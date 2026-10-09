@@ -90,7 +90,7 @@ describe('meetings queries', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    await act(() => invalidateTables(client, ['transcripts']));
+    await act(() => invalidateTables(client, ['transcript_segments']));
     expect(commands.list).toHaveBeenCalledTimes(1);
 
     await act(() => invalidateTables(client, ['meetings']));

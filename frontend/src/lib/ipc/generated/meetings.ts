@@ -130,9 +130,10 @@ updatedAt: string }
 /**
  * Identifies a meeting.
  * 
- * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and the
- * legacy recording and import paths still create IDs in that format. So a
- * meeting ID is opaque text; FND-07 decides whether to migrate it.
+ * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
+ * the legacy recording and import paths still create IDs in that format.
+ * FND-07 keeps the ID opaque text so every existing meeting still opens;
+ * new meetings may use any unique text, including `meeting-<UUIDv7>`.
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
 
