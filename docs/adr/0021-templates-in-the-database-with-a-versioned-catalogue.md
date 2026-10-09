@@ -20,7 +20,7 @@ selection by rules then an LLM, and a picker per meeting.
 - **Rows, not files.** `templates` holds one row per template (name,
   description, meeting context, auto rules, `builtin_version`, timestamps);
   `template_sections` holds its ordered sections (`PRIMARY KEY (template_id,
-  position)`, `format` CHECKed against `SectionFormat`). Sections are rows so
+  position)`, `format` CHECK-ed against `SectionFormat`). Sections are rows so
   the schema keeps their invariants and a template's row and sections are
   written in one transaction. Auto rules are a typed JSON column
   (`Vec<AutoRule>`): a short list evaluated in Rust (title patterns are

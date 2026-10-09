@@ -7,7 +7,7 @@
 -- `builtin_version` is NULL. Built-ins are immutable: "Duplicate" makes an
 -- editable copy with a new ID.
 --
--- Conventions as in FND-07: STRICT, NOT NULL by default, enums CHECKed
+-- Conventions as in FND-07: STRICT, NOT NULL by default, enums CHECK-ed
 -- against their `deino_domain` enum, timestamps RFC 3339 UTC, an index for
 -- every foreign key and list order.
 
