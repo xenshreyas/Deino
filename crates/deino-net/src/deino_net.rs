@@ -21,7 +21,7 @@
 //! - [`NetworkControls`]: the Settings → Privacy → Network page's service.
 //!
 //! The transcription and audio crates must never depend on this crate; a
-//! `cargo tree` check in `scripts/check-net-isolation.sh` enforces it.
+//! `cargo tree` check in `scripts/check-dependency-rules.sh` enforces it.
 
 mod client;
 mod controls;

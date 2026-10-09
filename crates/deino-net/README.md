@@ -42,7 +42,7 @@ egress log the user can read in Settings → Privacy → Network.
 
 - No other crate depends on `reqwest` or another HTTP client;
   `deino-audio` and `deino-stt` never depend on this crate
-  (`scripts/check-net-isolation.sh`, run by `scripts/clippy.sh`). clippy's
+  (`scripts/check-dependency-rules.sh`, the gate's `deps` step). clippy's
   `disallowed-types` bans `reqwest::Client` outside `reqwest_client.rs`.
 - A request to a host outside its service fails before anything is sent, and
   so does every redirect hop. A cross-origin hop drops credentials; an

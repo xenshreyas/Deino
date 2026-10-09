@@ -21,7 +21,7 @@ was sent. Transcription and audio code sat in the same crate as those clients.
   `NetClient` trait (one required `send`, helpers as provided methods: the
   shape of Zed's `HttpClient`, reference only). clippy's `disallowed-types`
   bans `reqwest::Client` everywhere else, and
-  `scripts/check-net-isolation.sh` (run by `scripts/clippy.sh`) fails if any
+  `scripts/check-dependency-rules.sh` (the gate's `deps` step) fails if any
   other crate under `crates/` depends on an HTTP client, or if `deino-audio`
   or `deino-stt` depend, even indirectly, on `deino-net` or one.
 - **Capabilities, not a shared client.** Every outside service is a
