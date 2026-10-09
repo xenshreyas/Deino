@@ -24,6 +24,9 @@ whisper-server-package/
 # testing
 /coverage
 /dist
+# Playwright output: screenshots, traces, reports
+/test-results
+/playwright-report
 
 
 # production

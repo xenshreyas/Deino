@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { ArrowLeft, Settings2, Mic, Database as DatabaseIcon, SparkleIcon, FlaskConical } from 'lucide-react';
+import React, { lazy, Suspense, useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { ArrowLeft, Settings2, Mic, Database as DatabaseIcon, SparkleIcon, FlaskConical, Wrench } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { motion } from 'framer-motion';
@@ -17,8 +17,15 @@ const TABS = [
   { value: 'recording', label: 'Recordings', icon: Mic },
   { value: 'Transcriptionmodels', label: 'Transcription', icon: DatabaseIcon },
   { value: 'summaryModels', label: 'Summary', icon: SparkleIcon },
-  { value: 'beta', label: 'Beta', icon: FlaskConical }
+  { value: 'beta', label: 'Beta', icon: FlaskConical },
+  // Debug builds only (FND-04): the `dev` plugin does not exist in release builds.
+  ...(import.meta.env.DEV ? [{ value: 'developer', label: 'Developer', icon: Wrench }] : []),
 ] as const;
+
+/** Settings → Developer, loaded lazily so release builds drop it entirely. */
+const DeveloperSettings = import.meta.env.DEV
+  ? lazy(() => import('@/features/developer').then((module) => ({ default: module.DeveloperSettings })))
+  : null;
 
 /** The settings screen: one tab per settings area. */
 export function SettingsScreen() {
@@ -125,6 +132,13 @@ export function SettingsScreen() {
             <TabsContent value="beta" className="mt-6">
               <BetaSettings />
             </TabsContent>
+            {DeveloperSettings && (
+              <TabsContent value="developer">
+                <Suspense fallback={null}>
+                  <DeveloperSettings />
+                </Suspense>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>

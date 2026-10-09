@@ -18,6 +18,13 @@ import { createQueryClient, IpcQueryProvider } from '@/lib/ipc';
 
 import { router } from './router';
 
+// `pnpm dev:mock`: run in a plain browser on fixture data. Production builds
+// drop this branch, and with it everything under `src/dev/`.
+if (import.meta.env.MODE === 'mock') {
+  const { installMockIpc } = await import('@/dev/mock-ipc/install');
+  installMockIpc();
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('index.html is missing the #root element');
