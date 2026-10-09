@@ -68,7 +68,6 @@ interface UseSummaryGenerationProps {
   initialSummary?: SummaryProcessResponse | null;
   meeting: {
     id: string;
-    created_at: string;
   };
   transcripts: Transcript[];
   modelConfig: ModelConfig;
