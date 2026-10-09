@@ -1,9 +1,8 @@
-//! The privacy and profile sections: placeholders that later cards fill.
+//! The privacy section: a placeholder that PRV-01 fills.
 //!
-//! They exist now so the settings file has its final shape: PRV-01/PRV-02
-//! add retention and app lock to [`PrivacySettings`], and NOT-05 adds the
-//! user's profile and global AI context to [`ProfileSettings`]. Each new
-//! field is `#[serde(default)]`, so existing files keep loading.
+//! It exists now so the settings file has its final shape: PRV-01/PRV-02 add
+//! retention and app lock to [`PrivacySettings`]. Each new field is
+//! `#[serde(default)]`, so existing files keep loading.
 
 use serde::{Deserialize, Serialize};
 
@@ -11,8 +10,3 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PrivacySettings {}
-
-/// The profile section of `Settings`. Empty until NOT-05.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ProfileSettings {}

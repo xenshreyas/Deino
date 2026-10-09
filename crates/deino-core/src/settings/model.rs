@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     AiSettings, AudioSettings, BetaSettings, NetworkSettings, NotificationSettings,
     OnboardingSettings, PrivacySettings, ProfileSettings, RecordingSettings, SettingsError,
+    TemplateSettings,
     TranscriptionSettings, UiSettings,
 };
 
@@ -37,6 +38,8 @@ pub struct Settings {
     pub network: NetworkSettings,
     /// The user's profile (NOT-05).
     pub profile: ProfileSettings,
+    /// Note templates (NOT-04).
+    pub templates: TemplateSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -57,6 +60,7 @@ impl Default for Settings {
             privacy: PrivacySettings::default(),
             network: NetworkSettings::default(),
             profile: ProfileSettings::default(),
+            templates: TemplateSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
             onboarding: OnboardingSettings::default(),
@@ -69,6 +73,7 @@ impl Settings {
     pub fn validate(&self) -> Result<(), SettingsError> {
         self.ai.validate()?;
         self.notifications.validate()?;
+        self.profile.validate()?;
         self.ui.validate()
     }
 
