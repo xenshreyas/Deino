@@ -29,17 +29,30 @@ pub enum SecretName {
     /// The key of the user's custom OpenAI-compatible endpoint.
     #[serde(rename = "custom_openai_api_key")]
     CustomOpenAiApiKey,
+    /// The client secret of the user's Google OAuth desktop client (ORG-01).
+    #[serde(rename = "google_oauth_client_secret")]
+    GoogleOAuthClientSecret,
+    /// The refresh token of the connected Google Calendar account (ORG-01).
+    #[serde(rename = "google_calendar_refresh_token")]
+    GoogleCalendarRefreshToken,
+    /// The refresh token of the connected Microsoft (Outlook) calendar
+    /// account (ORG-01).
+    #[serde(rename = "microsoft_calendar_refresh_token")]
+    MicrosoftCalendarRefreshToken,
 }
 
 impl SecretName {
     /// Every secret, in declaration order.
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 9] = [
         Self::OpenAiApiKey,
         Self::AnthropicApiKey,
         Self::GroqApiKey,
         Self::OpenRouterApiKey,
         Self::OllamaApiKey,
         Self::CustomOpenAiApiKey,
+        Self::GoogleOAuthClientSecret,
+        Self::GoogleCalendarRefreshToken,
+        Self::MicrosoftCalendarRefreshToken,
     ];
 
     /// The keychain account the secret is stored under; equal to its serialized name.
@@ -51,6 +64,9 @@ impl SecretName {
             Self::OpenRouterApiKey => "openrouter_api_key",
             Self::OllamaApiKey => "ollama_api_key",
             Self::CustomOpenAiApiKey => "custom_openai_api_key",
+            Self::GoogleOAuthClientSecret => "google_oauth_client_secret",
+            Self::GoogleCalendarRefreshToken => "google_calendar_refresh_token",
+            Self::MicrosoftCalendarRefreshToken => "microsoft_calendar_refresh_token",
         }
     }
 
@@ -63,6 +79,9 @@ impl SecretName {
             Self::OpenRouterApiKey => "OpenRouter API key",
             Self::OllamaApiKey => "Ollama API key",
             Self::CustomOpenAiApiKey => "custom endpoint API key",
+            Self::GoogleOAuthClientSecret => "Google client secret",
+            Self::GoogleCalendarRefreshToken => "Google Calendar sign-in",
+            Self::MicrosoftCalendarRefreshToken => "Microsoft calendar sign-in",
         }
     }
 }

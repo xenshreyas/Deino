@@ -1,0 +1,46 @@
+[package]
+name = "deino-connect"
+version = "0.1.0"
+description = "Deino's connections to the user's online accounts: OAuth 2.0 with PKCE over a loopback redirect, and the Google Calendar and Microsoft Graph calendar sources"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_connect.rs"
+
+[features]
+# Fakes of this crate's ports (`FakeBrowser`) for other crates' tests.
+test-support = []
+
+[dependencies]
+async-trait.workspace = true
+# PKCE verifiers, challenges and states: base64url without padding (already in the tree).
+base64 = "0.22.1"
+chrono.workspace = true
+deino-core.workspace = true
+deino-domain.workspace = true
+deino-net.workspace = true
+deino-secrets.workspace = true
+# Random PKCE verifiers and OAuth states from the OS (already in the tree).
+getrandom = "0.3.4"
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# The PKCE S256 challenge (already in the tree).
+sha2 = "0.10.9"
+thiserror.workspace = true
+tokio.workspace = true
+# Authorization URLs, form bodies and the loopback redirect's query (already in the tree).
+url = "2.5.8"
+
+[dev-dependencies]
+deino-connect = { path = ".", features = ["test-support"] }
+deino-core = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+deino-net = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
+tokio = { workspace = true, features = ["test-util"] }
+
+[lints]
+workspace = true

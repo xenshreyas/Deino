@@ -36,6 +36,14 @@ impl FakeReply {
         }
     }
 
+    /// The same answer with another status, for error bodies (`400` with
+    /// an OAuth error, say).
+    #[must_use]
+    pub fn with_status(mut self, status: Status) -> Self {
+        self.status = status;
+        self
+    }
+
     /// A redirect to `location`.
     pub fn redirect(status: Status, location: &str) -> Self {
         Self::status(status).header("location", location)
