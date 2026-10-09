@@ -6,7 +6,7 @@
 //! appends it to the sink and records it in the ledger.
 //!
 //! - [`CmafEncoderFactory`] (macOS): `AVAssetWriter` in CMAF segment-output
-//!   mode, AAC-LC 64 kbps, 1 s segments (ADR 0013).
+//!   mode, AAC-LC 64 kbps, 1 s segments (ADR 0014).
 //! - `FakeEncoderFactory` (`test-support`): keeps the PCM in memory.
 
 #[cfg(target_os = "macos")]

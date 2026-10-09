@@ -5,17 +5,17 @@
 //! microphone, the Core Audio process tap) arrive in later cards; this card
 //! ships [`MockAudioSource`], which plays generated signals in real time so
 //! the whole recording path runs without hardware. In debug builds,
-//! `DEINO_MOCK_AUDIO=1` selects it ([`mock_sources_from_env`]).
+//! `DEINO_MOCK_AUDIO` selects it ([`MockAudio::from_env`]): `1` plays the
+//! generated voices, any other value names a fixture meeting whose tracks
+//! the composition root decodes (`deino_testkit::fixture::PcmTrack`) and
+//! plays through [`TestSignal::from_pcm`].
 
 mod mock;
 mod signal;
 
-use std::sync::Arc;
-
 pub use mock::MockAudioSource;
 pub use signal::TestSignal;
 
-use crate::clock::HostClock;
 use crate::ring::RtSink;
 use crate::units::Track;
 
@@ -54,16 +54,35 @@ pub trait AudioSource: std::fmt::Debug + Send {
     fn stop(&mut self);
 }
 
-/// Whether a `DEINO_MOCK_AUDIO` value turns the mock on (`1` or `true`).
-pub fn mock_audio_enabled(value: Option<&str>) -> bool {
-    matches!(value.map(str::trim), Some("1" | "true"))
+/// What `DEINO_MOCK_AUDIO` asks the capture side to play instead of the
+/// real devices.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MockAudio {
+    /// The generated voices ([`MockAudioSource::meeting`]): `1` or `true`.
+    Generated,
+    /// The tracks of the fixture meeting with this ID.
+    Fixture(String),
 }
 
-/// Mock sources for both tracks when `DEINO_MOCK_AUDIO` asks for them in a
-/// debug build; `None` otherwise (release builds always capture for real).
-pub fn mock_sources_from_env(clock: &Arc<dyn HostClock>) -> Option<[MockAudioSource; 2]> {
-    let requested = mock_audio_enabled(std::env::var(MOCK_AUDIO_ENV).ok().as_deref());
-    (cfg!(debug_assertions) && requested).then(|| MockAudioSource::meeting(clock))
+impl MockAudio {
+    /// Parses a `DEINO_MOCK_AUDIO` value; unset, empty, `0` and `false` mean
+    /// real capture.
+    pub fn parse(value: Option<&str>) -> Option<Self> {
+        match value.map(str::trim)? {
+            "" | "0" | "false" => None,
+            "1" | "true" => Some(Self::Generated),
+            fixture => Some(Self::Fixture(fixture.to_owned())),
+        }
+    }
+
+    /// The mock `DEINO_MOCK_AUDIO` selects in a debug build; always `None`
+    /// in release builds, which capture for real.
+    pub fn from_env() -> Option<Self> {
+        if !cfg!(debug_assertions) {
+            return None;
+        }
+        Self::parse(std::env::var(MOCK_AUDIO_ENV).ok().as_deref())
+    }
 }
 
 #[cfg(test)]
@@ -71,11 +90,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn only_explicit_values_enable_the_mock() {
-        assert!(mock_audio_enabled(Some("1")));
-        assert!(mock_audio_enabled(Some(" true ")));
-        for value in [None, Some(""), Some("0"), Some("false"), Some("yes")] {
-            assert!(!mock_audio_enabled(value), "{value:?}");
+    fn the_variable_selects_generated_or_fixture_audio() {
+        assert_eq!(MockAudio::parse(Some("1")), Some(MockAudio::Generated));
+        assert_eq!(MockAudio::parse(Some(" true ")), Some(MockAudio::Generated));
+        assert_eq!(
+            MockAudio::parse(Some("fx-standup")),
+            Some(MockAudio::Fixture("fx-standup".into()))
+        );
+        for value in [None, Some(""), Some("0"), Some("false")] {
+            assert_eq!(MockAudio::parse(value), None, "{value:?}");
         }
     }
 }

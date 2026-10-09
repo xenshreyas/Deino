@@ -3,12 +3,16 @@
 //! Deino stores every track as 48 kHz mono, and **the sample index is time**:
 //! frame *n* of `mic.m4a` and frame *n* of `system.m4a` both mean
 //! `epoch + n / 48 000 s` (`docs/references/audio-capture.md` §4). These
-//! newtypes keep frames, milliseconds, nanoseconds and bytes from being mixed up.
+//! newtypes keep frames, nanoseconds and bytes from being mixed up;
+//! milliseconds are the shared [`Millis`] of `deino-domain`, the unit of
+//! `transcript_segments.start_ms`.
 
 use std::fmt;
 use std::ops::{Add, AddAssign, Sub};
 use std::time::Duration;
 
+use deino_domain::Channel;
+pub use deino_domain::Millis;
 use serde::{Deserialize, Serialize};
 
 /// The sample rate of every stored track, in frames per second.
@@ -44,6 +48,16 @@ impl Track {
     }
 }
 
+impl From<Track> for Channel {
+    /// The transcript channel a track's speech is stored under.
+    fn from(track: Track) -> Self {
+        match track {
+            Track::Microphone => Self::Mic,
+            Track::System => Self::System,
+        }
+    }
+}
+
 impl fmt::Display for Track {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.file_stem())
@@ -72,9 +86,11 @@ impl Frames {
         Self(u64::try_from(len).unwrap_or(u64::MAX))
     }
 
-    /// The presentation time of this frame index, rounded down to a millisecond.
+    /// The presentation time of this frame index, rounded down to a
+    /// millisecond (saturating past 49 days, `Millis`' range).
     pub fn as_millis(self) -> Millis {
-        Millis(self.0 * MILLIS_PER_SECOND / u64::from(STORAGE_RATE))
+        let millis = self.0 * MILLIS_PER_SECOND / u64::from(STORAGE_RATE);
+        Millis(u32::try_from(millis).unwrap_or(u32::MAX))
     }
 
     /// The duration these frames last.
@@ -117,13 +133,6 @@ impl Sub for Frames {
         self.saturating_sub(other)
     }
 }
-
-/// A presentation time or duration in whole milliseconds.
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
-)]
-#[serde(transparent)]
-pub struct Millis(pub u64);
 
 /// A reading of the monotonic host clock, in nanoseconds since an arbitrary
 /// origin (on macOS, `mach_absolute_time` converted to nanoseconds, the same
@@ -174,6 +183,12 @@ mod tests {
         assert_eq!(second, Frames(48_000));
         assert_eq!(second.as_millis(), Millis(1_000));
         assert_eq!(second.as_duration(), Duration::from_secs(1));
+    }
+
+    #[test]
+    fn tracks_map_onto_transcript_channels() {
+        assert_eq!(Channel::from(Track::Microphone), Channel::Mic);
+        assert_eq!(Channel::from(Track::System), Channel::System);
     }
 
     #[test]

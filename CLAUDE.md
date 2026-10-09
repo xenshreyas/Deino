@@ -92,6 +92,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
 | `crates/deino-core` | Features as modules: `meetings`, `settings`, the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
+| `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |

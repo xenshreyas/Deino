@@ -9,8 +9,8 @@ Decisions behind this layout are in [`adr/`](adr/): Tauri + Rust core (0004),
 SQLite + sqlx (0005), crate layout (0006), typed IPC (0007), TanStack Query +
 `DbChanged` (0008), the error model (0009), cloud LLM for notes with local
 transcription (0010), the code-quality limits (0011), the core schema with
-its legacy `transcripts` view (0012) and typed settings with Keychain secrets
-(0013).
+its legacy `transcripts` view (0012), typed settings with Keychain secrets
+(0013) and the native crash-safe recording format (0014).
 
 ## 1. Processes
 
@@ -46,6 +46,8 @@ flowchart BT
   testkit["deino-testkit<br/>(dev-dependency)"]
   app["deino (frontend/src-tauri)<br/>Tauri app: plugins, composition, legacy"]
   helper["llama-helper<br/>(separate binary)"]
+  audio["deino-audio<br/>track writer, recovery, finalize"]
+  audio --> domain
   db --> domain
   core --> db
   core --> domain
@@ -65,6 +67,7 @@ flowchart BT
 | `deino-secrets` | `crates/deino-secrets` | `SecretStore` (set, status, delete, and `get` for Rust only), `KeychainSecretStore` over `keyring`, `InMemorySecretStore` (feature `test-support`). |
 | `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
+| `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar. |
 
@@ -165,6 +168,22 @@ Legacy stores are imported once and removed: the SQLite `settings` and
 runs just before the migration that drops both tables (with `secure_delete`,
 so no key bytes survive); the tauri-plugin-store JSON files by
 `LegacyFileImport` at startup; the UI's localStorage keys by `SettingsSync`.
+
+### Recording files (`deino-audio`, wired in by FND-05b)
+
+```text
+capture callback ─▶ RtSink ═ rtrb ═▶ writer thread (per track, polls 10 ms)
+                                     TrackTimeline → Backlog (≤ 64 MiB) → AVAssetWriter (CMAF, 1 s)
+                                                                          └─▶ audio/<track>.NNN.m4a.part
+persister thread, every 5 s: snapshot frames → F_FULLFSYNC → recording.json (atomic)
+stop:    pad both tracks to the stop time → finish → rename .part → .m4a → status closed
+launch:  find_unclosed → recover_recording (truncate_to_playable, rename, status recovered)
+finalize_recording: mic.m4a, system.m4a (passthrough) + audio.mp4 (−6 dB mix) → status finalized
+```
+
+`kill -9` keeps every whole one-second segment (≤ 1 s lost); power loss keeps
+what the last 5 s sync covered. Health events (`Stalled`, `FramesDropped`,
+`DiskLow`, ...) go to a bounded channel for CAP-10's record pill.
 
 ### Reads and writes in a feature
 

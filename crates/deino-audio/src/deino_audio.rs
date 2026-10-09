@@ -2,7 +2,7 @@
 //!
 //! Records the microphone and system audio as two separate, sample-aligned
 //! tracks that survive `kill -9` (≤ 1 s lost) and power loss (≤ 5 s lost),
-//! without FFmpeg (ADR 0013, `docs/references/spike-native-recording.md`).
+//! without FFmpeg (ADR 0014, `docs/references/spike-native-recording.md`).
 //!
 //! ```text
 //!  AudioSource ─RT─▶ RtSink ═ring═▶ writer thread ──▶ TrackEncoder ──▶ TrackSink
@@ -80,6 +80,6 @@ pub use ring::RtSink;
 #[cfg(any(test, feature = "test-support"))]
 pub use sink::MemorySink;
 pub use sink::TrackSink;
-pub use source::{AudioSource, MockAudioSource, TestSignal, mock_sources_from_env};
+pub use source::{AudioSource, MockAudio, MockAudioSource, TestSignal};
 pub use timeline::{Placement, TrackTimeline};
 pub use units::{Bytes, Frames, HostTime, Millis, STORAGE_RATE, Track};
