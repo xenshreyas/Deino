@@ -1,0 +1,53 @@
+[package]
+name = "deino-audio"
+version = "0.1.0"
+description = "Deino's crash-safe audio recording: track writers, manifest, recovery, finalize and the AudioSource port"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_audio.rs"
+
+[features]
+# Fakes of this crate's ports (`FakeHostClock`, `MemorySink`, `FakeEncoderFactory`,
+# `FakeDiskSpace`) for other crates' tests. Never enable outside dev-dependencies.
+test-support = []
+
+[dependencies]
+chrono.workspace = true
+deino-domain.workspace = true
+log.workspace = true
+# Wait-free single-producer single-consumer ring between a real-time audio
+# callback and the writer thread (§3C). MIT/Apache-2.0.
+rtrb = "=0.4.0"
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+# F_FULLFSYNC and statvfs without hand-written unsafe FFI. MIT/Apache-2.0.
+rustix = { version = "=1.1.4", features = ["fs"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# AVAssetWriter (CMAF segments), Core Media sample buffers, ExtAudioFile and
+# mach time. Same git rev as the app crate, so both share one build.
+cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
+# The AVFoundation calls cidre a9587fa does not bind: AVAssetExportSession
+# (passthrough export) and -[AVAssetWriter finishWritingWithCompletionHandler:].
+block2 = "=0.6.2"
+objc2 = "=0.6.4"
+objc2-av-foundation = { version = "=0.3.2", default-features = false, features = ["std", "AVAsset", "AVAssetExportSession", "AVMediaFormat", "block2", "objc2-core-media"] }
+objc2-core-media = { version = "=0.3.2", default-features = false, features = ["std", "CMTime", "CMTimeRange"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSError", "NSString", "NSURL"] }
+
+[dev-dependencies]
+deino-domain = { workspace = true, features = ["test-support"] }
+tempfile = "3.3.0"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+# getrusage for the CPU measurement in tests/kill_harness.rs.
+libc = "0.2.186"
+
+[lints]
+workspace = true
