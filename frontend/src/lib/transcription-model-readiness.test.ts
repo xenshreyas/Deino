@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 
 import {
   getProviderCommands,
   hasDownloadingModel,
-} from '../../src/lib/transcription-model-readiness';
+} from './transcription-model-readiness';
 
 describe('transcription model readiness', () => {
   test('uses Whisper commands when Whisper is the configured provider', () => {
@@ -27,9 +27,9 @@ describe('transcription model readiness', () => {
   });
 
   test('recognizes only active downloads', () => {
-    expect(hasDownloadingModel([{ status: 'Available' }])).toBeFalse();
-    expect(hasDownloadingModel([{ status: 'Downloading' }])).toBeTrue();
-    expect(hasDownloadingModel([{ status: { Downloading: { progress: 0 } } }])).toBeTrue();
-    expect(hasDownloadingModel([{ status: { Downloading: { progress: 42 } } }])).toBeTrue();
+    expect(hasDownloadingModel([{ status: 'Available' }])).toBe(false);
+    expect(hasDownloadingModel([{ status: 'Downloading' }])).toBe(true);
+    expect(hasDownloadingModel([{ status: { Downloading: { progress: 0 } } }])).toBe(true);
+    expect(hasDownloadingModel([{ status: { Downloading: { progress: 42 } } }])).toBe(true);
   });
 });

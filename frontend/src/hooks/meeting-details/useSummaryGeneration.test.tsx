@@ -1,33 +1,40 @@
-import { afterAll, afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { useEffect, useState } from 'react';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import { parseSummaryContent } from '../../src/lib/summary-content';
-import type { MeetingSummary, SummaryProcessResponse } from '../../src/types';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-// Bun shares module mocks between test files; restore application modules after this suite.
-const originalToast = { ...await import('sonner') };
-afterAll(() => {
-  mock.module('sonner', () => originalToast);
-});
+import { SidebarProvider, useSidebar } from '@/components/Sidebar/SidebarProvider';
+import { parseSummaryContent } from '@/lib/summary-content';
+import type { MeetingSummary, SummaryProcessResponse } from '@/types';
 
-mock.module('next/navigation', () => ({ usePathname: () => '/meeting-details', useRouter: () => ({}) }));
-mock.module('../../src/contexts/RecordingStateContext', () => ({ useRecordingState: () => ({ isRecording: false }) }));
-const notify = mock(() => {});
-mock.module('sonner', () => ({ toast: { info: notify, error: notify, success: notify, warning: notify } }));
+import { useSummaryGeneration } from './useSummaryGeneration';
+
+const { invoke, notify } = vi.hoisted(() => ({ invoke: vi.fn(), notify: vi.fn() }));
+vi.mock('@tauri-apps/api/core', () => ({ invoke }));
+vi.mock('sonner', () => ({
+  toast: { info: notify, error: notify, success: notify, warning: notify },
+}));
+vi.mock('@/contexts/RecordingStateContext', () => ({
+  useRecordingState: () => ({ isRecording: false }),
+}));
+vi.mock('@tanstack/react-router', () => ({
+  useLocation: (options: { select: (location: { pathname: string }) => string }) =>
+    options.select({ pathname: '/meetings/meeting-a' }),
+  useNavigate: () => vi.fn(),
+}));
+
 let startProcess: () => Promise<{ process_id: string }>;
 let getSummary: (meetingId: string) => Promise<SummaryProcessResponse>;
-const invoke = mock(async (command: string, args?: Record<string, unknown>): Promise<unknown> => {
+invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
   if (command === 'api_get_meetings') return [];
-  if (command === 'api_get_summary') return getSummary(args!.meetingId as string);
-  if (command === 'api_get_meeting_transcripts') return { transcripts: [{ text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1 };
+  if (command === 'api_get_summary') return getSummary(String(args?.meetingId));
+  if (command === 'api_get_meeting_transcripts') {
+    return { transcripts: [{ text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1 };
+  }
   if (command === 'get_ollama_models') return [{ name: 'test' }];
   if (command === 'api_process_transcript') return startProcess();
   if (command === 'api_cancel_summary') return { cancelled: true };
   throw new Error(`Unexpected command: ${command}`);
 });
-mock.module('@tauri-apps/api/core', () => ({ invoke }));
-const { SidebarProvider, useSidebar } = await import('../../src/components/Sidebar/SidebarProvider');
-const { useSummaryGeneration } = await import('../../src/hooks/meeting-details/useSummaryGeneration');
 
 const response = (overrides: Partial<SummaryProcessResponse> = {}): SummaryProcessResponse => ({
   meeting_id: 'meeting-a', status: 'pending', start: 'attempt-a', end: null,
@@ -49,34 +56,45 @@ function Status({ initialSummary, meetingId = 'meeting-a' }: {
   return <output>{state.summaryStatus}:{state.summaryError}:{title}:{JSON.stringify(summary)}</output>;
 }
 
-let renderer: ReactTestRenderer;
-const timers = new Map<number, () => Promise<void>>();
+let view: RenderResult | undefined;
+const timers = new Map<number, () => unknown>();
 let nextTimer = 0;
 const realSetInterval = globalThis.setInterval;
 const realClearInterval = globalThis.clearInterval;
+function fakeSetInterval(callback: () => unknown): number {
+  const id = ++nextTimer;
+  timers.set(id, callback);
+  return id;
+}
+function fakeClearInterval(id: number): void {
+  timers.delete(id);
+}
 beforeEach(() => {
-  renderer = undefined as unknown as ReactTestRenderer;
+  view = undefined;
   configuredModel = 'test';
   timers.clear(); notify.mockClear(); invoke.mockClear();
   getSummary = async () => response();
   startProcess = async () => ({ process_id: 'attempt-a' });
-  globalThis.setInterval = ((callback: () => Promise<void>) => {
-    const id = ++nextTimer; timers.set(id, callback); return id;
-  }) as typeof setInterval;
-  globalThis.clearInterval = ((id: number) => { timers.delete(id); }) as typeof clearInterval;
+  globalThis.setInterval = fakeSetInterval as unknown as typeof setInterval;
+  globalThis.clearInterval = fakeClearInterval as unknown as typeof clearInterval;
 });
 afterEach(async () => {
-  if (renderer) await act(async () => renderer.unmount());
+  // Unmount while the fake timers are installed, so cleanup clears fake ids.
+  await act(async () => view?.unmount());
   globalThis.setInterval = realSetInterval;
   globalThis.clearInterval = realClearInterval;
 });
 async function show(initialSummary: SummaryProcessResponse | null, meetingId = 'meeting-a') {
+  const ui = (
+    <SidebarProvider>
+      {initialSummary && <Status key={meetingId} initialSummary={initialSummary} meetingId={meetingId} />}
+    </SidebarProvider>
+  );
   await act(async () => {
-    const view = <SidebarProvider>{initialSummary && <Status key={meetingId} initialSummary={initialSummary} meetingId={meetingId} />}</SidebarProvider>;
-    if (renderer) renderer.update(view); else renderer = create(view);
+    if (view) view.rerender(ui); else view = render(ui);
   });
 }
-const text = () => JSON.stringify(renderer.toJSON());
+const text = () => view?.container.textContent ?? '';
 async function tick() {
   await act(async () => { for (const callback of [...timers.values()]) callback(); });
 }
@@ -116,7 +134,7 @@ describe('summary state restored when returning to a meeting', () => {
       return null;
     }
     await act(async () => {
-      renderer = create(<SidebarProvider><RejectingConsumer /></SidebarProvider>);
+      view = render(<SidebarProvider><RejectingConsumer /></SidebarProvider>);
     });
     getSummary = async () => {
       if (failure === 'read') throw new Error('Database unavailable');

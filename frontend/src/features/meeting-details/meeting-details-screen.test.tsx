@@ -1,54 +1,45 @@
-import { afterAll, afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { useEffect } from 'react';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import type { SummaryProcessResponse } from '../../src/types';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const originalCore = { ...await import('@tauri-apps/api/core') };
-const originalToast = { ...await import('sonner') };
-const originalNavigation = { ...await import('next/navigation') };
-const originalConfig = { ...await import('../../src/contexts/ConfigContext') };
-afterAll(() => {
-  mock.module('@tauri-apps/api/core', () => originalCore);
-  mock.module('sonner', () => originalToast);
-  mock.module('next/navigation', () => originalNavigation);
-  mock.module('../../src/contexts/ConfigContext', () => originalConfig);
-});
+import { SidebarProvider } from '@/components/Sidebar/SidebarProvider';
+import { useMeetingData } from '@/hooks/meeting-details/useMeetingData';
+import { useSummaryGeneration } from '@/hooks/meeting-details/useSummaryGeneration';
+import type { MeetingSummary, SummaryProcessResponse, Transcript } from '@/types';
 
-let selectedMeeting = 'meeting-a';
-mock.module('next/navigation', () => ({
-  usePathname: () => '/meeting-details', useRouter: () => ({}),
-  useSearchParams: () => new URLSearchParams({ id: selectedMeeting }),
+import { MeetingDetailsScreen } from './meeting-details-screen';
+
+const { invoke, notify } = vi.hoisted(() => ({ invoke: vi.fn(), notify: vi.fn() }));
+vi.mock('@tauri-apps/api/core', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tauri-apps/api/core')>()),
+  invoke,
 }));
-mock.module('../../src/contexts/RecordingStateContext', () => ({ useRecordingState: () => ({ isRecording: false }) }));
-mock.module('../../src/contexts/ConfigContext', () => ({ useConfig: () => ({ isAutoSummary: false }) }));
-const notify = mock(() => {});
-mock.module('sonner', () => ({ toast: { info: notify, error: notify, success: notify, warning: notify } }));
-const metadata = (id: string) => ({ id, title: id, created_at: '2026-09-01', updated_at: '2026-09-01' });
-let readMetadata: (id: string) => Promise<unknown>;
-let readTranscripts: (id: string) => Promise<unknown>;
-const transcriptPage = {
-  transcripts: [{ id: 'transcript', text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1, has_more: false,
-};
-let savedSummary: SummaryProcessResponse;
-const invoke = mock(async (command: string, args?: Record<string, unknown>): Promise<unknown> => {
-  if (command === 'api_get_meetings') return [];
-  if (command === 'api_get_summary') return { ...savedSummary, meeting_id: args!.meetingId };
-  if (command === 'api_get_meeting_metadata') return readMetadata(args!.meetingId as string);
-  if (command === 'api_get_meeting_transcripts') return readTranscripts(args!.meetingId as string);
-  if (command === 'api_process_transcript') return { process_id: 'attempt-b' };
-  if (command === 'api_cancel_summary') return { cancelled: true };
-  throw new Error(`Unexpected command: ${command}`);
-});
-mock.module('@tauri-apps/api/core', () => ({ ...originalCore, invoke }));
-const { SidebarProvider } = await import('../../src/components/Sidebar/SidebarProvider');
-const { useSummaryGeneration } = await import('../../src/hooks/meeting-details/useSummaryGeneration');
-const { useMeetingData } = await import('../../src/hooks/meeting-details/useMeetingData');
+vi.mock('sonner', () => ({
+  toast: { info: notify, error: notify, success: notify, warning: notify },
+}));
+vi.mock('@/contexts/RecordingStateContext', () => ({
+  useRecordingState: () => ({ isRecording: false }),
+}));
+vi.mock('@/contexts/ConfigContext', () => ({ useConfig: () => ({ isAutoSummary: false }) }));
+vi.mock('@tanstack/react-router', () => ({
+  useLocation: (options: { select: (location: { pathname: string }) => string }) =>
+    options.select({ pathname: '/meetings/meeting-a' }),
+  useNavigate: () => vi.fn(),
+}));
 
-// Use a lightweight content view around the actual route, transcript loader, state hooks and polling provider.
+/** The props the screen passes to its content view (the real one renders BlockNote). */
+interface ContentProps {
+  meeting: { id: string; title: string; transcripts: Transcript[] };
+  initialSummary: SummaryProcessResponse | null;
+  summaryData: MeetingSummary | null;
+  onRefetchTranscripts: () => Promise<void>;
+}
+
+// A lightweight content view around the real route, transcript loader, state hooks and polling provider.
 let summaryState: ReturnType<typeof useSummaryGeneration>;
 let refresh: () => Promise<void>;
 let mounts = 0;
-function SummaryView(props: any) {
+function SummaryView(props: ContentProps) {
   const data = useMeetingData(props);
   summaryState = useSummaryGeneration({
     meeting: props.meeting, initialSummary: props.initialSummary, transcripts: data.transcripts,
@@ -59,43 +50,67 @@ function SummaryView(props: any) {
   useEffect(() => { mounts += 1; }, []);
   return <output>{props.meeting.id}:{summaryState.summaryStatus}:{JSON.stringify(data.aiSummary)}</output>;
 }
-mock.module('../../src/app/meeting-details/page-content', () => ({ default: SummaryView }));
-const { default: MeetingDetails } = await import('../../src/app/meeting-details/page');
+vi.mock('./meeting-details-content', () => ({ default: SummaryView }));
 
-let renderer: ReactTestRenderer | undefined;
+let selectedMeeting = 'meeting-a';
+const metadata = (id: string) => ({ id, title: id, created_at: '2026-09-01', updated_at: '2026-09-01' });
+let readMetadata: (id: string) => Promise<unknown>;
+let readTranscripts: (id: string) => Promise<unknown>;
+const transcriptPage = {
+  transcripts: [{ id: 'transcript', text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1, has_more: false,
+};
+let savedSummary: SummaryProcessResponse;
+invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
+  const meetingId = String(args?.meetingId);
+  if (command === 'api_get_meetings') return [];
+  if (command === 'api_get_summary') return { ...savedSummary, meeting_id: meetingId };
+  if (command === 'api_get_meeting_metadata') return readMetadata(meetingId);
+  if (command === 'api_get_meeting_transcripts') return readTranscripts(meetingId);
+  if (command === 'api_process_transcript') return { process_id: 'attempt-b' };
+  if (command === 'api_cancel_summary') return { cancelled: true };
+  throw new Error(`Unexpected command: ${command}`);
+});
+
+let view: RenderResult | undefined;
 const timers = new Map<number, () => Promise<void>>();
 let nextTimer = 0;
 const realSetInterval = globalThis.setInterval;
 const realClearInterval = globalThis.clearInterval;
+function fakeSetInterval(callback: () => Promise<void>): number {
+  const id = ++nextTimer;
+  timers.set(id, callback);
+  return id;
+}
+function fakeClearInterval(id: number): void {
+  timers.delete(id);
+}
 beforeEach(() => {
+  view = undefined;
   selectedMeeting = 'meeting-a';
   readMetadata = async id => metadata(id);
   readTranscripts = async () => transcriptPage;
   savedSummary = { meeting_id: selectedMeeting, status: 'pending', start: 'attempt-a', end: null, data: null, error: null, meetingName: 'Meeting A' };
   mounts = 0; timers.clear(); invoke.mockClear(); notify.mockClear();
-  globalThis.setInterval = ((callback: () => Promise<void>) => {
-    const id = ++nextTimer; timers.set(id, callback); return id;
-  }) as typeof setInterval;
-  globalThis.clearInterval = ((id: number) => { timers.delete(id); }) as typeof clearInterval;
+  globalThis.setInterval = fakeSetInterval as unknown as typeof setInterval;
+  globalThis.clearInterval = fakeClearInterval as unknown as typeof clearInterval;
 });
 afterEach(async () => {
-  if (renderer) await act(async () => renderer!.unmount());
-  renderer = undefined;
+  await act(async () => view?.unmount());
   globalThis.setInterval = realSetInterval;
   globalThis.clearInterval = realClearInterval;
 });
 async function show() {
+  const ui = <SidebarProvider><MeetingDetailsScreen meetingId={selectedMeeting} /></SidebarProvider>;
   await act(async () => {
-    const view = <SidebarProvider><MeetingDetails /></SidebarProvider>;
-    if (renderer) renderer.update(view); else renderer = create(view);
+    if (view) view.rerender(ui); else view = render(ui);
   });
 }
 async function tick() {
   await act(async () => { for (const callback of [...timers.values()]) await callback(); });
 }
-const text = () => JSON.stringify(renderer!.toJSON());
-async function complete(text: string, attempt: string) {
-  savedSummary = { ...savedSummary, status: 'completed', start: attempt, data: { markdown: text } };
+const text = () => view?.container.textContent ?? '';
+async function complete(markdown: string, attempt: string) {
+  savedSummary = { ...savedSummary, status: 'completed', start: attempt, data: { markdown } };
   await tick();
 }
 function deferMetadata() {
@@ -113,7 +128,7 @@ describe('meeting route transcript refresh', () => {
     let resolvePage!: (value: unknown) => void;
     readTranscripts = () => new Promise(resolve => { resolvePage = resolve; });
     await show();
-    expect(renderer!.root.findAllByType('output')).toHaveLength(0);
+    expect(view?.container.querySelectorAll('output')).toHaveLength(0);
     expect(mounts).toBe(1);
     await act(async () => { resolvePage(transcriptPage); });
     expect(text()).toContain('meeting-b');
@@ -154,7 +169,8 @@ describe('meeting route transcript refresh', () => {
     expect([...timers.keys()]).toEqual([currentTimer]);
     expect(summaryState.summaryStatus).toBe('regenerating');
     await act(async () => { await summaryState.handleStopGeneration(); });
-    expect(invoke.mock.calls.find(([command]) => command === 'api_cancel_summary')?.[1]?.processId).toBe('attempt-b');
+    const cancel = invoke.mock.calls.find(([command]) => command === 'api_cancel_summary');
+    expect(cancel?.[1]).toMatchObject({ processId: 'attempt-b' });
     expect(timers.size).toBe(0);
   });
 });

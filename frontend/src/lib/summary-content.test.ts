@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { hasVisibleSummaryContent, parseSummaryContent } from '../../src/lib/summary-content';
+import { describe, expect, test } from 'vitest';
+import { hasVisibleSummaryContent, parseSummaryContent } from './summary-content';
 
 describe('summary content validation', () => {
   test('accepts visible markdown and rejects whitespace or reasoning markers', () => {
