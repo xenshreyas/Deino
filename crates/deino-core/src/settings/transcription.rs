@@ -53,7 +53,9 @@ impl Default for TranscriptionSettings {
     fn default() -> Self {
         Self {
             engine: TranscriptionEngine::ParakeetUnified,
-            model: TranscriptionEngine::ParakeetUnified.default_model().to_owned(),
+            model: TranscriptionEngine::ParakeetUnified
+                .default_model()
+                .to_owned(),
         }
     }
 }

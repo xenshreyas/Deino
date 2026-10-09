@@ -7,7 +7,7 @@ import type * as Generated from '@/lib/ipc/generated/transcription';
 import type { CommandResult } from '@/lib/ipc/result';
 
 import { latency } from './latency';
-import { failure, ok } from './mock-database';
+import { failure, ok } from './command-result';
 import { mockEvent } from './mock-event';
 
 const NAME = 'Parakeet Unified EN 0.6B';
