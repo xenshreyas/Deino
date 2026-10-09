@@ -523,7 +523,7 @@ Legend:
 | **Speaker diarization, "Speaker N"** (desktop and in-person) | iOS only | ✅ (including hybrid rooms) | ❌ | CAP-03 |
 | **Voice profiles: rename once, recognized in future meetings** | — | ✅ | ❌ | CAP-04 |
 | **Real names from the meeting app UI** (Zoom/Teams/Meet active speaker) | ✅ | ✅ (bot) | ❌ | CAP-05 |
-| **Meeting detection when an app uses the mic** (per-app titles, ignore list) | ✅ | ✅ | 🟡 (macOS detector exists, not wired) | CAP-06 |
+| **Meeting detection when an app uses the mic** (per-app titles, ignore list) | ✅ | ✅ | ✅ (CAP-06, `deino-detect`) | CAP-06 |
 | **Calendar notification 1 min before, which joins the call and starts recording** | ✅ | ✅ | ❌ | ORG-02 |
 | **Auto-start (countdown) and auto-stop** (mic released, silence, sleep, calendar end) | 🟡 | ✅ | ❌ | CAP-06, CAP-07 |
 | **Floating recording indicator and record panel** (pause/stop/mic, quick notes) | ✅ | ✅ | ❌ (tray only) | CAP-10 |
@@ -2072,6 +2072,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | CAP-03 Local speaker diarization | ☑️ done on branch `feat/CAP-03-diarization` (ADR 0020; stage `diarize` registered) | |
 | NOT-04 Templates v2 | ☑️ done on branch `feat/NOT-04-templates-profile` (ADR 0021; 30 versioned built-ins, auto rules, LLM fallback on `tagging`) | |
 | NOT-05 User profile and global AI context | ☑️ done on branch `feat/NOT-04-templates-profile` (gateway `SystemContext`, "Me" person, internal vs external) | |
+| CAP-06 Meeting detection and auto-start | ☑️ done on branch `feat/CAP-06-detection` (ADR 0022; crate `deino-detect`, plugin `detection`) | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2193,6 +2194,13 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | NOT-05 | When the profile's first address belongs to an existing person, that person becomes "Me" and the previous "Me" row stays as a plain person; merge the two (attendance, speakers, action items) with ORG-04's merge. | ORG-04 |
 | NOT-05 | `profile::InternalDomains` is the shared internal-vs-external rule: fill `calendar_events.is_external` with it, and use it for follow-up recipients and briefs. | ORG-01 / NOT-07 / NOT-08 |
 | NOT-04 | The two follow-ups FND-09 and FND-12 assigned to "NOT-04 / next settings card" (move key entry onto Settings → AI; delete `api_test_custom_openai_connection`) are settings work outside the templates card and remain open. | Next settings card |
+| CAP-06 | Recording starts through the shell's start path (`ShellRecordingStarter` emits `RecordingRequested`; the record screen starts the legacy recorder) and "recording" is the legacy `IS_RECORDING` flag (`LegacyRecordingStatus`). Switch both to the typed `recording.start` / recording state: start with the detection's app and linked event as the meeting title, and open that meeting's notepad (NOT-01) instead of the record screen. | CAP-02 (then NOT-01) |
+| CAP-06 | Calendar association ships as `NoCalendar`. Implement `CalendarLookup` over `calendar_events` with `deino_detect::calendar::pick_linked` (started < 15 min ago, starts within 5 min; skip all-day and declined events), and let the prompt's event line open the event. | ORG-01 |
+| CAP-06 | Browser meetings are recognised by URL only when Accessibility is granted (`reads_browser_urls`); otherwise a browser call prompts after the 15 s hold as "Meeting detected". Request Accessibility with an explainer and a deep link to System Settings, and add the ScriptingBridge active-tab fallback (Muesli) if AX misses Chrome tabs. | CAP-05 |
+| CAP-06 | Auto-stop: build on `DetectionEvent::MeetingEnded` (2 s grace today). The policy marks a meeting "handled" while recording and does not track it further; CAP-07 needs the recorded meeting's app and its release (20 s) while recording. | CAP-07 |
+| CAP-06 | Detection ignores Do Not Disturb (`notifications.respectDoNotDisturb`) and has no "always detect" include list (anarlog); add both if users ask. The prompt window re-reads the theme cache on each detection only; broadcast theme changes to it with the record panel's. | CAP-10 / ORG-02 |
+| CAP-06 | Real-call smoke not observed by the agent: the smoke build (`com.xenshreyas.deino.smoke-cap06`) started detection with all three listeners and read 43 to 46 Core Audio processes, but `ffmpeg` from the agent's shell could not hold the microphone (macOS permission prompt for the host app) and computer-use access to Photo Booth was declined. Run the Manual QA list in `crates/deino-detect/README.md` (Zoom, Meet in Chrome, Slack huddle, ignore list, auto-start). | Owner |
+| CAP-06 | `src/dev/mock-ipc/mock-database.ts` imports `@/features/meetings`, whose generated mock imports `database.ts` back; an entry that does not load the meetings feature first hits a TDZ error in `pnpm dev:mock` (worked around in `src/detection-prompt.tsx`). Move `asMeetingId` out of the cycle. | FND-04 owner / next card touching mock IPC |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02
