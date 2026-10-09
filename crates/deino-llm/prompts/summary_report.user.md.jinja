@@ -1,0 +1,11 @@
+<transcript_chunks>
+{{ transcript }}
+</transcript_chunks>
+{%- if let Some(context) = user_context %}
+
+User Provided Context:
+
+<user_context>
+{{ context }}
+</user_context>
+{%- endif %}

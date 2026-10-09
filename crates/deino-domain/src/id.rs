@@ -188,6 +188,11 @@ uuid_id!(
     ActionItemId
 );
 
+uuid_id!(
+    /// Identifies one LLM provider call in the `llm_calls` usage log.
+    LlmCallId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

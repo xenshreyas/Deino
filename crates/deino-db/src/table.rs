@@ -46,6 +46,8 @@ pub enum Table {
     MeetingTags,
     /// Action items, from meetings or standalone.
     ActionItems,
+    /// One row per LLM provider call: usage, never content.
+    LlmCalls,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -53,7 +55,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 17] = [
+    pub const ALL: [Self; 18] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -70,6 +72,7 @@ impl Table {
         Self::Tags,
         Self::MeetingTags,
         Self::ActionItems,
+        Self::LlmCalls,
         Self::ExampleNotes,
     ];
 
@@ -95,6 +98,7 @@ impl Table {
             "tags" => Self::Tags,
             "meeting_tags" => Self::MeetingTags,
             "action_items" => Self::ActionItems,
+            "llm_calls" => Self::LlmCalls,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

@@ -1,0 +1,3 @@
+[general]
+# Built-in prompts, one `<name>.<role>.md.jinja` per message (see src/prompts.rs).
+dirs = ["prompts"]

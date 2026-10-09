@@ -1,0 +1,58 @@
+[package]
+name = "deino-llm"
+version = "0.1.0"
+description = "Deino's LLM gateway: task routes, providers, streaming, structured output, tools, prompts and usage"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_llm.rs"
+
+[features]
+# `MockProvider` and in-memory fakes of every port (`FakeHttp`,
+# `StaticCredentials`, `MemoryRouteStore`, `MemoryUsage`) for other crates' tests.
+test-support = ["deino-domain/test-support"]
+
+[dependencies]
+# Compile-time checked built-in prompts (`prompts/*.md.jinja`), the anarlog pattern.
+askama = { version = "0.15", default-features = false, features = ["config", "derive", "std"] }
+async-trait.workspace = true
+chrono.workspace = true
+deino-db.workspace = true
+deino-domain.workspace = true
+futures-util.workspace = true
+log.workspace = true
+# User-editable templates: strict undefined and a variable allowlist.
+minijinja = { version = "2.12", default-features = false, features = ["builtins", "debug", "macros", "serde"] }
+# Draft-07 JSON schemas for structured output and tool inputs (the zed technique).
+schemars = "1.2.1"
+serde.workspace = true
+serde_json.workspace = true
+specta.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+
+[dev-dependencies]
+deino-db = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+# The eval harness (an integration test) uses `MockProvider` for its offline trials.
+deino-llm = { path = ".", features = ["test-support"] }
+deino-testkit = { workspace = true, features = ["test-support"] }
+insta = "1.43"
+libtest-mimic = "0.8.1"
+proptest = { version = "1.6", default-features = false, features = ["std"] }
+# The eval harness's live runner only (tests/llm_eval/live.rs); the app's
+# transport is the FND-12 seam. Same version as the app crate.
+reqwest = { version = "0.11", features = ["stream"] }
+tokio.workspace = true
+
+# `DEINO_EVAL=1 pnpm eval <route>`: libtest-mimic, not part of CI (PARITY_PLAN §3A).
+[[test]]
+name = "llm_eval"
+path = "tests/llm_eval/main.rs"
+harness = false
+
+[lints]
+workspace = true

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO llm_calls (id, started_at, route, provider, model, input_tokens,\n                output_tokens, latency_ms, outcome, error_kind)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "a5ce7bd19bd749980030fe956fb92e0ad7c56d12bf958755983e6016801af1b2"
+}
