@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ModelLicenceNotice } from '@/features/transcription';
 import { getVersion } from '@tauri-apps/api/app';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -46,6 +47,8 @@ export function About() {
           </li>
         ))}
       </ul>
+
+      <ModelLicenceNotice />
 
       <div className="pt-3 border-t border-border text-center">
         {updatesEnabled === false && (

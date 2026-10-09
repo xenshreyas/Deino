@@ -3,9 +3,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { PermissionStatus, OnboardingPermissions } from '@/types/onboarding';
 import { resolveOnboardingSummaryModelStatus } from '@/lib/onboarding-summary-model';
-import type { ParakeetDownloadProgressEvent } from '@/lib/parakeet';
-
-const PARAKEET_MODEL = 'parakeet-tdt-0.6b-v3-int8';
+import {
+  downloadDefaultModel,
+  isAnyModelDownloading,
+  isDefaultModelReady,
+  onDefaultModelProgress,
+} from '@/features/transcription';
 
 interface OnboardingStatus {
   version: string;
@@ -192,65 +195,15 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     };
   }, [currentStep, parakeetDownloaded, summaryModelDownloaded, completed]);
 
-  // Listen to Parakeet download progress
+  // Listen to the speech model's download progress (Parakeet Unified, CAP-01).
   useEffect(() => {
-    const unlisten = listen<ParakeetDownloadProgressEvent>(
-      'parakeet-model-download-progress',
-      (event) => {
-        const { modelName, progress, downloaded_mb, total_mb, speed_mbps, status } = event.payload;
-        if (modelName !== PARAKEET_MODEL) return;
-
-        if (status === 'cancelled') {
-          setIsBackgroundDownloading(false);
-          setParakeetDownloaded(false);
-          setParakeetProgress(0);
-          setParakeetProgressInfo({
-            percent: 0,
-            downloadedMb: 0,
-            totalMb: 0,
-            speedMbps: 0,
-          });
-          return;
-        }
-
-        setParakeetProgress(progress);
-        setParakeetProgressInfo({
-          percent: progress,
-          downloadedMb: downloaded_mb ?? 0,
-          totalMb: total_mb ?? 0,
-          speedMbps: speed_mbps ?? 0,
-        });
-        if (status === 'completed') {
-          setParakeetDownloaded(true);
-        }
-      }
-    );
-
-    const unlistenComplete = listen<{ modelName: string }>(
-      'parakeet-model-download-complete',
-      (event) => {
-        const { modelName } = event.payload;
-        if (modelName === PARAKEET_MODEL) {
-          setParakeetDownloaded(true);
-          setParakeetProgress(100);
-        }
-      }
-    );
-
-    const unlistenError = listen<{ modelName: string; error: string }>(
-      'parakeet-model-download-error',
-      (event) => {
-        const { modelName } = event.payload;
-        if (modelName === PARAKEET_MODEL) {
-          console.error('Parakeet download error:', event.payload.error);
-        }
-      }
-    );
-
+    const unlisten = onDefaultModelProgress(({ percent, downloadedMb, totalMb }) => {
+      setParakeetProgress(percent);
+      setParakeetProgressInfo({ percent, downloadedMb, totalMb, speedMbps: 0 });
+      if (percent >= 100) setParakeetDownloaded(true);
+    });
     return () => {
       unlisten.then(fn => fn());
-      unlistenComplete.then(fn => fn());
-      unlistenError.then(fn => fn());
     };
   }, []);
 
@@ -347,8 +300,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
     // Verify Parakeet model exists on disk
     try {
-      await invoke('parakeet_init');
-      parakeetDownloaded = await invoke<boolean>('parakeet_has_available_models');
+      parakeetDownloaded = await isDefaultModelReady();
       console.log('[OnboardingContext] Parakeet verified on disk:', parakeetDownloaded);
     } catch (error) {
       console.warn('[OnboardingContext] Failed to verify Parakeet:', error);
@@ -497,7 +449,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       // Start Parakeet download first (speech recognition - always required)
       if (shouldStartParakeet) {
         console.log('[OnboardingContext] Starting Parakeet download');
-        invoke('parakeet_download_model', { modelName: PARAKEET_MODEL })
+        downloadDefaultModel()
+          .then(() => setParakeetDownloaded(true))
           .catch(err => console.error('[OnboardingContext] Parakeet download failed:', err));
       }
 
@@ -515,9 +468,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // Check if any models are currently downloading (for re-entry)
   const checkActiveDownloads = async () => {
     try {
-      const models = await invoke<any[]>('parakeet_get_available_models');
-      const isDownloading = models.some(m => m.status && (typeof m.status === 'object' ? 'Downloading' in m.status : m.status === 'Downloading'));
-      
+      const isDownloading = await isAnyModelDownloading();
+
       if (isDownloading) {
         console.log('[OnboardingContext] Detected active background downloads on mount');
         setIsBackgroundDownloading(true);
@@ -533,7 +485,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const retryParakeetDownload = async () => {
     console.log('[OnboardingContext] Retrying Parakeet download');
     try {
-      await invoke('parakeet_retry_download', { modelName: PARAKEET_MODEL });
+      // Resumes from what arrived; progress events update the state.
+      downloadDefaultModel()
+        .then(() => setParakeetDownloaded(true))
+        .catch(err => console.error('[OnboardingContext] Parakeet download failed:', err));
     } catch (error) {
       console.error('[OnboardingContext] Retry failed:', error);
       throw error;

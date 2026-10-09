@@ -13,6 +13,7 @@ import {
   type ModelWithStatus,
 } from '@/lib/transcription-model-readiness';
 import { toast } from 'sonner';
+import { PARAKEET_UNIFIED_PROVIDER, activeModel, isReady, providerOf, transcriptionApi } from '@/features/transcription';
 
 const TRANSCRIPTION_RUNTIME_START_ERROR_CODE = 'TRANSCRIPTION_RUNTIME_INITIALIZATION_FAILED';
 const TRANSCRIPTION_RUNTIME_USER_MESSAGE = 'Speech recognition could not initialize. Restart Deino. If the problem continues, repair or reinstall the app.';
@@ -66,10 +67,10 @@ export function useRecordingStart(
   const getTranscriptionProvider = useCallback(async (): Promise<string> => {
     try {
       const { transcription } = await settingsApi.get();
-      return transcription.engine === 'whisper' ? 'localWhisper' : 'parakeet';
+      return providerOf(transcription.engine);
     } catch (error) {
       console.error('Failed to load transcription provider:', error);
-      return 'parakeet';
+      return PARAKEET_UNIFIED_PROVIDER;
     }
   }, []);
 
@@ -77,6 +78,11 @@ export function useRecordingStart(
   const checkTranscriptionModelReady = useCallback(async (): Promise<boolean> => {
     try {
       const provider = await getTranscriptionProvider();
+      if (provider === PARAKEET_UNIFIED_PROVIDER) {
+        const { transcription } = await settingsApi.get();
+        const models = await transcriptionApi.listModels();
+        return isReady(activeModel(models, transcription.model));
+      }
       const commands = getProviderCommands(provider);
 
       if (commands) {
@@ -96,6 +102,10 @@ export function useRecordingStart(
   const checkIfModelDownloading = useCallback(async (): Promise<boolean> => {
     try {
       const provider = await getTranscriptionProvider();
+      if (provider === PARAKEET_UNIFIED_PROVIDER) {
+        const models = await transcriptionApi.listModels();
+        return models.some((model) => model.state.kind === 'downloading');
+      }
       const commands = getProviderCommands(provider);
       if (!commands) return false;
 

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/ui/select';
 import { Label } from '@/ui/controls';
+import { ParakeetUnifiedManager } from '@/features/transcription';
 import { ModelManager } from './WhisperModelManager';
 import { ParakeetModelManager } from './ParakeetModelManager';
 
-/** Local transcription engines. Transcription never leaves the Mac. */
-export type TranscriptProvider = 'localWhisper' | 'parakeet';
+/**
+ * Local transcription engines. Transcription never leaves the Mac.
+ * Parakeet Unified is the default (CAP-01); the others are "Advanced".
+ */
+export type TranscriptProvider = 'parakeetUnified' | 'localWhisper' | 'parakeet';
 
 export interface TranscriptModelProps {
     provider: TranscriptProvider;
@@ -47,12 +51,25 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                             <SelectValue placeholder="Select provider" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="parakeet">⚡ Parakeet (Recommended - Real-time / Accurate)</SelectItem>
-                            <SelectItem value="localWhisper">🏠 Local Whisper (High Accuracy)</SelectItem>
+                            <SelectItem value="parakeetUnified">Parakeet Unified EN (Recommended, live)</SelectItem>
+                            <SelectGroup>
+                                <SelectLabel>Advanced</SelectLabel>
+                                <SelectItem value="parakeet">Parakeet TDT v3 (ONNX)</SelectItem>
+                                <SelectItem value="localWhisper">Whisper</SelectItem>
+                            </SelectGroup>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
+
+            {uiProvider === 'parakeetUnified' && (
+                <div className="mt-6">
+                    <ParakeetUnifiedManager
+                        selectedModel={transcriptModelConfig.provider === 'parakeetUnified' ? transcriptModelConfig.model : undefined}
+                        onModelSelect={(model) => selectModel('parakeetUnified', model)}
+                    />
+                </div>
+            )}
 
             {uiProvider === 'localWhisper' && (
                 <div className="mt-6">
