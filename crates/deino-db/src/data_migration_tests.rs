@@ -35,6 +35,20 @@ impl DataMigration for SeesLegacySettings {
     }
 }
 
+/// Runs before the drop and moves nothing, like an import of empty tables.
+struct SeesNothing;
+
+#[async_trait]
+impl DataMigration for SeesNothing {
+    fn runs_before(&self) -> i64 {
+        DROP_LEGACY_SETTINGS
+    }
+
+    async fn run(&self, _database: &Database) -> Result<(), DataMigrationError> {
+        Ok(())
+    }
+}
+
 /// Always fails, like a step whose destination is unavailable.
 struct Fails;
 
@@ -127,12 +141,13 @@ async fn dropping_the_legacy_settings_leaves_no_key_bytes_in_the_file() {
         "the fixture wrote the key"
     );
 
-    Database::open(&location, &MIGRATOR)
+    let database = Database::open_with(&location, &MIGRATOR, &[&SeesNothing])
         .await
-        .unwrap()
-        .close()
-        .await;
+        .unwrap();
 
+    // Already true while the app runs, not only after a clean shutdown.
+    assert!(!file_contains(&path, CANARY_KEY));
+    database.close().await;
     assert!(!file_contains(&path, CANARY_KEY));
 }
 

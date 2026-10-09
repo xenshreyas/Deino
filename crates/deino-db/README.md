@@ -10,6 +10,10 @@ commit-time change signals (ADR 0005).
 - `Database` (`database.rs`): WAL, foreign keys on, a 5 s busy timeout, one
   writer connection and a `query_only` read pool; `close()` checkpoints the WAL.
 - `MIGRATOR` and `migrations/`: the one schema history for `deino.sqlite`.
+- `DataMigration` (`data_migration.rs`) and `Database::open_with`: Rust steps
+  that run against the schema just before a given migration, for data that
+  must leave the database before that migration (FND-06 moves API keys to
+  the Keychain before dropping `settings`).
 - `ChangeNotifier` (`change_notifier.rs`): update/commit/rollback hooks on the
   writer that publish `TableChanges { tables, seq }` once per committed
   transaction. Adapted from anarlog's `db-change` (MIT).
@@ -28,6 +32,8 @@ commit-time change signals (ADR 0005).
 
 ## Invariants
 
+- A `DataMigration` runs only while its migration is unapplied, and must be
+  idempotent: a crash between the step and the migration runs it again.
 - Migrations are append-only; never edit an applied file. Name new ones
   `<UTC YYYYMMDDHHMMSS>_<card>_<desc>.sql`, then run `scripts/sqlx-prepare.sh`.
 - Every write goes through `writer()`, so it passes the change hooks.
