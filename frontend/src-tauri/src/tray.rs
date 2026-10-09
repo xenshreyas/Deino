@@ -381,11 +381,18 @@ fn build_menu<R: Runtime>(
         }
     }
 
-    builder
+    builder = builder
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItemBuilder::with_id("open_window", "Open Main Window").build(app)?)
-        .item(&MenuItemBuilder::with_id("settings", "Settings").build(app)?)
-        .item(&MenuItemBuilder::with_id("check_updates", "Check for Updates").build(app)?)
+        .item(&MenuItemBuilder::with_id("settings", "Settings").build(app)?);
+
+    // Only offer update checks when the updater gate is on (PARITY_PLAN §8 D6).
+    if crate::updater::AUTO_UPDATE_ENABLED {
+        builder = builder
+            .item(&MenuItemBuilder::with_id("check_updates", "Check for Updates").build(app)?);
+    }
+
+    builder
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItemBuilder::with_id("quit", "Quit").build(app)?)
         .build()

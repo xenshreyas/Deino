@@ -51,6 +51,7 @@ pub mod parakeet_engine;
 pub mod state;
 pub mod summary;
 pub mod tray;
+pub mod updater;
 pub mod utils;
 pub mod whisper_engine;
 
@@ -459,11 +460,12 @@ pub fn run() {
         }));
     }
 
+    builder = updater::register(builder);
+
     builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(whisper_engine::parallel_commands::ParallelProcessorState::new())
         .manage(Arc::new(RwLock::new(
@@ -802,6 +804,8 @@ pub fn run() {
             audio::import::start_import_audio_command,
             audio::import::cancel_import_command,
             audio::import::is_import_in_progress_command,
+            // ── FND-01 updater ──
+            updater::updates_enabled,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
