@@ -36,6 +36,8 @@ pub enum Table {
     CalendarAccounts,
     /// Events synced from calendar accounts.
     CalendarEvents,
+    /// The calendars inside each calendar account (ORG-01).
+    Calendars,
     /// Folders, nested through `parent_id`.
     Folders,
     /// Which meetings sit in which folders.
@@ -67,7 +69,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 24] = [
+    pub const ALL: [Self; 25] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -79,6 +81,7 @@ impl Table {
         Self::MeetingAttendees,
         Self::CalendarAccounts,
         Self::CalendarEvents,
+        Self::Calendars,
         Self::Folders,
         Self::MeetingFolders,
         Self::FolderRules,
@@ -111,6 +114,7 @@ impl Table {
             "meeting_attendees" => Self::MeetingAttendees,
             "calendar_accounts" => Self::CalendarAccounts,
             "calendar_events" => Self::CalendarEvents,
+            "calendars" => Self::Calendars,
             "folders" => Self::Folders,
             "meeting_folders" => Self::MeetingFolders,
             "folder_rules" => Self::FolderRules,

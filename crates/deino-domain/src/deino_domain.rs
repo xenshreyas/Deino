@@ -52,8 +52,9 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, FolderRuleId, IdError,
-    LlmCallId, MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
+    ActionItemId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId, FolderId,
+    FolderRuleId, IdError, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId,
+    TagId, TemplateId,
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};
