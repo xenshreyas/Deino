@@ -4,7 +4,13 @@
 
 # dependencies
 /node_modules
-**/models
+# Downloaded model files (never source directories named `models`)
+/models/
+/frontend/models/
+/frontend/src-tauri/models/
+*.gguf
+*.onnx
+!fixtures/**/*.onnx
 /.pnp
 .pnp.*
 .yarn/*
