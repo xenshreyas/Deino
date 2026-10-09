@@ -16,9 +16,9 @@ pub const TRANSCRIPTION_LANGUAGE: &str = "en";
 /// This is the recommended balance of accuracy and speed.
 pub const DEFAULT_WHISPER_MODEL: &str = "large-v3-turbo";
 
-/// Default Parakeet model for transcription when no preference is configured.
-/// This is the quantized version optimized for speed.
-pub const DEFAULT_PARAKEET_MODEL: &str = "parakeet-tdt-0.6b-v3-int8";
+/// Default Parakeet model for transcription when no preference is configured:
+/// the quantized model, optimized for speed. Defined with the settings.
+pub const DEFAULT_PARAKEET_MODEL: &str = deino_core::settings::DEFAULT_PARAKEET_MODEL;
 
 /// Whisper model catalog with metadata for all supported models.
 /// Used by both `WhisperEngine::discover_models()` and `discover_models_standalone()`.

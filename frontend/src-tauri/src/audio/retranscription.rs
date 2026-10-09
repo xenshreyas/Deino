@@ -583,18 +583,13 @@ async fn get_configured_whisper_model<R: Runtime>(app: &AppHandle<R>) -> Result<
             anyhow!("App state not available")
         })?;
 
-    debug!("Querying transcript_settings table...");
+    debug!("Reading the transcription settings...");
 
-    // Query the transcript settings from the database - get both provider and model
-    let result: Option<(String, String)> = sqlx::query_as(
-        "SELECT provider, model FROM transcript_settings WHERE id = '1'"
-    )
-    .fetch_optional(app_state.db_manager.pool())
-    .await
-    .map_err(|e| {
-        error!("Failed to query transcript config: {}", e);
-        anyhow!("Failed to query transcript config: {}", e)
-    })?;
+    // The transcription settings (FND-06): provider and model
+    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
+        .await
+        .map_err(|e| anyhow!(e))?
+        .map(|config| (config.provider, config.model));
 
     match result {
         Some((provider, model)) => {
@@ -685,16 +680,11 @@ async fn get_configured_parakeet_model<R: Runtime>(app: &AppHandle<R>) -> Result
             anyhow!("App state not available")
         })?;
 
-    // Query the transcript settings from the database
-    let result: Option<(String, String)> = sqlx::query_as(
-        "SELECT provider, model FROM transcript_settings WHERE id = '1'"
-    )
-    .fetch_optional(app_state.db_manager.pool())
-    .await
-    .map_err(|e| {
-        error!("Failed to query transcript config: {}", e);
-        anyhow!("Failed to query transcript config: {}", e)
-    })?;
+    // The transcription settings (FND-06)
+    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
+        .await
+        .map_err(|e| anyhow!(e))?
+        .map(|config| (config.provider, config.model));
 
     match result {
         Some((provider, model)) => {

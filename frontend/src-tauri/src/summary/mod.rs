@@ -7,30 +7,8 @@
 //! - Templates for structured meeting summary generation
 //! - Tauri commands for frontend integration
 
-use serde::{Deserialize, Serialize};
-
-/// Custom OpenAI-compatible endpoint configuration
-/// Stored as JSON in the database and used for connecting to any OpenAI-compatible API server
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CustomOpenAIConfig {
-    /// Base URL of the OpenAI-compatible API endpoint (e.g., "http://localhost:8000/v1")
-    pub endpoint: String,
-    /// API key for authentication (optional if server doesn't require it)
-    #[serde(rename = "apiKey")]
-    pub api_key: Option<String>,
-    /// Model identifier to use (e.g., "gpt-4", "llama-3-70b", "mistral-7b")
-    pub model: String,
-    /// Maximum tokens for completion (optional)
-    #[serde(rename = "maxTokens")]
-    pub max_tokens: Option<i32>,
-    /// Temperature parameter (0.0-2.0, optional)
-    pub temperature: Option<f32>,
-    /// Top-P sampling parameter (0.0-1.0, optional)
-    #[serde(rename = "topP")]
-    pub top_p: Option<f32>,
-}
-
 pub mod commands;
+pub(crate) mod credentials;
 pub mod llm_client;
 pub mod processor;
 pub mod service;

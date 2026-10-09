@@ -5,13 +5,9 @@ use tauri::{AppHandle, Runtime};
 use crate::{
     database::{
         models::MeetingModel,
-        repositories::{
-            meeting::MeetingsRepository, setting::SettingsRepository,
-            transcript::TranscriptsRepository,
-        },
+        repositories::{meeting::MeetingsRepository, transcript::TranscriptsRepository},
     },
     state::AppState,
-    summary::CustomOpenAIConfig,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,45 +30,35 @@ pub struct TranscriptSearchResult {
     pub timestamp: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ModelConfig {
-    pub provider: String,
-    pub model: String,
-    #[serde(rename = "whisperModel")]
-    pub whisper_model: String,
-    #[serde(rename = "apiKey")]
-    pub api_key: Option<String>,
-    #[serde(rename = "ollamaEndpoint")]
-    pub ollama_endpoint: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SaveModelConfigRequest {
-    pub provider: String,
-    pub model: String,
-    #[serde(rename = "whisperModel")]
-    pub whisper_model: String,
-    #[serde(rename = "apiKey")]
-    pub api_key: Option<String>,
-    #[serde(rename = "ollamaEndpoint")]
-    pub ollama_endpoint: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetApiKeyRequest {
-    pub provider: String,
-}
-
+/// The transcription engine and model in the legacy shape, where
+/// `provider` is "parakeet" or "localWhisper".
+///
+/// A bridge for the STT code that CAP-01 rewrites: the value comes from the
+/// typed settings (`Settings::transcription`), not the dropped
+/// `transcript_settings` table.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TranscriptConfig {
     pub provider: String,
     pub model: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SaveTranscriptConfigRequest {
-    pub provider: String,
-    pub model: String,
+/// The current [`TranscriptConfig`]. Never fails and is never `None`; the
+/// signature matches the retired `api_get_transcript_config` command so its
+/// callers did not change shape.
+pub async fn current_transcript_config<R: Runtime>(
+    app: &AppHandle<R>,
+) -> Result<Option<TranscriptConfig>, String> {
+    use deino_core::settings::TranscriptionEngine;
+
+    let transcription = crate::features::settings::current(app).await.transcription;
+    let provider = match transcription.engine {
+        TranscriptionEngine::Parakeet => "parakeet",
+        TranscriptionEngine::Whisper => "localWhisper",
+    };
+    Ok(Some(TranscriptConfig {
+        provider: provider.to_owned(),
+        model: transcription.model,
+    }))
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -182,226 +168,6 @@ pub async fn api_search_transcripts<R: Runtime>(
         Err(e) => {
             log_error!("Error searching transcripts for query '{}': {}", query, e);
             Err(format!("Failed to search transcripts: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_get_model_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    _auth_token: Option<String>,
-) -> Result<Option<ModelConfig>, String> {
-    log_info!("api_get_model_config called (native)");
-    let pool = state.db_manager.pool();
-
-    match SettingsRepository::get_model_config(pool).await {
-        Ok(Some(config)) => {
-            log_info!(
-                "✅ Found model config in database: provider={}, model={}, whisperModel={}, ollamaEndpoint={:?}",
-                &config.provider,
-                &config.model,
-                &config.whisper_model,
-                &config.ollama_endpoint
-            );
-            match SettingsRepository::get_api_key(pool, &config.provider).await {
-                Ok(api_key) => {
-                    log_info!("Successfully retrieved model config and API key.");
-                    Ok(Some(ModelConfig {
-                        provider: config.provider,
-                        model: config.model,
-                        whisper_model: config.whisper_model,
-                        api_key,
-                        ollama_endpoint: config.ollama_endpoint,
-                    }))
-                }
-                Err(e) => {
-                    log_error!(
-                        "Failed to get API key for provider {}: {}",
-                        &config.provider,
-                        e
-                    );
-                    Err(e.to_string())
-                }
-            }
-        }
-        Ok(None) => {
-            log_warn!("⚠️ No model config found in database - database may be empty or settings table not initialized");
-            Ok(None)
-        }
-        Err(e) => {
-            log_error!("❌ Failed to get model config from database: {}", e);
-            Err(e.to_string())
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_save_model_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    provider: String,
-    model: String,
-    whisper_model: String,
-    api_key: Option<String>,
-    ollama_endpoint: Option<String>,
-    _auth_token: Option<String>,
-) -> Result<serde_json::Value, String> {
-    log_info!(
-        "💾 api_save_model_config called (native): provider='{}', model='{}', whisperModel='{}', ollamaEndpoint={:?}",
-        &provider,
-        &model,
-        &whisper_model,
-        &ollama_endpoint
-    );
-    let pool = state.db_manager.pool();
-
-    if let Err(e) = SettingsRepository::save_model_config(
-        pool,
-        &provider,
-        &model,
-        &whisper_model,
-        ollama_endpoint.as_deref(),
-    )
-    .await
-    {
-        log_error!("❌ Failed to save model config to database: {}", e);
-        return Err(e.to_string());
-    }
-
-    // Skip API key saving for custom-openai provider (it uses customOpenAIConfig JSON instead)
-    if let Some(key) = api_key {
-        if !key.is_empty() && provider != "custom-openai" {
-            log_info!("🔑 API key provided, saving...");
-            if let Err(e) = SettingsRepository::save_api_key(pool, &provider, &key).await {
-                log_error!("❌ Failed to save API key: {}", e);
-                return Err(e.to_string());
-            }
-        }
-    }
-
-    // Trigger graceful shutdown of built-in AI sidecar if it's running
-    // This ensures that if the user switched models/providers, the old one is cleaned up
-    // The shutdown happens in the background, so it won't block the UI
-    if let Err(e) = crate::summary::summary_engine::client::shutdown_sidecar_gracefully().await {
-        log_warn!("Failed to initiate graceful sidecar shutdown: {}", e);
-    }
-
-    log_info!("✅ Successfully saved model configuration to database");
-    Ok(
-        serde_json::json!({ "status": "success", "message": "Model configuration saved successfully" }),
-    )
-}
-
-#[tauri::command]
-pub async fn api_get_api_key<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    provider: String,
-    _auth_token: Option<String>,
-) -> Result<String, String> {
-    log_info!(
-        "api_get_api_key called (native) for provider '{}'",
-        &provider
-    );
-    match SettingsRepository::get_api_key(&state.db_manager.pool(), &provider).await {
-        Ok(key) => {
-            log_info!(
-                "Successfully retrieved API key for provider '{}'.",
-                &provider
-            );
-            Ok(key.unwrap_or_default())
-        }
-        Err(e) => {
-            log_error!("Failed to get API key for provider '{}': {}", &provider, e);
-            Err(e.to_string())
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_get_transcript_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    _auth_token: Option<String>,
-) -> Result<Option<TranscriptConfig>, String> {
-    log_info!("api_get_transcript_config called (native)");
-    let pool = state.db_manager.pool();
-
-    match SettingsRepository::get_transcript_config(pool).await {
-        Ok(Some(config)) => {
-            log_info!(
-                "Found transcript config: provider={}, model={}",
-                &config.provider,
-                &config.model
-            );
-            Ok(Some(TranscriptConfig {
-                provider: config.provider,
-                model: config.model,
-            }))
-        }
-        Ok(None) => {
-            log_info!("No transcript config found, returning default.");
-            Ok(Some(TranscriptConfig {
-                provider: "parakeet".to_string(),
-                model: crate::config::DEFAULT_PARAKEET_MODEL.to_string(),
-            }))
-        }
-        Err(e) => {
-            log_error!("Failed to get transcript config: {}", e);
-            Err(e.to_string())
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_save_transcript_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    provider: String,
-    model: String,
-    _auth_token: Option<String>,
-) -> Result<serde_json::Value, String> {
-    log_info!(
-        "api_save_transcript_config called (native) for provider '{}'",
-        &provider
-    );
-    let pool = state.db_manager.pool();
-
-    if let Err(e) = SettingsRepository::save_transcript_config(pool, &provider, &model).await {
-        log_error!("Failed to save transcript config: {}", e);
-        return Err(e.to_string());
-    }
-
-    log_info!("Successfully saved transcript configuration.");
-    Ok(
-        serde_json::json!({ "status": "success", "message": "Transcript configuration saved successfully" }),
-    )
-}
-
-#[tauri::command]
-pub async fn api_delete_api_key<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    provider: String,
-    _auth_token: Option<String>,
-) -> Result<(), String> {
-    log_info!(
-        "log_api_delete_api_key called (native) for provider '{}'",
-        &provider
-    );
-    match SettingsRepository::delete_api_key(&state.db_manager.pool(), &provider).await {
-        Ok(_) => {
-            log_info!("Successfully deleted API key for provider '{}'.", &provider);
-            Ok(())
-        }
-        Err(e) => {
-            log_error!(
-                "Failed to delete API key for provider '{}': {}",
-                &provider,
-                e
-            );
-            Err(e.to_string())
         }
     }
 }
@@ -568,8 +334,8 @@ pub async fn api_save_transcript<R: Runtime>(
 
     // Log parsed segments count and first segment details
     if let Some(first_seg) = transcripts_to_save.first() {
-        log_debug!("First parsed segment: text='{}', audio_start_time={:?}, audio_end_time={:?}, duration={:?}",
-                   first_seg.text.chars().take(50).collect::<String>(),
+        // Never log the transcript text itself (CLAUDE.md privacy rule).
+        log_debug!("First parsed segment: audio_start_time={:?}, audio_end_time={:?}, duration={:?}",
                    first_seg.audio_start_time,
                    first_seg.audio_end_time,
                    first_seg.duration);
@@ -698,119 +464,28 @@ pub async fn open_external_url(url: String) -> Result<(), String> {
     }
 }
 
-// ===== CUSTOM OPENAI API COMMANDS =====
-
-/// Saves the custom OpenAI configuration
-/// This configuration is stored as JSON and includes endpoint, apiKey, model, and optional parameters
-#[tauri::command]
-pub async fn api_save_custom_openai_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    endpoint: String,
-    api_key: Option<String>,
-    model: String,
-    max_tokens: Option<i32>,
-    temperature: Option<f32>,
-    top_p: Option<f32>,
-) -> Result<serde_json::Value, String> {
-    log_info!(
-        "api_save_custom_openai_config called: endpoint='{}', model='{}'",
-        &endpoint,
-        &model
-    );
-
-    // Validate required fields
-    if endpoint.trim().is_empty() {
-        return Err("Endpoint URL is required".to_string());
-    }
-    if model.trim().is_empty() {
-        return Err("Model name is required".to_string());
-    }
-
-    // Validate endpoint URL format
-    if !endpoint.starts_with("http://") && !endpoint.starts_with("https://") {
-        return Err("Endpoint must start with http:// or https://".to_string());
-    }
-
-    // Validate optional numeric parameters
-    if let Some(temp) = temperature {
-        if !(0.0..=2.0).contains(&temp) {
-            return Err("Temperature must be between 0.0 and 2.0".to_string());
-        }
-    }
-    if let Some(top) = top_p {
-        if !(0.0..=1.0).contains(&top) {
-            return Err("Top P must be between 0.0 and 1.0".to_string());
-        }
-    }
-    if let Some(tokens) = max_tokens {
-        if tokens < 1 {
-            return Err("Max tokens must be at least 1".to_string());
-        }
-    }
-
-    let config = CustomOpenAIConfig {
-        endpoint: endpoint.trim().to_string(),
-        api_key: api_key.filter(|k| !k.trim().is_empty()),
-        model: model.trim().to_string(),
-        max_tokens,
-        temperature,
-        top_p,
-    };
-
-    let pool = state.db_manager.pool();
-
-    match SettingsRepository::save_custom_openai_config(pool, &config).await {
-        Ok(()) => {
-            log_info!("✅ Successfully saved custom OpenAI config for endpoint: {}", config.endpoint);
-            Ok(serde_json::json!({
-                "status": "success",
-                "message": "Custom OpenAI configuration saved successfully"
-            }))
-        }
-        Err(e) => {
-            log_error!("❌ Failed to save custom OpenAI config: {}", e);
-            Err(format!("Failed to save custom OpenAI configuration: {}", e))
-        }
-    }
-}
-
-/// Gets the custom OpenAI configuration
-#[tauri::command]
-pub async fn api_get_custom_openai_config<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-) -> Result<Option<CustomOpenAIConfig>, String> {
-    log_info!("api_get_custom_openai_config called");
-
-    let pool = state.db_manager.pool();
-
-    match SettingsRepository::get_custom_openai_config(pool).await {
-        Ok(config) => {
-            if let Some(ref c) = config {
-                log_info!("✅ Found custom OpenAI config: endpoint='{}', model='{}'",
-                    c.endpoint, c.model);
-            } else {
-                log_info!("No custom OpenAI config found");
-            }
-            Ok(config)
-        }
-        Err(e) => {
-            log_error!("❌ Failed to get custom OpenAI config: {}", e);
-            Err(format!("Failed to get custom OpenAI configuration: {}", e))
-        }
-    }
-}
+// ===== CUSTOM OPENAI CONNECTION TEST =====
+// The endpoint's settings live in `Settings::ai.customOpenai` and its key in
+// the Keychain (FND-06); only the connection test is still a legacy command.
 
 /// Tests the connection to a custom OpenAI-compatible endpoint
 /// Makes a minimal request to verify the endpoint is reachable and responds correctly
 #[tauri::command]
 pub async fn api_test_custom_openai_connection<R: Runtime>(
-    _app: AppHandle<R>,
+    app: AppHandle<R>,
     endpoint: String,
     api_key: Option<String>,
     model: String,
 ) -> Result<serde_json::Value, String> {
+    // The form cannot read the saved key back, so an empty key field means
+    // "test with the key in the Keychain".
+    let api_key = crate::features::secrets::typed_or_stored(
+        &app,
+        api_key,
+        deino_secrets::SecretName::CustomOpenAiApiKey,
+    )
+    .await
+    .map_err(|e| e.to_string())?;
     log_info!(
         "api_test_custom_openai_connection called: endpoint='{}', model='{}'",
         &endpoint,

@@ -24,10 +24,6 @@ pub enum Table {
     SummaryProcesses,
     /// The transcript text sent for summarisation.
     TranscriptChunks,
-    /// LLM provider and model settings.
-    Settings,
-    /// Transcription engine settings.
-    TranscriptSettings,
     /// The user's own notes for a meeting.
     MeetingNotes,
     /// People the user meets.
@@ -57,14 +53,12 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 19] = [
+    pub const ALL: [Self; 17] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
         Self::SummaryProcesses,
         Self::TranscriptChunks,
-        Self::Settings,
-        Self::TranscriptSettings,
         Self::MeetingNotes,
         Self::People,
         Self::Companies,
@@ -90,8 +84,6 @@ impl Table {
             "speakers" => Self::Speakers,
             "summary_processes" => Self::SummaryProcesses,
             "transcript_chunks" => Self::TranscriptChunks,
-            "settings" => Self::Settings,
-            "transcript_settings" => Self::TranscriptSettings,
             "meeting_notes" => Self::MeetingNotes,
             "people" => Self::People,
             "companies" => Self::Companies,

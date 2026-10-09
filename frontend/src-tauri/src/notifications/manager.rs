@@ -14,8 +14,7 @@ pub struct NotificationManager<R: Runtime> {
     #[allow(dead_code)] // Reserved for future functionality
     app_handle: AppHandle<R>,
     system_handler: Arc<SystemNotificationHandler<R>>,
-    consent_manager: Arc<ConsentManager<R>>,
-    settings: Arc<RwLock<NotificationSettings>>,
+    consent_manager: Arc<ConsentManager>,
     initialized: Arc<RwLock<bool>>,
 }
 
@@ -23,17 +22,12 @@ impl<R: Runtime> NotificationManager<R> {
     /// Create a new notification manager
     pub async fn new(app_handle: AppHandle<R>) -> Result<Self> {
         let system_handler = Arc::new(SystemNotificationHandler::new(app_handle.clone()));
-        let consent_manager = Arc::new(ConsentManager::new(app_handle.clone())?);
-
-        // Load initial settings
-        let settings = consent_manager.get_settings_with_migration().await
-            .unwrap_or_else(|_| NotificationSettings::default());
+        let consent_manager = Arc::new(ConsentManager::new(&app_handle)?);
 
         let manager = Self {
             app_handle,
             system_handler,
             consent_manager,
-            settings: Arc::new(RwLock::new(settings)),
             initialized: Arc::new(RwLock::new(false)),
         };
 
@@ -99,10 +93,10 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a recording started notification
     pub async fn show_recording_started(&self, meeting_name: Option<String>) -> Result<()> {
-        let settings = self.settings.read().await;
-        log_info!("🔔 Checking notification settings - show_recording_started: {}", settings.notification_preferences.show_recording_started);
+        let settings = self.current().await;
+        log_info!("🔔 Checking notification settings - show_recording_started: {}", settings.preferences.show_recording_started);
 
-        if !settings.notification_preferences.show_recording_started {
+        if !settings.preferences.show_recording_started {
             log_info!("🚫 Recording started notification is disabled, skipping");
             return Ok(());
         }
@@ -114,8 +108,8 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a recording stopped notification
     pub async fn show_recording_stopped(&self) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_recording_stopped {
+        let settings = self.current().await;
+        if !settings.preferences.show_recording_stopped {
             return Ok(());
         }
 
@@ -125,8 +119,8 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a recording paused notification
     pub async fn show_recording_paused(&self) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_recording_paused {
+        let settings = self.current().await;
+        if !settings.preferences.show_recording_paused {
             return Ok(());
         }
 
@@ -136,8 +130,8 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a recording resumed notification
     pub async fn show_recording_resumed(&self) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_recording_resumed {
+        let settings = self.current().await;
+        if !settings.preferences.show_recording_resumed {
             return Ok(());
         }
 
@@ -147,8 +141,8 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a transcription complete notification
     pub async fn show_transcription_complete(&self, file_path: Option<String>) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_transcription_complete {
+        let settings = self.current().await;
+        if !settings.preferences.show_transcription_complete {
             return Ok(());
         }
 
@@ -158,13 +152,15 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a meeting reminder notification
     pub async fn show_meeting_reminder(&self, minutes_until: u64, meeting_title: Option<String>) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_meeting_reminders {
+        let settings = self.current().await;
+        if !settings.preferences.show_meeting_reminders {
             return Ok(());
         }
 
         // Check if this reminder time is enabled
-        if !settings.notification_preferences.meeting_reminder_minutes.contains(&minutes_until) {
+        let enabled = u16::try_from(minutes_until)
+            .is_ok_and(|minutes| settings.preferences.meeting_reminder_minutes.contains(&minutes));
+        if !enabled {
             return Ok(());
         }
 
@@ -174,8 +170,8 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Show a system error notification
     pub async fn show_system_error(&self, error: String) -> Result<()> {
-        let settings = self.settings.read().await;
-        if !settings.notification_preferences.show_system_errors {
+        let settings = self.current().await;
+        if !settings.preferences.show_system_errors {
             return Ok(());
         }
 
@@ -189,27 +185,25 @@ impl<R: Runtime> NotificationManager<R> {
         self.system_handler.show_notification(notification).await
     }
 
+    /// The current notification settings, read from the typed settings so a
+    /// change made in the settings screen applies at once.
+    async fn current(&self) -> NotificationSettings {
+        self.consent_manager.load_settings().await.unwrap_or_default()
+    }
+
     /// Get current notification settings
     pub async fn get_settings(&self) -> NotificationSettings {
-        self.settings.read().await.clone()
+        self.current().await
     }
 
     /// Update notification settings
     pub async fn update_settings(&self, new_settings: NotificationSettings) -> Result<()> {
         log_info!("📝 Updating notification settings:");
-        log_info!("   show_recording_started: {}", new_settings.notification_preferences.show_recording_started);
-        log_info!("   show_recording_stopped: {}", new_settings.notification_preferences.show_recording_stopped);
+        log_info!("   show_recording_started: {}", new_settings.preferences.show_recording_started);
+        log_info!("   show_recording_stopped: {}", new_settings.preferences.show_recording_stopped);
 
-        // Validate settings
-        crate::notifications::settings::validate_settings(&new_settings)?;
-
-        // Save to disk
+        // Validated and saved by the settings service.
         self.consent_manager.save_settings(&new_settings).await?;
-        log_info!("💾 Settings saved to disk");
-
-        // Update in-memory settings
-        let mut settings = self.settings.write().await;
-        *settings = new_settings;
 
         log_info!("✅ Notification settings updated successfully");
         Ok(())
@@ -217,7 +211,7 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Check if Do Not Disturb is active (system or manual)
     pub async fn is_dnd_active(&self) -> bool {
-        let settings = self.settings.read().await;
+        let settings = self.current().await;
 
         // Check manual DND first
         if settings.manual_dnd_mode {
@@ -241,10 +235,6 @@ impl<R: Runtime> NotificationManager<R> {
     pub async fn set_manual_dnd(&self, enabled: bool) -> Result<()> {
         self.consent_manager.set_dnd_mode(enabled).await?;
 
-        // Update in-memory settings
-        let mut settings = self.settings.write().await;
-        settings.manual_dnd_mode = enabled;
-
         log_info!("Manual DND mode set to: {}", enabled);
         Ok(())
     }
@@ -254,10 +244,6 @@ impl<R: Runtime> NotificationManager<R> {
         let granted = self.system_handler.request_permission().await?;
         self.consent_manager.set_system_permission(granted).await?;
 
-        // Update in-memory settings
-        let mut settings = self.settings.write().await;
-        settings.system_permission_granted = granted;
-
         Ok(granted)
     }
 
@@ -265,17 +251,13 @@ impl<R: Runtime> NotificationManager<R> {
     pub async fn set_consent(&self, consent: bool) -> Result<()> {
         self.consent_manager.set_consent(consent).await?;
 
-        // Update in-memory settings
-        let mut settings = self.settings.write().await;
-        settings.consent_given = consent;
-
         log_info!("User consent set to: {}", consent);
         Ok(())
     }
 
     /// Check if we should show a specific notification based on settings
     async fn should_show_notification(&self, notification: &Notification) -> bool {
-        let settings = self.settings.read().await;
+        let settings = self.current().await;
 
         // Check basic consent and permissions
         if !settings.consent_given || !settings.system_permission_granted {
@@ -293,13 +275,13 @@ impl<R: Runtime> NotificationManager<R> {
 
         // Check notification type specific settings
         match &notification.notification_type {
-            NotificationType::RecordingStarted => settings.notification_preferences.show_recording_started,
-            NotificationType::RecordingStopped => settings.notification_preferences.show_recording_stopped,
-            NotificationType::RecordingPaused => settings.notification_preferences.show_recording_paused,
-            NotificationType::RecordingResumed => settings.notification_preferences.show_recording_resumed,
-            NotificationType::TranscriptionComplete => settings.notification_preferences.show_transcription_complete,
-            NotificationType::MeetingReminder(_) => settings.notification_preferences.show_meeting_reminders,
-            NotificationType::SystemError(_) => settings.notification_preferences.show_system_errors,
+            NotificationType::RecordingStarted => settings.preferences.show_recording_started,
+            NotificationType::RecordingStopped => settings.preferences.show_recording_stopped,
+            NotificationType::RecordingPaused => settings.preferences.show_recording_paused,
+            NotificationType::RecordingResumed => settings.preferences.show_recording_resumed,
+            NotificationType::TranscriptionComplete => settings.preferences.show_transcription_complete,
+            NotificationType::MeetingReminder(_) => settings.preferences.show_meeting_reminders,
+            NotificationType::SystemError(_) => settings.preferences.show_system_errors,
             NotificationType::Test => true, // Always show test notifications
         }
     }
@@ -316,15 +298,15 @@ impl<R: Runtime> NotificationManager<R> {
 
     /// Get notification statistics (for debugging)
     pub async fn get_stats(&self) -> NotificationStats {
-        let settings = self.settings.read().await;
+        let settings = self.current().await;
 
         NotificationStats {
             consent_given: settings.consent_given,
             system_permission_granted: settings.system_permission_granted,
             manual_dnd_active: settings.manual_dnd_mode,
             system_dnd_active: self.get_system_dnd_status().await,
-            recording_notifications_enabled: settings.notification_preferences.show_recording_started,
-            meeting_reminders_enabled: settings.notification_preferences.show_meeting_reminders,
+            recording_notifications_enabled: settings.preferences.show_recording_started,
+            meeting_reminders_enabled: settings.preferences.show_meeting_reminders,
         }
     }
 }

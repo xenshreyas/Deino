@@ -20,6 +20,9 @@ pub enum DbError {
     /// A migration failed to apply.
     #[error("could not update the database schema")]
     Migrate(#[source] sqlx::migrate::MigrateError),
+    /// A Rust data migration (`DataMigration`) failed.
+    #[error("could not move data to its new home while updating the database")]
+    DataMigration(#[source] crate::DataMigrationError),
     /// A query failed.
     #[error("a database query failed")]
     Query(#[from] sqlx::Error),
@@ -32,7 +35,7 @@ impl DbError {
             Self::Open(error)
             | Self::Query(error)
             | Self::Migrate(sqlx::migrate::MigrateError::Execute(error)) => error,
-            Self::CreateDir(_) | Self::Migrate(_) => return false,
+            Self::CreateDir(_) | Self::Migrate(_) | Self::DataMigration(_) => return false,
         };
         primary_code(source).is_some_and(|code| code == SQLITE_CORRUPT || code == SQLITE_NOTADB)
     }

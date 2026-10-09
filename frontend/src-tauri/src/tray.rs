@@ -266,13 +266,7 @@ async fn get_current_recording_state() -> RecordingState {
 /// - Parakeet transcription model is ready (downloaded)
 async fn check_can_record<R: Runtime>(app: &AppHandle<R>) -> bool {
     // First check if onboarding is complete
-    let onboarding_complete = match crate::onboarding::load_onboarding_status(app).await {
-        Ok(status) => status.completed,
-        Err(e) => {
-            log::warn!("Tray: Failed to load onboarding status: {}, assuming complete", e);
-            true // Assume complete if we can't check (safe default)
-        }
-    };
+    let onboarding_complete = crate::features::settings::current(app).await.onboarding.completed;
 
     // If onboarding is complete, always allow recording
     // (user may prefer Whisper or have their own transcription setup)

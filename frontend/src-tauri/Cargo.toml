@@ -146,17 +146,18 @@ sqlx = { workspace = true, features = ["json"] }
 deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
+deino-secrets.workspace = true
 # The fixture seeder behind the debug-only `dev` plugin (features/dev.rs); its
 # fakes stay behind `test-support`, which only the dev-dependency enables.
 deino-testkit.workspace = true
-specta.workspace = true
+# `serde_json` types the settings merge patch (`plugin:settings|patch`).
+specta = { workspace = true, features = ["serde_json"] }
 tauri-specta.workspace = true
 
 # Common Tauri configuration
 tauri = { version = "2.6.2", features = [ "macos-private-api", "protocol-asset", "tray-icon"] }
 tauri-plugin-fs = "2.4.0"
 tauri-plugin-dialog = "2.3.0"
-tauri-plugin-store = "2.4.0"
 tauri-plugin-notification = "2.3.1"
 tauri-plugin-updater = "2.3.0"
 tauri-plugin-process = "2.3.0"
@@ -207,6 +208,7 @@ futures-channel = "0.3.31"
 
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 specta-typescript.workspace = true
 # Mock runtime for end-to-end IPC/ACL tests of feature plugins (features/ipc_tests.rs).

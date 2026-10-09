@@ -21,7 +21,9 @@ pub mod config;
 mod error;
 pub mod features;
 mod lifecycle;
+pub mod onboarding;
 mod onnx_runtime;
+mod paths;
 mod setup;
 pub mod updater;
 
@@ -35,7 +37,6 @@ legacy_modules! {
     mod legacy;
     pub mod notifications;
     pub mod ollama;
-    pub mod onboarding;
     pub mod openai;
     pub mod openrouter;
     pub mod parakeet_engine;
@@ -79,6 +80,8 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     let builder = builder
         .plugin(features::db::init())
         .plugin(features::meetings::init())
+        .plugin(features::secrets::init())
+        .plugin(features::settings::init())
         .plugin(features::system::init());
     #[cfg(debug_assertions)]
     let builder = builder
@@ -96,7 +99,6 @@ fn register_platform_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     }));
     updater::register(builder)
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
 }

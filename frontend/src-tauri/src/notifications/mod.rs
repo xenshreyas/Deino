@@ -9,16 +9,12 @@ pub mod manager;
 pub use types::{
     Notification, NotificationType, NotificationPriority, NotificationTimeout
 };
-pub use settings::{
-    NotificationSettings, ConsentManager, get_default_settings
-};
+pub use settings::{ConsentManager, NotificationSettings};
 pub use manager::NotificationManager;
 pub use system::SystemNotificationHandler;
 
 // Export commands for Tauri
 pub use commands::{
-    get_notification_settings,
-    set_notification_settings,
     request_notification_permission,
     show_notification,
     show_test_notification,

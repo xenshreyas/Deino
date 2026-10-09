@@ -1,0 +1,51 @@
+//! Settings: every user preference as one typed, versioned document.
+//!
+//! - [`Settings`] is the document, one `#[serde(default)]` section per area
+//!   ([`AiSettings`], [`AudioSettings`], [`UiSettings`], …), so a file
+//!   written by an older build always loads.
+//! - [`SettingsService`] owns the current value: reads come from memory,
+//!   and every change is validated, saved atomically through the
+//!   [`SettingsStore`] port ([`JsonFileSettingsStore`] in the app) and
+//!   announced through the [`SettingsEvents`] port.
+//! - The UI changes settings with a [`SettingsPatch`], an RFC 7396 merge
+//!   patch that is parsed back into [`Settings`] before anything is saved.
+//! - [`legacy`] moves the stores that predate FND-06 into this one.
+//!
+//! Secrets are never settings: API keys live in the Keychain
+//! (`deino-secrets`), named by [`LlmProvider::api_key`].
+
+mod ai;
+mod audio;
+mod error;
+mod events;
+#[cfg(any(test, feature = "test-support"))]
+mod fake;
+pub mod legacy;
+mod model;
+mod notifications;
+mod onboarding;
+mod patch;
+mod personal;
+mod service;
+mod store;
+mod transcription;
+mod ui;
+
+pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
+pub use audio::{AudioSettings, RecordingSettings};
+pub use error::SettingsError;
+pub use events::SettingsEvents;
+#[cfg(any(test, feature = "test-support"))]
+pub use fake::{FakeSettingsStore, RecordedSettingsEvents};
+pub use legacy::{LegacyFileImport, LegacySqliteImport};
+pub use model::{SETTINGS_VERSION, Settings};
+pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, NotificationSettings};
+pub use onboarding::{ModelDownloadState, OnboardingSettings};
+pub use patch::SettingsPatch;
+pub use personal::{PrivacySettings, ProfileSettings};
+pub use service::SettingsService;
+pub use store::{JsonFileSettingsStore, SettingsStore};
+pub use transcription::{DEFAULT_PARAKEET_MODEL, TranscriptionEngine, TranscriptionSettings};
+pub use ui::{
+    BetaSettings, MAX_TRANSCRIPT_PANE_RATIO, MIN_TRANSCRIPT_PANE_RATIO, Theme, UiSettings,
+};

@@ -1,6 +1,5 @@
 use crate::notifications::{
     types::Notification,
-    settings::NotificationSettings,
     manager::NotificationManager,
 };
 
@@ -25,38 +24,6 @@ pub async fn initialize_notification_manager<R: Runtime>(
 
     log_info!("Notification manager initialized successfully");
     Ok(manager)
-}
-
-/// Get notification settings
-#[tauri::command]
-pub async fn get_notification_settings(
-    manager_state: State<'_, NotificationManagerState<Wry>>
-) -> Result<NotificationSettings, String> {
-    log_info!("Getting notification settings");
-
-    let manager_lock = manager_state.read().await;
-    if let Some(manager) = manager_lock.as_ref() {
-        Ok(manager.get_settings().await)
-    } else {
-        Err("Notification manager not initialized".to_string())
-    }
-}
-
-/// Set notification settings
-#[tauri::command]
-pub async fn set_notification_settings(
-    settings: NotificationSettings,
-    manager_state: State<'_, NotificationManagerState<Wry>>
-) -> Result<(), String> {
-    log_info!("Setting notification settings");
-
-    let manager_lock = manager_state.read().await;
-    if let Some(manager) = manager_lock.as_ref() {
-        manager.update_settings(settings).await
-            .map_err(|e| format!("Failed to update settings: {}", e))
-    } else {
-        Err("Notification manager not initialized".to_string())
-    }
 }
 
 /// Request notification permission from the system
@@ -323,10 +290,10 @@ pub async fn show_recording_started_notification<R: Runtime>(
 
                 // Check settings before showing fallback notification
                 use crate::notifications::settings::ConsentManager;
-                let consent_manager = ConsentManager::new(app_handle.clone())?;
+                let consent_manager = ConsentManager::new(app_handle)?;
                 let settings = consent_manager.load_settings().await.unwrap_or_default();
 
-                if !settings.notification_preferences.show_recording_started {
+                if !settings.preferences.show_recording_started {
                     log_info!("Recording started notification is disabled in settings, skipping fallback");
                     return Ok(());
                 }
@@ -338,7 +305,7 @@ pub async fn show_recording_started_notification<R: Runtime>(
                     None => "Recording has started. Please inform others in the meeting that you are recording.".to_string(),
                 };
 
-                log_info!("Using direct Tauri notification fallback: {} - {}", title, body);
+                log_info!("Using direct Tauri notification fallback: {}", title);
 
                 match app_handle.notification().builder()
                     .title(title)
@@ -373,10 +340,10 @@ pub async fn show_recording_stopped_notification<R: Runtime>(
 
         // Check settings before showing fallback notification
         use crate::notifications::settings::ConsentManager;
-        let consent_manager = ConsentManager::new(app_handle.clone())?;
+        let consent_manager = ConsentManager::new(app_handle)?;
         let settings = consent_manager.load_settings().await.unwrap_or_default();
 
-        if !settings.notification_preferences.show_recording_stopped {
+        if !settings.preferences.show_recording_stopped {
             log_info!("Recording stopped notification is disabled in settings, skipping fallback");
             return Ok(());
         }
@@ -385,7 +352,7 @@ pub async fn show_recording_stopped_notification<R: Runtime>(
         let title = crate::APP_NAME;
         let body = "Recording has stopped";
 
-        log_info!("Using direct Tauri notification fallback: {} - {}", title, body);
+        log_info!("Using direct Tauri notification fallback: {}", title);
 
         match app_handle.notification().builder()
             .title(title)

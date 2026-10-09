@@ -843,12 +843,10 @@ async fn get_configured_model<R: Runtime>(app: &AppHandle<R>, provider_type: &st
         .try_state::<AppState>()
         .ok_or_else(|| anyhow!("App state not available"))?;
 
-    let result: Option<(String, String)> = sqlx::query_as(
-        "SELECT provider, model FROM transcript_settings WHERE id = '1'",
-    )
-    .fetch_optional(app_state.db_manager.pool())
-    .await
-    .map_err(|e| anyhow!("Failed to query config: {}", e))?;
+    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
+        .await
+        .map_err(|e| anyhow!(e))?
+        .map(|config| (config.provider, config.model));
 
     match result {
         Some((provider, model)) => {

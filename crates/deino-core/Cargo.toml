@@ -11,25 +11,30 @@ path = "src/deino_core.rs"
 
 [features]
 # Fakes of this crate's ports (`FakeMeetingRepo`, ...) for other crates' tests.
-test-support = ["deino-domain/test-support"]
+test-support = ["deino-domain/test-support", "deino-secrets/test-support"]
 
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
+deino-secrets.workspace = true
+# RFC 7396 merge patches for settings (already in the tree through Tauri).
+json-patch = { version = "3.0.1", default-features = false }
 log.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 specta.workspace = true
 sqlx = { workspace = true, features = ["json"] }
 thiserror.workspace = true
+tokio.workspace = true
 
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
-serde_json.workspace = true
-tokio.workspace = true
+tempfile = "3.3.0"
 
 [lints]
 workspace = true

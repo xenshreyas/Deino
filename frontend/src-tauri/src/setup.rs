@@ -1,14 +1,16 @@
 //! One-time application startup, run from the Tauri `setup` hook.
 //!
 //! Each step is a small function so startup order is readable in [`run`].
-//! Slow work (engine warm-up, model manager, notifications) is spawned so the
-//! window appears immediately; only the database open blocks, because every
+//! Settings and secrets come first, because everything else reads them; slow
+//! work (engine warm-up, model manager, notifications) is spawned so the
+//! window appears immediately; the database open blocks, because every
 //! legacy command expects [`crate::state::AppState`] to exist.
 
 use tauri::{App, AppHandle, Manager, Wry};
 
 use crate::notifications::commands::{NotificationManagerState, initialize_notification_manager};
-use crate::{database, onnx_runtime, parakeet_engine, summary, tray, whisper_engine};
+use crate::paths::AppPaths;
+use crate::{composition, database, onnx_runtime, parakeet_engine, summary, tray, whisper_engine};
 
 /// Error type accepted by Tauri's setup hook.
 type SetupResult = Result<(), Box<dyn std::error::Error>>;
@@ -16,15 +18,17 @@ type SetupResult = Result<(), Box<dyn std::error::Error>>;
 /// Tauri setup hook: initializes runtime services in dependency order.
 pub(crate) fn run(app: &mut App) -> SetupResult {
     let handle = app.handle();
+    let paths = AppPaths::resolve(handle)?;
+    tauri::async_runtime::block_on(composition::attach_settings(handle, &paths))?;
     onnx_runtime::init_bundled(handle);
     create_tray(handle);
     spawn_notification_manager(handle.clone());
-    init_transcription_engines(handle);
+    init_transcription_engines(&paths);
     spawn_summary_model_manager(handle.clone());
     tauri::async_runtime::block_on(database::setup::initialize_database_on_startup(handle))?;
     #[cfg(debug_assertions)]
-    tauri::async_runtime::block_on(crate::composition::attach_example(handle))?;
-    configure_template_dirs(handle);
+    tauri::async_runtime::block_on(composition::attach_example(handle))?;
+    configure_template_dirs(&paths);
     log::info!("Application setup complete");
     Ok(())
 }
@@ -54,10 +58,10 @@ fn spawn_notification_manager(app: AppHandle) {
     });
 }
 
-/// Points both STT engines at the app data dir and warms them up in the background.
-fn init_transcription_engines(app: &AppHandle) {
-    whisper_engine::commands::set_models_directory(app);
-    parakeet_engine::commands::set_models_directory(app);
+/// Points both STT engines at the models dir and warms them up in the background.
+fn init_transcription_engines(paths: &AppPaths) {
+    whisper_engine::commands::set_models_directory(paths.models());
+    parakeet_engine::commands::set_models_directory(paths.models());
     tauri::async_runtime::spawn(async {
         if let Err(e) = whisper_engine::commands::whisper_init().await {
             log::error!("Failed to initialize Whisper engine on startup: {e}");
@@ -82,13 +86,10 @@ fn spawn_summary_model_manager(app: AppHandle) {
 }
 
 /// Registers the bundled (resources) and user (app data) template directories.
-fn configure_template_dirs(app: &AppHandle) {
-    match app.path().resource_dir() {
-        Ok(resources) => summary::templates::set_bundled_templates_dir(resources.join("templates")),
-        Err(e) => log::warn!("Failed to resolve resource directory for templates: {e}"),
+fn configure_template_dirs(paths: &AppPaths) {
+    match paths.bundled_templates() {
+        Some(bundled) => summary::templates::set_bundled_templates_dir(bundled),
+        None => log::warn!("No resource directory; only the built-in templates are available"),
     }
-    match app.path().app_data_dir() {
-        Ok(app_data) => summary::templates::set_custom_templates_dir(app_data.join("templates")),
-        Err(e) => log::warn!("Failed to resolve app data directory for templates: {e}"),
-    }
+    summary::templates::set_custom_templates_dir(paths.custom_templates());
 }

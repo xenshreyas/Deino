@@ -6,7 +6,7 @@ use std::time::Duration;
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
 
-use crate::{ChangeNotifier, DbError};
+use crate::{ChangeNotifier, DataMigration, DbError};
 
 /// Read connections. In WAL mode SQLite serves readers alongside the writer.
 const READ_POOL_SIZE: u32 = 4;
@@ -40,6 +40,37 @@ impl Database {
     ///
     /// Every commit on the writer is reported through [`Database::changes`].
     pub async fn open(location: &DbLocation, migrator: &Migrator) -> Result<Self, DbError> {
+        Self::open_with(location, migrator, &[]).await
+    }
+
+    /// Opens the database like [`Database::open`], running each Rust `step`
+    /// against the schema just before its [`DataMigration::runs_before`]
+    /// version. Steps whose version is already applied are skipped.
+    pub async fn open_with(
+        location: &DbLocation,
+        migrator: &Migrator,
+        steps: &[&dyn DataMigration],
+    ) -> Result<Self, DbError> {
+        let database = Self::connect(location).await?;
+        let mut ordered = steps.to_vec();
+        ordered.sort_by_key(|step| step.runs_before());
+        for step in ordered {
+            if database
+                .migrate_before(migrator, step.runs_before())
+                .await?
+            {
+                step.run(&database).await.map_err(DbError::DataMigration)?;
+            }
+        }
+        migrator
+            .run(&database.writer)
+            .await
+            .map_err(DbError::Migrate)?;
+        Ok(database)
+    }
+
+    /// Opens the writer and the read pool without touching the schema.
+    pub(crate) async fn connect(location: &DbLocation) -> Result<Self, DbError> {
         if let DbLocation::File(path) = location
             && let Some(directory) = path.parent()
         {
@@ -52,7 +83,6 @@ impl Database {
             .connect_with(options.clone())
             .await
             .map_err(DbError::Open)?;
-        migrator.run(&writer).await.map_err(DbError::Migrate)?;
         let reader = match location {
             // Each in-memory connection is its own database, so reads share the writer.
             DbLocation::Memory => writer.clone(),

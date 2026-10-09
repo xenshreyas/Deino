@@ -147,7 +147,7 @@ async fn a_rolled_back_transaction_publishes_nothing() {
         .await
         .unwrap();
     transaction.rollback().await.unwrap();
-    sqlx::query("UPDATE settings SET model = 'x'")
+    sqlx::query("UPDATE meetings SET title = 'x' WHERE id = 'none'")
         .execute(database.writer())
         .await
         .unwrap();

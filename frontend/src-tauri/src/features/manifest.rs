@@ -21,6 +21,9 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ("system", &["app_version"]),
     // ── FND-13 meetings ──
     ("meetings", &["list", "get", "rename"]),
+    // ── FND-06 settings and secrets ──
+    ("settings", &["get", "patch"]),
+    ("secrets", &["set", "status", "delete"]),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers
