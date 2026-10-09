@@ -24,6 +24,19 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     // ── FND-06 settings and secrets ──
     ("settings", &["get", "patch"]),
     ("secrets", &["set", "status", "delete"]),
+    // ── FND-09 LLM gateway: Settings → AI ──
+    (
+        "llm",
+        &[
+            "providers",
+            "models",
+            "routes",
+            "set_route",
+            "test_route",
+            "ollama_pull",
+            "ollama_delete",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

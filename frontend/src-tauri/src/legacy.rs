@@ -15,8 +15,8 @@ mod devices;
 mod recording;
 
 use crate::{
-    anthropic, api, audio, console_utils, database, groq, notifications, ollama, onboarding,
-    openai, openrouter, parakeet_engine, summary, updater, whisper_engine,
+    api, audio, console_utils, database, notifications, onboarding, parakeet_engine, summary,
+    updater, whisper_engine,
 };
 #[cfg(target_os = "macos")]
 use crate::utils;
@@ -99,15 +99,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         console_utils::show_console,
         console_utils::hide_console,
         console_utils::toggle_console,
-        // LLM provider model lists
-        ollama::get_ollama_models,
-        ollama::pull_ollama_model,
-        ollama::delete_ollama_model,
-        ollama::get_ollama_model_context,
-        openai::openai::get_openai_models,
-        anthropic::anthropic::get_anthropic_models,
-        groq::groq::get_groq_models,
-        openrouter::get_openrouter_models,
         // Meetings and transcripts (list/get/rename: the meetings plugin; settings: the settings plugin)
         api::api_search_transcripts,
         api::api_delete_meeting,

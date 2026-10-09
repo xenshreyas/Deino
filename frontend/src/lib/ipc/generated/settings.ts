@@ -76,7 +76,12 @@ customOpenai: CustomOpenAiSettings | null;
 /**
  * Generate notes automatically when a recording stops.
  */
-autoSummary: boolean }
+autoSummary: boolean; 
+/**
+ * The provider and model the user pinned per LLM task route (Settings →
+ * AI); routes not listed use the defaults of PARITY_PLAN §4.3.
+ */
+routes: Partial<{ [key in Route]: Target }> }
 /**
  * The only error type that crosses IPC.
  * 
@@ -340,6 +345,41 @@ export type PrivacySettings = Record<string, never>
  */
 export type ProfileSettings = Record<string, never>
 /**
+ * An LLM provider. Every call names one, through a route or a pinned target.
+ * 
+ * Stored as TEXT in `llm_calls.provider` and the route settings, with the
+ * serialized names below; renaming a variant needs a migration.
+ */
+export type ProviderId = 
+/**
+ * Anthropic's Messages API (Claude).
+ */
+"anthropic" | 
+/**
+ * OpenAI's Chat Completions API.
+ */
+"openai" | 
+/**
+ * Groq's OpenAI-compatible API.
+ */
+"groq" | 
+/**
+ * OpenRouter's OpenAI-compatible API.
+ */
+"openrouter" | 
+/**
+ * Any OpenAI-compatible endpoint the user configures.
+ */
+"custom_openai" | 
+/**
+ * A local or remote Ollama server.
+ */
+"ollama" | 
+/**
+ * The built-in local model, run by the llama-helper sidecar.
+ */
+"builtin"
+/**
  * The recording section of `Settings`.
  */
 export type RecordingSettings = { 
@@ -351,6 +391,55 @@ autoSave: boolean;
  * Remind the user to tell participants that the meeting is recorded.
  */
 showRecordingNotice: boolean }
+/**
+ * What an LLM call is for. Serialized as the dotted names of §4.3.
+ */
+export type Route = 
+/**
+ * Enhanced notes from a transcript and the user's notes (and, until
+ * NOT-02, the legacy template summaries).
+ */
+"notes.enhance" | 
+/**
+ * Editing notes by asking (NOT-06).
+ */
+"notes.edit" | 
+/**
+ * Chat across meetings (AI-02).
+ */
+"chat" | 
+/**
+ * Action item extraction (AI-05).
+ */
+"extract.action_items" | 
+/**
+ * Custom insights (AI-06).
+ */
+"extract.insights" | 
+/**
+ * AI auto-tagging (ORG-06).
+ */
+"tagging" | 
+/**
+ * Meeting titles (NOT-02).
+ */
+"title" | 
+/**
+ * People and company summaries (ORG-04).
+ */
+"entity.summary" | 
+/**
+ * Pre-meeting briefs (NOT-08).
+ */
+"brief" | 
+/**
+ * Follow-up email drafts (NOT-07).
+ */
+"followup.email" | 
+/**
+ * Embeddings for semantic search (AI-01); always local (§8 D3).
+ */
+"embed"
 /**
  * Every user preference. Secrets are never here; they live in the Keychain.
  * 
@@ -410,6 +499,18 @@ export type SettingsChanged = {
  * Every setting, as now saved.
  */
 settings: Settings }
+/**
+ * A provider and model, chosen by a route or pinned by the caller.
+ */
+export type Target = { 
+/**
+ * Who serves the call.
+ */
+provider: ProviderId; 
+/**
+ * The provider's model ID.
+ */
+model: string }
 /**
  * The colour theme (PARITY_PLAN §3B: follow the system by default).
  */

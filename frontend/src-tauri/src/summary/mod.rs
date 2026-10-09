@@ -1,16 +1,13 @@
-//! Summary module - handles all meeting summary generation functionality
+//! Legacy template summaries: IPC, background jobs and templates.
 //!
-//! This module contains:
-//! - LLM client for communicating with various AI providers (OpenAI, Claude, Groq, Ollama, OpenRouter, CustomOpenAI)
-//! - Processor for chunking transcripts and generating summaries
-//! - Service layer for orchestrating summary generation
-//! - Templates for structured meeting summary generation
-//! - Tauri commands for frontend integration
+//! Generation goes through the LLM gateway (FND-09):
+//! `deino_core::summaries::SummaryGenerator` over `deino_llm::Gateway`.
+//! This module keeps the legacy commands, the `summary_processes`
+//! lifecycle ([`service`]), the stored result shape ([`result`]), the JSON
+//! templates and the built-in model manager (`summary_engine`).
 
 pub mod commands;
-pub(crate) mod credentials;
-pub mod llm_client;
-pub mod processor;
+mod result;
 pub mod service;
 pub mod summary_engine;
 pub mod template_commands;
@@ -33,7 +30,4 @@ pub use template_commands::{
     api_get_template_details, api_list_templates, api_validate_template,
 };
 
-// Re-export commonly used items
-pub use llm_client::LLMProvider;
-pub use processor::{chunk_text, extract_meeting_name_from_markdown, rough_token_count};
 pub use service::SummaryService;

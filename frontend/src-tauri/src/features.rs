@@ -20,6 +20,7 @@ pub mod _example;
 pub mod db;
 #[cfg(debug_assertions)]
 pub mod dev;
+pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
 pub mod meetings;
@@ -35,6 +36,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (db::NAME, db::specta()),
         (meetings::NAME, meetings::specta()),
         (secrets::NAME, secrets::specta()),
+        (llm::NAME, llm::specta()),
         (settings::NAME, settings::specta()),
         (system::NAME, system::specta()),
     ];

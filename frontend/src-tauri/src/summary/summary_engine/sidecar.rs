@@ -54,6 +54,29 @@ pub struct SidecarManager {
     idle_timeout_secs: u64,
 }
 
+/// One request's response lines, read in order (see
+/// [`SidecarManager::begin_exchange`]).
+pub struct Exchange {
+    reader: tokio::sync::OwnedMutexGuard<Option<BufReader<ChildStdout>>>,
+    _active: RequestGuard,
+}
+
+impl Exchange {
+    /// The next response line, or `None` when the sidecar closed stdout.
+    pub async fn next_line(&mut self) -> Result<Option<String>> {
+        let reader = self
+            .reader
+            .as_mut()
+            .ok_or_else(|| anyhow!("Sidecar not running"))?;
+        let mut line = String::new();
+        let read = reader
+            .read_line(&mut line)
+            .await
+            .context("Failed to read response from stdout")?;
+        Ok((read > 0).then(|| line.trim().to_string()))
+    }
+}
+
 /// RAII guard for tracking active requests
 /// Decrements the active request count when dropped
 struct RequestGuard {
@@ -348,45 +371,32 @@ impl SidecarManager {
         Ok(())
     }
 
-    /// Send a request to the sidecar and wait for response
-    pub async fn send_request(&self, request_json: String, timeout: Duration) -> Result<String> {
-        // Track active request
-        let _guard = RequestGuard::new(self.active_request_count.clone());
+    // ── FND-09: streamed exchanges for the LLM gateway ──
 
-        // Write request to stdin
+    /// Writes one request line and returns the [`Exchange`] that reads its
+    /// response lines. The stdout lock is held until the exchange is
+    /// dropped, so concurrent requests queue instead of interleaving, and the
+    /// health ping stays away while it is active.
+    pub async fn begin_exchange(&self, request_json: &str) -> Result<Exchange> {
+        let guard = RequestGuard::new(self.active_request_count.clone());
+        let reader = Arc::clone(&self.stdout_reader).lock_owned().await;
         {
             let mut stdin_lock = self.stdin_writer.lock().await;
             let stdin = stdin_lock
                 .as_mut()
                 .ok_or_else(|| anyhow!("Sidecar not running"))?;
-
             stdin
                 .write_all(request_json.as_bytes())
                 .await
                 .context("Failed to write request to stdin")?;
-            stdin
-                .write_all(b"\n")
-                .await
-                .context("Failed to write newline")?;
+            stdin.write_all(b"\n").await.context("Failed to write newline")?;
             stdin.flush().await.context("Failed to flush stdin")?;
         }
-
-        // Read response from stdout with timeout
-        match tokio::time::timeout(timeout, self.read_response()).await {
-            Ok(Ok(response)) => {
-                self.update_activity().await;
-                Ok(response)
-            }
-            Ok(Err(e)) => Err(e),
-            Err(_) => {
-                // Timeout reached - shutdown sidecar to stop generation
-                log::error!("Request timeout after {:?}, shutting down sidecar", timeout);
-                if let Err(shutdown_err) = self.shutdown().await {
-                    log::error!("Failed to shutdown sidecar after timeout: {}", shutdown_err);
-                }
-                Err(anyhow!("Request timed out after {:?}", timeout))
-            }
-        }
+        self.update_activity().await;
+        Ok(Exchange {
+            reader,
+            _active: guard,
+        })
     }
 
     /// Read a single line response from stdout
