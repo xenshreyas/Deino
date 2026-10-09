@@ -890,7 +890,10 @@ Card format:
 - **Owns:** `diarization/` (new), pipeline stage `diarize`, the `speakers` writes
 - **Parity:** C §6 (Participant N, hybrid-room separation); G §2.6 (Speaker A/B)
 - **Build:**
-  - Use `sherpa-rs` (sherpa-onnx bindings, Apache-2.0): pyannote `segmentation-3.0` ONNX plus a 3D-Speaker/WeSpeaker embedding ONNX. Download models on demand with sha256 pins.
+  - Use the **official `sherpa-onnx` crate 1.13.8** (Apache-2.0, static link, CPU provider), not `sherpa-rs`. Models: pyannote `segmentation-3.0` plus ONE frozen English speaker-embedding model, chosen by measured DER on fixtures (candidates: CAM++ VoxCeleb, WeSpeaker ResNet34-LM, TitaNet-small). Download models on demand with sha256 pins. Read `docs/REFERENCES.md` → "Diarization" first.
+  - **Scaling:** use `window_shift_ratio` 0.25 or more for meetings over 30 minutes; the clustering memory grows with the square of the number of embeddings.
+  - **Progress bar:** add an `extern "C"` binding for `SherpaOnnxOfflineSpeakerDiarizationProcessWithCallback`.
+  - **Linking:** check that `ort` and sherpa's static onnxruntime link together.
   - **Post-meeting stage:**
     - Diarize the **system** track into Speaker 1..N.
     - Also diarize the **mic** track when "In-person meeting" is on (a toggle at record start, auto-on when the system track is silent for over 80% of the meeting).
