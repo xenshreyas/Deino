@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use reqwest::Client;
+use deino_net::{NetClient, NetError, Request, Status};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::fs::{self, OpenOptions};
@@ -331,6 +331,7 @@ impl ModelManager {
     pub async fn download_model(
         &self,
         model_name: &str,
+        http: Arc<dyn NetClient>,
         progress_callback: Option<Box<dyn Fn(u8) + Send>>,
     ) -> Result<()> {
         // Wrap the simple callback to use detailed progress internally
@@ -338,13 +339,15 @@ impl ModelManager {
             progress_callback.map(|cb| {
                 Box::new(move |p: DownloadProgress| cb(p.percent)) as Box<dyn Fn(DownloadProgress) + Send>
             });
-        self.download_model_detailed(model_name, detailed_callback).await
+        self.download_model_detailed(model_name, http, detailed_callback).await
     }
 
-    /// Download a model with detailed progress (MB, speed, etc.)
+    /// Download a model with detailed progress (MB, speed, etc.) through
+    /// `http`, a `deino-net` client scoped to the model host (FND-12).
     pub async fn download_model_detailed(
         &self,
         model_name: &str,
+        http: Arc<dyn NetClient>,
         progress_callback: Option<Box<dyn Fn(DownloadProgress) + Send>>,
     ) -> Result<()> {
         log::info!("Starting download for model: {}", model_name);
@@ -463,38 +466,32 @@ impl ModelManager {
             0
         };
 
-        // Download the file with optimized client settings
-        let client = Client::builder()
-            .tcp_nodelay(true) // Disable Nagle's algorithm for faster streaming
-            .pool_max_idle_per_host(1) // Keep connection alive
-            .timeout(Duration::from_secs(3600)) // 1 hour timeout for large files
-            .connect_timeout(Duration::from_secs(30))
-            .build()
-            .map_err(|e| anyhow!("Failed to create HTTP client: {}", e))?;
-
-        // Build request with Range header if resuming
-        let mut request = client.get(&model_def.download_url);
+        // Build request with Range header if resuming. No end-to-end timeout:
+        // a stalled body is caught per chunk below.
+        let mut request = Request::get(&model_def.download_url)
+            .map_err(|e| anyhow!("Invalid download URL: {}", e))?
+            .timeout(None);
         if existing_size > 0 {
             log::info!(
                 "Resuming download from byte {} ({:.1} MB)",
                 existing_size,
                 existing_size as f64 / (1024.0 * 1024.0)
             );
-            request = request.header("Range", format!("bytes={}-", existing_size));
+            request = request.header("range", format!("bytes={}-", existing_size));
         }
 
-        let response = request
-            .send()
+        let response = http
+            .send(request)
             .await
             .map_err(|e| anyhow!("Failed to start download: {}", e))?;
 
         // Check response status - 200 OK (full download) or 206 Partial Content (resume)
-        let (total_size, resuming) = if response.status() == reqwest::StatusCode::PARTIAL_CONTENT {
+        let (total_size, resuming) = if response.status == Status::PARTIAL_CONTENT {
             // Server supports resume - total size = existing + remaining
             let remaining = response.content_length().unwrap_or(0);
             log::info!("Server supports resume, {} MB remaining", remaining / (1024 * 1024));
             (existing_size + remaining, true)
-        } else if response.status().is_success() {
+        } else if response.status.is_success() {
             // Server doesn't support resume or fresh download
             if existing_size > 0 {
                 log::warn!("Server doesn't support resume, starting fresh download");
@@ -503,7 +500,7 @@ impl ModelManager {
         } else {
             let mut active = self.active_downloads.write().await;
             active.remove(model_name);
-            return Err(anyhow!("Download failed with status: {}", response.status()));
+            return Err(anyhow!("Download failed with status: {}", response.status));
         };
 
         log::info!("Total size: {} MB", total_size / (1024 * 1024));
@@ -548,7 +545,7 @@ impl ModelManager {
         let start_downloaded = downloaded;
 
         use futures_util::StreamExt;
-        let mut stream = response.bytes_stream();
+        let mut stream = response.body;
 
         loop {
             // Check for cancellation
@@ -617,14 +614,11 @@ impl ModelManager {
                             active.remove(model_name);
 
                             // Categorize error for user-friendly message
-                            let error_msg = if e.is_timeout() {
-                                "Connection timeout - Check your internet"
-                            } else if e.is_connect() {
-                                "Connection failed - Check your internet"
-                            } else if e.is_body() {
-                                "Stream interrupted - Network unstable"
-                            } else {
-                                "Download error"
+                            let error_msg = match &e {
+                                NetError::Timeout(_) => "Connection timeout - Check your internet",
+                                NetError::Connect(_) => "Connection failed - Check your internet",
+                                NetError::Transport(_) => "Stream interrupted - Network unstable",
+                                _ => "Download error",
                             };
 
                             // Set model status to Error (NOT NotDownloaded) so UI can show retry button

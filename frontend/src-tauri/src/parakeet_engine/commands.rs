@@ -411,8 +411,9 @@ pub async fn parakeet_download_model<R: Runtime>(
             // Continue anyway, maybe it will work if the model is already known
         }
 
+        let http = crate::composition::model_downloads(&app_handle)?;
         let result = engine
-            .download_model_detailed(&model_name, Some(progress_callback))
+            .download_model_detailed(&model_name, http, Some(progress_callback))
             .await;
 
         match result {

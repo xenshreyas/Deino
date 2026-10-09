@@ -29,7 +29,13 @@
                 "default-src": "'self'",
                 "style-src": "'self' 'unsafe-inline'",
                 "img-src": "'self' asset: https://asset.localhost data:",
-                "connect-src": "'self' http://localhost:11434 https://api.ollama.ai"
+                "connect-src": "'self' ipc: http://ipc.localhost asset:"
+            },
+            "devCsp": {
+                "default-src": "'self'",
+                "style-src": "'self' 'unsafe-inline'",
+                "img-src": "'self' asset: https://asset.localhost data:",
+                "connect-src": "'self' ipc: http://ipc.localhost asset: ws://localhost:3118 http://localhost:3118"
             },
             "assetProtocol": {
                 "enable": true,

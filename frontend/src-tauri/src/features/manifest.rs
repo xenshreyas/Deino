@@ -47,6 +47,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "ollama_delete",
         ],
     ),
+    // ── FND-12 network controls ──
+    ("network", &["services", "set_service_enabled", "egress_log"]),
     // ── FND-08 pipeline ──
     ("pipeline", &["status", "rerun"]),
 ];
