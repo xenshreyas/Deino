@@ -74,9 +74,7 @@ impl Writer {
             Block::List { ordered, items } => self.list(*ordered, items, depth),
             Block::Quote { blocks } => self.quote(blocks),
             Block::Code { text } => self.code(text),
-            Block::Rule => {
-                self.paragraph(Paragraph::new().add_run(Run::new().add_text("———").color(MUTED)))
-            }
+            Block::Rule => self.rule(),
         }
     }
 
@@ -119,6 +117,11 @@ impl Writer {
                 .italic();
             self.paragraph(runs(paragraph, &content));
         }
+    }
+
+    fn rule(&mut self) {
+        let rule = Run::new().add_text("———").color(MUTED);
+        self.paragraph(Paragraph::new().add_run(rule));
     }
 
     fn code(&mut self, text: &str) {

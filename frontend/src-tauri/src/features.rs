@@ -22,6 +22,7 @@ pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
 pub mod folders;
+pub mod export;
 pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
@@ -45,6 +46,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
     let mut builders = vec![
         (db::NAME, db::specta()),
         (detection::NAME, detection::specta()),
+        (export::NAME, export::specta()),
         (meetings::NAME, meetings::specta()),
         (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),

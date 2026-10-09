@@ -132,6 +132,8 @@ deino-db.workspace = true
 # Local speaker diarization behind the `diarize` stage (CAP-03).
 deino-diarize.workspace = true
 deino-domain.workspace = true
+# Meeting renderers (EXP-01): the export plugin names their format and section types.
+deino-export.workspace = true
 deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.
 deino-net.workspace = true
@@ -156,6 +158,8 @@ tauri-specta.workspace = true
 tauri = { version = "2.6.2", features = [ "macos-private-api", "protocol-asset", "tray-icon"] }
 tauri-plugin-fs = "2.4.0"
 tauri-plugin-dialog = "2.3.0"
+# Rich-text copies (HTML with a plain-text fallback) for the export plugin.
+arboard = { version = "=3.6.1", default-features = false }
 tauri-plugin-notification = "2.3.1"
 tauri-plugin-updater = "2.3.0"
 tauri-plugin-process = "2.3.0"

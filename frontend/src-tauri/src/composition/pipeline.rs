@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
+use deino_core::export::AutoExporter;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
@@ -24,13 +25,22 @@ use crate::features;
 
 /// What the pipeline gets from the app: where progress goes, the legacy
 /// summary service behind `legacy_summary`, the diarization engine behind
-/// `diarize`, and the auto-tagger behind `auto_tag`.
+/// `diarize`, and the services behind `auto_tag` and `auto_export`.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) summaries: Arc<dyn Summarizer>,
     pub(crate) diarizer: Arc<dyn TrackDiarizer>,
     /// Over the LLM gateway (`Organize::auto_tagger`).
     pub(crate) auto_tagger: Arc<dyn AutoTagger>,
+    /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
+    pub(crate) auto_export: Arc<dyn AutoExporter>,
+}
+
+/// The stage services built before the pipeline: the auto-tagger and the
+/// auto-exporter.
+pub(crate) struct StageAdapters {
+    pub(crate) auto_tagger: Arc<dyn AutoTagger>,
+    pub(crate) auto_export: Arc<dyn AutoExporter>,
 }
 
 /// The ports the registered stages read: SQLite repositories over
@@ -56,6 +66,7 @@ fn stage_ports(
         diarizer: adapters.diarizer,
         clock: Arc::clone(clock),
         auto_tagger: adapters.auto_tagger,
+        auto_export: adapters.auto_export,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
     }
 }
@@ -113,7 +124,7 @@ pub(super) fn attach_pipeline(
     app: &AppHandle,
     database: &Database,
     clock: &Arc<dyn Clock>,
-    auto_tagger: Arc<dyn AutoTagger>,
+    stages: StageAdapters,
 ) {
     let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
         return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
@@ -133,7 +144,8 @@ pub(super) fn attach_pipeline(
             Arc::clone(&settings),
             Arc::clone(clock),
         )),
-        auto_tagger,
+        auto_tagger: stages.auto_tagger,
+        auto_export: stages.auto_export,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
 }

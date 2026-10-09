@@ -8,13 +8,16 @@ use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
 use deino_core::folders::AutoFiler;
+use deino_core::export::AutoExporter;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
 use deino_core::tags::AutoTagger;
 use deino_domain::{Clock, StageId};
 
-use crate::stages::{AutoFolderStage, AutoTagStage, DiarizeStage, LegacySummaryStage, Summarizer};
+use crate::stages::{
+    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, LegacySummaryStage, Summarizer,
+};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -35,6 +38,8 @@ pub struct StagePorts {
     pub speakers: Arc<dyn SpeakerRepo>,
     /// The diarization engine (`deino-diarize` in the app).
     pub diarizer: Arc<dyn TrackDiarizer>,
+    /// Writes the meeting into the user's notes folder (EXP-02).
+    pub auto_export: Arc<dyn AutoExporter>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
     /// The auto-tagger (ORG-06).
@@ -63,6 +68,7 @@ impl StagePorts {
             segment_writer: segments.clone(),
             speakers: segments,
             diarizer: Arc::new(FakeTrackDiarizer::default()),
+            auto_export: Arc::new(crate::stages::ScriptedAutoExporter::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
@@ -81,6 +87,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(AutoTagStage::new(ports)),
         // 75 · ORG-05.
         Arc::new(AutoFolderStage::new(ports)),
+        // 99 · EXP-02: the notes into the user's folder, last.
+        Arc::new(AutoExportStage::new(ports)),
     ])
 }
 
@@ -155,7 +163,7 @@ mod tests {
         assert_eq!(Registry::new(stages.clone()).stages().len(), stages.len());
         assert_eq!(
             Registry::new(stages).ids(),
-            ["diarize", "legacy_summary", "auto_tag", "auto_folder"].map(StageId::new)
+            ["diarize", "legacy_summary", "auto_tag", "auto_folder", "auto_export"].map(StageId::new)
         );
     }
 

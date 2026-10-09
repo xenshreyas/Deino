@@ -19,6 +19,7 @@ mod audio;
 mod detection;
 mod error;
 mod events;
+mod export;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
 pub mod legacy;
@@ -45,6 +46,7 @@ pub use detection::{
 };
 pub use error::SettingsError;
 pub use events::SettingsEvents;
+pub use export::{DEFAULT_FILE_NAME, DEFAULT_SUBFOLDER, ExportSettings};
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{FakeSettingsStore, RecordedSettingsEvents};
 pub use legacy::{LegacyFileImport, LegacySqliteImport};

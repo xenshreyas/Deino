@@ -19,6 +19,8 @@ chrono.workspace = true
 deino-db.workspace = true
 deino-doc.workspace = true
 deino-domain.workspace = true
+# Meeting renderers behind exports, copy, email and auto-export (EXP-01/02).
+deino-export.workspace = true
 deino-llm.workspace = true
 deino-secrets.workspace = true
 # RFC 7396 merge patches for settings (already in the tree through Tauri).
@@ -39,7 +41,10 @@ sqlx = { workspace = true, features = ["json"] }
 thiserror.workspace = true
 # Async file I/O, timeouts and cancellation for model downloads.
 tokio.workspace = true
-tokio-util = "0.7.18"
+# Cancellation, and the tracked task of the account export (`rt`).
+tokio-util.workspace = true
+# The account export's zip archive (EXP-02).
+zip.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]

@@ -5,6 +5,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use deino_core::export::FullExportService;
 use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
@@ -65,6 +66,10 @@ async fn cleanup(app: &AppHandle) {
     // First, so no stage writes after the database is closed.
     if let Some(pipeline) = app.try_state::<Arc<PipelineService>>() {
         pipeline.shutdown().await;
+    }
+    // A running account export is cancelled; its partial archive is deleted.
+    if let Some(export) = app.try_state::<Arc<FullExportService>>() {
+        export.shutdown().await;
     }
     match app.try_state::<AppState>() {
         Some(state) => state.db_manager.cleanup().await,

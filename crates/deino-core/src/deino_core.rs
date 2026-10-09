@@ -36,6 +36,7 @@ pub mod action_items;
 pub mod calendar;
 pub mod companies;
 pub mod diarization;
+pub mod export;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;

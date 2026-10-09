@@ -122,6 +122,20 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "list", "create", "update", "delete", "tags_of", "links", "apply", "remove",
         ],
     ),
+    // ── EXP-01/EXP-02 export (features/export.rs) ──
+    (
+        "export",
+        &[
+            "preview",
+            "save",
+            "copy",
+            "email",
+            "choose_folder",
+            "start_full_export",
+            "cancel_full_export",
+            "full_export_status",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

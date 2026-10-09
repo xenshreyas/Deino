@@ -136,8 +136,6 @@
 }
 
 // ── The document ──
-#text(size: 7.5pt, weight: 600, fill: subtle, tracking: 0.08em, upper("Meeting notes"))
-#v(5pt, weak: true)
 #text(size: 21pt, weight: 600, tracking: -0.02em, data.title)
 #v(7pt, weak: true)
 #text(size: 9pt, fill: muted, data.meta)

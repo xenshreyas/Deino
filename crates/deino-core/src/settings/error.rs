@@ -15,6 +15,9 @@ pub enum SettingsError {
     /// Patches may not change the format version.
     #[error("the settings version cannot be changed")]
     VersionIsReadOnly,
+    /// The patch sets a path that only a dialog may choose.
+    #[error("{0} is chosen with its dialog, not set directly")]
+    ChosenInDialog(&'static str),
     /// The patch names a setting that does not exist.
     #[error("there is no setting named {0}")]
     UnknownSetting(String),
@@ -52,6 +55,7 @@ impl ErrorClass for SettingsError {
         match self {
             Self::NotAnObject
             | Self::VersionIsReadOnly
+            | Self::ChosenInDialog(_)
             | Self::UnknownSetting(_)
             | Self::WrongShape(_)
             | Self::InvalidValue { .. } => ErrorCode::Invalid,
