@@ -153,6 +153,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "set_calendar_visible",
             "upcoming",
             "event",
+            "connect",
+            "disconnect",
         ],
     ),
 ];

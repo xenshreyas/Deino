@@ -41,7 +41,9 @@ mod ui;
 
 pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
 pub use audio::{AudioSettings, RecordingSettings};
-pub use calendar::{CalendarSettings, MAX_HIDDEN_CALENDARS};
+pub use calendar::{
+    CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS, MAX_HIDDEN_CALENDARS,
+};
 pub use detection::{
     AutoStartSettings, DetectionSettings, IgnoredApp, MAX_AUTO_START_SECONDS,
     MIN_AUTO_START_SECONDS,

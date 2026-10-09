@@ -11,7 +11,7 @@ use std::sync::Arc;
 use deino_core::calendar::{
     CalendarEvent, CalendarService, CalendarStatus, CalendarView, TimeRange,
 };
-use deino_domain::{AppError, CalendarEventId, CalendarId};
+use deino_domain::{AppError, CalendarEventId, CalendarId, CalendarProvider};
 use tauri::{Runtime, State};
 
 use crate::error::IntoIpc;
@@ -28,6 +28,8 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         set_calendar_visible,
         upcoming,
         event,
+        connect,
+        disconnect,
     ]
 }
 
@@ -106,4 +108,27 @@ async fn event(
     id: CalendarEventId,
 ) -> Result<CalendarEvent, AppError> {
     calendar.event(id).await.into_ipc()
+}
+
+/// Connects a Google or Microsoft account: opens its sign-in page in the
+/// browser, waits for the user, then syncs. Fails with `invalid` until its
+/// client ID is set, and `permission_denied` when the user declines.
+#[tauri::command]
+#[specta::specta]
+async fn connect(
+    calendar: State<'_, Arc<CalendarService>>,
+    provider: CalendarProvider,
+) -> Result<CalendarStatus, AppError> {
+    calendar.connect(provider).await.into_ipc()
+}
+
+/// Disconnects a Google or Microsoft account: forgets its sign-in and its
+/// synced calendars.
+#[tauri::command]
+#[specta::specta]
+async fn disconnect(
+    calendar: State<'_, Arc<CalendarService>>,
+    provider: CalendarProvider,
+) -> Result<CalendarStatus, AppError> {
+    calendar.disconnect(provider).await.into_ipc()
 }

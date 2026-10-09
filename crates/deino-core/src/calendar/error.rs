@@ -4,7 +4,7 @@
 //! limits, never an event's title, notes or attendees.
 
 use deino_db::DbError;
-use deino_domain::{CalendarEventId, CalendarId, ErrorClass, ErrorCode};
+use deino_domain::{CalendarEventId, CalendarId, CalendarProvider, ErrorClass, ErrorCode};
 
 use super::SourceError;
 use crate::settings::SettingsError;
@@ -22,6 +22,9 @@ pub enum CalendarError {
     /// No stored calendar has this ID.
     #[error("calendar {0} was not found")]
     CalendarNotFound(CalendarId),
+    /// No direct connector serves this provider.
+    #[error("there is no {0} calendar connector")]
+    NoConnector(CalendarProvider),
     /// The range ends before it starts, or spans too long.
     #[error("a time range must end after it starts and span at most {MAX_RANGE_DAYS} days")]
     InvalidRange,
@@ -40,7 +43,7 @@ impl ErrorClass for CalendarError {
     fn code(&self) -> ErrorCode {
         match self {
             Self::EventNotFound(_) | Self::CalendarNotFound(_) => ErrorCode::NotFound,
-            Self::InvalidRange => ErrorCode::Invalid,
+            Self::InvalidRange | Self::NoConnector(_) => ErrorCode::Invalid,
             Self::Source(error) => error.code(),
             Self::Settings(error) => error.code(),
             Self::Storage(_) => ErrorCode::Internal,

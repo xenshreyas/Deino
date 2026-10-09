@@ -1,11 +1,11 @@
 //! What the UI lists: calendars with their visibility, "Coming up", one
 //! event, and the synchronous lookup meeting detection uses.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::PoisonError;
 
 use chrono::{DateTime, TimeDelta, Utc};
-use deino_domain::{CalendarEventId, CalendarId};
+use deino_domain::{CalendarAccountId, CalendarEventId, CalendarId};
 
 use super::error::MAX_RANGE_DAYS;
 use super::filter::{TimeRange, agenda};
@@ -72,23 +72,39 @@ impl CalendarService {
         Ok(view)
     }
 
-    /// The visible events overlapping `range`, by start time; empty while
-    /// sync is off.
+    /// The visible events overlapping `range`, by start time, from the
+    /// active sources only (macOS Calendar while its switch is on, each
+    /// connector while connected).
     pub async fn upcoming(&self, range: TimeRange) -> Result<Vec<CalendarEvent>, CalendarError> {
         let span = range.end - range.start;
         if span <= TimeDelta::zero() || span > TimeDelta::days(MAX_RANGE_DAYS) {
             return Err(CalendarError::InvalidRange);
         }
-        let settings = self.settings.get().await.calendar;
-        if !settings.sync_enabled {
+        let accounts = self.active_accounts().await?;
+        if accounts.is_empty() {
             return Ok(Vec::new());
         }
         let stored = self
             .store
             .events
             .events_between(range.start - LONGEST_ONGOING, range.end)
-            .await?;
-        Ok(agenda(stored, &settings.hidden_calendars, &range))
+            .await?
+            .into_iter()
+            .filter(|event| accounts.contains(&event.account_id))
+            .collect();
+        let hidden = self.settings.get().await.calendar.hidden_calendars;
+        Ok(agenda(stored, &hidden, &range))
+    }
+
+    /// The stored accounts of the active providers.
+    async fn active_accounts(&self) -> Result<BTreeSet<CalendarAccountId>, CalendarError> {
+        let active = self.active_providers().await;
+        let accounts = self.store.accounts.accounts().await?;
+        Ok(accounts
+            .into_iter()
+            .filter(|account| active.contains(&account.provider))
+            .map(|account| account.id)
+            .collect())
     }
 
     /// One stored event.

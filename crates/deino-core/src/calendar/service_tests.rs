@@ -16,8 +16,18 @@ use crate::settings::{FakeSettingsStore, RecordedSettingsEvents, SettingsService
 struct Harness {
     service: Arc<CalendarService>,
     source: Arc<FakeCalendarSource>,
+    google: Arc<FakeCalendarSource>,
     events: Arc<RecordedCalendarEvents>,
     clock: Arc<FakeClock>,
+}
+
+/// A Google account with one meeting in three hours.
+fn google_account() -> Arc<FakeCalendarSource> {
+    let google = Arc::new(FakeCalendarSource::new(CalendarProvider::Google));
+    let mut account = snapshot(vec![meeting("g-1", 3)]);
+    account.accounts[0].name = "maya@gmail.com".into();
+    google.set_snapshot(account);
+    google
 }
 
 async fn harness() -> Harness {
@@ -32,8 +42,10 @@ async fn harness() -> Harness {
     .await
     .unwrap();
     let repo = Arc::new(FakeCalendarRepo::default());
+    let google = google_account();
     let service = CalendarService::new(CalendarDeps {
         source: source.clone(),
+        connectors: vec![google.clone()],
         store: CalendarStore::over(&repo),
         directory: AttendeeDirectory::new(
             Arc::new(FakePeopleRepo::default()),
@@ -47,6 +59,7 @@ async fn harness() -> Harness {
     Harness {
         service: Arc::new(service),
         source,
+        google,
         events,
         clock,
     }
@@ -75,6 +88,7 @@ async fn enabling_asks_for_access_turns_sync_on_syncs_and_announces() {
         source,
         events,
         clock,
+        ..
     } = harness().await;
 
     let status = service.enable().await.unwrap();
@@ -99,7 +113,7 @@ async fn denied_access_leaves_sync_off_and_reads_nothing() {
     assert!(!status.sync_enabled);
     assert_eq!(status.access, CalendarAccess::Denied);
     assert_eq!(source.fetch_count(), 0);
-    assert_eq!(service.sync_if_enabled().await, None);
+    assert!(!service.sync_if_enabled().await);
 }
 
 #[tokio::test]
@@ -279,4 +293,70 @@ async fn settle() {
         tokio::task::yield_now().await;
     }
     tokio::time::sleep(Duration::from_millis(1)).await;
+}
+
+#[tokio::test]
+async fn connecting_a_connector_signs_in_syncs_and_reports_it() {
+    let Harness {
+        service, google, ..
+    } = harness().await;
+
+    let status = service.connect(CalendarProvider::Google).await.unwrap();
+
+    let connector = &status.connectors[0];
+    assert_eq!(connector.provider, CalendarProvider::Google);
+    assert!(connector.connected && !connector.configured);
+    assert_eq!(connector.last_synced_at, Some(hours(0)));
+    assert_eq!(google.fetch_count(), 1);
+    assert_eq!(
+        upcoming_ids(&service).await,
+        ["g-1"],
+        "macOS Calendar is still off"
+    );
+}
+
+#[tokio::test]
+async fn disconnecting_forgets_the_account_and_its_events() {
+    let Harness { service, .. } = harness().await;
+    service.connect(CalendarProvider::Google).await.unwrap();
+    service.enable().await.unwrap();
+
+    let status = service.disconnect(CalendarProvider::Google).await.unwrap();
+
+    assert!(!status.connectors[0].connected);
+    assert_eq!(upcoming_ids(&service).await, ["evt-1", "evt-2"]);
+    let accounts = service.calendars().await.unwrap();
+    assert!(
+        accounts
+            .iter()
+            .all(|calendar| calendar.provider == CalendarProvider::Apple)
+    );
+}
+
+#[tokio::test]
+async fn a_connected_account_syncs_on_the_schedule_with_macos_calendar_off() {
+    let Harness {
+        service,
+        google,
+        source,
+        ..
+    } = harness().await;
+    service.connect(CalendarProvider::Google).await.unwrap();
+
+    assert!(service.sync_if_enabled().await);
+
+    assert_eq!(google.fetch_count(), 2);
+    assert_eq!(source.fetch_count(), 0);
+}
+
+#[tokio::test]
+async fn a_provider_without_a_connector_is_refused() {
+    let Harness { service, .. } = harness().await;
+
+    let outcome = service.connect(CalendarProvider::Microsoft).await;
+
+    assert!(matches!(
+        outcome,
+        Err(CalendarError::NoConnector(CalendarProvider::Microsoft))
+    ));
 }

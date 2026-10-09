@@ -236,6 +236,13 @@ pub trait CalendarSource: Send + Sync {
     /// Every account, calendar and event overlapping `window`.
     async fn fetch(&self, window: SyncWindow) -> Result<SourceSnapshot, SourceError>;
 
+    /// Forgets this source's sign-in (a connector's refresh token). Sources
+    /// without one (macOS Calendar, whose access lives in System Settings)
+    /// have nothing to forget.
+    async fn disconnect(&self) -> Result<(), SourceError> {
+        Ok(())
+    }
+
     /// Opens the system page where the user grants or revokes this source's
     /// access (System Settings → Privacy & Security → Calendars). False when
     /// the source has none or it could not be opened.

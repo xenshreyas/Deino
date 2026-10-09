@@ -129,6 +129,8 @@ sqlx = { workspace = true, features = ["json"] }
 # Live recording (FND-05b, CAP-02): capture, the crash-safe tracks, and the
 # two-lane Me/Them pipeline that saves the transcript as it is spoken.
 deino-audio.workspace = true
+# OAuth and the Google and Microsoft calendar connectors (ORG-01).
+deino-connect.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
 deino-recording.workspace = true
@@ -184,6 +186,9 @@ time = { version = "0.3", features = ["formatting"] }
 reqwest = { version = "0.11", features = ["multipart", "json"] }
 core-graphics = "0.23"
 cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
+# NSWorkspace.openURL for OAuth sign-in pages (ORG-01); the objc2 release in the tree.
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWorkspace"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSString", "NSURL"] }
 dasp = "0.11.0"
 # The meeting prompt as a non-activating NSPanel, so it never steals focus
 # from the call (CAP-06; Handy's overlay pattern). MIT/Apache-2.0, pinned.

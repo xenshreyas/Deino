@@ -105,6 +105,31 @@ async event(id: CalendarEventId) : Promise<Result<CalendarEvent, AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Connects a Google or Microsoft account: opens its sign-in page in the
+ * browser, waits for the user, then syncs. Fails with `invalid` until its
+ * client ID is set, and `permission_denied` when the user declines.
+ */
+async connect(provider: CalendarProvider) : Promise<Result<CalendarStatus, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|connect", { provider }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Disconnects a Google or Microsoft account: forgets its sign-in and its
+ * synced calendars.
+ */
+async disconnect(provider: CalendarProvider) : Promise<Result<CalendarStatus, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|disconnect", { provider }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -313,13 +338,17 @@ syncEnabled: boolean;
  */
 access: CalendarAccess; 
 /**
- * When the last sync finished, this session.
+ * When macOS Calendar's last sync finished, this session.
  */
 lastSyncedAt: string | null; 
 /**
  * Why the last sync failed, in plain English; `None` after a success.
  */
-lastError: string | null }
+lastError: string | null; 
+/**
+ * The direct connectors (Google, Microsoft).
+ */
+connectors: ConnectorStatus[] }
 /**
  * One calendar as Settings → Calendars lists it.
  */
@@ -381,6 +410,30 @@ export type ConferencePlatform =
  * Any other recognised link.
  */
 "other"
+/**
+ * A direct connector's state, for Settings → Calendar.
+ */
+export type ConnectorStatus = { 
+/**
+ * Which provider.
+ */
+provider: CalendarProvider; 
+/**
+ * The user entered the client ID of their app registration.
+ */
+configured: boolean; 
+/**
+ * An account is signed in.
+ */
+connected: boolean; 
+/**
+ * When its last sync finished, this session.
+ */
+lastSyncedAt: string | null; 
+/**
+ * Why its last sync failed; `None` after a success.
+ */
+lastError: string | null }
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it.
  */

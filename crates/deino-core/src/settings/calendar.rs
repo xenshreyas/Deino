@@ -5,6 +5,11 @@
 //! §3C: a permission is requested only when the feature needing it is turned
 //! on), so the switch is off by default. Hiding a calendar only filters what
 //! Deino shows; its events stay synced, so showing it again is instant.
+//!
+//! The direct connectors (Google Calendar, Microsoft Graph) take the client
+//! ID of the user's own app registration (PARITY_PLAN §9). It is not a
+//! secret; Google's client secret and every refresh token live in the
+//! Keychain.
 
 use std::collections::BTreeSet;
 
@@ -16,6 +21,9 @@ use super::SettingsError;
 /// The most calendars that can be hidden; far more than anyone subscribes to.
 pub const MAX_HIDDEN_CALENDARS: usize = 500;
 
+/// The longest OAuth client ID accepted (Google's are about 75 characters).
+pub const MAX_CLIENT_ID_CHARS: usize = 256;
+
 /// The calendar section of `Settings`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
@@ -24,6 +32,26 @@ pub struct CalendarSettings {
     pub sync_enabled: bool,
     /// Calendars whose events Deino does not show (Settings → Calendars).
     pub hidden_calendars: BTreeSet<CalendarId>,
+    /// The Google Calendar connector's app registration.
+    pub google: ConnectorSettings,
+    /// The Microsoft Graph connector's app registration.
+    pub microsoft: ConnectorSettings,
+}
+
+/// A direct calendar connector's app registration.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ConnectorSettings {
+    /// The OAuth client ID of the user's own app registration; empty until
+    /// they set one up (docs/setup/google-calendar.md, microsoft-graph.md).
+    pub client_id: String,
+}
+
+impl ConnectorSettings {
+    /// The client ID, if one is set.
+    pub fn client_id(&self) -> Option<&str> {
+        Some(self.client_id.trim()).filter(|id| !id.is_empty())
+    }
 }
 
 impl CalendarSettings {
@@ -48,6 +76,15 @@ impl CalendarSettings {
                 "calendar.hiddenCalendars",
                 "lists too many calendars",
             ));
+        }
+        for (setting, connector) in [
+            ("calendar.google.clientId", &self.google),
+            ("calendar.microsoft.clientId", &self.microsoft),
+        ] {
+            let id = &connector.client_id;
+            if id.chars().count() > MAX_CLIENT_ID_CHARS || id.contains(char::is_whitespace) {
+                return Err(SettingsError::invalid(setting, "is not a client ID"));
+            }
         }
         Ok(())
     }
@@ -94,7 +131,19 @@ mod tests {
             hidden_calendars: (0..=MAX_HIDDEN_CALENDARS)
                 .map(|_| CalendarId::generate(&clock))
                 .collect(),
+            ..CalendarSettings::default()
         };
+        assert!(settings.validate().is_err());
+    }
+
+    #[test]
+    fn a_client_id_with_spaces_is_rejected_and_a_blank_one_is_unset() {
+        let mut settings = CalendarSettings::default();
+        assert_eq!(settings.google.client_id(), None);
+
+        settings.google.client_id = "1234-abc.apps.googleusercontent.com".into();
+        assert!(settings.validate().is_ok());
+        settings.microsoft.client_id = "not an id".into();
         assert!(settings.validate().is_err());
     }
 }

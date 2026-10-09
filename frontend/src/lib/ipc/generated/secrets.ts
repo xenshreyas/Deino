@@ -139,7 +139,20 @@ export type SecretName =
 /**
  * The key of the user's custom OpenAI-compatible endpoint.
  */
-"custom_openai_api_key"
+"custom_openai_api_key" | 
+/**
+ * The client secret of the user's Google OAuth desktop client (ORG-01).
+ */
+"google_oauth_client_secret" | 
+/**
+ * The refresh token of the connected Google Calendar account (ORG-01).
+ */
+"google_calendar_refresh_token" | 
+/**
+ * The refresh token of the connected Microsoft (Outlook) calendar
+ * account (ORG-01).
+ */
+"microsoft_calendar_refresh_token"
 /**
  * Whether a secret is saved, as far as the UI may know.
  */

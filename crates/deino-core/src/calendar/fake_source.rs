@@ -90,6 +90,11 @@ impl CalendarSource for FakeCalendarSource {
         Ok(*access)
     }
 
+    async fn disconnect(&self) -> Result<(), SourceError> {
+        *lock(&self.access) = CalendarAccess::NotDetermined;
+        Ok(())
+    }
+
     async fn fetch(&self, window: SyncWindow) -> Result<SourceSnapshot, SourceError> {
         self.fetches.fetch_add(1, Ordering::SeqCst);
         lock(&self.windows).push(window);

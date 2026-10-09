@@ -1,22 +1,23 @@
 //! [`CalendarService`]: calendar sync as the app sees it.
 //!
-//! This file holds the sync lifecycle: the switch (`enable` asks macOS for
-//! access, §3C), `refresh` and the scheduler's `sync_if_enabled`, and the
-//! status Settings shows. `reads.rs` holds what the UI lists. Syncs never
-//! overlap: one lock serialises the scheduler, wake-ups and the Refresh
-//! button.
+//! This file holds the sync lifecycle: macOS Calendar's switch (`enable`
+//! asks macOS for access, §3C), `refresh` and the scheduler's
+//! `sync_if_enabled`, and the status Settings shows. `connectors.rs` holds
+//! the direct connectors' connect and disconnect, `reads.rs` what the UI
+//! lists. Syncs never overlap: one lock serialises the scheduler, wake-ups,
+//! connecting and the Refresh button.
 
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock};
 
 use chrono::{DateTime, Utc};
-use deino_domain::Clock;
+use deino_domain::{CalendarProvider, Clock, Email};
 
-use super::batch::SyncReport;
 use super::entities::AttendeeDirectory;
 use super::sync::CalendarSync;
 use super::{
     CalendarAccess, CalendarAccountRepo, CalendarError, CalendarEvent, CalendarEventRepo,
-    CalendarEvents, CalendarRepo, CalendarSource, CalendarStatus, CalendarSyncRepo,
+    CalendarEvents, CalendarRepo, CalendarSource, CalendarStatus, CalendarSyncRepo, SourceError,
 };
 use crate::settings::SettingsService;
 
@@ -49,11 +50,13 @@ impl CalendarStore {
 pub struct CalendarDeps {
     /// macOS Calendar (`EventKit`), the default source.
     pub source: Arc<dyn CalendarSource>,
+    /// The direct connectors (Google, Microsoft), synced while connected.
+    pub connectors: Vec<Arc<dyn CalendarSource>>,
     /// The stored calendars.
     pub store: CalendarStore,
     /// Where synced attendees become people and companies.
     pub directory: AttendeeDirectory,
-    /// Holds the sync switch and the hidden calendars.
+    /// Holds the sync switch, the hidden calendars and the client IDs.
     pub settings: Arc<SettingsService>,
     /// Where `CalendarChanged` goes.
     pub events: Arc<dyn CalendarEvents>,
@@ -61,25 +64,26 @@ pub struct CalendarDeps {
     pub clock: Arc<dyn Clock>,
 }
 
-/// The outcome of the last sync this session.
+/// The outcome of each source's last sync this session.
 #[derive(Clone, Debug, Default)]
-struct SyncState {
-    last_synced_at: Option<DateTime<Utc>>,
-    last_error: Option<String>,
+pub(super) struct SyncState {
+    pub(super) synced_at: BTreeMap<CalendarProvider, DateTime<Utc>>,
+    pub(super) errors: BTreeMap<CalendarProvider, String>,
 }
 
 /// Syncs the user's calendars and answers what the UI asks about them.
 pub struct CalendarService {
     pub(super) source: Arc<dyn CalendarSource>,
+    pub(super) connectors: Vec<Arc<dyn CalendarSource>>,
     pub(super) store: CalendarStore,
     pub(super) settings: Arc<SettingsService>,
     pub(super) events: Arc<dyn CalendarEvents>,
     pub(super) clock: Arc<dyn Clock>,
     /// The visible events around now, for synchronous lookups (`events_near`).
     pub(super) nearby: RwLock<Vec<CalendarEvent>>,
+    pub(super) running: tokio::sync::Mutex<()>,
     sync: CalendarSync,
     state: Mutex<SyncState>,
-    running: tokio::sync::Mutex<()>,
 }
 
 impl CalendarService {
@@ -88,31 +92,35 @@ impl CalendarService {
         let sync = CalendarSync::new(deps.store.sync.clone(), deps.directory, deps.clock.clone());
         Self {
             source: deps.source,
+            connectors: deps.connectors,
             store: deps.store,
             settings: deps.settings,
             events: deps.events,
             clock: deps.clock,
             nearby: RwLock::new(Vec::new()),
+            running: tokio::sync::Mutex::new(()),
             sync,
             state: Mutex::new(SyncState::default()),
-            running: tokio::sync::Mutex::new(()),
         }
     }
 
-    /// The switch, macOS access and the last sync's outcome.
+    /// The switch, macOS access, each connector and the last syncs.
     pub async fn status(&self) -> CalendarStatus {
         let state = self.state().clone();
+        let apple = CalendarProvider::Apple;
         CalendarStatus {
             sync_enabled: self.settings.get().await.calendar.sync_enabled,
             access: self.source.access().await,
-            last_synced_at: state.last_synced_at,
-            last_error: state.last_error,
+            last_synced_at: state.synced_at.get(&apple).copied(),
+            last_error: state.errors.get(&apple).cloned(),
+            connectors: self.connector_statuses(&state).await,
         }
     }
 
-    /// Turns sync on: asks macOS for Calendars access the first time, and
-    /// syncs at once when it is granted. Denied access leaves sync off; the
-    /// status says so, and Settings links to System Settings.
+    /// Turns macOS Calendar sync on: asks macOS for Calendars access the
+    /// first time, and syncs at once when it is granted. Denied access
+    /// leaves sync off; the status says so, and Settings links to System
+    /// Settings.
     pub async fn enable(&self) -> Result<CalendarStatus, CalendarError> {
         let access = self.source.request_access().await?;
         if access == CalendarAccess::Granted {
@@ -122,11 +130,11 @@ impl CalendarService {
         Ok(self.announce().await)
     }
 
-    /// Turns sync off. Stored events stay, so meetings keep their links;
-    /// "Coming up" empties until sync is on again.
+    /// Turns macOS Calendar sync off. Stored events stay, so meetings keep
+    /// their links; its events leave "Coming up" until sync is on again.
     pub async fn disable(&self) -> Result<CalendarStatus, CalendarError> {
         self.set_enabled(false).await?;
-        self.write_nearby(Vec::new());
+        self.refresh_nearby().await;
         Ok(self.announce().await)
     }
 
@@ -136,50 +144,56 @@ impl CalendarService {
         self.source.open_access_settings()
     }
 
-    /// Syncs now if sync is on, and returns the status.
+    /// Syncs every active source now, and returns the status.
     pub async fn refresh(&self) -> CalendarStatus {
         self.sync_if_enabled().await;
         self.status().await
     }
 
-    /// Syncs if sync is on and macOS still grants access; the scheduler's
-    /// tick. `None` when nothing ran.
-    pub async fn sync_if_enabled(&self) -> Option<SyncReport> {
-        if !self.settings.get().await.calendar.sync_enabled {
-            return None;
+    /// Syncs every active source: macOS Calendar while its switch is on,
+    /// each connector while connected. The scheduler's tick; false when no
+    /// source is active.
+    pub async fn sync_if_enabled(&self) -> bool {
+        if self.active_providers().await.is_empty() {
+            return false;
         }
-        let report = self.sync_now().await;
+        self.sync_now().await;
         self.announce().await;
-        report
+        true
     }
 
-    /// One sync, recorded in the status; `None` when it failed.
-    async fn sync_now(&self) -> Option<SyncReport> {
-        let _running = self.running.lock().await;
-        let result = match self.source.access().await {
-            CalendarAccess::Granted => {
-                let profile = self.settings.get().await.profile;
-                self.sync.run(self.source.as_ref(), &profile.emails).await
-            }
-            _ => Err(super::SourceError::AccessDenied.into()),
+    /// One sync of every active source, each recorded in the status.
+    pub(super) async fn sync_now(&self) {
+        let running = self.running.lock().await;
+        let settings = self.settings.get().await;
+        let active = self.active_providers().await;
+        let sources = std::iter::once(&self.source).chain(&self.connectors);
+        for source in sources.filter(|source| active.contains(&source.provider())) {
+            self.sync_source(source.as_ref(), &settings.profile.emails)
+                .await;
+        }
+        drop(running);
+        self.refresh_nearby().await;
+    }
+
+    /// Syncs one source and records its outcome.
+    async fn sync_source(&self, source: &dyn CalendarSource, profile: &[Email]) {
+        let provider = source.provider();
+        let result = match source.access().await {
+            CalendarAccess::Granted => self.sync.run(source, profile).await,
+            _ => Err(SourceError::AccessDenied.into()),
         };
-        let now = self.clock.now();
-        let report = match result {
-            Ok(report) => {
-                *self.state() = SyncState {
-                    last_synced_at: Some(now),
-                    last_error: None,
-                };
-                Some(report)
+        let mut state = self.state();
+        match result {
+            Ok(_) => {
+                state.synced_at.insert(provider, self.clock.now());
+                state.errors.remove(&provider);
             }
             Err(error) => {
-                log::warn!(target: "calendar", "calendar sync failed: {error}");
-                self.state().last_error = Some(error.to_string());
-                None
+                log::warn!(target: "calendar", "{provider} calendar sync failed: {error}");
+                state.errors.insert(provider, error.to_string());
             }
-        };
-        self.refresh_nearby().await;
-        report
+        }
     }
 
     async fn set_enabled(&self, enabled: bool) -> Result<(), CalendarError> {
@@ -196,7 +210,7 @@ impl CalendarService {
         status
     }
 
-    fn state(&self) -> MutexGuard<'_, SyncState> {
+    pub(super) fn state(&self) -> MutexGuard<'_, SyncState> {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }

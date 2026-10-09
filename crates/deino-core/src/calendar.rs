@@ -32,6 +32,7 @@ mod calendar_repo;
 mod calendar_tests;
 mod color;
 mod conference;
+mod connectors;
 mod entities;
 mod error;
 mod event_repo;
@@ -86,4 +87,4 @@ pub use source::{
 };
 pub use sync::CalendarSync;
 pub use sync_repo::CalendarSyncRepo;
-pub use view::{CalendarStatus, CalendarView};
+pub use view::{CalendarStatus, CalendarView, ConnectorStatus};

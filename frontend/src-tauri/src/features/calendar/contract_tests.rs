@@ -62,7 +62,13 @@ fn pricing_review() -> SourceEvent {
 
 fn source() -> Arc<FakeCalendarSource> {
     let source = Arc::new(FakeCalendarSource::new(CalendarProvider::Apple));
-    source.set_snapshot(SourceSnapshot {
+    source.set_snapshot(work_snapshot());
+    source
+}
+
+/// One iCloud account with a "Work" calendar holding the pricing review.
+fn work_snapshot() -> SourceSnapshot {
+    SourceSnapshot {
         accounts: vec![SourceAccount {
             name: "iCloud".into(),
             calendars: vec![SourceCalendar {
@@ -72,8 +78,7 @@ fn source() -> Arc<FakeCalendarSource> {
                 events: vec![pricing_review()],
             }],
         }],
-    });
-    source
+    }
 }
 
 /// An app with the `calendar` plugin over a scripted macOS Calendar.
@@ -91,8 +96,11 @@ fn calendar_app_over(source: Arc<FakeCalendarSource>) -> App<MockRuntime> {
     ))
     .unwrap();
     let repo = Arc::new(FakeCalendarRepo::default());
+    let google = Arc::new(FakeCalendarSource::new(CalendarProvider::Google));
+    google.set_snapshot(work_snapshot());
     let service = CalendarService::new(CalendarDeps {
         source,
+        connectors: vec![google],
         store: CalendarStore::over(&repo),
         directory: AttendeeDirectory::new(
             Arc::new(FakePeopleRepo::default()),
@@ -127,6 +135,13 @@ fn status_reports_the_switch_access_and_last_sync_in_camel_case() {
             "access": "not_determined",
             "lastSyncedAt": null,
             "lastError": null,
+            "connectors": [{
+                "provider": "google",
+                "configured": false,
+                "connected": false,
+                "lastSyncedAt": null,
+                "lastError": null,
+            }],
         }))
     );
 }
@@ -148,6 +163,13 @@ fn enable_syncs_and_emits_calendar_changed_with_the_status() {
         "access": "granted",
         "lastSyncedAt": NOW,
         "lastError": null,
+        "connectors": [{
+            "provider": "google",
+            "configured": false,
+            "connected": false,
+            "lastSyncedAt": null,
+            "lastError": null,
+        }],
     });
     assert_eq!(status, expected);
     let payload: Value =
@@ -256,5 +278,28 @@ fn denied_access_keeps_sync_off_and_says_so() {
         opened,
         Ok(json!(false)),
         "the scripted source has no settings page"
+    );
+}
+
+#[test]
+fn connect_and_disconnect_take_a_provider_and_return_the_status() {
+    let app = calendar_app();
+    let window = main_window(&app);
+    let google = json!({ "provider": "google" });
+
+    let connected = invoke(&window, "plugin:calendar|connect", google.clone()).unwrap();
+    let disconnected = invoke(&window, "plugin:calendar|disconnect", google).unwrap();
+    let missing = invoke(
+        &window,
+        "plugin:calendar|connect",
+        json!({ "provider": "microsoft" }),
+    );
+
+    assert_eq!(connected["connectors"][0]["connected"], true);
+    assert_eq!(connected["connectors"][0]["lastSyncedAt"], NOW);
+    assert_eq!(disconnected["connectors"][0]["connected"], false);
+    assert_eq!(
+        missing,
+        Err(json!({ "code": "invalid", "message": "there is no microsoft calendar connector" }))
     );
 }

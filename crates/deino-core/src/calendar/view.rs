@@ -15,9 +15,27 @@ pub struct CalendarStatus {
     pub sync_enabled: bool,
     /// Whether macOS lets Deino read the calendars.
     pub access: CalendarAccess,
-    /// When the last sync finished, this session.
+    /// When macOS Calendar's last sync finished, this session.
     pub last_synced_at: Option<DateTime<Utc>>,
     /// Why the last sync failed, in plain English; `None` after a success.
+    pub last_error: Option<String>,
+    /// The direct connectors (Google, Microsoft).
+    pub connectors: Vec<ConnectorStatus>,
+}
+
+/// A direct connector's state, for Settings → Calendar.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectorStatus {
+    /// Which provider.
+    pub provider: CalendarProvider,
+    /// The user entered the client ID of their app registration.
+    pub configured: bool,
+    /// An account is signed in.
+    pub connected: bool,
+    /// When its last sync finished, this session.
+    pub last_synced_at: Option<DateTime<Utc>>,
+    /// Why its last sync failed; `None` after a success.
     pub last_error: Option<String>,
 }
 
