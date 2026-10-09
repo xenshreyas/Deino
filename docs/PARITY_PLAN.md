@@ -2044,6 +2044,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
   - **CAP-06** lives in its own crate `crates/deino-detect` (heavy macOS native code), so it doesn't wait on FND-05.
   - **EXP-01** pure renderers (Markdown, TXT, JSON, SRT/VTT, DOCX, PDF) work from a DTO and can start before FND-07 merges. Wire them to the repos afterwards.
 - **Benchmarks:** take acceptance timings only when the machine load is below about 20, or label them with the load.
+- **Never kill processes by pattern.** `pkill -f target/debug/deino` also kills other agents' dev apps. Record the PID you started (`$!`) and kill only that PID.
 
 ### 7.1 Progress log
 
