@@ -41,6 +41,16 @@ impl FakePeopleRepo {
         listed.sort_by_key(|person| (person.name.to_lowercase(), person.id));
         listed
     }
+
+    /// Every stored person, merged or not, in insertion order.
+    pub(super) fn people(&self) -> Vec<Person> {
+        lock(&self.people).clone()
+    }
+
+    /// Changes the stored people under one lock, like a transaction.
+    pub(super) fn update_people<T>(&self, change: impl FnOnce(&mut Vec<Person>) -> T) -> T {
+        change(&mut lock(&self.people))
+    }
 }
 
 #[async_trait]

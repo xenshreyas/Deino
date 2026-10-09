@@ -1,0 +1,9 @@
+---
+source: crates/deino-core/src/templates/prompt.rs
+expression: "preview.blocks[1].body"
+---
+Title: Deino × Brightkite: discovery
+Date: Wednesday 30 September 2026, 15:00 UTC
+Audience: external
+Attendees (2): marcus@brightkite-logistics.com
+Description: Intro call.

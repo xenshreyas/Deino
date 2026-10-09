@@ -49,7 +49,16 @@ let settings: Generated.Settings = {
   },
   privacy: {},
   network: { offlineMode: false, services: {} },
-  profile: {},
+  profile: {
+    name: 'Shreyas',
+    emails: ['shreyas@deino.dev' as Generated.Email],
+    role: 'CTO',
+    company: 'Deino',
+    focusAreas: ['Reliability', 'Hiring'],
+    writingStyle: '',
+    context: '',
+  },
+  templates: { defaultTemplate: null },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

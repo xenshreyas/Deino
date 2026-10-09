@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every template, by name. Served by idx_templates_name (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: TemplateId\",\n    name,\n    description,\n    meeting_context,\n    auto_rules_json AS \"auto_rules: Json<Vec<AutoRule>>\",\n    builtin_version,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM templates\nORDER BY name COLLATE NOCASE, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: TemplateId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_context",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "auto_rules: Json<Vec<AutoRule>>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "builtin_version",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "3eebfd41d2acdb9231635025e2a6ab5b2e66bd2d6ce7f0d11b4b1da8adc03879"
+}

@@ -1,0 +1,17 @@
+---
+source: crates/deino-core/src/templates/classifier_tests.rs
+expression: "pick_prompt(&meeting(), &candidates())"
+---
+<meeting>
+Title: Brightkite × Deino
+Description: First conversation about routing.
+Attendees (3): marcus@brightkite-logistics.com
+</meeting>
+
+<templates>
+- general: General — Adapts to any meeting: an overview, the discussion by topic, decisions and next steps.
+- sales_discovery: Sales discovery — A first call with a prospect: their situation, pain, buying process and fit.
+- podcast: Podcast — A podcast episode, recorded or listened to: topics, the guest's insights, quotes and mentions.
+</templates>
+
+Now choose the template for this meeting.

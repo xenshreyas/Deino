@@ -12,6 +12,8 @@ export const settingsSectionSchema = z.enum([
   'transcription',
   'ai',
   'models',
+  'templates',
+  'profile',
   'network',
   'beta',
   'about',
@@ -21,7 +23,11 @@ export const settingsSectionSchema = z.enum([
 /** One settings page. */
 export type SettingsSectionId = z.infer<typeof settingsSectionSchema>;
 
-/** `/settings?section=appearance` */
+/**
+ * `/settings?section=appearance`. `template` opens a template in the
+ * Templates page's editor (`new` for a new one).
+ */
 export const settingsSearchSchema = z.object({
   section: settingsSectionSchema.optional().catch(undefined),
+  template: z.string().min(1).optional().catch(undefined),
 });

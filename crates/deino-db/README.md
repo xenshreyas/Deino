@@ -21,7 +21,9 @@ commit-time change signals (ADR 0005).
 - The core schema (FND-07, ADR 0012), including the legacy `transcripts`
   compatibility view over `transcript_segments`, and the pipeline queue
   tables `jobs` and `job_runs` (FND-08, ADR 0018; their SQL lives in
-  `deino-pipeline`).
+  `deino-pipeline`), and `templates` / `template_sections` with the
+  `meetings.template_id` reference (NOT-04, ADR 0021; SQL in
+  `deino-core::templates`).
 - `test_db()` (feature `test-support`): an in-memory database with every
   migration applied.
 

@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- One template's sections (?1), in order. Served by the primary key.\nSELECT\n    template_id AS \"template_id: TemplateId\",\n    title,\n    instructions,\n    format AS \"format: SectionFormat\"\nFROM template_sections\nWHERE template_id = ?1\nORDER BY position\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "instructions",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "format: SectionFormat",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "0a63406bc57ded877bf8e19e9f4748f9ea0ec79bbaf8918768e28f539624ed88"
+}

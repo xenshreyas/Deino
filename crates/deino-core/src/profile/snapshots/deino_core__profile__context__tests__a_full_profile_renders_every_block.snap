@@ -1,0 +1,18 @@
+---
+source: crates/deino-core/src/profile/context.rs
+expression: "render_profile_context(&profile(\"CTO\")).unwrap()"
+---
+About the user, who these notes are for ("Me" in transcripts):
+- Name: Shreyas Rao
+- Role: CTO at Deino
+- Email: shreyas@deino.dev
+- Focus areas: Reliability, Hiring
+
+Write for their role (CTO): lead with what someone in that role needs to know, decide or act on, and use that role's vocabulary. Give extra weight to anything touching their focus areas.
+
+Writing style:
+Short bullets. British spelling.
+
+Context and glossary:
+FSM = field-service management.
+Brightkite is a prospect.

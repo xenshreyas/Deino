@@ -988,13 +988,14 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.16.6"
+version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e96a4956774c13c126a8b5af4daa79384f4d826534c95a02d76afb39e2ab64e3"
+checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
 dependencies = [
  "encode_unicode",
  "libc",
- "windows-sys 0.61.2",
+ "once_cell",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1620,9 +1621,11 @@ dependencies = [
  "deino-llm",
  "deino-secrets",
  "deino-testkit",
+ "insta",
  "json-patch",
  "log",
  "regex",
+ "schemars 1.2.1",
  "serde",
  "serde_json",
  "sha2",
@@ -3332,14 +3335,13 @@ dependencies = [
 
 [[package]]
 name = "insta"
-version = "1.49.0"
+version = "1.43.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67d3d2e287e4b86c10b3f3b641033d1f89b74bdb39d05f34952e2b9a6fe21cd"
+checksum = "154934ea70c58054b556dd430b99a98c2a7ff5309ac9891597e339b5c28f4371"
 dependencies = [
  "console",
  "once_cell",
  "similar",
- "tempfile",
 ]
 
 [[package]]

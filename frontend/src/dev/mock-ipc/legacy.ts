@@ -45,13 +45,6 @@ const STATIC_RESPONSES: Record<string, unknown> = {
   get_database_directory: '~/Library/Application Support/com.xenshreyas.deino',
   whisper_get_models_directory: '~/Library/Application Support/com.xenshreyas.deino/models',
   'plugin:app|version': packageJson.version,
-  api_list_templates: [
-    {
-      id: 'standard_meeting',
-      name: 'Standard meeting',
-      description: 'Summary, decisions, action items',
-    },
-  ],
   parakeet_has_available_models: true,
   parakeet_get_available_models: [],
   whisper_has_available_models: false,

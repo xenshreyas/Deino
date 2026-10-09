@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: TemplateId\", builtin_version AS \"version!: i64\"\n               FROM templates WHERE builtin_version IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: TemplateId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "version!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "d2d67453d19c2b18e2fec180cb0e2b011b1fff2677c4e1f1e36e135b3de4c80f"
+}

@@ -15,10 +15,8 @@ use tauri::{AppHandle, Manager, Runtime};
 pub(crate) struct AppPaths {
     /// Configuration: `settings.json`.
     config: PathBuf,
-    /// Data: the database, models, custom templates and the legacy stores.
+    /// Data: the database, models and the legacy stores.
     data: PathBuf,
-    /// Bundled resources, when the platform has a resource directory.
-    resources: Option<PathBuf>,
 }
 
 impl AppPaths {
@@ -28,7 +26,6 @@ impl AppPaths {
         Ok(Self {
             config: resolver.app_config_dir()?,
             data: resolver.app_data_dir()?,
-            resources: resolver.resource_dir().ok(),
         })
     }
 
@@ -47,15 +44,9 @@ impl AppPaths {
         self.data.join("models")
     }
 
-    /// The user's own summary templates (`<data>/templates`).
-    pub(crate) fn custom_templates(&self) -> PathBuf {
+    /// The pre-NOT-04 custom templates folder (`<data>/templates`), read
+    /// once at startup to import its JSON files into the database.
+    pub(crate) fn legacy_templates(&self) -> PathBuf {
         self.data.join("templates")
-    }
-
-    /// The templates shipped with the app, if there is a resource directory.
-    pub(crate) fn bundled_templates(&self) -> Option<PathBuf> {
-        self.resources
-            .as_ref()
-            .map(|resources| resources.join("templates"))
     }
 }

@@ -132,6 +132,33 @@ db_enum! {
     }
 }
 
+db_enum! {
+    /// How the notes render one section of a template. Stored in
+    /// `template_sections.format`.
+    SectionFormat {
+        /// A bulleted list, one idea per bullet.
+        Bullets = "bullets",
+        /// Prose: one or two short paragraphs.
+        Paragraph = "paragraph",
+        /// A Markdown table with a header row.
+        Table = "table",
+        /// A task list (`- [ ]`), one action per line.
+        Todo = "todo",
+    }
+}
+
+db_enum! {
+    /// Who a meeting is with, from the user's side: only colleagues, or
+    /// someone from outside. Template auto rules match on it (NOT-04);
+    /// briefs, follow-up emails and calendar sync use it later.
+    Audience {
+        /// Everyone else shares one of the user's work email domains.
+        Internal = "internal",
+        /// At least one attendee is from another domain.
+        External = "external",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,6 +174,8 @@ mod tests {
         assert_names_agree(ActionItemPriority::ALL, ActionItemPriority::as_str);
         assert_names_agree(ActionItemOrigin::ALL, ActionItemOrigin::as_str);
         assert_names_agree(TagSource::ALL, TagSource::as_str);
+        assert_names_agree(SectionFormat::ALL, SectionFormat::as_str);
+        assert_names_agree(Audience::ALL, Audience::as_str);
         assert_names_agree(CalendarProvider::ALL, CalendarProvider::as_str);
         assert_names_agree(ConferencePlatform::ALL, ConferencePlatform::as_str);
     }

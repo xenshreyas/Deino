@@ -28,8 +28,10 @@ mod notifications;
 mod onboarding;
 mod patch;
 mod personal;
+mod profile;
 mod service;
 mod store;
+mod templates;
 mod transcription;
 mod ui;
 
@@ -46,9 +48,14 @@ pub use network::NetworkSettings;
 pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, NotificationSettings};
 pub use onboarding::{ModelDownloadState, OnboardingSettings};
 pub use patch::SettingsPatch;
-pub use personal::{PrivacySettings, ProfileSettings};
+pub use personal::PrivacySettings;
+pub use profile::{
+    MAX_CONTEXT_CHARS, MAX_FOCUS_AREA_CHARS, MAX_FOCUS_AREAS, MAX_PROFILE_EMAILS,
+    MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,
+};
 pub use service::SettingsService;
 pub use store::{JsonFileSettingsStore, SettingsStore};
+pub use templates::TemplateSettings;
 pub use transcription::{DEFAULT_PARAKEET_MODEL, TranscriptionEngine, TranscriptionSettings};
 pub use ui::{
     BetaSettings, MAX_TRANSCRIPT_PANE_RATIO, MIN_TRANSCRIPT_PANE_RATIO, Theme, UiSettings,

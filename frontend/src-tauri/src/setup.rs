@@ -30,7 +30,6 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     tauri::async_runtime::block_on(database::setup::initialize_database_on_startup(handle))?;
     #[cfg(debug_assertions)]
     tauri::async_runtime::block_on(composition::attach_example(handle))?;
-    configure_template_dirs(&paths);
     log::info!("Application setup complete");
     Ok(())
 }
@@ -94,13 +93,4 @@ fn spawn_summary_model_manager(app: AppHandle) {
             Err(e) => log::warn!("ModelManager startup init failed, will retry lazily: {e}"),
         }
     });
-}
-
-/// Registers the bundled (resources) and user (app data) template directories.
-fn configure_template_dirs(paths: &AppPaths) {
-    match paths.bundled_templates() {
-        Some(bundled) => summary::templates::set_bundled_templates_dir(bundled),
-        None => log::warn!("No resource directory; only the built-in templates are available"),
-    }
-    summary::templates::set_custom_templates_dir(paths.custom_templates());
 }

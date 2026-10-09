@@ -71,6 +71,21 @@ pub struct TitleUser<'a> {
     pub transcript: &'a str,
 }
 
+/// `tagging`, template auto-selection (NOT-04): instructions.
+#[derive(Template)]
+#[template(path = "template_pick.system.md.jinja", escape = "none")]
+pub struct TemplatePickSystem;
+
+/// `tagging`, template auto-selection: the meeting and the candidates.
+#[derive(Template)]
+#[template(path = "template_pick.user.md.jinja", escape = "none")]
+pub struct TemplatePickUser<'a> {
+    /// The meeting's title, description and attendees, one per line.
+    pub meeting: &'a str,
+    /// One `- id: name — description` line per template.
+    pub templates: &'a str,
+}
+
 /// The Settings → AI "Test" button's message.
 #[derive(Template)]
 #[template(path = "route_test.user.md.jinja", escape = "none")]
@@ -201,6 +216,42 @@ mod tests {
     </transcript>
 
     Now write the title of this meeting.
+    "
+    );
+
+    prompt_snapshot!(
+        template_pick_system_limits_the_answer_to_listed_ids,
+        TemplatePickSystem,
+        @r#"
+    # General Instructions
+
+    - You choose the note template that best fits a meeting, from a fixed list.
+    - Judge by the meeting's title, its calendar description and who attends.
+    - Prefer a specific template only when the meeting clearly is that kind of meeting; otherwise choose "general".
+
+    # Format Requirements
+
+    - Answer with the chosen template's `id`, exactly as listed, and one short reason (under 15 words) a user would understand.
+    - Never invent an id that is not in the list.
+    "#
+    );
+
+    prompt_snapshot!(
+        template_pick_user_lists_meeting_and_templates,
+        TemplatePickUser {
+            meeting: "Title: Brightkite discovery",
+            templates: "- general: General — Adapts to any meeting.",
+        },
+        @r"
+    <meeting>
+    Title: Brightkite discovery
+    </meeting>
+
+    <templates>
+    - general: General — Adapts to any meeting.
+    </templates>
+
+    Now choose the template for this meeting.
     "
     );
 

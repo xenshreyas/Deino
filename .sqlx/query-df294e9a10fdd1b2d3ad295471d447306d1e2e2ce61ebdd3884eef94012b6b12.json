@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO templates (id, name, description, meeting_context, auto_rules_json, builtin_version, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)\n             ON CONFLICT (id) DO UPDATE SET\n                 name = excluded.name, description = excluded.description,\n                 meeting_context = excluded.meeting_context, auto_rules_json = excluded.auto_rules_json,\n                 builtin_version = excluded.builtin_version, updated_at = excluded.updated_at\n             WHERE templates.builtin_version IS NOT NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "df294e9a10fdd1b2d3ad295471d447306d1e2e2ce61ebdd3884eef94012b6b12"
+}

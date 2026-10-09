@@ -30,7 +30,7 @@ pub async fn initialize_fresh_database(app: AppHandle) -> Result<(), String> {
         })?;
 
     // Wire the new database into the legacy state, the services and the UI bridge.
-    crate::composition::attach_database(&app, db_manager.clone());
+    crate::composition::attach_database(&app, db_manager.clone()).await;
 
     // A fresh install summarises with the built-in model recommended for this
     // Mac, unless onboarding already picked one. Parakeet is the settings' default.

@@ -57,3 +57,5 @@ mod data_migration_tests;
 mod database_tests;
 #[cfg(test)]
 mod migration_tests;
+#[cfg(test)]
+mod templates_migration_tests;

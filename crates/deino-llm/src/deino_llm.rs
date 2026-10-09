@@ -26,6 +26,7 @@
 
 pub mod admin;
 mod catalog;
+mod context;
 mod credentials;
 mod error;
 mod event;
@@ -48,6 +49,7 @@ mod user_templates;
 
 pub use admin::{AdminParts, LlmAdmin, ProviderStatus, RouteTestReport, TextSink};
 pub use catalog::{DraftConnection, ModelCatalog, ModelInfo};
+pub use context::SystemContext;
 pub use credentials::{
     ApiKey, CredentialError, CredentialSource, Endpoint, EndpointSource, SamplingOverrides,
     StaticCredentials,

@@ -126,6 +126,14 @@ export type Table =
  */
 "egress_log" | 
 /**
+ * Note templates, built-in and the user's own (NOT-04).
+ */
+"templates" | 
+/**
+ * The ordered sections of each template.
+ */
+"template_sections" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

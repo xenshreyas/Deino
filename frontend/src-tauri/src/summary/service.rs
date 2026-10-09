@@ -22,7 +22,7 @@ use super::result::build_summary_result_json;
 use crate::database::repositories::{
     meeting::MeetingsRepository, summary::SummaryProcessesRepository,
 };
-use crate::summary::templates;
+use crate::features::templates::summary_template;
 
 /// The cancellation token of each meeting's running summary, with the start
 /// time that identifies the generation.
@@ -144,16 +144,15 @@ async fn generate<R: Runtime>(
     job: &SummaryJob,
 ) -> Result<GeneratedSummary, String> {
     let target = target(&job.provider, &job.model)?;
-    let template = templates::get_template(&job.template_id)
-        .map_err(|e| format!("Failed to load template '{}': {}", job.template_id, e))?;
+    let template = summary_template(app, &job.template_id).await?;
     let generator = app
         .try_state::<Arc<SummaryGenerator>>()
         .ok_or("Summaries are not ready yet; try again in a moment")?;
     let request = SummaryRequest {
         transcript: job.text.clone(),
         user_context: Some(job.custom_prompt.clone()).filter(|context| !context.trim().is_empty()),
-        section_instructions: template.to_section_instructions(),
-        template_markdown: template.to_markdown_structure(),
+        section_instructions: template.section_instructions,
+        template_markdown: template.template_markdown,
         target,
     };
     generator

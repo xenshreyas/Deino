@@ -24,7 +24,7 @@ pub async fn initialize_database_on_startup(app: &AppHandle) -> Result<(), Strin
         .await
         .map_err(|e| format!("Failed to initialize database manager: {}", e))?;
 
-    composition::attach_database(app, db_manager);
+    composition::attach_database(app, db_manager).await;
     info!("Database initialized successfully");
     Ok(())
 }

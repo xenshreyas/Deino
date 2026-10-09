@@ -41,9 +41,11 @@
         "meetings:default",
         "network:default",
         "pipeline:default",
+        "profile:default",
         "secrets:default",
         "llm:default",
         "settings:default",
+        "templates:default",
         "transcription:default"
     ]
 }

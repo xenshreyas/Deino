@@ -41,7 +41,16 @@ const DEFAULT_SETTINGS: Settings = {
   },
   privacy: {},
   network: { offlineMode: false, services: {} },
-  profile: {},
+  profile: {
+    name: '',
+    emails: [],
+    role: '',
+    company: '',
+    focusAreas: [],
+    writingStyle: '',
+    context: '',
+  },
+  templates: { defaultTemplate: null },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

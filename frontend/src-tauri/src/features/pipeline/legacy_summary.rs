@@ -15,10 +15,11 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_core::settings::SettingsService;
+use deino_core::templates::{GENERAL_TEMPLATE_ID, MeetingTemplateService};
 use deino_domain::{Clock, ErrorCode, MeetingId};
 use deino_pipeline::{StageError, StageOutcome, Summarizer, SummaryInput};
 use sqlx::SqlitePool;
-use tauri::{AppHandle, Runtime};
+use tauri::{AppHandle, Manager, Runtime};
 use tokio_util::sync::CancellationToken;
 
 use crate::database::repositories::summary::SummaryProcessesRepository;
@@ -26,8 +27,6 @@ use crate::database::repositories::transcript_chunk::TranscriptChunksRepository;
 use crate::summary::SummaryService;
 use crate::summary::service::SummaryJob;
 
-/// The template the meeting page selects by default.
-const DEFAULT_TEMPLATE: &str = "standard_meeting";
 /// Characters per chunk and their overlap, as the meeting page requests them.
 const CHUNK_SIZE: i32 = 40_000;
 const CHUNK_OVERLAP: i32 = 1_000;
@@ -107,15 +106,30 @@ impl<R: Runtime> LegacySummarizer<R> {
         Ok(started_at)
     }
 
+    /// The template auto-selection picks for a meeting without one (NOT-04:
+    /// rules, the default template, then the LLM classifier), else General.
+    async fn auto_template(&self, meeting: &MeetingId) -> String {
+        let Some(templates) = self.app.try_state::<Arc<MeetingTemplateService>>() else {
+            return GENERAL_TEMPLATE_ID.to_owned();
+        };
+        match templates.auto_choice(meeting).await {
+            Ok(choice) => choice.template.id.to_string(),
+            Err(error) => {
+                log::warn!(target: "pipeline", "no automatic template for {meeting}: {error}");
+                GENERAL_TEMPLATE_ID.to_owned()
+            }
+        }
+    }
+
     /// Runs the summary job to the end. When `cancel` fires, it cancels the
     /// job, which then stores itself as cancelled.
     async fn run(&self, request: SummaryInput, model: SummaryModel, process: Process) {
         let meeting = request.meeting_id.to_string();
         let legacy = SummaryService::register_cancellation_token(&meeting, process.started_at);
-        let template_id = request.template.map_or_else(
-            || DEFAULT_TEMPLATE.to_owned(),
-            |template| template.to_string(),
-        );
+        let template_id = match request.template {
+            Some(template) => template.to_string(),
+            None => self.auto_template(&request.meeting_id).await,
+        };
         let job = SummaryJob {
             pool: self.pool.clone(),
             meeting_id: meeting,

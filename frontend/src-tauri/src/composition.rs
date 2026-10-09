@@ -15,17 +15,22 @@
 //! 3. [`attach_database`]: the database-backed [`Services`] and the
 //!    post-meeting [`Pipeline`] (started in the background), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
-//!    by [`legacy_settings_import`]), and the egress log's table.
+//!    by [`legacy_settings_import`]), the egress log's table, the LLM
+//!    gateway (`llm.rs`), and templates and the profile (`notes.rs`: the
+//!    built-in catalogue is synced before the pipeline starts).
 //!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
 mod diarize;
+mod llm;
 mod network;
+mod notes;
 mod stt;
 
 use std::sync::Arc;
 
+use notes::{NoteDeps, NoteServices};
 pub(crate) use stt::attach_stt;
 
 use deino_core::diarization::TrackDiarizer;
@@ -33,8 +38,7 @@ use deino_core::meetings::{MeetingLifecycleService, MeetingService, SqliteMeetin
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
-    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, LlmAccess, SettingsError,
-    SettingsService,
+    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
@@ -182,19 +186,43 @@ impl Pipeline {
 /// Runs once, at startup or from the first-launch `initialize_fresh_database`
 /// command. Feature commands called before that fail with Tauri's "state not
 /// managed" error, as the legacy commands always have.
-pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
+pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     let database = manager.database().clone();
     let clock: Arc<dyn Clock> = Arc::new(SystemClock);
     app.manage(AppState {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
-    attach_llm(app, &database, Arc::clone(&clock));
-    attach_pipeline(app, &database, &clock);
     network::attach_network_log(app, &database);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, &database);
     features::db::forward_changes(app, database.changes());
+    let Some(settings) = app
+        .try_state::<Arc<SettingsService>>()
+        .map(|settings| Arc::clone(&settings))
+    else {
+        log::error!(target: "startup", "settings were not wired before the database; AI, templates and the profile are unavailable");
+        return;
+    };
+    let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
+    let deps = NoteDeps {
+        settings,
+        gateway,
+        clock: Arc::clone(&clock),
+    };
+    // Templates are seeded before the pipeline starts: its summary stage reads them.
+    attach_notes(app, &database, deps).await;
+    attach_pipeline(app, &database, &clock);
+}
+
+/// Wires templates and the profile (`notes.rs`) and prepares them.
+async fn attach_notes(app: &AppHandle, database: &Database, deps: NoteDeps) {
+    let notes = NoteServices::build(database, deps);
+    let legacy_templates = AppPaths::resolve(app)
+        .ok()
+        .map(|paths| paths.legacy_templates());
+    notes.prepare(legacy_templates.as_deref()).await;
+    notes.manage(app);
 }
 
 /// Builds the pipeline with the app's adapters, starts it and manages it.
@@ -221,38 +249,6 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
         )),
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
-}
-
-/// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>`,
-/// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
-/// that saves `llm_calls`. Needs [`attach_settings`] to have run.
-fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
-    let (Some(settings), Some(secrets), Some(net)) = (
-        app.try_state::<Arc<SettingsService>>(),
-        app.try_state::<Arc<dyn SecretStore>>(),
-        app.try_state::<deino_net::Net>(),
-    ) else {
-        log::error!(target: "llm", "settings or the network were not wired before the database; AI is unavailable");
-        return;
-    };
-    let access = Arc::new(LlmAccess::new(Arc::clone(&settings), Arc::clone(&secrets)));
-    let app_data_dir = app.path().app_data_dir().unwrap_or_default();
-    let services = crate::llm::build(crate::llm::LlmPorts {
-        access,
-        database: database.clone(),
-        app_data_dir,
-        clock,
-        net: net.inner().clone(),
-    });
-    // Owned for the app's lifetime: it ends when the gateway, and with it the
-    // last usage channel, is dropped at exit.
-    tauri::async_runtime::spawn(services.usage_writer.run());
-    app.manage(services.gateway);
-    app.manage(services.admin);
-    app.manage(services.summaries);
-    let pull_events: Arc<dyn features::llm::PullEvents> =
-        Arc::new(features::llm::TauriPullEvents::new(app.clone()));
-    app.manage(pull_events);
 }
 
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE templates SET name = ?1, description = ?2, meeting_context = ?3, auto_rules_json = ?4, updated_at = ?5\n             WHERE id = ?6 AND builtin_version IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "9936954acee6ebffab4ad6e7621221d56566b9f1d003e389ccc413aad6732260"
+}
