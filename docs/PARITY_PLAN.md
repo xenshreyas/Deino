@@ -850,7 +850,16 @@ Card format:
 - **Wave** 1 · **Depends on** FND-02 · **Size** M
 - **Owns:** `audio/transcription/parakeet_unified_provider.rs` (new), `audio/transcription/engine.rs`, the model manager UI
 - **Build:**
-  - Port the integration from Handy (`~/Documents/GitHub/Handy/src-tauri/src/managers/transcription.rs`, `catalog/catalog.json`, and the `transcribe-cpp = "0.1.3"` dependency with the `metal` feature on macOS).
+  - Port the integration from Handy (`~/Documents/GitHub/deino-references/Handy/src-tauri/`). Read `docs/REFERENCES.md` → "Handy STT" first.
+    - Dependency: `transcribe-cpp = { version = "0.3.1", default-features = false, features = ["serde"] }`, plus `metal` on macOS.
+    - Adopt Handy's **worker-process isolation** (`src/engine_supervisor/`), so a GGML abort or hang can't take down the app.
+    - Adopt the FIFO stream feed/finalize lifecycle with a **batch fallback** on the retained audio.
+    - Adopt the idle unload, the `GGML_METAL_NO_RESIDENCY=1` setting, the background Metal shader pre-warm, and the resumable sha256-verified downloader.
+    - **Meeting-specific differences from Handy:**
+      - Feed the stream **wall-clock-continuous audio**: do not VAD-gate the input, so timestamps stay on meeting time. VAD is used only for segmentation and UI.
+      - Read **token timestamps** from the crate API (Handy doesn't). Check the crate source after `cargo fetch`.
+      - Support **two concurrent streams** (mic and system lanes for CAP-02), either as two workers or one worker with two sessions; benchmark both.
+      - Verify sha256 on the HuggingFace download path too.
   - **Model:** `handy-computer/parakeet-unified-en-0.6b-gguf` at revision `7e948f21b7bdbac698d3318db9d350f1096f3b6c`. Default quant `Q8_0` (731,357,568 bytes, sha256 `4b50b6dd…f38795`; copy all six quant entries and hashes from Handy's catalog). Download from HuggingFace with resume and sha256 verification.
   - **Streaming mode for live transcription**, with token timestamps stored in `words_json`.
   - Implement `TranscriptionProvider`.
