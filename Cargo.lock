@@ -1650,6 +1650,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "deino-diarize"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "deino-audio",
+ "deino-core",
+ "deino-domain",
+ "deino-testkit",
+ "hound",
+ "knf-rs",
+ "log",
+ "ort",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "deino-domain"
 version = "0.1.0"
 dependencies = [
@@ -3555,6 +3576,14 @@ dependencies = [
  "security-framework 3.7.0",
  "windows-sys 0.60.2",
  "zeroize",
+]
+
+[[package]]
+name = "knf-rs"
+version = "0.3.2"
+dependencies = [
+ "cc",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
