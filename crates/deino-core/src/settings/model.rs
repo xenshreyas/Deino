@@ -3,9 +3,9 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, BetaSettings, NotificationSettings, OnboardingSettings,
-    PrivacySettings, ProfileSettings, RecordingSettings, SettingsError, TranscriptionSettings,
-    UiSettings,
+    AiSettings, AudioSettings, BetaSettings, NetworkSettings, NotificationSettings,
+    OnboardingSettings, PrivacySettings, ProfileSettings, RecordingSettings, SettingsError,
+    TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -33,6 +33,8 @@ pub struct Settings {
     pub notifications: NotificationSettings,
     /// Privacy controls (PRV-01).
     pub privacy: PrivacySettings,
+    /// Which outside services may send data, and offline mode (FND-12).
+    pub network: NetworkSettings,
     /// The user's profile (NOT-05).
     pub profile: ProfileSettings,
     /// Appearance and layout.
@@ -53,6 +55,7 @@ impl Default for Settings {
             transcription: TranscriptionSettings::default(),
             notifications: NotificationSettings::default(),
             privacy: PrivacySettings::default(),
+            network: NetworkSettings::default(),
             profile: ProfileSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),

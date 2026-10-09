@@ -39,6 +39,7 @@ deino-db = { path = "crates/deino-db" }
 deino-domain = { path = "crates/deino-domain" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }
+deino-net = { path = "crates/deino-net" }
 deino-pipeline = { path = "crates/deino-pipeline" }
 deino-secrets = { path = "crates/deino-secrets" }
 deino-stt = { path = "crates/deino-stt" }

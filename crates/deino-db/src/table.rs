@@ -52,6 +52,8 @@ pub enum Table {
     Jobs,
     /// The attempts of each pipeline job.
     JobRuns,
+    /// One row per outgoing HTTP request: service, host, size, never content.
+    EgressLog,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -59,7 +61,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 20] = [
+    pub const ALL: [Self; 21] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -79,6 +81,7 @@ impl Table {
         Self::LlmCalls,
         Self::Jobs,
         Self::JobRuns,
+        Self::EgressLog,
         Self::ExampleNotes,
     ];
 
@@ -107,6 +110,7 @@ impl Table {
             "llm_calls" => Self::LlmCalls,
             "jobs" => Self::Jobs,
             "job_runs" => Self::JobRuns,
+            "egress_log" => Self::EgressLog,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })
