@@ -6,7 +6,7 @@ use std::time::Duration;
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
 
-use crate::{ChangeNotifier, DbError};
+use crate::{ChangeNotifier, DataMigration, DbError};
 
 /// Read connections. In WAL mode SQLite serves readers alongside the writer.
 const READ_POOL_SIZE: u32 = 4;
@@ -40,6 +40,44 @@ impl Database {
     ///
     /// Every commit on the writer is reported through [`Database::changes`].
     pub async fn open(location: &DbLocation, migrator: &Migrator) -> Result<Self, DbError> {
+        Self::open_with(location, migrator, &[]).await
+    }
+
+    /// Opens the database like [`Database::open`], running each Rust `step`
+    /// against the schema just before its [`DataMigration::runs_before`]
+    /// version. Steps whose version is already applied are skipped.
+    pub async fn open_with(
+        location: &DbLocation,
+        migrator: &Migrator,
+        steps: &[&dyn DataMigration],
+    ) -> Result<Self, DbError> {
+        let database = Self::connect(location).await?;
+        let mut ordered = steps.to_vec();
+        ordered.sort_by_key(|step| step.runs_before());
+        let mut moved_data = false;
+        for step in ordered {
+            if database
+                .migrate_before(migrator, step.runs_before())
+                .await?
+            {
+                step.run(&database).await.map_err(DbError::DataMigration)?;
+                moved_data = true;
+            }
+        }
+        migrator
+            .run(&database.writer)
+            .await
+            .map_err(DbError::Migrate)?;
+        if moved_data {
+            // Data that left the database (FND-06's keys) must leave the file
+            // now, not at the next clean shutdown: write the WAL back.
+            database.checkpoint().await;
+        }
+        Ok(database)
+    }
+
+    /// Opens the writer and the read pool without touching the schema.
+    pub(crate) async fn connect(location: &DbLocation) -> Result<Self, DbError> {
         if let DbLocation::File(path) = location
             && let Some(directory) = path.parent()
         {
@@ -52,7 +90,6 @@ impl Database {
             .connect_with(options.clone())
             .await
             .map_err(DbError::Open)?;
-        migrator.run(&writer).await.map_err(DbError::Migrate)?;
         let reader = match location {
             // Each in-memory connection is its own database, so reads share the writer.
             DbLocation::Memory => writer.clone(),
@@ -86,14 +123,19 @@ impl Database {
     /// Call it on shutdown so no `-wal`/`-shm` files are left behind.
     pub async fn close(&self) {
         self.reader.close().await;
-        // TRUNCATE copies every WAL frame into the database and empties the WAL.
+        self.checkpoint().await;
+        self.writer.close().await;
+    }
+
+    /// Copies every WAL frame into the database file and empties the WAL
+    /// (`TRUNCATE`). A failure only delays that to the next checkpoint.
+    async fn checkpoint(&self) {
         let checkpoint = sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
             .execute(&self.writer)
             .await;
         if let Err(error) = checkpoint {
-            log::warn!(target: "db", "WAL checkpoint on close failed: {error}");
+            log::warn!(target: "db", "WAL checkpoint failed: {error}");
         }
-        self.writer.close().await;
     }
 }
 

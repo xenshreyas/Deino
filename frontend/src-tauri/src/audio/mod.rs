@@ -88,9 +88,7 @@ pub use recording_commands::{
     start_recording, start_recording_with_devices, stop_recording,
     is_recording, get_transcription_status, RecordingArgs, TranscriptionStatus, TranscriptUpdate
 };
-pub use recording_preferences::{
-    RecordingPreferences, get_default_recordings_folder
-};
+pub use recording_preferences::get_default_recordings_folder;
 pub use recording_saver::RecordingSaver;
 pub use level_monitor::{AudioLevelMonitor, AudioLevelData, AudioLevelUpdate};
 pub use buffer_pool::{AudioBufferPool, PooledBuffer};

@@ -4,6 +4,7 @@ import { ConfidenceIndicator } from './ConfidenceIndicator';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { RecordingStatusBar } from './RecordingStatusBar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSettings } from '@/features/settings';
 
 interface TranscriptViewProps {
   transcripts: Transcript[];
@@ -124,25 +125,9 @@ export const TranscriptView: React.FC<TranscriptViewProps> = ({ transcripts, isR
   const streamingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastStreamedIdRef = useRef<string | null>(null); // Track which transcript we've streamed
 
-  // Load preference for showing confidence indicator
-  const [showConfidence, setShowConfidence] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('showConfidenceIndicator');
-      return saved !== null ? saved === 'true' : true; // Default to true
-    }
-    return true;
-  });
-
-  // Listen for preference changes from settings
-  useEffect(() => {
-    const handleConfidenceChange = (e: Event) => {
-      const customEvent = e as CustomEvent<boolean>;
-      setShowConfidence(customEvent.detail);
-    };
-
-    window.addEventListener('confidenceIndicatorChanged', handleConfidenceChange);
-    return () => window.removeEventListener('confidenceIndicatorChanged', handleConfidenceChange);
-  }, []);
+  // Whether to show confidence dots: a typed setting (`ui.showConfidenceIndicator`)
+  const { data: settings } = useSettings();
+  const showConfidence = settings?.ui.showConfidenceIndicator ?? true;
 
   // Listen for speech-detected event
   useEffect(() => {

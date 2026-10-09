@@ -11,7 +11,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use deino_db::{Database, DbError, DbLocation, MIGRATOR};
+use deino_db::{DataMigration, Database, DbError, DbLocation, MIGRATOR};
 use sqlx::SqlitePool;
 use tauri::Manager;
 
@@ -28,24 +28,33 @@ pub struct DatabaseManager {
 }
 
 impl DatabaseManager {
-    /// Opens (creating it if needed) the database at `db_path` and runs all migrations.
-    pub async fn open(db_path: &Path) -> Result<Self, DbError> {
-        let database = Database::open(&DbLocation::File(db_path.to_path_buf()), &MIGRATOR).await?;
+    /// Opens (creating it if needed) the database at `db_path`, runs all
+    /// migrations and, between them, the Rust data migrations in `steps`.
+    pub async fn open(db_path: &Path, steps: &[&dyn DataMigration]) -> Result<Self, DbError> {
+        let location = DbLocation::File(db_path.to_path_buf());
+        let database = Database::open_with(&location, &MIGRATOR, steps).await?;
         Ok(Self { database })
     }
 
     /// Opens the database in the app data dir, retrying once after removing
-    /// orphaned WAL side files when SQLite reports corruption.
+    /// orphaned WAL side files when SQLite reports corruption. The legacy
+    /// SQLite settings move to the settings file and the Keychain on the way.
     pub async fn new_from_app_handle(app_handle: &tauri::AppHandle) -> Result<Self, DbError> {
         let db_path = Self::db_path(app_handle);
         log::info!("Database path: {}", db_path.display());
+        let import = crate::composition::legacy_settings_import(app_handle);
+        let steps: Vec<&dyn DataMigration> = import
+            .as_ref()
+            .map(|step| step as &dyn DataMigration)
+            .into_iter()
+            .collect();
 
-        match Self::open(&db_path).await {
+        match Self::open(&db_path, &steps).await {
             Ok(db_manager) => Ok(db_manager),
             Err(e) if e.is_corruption() => {
                 log::warn!("Database appears corrupted, likely an orphaned WAL file: {:?}", e);
                 Self::remove_wal_side_files(&db_path);
-                Self::open(&db_path).await
+                Self::open(&db_path, &steps).await
             }
             Err(e) => {
                 log::error!("Database connection failed: {:?}", e);

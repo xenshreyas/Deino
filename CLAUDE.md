@@ -90,7 +90,8 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 |---|---|
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
-| `crates/deino-core` | Features as modules: `meetings`, the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
+| `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
+| `crates/deino-core` | Features as modules: `meetings`, `settings`, the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |
@@ -103,9 +104,11 @@ Does Not Own, Invariants); read it before editing the crate.
 - `lib.rs`: the builder only. `setup.rs` (startup), `lifecycle.rs` (window
   and exit).
 - `composition.rs`: **the composition root.** Turns adapters (SQLite repos,
-  `SystemClock`, Tauri event adapters) into services and `app.manage`s them.
+  `SystemClock`, the settings file, the Keychain, Tauri event adapters) into
+  services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
+  folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `db`, and `example` in debug builds). `features/manifest.rs`
+  `meetings`, `settings`, `secrets`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
@@ -263,9 +266,12 @@ and untyped events still exist until cards port them; never add new ones
   `Arc<RwLock<T>>` and `Arc<AtomicBool>`. No new global statics.
 - **Models:** downloaded into `<app_data_dir>/models/` (`parakeet/`, `summary/`,
   Whisper files at the root), pinned by revision and byte size.
-- **Settings:** many still live in localStorage or Tauri store files. FND-06
-  introduces the typed settings store and Keychain secrets; use it for anything
-  new.
+- **Settings:** one typed, versioned document (`deino_core::settings::Settings`,
+  `settings.json`), read in the UI with `useSettings()` and changed with merge
+  patches (`usePatchSettings`); Rust uses `SettingsService::update`. A new
+  setting is a field with a default in its section. **API keys live only in
+  the Keychain** (`deino-secrets`); the UI can save, check and forget a key,
+  never read it (ADR 0013).
 
 ## Platform notes
 

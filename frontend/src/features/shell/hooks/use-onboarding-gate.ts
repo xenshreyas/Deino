@@ -1,11 +1,7 @@
-import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useState } from 'react';
-import { z } from 'zod';
 
+import { settingsApi } from '@/features/settings';
 import { useMountEffect } from '@/hooks/useMountEffect';
-
-/** The part of the Rust `OnboardingStatus` the gate reads; `null` before first run. */
-const onboardingStatusSchema = z.object({ completed: z.boolean() }).nullable();
 
 /** State of the first-run gate in front of the whole app. */
 export interface OnboardingGate {
@@ -15,10 +11,10 @@ export interface OnboardingGate {
   completeOnboarding: () => void;
 }
 
-/** Asks the Rust core whether onboarding has been completed. */
+/** Asks the typed settings whether onboarding has been completed. */
 async function readOnboardingCompleted(): Promise<boolean> {
-  const status = onboardingStatusSchema.parse(await invoke('get_onboarding_status'));
-  return status?.completed ?? false;
+  const { onboarding } = await settingsApi.get();
+  return onboarding.completed;
 }
 
 /**
@@ -32,7 +28,9 @@ export function useOnboardingGate(): OnboardingGate {
 
   useMountEffect(() => {
     readOnboardingCompleted()
-      .then((completed) => { setShowOnboarding(!completed); })
+      .then((completed) => {
+        setShowOnboarding(!completed);
+      })
       .catch((error: unknown) => {
         console.error('[shell] Failed to read onboarding status', error);
         setShowOnboarding(true);

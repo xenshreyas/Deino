@@ -6,19 +6,69 @@
 //! `State<'_, Arc<Service>>` and never builds anything itself (§3A dependency
 //! inversion). Tests build the same services over fakes instead.
 //!
+//! Startup wires two groups, in order:
+//!
+//! 1. [`attach_settings`]: settings and Keychain secrets, which need no
+//!    database and which everything else reads;
+//! 2. [`attach_database`]: the database-backed [`Services`], once
+//!    `deino.sqlite` is open (its legacy settings are imported on the way
+//!    by [`legacy_settings_import`]).
+//!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
 use std::sync::Arc;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
+use deino_core::settings::{
+    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
+};
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
+use deino_secrets::{KeychainSecretStore, SecretStore};
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::database::manager::DatabaseManager;
 use crate::features;
+use crate::features::settings::TauriSettingsEvents;
+use crate::paths::AppPaths;
 use crate::state::AppState;
+
+/// Loads the settings, moves the legacy JSON stores into them, opens the
+/// Keychain, and manages `Arc<SettingsService>` and `Arc<dyn SecretStore>`.
+///
+/// Runs first at startup. Keychain items carry the bundle identifier as
+/// their service (`com.xenshreyas.deino`), so a build with another
+/// identifier never sees this app's keys.
+pub(crate) async fn attach_settings(
+    app: &AppHandle,
+    paths: &AppPaths,
+) -> Result<(), SettingsError> {
+    let store = Arc::new(JsonFileSettingsStore::new(paths.settings_file()));
+    let events = Arc::new(TauriSettingsEvents::new(app.clone()));
+    let settings = Arc::new(SettingsService::load(store, events).await?);
+    // A store that cannot be imported keeps its defaults; it never blocks startup.
+    if let Err(error) = LegacyFileImport::new(paths.data()).run(&settings).await {
+        log::warn!(target: "settings", "could not import the legacy settings files: {error}");
+    }
+    let secrets: Arc<dyn SecretStore> =
+        Arc::new(KeychainSecretStore::new(app.config().identifier.clone()));
+    app.manage(settings);
+    app.manage(secrets);
+    Ok(())
+}
+
+/// The data migration that moves the legacy SQLite settings and keys into
+/// the settings file and the Keychain before their tables are dropped.
+/// `None` until [`attach_settings`] has run.
+pub(crate) fn legacy_settings_import<R: Runtime>(app: &AppHandle<R>) -> Option<LegacySqliteImport> {
+    let settings = app.try_state::<Arc<SettingsService>>()?;
+    let secrets = app.try_state::<Arc<dyn SecretStore>>()?;
+    Some(LegacySqliteImport::new(
+        Arc::clone(&settings),
+        Arc::clone(&secrets),
+    ))
+}
 
 /// Every feature service backed by the app's database.
 pub(crate) struct Services {

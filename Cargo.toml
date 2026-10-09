@@ -34,6 +34,7 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
 deino-domain = { path = "crates/deino-domain" }
+deino-secrets = { path = "crates/deino-secrets" }
 # Tests add `features = ["test-support"]` for its fakes; the app's debug-only
 # `dev` plugin uses only its fixture seeder.
 deino-testkit = { path = "crates/deino-testkit", default-features = false }

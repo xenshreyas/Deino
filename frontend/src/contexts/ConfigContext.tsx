@@ -1,9 +1,37 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
-import { TranscriptModelProps } from '@/components/TranscriptSettings';
-import { SelectedDevices } from '@/components/DeviceSelection';
-import { configService, ModelConfig } from '@/services/configService';
+/**
+ * App-wide configuration for the legacy components, backed by the typed
+ * settings (FND-06).
+ *
+ * Every value here is derived from `useSettings()` and every setter writes
+ * a settings patch, so there is one source of truth and nothing to sync.
+ * The one piece of local state is the model picker's unsaved draft. API
+ * keys are not here: the UI can only ask whether one is saved
+ * (`useSecretStatus` from `@/features/settings`).
+ *
+ * New code should use `@/features/settings` directly; this context shrinks
+ * as FND-09/FND-10 rebuild the screens that read it.
+ */
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
-import { BetaFeatures, BetaFeatureKey, loadBetaFeatures, saveBetaFeatures } from '@/types/betaFeatures';
+
+import type { ModelConfig } from '@/components/ModelSettingsModal';
+import type { TranscriptModelProps } from '@/components/TranscriptSettings';
+import type { SelectedDevices } from '@/components/DeviceSelection';
+import { BetaFeatures, BetaFeatureKey, DEFAULT_BETA_FEATURES } from '@/types/betaFeatures';
+import {
+  type AiSettings,
+  type ModelSelection,
+  type NotificationSettings,
+  type Settings,
+  type SettingsPatch,
+  type TranscriptionSettings,
+  usePatchSettings,
+  useSaveModelSelection,
+  useSettings,
+} from '@/features/settings';
+
+export type { NotificationSettings } from '@/features/settings';
 
 export interface OllamaModel {
   name: string;
@@ -18,326 +46,200 @@ export interface StorageLocations {
   recordings: string;
 }
 
-export interface NotificationSettings {
-  recording_notifications: boolean;
-  time_based_reminders: boolean;
-  meeting_reminders: boolean;
-  respect_do_not_disturb: boolean;
-  notification_sound: boolean;
-  system_permission_granted: boolean;
-  consent_given: boolean;
-  manual_dnd_mode: boolean;
-  notification_preferences: {
-    show_recording_started: boolean;
-    show_recording_stopped: boolean;
-    show_recording_paused: boolean;
-    show_recording_resumed: boolean;
-    show_transcription_complete: boolean;
-    show_meeting_reminders: boolean;
-    show_system_errors: boolean;
-    meeting_reminder_minutes: number[];
-  };
-}
-
 interface ConfigContextType {
-  // Model configuration
+  /** The summary model: the picker's unsaved draft, else the saved choice. */
   modelConfig: ModelConfig;
+  /** Edits the draft; nothing is saved until `saveModelConfig`. */
   setModelConfig: (config: ModelConfig | ((prev: ModelConfig) => ModelConfig)) => void;
+  /** Saves a model choice (and a typed key, to the Keychain) and drops the draft. */
+  saveModelConfig: (config: ModelConfig) => Promise<void>;
   isModelConfigLoading: boolean;
 
-  // Transcript model configuration
   transcriptModelConfig: TranscriptModelProps;
-  setTranscriptModelConfig: (config: TranscriptModelProps | ((prev: TranscriptModelProps) => TranscriptModelProps)) => void;
+  setTranscriptModelConfig: (config: TranscriptModelProps) => void;
 
-  // Device configuration
   selectedDevices: SelectedDevices;
   setSelectedDevices: (devices: SelectedDevices) => void;
 
-  // UI preferences
   showConfidenceIndicator: boolean;
   toggleConfidenceIndicator: (checked: boolean) => void;
 
-  // Beta features
   betaFeatures: BetaFeatures;
   toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => void;
 
-  // Ollama models
   models: OllamaModel[];
   modelOptions: Record<ModelConfig['provider'], string[]>;
   error: string;
 
-  // Summary configuration
   isAutoSummary: boolean;
   toggleIsAutoSummary: (checked: boolean) => void;
 
-  // Provider-specific API keys
-  providerApiKeys: {
-    claude: string | null;
-    groq: string | null;
-    openai: string | null;
-    openrouter: string | null;
-  };
-  updateProviderApiKey: (provider: string, apiKey: string | null) => void;
-
-  // Preference settings (lazy loaded)
   notificationSettings: NotificationSettings | null;
+  updateNotificationSettings: (settings: NotificationSettings) => Promise<void>;
+
   storageLocations: StorageLocations | null;
   isLoadingPreferences: boolean;
   loadPreferences: () => Promise<void>;
-  updateNotificationSettings: (settings: NotificationSettings) => Promise<void>;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
+/** The legacy model config for the saved AI settings. Keys are never included. */
+export function toModelConfig(ai: AiSettings): ModelConfig {
+  const custom = ai.customOpenai;
+  return {
+    provider: ai.provider,
+    model: ai.model,
+    apiKey: null,
+    ollamaEndpoint: ai.ollamaEndpoint,
+    customOpenAIEndpoint: custom?.endpoint ?? null,
+    customOpenAIModel: custom?.model ?? null,
+    customOpenAIApiKey: null,
+    maxTokens: custom?.maxTokens ?? null,
+    temperature: custom?.temperature ?? null,
+    topP: custom?.topP ?? null,
+  };
+}
+
+/** What saving `config` writes: the settings fields and any typed key. */
+export function toModelSelection(config: ModelConfig): ModelSelection {
+  const isCustom = config.provider === 'custom-openai';
+  const endpoint = config.customOpenAIEndpoint?.trim() ?? '';
+  return {
+    provider: config.provider,
+    model: config.model,
+    ollamaEndpoint: config.ollamaEndpoint?.trim() || null,
+    customOpenai: isCustom && endpoint !== ''
+      ? {
+          endpoint,
+          model: config.customOpenAIModel?.trim() || config.model,
+          maxTokens: config.maxTokens ?? null,
+          temperature: config.temperature ?? null,
+          topP: config.topP ?? null,
+        }
+      : null,
+    typedKey: isCustom ? config.customOpenAIApiKey ?? null : config.apiKey ?? null,
+  };
+}
+
+/** The legacy transcript config for the saved transcription settings. */
+function toTranscriptConfig(transcription: TranscriptionSettings): TranscriptModelProps {
+  return {
+    provider: transcription.engine === 'whisper' ? 'localWhisper' : 'parakeet',
+    model: transcription.model,
+  };
+}
+
+const FALLBACK_MODEL_CONFIG: ModelConfig = { provider: 'builtin-ai', model: '' };
+const FALLBACK_TRANSCRIPT_CONFIG: TranscriptModelProps = {
+  provider: 'parakeet',
+  model: 'parakeet-tdt-0.6b-v3-int8',
+};
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
-  // Model configuration state
-  const [modelConfig, setModelConfig] = useState<ModelConfig>({
-    provider: 'ollama',
-    model: 'llama3.2:latest',
-    whisperModel: 'large-v3',
-    ollamaEndpoint: null
-  });
-  const [isModelConfigLoading, setIsModelConfigLoading] = useState(true);
+  const { data: settings, isPending } = useSettings();
+  const { mutateAsync: patch } = usePatchSettings();
+  const { mutateAsync: saveSelection } = useSaveModelSelection();
+  const [draft, setDraft] = useState<ModelConfig | null>(null);
+  const preferences = useStoragePreferences();
 
+  const savedModelConfig = settings ? toModelConfig(settings.ai) : FALLBACK_MODEL_CONFIG;
+  const modelConfig = draft ?? savedModelConfig;
+  const ollama = useOllamaModels(settings?.ai.ollamaEndpoint ?? null);
 
-  // Transcript model configuration state
-  const [transcriptModelConfig, setTranscriptModelConfig] = useState<TranscriptModelProps>({
-    provider: 'parakeet',
-    model: 'parakeet-tdt-0.6b-v3-int8',
-  });
+  const persist = useCallback((change: SettingsPatch) => {
+    patch(change).catch((error: unknown) => {
+      console.error('[ConfigContext] Failed to save settings:', error);
+    });
+  }, [patch]);
 
-  // Provider-specific API keys (loaded once at startup)
-  // Note: Gemini omitted for now - add when UI support is added
-  const [providerApiKeys, setProviderApiKeys] = useState<{
-    claude: string | null;
-    groq: string | null;
-    openai: string | null;
-    openrouter: string | null;
-  }>({
-    claude: null,
-    groq: null,
-    openai: null,
-    openrouter: null,
-  });
-
-  // Ollama models list and error state
-  const [models, setModels] = useState<OllamaModel[]>([]);
-  const [error, setError] = useState<string>('');
-
-  // Device configuration state
-  const [selectedDevices, setSelectedDevices] = useState<SelectedDevices>({
-    micDevice: null,
-    systemDevice: null
-  });
-
-  // UI preferences state
-  const [showConfidenceIndicator, setShowConfidenceIndicator] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('showConfidenceIndicator');
-      return saved !== null ? saved === 'true' : true;
-    }
-    return true;
-  });
-
-  // Summary configs
-  const [isAutoSummary, setisAutoSummary] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('isAutoSummary');
-      return saved !== null ? saved === 'true' : false
-    }
-    return false;
-  });
-
-  // Beta features state (localStorage)
-  const [betaFeatures, setBetaFeatures] = useState<BetaFeatures>(() => {
-    return loadBetaFeatures();
-  });
-
-  // Preference settings state (lazy loaded)
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
-  const [storageLocations, setStorageLocations] = useState<StorageLocations | null>(null);
-  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
-  const preferencesLoadedRef = useRef(false);
-  const isLoadingRef = useRef(false);
-
-  // Load Ollama models (uses saved endpoint, re-runs when endpoint changes after config load)
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        const endpoint = modelConfig.ollamaEndpoint || null;
-        const modelList = await invoke<OllamaModel[]>('get_ollama_models', { endpoint });
-        setModels(modelList);
-        setError('');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load Ollama models');
-        console.error('Error loading models:', err);
-      }
-    };
-    loadModels();
-  }, [modelConfig.ollamaEndpoint]);
-
-  // Load transcript configuration on mount
-  useEffect(() => {
-    const loadTranscriptConfig = async () => {
-      try {
-        const config = await configService.getTranscriptConfig();
-        if (config) {
-          console.log('[ConfigContext] Loaded saved transcript config:', config);
-          setTranscriptModelConfig({
-            provider: config.provider || 'parakeet',
-            model: config.model || 'parakeet-tdt-0.6b-v3-int8',
-          });
-        }
-      } catch (error) {
-        console.error('[ConfigContext] Failed to load transcript config:', error);
-      }
-    };
-    loadTranscriptConfig();
-  }, []);
-
-  // Load model configuration on mount
-  useEffect(() => {
-    const fetchModelConfig = async () => {
-      try {
-        const data = await configService.getModelConfig();
-        if (data && data.provider) {
-          // If provider is custom-openai, fetch the additional config
-          if (data.provider === 'custom-openai') {
-            try {
-              const customConfig = await configService.getCustomOpenAIConfig();
-              if (customConfig) {
-                // Merge custom config fields into modelConfig
-                console.log('[ConfigContext] Loading custom OpenAI config:', {
-                  endpoint: customConfig.endpoint,
-                  model: customConfig.model,
-                });
-                const resolvedModel = customConfig.model || data.model || '';
-                setModelConfig(prev => ({
-                  ...prev,
-                  provider: data.provider,
-                  model: resolvedModel || prev.model,
-                  whisperModel: data.whisperModel || prev.whisperModel,
-                  customOpenAIEndpoint: customConfig.endpoint,
-                  customOpenAIModel: customConfig.model,
-                  customOpenAIApiKey: customConfig.apiKey,
-                  maxTokens: customConfig.maxTokens,
-                  temperature: customConfig.temperature,
-                  topP: customConfig.topP,
-                }));
-
-                // Seed per-provider model cache from DB
-                if (resolvedModel) {
-                  const map = JSON.parse(localStorage.getItem('providerModelMap') || '{}');
-                  map[data.provider] = resolvedModel;
-                  localStorage.setItem('providerModelMap', JSON.stringify(map));
-                }
-
-                return; // Early return
-              }
-            } catch (err) {
-              console.error('[ConfigContext] Failed to fetch custom OpenAI config:', err);
-            }
-          }
-
-          // For non-custom-openai providers, just set base config
-          setModelConfig(prev => ({
-            ...prev,
-            provider: data.provider,
-            model: data.model || prev.model,
-            whisperModel: data.whisperModel || prev.whisperModel,
-            ollamaEndpoint: data.ollamaEndpoint,
-          }));
-
-          // Seed per-provider model cache from DB
-          if (data.model) {
-            const map = JSON.parse(localStorage.getItem('providerModelMap') || '{}');
-            map[data.provider] = data.model;
-            localStorage.setItem('providerModelMap', JSON.stringify(map));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch saved model config in ConfigContext:', error);
-      } finally {
-        setIsModelConfigLoading(false);
-      }
-    };
-    fetchModelConfig();
-  }, []);
-
-  // Load all provider API keys on mount
-  useEffect(() => {
-    const loadAllApiKeys = async () => {
-      try {
-        const providers = ['claude', 'groq', 'openai', 'openrouter'];
-        const keys = await Promise.all(
-          providers.map(p =>
-            invoke<string>('api_get_api_key', { provider: p })
-              .catch(() => null) // Gracefully handle missing keys
-          )
-        );
-
-        setProviderApiKeys({
-          claude: keys[0],
-          groq: keys[1],
-          openai: keys[2],
-          openrouter: keys[3],
-        });
-        console.log('[ConfigContext] Loaded provider API keys');
-      } catch (error) {
-        console.error('[ConfigContext] Failed to load provider API keys:', error);
-      }
-    };
-
-    loadAllApiKeys();
-  }, []);
-
-  // Listen for model config updates from other components
-  useEffect(() => {
-    const setupListener = async () => {
-      const { listen } = await import('@tauri-apps/api/event');
-      const unlisten = await listen<ModelConfig>('model-config-updated', (event) => {
-        console.log('[ConfigContext] Received model-config-updated event:', event.payload);
-        setModelConfig(event.payload);
-
-        // Update provider-specific key when config changes
-        if (event.payload.apiKey && event.payload.provider !== 'custom-openai') {
-          updateProviderApiKey(event.payload.provider, event.payload.apiKey);
-        }
+  const setModelConfig = useCallback(
+    (config: ModelConfig | ((prev: ModelConfig) => ModelConfig)) => {
+      setDraft((current) => {
+        const base = current ?? savedModelConfig;
+        return typeof config === 'function' ? config(base) : config;
       });
-      return unlisten;
-    };
+    },
+    [savedModelConfig],
+  );
 
-    let cleanup: (() => void) | undefined;
-    setupListener().then(fn => cleanup = fn);
+  const saveModelConfig = useCallback(async (config: ModelConfig) => {
+    await saveSelection(toModelSelection(config));
+    setDraft(null);
+  }, [saveSelection]);
 
-    return () => {
-      cleanup?.();
-    };
-  }, []);
+  const value = useMemo<ConfigContextType>(() => ({
+    modelConfig,
+    setModelConfig,
+    saveModelConfig,
+    isModelConfigLoading: isPending,
+    ...derivedSettings(settings, persist),
+    models: ollama.models,
+    modelOptions: modelOptionsFor(ollama.models),
+    error: ollama.error,
+    ...preferences,
+  }), [modelConfig, setModelConfig, saveModelConfig, isPending, settings, persist, ollama, preferences]);
 
-  // Load device preferences on mount
-  useEffect(() => {
-    const loadDevicePreferences = async () => {
-      try {
-        const prefs = await configService.getRecordingPreferences();
-        if (prefs && (prefs.preferred_mic_device || prefs.preferred_system_device)) {
-          setSelectedDevices({
-            micDevice: prefs.preferred_mic_device,
-            systemDevice: prefs.preferred_system_device
-          });
-          console.log('Loaded device preferences:', prefs);
-        }
-      } catch (error) {
-        console.log('No device preferences found or failed to load:', error);
-      }
-    };
-    loadDevicePreferences();
-  }, []);
+  return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
+}
 
-  // Calculate model options based on available models
-  const modelOptions: Record<ModelConfig['provider'], string[]> = {
-    ollama: models.map(model => model.name),
+/** The settings-backed values and their setters. */
+function derivedSettings(
+  settings: Settings | undefined,
+  persist: (change: SettingsPatch) => void,
+) {
+  return {
+    transcriptModelConfig: settings ? toTranscriptConfig(settings.transcription) : FALLBACK_TRANSCRIPT_CONFIG,
+    setTranscriptModelConfig: (config: TranscriptModelProps) => {
+      persist({
+        transcription: {
+          engine: config.provider === 'localWhisper' ? 'whisper' : 'parakeet',
+          model: config.model,
+        },
+      });
+    },
+    selectedDevices: {
+      micDevice: settings?.audio.preferredMicDevice ?? null,
+      systemDevice: settings?.audio.preferredSystemDevice ?? null,
+    },
+    setSelectedDevices: (devices: SelectedDevices) => {
+      persist({
+        audio: { preferredMicDevice: devices.micDevice, preferredSystemDevice: devices.systemDevice },
+      });
+    },
+    showConfidenceIndicator: settings?.ui.showConfidenceIndicator ?? true,
+    toggleConfidenceIndicator: (checked: boolean) => {
+      persist({ ui: { showConfidenceIndicator: checked } });
+    },
+    betaFeatures: settings ? { importAndRetranscribe: settings.beta.importAndRetranscribe } : DEFAULT_BETA_FEATURES,
+    toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => {
+      persist({ beta: { [featureKey]: enabled } });
+    },
+    isAutoSummary: settings?.ai.autoSummary ?? false,
+    toggleIsAutoSummary: (checked: boolean) => {
+      persist({ ai: { autoSummary: checked } });
+    },
+    notificationSettings: settings?.notifications ?? null,
+    updateNotificationSettings: async (notifications: NotificationSettings) => {
+      persist({ notifications });
+    },
+  };
+}
+
+/** The models of the configured Ollama server; empty while it is unreachable. */
+function useOllamaModels(endpoint: string | null): { models: OllamaModel[]; error: string } {
+  const query = useQuery({
+    queryKey: ['ollama-models', endpoint],
+    queryFn: () => invoke<OllamaModel[]>('get_ollama_models', { endpoint }),
+    retry: false,
+  });
+  const error = query.error ? query.error.message || 'Failed to load Ollama models' : '';
+  return useMemo(() => ({ models: query.data ?? [], error }), [query.data, error]);
+}
+
+function modelOptionsFor(models: OllamaModel[]): Record<ModelConfig['provider'], string[]> {
+  return {
+    ollama: models.map((model) => model.name),
     claude: ['claude-3-5-sonnet-latest'],
     groq: ['llama-3.3-70b-versatile'],
     openrouter: [],
@@ -345,150 +247,33 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     'builtin-ai': [],
     'custom-openai': [],
   };
+}
 
-  // Toggle confidence indicator with localStorage persistence
-  const toggleConfidenceIndicator = useCallback((checked: boolean) => {
-    setShowConfidenceIndicator(checked);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('showConfidenceIndicator', checked.toString());
-    }
-    // Trigger a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('confidenceIndicatorChanged', { detail: checked }));
-  }, []);
+/** The storage folder paths, loaded on first request. */
+function useStoragePreferences() {
+  const [storageLocations, setStorageLocations] = useState<StorageLocations | null>(null);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
 
-  const toggleIsAutoSummary = useCallback((checked: boolean) => {
-    setisAutoSummary(checked);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('isAutoSummary', checked.toString());
-    }
-  }, [])
-
-  // Toggle beta feature with localStorage persistence
-  const toggleBetaFeature = useCallback((featureKey: BetaFeatureKey, enabled: boolean) => {
-    setBetaFeatures(prev => {
-      const updated = { ...prev, [featureKey]: enabled };
-      saveBetaFeatures(updated);
-
-      return updated;
-    });
-  }, []);
-
-  // Update individual provider API key
-  const updateProviderApiKey = useCallback((provider: string, apiKey: string | null) => {
-    setProviderApiKeys(prev => ({ ...prev, [provider]: apiKey }));
-  }, []);
-
-  // Lazy load preference settings (only loads if not already cached)
   const loadPreferences = useCallback(async () => {
-    // If already loaded, don't reload
-    if (preferencesLoadedRef.current) {
-      return;
-    }
-
-    // If currently loading, don't start another load
-    if (isLoadingRef.current) {
-      return;
-    }
-
-    isLoadingRef.current = true;
+    if (storageLocations !== null || isLoadingPreferences) return;
     setIsLoadingPreferences(true);
     try {
-      // Load notification settings from backend
-      let settings: NotificationSettings | null = null;
-      try {
-        settings = await invoke<NotificationSettings>('get_notification_settings');
-        setNotificationSettings(settings);
-      } catch (notifError) {
-        console.error('[ConfigContext] Failed to load notification settings:', notifError);
-        // Use default values if notification settings fail to load
-        setNotificationSettings(null);
-      }
-
-      // Load storage locations
-      const [dbDir, modelsDir, recordingsDir] = await Promise.all([
+      const [database, models, recordings] = await Promise.all([
         invoke<string>('get_database_directory'),
         invoke<string>('whisper_get_models_directory'),
-        invoke<string>('get_default_recordings_folder_path')
+        invoke<string>('get_default_recordings_folder_path'),
       ]);
-
-      setStorageLocations({
-        database: dbDir,
-        models: modelsDir,
-        recordings: recordingsDir
-      });
-
-      // Mark as loaded
-      preferencesLoadedRef.current = true;
+      setStorageLocations({ database, models, recordings });
     } catch (error) {
-      console.error('[ConfigContext] Failed to load preferences:', error);
+      console.error('[ConfigContext] Failed to load storage locations:', error);
     } finally {
-      isLoadingRef.current = false;
       setIsLoadingPreferences(false);
     }
-  }, []);
+  }, [storageLocations, isLoadingPreferences]);
 
-  // Update notification settings
-  const updateNotificationSettings = useCallback(async (settings: NotificationSettings) => {
-    try {
-      await invoke('set_notification_settings', { settings });
-      setNotificationSettings(settings);
-    } catch (error) {
-      console.error('[ConfigContext] Failed to update notification settings:', error);
-      throw error; // Re-throw so component can handle error
-    }
-  }, []);
-
-  const value: ConfigContextType = useMemo(() => ({
-    modelConfig,
-    setModelConfig,
-    isModelConfigLoading,
-    isAutoSummary,
-    toggleIsAutoSummary,
-    providerApiKeys,
-    updateProviderApiKey,
-    transcriptModelConfig,
-    setTranscriptModelConfig,
-    selectedDevices,
-    setSelectedDevices,
-    showConfidenceIndicator,
-    toggleConfidenceIndicator,
-    betaFeatures,
-    toggleBetaFeature,
-    models,
-    modelOptions,
-    error,
-    notificationSettings,
-    storageLocations,
-    isLoadingPreferences,
-    loadPreferences,
-    updateNotificationSettings,
-  }), [
-    modelConfig,
-    isModelConfigLoading,
-    isAutoSummary,
-    toggleIsAutoSummary,
-    providerApiKeys,
-    updateProviderApiKey,
-    transcriptModelConfig,
-    selectedDevices,
-    showConfidenceIndicator,
-    toggleConfidenceIndicator,
-    betaFeatures,
-    toggleBetaFeature,
-    models,
-    modelOptions,
-    error,
-    notificationSettings,
-    storageLocations,
-    isLoadingPreferences,
-    loadPreferences,
-    updateNotificationSettings,
-  ]);
-
-  return (
-    <ConfigContext.Provider value={value}>
-      {children}
-    </ConfigContext.Provider>
+  return useMemo(
+    () => ({ storageLocations, isLoadingPreferences, loadPreferences }),
+    [storageLocations, isLoadingPreferences, loadPreferences],
   );
 }
 

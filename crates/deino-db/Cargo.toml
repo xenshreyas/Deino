@@ -14,6 +14,7 @@ path = "src/deino_db.rs"
 test-support = []
 
 [dependencies]
+async-trait.workspace = true
 deino-domain.workspace = true
 log.workspace = true
 serde.workspace = true

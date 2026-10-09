@@ -101,8 +101,20 @@ fn is_chat_model(model_id: &str) -> bool {
 /// # Returns
 /// Vector of available models, or fallback models on error
 #[command]
-pub async fn get_openai_models(api_key: Option<String>) -> Result<Vec<OpenAIModel>, String> {
-    // Return fallback if no API key provided
+pub async fn get_openai_models<R: tauri::Runtime>(
+    app: tauri::AppHandle<R>,
+    api_key: Option<String>,
+) -> Result<Vec<OpenAIModel>, String> {
+    // The settings form cannot read a saved key back (FND-06), so without a
+    // typed key the saved one lists the models.
+    let api_key = crate::features::secrets::typed_or_stored(
+        &app,
+        api_key,
+        deino_secrets::SecretName::OpenAiApiKey,
+    )
+    .await
+    .map_err(|e| e.to_string())?;
+    // Return fallback if no API key is typed or saved
     let api_key = match api_key {
         Some(key) if !key.trim().is_empty() => key.trim().to_string(),
         _ => {

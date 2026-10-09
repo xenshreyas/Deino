@@ -1,11 +1,12 @@
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { listen } from '@tauri-apps/api/event';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ImportDropOverlay } from '@/components/ImportAudio';
 import { getAudioFormatsDisplayList } from '@/constants/audioFormats';
+import { settingsQuery } from '@/features/settings';
 import { useMountEffect } from '@/hooks/useMountEffect';
-import { loadBetaFeatures } from '@/types/betaFeatures';
 
 import { classifyAudioDrop } from '../audio-drop';
 import { shellCopy } from '../copy';
@@ -21,14 +22,22 @@ interface AudioDropTargetProps {
   onAudioFile: (path: string) => void;
 }
 
-/** Reads the beta flag from storage: this sits above the ConfigProvider state. */
-function importEnabled(): boolean {
-  return loadBetaFeatures().importAndRetranscribe;
+/**
+ * Reads the import beta flag from the cached settings at drop time; the
+ * listeners are attached once, so they must not capture a stale value.
+ * Until the settings load, the feature's default (on) applies.
+ */
+function importEnabled(client: QueryClient): boolean {
+  return client.getQueryData(settingsQuery().queryKey)?.beta.importAndRetranscribe ?? true;
 }
 
 /** Turns a drop into an import, or tells the user why it was ignored. */
-function handleDrop(paths: readonly string[], onAudioFile: (path: string) => void): void {
-  const outcome = classifyAudioDrop(paths, importEnabled());
+function handleDrop(
+  paths: readonly string[],
+  enabled: boolean,
+  onAudioFile: (path: string) => void,
+): void {
+  const outcome = classifyAudioDrop(paths, enabled);
   if (outcome.kind === 'audio') onAudioFile(outcome.path);
   if (outcome.kind === 'import-disabled') {
     toast.error(shellCopy.importDisabledTitle, {
@@ -50,18 +59,19 @@ function handleDrop(paths: readonly string[], onAudioFile: (path: string) => voi
  */
 export function AudioDropTarget({ onAudioFile }: AudioDropTargetProps) {
   const [overlayVisible, setOverlayVisible] = useState(false);
+  const client = useQueryClient();
 
   useMountEffect(() =>
     holdSubscriptions([
       listen('tauri://drag-enter', () => {
-        setOverlayVisible(importEnabled());
+        setOverlayVisible(importEnabled(client));
       }),
       listen('tauri://drag-leave', () => {
         setOverlayVisible(false);
       }),
       listen<DragDropPayload>('tauri://drag-drop', (event) => {
         setOverlayVisible(false);
-        handleDrop(event.payload.paths, onAudioFile);
+        handleDrop(event.payload.paths, importEnabled(client), onAudioFile);
       }),
     ]),
   );

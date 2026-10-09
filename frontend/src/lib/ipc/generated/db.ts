@@ -66,14 +66,6 @@ export type Table =
  */
 "transcript_chunks" | 
 /**
- * LLM provider and model settings.
- */
-"settings" | 
-/**
- * Transcription engine settings.
- */
-"transcript_settings" | 
-/**
  * The user's own notes for a meeting.
  */
 "meeting_notes" | 

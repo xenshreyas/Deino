@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useConfig } from '@/contexts/ConfigContext';
 import {
+  ApiKeyStatus,
+  apiKeyPlaceholder,
+  PROVIDER_KEYS,
+  useSecretStatus,
+  useSettings,
+} from '@/features/settings';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,7 +38,7 @@ import { toast } from 'sonner';
 export interface ModelConfig {
   provider: 'ollama' | 'groq' | 'claude' | 'openai' | 'openrouter' | 'builtin-ai' | 'custom-openai';
   model: string;
-  whisperModel: string;
+  /** A key typed in the picker; saved keys are never read back (FND-06). */
   apiKey?: string | null;
   ollamaEndpoint?: string | null;
   // Custom OpenAI fields
@@ -118,14 +125,17 @@ export function ModelSettingsModal({
   const configContext = useConfig();
   const modelConfig = configContext?.modelConfig || propsModelConfig;
   const setModelConfig = configContext?.setModelConfig || propsSetModelConfig;
-  const providerApiKeys = configContext?.providerApiKeys;
-  const updateProviderApiKey = configContext?.updateProviderApiKey;
+  // Saved keys stay in the Keychain; the picker only learns whether one exists.
+  const { data: keyStatus } = useSecretStatus(PROVIDER_KEYS[modelConfig.provider]);
+  const hasSavedKey = keyStatus === 'stored';
+  const { data: settings } = useSettings();
+  const savedProviderModels = settings?.ai.providerModels ?? {};
 
   const [models, setModels] = useState<OllamaModel[]>([]);
   const [error, setError] = useState<string>('');
   const [apiKey, setApiKey] = useState<string | null>(modelConfig.apiKey || null);
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
-  const [isApiKeyLocked, setIsApiKeyLocked] = useState<boolean>(!!modelConfig.apiKey?.trim());
+  const [isApiKeyLocked, setIsApiKeyLocked] = useState<boolean>(false);
   const [isLockButtonVibrating, setIsLockButtonVibrating] = useState<boolean>(false);
   const [openRouterModels, setOpenRouterModels] = useState<OpenRouterModel[]>([]);
   const [openRouterError, setOpenRouterError] = useState<string>('');
@@ -136,7 +146,6 @@ export function ModelSettingsModal({
   const [endpointValidationState, setEndpointValidationState] = useState<'valid' | 'invalid' | 'none'>('none');
   const [hasAutoFetched, setHasAutoFetched] = useState<boolean>(false);
   const hasSyncedFromParent = useRef<boolean>(false);
-  const hasLoadedInitialConfig = useRef<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isEndpointSectionCollapsed, setIsEndpointSectionCollapsed] = useState<boolean>(true); // Collapsed by default
   const [ollamaNotInstalled, setOllamaNotInstalled] = useState<boolean>(false); // Track if Ollama is not installed
@@ -199,17 +208,6 @@ export function ModelSettingsModal({
     return () => clearTimeout(timer);
   }, [ollamaEndpoint]);
 
-  const fetchApiKey = async (provider: string) => {
-    try {
-      const data = (await invoke('api_get_api_key', {
-        provider,
-      })) as string;
-      setApiKey(data || '');
-    } catch (err) {
-      console.error('Error fetching API key:', err);
-      setApiKey(null);
-    }
-  };
 
   // Auto-unlock when API key becomes empty, 
   useEffect(() => {
@@ -246,68 +244,10 @@ export function ModelSettingsModal({
   );
 
   const isDoneDisabled =
-    (requiresApiKey && (!apiKey || (typeof apiKey === 'string' && !apiKey.trim()))) ||
+    (requiresApiKey && !apiKey?.trim() && !hasSavedKey) ||
     (modelConfig.provider === 'ollama' && ollamaEndpointChanged) ||
     isCustomOpenAIInvalid;
 
-  useEffect(() => {
-    const fetchModelConfig = async () => {
-      // If parent component manages config, skip fetch and just mark as loaded
-      if (skipInitialFetch) {
-        hasLoadedInitialConfig.current = true;
-        return;
-      }
-
-      try {
-        const data = (await invoke('api_get_model_config')) as any;
-        if (data && data.provider !== null) {
-          setModelConfig(data);
-
-          // Fetch API key if not included in response and provider requires it
-          if (data.provider !== 'ollama' && !data.apiKey) {
-            try {
-              const apiKeyData = await invoke('api_get_api_key', {
-                provider: data.provider
-              }) as string;
-              data.apiKey = apiKeyData;
-              setApiKey(apiKeyData);
-            } catch (err) {
-              console.error('Failed to fetch API key:', err);
-            }
-          }
-
-          // Sync ollamaEndpoint state with fetched config
-          if (data.ollamaEndpoint) {
-            setOllamaEndpoint(data.ollamaEndpoint);
-            // Don't set lastFetchedEndpoint here - it will be set after successful model fetch
-          }
-          hasLoadedInitialConfig.current = true; // Mark that initial config is loaded
-
-          // Fetch Custom OpenAI config if that's the active provider
-          if (data.provider === 'custom-openai') {
-            try {
-              const customConfig = (await invoke('api_get_custom_openai_config')) as any;
-              if (customConfig) {
-                setCustomOpenAIEndpoint(customConfig.endpoint || '');
-                setCustomOpenAIModel(customConfig.model || '');
-                setCustomOpenAIApiKey(customConfig.apiKey || '');
-                setCustomMaxTokens(customConfig.maxTokens?.toString() || '');
-                setCustomTemperature(customConfig.temperature?.toString() || '');
-                setCustomTopP(customConfig.topP?.toString() || '');
-              }
-            } catch (err) {
-              console.error('Failed to fetch custom OpenAI config:', err);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch model config:', error);
-        hasLoadedInitialConfig.current = true; // Mark as loaded even on error
-      }
-    };
-
-    fetchModelConfig();
-  }, [skipInitialFetch]);
 
   // Sync ollamaEndpoint state when modelConfig.ollamaEndpoint changes from parent
   useEffect(() => {
@@ -381,16 +321,6 @@ export function ModelSettingsModal({
     }
   }, [ollamaEndpoint, lastFetchedEndpoint, modelConfig.provider]);
 
-  // Sync local apiKey state when provider changes
-  useEffect(() => {
-    if (providerApiKeys && requiresApiKey && modelConfig.provider !== 'custom-openai') {
-      const correctKey = providerApiKeys[modelConfig.provider as keyof typeof providerApiKeys];
-      if (correctKey !== apiKey) {
-        setApiKey(correctKey || '');
-        setIsApiKeyLocked(!!correctKey?.trim());
-      }
-    }
-  }, [modelConfig.provider, providerApiKeys, requiresApiKey]);
 
   // Manual fetch function for Ollama models
   const fetchOllamaModels = async (silent = false) => {
@@ -505,13 +435,13 @@ export function ModelSettingsModal({
 
   // Fetch OpenAI models from API
   const loadOpenAIModels = async (key: string | null) => {
-    if (!key?.trim()) {
+    if (!key?.trim() && !hasSavedKey) {
       setOpenaiModels([]); // Will use fallback via modelOptions
       return;
     }
     setIsLoadingOpenAI(true);
     try {
-      const data = (await invoke('get_openai_models', { apiKey: key })) as OpenAIModel[];
+      const data = (await invoke('get_openai_models', { apiKey: key?.trim() || null })) as OpenAIModel[];
       setOpenaiModels(data.map((m) => m.id));
     } catch (err) {
       console.error('Error loading OpenAI models:', err);
@@ -523,13 +453,13 @@ export function ModelSettingsModal({
 
   // Fetch Anthropic (Claude) models from API
   const loadClaudeModels = async (key: string | null) => {
-    if (!key?.trim()) {
+    if (!key?.trim() && !hasSavedKey) {
       setClaudeModels([]); // Will use fallback via modelOptions
       return;
     }
     setIsLoadingClaude(true);
     try {
-      const data = (await invoke('get_anthropic_models', { apiKey: key })) as AnthropicModel[];
+      const data = (await invoke('get_anthropic_models', { apiKey: key?.trim() || null })) as AnthropicModel[];
       setClaudeModels(data.map((m) => m.id));
     } catch (err) {
       console.error('Error loading Claude models:', err);
@@ -541,13 +471,13 @@ export function ModelSettingsModal({
 
   // Fetch Groq models from API
   const loadGroqModels = async (key: string | null) => {
-    if (!key?.trim()) {
+    if (!key?.trim() && !hasSavedKey) {
       setGroqModels([]); // Will use fallback via modelOptions
       return;
     }
     setIsLoadingGroq(true);
     try {
-      const data = (await invoke('get_groq_models', { apiKey: key })) as GroqModel[];
+      const data = (await invoke('get_groq_models', { apiKey: key?.trim() || null })) as GroqModel[];
       setGroqModels(data.map((m) => m.id));
     } catch (err) {
       console.error('Error loading Groq models:', err);
@@ -559,24 +489,24 @@ export function ModelSettingsModal({
 
   // Auto-fetch OpenAI models when provider is openai and we have an API key
   useEffect(() => {
-    if (modelConfig.provider === 'openai' && apiKey?.trim()) {
+    if (modelConfig.provider === 'openai' && (apiKey?.trim() || hasSavedKey)) {
       loadOpenAIModels(apiKey);
     }
-  }, [modelConfig.provider, apiKey]);
+  }, [modelConfig.provider, apiKey, hasSavedKey]);
 
   // Auto-fetch Claude models when provider is claude and we have an API key
   useEffect(() => {
-    if (modelConfig.provider === 'claude' && apiKey?.trim()) {
+    if (modelConfig.provider === 'claude' && (apiKey?.trim() || hasSavedKey)) {
       loadClaudeModels(apiKey);
     }
-  }, [modelConfig.provider, apiKey]);
+  }, [modelConfig.provider, apiKey, hasSavedKey]);
 
   // Auto-fetch Groq models when provider is groq and we have an API key
   useEffect(() => {
-    if (modelConfig.provider === 'groq' && apiKey?.trim()) {
+    if (modelConfig.provider === 'groq' && (apiKey?.trim() || hasSavedKey)) {
       loadGroqModels(apiKey);
     }
-  }, [modelConfig.provider, apiKey]);
+  }, [modelConfig.provider, apiKey, hasSavedKey]);
 
   // Restore cached model when async model lists become available
   useEffect(() => {
@@ -586,34 +516,14 @@ export function ModelSettingsModal({
     // If current model is already valid, nothing to do
     if (modelConfig.model && providerModels.includes(modelConfig.model)) return;
 
-    // Try to restore from localStorage cache
-    const map = JSON.parse(localStorage.getItem('providerModelMap') || '{}');
-    const cachedModel = map[modelConfig.provider];
+    // Try to restore the model last saved for this provider
+    const cachedModel = savedProviderModels[modelConfig.provider];
     if (cachedModel && providerModels.includes(cachedModel)) {
       setModelConfig((prev: ModelConfig) => ({ ...prev, model: cachedModel }));
     }
   }, [models, openRouterModels, builtinAiModels, openaiModels, claudeModels, groqModels, modelConfig.provider]);
 
   const handleSave = async () => {
-    // For custom-openai provider, save the custom config first
-    if (modelConfig.provider === 'custom-openai') {
-      try {
-        await invoke('api_save_custom_openai_config', {
-          endpoint: customOpenAIEndpoint.trim(),
-          apiKey: customOpenAIApiKey.trim() || null,
-          model: customOpenAIModel.trim(),
-          maxTokens: customMaxTokens ? parseInt(customMaxTokens, 10) : null,
-          temperature: customTemperature ? parseFloat(customTemperature) : null,
-          topP: customTopP ? parseFloat(customTopP) : null,
-        });
-        console.log('Custom OpenAI config saved successfully');
-      } catch (err) {
-        console.error('Failed to save custom OpenAI config:', err);
-        toast.error('Failed to save custom OpenAI configuration');
-        return;
-      }
-    }
-
     const updatedConfig = {
       ...modelConfig,
       apiKey: typeof apiKey === 'string' ? apiKey.trim() || null : null,
@@ -630,20 +540,8 @@ export function ModelSettingsModal({
       // For custom-openai, use the customOpenAIModel as the model field
       model: modelConfig.provider === 'custom-openai' ? customOpenAIModel.trim() : modelConfig.model,
     };
+    // Never log the config: it may hold a freshly typed API key.
     setModelConfig(updatedConfig);
-    console.log('ModelSettingsModal - handleSave - Updated ModelConfig:', updatedConfig);
-
-    // Persist confirmed model choice to per-provider cache
-    if (updatedConfig.model) {
-      const map = JSON.parse(localStorage.getItem('providerModelMap') || '{}');
-      map[updatedConfig.provider] = updatedConfig.model;
-      localStorage.setItem('providerModelMap', JSON.stringify(map));
-    }
-
-    // Update provider-specific key in context
-    if (updateProviderApiKey && updatedConfig.apiKey && updatedConfig.provider !== 'custom-openai') {
-      updateProviderApiKey(updatedConfig.provider, updatedConfig.apiKey);
-    }
 
     onSave(updatedConfig);
   };
@@ -799,15 +697,11 @@ export function ModelSettingsModal({
                 // Clear error state when switching providers
                 setError('');
 
-                // Save current provider's model to localStorage before switching
-                const map = JSON.parse(localStorage.getItem('providerModelMap') || '{}');
-                if (modelConfig.model) {
-                  map[modelConfig.provider] = modelConfig.model;
-                  localStorage.setItem('providerModelMap', JSON.stringify(map));
-                }
+                // A typed key belongs to the provider it was typed for
+                setApiKey(null);
 
-                // Try to restore cached model for the new provider
-                const savedModel = map[provider];
+                // Try to restore the model last saved for the new provider
+                const savedModel = savedProviderModels[provider];
                 const providerModels = modelOptions[provider];
                 const defaultModel = providerModels && providerModels.length > 0
                   ? providerModels[0]
@@ -821,7 +715,6 @@ export function ModelSettingsModal({
                   provider,
                   model,
                 });
-                // API key is now synced automatically via useEffect watching providerApiKeys
 
                 // Load OpenRouter models only when OpenRouter is selected
                 if (provider === 'openrouter') {
@@ -833,20 +726,15 @@ export function ModelSettingsModal({
                   loadBuiltinAiModels();
                 }
 
-                // Load custom OpenAI config when selected
-                if (provider === 'custom-openai') {
-                  invoke<any>('api_get_custom_openai_config').then((config) => {
-                    if (config) {
-                      setCustomOpenAIEndpoint(config.endpoint || '');
-                      setCustomOpenAIModel(config.model || '');
-                      setCustomOpenAIApiKey(config.apiKey || '');
-                      setCustomMaxTokens(config.maxTokens?.toString() || '');
-                      setCustomTemperature(config.temperature?.toString() || '');
-                      setCustomTopP(config.topP?.toString() || '');
-                    }
-                  }).catch((err) => {
-                    console.error('Failed to load custom OpenAI config:', err);
-                  });
+                // Load the saved custom endpoint when selected (its key stays in the Keychain)
+                const savedCustom = settings?.ai.customOpenai;
+                if (provider === 'custom-openai' && savedCustom) {
+                  setCustomOpenAIEndpoint(savedCustom.endpoint);
+                  setCustomOpenAIModel(savedCustom.model);
+                  setCustomOpenAIApiKey('');
+                  setCustomMaxTokens(savedCustom.maxTokens?.toString() || '');
+                  setCustomTemperature(savedCustom.temperature?.toString() || '');
+                  setCustomTopP(savedCustom.topP?.toString() || '');
                 }
               }}
             >
@@ -962,9 +850,10 @@ export function ModelSettingsModal({
                 type="password"
                 value={customOpenAIApiKey}
                 onChange={(e) => setCustomOpenAIApiKey(e.target.value)}
-                placeholder="Leave empty if not required"
+                placeholder={hasSavedKey ? apiKeyPlaceholder(keyStatus) : 'Leave empty if not required'}
                 className="mt-1"
               />
+              <ApiKeyStatus status={keyStatus} />
             </div>
 
             {/* Advanced Options (Collapsible) */}
@@ -1059,7 +948,7 @@ export function ModelSettingsModal({
                 value={apiKey || ''}
                 onChange={(e) => setApiKey(e.target.value)}
                 disabled={isApiKeyLocked}
-                placeholder="Enter your API key"
+                placeholder={apiKeyPlaceholder(keyStatus)}
                 className="pr-24"
               />
               {isApiKeyLocked && apiKey?.trim() && (
@@ -1091,6 +980,7 @@ export function ModelSettingsModal({
                 </Button>
               </div>
             </div>
+            <ApiKeyStatus status={keyStatus} />
           </div>
         )}
 

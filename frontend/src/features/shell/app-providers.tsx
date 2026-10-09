@@ -10,6 +10,7 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { RecordingPostProcessingProvider } from '@/contexts/RecordingPostProcessingProvider';
 import { RecordingStateProvider } from '@/contexts/RecordingStateContext';
 import { TranscriptProvider } from '@/contexts/TranscriptContext';
+import { SettingsSync } from '@/features/settings';
 
 interface AppProvidersProps {
   /** Opens the audio import dialog; exposed to the tree via `useImportDialog`. */
@@ -24,10 +25,12 @@ interface AppProvidersProps {
  * `SidebarProvider` reads recording state). Rust data is moving out of these
  * contexts into TanStack Query (the meetings list already lives in
  * `@/features/meetings`); the query client itself is provided in `main.tsx`.
+ * `SettingsSync` keeps the cached settings equal to the saved ones.
  */
 export function AppProviders({ onOpenImportDialog, children }: AppProvidersProps) {
   return (
     <RecordingStateProvider>
+      <SettingsSync />
       <TranscriptProvider>
         <ConfigProvider>
           <OllamaDownloadProvider>

@@ -23,6 +23,8 @@ pub mod dev;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
 pub mod meetings;
+pub mod secrets;
+pub mod settings;
 pub mod system;
 
 /// Every feature's bindings builder, keyed by the file it is exported to
@@ -32,6 +34,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
     let mut builders = vec![
         (db::NAME, db::specta()),
         (meetings::NAME, meetings::specta()),
+        (secrets::NAME, secrets::specta()),
+        (settings::NAME, settings::specta()),
         (system::NAME, system::specta()),
     ];
     #[cfg(debug_assertions)]

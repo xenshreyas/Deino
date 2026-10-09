@@ -1,0 +1,43 @@
+[package]
+name = "deino-secrets"
+version = "0.1.0"
+description = "Deino's secrets: API keys and tokens in the OS keychain, never in files"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_secrets.rs"
+
+[features]
+# `InMemorySecretStore` for other crates' tests. Never enable outside dev-dependencies.
+test-support = []
+
+[dependencies]
+async-trait.workspace = true
+deino-domain.workspace = true
+serde.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+# Wipes secret values from memory when they are dropped (already in the tree).
+zeroize = "1.8.2"
+
+# The OS keychain behind one API (MIT OR Apache-2.0). Each platform enables its
+# native store; without one, keyring silently falls back to an in-memory mock.
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "=3.6.3", features = ["apple-native"] }
+# Only to read the OSStatus behind a keyring error (already in the tree).
+security-framework = "3.7.0"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "=3.6.3", features = ["windows-native"] }
+
+[target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies]
+keyring = { version = "=3.6.3", features = ["linux-native"] }
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

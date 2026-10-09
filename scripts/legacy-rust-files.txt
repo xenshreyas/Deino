@@ -15,7 +15,6 @@ frontend/src-tauri/src/audio/level_monitor.rs
 frontend/src-tauri/src/audio/pipeline.rs
 frontend/src-tauri/src/audio/recording_commands.rs
 frontend/src-tauri/src/audio/recording_manager.rs
-frontend/src-tauri/src/audio/recording_preferences.rs
 frontend/src-tauri/src/audio/recording_saver.rs
 frontend/src-tauri/src/audio/recording_state.rs
 frontend/src-tauri/src/audio/retranscription.rs

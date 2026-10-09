@@ -2,7 +2,8 @@
 //!
 //! - [`Database`] opens `deino.sqlite` the way every caller needs it: WAL
 //!   mode, foreign keys on, one writer connection and a read-only pool.
-//! - [`MIGRATOR`] embeds `migrations/`, the one schema history for the app.
+//! - [`MIGRATOR`] embeds `migrations/`, the one schema history for the app;
+//!   a [`DataMigration`] runs Rust between two of its migrations.
 //! - [`ChangeNotifier`] turns SQLite commit hooks into [`TableChanges`]
 //!   signals, which the app forwards to the UI as `DbChanged` events so
 //!   TanStack Query refetches exactly what changed.
@@ -13,11 +14,13 @@
 //! connections, the schema history and change signals (see README.md).
 
 mod change_notifier;
+mod data_migration;
 mod database;
 mod error;
 mod table;
 
 pub use change_notifier::{ChangeNotifier, TableChanges};
+pub use data_migration::{DataMigration, DataMigrationError};
 pub use database::{Database, DbLocation};
 pub use error::DbError;
 pub use table::Table;
@@ -48,6 +51,8 @@ pub async fn test_db() -> Database {
         .expect("every migration applies to an empty database")
 }
 
+#[cfg(test)]
+mod data_migration_tests;
 #[cfg(test)]
 mod database_tests;
 #[cfg(test)]

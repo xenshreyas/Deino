@@ -23,7 +23,6 @@
         "core:menu:default",
         "core:tray:default",
         "core:window:allow-set-title",
-        "store:default",
         "notification:default",
         "notification:allow-is-permission-granted",
         "updater:default",
@@ -37,6 +36,8 @@
             ]
         },
         "system:default",
-        "meetings:default"
+        "meetings:default",
+        "secrets:default",
+        "settings:default"
     ]
 }

@@ -10,20 +10,13 @@ pub static PARAKEET_ENGINE: Mutex<Option<Arc<ParakeetEngine>>> = Mutex::new(None
 // Global models directory path (set during app initialization)
 static MODELS_DIR: Mutex<Option<PathBuf>> = Mutex::new(None);
 
-/// Initialize the models directory path using app_data_dir
-/// This should be called during app setup before parakeet_init
-pub fn set_models_directory<R: Runtime>(app: &AppHandle<R>) {
-    let app_data_dir = app.path().app_data_dir()
-        .expect("Failed to get app data dir");
-
-    let models_dir = app_data_dir.join("models");
-
-    // Create directory if it doesn't exist
-    if !models_dir.exists() {
-        if let Err(e) = std::fs::create_dir_all(&models_dir) {
-            log::error!("Failed to create models directory: {}", e);
-            return;
-        }
+/// Points the engine at `models_dir`, the composition root's
+/// `AppPaths::models()` (`<app_data_dir>/models`), creating it if needed.
+/// Call it during setup, before the engine initializes.
+pub fn set_models_directory(models_dir: PathBuf) {
+    if let Err(e) = std::fs::create_dir_all(&models_dir) {
+        log::error!("Failed to create models directory: {}", e);
+        return;
     }
 
     log::info!("Parakeet models directory set to: {}", models_dir.display());
@@ -245,11 +238,7 @@ pub async fn parakeet_validate_model_ready_with_config<R: tauri::Runtime>(
         }
 
         // No model loaded - try to load user's configured model from transcript config
-        let model_to_load = match crate::api::api::api_get_transcript_config(
-            app.clone(),
-            app.state(),
-            None,
-        )
+        let model_to_load = match crate::api::api::current_transcript_config(&app)
         .await
         {
             Ok(Some(config)) => {

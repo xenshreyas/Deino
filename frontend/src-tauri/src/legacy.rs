@@ -108,21 +108,14 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         anthropic::anthropic::get_anthropic_models,
         groq::groq::get_groq_models,
         openrouter::get_openrouter_models,
-        // Meetings, transcripts and model settings (list/get/rename: the meetings plugin)
+        // Meetings and transcripts (list/get/rename: the meetings plugin; settings: the settings plugin)
         api::api_search_transcripts,
-        api::api_get_model_config,
-        api::api_save_model_config,
-        api::api_get_api_key,
-        api::api_get_transcript_config,
-        api::api_save_transcript_config,
         api::api_delete_meeting,
         api::api_get_meeting_metadata,
         api::api_get_meeting_transcripts,
         api::api_save_transcript,
         api::open_meeting_folder,
         api::open_external_url,
-        api::api_save_custom_openai_config,
-        api::api_get_custom_openai_config,
         api::api_test_custom_openai_connection,
         // Summaries and templates
         summary::commands::api_process_transcript,
@@ -141,9 +134,7 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         summary::summary_engine::commands::builtin_ai_is_model_ready,
         summary::summary_engine::commands::builtin_ai_get_available_summary_model,
         summary::summary_engine::commands::builtin_ai_get_recommended_model,
-        // Recording preferences and audio backends
-        audio::recording_preferences::get_recording_preferences,
-        audio::recording_preferences::set_recording_preferences,
+        // Recordings folder and audio backends (preferences: the settings plugin)
         audio::recording_preferences::get_default_recordings_folder_path,
         audio::recording_preferences::open_recordings_folder,
         audio::recording_preferences::select_recording_folder,
@@ -152,8 +143,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         audio::recording_preferences::set_audio_backend,
         audio::recording_preferences::get_audio_backend_info,
         // Notifications
-        notifications::commands::get_notification_settings,
-        notifications::commands::set_notification_settings,
         notifications::commands::request_notification_permission,
         notifications::commands::show_notification,
         notifications::commands::show_test_notification,

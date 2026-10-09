@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
+import { settingsApi } from '@/features/settings';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -257,10 +258,7 @@ export function ParakeetModelManager({
 
   const saveModelSelection = async (modelName: string) => {
     try {
-      await invoke('api_save_transcript_config', {
-        provider: 'parakeet',
-        model: modelName,
-      });
+      await settingsApi.patch({ transcription: { engine: 'parakeet', model: modelName } });
     } catch (error) {
       console.error('Failed to save model selection:', error);
     }

@@ -1,6 +1,9 @@
 //! Tauri commands for database lifecycle: first-launch detection, fresh
 //! initialization with default model settings, and locating the data folder.
 
+use std::sync::Arc;
+
+use deino_core::settings::{LlmProvider, SettingsService};
 use log::{error, info};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -29,30 +32,20 @@ pub async fn initialize_fresh_database(app: AppHandle) -> Result<(), String> {
     // Wire the new database into the legacy state, the services and the UI bridge.
     crate::composition::attach_database(&app, db_manager.clone());
 
-    // Set default model configuration for fresh installs
-    let pool = db_manager.pool();
-    
+    // A fresh install summarises with the built-in model recommended for this
+    // Mac, unless onboarding already picked one. Parakeet is the settings' default.
     let default_summary_model = crate::summary::summary_engine::commands::get_recommended_summary_model_for_current_system()
         .unwrap_or("qwen3.5:2b");
-
-    // Default Summary Model: Built-in AI (Qwen recommendation for this system)
-    if let Err(e) = crate::database::repositories::setting::SettingsRepository::save_model_config(
-        pool,
-        "builtin-ai",
-        default_summary_model,
-        "large-v3", // Default whisper model (unused for builtin but required)
-        None,
-    ).await {
-        error!("Failed to set default summary model config: {}", e);
-    }
-
-    // Default Transcription Model: Parakeet
-    if let Err(e) = crate::database::repositories::setting::SettingsRepository::save_transcript_config(
-        pool,
-        "parakeet",
-        crate::config::DEFAULT_PARAKEET_MODEL,
-    ).await {
-        error!("Failed to set default transcription model config: {}", e);
+    let settings = app.state::<Arc<SettingsService>>();
+    let defaults = settings.update(|s| {
+        if s.ai.model.trim().is_empty() {
+            s.ai.provider = LlmProvider::BuiltInAi;
+            s.ai.model = default_summary_model.to_owned();
+            s.ai.provider_models.insert(LlmProvider::BuiltInAi, default_summary_model.to_owned());
+        }
+    });
+    if let Err(e) = defaults.await {
+        error!("Failed to set the default summary model: {}", e);
     }
 
     info!("Fresh database initialized successfully with default models");
