@@ -5,6 +5,7 @@ use crate::audio::vad::get_speech_chunks_with_progress;
 use super::common::{create_transcript_segments, split_segment_at_silence, write_transcripts_json};
 use super::constants::AUDIO_EXTENSIONS;
 use crate::config::{DEFAULT_WHISPER_MODEL, DEFAULT_PARAKEET_MODEL};
+use crate::audio::transcription::TranscriptionProvider;
 use crate::parakeet_engine::ParakeetEngine;
 use crate::state::AppState;
 use crate::whisper_engine::WhisperEngine;
@@ -179,6 +180,7 @@ async fn run_retranscription<R: Runtime>(
 
     // Determine which provider to use (default to whisper)
     let use_parakeet = provider.as_deref() == Some("parakeet");
+    let use_unified = provider.as_deref() == Some(crate::stt::PROVIDER);
 
     info!(
         "Starting retranscription for meeting {} with model {:?}, provider {:?}",
@@ -296,8 +298,18 @@ async fn run_retranscription<R: Runtime>(
     emit_progress(&app, &meeting_id, "transcribing", 25, "Loading transcription engine...");
 
     // Initialize the appropriate engine once (not per-segment)
-    let whisper_engine = if !use_parakeet {
+    let whisper_engine = if !use_parakeet && !use_unified {
         Some(get_or_init_whisper(&app, model.as_deref()).await?)
+    } else {
+        None
+    };
+    // CAP-01: Parakeet Unified (the default engine) runs through deino-stt.
+    let unified_engine = if use_unified {
+        Some(
+            crate::stt::batch_provider(&app, model.as_deref().unwrap_or(""))
+                .await
+                .map_err(|e| anyhow!(e))?,
+        )
     } else {
         None
     };
@@ -365,7 +377,14 @@ async fn run_retranscription<R: Runtime>(
         }
 
         // Transcribe this segment
-        let (text, conf) = if use_parakeet {
+        let (text, conf) = if let Some(engine) = unified_engine.as_ref() {
+            // CAP-01: Parakeet Unified on the batch engine, one VAD segment at a time.
+            let result = engine
+                .transcribe(segment.samples.clone())
+                .await
+                .map_err(|e| anyhow!("Parakeet Unified transcription failed on segment {}: {}", i, e))?;
+            (result.text, result.confidence.unwrap_or(0.85))
+        } else if use_parakeet {
             let engine = parakeet_engine.as_ref().unwrap();
             let text = engine
                 .transcribe_audio(segment.samples.clone())
@@ -384,10 +403,10 @@ async fn run_retranscription<R: Runtime>(
         // Skip empty transcripts
         let trimmed = text.trim();
         if !trimmed.is_empty() {
+            // Lengths only: transcript text never reaches the log (§3A).
             debug!(
-                "Segment {}/{}: {:.1}s, conf={:.2}, text='{}'",
-                i + 1, processable_count, segment_duration_sec, conf,
-                if trimmed.len() > 80 { let mut end = 80; while !trimmed.is_char_boundary(end) { end -= 1; } &trimmed[..end] } else { trimmed }
+                "Segment {}/{}: {:.1}s, conf={:.2}, {} chars",
+                i + 1, processable_count, segment_duration_sec, conf, trimmed.chars().count()
             );
             all_transcripts.push((text, segment.start_timestamp_ms, segment.end_timestamp_ms));
             total_confidence += conf;

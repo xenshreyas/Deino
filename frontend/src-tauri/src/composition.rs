@@ -17,7 +17,11 @@
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod stt;
+
 use std::sync::Arc;
+
+pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::settings::{

@@ -25,6 +25,7 @@ pub mod onboarding;
 mod onnx_runtime;
 mod paths;
 mod setup;
+pub mod stt;
 pub mod updater;
 
 legacy_modules! {
@@ -82,6 +83,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::meetings::init())
         .plugin(features::secrets::init())
         .plugin(features::settings::init())
+        .plugin(features::transcription::init())
         .plugin(features::system::init());
     #[cfg(debug_assertions)]
     let builder = builder

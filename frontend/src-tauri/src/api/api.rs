@@ -31,7 +31,7 @@ pub struct TranscriptSearchResult {
 }
 
 /// The transcription engine and model in the legacy shape, where
-/// `provider` is "parakeet" or "localWhisper".
+/// `provider` is "parakeetUnified", "parakeet" or "localWhisper".
 ///
 /// A bridge for the STT code that CAP-01 rewrites: the value comes from the
 /// typed settings (`Settings::transcription`), not the dropped
@@ -52,6 +52,7 @@ pub async fn current_transcript_config<R: Runtime>(
 
     let transcription = crate::features::settings::current(app).await.transcription;
     let provider = match transcription.engine {
+        TranscriptionEngine::ParakeetUnified => crate::stt::PROVIDER,
         TranscriptionEngine::Parakeet => "parakeet",
         TranscriptionEngine::Whisper => "localWhisper",
     };

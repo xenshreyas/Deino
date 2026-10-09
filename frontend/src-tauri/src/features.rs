@@ -26,6 +26,7 @@ pub mod meetings;
 pub mod secrets;
 pub mod settings;
 pub mod system;
+pub mod transcription;
 
 /// Every feature's bindings builder, keyed by the file it is exported to
 /// under `frontend/src/lib/ipc/generated/`.
@@ -36,6 +37,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (meetings::NAME, meetings::specta()),
         (secrets::NAME, secrets::specta()),
         (settings::NAME, settings::specta()),
+        (transcription::NAME, transcription::specta()),
         (system::NAME, system::specta()),
     ];
     #[cfg(debug_assertions)]

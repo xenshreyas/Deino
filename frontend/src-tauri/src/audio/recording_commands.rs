@@ -395,6 +395,10 @@ pub async fn start_recording_with_meeting_name<R: Runtime>(
     });
 
     // Start recording with resolved devices (replaces start_recording_with_defaults_and_auto_save call)
+    // CAP-01: Parakeet Unified streams continuous audio through a live lane.
+    let live_sink = transcription::live_sink_for_config(&app).await?;
+    manager.set_live_sink(live_sink);
+
     let transcription_receiver = manager
         .start_recording(microphone_device, system_device, auto_save)
         .await
@@ -574,6 +578,10 @@ pub async fn start_recording_with_devices_and_meeting<R: Runtime>(
     });
 
     // Start recording with specified devices and auto_save setting
+    // CAP-01: Parakeet Unified streams continuous audio through a live lane.
+    let live_sink = transcription::live_sink_for_config(&app).await?;
+    manager.set_live_sink(live_sink);
+
     let transcription_receiver = manager
         .start_recording(mic_device, system_device, auto_save)
         .await
@@ -796,6 +804,11 @@ pub async fn stop_recording<R: Runtime>(
         info!("ℹ️ No transcription task found to wait for");
     }
 
+    // CAP-01: the pipeline has ended (the chunk task saw its channel close),
+    // so every second is in the live lane: transcribe its tail and emit its
+    // last segment before the stop flow saves the transcript.
+    crate::stt::finish_live(&app).await;
+
     // Step 3: Now safely unload Whisper model after ALL chunks are processed
     let _ = app.emit(
         "recording-shutdown-progress",
@@ -852,6 +865,11 @@ pub async fn stop_recording<R: Runtime>(
             } else {
                 warn!("⚠️ No Parakeet engine found to unload model");
             }
+        }
+        Some(crate::stt::PROVIDER) => {
+            // CAP-01: the live engine stays warm for the next recording and
+            // unloads after 5 idle minutes (stt/runtime.rs).
+            info!("Parakeet Unified engines unload when idle");
         }
         _ => {
             // Default to Whisper

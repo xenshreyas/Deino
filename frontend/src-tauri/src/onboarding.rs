@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 use deino_core::settings::{
     LlmProvider, ModelDownloadState, OnboardingSettings, Settings, SettingsService,
-    TranscriptionEngine, TranscriptionSettings,
+    TranscriptionSettings,
 };
 use deino_domain::{Clock, SystemClock};
 use serde::{Deserialize, Serialize};
@@ -110,8 +110,9 @@ pub async fn reset_onboarding_status_cmd(
     update(&settings, |s| s.onboarding = OnboardingSettings::default()).await
 }
 
-/// Finishes onboarding with the built-in summary `model` and Parakeet
-/// transcription, in one atomic settings change.
+/// Finishes onboarding with the built-in summary `model` and the default
+/// transcription (Parakeet Unified at the recommended quant), in one atomic
+/// settings change.
 #[tauri::command]
 pub async fn complete_onboarding(
     settings: State<'_, Arc<SettingsService>>,
@@ -130,10 +131,7 @@ fn complete(settings: &mut Settings, model: String, now: chrono::DateTime<chrono
         .ai
         .provider_models
         .insert(LlmProvider::BuiltInAi, model.clone());
-    settings.transcription = TranscriptionSettings {
-        engine: TranscriptionEngine::Parakeet,
-        ..TranscriptionSettings::default()
-    };
+    settings.transcription = TranscriptionSettings::default();
     settings.onboarding = OnboardingSettings {
         completed: true,
         current_step: LAST_STEP,
@@ -158,6 +156,7 @@ async fn update(
 
 #[cfg(test)]
 mod tests {
+    use deino_core::settings::TranscriptionEngine;
     use deino_testkit::{FakeClock, at};
 
     use super::*;
@@ -182,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn completing_switches_to_the_built_in_model_and_parakeet() {
+    fn completing_switches_to_the_built_in_model_and_the_default_engine() {
         let mut settings = Settings::default();
         settings.transcription.engine = TranscriptionEngine::Whisper;
 
