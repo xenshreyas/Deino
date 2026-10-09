@@ -33,6 +33,7 @@ fn event(
     CalendarEvent {
         id: CalendarEventId::generate(&FakeClock::new(at(NOW))),
         account_id: account.id,
+        calendar_id: None,
         provider_event_id: provider_event_id.into(),
         ical_uid: None,
         series_id: Some(SeriesId::new("weekly-sync")),
@@ -40,6 +41,7 @@ fn event(
         description: String::new(),
         start_at,
         end_at: start_at + TimeDelta::minutes(30),
+        is_all_day: false,
         conference_url: Some("https://meet.example.com/abc".into()),
         platform: Some(ConferencePlatform::GoogleMeet),
         organizer_email: Some("ada@example.com".into()),

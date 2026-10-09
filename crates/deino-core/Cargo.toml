@@ -46,6 +46,9 @@ tokio-util.workspace = true
 # The account export's zip archive (EXP-02).
 zip.workspace = true
 uuid.workspace = true
+# Conference links in calendar events: parsing, hosts and redirect query
+# parameters (already in the tree through deino-net).
+url = "2.5.8"
 
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }
