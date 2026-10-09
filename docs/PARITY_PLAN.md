@@ -876,7 +876,10 @@ Card format:
 - **Parity:** G §2.1, G §4 (Me/Them); CM §4.4 (#241, #642; upstream PR #823 multitrack)
 - **Build:**
   - Run VAD and STT **per channel**: two worker lanes, mic and system, and tag every segment with its `channel`. The mixed stream is still saved for playback.
-  - **Echo and bleed suppression:** when the user is on speakers, the mic picks up system audio. Drop or merge mic segments when the system channel was active over the same window and the texts are similar (normalized Levenshtein ratio > 0.6) or the mic energy is mostly correlated with the system stream.
+  - **Echo and bleed suppression:** when the user is on speakers, the mic picks up system audio.
+    - **Primary:** acoustic echo cancellation. Run a WebRTC AEC (e.g. the `webrtc-audio-processing` crate; check its licence) in 10 ms chunks, with the **system track as the reference stream** and the mic as the capture stream (pattern: Zed `livekit_client/playback.rs:50-80`, reference only).
+    - **Fallback:** if AEC leaves residue, drop or merge mic segments when the system channel was active over the same window and the texts are similar (normalized Levenshtein ratio > 0.6).
+  - **Timeline:** use the sample-count timeline with gap filling, and anchor the system track to the recording epoch so both tracks align at t=0. See `docs/REFERENCES.md` → "Cap/Zed audio patterns".
   - Add a setting "I use headphones" that skips suppression.
   - Default speakers: mic → the "Me" speaker (`is_me=1`, linked to the `people.is_me` row); system → "Them" until CAP-03 runs.
   - Update the live UI to label lines Me/Them (full layout in TRN-01).
