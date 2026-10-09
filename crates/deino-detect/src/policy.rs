@@ -28,6 +28,7 @@ use deino_domain::{BundleId, Clock};
 
 use crate::event::DetectionId;
 use crate::snapshot::{Candidate, CandidateKey, Dwell};
+use steps::{OnScreen, Seen};
 
 /// How long strong evidence must hold: the prompt lands within the card's 3 s.
 pub const SHORT_DWELL: TimeDelta = TimeDelta::milliseconds(2_500);
@@ -197,134 +198,6 @@ impl DetectionPolicy {
             Phase::Handled { missing_since, .. } => missing_since.map(|since| since + END_GRACE),
         }
     }
-
-    /// Off or recording: close any prompt; a meeting seen now counts as handled.
-    fn suppress(&mut self, candidate: Option<Candidate>) -> Vec<PolicyAction> {
-        let closed = self.prompt().map(|(id, _)| PolicyAction::Close(id));
-        self.phase = match candidate {
-            Some(candidate) => Phase::Handled {
-                key: candidate.key,
-                missing_since: None,
-            },
-            None => Phase::Idle,
-        };
-        closed.into_iter().collect()
-    }
-
-    /// From idle: a candidate starts its dwell.
-    fn observe(&mut self, seen: Seen) -> Vec<PolicyAction> {
-        if let Some(candidate) = seen.candidate {
-            self.phase = Phase::Pending {
-                candidate,
-                since: seen.now,
-            };
-        }
-        Vec::new()
-    }
-
-    /// A candidate that held for its dwell becomes a prompt.
-    fn pending(
-        &mut self,
-        key: &CandidateKey,
-        since: DateTime<Utc>,
-        seen: Seen,
-    ) -> Vec<PolicyAction> {
-        let Some(candidate) = seen.candidate.as_ref().filter(|c| c.key == *key) else {
-            return self.observe(seen);
-        };
-        let candidate = candidate.clone();
-        if seen.now < since + dwell(&candidate) {
-            self.phase = Phase::Pending { candidate, since };
-            return Vec::new();
-        }
-        self.last_id += 1;
-        let id = DetectionId(self.last_id);
-        self.phase = Phase::Prompting {
-            id,
-            candidate: candidate.clone(),
-            shown_at: seen.now,
-            missing_since: None,
-        };
-        vec![PolicyAction::Prompt(id, candidate)]
-    }
-
-    /// A prompt times out, or ends once its meeting is gone for the grace.
-    fn prompting(&mut self, shown: OnScreen, seen: Seen) -> Vec<PolicyAction> {
-        let OnScreen {
-            id,
-            candidate,
-            shown_at,
-            missing_since,
-        } = shown;
-        if let Some(current) = seen.candidate.as_ref().filter(|c| c.key == candidate.key) {
-            if seen.now >= shown_at + PROMPT_TIMEOUT {
-                self.phase = Phase::Handled {
-                    key: candidate.key,
-                    missing_since: None,
-                };
-                return vec![PolicyAction::Close(id)];
-            }
-            self.phase = Phase::Prompting {
-                id,
-                candidate: current.clone(),
-                shown_at,
-                missing_since: None,
-            };
-            return Vec::new();
-        }
-        let missing_since = missing_since.unwrap_or(seen.now);
-        if seen.now < missing_since + END_GRACE {
-            self.phase = Phase::Prompting {
-                id,
-                candidate,
-                shown_at,
-                missing_since: Some(missing_since),
-            };
-            return Vec::new();
-        }
-        let mut actions = vec![PolicyAction::End(id)];
-        actions.extend(self.observe(seen));
-        actions
-    }
-
-    /// A handled meeting stays quiet until it is gone for the grace.
-    fn handled(
-        &mut self,
-        key: CandidateKey,
-        missing_since: Option<DateTime<Utc>>,
-        seen: Seen,
-    ) -> Vec<PolicyAction> {
-        if seen.candidate.as_ref().is_some_and(|c| c.key == key) {
-            self.phase = Phase::Handled {
-                key,
-                missing_since: None,
-            };
-            return Vec::new();
-        }
-        let missing_since = missing_since.unwrap_or(seen.now);
-        if seen.now < missing_since + END_GRACE {
-            self.phase = Phase::Handled {
-                key,
-                missing_since: Some(missing_since),
-            };
-            return Vec::new();
-        }
-        self.observe(seen)
-    }
-}
-
-/// One evaluation's input: the candidate, if any, and the time.
-struct Seen {
-    candidate: Option<Candidate>,
-    now: DateTime<Utc>,
-}
-
-/// The prompt being shown, unpacked from [`Phase::Prompting`].
-struct OnScreen {
-    id: DetectionId,
-    candidate: Candidate,
-    shown_at: DateTime<Utc>,
-    missing_since: Option<DateTime<Utc>>,
 }
 
 fn dwell(candidate: &Candidate) -> TimeDelta {
@@ -334,6 +207,7 @@ fn dwell(candidate: &Candidate) -> TimeDelta {
     }
 }
 
+mod steps;
 #[cfg(test)]
 #[path = "policy_tests.rs"]
 mod tests;

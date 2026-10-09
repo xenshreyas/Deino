@@ -72,6 +72,13 @@ Adapted in Deino:
   planning (the in-person shared-microphone rule) from
   `crates/listener2-core/src/batch/diarize.rs`, and word-to-speaker
   assignment from `pyannote-local::assign_words`.
+- `crates/deino-detect/` (CAP-06): the deny-list categories
+  (`classify/tables.rs`, from `plugins/detect/src/policy.rs`), the 15 s
+  microphone hold and 10-minute cooldown (`policy.rs`, from
+  `plugins/detect/src/mic_usage_tracker.rs`), resolution to the outermost
+  `.app` bundle and the FaceTime / iPhone call-daemon relabelling
+  (`attribution.rs`, from `crates/detect/src/list/macos.rs`), and the
+  browser bundle list (from `apps/desktop/src/stt/meeting-apps.ts`).
 
 MIT License
 
@@ -174,6 +181,13 @@ Adapted in Deino:
 
 - `docs/REVIEW.md`: the severity scale and review-priority structure, from
   `REVIEW.md`.
+- `crates/deino-detect/` (CAP-06), ported from Swift: the meeting-app table
+  with its weak, full-duplex-only apps and the candidate priority order
+  (`classify/tables.rs`, `resolver.rs`, from `MeetingCandidateResolver.swift`),
+  the meeting-URL normaliser (`url.rs`, from `MeetingURLNormalizer`), the
+  candidate stability rule (`policy.rs`, from
+  `MeetingPromptStateMachine.swift`), and the CoreMediaIO camera observer
+  (`macos/cmio.rs`, `macos/camera.rs`, from `CameraActivityMonitor.swift`).
 
 MIT License
 
@@ -324,7 +338,11 @@ Source: https://github.com/OpenWhispr/openwhispr, MIT License.
 Adapted in Deino: `crates/deino-diarize/src/prune.rs` (phantom-speaker pruning
 and collapse detection, from `src/helpers/diarizationPolicy.js`) and
 `crates/deino-diarize/src/online.rs` (the threshold-plus-margin live speaker
-rules, from `src/helpers/liveSpeakerIdentifier.js`).
+rules, from `src/helpers/liveSpeakerIdentifier.js`). `crates/deino-detect/`
+(CAP-06) ports the PID-scoped microphone listener from
+`resources/macos-mic-listener.swift`: listeners on the process list and on
+each process object, a reconcile that skips objects that vanished mid-read,
+and ignoring `com.apple.CoreSpeech` (`macos/processes.rs`, `reader.rs`).
 
 Copyright (c) 2024 OpenWhispr Team. Licensed under the MIT License (the
 same terms as the Anarlog notice above).
