@@ -114,6 +114,14 @@ export type Table =
  */
 "llm_calls" | 
 /**
+ * Post-meeting pipeline jobs: one row per meeting and stage (FND-08).
+ */
+"jobs" | 
+/**
+ * The attempts of each pipeline job.
+ */
+"job_runs" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

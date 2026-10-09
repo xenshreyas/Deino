@@ -142,6 +142,13 @@ text_id!(
     TemplateId
 );
 
+text_id!(
+    /// Identifies a stage of the post-meeting pipeline (FND-08), for example
+    /// `legacy_summary`. Stages name themselves in code
+    /// (`deino-pipeline/src/registry.rs`); `jobs.stage` stores the name.
+    StageId
+);
+
 uuid_id!(
     /// Identifies a transcript segment. Segments migrated from the legacy
     /// `transcripts` table keep their UUIDv4.

@@ -1,6 +1,7 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
 import { type MeetingId, useMeeting } from '@/features/meetings';
+import { PipelineStrip } from '@/features/pipeline';
 import { Chip, MetaChip } from '@/ui/chip';
 import { Calendar, Plus, Users } from '@/ui/icons';
 import { Skeleton } from '@/ui/skeleton';
@@ -36,7 +37,7 @@ function SoonChip({ label, icon }: { label: string; icon: typeof Plus }) {
 
 /**
  * Title, then a row of meta chips: date, attendees and tags (placeholders
- * until ORG-04 and ORG-06 provide them).
+ * until ORG-04 and ORG-06 provide them), then the processing status strip.
  */
 export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
   const meeting = useMeeting(meetingId);
@@ -56,6 +57,8 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
         <SoonChip icon={Users} label={meetingCopy.addAttendees} />
         <SoonChip icon={Plus} label={meetingCopy.addTag} />
       </div>
+      {/* FND-08: processing status, minimally placed; FND-10 follow-up gives it its home. */}
+      <PipelineStrip meetingId={meetingId} />
     </header>
   );
 }

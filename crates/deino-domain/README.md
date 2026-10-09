@@ -16,7 +16,8 @@ crate and across IPC. No I/O, no Tauri.
   `CHECK` list: `MeetingStatus` (a state machine: `apply(MeetingEvent)` and
   one method per transition), `MeetingSource`, `Channel`, `AttendeeRole`,
   `Rsvp`, `ActionItemStatus`, `ActionItemPriority`, `ActionItemOrigin`,
-  `TagSource`, `CalendarProvider`, `ConferencePlatform`.
+  `TagSource`, `CalendarProvider`, `ConferencePlatform`; and the pipeline's
+  `JobStatus` and `RunOutcome` (`job.rs`, FND-08) with its `StageId`.
 - Values with rules: `Millis` and `Seconds` (`units.rs`), `Email` (`email.rs`,
   canonical lower-case addresses; `parse` normalises user input), and
   `PaletteColor` (`color.rs`, a slot of the shared speaker and tag palette).

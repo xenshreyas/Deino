@@ -103,6 +103,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
 | `crates/deino-llm` | The LLM gateway (ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router`, providers (Anthropic, OpenAI-compatible, Ollama, built-in llama-helper), askama/minijinja prompts, `MockProvider`, the `llm_calls` usage log (no content). Every LLM call goes through it. |
+| `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |
@@ -119,7 +120,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `settings`, `secrets`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `settings`, `secrets`, `pipeline`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

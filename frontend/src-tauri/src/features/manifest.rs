@@ -47,6 +47,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "ollama_delete",
         ],
     ),
+    // ── FND-08 pipeline ──
+    ("pipeline", &["status", "rerun"]),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

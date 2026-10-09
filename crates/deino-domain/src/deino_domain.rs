@@ -9,6 +9,7 @@
 //! - [`enums`] and [`color`]: the other closed sets the core schema stores
 //!   ([`Channel`], [`AttendeeRole`], [`Rsvp`], [`PaletteColor`], ...), each
 //!   matching its column's `CHECK` constraint;
+//! - [`job`]: the post-meeting pipeline's [`JobStatus`] and [`RunOutcome`];
 //! - [`units`]: [`Millis`] and [`Seconds`], so durations carry their unit;
 //! - [`email`]: [`Email`], a normalised address (people, attendees, fixtures);
 //! - [`error`]: [`AppError`], the only error that crosses IPC, its
@@ -27,6 +28,7 @@ pub mod email;
 pub mod enums;
 pub mod error;
 pub mod id;
+pub mod job;
 pub mod status;
 pub mod units;
 
@@ -44,7 +46,8 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, IdError, LlmCallId,
-    MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, TagId, TemplateId,
+    MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
 };
+pub use job::{JobStatus, RunOutcome};
 pub use status::{InvalidTransition, MeetingEvent, MeetingStatus};
 pub use units::{Millis, Seconds};

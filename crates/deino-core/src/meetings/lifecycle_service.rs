@@ -4,23 +4,42 @@
 //! this service reads the current status, asks the state machine for the
 //! next one and stores it with a compare-and-set, so a concurrent writer
 //! (the recorder and the pipeline, say) can never be silently overwritten.
+//! Once a change is stored, every [`MeetingStatusObserver`] hears about it
+//! (the pipeline starts when a meeting enters `processing`).
 
-use std::sync::Arc;
+use std::sync::{Arc, PoisonError, RwLock};
 
 use deino_domain::{Clock, MeetingEvent, MeetingId, MeetingStatus};
 
-use super::{MeetingError, MeetingLifecycleRepo, StatusChange};
+use super::{MeetingError, MeetingLifecycleRepo, MeetingStatusObserver, StatusChange};
 
 /// Applies [`MeetingEvent`]s to stored meetings.
 pub struct MeetingLifecycleService {
     repo: Arc<dyn MeetingLifecycleRepo>,
     clock: Arc<dyn Clock>,
+    observers: RwLock<Vec<Arc<dyn MeetingStatusObserver>>>,
 }
 
 impl MeetingLifecycleService {
-    /// Creates the service over its ports.
+    /// Creates the service over its ports, with no observers.
     pub fn new(repo: Arc<dyn MeetingLifecycleRepo>, clock: Arc<dyn Clock>) -> Self {
-        Self { repo, clock }
+        Self {
+            repo,
+            clock,
+            observers: RwLock::default(),
+        }
+    }
+
+    /// Adds `observer`, called after every stored status change from now on.
+    ///
+    /// Observers subscribe after construction because some of them (the
+    /// pipeline) depend on this service themselves.
+    pub fn subscribe(&self, observer: Arc<dyn MeetingStatusObserver>) {
+        let mut observers = self
+            .observers
+            .write()
+            .unwrap_or_else(PoisonError::into_inner);
+        observers.push(observer);
     }
 
     /// Applies `event` to the meeting and returns its new status.
@@ -48,7 +67,21 @@ impl MeetingLifecycleService {
             return Err(MeetingError::StatusChanged(id.clone()));
         }
         log::info!(target: "meetings", "meeting {id} is now {to}");
+        self.notify(id, change).await;
         Ok(to)
+    }
+
+    /// Tells every observer about a stored change, in subscription order.
+    async fn notify(&self, id: &MeetingId, change: StatusChange) {
+        // Cloned so no lock is held while observers run (they may transition again).
+        let observers = self
+            .observers
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
+        for observer in observers {
+            observer.status_changed(id, change).await;
+        }
     }
 }
 
@@ -122,5 +155,58 @@ mod tests {
             .unwrap_err();
 
         assert!(matches!(error, MeetingError::NotFound(_)));
+    }
+
+    /// Remembers every change it hears about.
+    #[derive(Default)]
+    struct RecordingObserver {
+        heard: std::sync::Mutex<Vec<(MeetingId, StatusChange)>>,
+    }
+
+    #[async_trait::async_trait]
+    impl MeetingStatusObserver for RecordingObserver {
+        async fn status_changed(&self, id: &MeetingId, change: StatusChange) {
+            self.heard.lock().unwrap().push((id.clone(), change));
+        }
+    }
+
+    #[tokio::test]
+    async fn observers_hear_each_stored_change_with_its_from_and_to() {
+        let (service, _) = service_with(MeetingStatus::Recording).await;
+        let observer = Arc::new(RecordingObserver::default());
+        service.subscribe(observer.clone());
+        let id = MeetingId::new("meeting-a");
+
+        service
+            .transition(&id, MeetingEvent::StopRecording)
+            .await
+            .unwrap();
+
+        let heard = observer.heard.lock().unwrap().clone();
+        assert_eq!(
+            heard,
+            [(
+                id,
+                StatusChange {
+                    from: MeetingStatus::Recording,
+                    to: MeetingStatus::Processing,
+                    at: at(CREATED_AT) + TimeDelta::hours(1),
+                }
+            )]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_refused_change_is_not_announced() {
+        let (service, _) = service_with(MeetingStatus::Ready).await;
+        let observer = Arc::new(RecordingObserver::default());
+        service.subscribe(observer.clone());
+
+        let refused = service
+            .transition(&MeetingId::new("meeting-a"), MeetingEvent::Complete)
+            .await;
+
+        assert!(refused.is_err());
+        assert!(observer.heard.lock().unwrap().is_empty());
     }
 }

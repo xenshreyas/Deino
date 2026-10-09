@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Jobs left running, which at startup means a crash interrupted them.\n-- Served by idx_jobs_status_meeting_id (asserted in repo_tests.rs).\nSELECT\n    meeting_id AS \"meeting_id!: MeetingId\",\n    stage AS \"stage!: StageId\",\n    status AS \"status: JobStatus\",\n    attempts AS \"attempts: u32\",\n    not_before AS \"not_before: DateTime<Utc>\",\n    message,\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM jobs\nWHERE status = 'running'\nORDER BY meeting_id, stage\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "stage!: StageId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: JobStatus",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "attempts: u32",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "not_before: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "message",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "beb99a4e7f7fc0b065e286b4c16d50b4c005d92bb853da84c7da02982306d83c"
+}

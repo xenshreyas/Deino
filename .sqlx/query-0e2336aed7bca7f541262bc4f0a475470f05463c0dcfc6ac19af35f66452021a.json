@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE job_runs\n         SET finished_at = CASE WHEN julianday(?3) < julianday(started_at) THEN started_at ELSE ?3 END,\n             outcome = ?4, message = ?5\n         WHERE meeting_id = ?1 AND stage = ?2 AND finished_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "0e2336aed7bca7f541262bc4f0a475470f05463c0dcfc6ac19af35f66452021a"
+}
