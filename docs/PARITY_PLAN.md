@@ -37,13 +37,17 @@ This document does two jobs:
 **Fixed constraints (from the owner)**
 - **English only.** Remove language pickers, translation and auto-detect. Hard-code `en` everywhere.
 - **Transcription model quality is out of scope.** The default engine is **Parakeet Unified EN 0.6B** (`nvidia/parakeet-unified-en-0.6b`, GGUF via `transcribe-cpp`, see CAP-01). Do not spend effort on model accuracy beyond wiring that engine in.
-- **Local-only.** Recording, transcription, notes, search and AI all run on the user's own Mac. **Nothing leaves the machine by default.** An **Offline mode** switch (FND-12) is ON by default and blocks every outbound request except model downloads the user approves. Online features (a cloud LLM key, Slack, Notion, Gmail, CRMs, Google/Microsoft calendar APIs) only work when the user switches Offline mode off **and** connects that specific service.
-- **No meeting bot, no Deino server.** Recording only ever happens on the computer running Deino. There is no hosted backend, so there are no share links, cloud sync or mobile apps (§5.8).
+- **A Mac app with no cloud services.** The app, recording, **transcription (always local)**, storage and search all run on the user's Mac. There is never a Deino server or hosted backend.
+- **What may leave the Mac, and how.** Data goes **directly from the app** to services the user has connected, and nowhere else:
+  - the LLM provider chosen for notes and chat (**Claude API or OpenAI API**), which receives transcript text and notes;
+  - integrations the user connects (Slack, Notion, Gmail, calendars, CRMs, task tools).
+  - Audio and transcription never leave the Mac.
+- **No meeting bot.** Recording only ever happens on the computer running Deino. There are no share links or cloud sync (§5.8). A phone app is a future consideration (§10).
 - **Proprietary.** Do not add open-source licence headers. Keep `THIRD_PARTY_NOTICES.md` up to date whenever code is copied from MIT projects such as Meetily, Handy or community PRs.
 
 **Defaults unless §8 says otherwise**
 - **Platform:** macOS 14.2+ on Apple Silicon is the primary target. Windows and Linux must still compile (`cargo check`), but new OS-specific features may be stubbed with `#[cfg(not(target_os = "macos"))]` returning `Err("unsupported on this platform")`.
-- **Users:** a single user on a single machine. Team, workspace and admin features are deferred to Phase 7 (§6.12).
+- **Users:** a single user on a single machine. Team, workspace and admin features are not planned (§5.8).
 - **Data location:** everything stays local under the app data dir.
 - **Distribution:** the owner may hand the app to other people. Each copy is fully independent and keeps its own data on its own computer.
 
@@ -139,9 +143,76 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
     - If you add one, pin its version, say why in the PR, and keep its licence permissive: MIT, Apache-2.0, BSD or ISC. **No GPL or AGPL.**
     - Never run downloaded binaries during the build without a sha256 pin.
 11. **Platform guards.** macOS-only code goes behind `#[cfg(target_os = "macos")]` with a stub for other platforms, and `cargo check` must pass on Linux in CI.
-12. **Keep it single-user.** Do not invent auth, users or tenants unless the card is in Phase 7.
-13. **Style.** Match the surrounding code: `anyhow` internally, `Result<T, String>` at the command boundary, `log`/`perf_debug!` macros, Context+hooks on the frontend, shadcn/Radix components and sonner toasts. Remove dead code you replace.
+12. **Keep it single-user.** Do not invent auth, users or tenants.
+13. **Code quality.** Follow §3A for all new code. Remove dead code you replace. When you touch a legacy file that breaks §3A, improve the part you touch, but don't rewrite unrelated code.
 14. **Reference code you may port.** Meetily community PRs are MIT, and so is Handy (`~/Documents/GitHub/Handy`). If you copy code, add an entry to `THIRD_PARTY_NOTICES.md`. Do **not** copy from Granola, Circleback or Meetily PRO.
+
+---
+
+## 3A. Code quality standards
+
+Owner goal: code that is **readable, maintainable, well documented and easy to test**, so later features and bug fixes are cheap. Reviewers reject PRs that break these rules. FND-13 sets up the tooling and the examples.
+
+### Structure (Rust)
+- **Layers.** Each feature module has these layers. Each layer may only call the one below it.
+  1. `commands.rs`: thin Tauri commands. They parse input, call one service function and map errors. No logic.
+  2. `service.rs`: business logic. It has no Tauri types and no SQL, and it is pure where it can be.
+  3. `repo.rs`: SQL only, through sqlx. One function per query, returning typed structs.
+  4. `adapters/`: anything external (LLM, HTTP, OS APIs, audio devices, filesystem, clock), each **behind a trait**.
+- **Dependency injection.** Services receive their dependencies as trait objects or generics: `LlmGateway`, `Clock`, `HttpClient`, `CalendarSource` and so on. Tests pass fakes. Never reach for globals or singletons in new code.
+- **Errors.**
+  - Each module has a `thiserror` enum describing what can go wrong.
+  - Commands convert errors to the shared serializable `AppError { code, message }` (FND-13), so the UI can react to `code`.
+  - `anyhow` is allowed only at the edges, such as `main` and one-off scripts.
+  - No `unwrap`/`expect` outside tests unless it guards a real invariant, with a comment saying why it can't fail.
+- **Size.** Aim for functions of 60 lines or fewer and files of 400 lines or fewer. Split by responsibility, not arbitrarily.
+- **Constants.** No magic numbers or strings: use named `const`s with a doc comment (for example `const AUTO_STOP_SILENCE: Duration = …`).
+- **Logging.** Use the `log` crate with the module as target. **Never log transcript text, notes, prompts, emails or secrets**; log IDs and counts instead.
+
+### Structure (frontend)
+- **TypeScript.** `strict` mode, no `any`, and no non-null `!` without a comment.
+- **Types shared with Rust are generated, not hand-written.** Use `tauri-specta` (or `ts-rs`), so the IPC types can't drift (FND-13).
+- **Feature folders.** `features/<name>/` contains `components/` (presentational, props in, events out), `hooks/` (data and state), `api.ts` (typed IPC calls) and `types.ts`.
+- **Server state.** Data that comes from Rust goes through **TanStack Query** hooks over IPC: caching, invalidation on Rust events, and loading and error states. UI-only state stays local, or in a small Zustand store when shared.
+- **UI.** Build with shadcn/Radix components and Tailwind design tokens. Keep visible strings in one `copy.ts` per feature.
+
+### Documentation
+- **Rust.** Every module starts with a `//!` doc covering what it does, how it fits in and its main types. Every `pub` item has `///` docs.
+- **TypeScript.** Exported functions, hooks and components have TSDoc.
+- **Comments** explain *why* (constraints, edge cases, links to research sections), not *what*.
+- **`docs/ARCHITECTURE.md`** (FND-13) is the map of the system:
+  - processes
+  - modules
+  - data flow (record → pipeline → notes)
+  - DB schema diagram
+  - extension points (new pipeline stage, LLM route, integration, MCP tool)
+
+  **Update it in the same PR** whenever a card changes any of these.
+- **ADRs:** a significant design choice (a library, a data model, an algorithm) gets a short ADR in `docs/adr/NNNN-title.md` (context, decision, alternatives, consequences).
+- **Setup docs:** every integration documents its setup in `docs/setup/<provider>.md`.
+
+### Testing
+- **Unit tests** for every service function, using fakes for adapters and `Clock` for anything time-based.
+- **Repository tests** against an in-memory SQLite with all migrations applied (`test_db()`).
+- **Contract tests** for every Tauri command: input → output JSON shape, so the frontend can rely on it.
+- **Frontend:** component and hook tests with bun:test, Testing Library and happy-dom. Use Playwright smoke tests for main flows against `pnpm dev:mock`.
+- **LLM features:** prompt-snapshot tests with `MockProvider`, plus a small **eval set** (fixtures and expected facts) runnable on demand with a real key (`pnpm eval <feature>`). Evals are not part of CI.
+- **Coverage:** new service and repository code should reach about 80% line coverage. CI reports it (`cargo llvm-cov`, bun coverage).
+- **Bug fixes** start with a failing test that reproduces the bug.
+
+### Tooling enforced in CI (FND-03 and FND-13)
+- **Rust:** `rustfmt`, `clippy -D warnings` with a curated set of pedantic lints in `clippy.toml`.
+- **Frontend:** ESLint (typescript-eslint strict, react-hooks) and Prettier. `tsc --noEmit`.
+- **Tests:** all tests must pass.
+- **Commits:** Conventional Commits.
+- **PR template:** what, why, how it was tested, screenshots, docs updated, follow-ups.
+
+### Definition of done (every card)
+- [ ] The acceptance checklist passes.
+- [ ] Tests were added at the right layers, and CI is green.
+- [ ] Module docs and public-item docs are written, and `ARCHITECTURE.md` and any ADR are updated.
+- [ ] No new lint suppressions without a comment.
+- [ ] No secrets or meeting content in logs.
 
 ---
 
@@ -226,9 +297,11 @@ Stages register through a trait: `trait PipelineStage { fn id(&self)->&'static s
   - `followup.email`
   - `embed`
 - **Default routing (§8 D3):**
-  - Everything goes to the built-in local model by default.
-  - If Offline mode is off and a Claude API key is set: `claude-sonnet-5-5` for `notes.*`, `chat`, `brief` and `followup.email`; `claude-haiku-5-5` for `extract.*`, `tagging`, `title` and `entity.summary`.
-  - Every cloud route must go through the FND-12 network guard.
+  - **Claude:** `claude-sonnet-5-5` for `notes.*`, `chat`, `brief` and `followup.email`; `claude-haiku-5-5` for `extract.*`, `tagging`, `title` and `entity.summary`.
+  - **OpenAI:** the user picks a "smart" and a "fast" model from the provider's live model list.
+  - **No key:** if no API key is set, routes fall back to the built-in local model.
+  - `embed` is always local.
+  - All provider traffic goes through the FND-12 network client.
 - **Logging:** usage per call (tokens, latency, route) goes to a local `llm_calls` table for a usage page. Prompts are never logged unless the user turns on debug mode.
 - **Testing:** `MockProvider` returns canned responses keyed by route, for tests.
 
@@ -298,7 +371,7 @@ Legend:
 | Audio file import | — | ✅ (2 GB) | ✅ (beta flag) | CAP-11 (promote, add video, link to event) |
 | **Folder watcher auto-import** | — | — | ❌ (OSS peers have it) | CAP-11 |
 | **Import from other note-takers** (Granola, Circleback, Fathom, Fireflies, Read AI) | ✅ (account move) | ✅ | ❌ | CAP-12 |
-| Phone and in-person mobile capture, Apple Watch | ✅ | ✅ | ❌ | **Won't build** (needs sync); in-person meetings are recorded on the Mac with CAP-03 |
+| Phone and in-person mobile capture, Apple Watch | ✅ | ✅ | ❌ | **Future** (§10); in-person meetings are recorded on the Mac with CAP-03 |
 | Meeting bot (Zoom/Meet/Teams/Webex) | — | ✅ | ❌ | **Won't build** (owner decision) |
 | Slack huddles | ✅ (desktop audio) | ✅ (bot) | ✅ (desktop audio) | — |
 | **Consent tools** (automatic chat message, watermark camera) | ✅ | 🟡 (bot message) | ❌ | CAP-13 |
@@ -383,7 +456,7 @@ Legend:
 
 ### 5.6 Automations, integrations, export, developer platform
 
-The integrations here (INT-*) send data off the Mac by their nature. They are **online opt-in features**: they stay disabled until the user turns Offline mode off and connects that service (FND-12). The automations engine, exports, webhooks to localhost, MCP, the local API and the CLI all run locally.
+The integrations here (INT-*) send data **directly from the Mac to that service** once the user connects it. There is no Deino server in between. Everything else in this table (automations engine, exports, MCP, local API, CLI) runs locally.
 
 | Feature | G | C | Deino today | Card |
 |---|---|---|---|---|
@@ -425,7 +498,7 @@ The integrations here (INT-*) send data off the Mac by their nature. They are **
 | Share links / web viewer | ✅ | ✅ | Needs a hosted server | Export a PDF, DOCX or Markdown file and send it yourself (EXP-01) |
 | Email recap sent automatically to attendees | — | ✅ | Needs a server | Follow-up email draft opened in Mail.app (NOT-07) |
 | Multi-device sync | ✅ | ✅ | Needs a server | Auto-export to a folder you control (EXP-02) |
-| iOS / Android / Watch apps | ✅ | ✅ | Need sync | Record in-person meetings on the Mac |
+| iOS / Android / Watch apps | ✅ | ✅ | **Future consideration** (§10); build the Mac app first | Record in-person meetings on the Mac |
 | Slack bot (ask in Slack, link unfurls) | ✅ | ✅ | Needs a server | Post notes to Slack yourself (INT-01, online opt-in) |
 | Teams, workspaces, admin, SSO/SCIM, audit log | ✅ | ✅ | Single-user app | — |
 
@@ -621,18 +694,38 @@ Card format:
   - [ ] A new nav item or tab can be added by editing one registry file.
   - [ ] Screenshots of `dev:mock` are in the PR.
 
-#### FND-12 · Offline mode and network guard
-- **Wave** 1 · **Depends on** FND-06 · **Size** M
+#### FND-13 · Code-quality baseline
+- **Wave** 0 · **Depends on** FND-02 · **Size** M
+- **Owns:** `docs/ARCHITECTURE.md`, `docs/adr/`, `.github/pull_request_template.md`, `clippy.toml`, ESLint/Prettier config, `frontend/src-tauri/src/error.rs`, the IPC type generation, the TanStack Query setup
+- **Build:**
+  - **`docs/ARCHITECTURE.md`:** an accurate map of the system as it is after FND-02: processes, modules, data flow, schema and extension points.
+  - **ADRs:** `docs/adr/0001-record-architecture-decisions.md` plus a template. Write ADRs for the decisions already taken in this plan: Tauri + Rust core, SQLite + sqlx, the pipeline-stage pattern, the LLM gateway with routes, and cloud LLM for notes with local transcription.
+  - **`AppError`:** the shared `{code, message}` type, serializable to TS, with a conversion pattern from module `thiserror` enums.
+  - **Generated IPC types:** set up `tauri-specta` (or `ts-rs`) so command types and DTOs generate into `frontend/src/lib/ipc/generated.ts`. CI fails if the generated file is stale. Convert one existing feature (meetings list) as the worked example.
+  - **TanStack Query:** set up the provider plus a helper that invalidates queries on Rust events. Convert the meetings list as the example.
+  - **Lint and format configs:** a `clippy.toml` with curated pedantic lints, ESLint (typescript-eslint strict, react-hooks), and Prettier. Fix or explicitly allow the existing violations so CI starts green.
+  - **PR template** and Conventional Commits check.
+  - **Coverage reporting** in CI: `cargo llvm-cov` and bun coverage, informational.
+  - **Reference module:** `frontend/src-tauri/src/_example_feature/`, a tiny commands → service → repo + adapter-trait module with full docs and tests. Agents copy it as their starting point. Exclude it from release builds.
+- **Accept:**
+  - [ ] The example module and the converted meetings list follow every §3A rule.
+  - [ ] CI enforces lint, format, generated types and tests.
+  - [ ] `ARCHITECTURE.md` is reviewed against the code.
+
+#### FND-12 · Network client and data-egress controls
+- **Wave** 1 · **Depends on** FND-06 · **Size** S
 - **Owns:** `net/` (new), the Settings → Privacy → Network page
 - **Build:**
-  - **One HTTP client:** a shared `net::Client` that every Rust module must use for outbound requests. Add a CI check (grep or clippy lint) that fails on direct `reqwest::Client` use elsewhere.
-  - **Offline mode switch,** ON by default. While it's on, every request fails fast with an `OfflineModeError`. The only exception is model downloads (Parakeet, the local LLM, the embedding model, the diarization models), which ask for confirmation, name the host, and reach only an allowlist of HuggingFace URLs.
-  - **Per-service toggles:** when Offline mode is off, each online service (Claude/OpenAI, Slack, Notion, Gmail, CRMs, Google/Microsoft calendar API, web search) still needs its own toggle. Requests go out only for services that are switched on.
-  - **Network log:** Settings → Network lists every outbound request (time, host, feature, bytes), with no bodies.
-  - **Frontend:** a CSP `connect-src` restricted to `self`, `ipc:` and `asset:`. All online calls go through Rust.
-  - In the UI, features that need the internet show a small globe icon and explain why they're disabled in Offline mode.
+  - **One HTTP client:** a shared `net::Client` that every Rust module must use for outbound requests. Add a CI check that fails on direct `reqwest::Client` use elsewhere.
+  - **Service registry:** every outbound host belongs to a named service (`llm.anthropic`, `llm.openai`, `slack`, `notion`, `gmail`, `google_calendar`, `hf_models`, …). A request to an unregistered host fails.
+  - **Per-service gating:** a service sends nothing until the user connects or enables it.
+  - **Hard rule:** the transcription and audio modules get **no** network client injected, so they cannot make requests at all.
+  - **Network log:** Settings → Network lists every outbound request (time, service, host, bytes, with no bodies) so the user can see exactly what left the Mac.
+  - **Optional "Offline mode"** switch (OFF by default) for times the user wants zero traffic. Notes then fall back to the local model.
+  - **Frontend CSP:** `connect-src` restricted to `self`, `ipc:` and `asset:`. All online calls go through Rust.
 - **Accept:**
-  - [ ] With Offline mode on, a full meeting (record → notes → chat → export) makes zero outbound connections. Verify with Little Snitch or `nettop` and record the result in the PR.
+  - [ ] With no services connected, a full meeting (record → notes with the local model → export) makes zero outbound connections. Verify with `nettop` or Little Snitch and record the result in the PR.
+  - [ ] Transcription has no code path to the network (compile-time: no client in scope).
   - [ ] The CI check catches direct `reqwest` use.
 
 #### FND-11 · Onboarding v2
@@ -642,7 +735,7 @@ Card format:
   - **Steps:**
     1. Welcome.
     2. Permissions: mic, system audio, notifications, **Accessibility** (optional, for speaker names and the consent message), **Calendar** (EventKit).
-    3. Model download: Parakeet Unified EN, the built-in LLM and the embedding model (local by default; a Claude key is an optional online upgrade).
+    3. AI setup: download Parakeet Unified EN and the embedding model, then paste a Claude or OpenAI API key for notes and chat (or download the built-in local model instead).
     4. Connect calendar.
     5. Profile (NOT-05).
     6. Try it: record a 20 s test or open the sample meeting from fixtures.
@@ -1677,7 +1770,7 @@ Card format:
 
 ### 6.8 Removed cards
 
-The cloud cards (CLD-01 to CLD-07: hosted backend, share links, email recaps, sync, mobile apps, meeting bot, Slack bot) and the team cards (TEAM-01, TEAM-02) were removed on 2026-10-08. The owner wants recording to stay local and nothing to leave the Mac. See §5.8 for the local alternatives. Do not build them.
+The cloud cards (CLD-01 to CLD-07: hosted backend, share links, email recaps, sync, mobile apps, meeting bot, Slack bot) and the team cards (TEAM-01, TEAM-02) were removed on 2026-10-08. The owner wants a Mac app with no cloud services and no meeting bot, and the phone app is a future consideration (§10). See §5.8 for the local alternatives. Do not build them.
 
 ---
 
@@ -1687,7 +1780,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 
 | Wave | Cards (✅ = merged) | Notes |
 |---|---|---|
-| **0** | FND-01 → FND-02 → (FND-03 ∥ FND-04) | One after another. Everything touches `lib.rs` and branding. |
+| **0** | FND-01 → FND-02 → (FND-03 ∥ FND-04 ∥ FND-13) | One after another. Everything touches `lib.rs` and branding. |
 | **1** | FND-05 ∥ FND-06 ∥ FND-07 ∥ FND-10 ∥ CAP-01; then FND-09 and FND-12 (after FND-06) | FND-05 and FND-07 coordinate on `transcript_segments`. Land FND-07's migration first and FND-05 rebases onto it. |
 | **2** | FND-08, then in parallel: CAP-02 ∥ CAP-06 ∥ CAP-10 ∥ NOT-01 ∥ NOT-04 ∥ NOT-05 ∥ ORG-01 ∥ ORG-05 ∥ ORG-06 ∥ EXP-01 ∥ INT-00 | FND-08 merges first, because many cards add stages. |
 | **3** | CAP-03 ∥ CAP-07 ∥ CAP-08 ∥ CAP-11 ∥ TRN-01 ∥ TRN-05 ∥ NOT-02 ∥ ORG-02 ∥ ORG-03 ∥ ORG-04 ∥ ORG-08 ∥ AI-05 ∥ EXP-02 ∥ DEV-01 ∥ PRV-01; then TRN-03 (after TRN-01), ORG-07 (after ORG-04), AI-01 (after ORG-08) | The heaviest wave. NOT-02 is on the critical path. |
@@ -1717,8 +1810,8 @@ Agents use these defaults. The owner can change any of them.
 | ID | Decision | Default |
 |---|---|---|
 | D1 | Platforms | macOS (Apple Silicon) first-class. Windows and Linux compile-only for new features. |
-| D2 | Cloud features | **None.** There is no Deino server, meeting bot, sync or mobile app (§5.8). |
-| D3 | Default AI | **The built-in local model** (llama-helper). Embeddings are local too. Claude is an opt-in upgrade: with Offline mode off and a key added, use `claude-sonnet-5-5` for notes, chat, briefs and email and `claude-haiku-5-5` for extraction, tagging and titles. |
+| D2 | Cloud features | **None.** There is no Deino server, meeting bot or sync. The only outbound traffic is directly to the user's LLM provider and connected integrations (§1). |
+| D3 | Default AI | Transcription and embeddings are **always local**. Notes, chat and extraction use **Claude or OpenAI** through the user's own API key (Claude defaults in §4.3). The built-in local model is only a fallback when there's no key. |
 | D4 | Web search in chat | Off by default. When the chat route is Claude, use Claude's server-side web search tool; otherwise a user-provided Brave or Tavily key. |
 | D5 | Bundle id | `com.xenshreyas.deino`. Change it before the first real install, because changing it later moves the data dir. |
 | D6 | Auto-update | Disabled. Install DMGs by hand from CI artifacts. Re-enable later with your own minisign key and a release host (the private GitHub repo needs a token, so use a separate public releases repo or R2/S3). |
@@ -1736,7 +1829,12 @@ Agents should build with config fields for these and document the steps in `docs
 - **macOS permissions** granted manually: Microphone, Screen & System Audio Recording, Accessibility, Calendars, Reminders, Notifications.
 - **Apple Developer ID** signing and notarization (optional; ad-hoc signing works for personal use). Required for the CAP-13 watermark camera extension.
 
-## 10. Explicitly out of scope
+## 10. Future considerations (not now)
+
+- **iPhone app** for in-person recording and reading notes. It needs a sync design with **no Deino server**, such as an iCloud/CloudKit private database or direct Mac↔iPhone sync over the local network. Design it only after the Mac app is complete, and record the design as an ADR.
+- **Apple Watch recorder**, after the iPhone app.
+
+## 10A. Explicitly out of scope
 
 - Transcription model accuracy and benchmarking, multilingual support and translation (owner constraint).
 - Everything in §5.8: meeting bot, share links, sync, mobile and Watch apps, Slack bot, teams and admin.
