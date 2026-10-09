@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { asMeetingId } from '@/features/meetings';
 import type { Table } from '@/lib/ipc/generated/shared';
 
+import { fixtureUuid } from './fixture-ids';
 import { loadFixtureMeetings } from './fixtures';
 import { legacyMeetingResponses } from './legacy-meetings';
 import { MockDatabase } from './mock-database';
@@ -103,8 +104,8 @@ describe('legacy meeting commands', () => {
 
     expect(page.has_more).toBe(true);
     expect(page.transcripts[0]).toMatchObject({
-      id: 'meeting-fixture-one-on-one-segment-0000',
-      timestamp: expect.stringMatching(/^\d\d:\d\d:\d\d$/) as unknown,
+      id: fixtureUuid('segment/meeting-fixture-one-on-one/0'),
+      timestamp: expect.stringMatching(/^00:00:\d\d$/) as unknown,
     });
   });
 

@@ -76,7 +76,8 @@ impl PcmTrack {
     /// How long the track plays.
     pub fn duration(&self) -> Millis {
         let samples = u64::try_from(self.samples.len()).unwrap_or(u64::MAX);
-        Millis(samples.saturating_mul(1000) / u64::from(self.sample_rate.max(1)))
+        let millis = samples.saturating_mul(1000) / u64::from(self.sample_rate.max(1));
+        Millis(u32::try_from(millis).unwrap_or(u32::MAX))
     }
 
     /// Consecutive frames of `frame_len` samples (the last may be shorter),
@@ -104,7 +105,7 @@ impl PcmTrack {
 
     /// The index of the sample at `offset`, if the track is that long.
     fn sample_index(&self, offset: Millis) -> Option<usize> {
-        let index = offset.0.checked_mul(u64::from(self.sample_rate))? / 1000;
+        let index = u64::from(offset.0).checked_mul(u64::from(self.sample_rate))? / 1000;
         usize::try_from(index)
             .ok()
             .filter(|index| *index <= self.samples.len())

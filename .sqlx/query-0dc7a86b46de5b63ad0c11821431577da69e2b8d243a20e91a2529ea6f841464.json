@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendar_accounts (id, provider, name, created_at) VALUES (?1, ?2, ?3, ?4)\n             ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "0dc7a86b46de5b63ad0c11821431577da69e2b8d243a20e91a2529ea6f841464"
+}

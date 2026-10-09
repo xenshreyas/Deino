@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_attendees (meeting_id, person_id, role, rsvp)\n                 VALUES (?1, (SELECT id FROM people WHERE email = ?2), ?3, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "121e3cf1125dfff6ae3ecc55b440acabfda99d6c4c2251c6869584759a0ae394"
+}

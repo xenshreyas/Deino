@@ -4,7 +4,7 @@
 SELECT
     id AS "id: PersonId",
     name,
-    email AS "email: EmailAddress",
+    email AS "email: Email",
     company_id AS "company_id: CompanyId",
     title,
     avatar_path,

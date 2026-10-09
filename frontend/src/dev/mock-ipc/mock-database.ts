@@ -84,7 +84,16 @@ export class MockDatabase {
   /** Restores every fixture meeting, like the Rust `FixtureSeeder`. */
   reseed(): SeedReport {
     this.load();
-    this.onChange(['meetings', 'transcripts']);
+    this.onChange([
+      'calendar_accounts',
+      'calendar_events',
+      'meetings',
+      'companies',
+      'people',
+      'meeting_attendees',
+      'speakers',
+      'transcript_segments',
+    ]);
     const segments = this.fixtures.reduce((sum, fixture) => sum + fixture.segments.length, 0);
     return { meetings: this.fixtures.length, segments };
   }

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO people (id, name, email, company_id, title, created_at, updated_at)\n         VALUES (?1, ?2, ?3, (SELECT id FROM companies WHERE domain = ?4), ?5, ?6, ?6)\n         ON CONFLICT (email) DO UPDATE SET\n             name = excluded.name, company_id = excluded.company_id, title = excluded.title",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "6c1613b5c99dae3b076b2c120fbe1021b987ee68bbe40d4532e3c3ff0c510b76"
+}

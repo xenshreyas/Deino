@@ -1,6 +1,8 @@
 //! Tests of the fixture schema, the repository's fixtures, the seeder and the
 //! fixture audio.
 
+use std::collections::HashSet;
+
 use deino_db::test_db;
 use serde_json::{Value, json};
 
@@ -107,6 +109,14 @@ fn the_user_is_never_heard_on_system_audio() {
 }
 
 #[test]
+fn fixtures_keep_the_microphone_and_system_tracks_apart() {
+    let found = problem(|m| {
+        m["speakers"][1]["channel"] = json!("mixed");
+    });
+    assert_eq!(found, Problem::MixedChannel("Speaker 2".into()));
+}
+
+#[test]
 fn overlapping_or_overlong_segments_are_rejected() {
     let overlap = problem(|m| {
         m["segments"][1] = segment("Speaker 2", "system", 3_000, "Yes, I will ship it Friday.");
@@ -193,7 +203,7 @@ async fn seeding_writes_every_fixture_meeting_and_segment_in_one_commit() {
     assert_eq!(report.meetings as usize, fixtures.meetings().len());
     assert_eq!(report.segments as usize, segments);
     assert_eq!(
-        count(&database, "SELECT COUNT(*) FROM transcripts").await,
+        count(&database, "SELECT COUNT(*) FROM transcript_segments").await,
         segments
     );
     assert_eq!(commits.recv().await.unwrap().seq, 1);
@@ -223,7 +233,7 @@ async fn reseeding_restores_fixtures_and_keeps_the_users_meetings() {
         "SELECT COUNT(*) FROM meetings WHERE title = 'Renamed'",
     )
     .await;
-    let segments = count(&database, "SELECT COUNT(*) FROM transcripts").await;
+    let segments = count(&database, "SELECT COUNT(*) FROM transcript_segments").await;
     let first = Fixtures::load()
         .unwrap()
         .meetings()
@@ -246,23 +256,78 @@ async fn reseeding_restores_fixtures_and_keeps_the_users_meetings() {
 }
 
 #[tokio::test]
-async fn seeded_transcripts_keep_channel_and_timing() {
+async fn seeded_segments_keep_their_id_channel_speaker_and_timing() {
     let database = test_db().await;
     seed_fixtures(&database).await.unwrap();
+    let id = fixture_uuid("segment/meeting-fixture-one-on-one/0");
 
-    let (speaker, start, end): (String, f64, f64) = sqlx::query_as(
-        "SELECT speaker, audio_start_time, audio_end_time FROM transcripts
-         WHERE id = 'meeting-fixture-one-on-one-segment-0000'",
+    let (channel, label, start, end): (String, String, i64, i64) = sqlx::query_as(
+        "SELECT s.channel, sp.label, s.start_ms, s.end_ms
+         FROM transcript_segments AS s JOIN speakers AS sp ON sp.id = s.speaker_id
+         WHERE s.id = ?1",
     )
+    .bind(&id)
     .fetch_one(database.reader())
     .await
     .unwrap();
 
     let fixtures = Fixtures::load().unwrap();
     let first = &fixtures.meeting(MeetingKind::OneOnOne).unwrap().segments[0];
-    assert_eq!(speaker, first.channel.as_str());
-    assert!((start - first.start_ms.as_secs_f64()).abs() < 1e-9);
-    assert!((end - first.end_ms.as_secs_f64()).abs() < 1e-9);
+    assert_eq!(
+        (channel.as_str(), label.as_str()),
+        (first.channel.as_str(), first.speaker.as_str())
+    );
+    assert_eq!(
+        (start, end),
+        (i64::from(first.start_ms.0), i64::from(first.end_ms.0))
+    );
+}
+
+#[tokio::test]
+async fn seeding_links_people_companies_attendees_and_the_calendar_event() {
+    let database = test_db().await;
+    seed_fixtures(&database).await.unwrap();
+    seed_fixtures(&database).await.unwrap();
+
+    let fixtures = Fixtures::load().unwrap();
+    let emails: HashSet<&str> = fixtures
+        .meetings()
+        .iter()
+        .flat_map(|m| m.attendees.iter().map(|a| a.email.as_str()))
+        .collect();
+    let attendees: usize = fixtures.meetings().iter().map(|m| m.attendees.len()).sum();
+    assert_eq!(
+        count(&database, "SELECT COUNT(*) FROM people").await,
+        emails.len()
+    );
+    assert_eq!(
+        count(&database, "SELECT COUNT(*) FROM meeting_attendees").await,
+        attendees
+    );
+    let unlinked =
+        "SELECT COUNT(*) FROM meetings WHERE calendar_event_id IS NULL OR status <> 'ready'";
+    assert_eq!(count(&database, unlinked).await, 0);
+    let domains: HashSet<&str> = fixtures
+        .meetings()
+        .iter()
+        .flat_map(|m| m.companies.iter().map(|c| c.domain.as_str()))
+        .collect();
+    let independent = emails
+        .iter()
+        .filter(|email| !domains.contains(email.split_once('@').unwrap().1));
+    let without_company = "SELECT COUNT(*) FROM people WHERE company_id IS NULL";
+    assert_eq!(count(&database, without_company).await, independent.count());
+}
+
+#[tokio::test]
+async fn legacy_code_reads_the_seeded_transcript_through_the_compatibility_view() {
+    let database = test_db().await;
+    seed_fixtures(&database).await.unwrap();
+
+    let segments = count(&database, "SELECT COUNT(*) FROM transcript_segments").await;
+    let legacy = count(&database, "SELECT COUNT(*) FROM transcripts").await;
+
+    assert_eq!(legacy, segments);
 }
 
 #[test]
@@ -277,8 +342,9 @@ fn fixture_audio_is_spoken_on_the_right_track_at_the_right_time() {
 
     for meeting in with_audio {
         let audio = meeting.audio.as_ref().unwrap();
-        let mic = PcmTrack::decode(&fixtures.audio_path(audio, Channel::Mic)).unwrap();
-        let system = PcmTrack::decode(&fixtures.audio_path(audio, Channel::System)).unwrap();
+        let mic = PcmTrack::decode(&fixtures.audio_path(audio, Channel::Mic).unwrap()).unwrap();
+        let system =
+            PcmTrack::decode(&fixtures.audio_path(audio, Channel::System).unwrap()).unwrap();
         assert!(mic.duration() >= audio.clip_end_ms && mic.duration() <= Millis(60_000));
         let spoken = meeting
             .segments
@@ -287,7 +353,7 @@ fn fixture_audio_is_spoken_on_the_right_track_at_the_right_time() {
         for segment in spoken {
             let (heard, silent) = match segment.channel {
                 Channel::Mic => (&mic, &system),
-                Channel::System => (&system, &mic),
+                Channel::System | Channel::Mixed => (&system, &mic),
             };
             let (from, to) = (segment.start_ms, segment.end_ms);
             assert!(

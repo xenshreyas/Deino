@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO companies (id, name, domain, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?4)\n         ON CONFLICT (domain) DO UPDATE SET name = excluded.name",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "d4768d4d3c5f05fbd9be2e50271b0389b8a1832ffe4adbd2aa1e72dbfb321f8b"
+}

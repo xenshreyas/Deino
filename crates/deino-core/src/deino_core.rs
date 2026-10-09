@@ -25,6 +25,8 @@ pub mod _example;
 pub mod action_items;
 pub mod calendar;
 pub mod companies;
+#[cfg(test)]
+mod fixture_tests;
 pub mod folders;
 pub mod meetings;
 pub mod people;

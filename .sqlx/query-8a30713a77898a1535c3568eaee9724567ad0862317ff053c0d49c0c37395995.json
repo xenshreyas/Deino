@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM meeting_attendees WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8a30713a77898a1535c3568eaee9724567ad0862317ff053c0d49c0c37395995"
+}

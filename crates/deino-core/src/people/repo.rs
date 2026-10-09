@@ -3,9 +3,9 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::{Database, DbError};
-use deino_domain::{CompanyId, PersonId};
+use deino_domain::{CompanyId, Email, PersonId};
 
-use super::{EmailAddress, Person};
+use super::Person;
 
 /// Where people are stored.
 #[async_trait]
@@ -18,7 +18,7 @@ pub trait PersonRepo: Send + Sync {
     async fn find(&self, id: &PersonId) -> Result<Option<Person>, DbError>;
 
     /// The person with `email`, for upserting calendar attendees.
-    async fn find_by_email(&self, email: &EmailAddress) -> Result<Option<Person>, DbError>;
+    async fn find_by_email(&self, email: &Email) -> Result<Option<Person>, DbError>;
 
     /// Every person not merged into another, by name (case-insensitive).
     async fn list(&self) -> Result<Vec<Person>, DbError>;
@@ -80,7 +80,7 @@ impl PersonRepo for SqlitePeopleRepo {
         Ok(person)
     }
 
-    async fn find_by_email(&self, email: &EmailAddress) -> Result<Option<Person>, DbError> {
+    async fn find_by_email(&self, email: &Email) -> Result<Option<Person>, DbError> {
         let person = sqlx::query_file_as!(Person, "src/people/queries/find_by_email.sql", email)
             .fetch_optional(self.database.reader())
             .await?;

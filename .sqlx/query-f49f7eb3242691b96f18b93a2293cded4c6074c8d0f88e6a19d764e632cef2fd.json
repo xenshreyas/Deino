@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "-- One person by email (?1), through the UNIQUE email index.\nSELECT\n    id AS \"id: PersonId\",\n    name,\n    email AS \"email: EmailAddress\",\n    company_id AS \"company_id: CompanyId\",\n    title,\n    avatar_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    is_me AS \"is_me: bool\",\n    merged_into AS \"merged_into: PersonId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM people\nWHERE email = ?1\n",
+  "query": "-- One person by email (?1), through the UNIQUE email index.\nSELECT\n    id AS \"id: PersonId\",\n    name,\n    email AS \"email: Email\",\n    company_id AS \"company_id: CompanyId\",\n    title,\n    avatar_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    is_me AS \"is_me: bool\",\n    merged_into AS \"merged_into: PersonId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM people\nWHERE email = ?1\n",
   "describe": {
     "columns": [
       {
@@ -14,7 +14,7 @@
         "type_info": "Text"
       },
       {
-        "name": "email: EmailAddress",
+        "name": "email: Email",
         "ordinal": 2,
         "type_info": "Text"
       },
@@ -88,5 +88,5 @@
       false
     ]
   },
-  "hash": "3af3e06802e49f9b77bfde436cdece5bad69edf7deec8ca5b8bc7d3c44809699"
+  "hash": "f49f7eb3242691b96f18b93a2293cded4c6074c8d0f88e6a19d764e632cef2fd"
 }

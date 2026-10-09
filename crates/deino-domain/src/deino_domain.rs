@@ -10,6 +10,7 @@
 //!   ([`Channel`], [`AttendeeRole`], [`Rsvp`], [`PaletteColor`], ...), each
 //!   matching its column's `CHECK` constraint;
 //! - [`units`]: [`Millis`] and [`Seconds`], so durations carry their unit;
+//! - [`email`]: [`Email`], a normalised address (people, attendees, fixtures);
 //! - [`error`]: [`AppError`], the only error that crosses IPC, its
 //!   [`ErrorCode`] and the [`ErrorClass`] trait that module errors implement;
 //! - [`clock`]: the [`Clock`] port, so time-dependent logic is testable.
@@ -22,6 +23,7 @@ mod db_enum;
 
 pub mod clock;
 pub mod color;
+pub mod email;
 pub mod enums;
 pub mod error;
 pub mod id;
@@ -32,6 +34,7 @@ pub mod units;
 pub use clock::FakeClock;
 pub use clock::{Clock, SystemClock};
 pub use color::{InvalidPaletteColor, PaletteColor};
+pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, CalendarProvider,
     Channel, ConferencePlatform, MeetingSource, Rsvp, TagSource,

@@ -4,9 +4,9 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use deino_db::DbError;
-use deino_domain::{CompanyId, MeetingId, PersonId};
+use deino_domain::{CompanyId, Email, MeetingId, PersonId};
 
-use super::{Attendee, AttendeeRepo, EmailAddress, Person, PersonRepo};
+use super::{Attendee, AttendeeRepo, Person, PersonRepo};
 use crate::meetings::Meeting;
 use crate::testing::lock;
 
@@ -57,7 +57,7 @@ impl PersonRepo for FakePeopleRepo {
             .cloned())
     }
 
-    async fn find_by_email(&self, email: &EmailAddress) -> Result<Option<Person>, DbError> {
+    async fn find_by_email(&self, email: &Email) -> Result<Option<Person>, DbError> {
         let people = lock(&self.people);
         Ok(people
             .iter()

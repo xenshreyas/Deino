@@ -13,20 +13,22 @@
 //! validates it with zod, and the AI evals, which read `groundTruth`.
 
 mod audio;
-mod legacy_rows;
+mod ids;
 mod load;
 mod model;
+mod rows;
 mod seeding;
 mod validate;
 mod vocab;
 
 pub use audio::{AudioError, PcmTrack};
-pub use legacy_rows::{LegacyMeetingRows, LegacyTranscriptRows};
+pub use ids::fixture_uuid;
 pub use load::{FixtureError, Fixtures};
 pub use model::{
     Attendee, CalendarEvent, Company, ExpectedActionItem, ExpectedFact, FixtureAudio,
     FixtureMeeting, GroundTruth, Segment, Speaker, USER_EMAIL, Word,
 };
+pub use rows::{CalendarRows, MeetingRows, PeopleRows, TranscriptRows};
 pub use seeding::{FixtureSeeder, SeedError, SeedReport, SeedTarget, seed_fixtures};
 pub use validate::{ID_PREFIX, Problem, validate};
 pub use vocab::{

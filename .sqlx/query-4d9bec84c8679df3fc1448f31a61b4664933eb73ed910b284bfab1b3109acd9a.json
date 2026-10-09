@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "-- One person by ID (?1).\nSELECT\n    id AS \"id: PersonId\",\n    name,\n    email AS \"email: EmailAddress\",\n    company_id AS \"company_id: CompanyId\",\n    title,\n    avatar_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    is_me AS \"is_me: bool\",\n    merged_into AS \"merged_into: PersonId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM people\nWHERE id = ?1\n",
+  "query": "-- Every person not merged into another, by name. Served by the partial\n-- index idx_people_listed_name (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: PersonId\",\n    name,\n    email AS \"email: Email\",\n    company_id AS \"company_id: CompanyId\",\n    title,\n    avatar_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    is_me AS \"is_me: bool\",\n    merged_into AS \"merged_into: PersonId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM people\nWHERE merged_into IS NULL\nORDER BY name COLLATE NOCASE, id\n",
   "describe": {
     "columns": [
       {
@@ -14,7 +14,7 @@
         "type_info": "Text"
       },
       {
-        "name": "email: EmailAddress",
+        "name": "email: Email",
         "ordinal": 2,
         "type_info": "Text"
       },
@@ -70,7 +70,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -88,5 +88,5 @@
       false
     ]
   },
-  "hash": "aa7b7f85215c08d30dce2b80ee3eb529efb90f8b6b29fbc0e6b1377f4176c96b"
+  "hash": "4d9bec84c8679df3fc1448f31a61b4664933eb73ed910b284bfab1b3109acd9a"
 }

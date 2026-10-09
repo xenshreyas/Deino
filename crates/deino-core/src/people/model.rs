@@ -1,8 +1,8 @@
 //! People, their email addresses, and who attended which meeting.
 
 use chrono::{DateTime, Utc};
-use deino_domain::{AttendeeRole, CompanyId, MeetingId, PersonId, Rsvp};
-use serde::{Deserialize, Serialize};
+use deino_domain::{AttendeeRole, CompanyId, Email, MeetingId, PersonId, Rsvp};
+use serde::Serialize;
 
 /// Someone the user meets.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
@@ -13,7 +13,7 @@ pub struct Person {
     /// Their display name.
     pub name: String,
     /// Their email address; unique, so calendar attendees upsert onto one person.
-    pub email: Option<EmailAddress>,
+    pub email: Option<Email>,
     /// Where they work.
     pub company_id: Option<CompanyId>,
     /// Their job title.
@@ -36,49 +36,6 @@ pub struct Person {
     pub updated_at: DateTime<Utc>,
 }
 
-/// An email address: trimmed, lower case, with something on both sides of
-/// one `@` and no whitespace. The schema checks the same shape, and the
-/// lower case makes the UNIQUE constraint case-insensitive.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    specta::Type,
-    sqlx::Type,
-)]
-#[serde(transparent)]
-#[sqlx(transparent)]
-pub struct EmailAddress(String);
-
-impl EmailAddress {
-    /// Normalises `input` into an email address, or `None` if it is not one.
-    pub fn parse(input: &str) -> Option<Self> {
-        let email = input.trim().to_lowercase();
-        let (local, domain) = email.split_once('@')?;
-        let looks_valid = !local.is_empty()
-            && !domain.is_empty()
-            && !domain.contains('@')
-            && !email.contains(char::is_whitespace);
-        looks_valid.then_some(Self(email))
-    }
-
-    /// The address as stored.
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    /// The part after the `@`, for matching a company by domain.
-    pub fn domain(&self) -> &str {
-        self.0.split_once('@').map_or("", |(_, domain)| domain)
-    }
-}
-
 /// A person's place in a meeting.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -92,30 +49,4 @@ pub struct Attendee {
     /// Their answer to the invitation; `None` when they were not invited or
     /// the calendar did not say.
     pub rsvp: Option<Rsvp>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn email_addresses_are_trimmed_and_lower_cased() {
-        let email = EmailAddress::parse(" Ada@Example.COM ").unwrap();
-        assert_eq!(email.as_str(), "ada@example.com");
-        assert_eq!(email.domain(), "example.com");
-    }
-
-    #[test]
-    fn things_that_are_not_email_addresses_are_rejected() {
-        for input in [
-            "",
-            "ada",
-            "@example.com",
-            "ada@",
-            "a@b@c",
-            "ada lovelace@example.com",
-        ] {
-            assert_eq!(EmailAddress::parse(input), None, "{input:?}");
-        }
-    }
 }

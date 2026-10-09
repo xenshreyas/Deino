@@ -2,7 +2,7 @@
 //! fake, plus what only the real schema can check.
 
 use deino_db::test_db;
-use deino_domain::{CompanyId, FakeClock, PersonId};
+use deino_domain::{CompanyId, Email, FakeClock, PersonId};
 use deino_testkit::at;
 
 use super::*;
@@ -16,7 +16,7 @@ fn person(name: &str, email: Option<&str>) -> Person {
     Person {
         id: PersonId::generate(&FakeClock::new(created_at)),
         name: name.into(),
-        email: email.and_then(EmailAddress::parse),
+        email: email.and_then(|email| Email::parse(email).ok()),
         company_id: None,
         title: None,
         avatar_path: None,
@@ -66,7 +66,7 @@ async fn people_list_by_name_without_merged_ones(repo: &impl PersonRepo, company
         repo.create(someone).await.unwrap();
     }
 
-    let email = EmailAddress::parse("ada@example.com").unwrap();
+    let email = Email::parse("ada@example.com").unwrap();
 
     assert_eq!(names(&repo.list().await.unwrap()), ["ada", "Grace"]);
     assert_eq!(
