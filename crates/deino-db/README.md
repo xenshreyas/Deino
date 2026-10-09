@@ -14,6 +14,8 @@ commit-time change signals (ADR 0005).
   writer that publish `TableChanges { tables, seq }` once per committed
   transaction. Adapted from anarlog's `db-change` (MIT).
 - `Table` (`table.rs`): every table the UI can be told about.
+- The core schema (FND-07, ADR 0012), including the legacy `transcripts`
+  compatibility view over `transcript_segments`.
 - `test_db()` (feature `test-support`): an in-memory database with every
   migration applied.
 
@@ -32,4 +34,8 @@ commit-time change signals (ADR 0005).
 - A new table gets a `Table` variant in the same PR.
 - Hook callbacks stay cheap: no allocation for untracked tables, no I/O, no
   async work. Signals are emitted on commit and dropped on rollback.
-- The update hook cannot see `DELETE` without `WHERE` or `REPLACE` conflicts.
+- The update hook cannot see `DELETE` without `WHERE` or `REPLACE` conflicts,
+  nor `WITHOUT ROWID` tables: never create one, and write upserts as
+  `ON CONFLICT DO UPDATE`.
+- A view never reaches the update hook; writes through `transcripts` are
+  reported as `transcript_segments`.

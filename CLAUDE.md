@@ -88,9 +88,9 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 
 | Crate | Role |
 |---|---|
-| `crates/deino-domain` | Typed IDs, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
+| `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
-| `crates/deino-core` | Features as modules: `meetings`, `_example` (debug builds) |
+| `crates/deino-core` | Features as modules: `meetings`, the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |

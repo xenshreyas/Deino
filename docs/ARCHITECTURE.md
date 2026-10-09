@@ -8,7 +8,8 @@ module boundary, the data flow, the schema or an extension point (§3A).
 Decisions behind this layout are in [`adr/`](adr/): Tauri + Rust core (0004),
 SQLite + sqlx (0005), crate layout (0006), typed IPC (0007), TanStack Query +
 `DbChanged` (0008), the error model (0009), cloud LLM for notes with local
-transcription (0010) and the code-quality limits (0011).
+transcription (0010), the code-quality limits (0011) and the core schema with
+its legacy `transcripts` view (0012).
 
 ## 1. Processes
 
@@ -36,9 +37,9 @@ flowchart LR
 
 ```mermaid
 flowchart BT
-  domain["deino-domain<br/>IDs, AppError, Clock"]
+  domain["deino-domain<br/>IDs, enums, units, AppError, Clock"]
   db["deino-db<br/>pools, migrations, change notifier"]
-  core["deino-core<br/>features: meetings, _example"]
+  core["deino-core<br/>features: meetings, segments, people, ..."]
   testkit["deino-testkit<br/>(dev-dependency)"]
   app["deino (frontend/src-tauri)<br/>Tauri app: plugins, composition, legacy"]
   helper["llama-helper<br/>(separate binary)"]
@@ -53,9 +54,9 @@ flowchart BT
 
 | Crate | Path | Role |
 |---|---|---|
-| `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
+| `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), the closed sets the schema stores (`MeetingStatus` with its transitions, `Channel`, `AttendeeRole`, `Rsvp`, ...), `Millis`/`Seconds`, `Email`, `PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `ChangeNotifier`, `Table`, `test_db()`. |
-| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `meetings`, and `_example` (debug builds). |
+| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `meetings` (list, rename, lifecycle, trash), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar. |
@@ -111,16 +112,19 @@ sequenceDiagram
   Core->>Core: mix, VAD, Parakeet/Whisper (audio/pipeline.rs, transcription/worker.rs)
   Core-->>UI: transcript-update events (legacy, untyped)
   UI->>Core: stop: api_save_transcript (legacy)
-  Core->>DB: INSERT meetings + transcripts (writer connection)
-  DB-->>Core: commit hook: tables {meetings, transcripts}
+  Core->>DB: INSERT meetings + transcripts view (writer connection)
+  DB-->>Core: commit hook: tables {meetings, transcript_segments}
   Core-->>UI: plugin:db:db-changed
   UI->>Core: plugin:meetings|list (refetch)
   UI->>Core: api_process_transcript (legacy summary)
   Core->>DB: summary_processes rows; UI polls api_get_summary
 ```
 
-What changes next: FND-05 moves transcript persistence into Rust during the
-recording, FND-08 turns everything after "stop" into durable pipeline stages
+What changes next: FND-05b moves persistence into Rust during the recording:
+it creates the meeting through `MeetingLifecycleRepo::create` (`recording`),
+appends each batch of finalized segments with `SegmentWriter::append` (one
+transaction, one `DbChanged` per batch) and stops through
+`MeetingLifecycleService::transition` (`processing`). FND-08 turns everything after "stop" into durable pipeline stages
 (`finalize_audio` → … → `enhance_notes` → `index`), and FND-09 routes every LLM
 call through one gateway.
 
@@ -139,49 +143,142 @@ the same writer connection, so its writes refresh the new queries too.
 
 ```mermaid
 erDiagram
-  meetings ||--o{ transcripts : has
+  meetings ||--o{ transcript_segments : has
+  meetings ||--o{ speakers : has
+  speakers |o--o{ transcript_segments : "said"
+  people |o--o{ speakers : "is"
+  meetings ||--o{ meeting_attendees : has
+  people ||--o{ meeting_attendees : attends
+  companies |o--o{ people : employs
+  people |o--o{ people : "merged_into"
+  calendar_accounts ||--o{ calendar_events : syncs
+  calendar_events |o--o{ meetings : "recorded as"
+  folders |o--o{ folders : "parent_id"
+  folders ||--o{ meeting_folders : holds
+  meetings ||--o{ meeting_folders : "filed in"
+  tags ||--o{ meeting_tags : labels
+  meetings ||--o{ meeting_tags : "tagged"
+  meetings |o--o{ action_items : yields
+  people |o--o{ action_items : "assigned"
+  transcript_segments |o--o{ action_items : "evidence"
   meetings ||--o| summary_processes : has
   meetings ||--o| transcript_chunks : has
   meetings ||--o| meeting_notes : has
   meetings {
-    TEXT id PK "meeting-<uuid v4> (legacy format)"
+    TEXT id PK "meeting-<uuid> (opaque text)"
     TEXT title
-    TEXT created_at "indexed with id: list order"
+    TEXT status "scheduled|recording|processing|ready|failed"
+    TEXT source "live|import|api"
+    TEXT started_at
+    TEXT ended_at
+    INTEGER duration_s "denormalised: audio length"
+    TEXT calendar_event_id FK
+    TEXT series_id
+    TEXT template_id "NOT-04 makes it a reference"
+    TEXT deleted_at "trash"
+    TEXT audio_path "and mic, system, video paths"
+    TEXT created_at
     TEXT updated_at
     TEXT folder_path "recording folder"
   }
-  transcripts {
+  transcript_segments {
+    TEXT id PK "UUID"
+    TEXT meeting_id FK
+    TEXT channel "mic|system|mixed"
+    TEXT speaker_id FK "same meeting (trigger)"
+    INTEGER start_ms
+    INTEGER end_ms
+    TEXT text
+    TEXT words_json "Vec<WordTiming>"
+    INTEGER is_deleted
+    TEXT edited_at
+  }
+  speakers {
     TEXT id PK
     TEXT meeting_id FK
-    TEXT transcript
-    TEXT timestamp
-    REAL audio_start_time
-    REAL audio_end_time
-    TEXT speaker "unused"
+    TEXT label "unique per meeting"
+    TEXT person_id FK
+    INTEGER is_me
+    INTEGER color "palette slot 1-6"
   }
-  summary_processes {
-    TEXT meeting_id PK
-    TEXT status
-    TEXT result "summary JSON"
-    TEXT result_backup
+  people {
+    TEXT id PK
+    TEXT name
+    TEXT email UK "lower case"
+    TEXT company_id FK
+    INTEGER is_me "at most one"
+    TEXT merged_into FK
   }
-  transcript_chunks {
-    TEXT meeting_id PK
-    TEXT meeting_name "copy of meetings.title"
-    TEXT transcript_text
+  companies {
+    TEXT id PK
+    TEXT name
+    TEXT domain UK
   }
-  meeting_notes {
+  meeting_attendees {
     TEXT meeting_id PK
-    TEXT notes_markdown
-    TEXT notes_json
+    TEXT person_id PK
+    TEXT role "organizer|invitee|speaker_only"
+    TEXT rsvp
+  }
+  calendar_events {
+    TEXT id PK
+    TEXT account_id FK
+    TEXT provider_event_id "unique per account"
+    TEXT series_id
+    TEXT start_at
+    TEXT attendees_json "Vec<EventAttendee>"
+    INTEGER record_override
+  }
+  folders {
+    TEXT id PK
+    TEXT parent_id FK "no cycles: FolderRepo::move_folder"
+    TEXT name "unique among siblings"
+  }
+  tags {
+    TEXT id PK
+    TEXT name UK
+    INTEGER color
+    INTEGER auto_apply
+  }
+  meeting_tags {
+    TEXT meeting_id PK
+    TEXT tag_id PK
+    TEXT applied_by "user|ai|automation"
+  }
+  action_items {
+    TEXT id PK
+    TEXT meeting_id FK "SET NULL: items outlive meetings"
+    TEXT title
+    TEXT status "open|done, with completed_at"
+    TEXT assignee_person_id FK
+    TEXT due_at
+    TEXT source_segment_id FK
   }
 ```
 
-`settings` (LLM provider, model and API keys, in plaintext until FND-06) and
-`transcript_settings` (STT engine) are single-row tables. Denormalised copy:
-`transcript_chunks.meeting_name` mirrors `meetings.title`;
-`SqliteMeetingRepo::rename` updates both in one transaction (legacy summary
-code does the same). FND-07 adds the core schema of §4.1.
+The core schema is FND-07's one migration (`20261009060435_fnd07_core_schema.sql`):
+every new table is `STRICT`, enums are `CHECK`ed and mirror a `deino-domain`
+enum, foreign keys have an explicit `ON DELETE`, and every foreign key and
+list order has an index that a repository test asserts with `EXPLAIN QUERY
+PLAN`. No table is `WITHOUT ROWID`, because the update hook behind `DbChanged`
+does not see those. `calendar_accounts`, `meeting_folders` and the legacy
+tables are omitted from the diagram's attributes.
+
+- **Legacy transcripts** (ADR 0012): `transcripts` is now a view over
+  `transcript_segments` with `INSTEAD OF` insert and delete triggers, so the
+  inherited import, re-transcription, save, search, delete and meeting-page
+  code works unchanged; their writes reach `DbChanged` as
+  `transcript_segments`. The view goes when FND-05b, CAP-08, CAP-11 and TRN-01
+  have moved the last legacy caller onto `SegmentWriter`/`SegmentReader`.
+- **Links live in one place:** a meeting points at its calendar event
+  (`meetings.calendar_event_id`); events do not point back.
+- **Denormalised copies:** `transcript_chunks.meeting_name` mirrors
+  `meetings.title` (`SqliteMeetingRepo::rename` updates both in one
+  transaction; legacy summary code does the same). `meetings.duration_s`
+  caches the recorded length; `MeetingLifecycleRepo::set_timing` is its only
+  writer.
+- `settings` (LLM provider, model and API keys, in plaintext until FND-06) and
+  `transcript_settings` (STT engine) are single-row tables.
 
 ## 7. IPC
 
