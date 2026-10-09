@@ -154,7 +154,9 @@ impl PipelineService {
 
     /// Makes `stages` fresh pending jobs of `meeting` and reports them.
     async fn schedule(&self, meeting: &MeetingId, stages: &[StageId]) -> Result<(), PipelineError> {
-        self.jobs.schedule(meeting, stages, self.clock.now()).await?;
+        self.jobs
+            .schedule(meeting, stages, self.clock.now())
+            .await?;
         for stage in stages {
             self.progress.progress(&PipelineProgress {
                 meeting_id: meeting.clone(),
@@ -173,16 +175,21 @@ impl PipelineService {
     }
 
     /// The meeting's status, if its recording is done so it can be processed.
-    async fn processable_status(&self, meeting: &MeetingId) -> Result<MeetingStatus, PipelineError> {
+    async fn processable_status(
+        &self,
+        meeting: &MeetingId,
+    ) -> Result<MeetingStatus, PipelineError> {
         let state = self.meetings.state(meeting).await?;
         let status = state
             .ok_or_else(|| PipelineError::MeetingNotFound(meeting.clone()))?
             .status;
         match status {
-            MeetingStatus::Scheduled | MeetingStatus::Recording => Err(PipelineError::NotRecorded {
-                meeting: meeting.clone(),
-                status,
-            }),
+            MeetingStatus::Scheduled | MeetingStatus::Recording => {
+                Err(PipelineError::NotRecorded {
+                    meeting: meeting.clone(),
+                    status,
+                })
+            }
             _ => Ok(status),
         }
     }

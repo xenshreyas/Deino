@@ -46,7 +46,10 @@ impl Inner {
     /// Takes the meeting's next step. Returns `false` once the worker has
     /// given the meeting up.
     async fn step(&self, meeting: &MeetingId) -> Result<bool, DbError> {
-        let jobs = self.deps.registry.in_order(self.deps.jobs.jobs(meeting).await?);
+        let jobs = self
+            .deps
+            .registry
+            .in_order(self.deps.jobs.jobs(meeting).await?);
         match plan::next_step(&jobs, self.deps.clock.now()) {
             Step::Run(job) => self.attempt(&job).await.map(|()| true),
             Step::Retry { job, at } => self.wait_for_retry(&job, at).await.map(|()| true),
@@ -81,7 +84,12 @@ impl Inner {
             message: None,
             at: self.deps.clock.now(),
         };
-        if self.deps.jobs.settle(&job.key(), JobStatus::Pending, &settlement).await? {
+        if self
+            .deps
+            .jobs
+            .settle(&job.key(), JobStatus::Pending, &settlement)
+            .await?
+        {
             self.report(job, JobStatus::Cancelled);
         }
         self.slots.renew(&job.meeting_id);
@@ -106,7 +114,9 @@ impl Inner {
             Ending::Empty => return,
         };
         match self.deps.lifecycle.transition(meeting, event).await {
-            Ok(status) => log::info!(target: "pipeline", "pipeline of meeting {meeting} ended: {status}"),
+            Ok(status) => {
+                log::info!(target: "pipeline", "pipeline of meeting {meeting} ended: {status}")
+            }
             // The meeting is not processing (a re-run of a ready meeting's stage).
             Err(MeetingError::InvalidTransition(_)) => {}
             Err(error) => {

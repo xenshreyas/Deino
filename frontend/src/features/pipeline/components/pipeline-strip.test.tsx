@@ -79,7 +79,9 @@ describe('PipelineStrip', () => {
     bindings.commands.rerun.mockResolvedValue({ status: 'ok', data: [stage('pending')] });
     renderStrip();
 
-    expect(await screen.findByText('Choose a summary model in Settings, then retry.')).toBeDefined();
+    expect(
+      await screen.findByText('Choose a summary model in Settings, then retry.'),
+    ).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: copy.retryStage('Summary') }));
 
     expect(await screen.findByText('Retrying soon')).toBeDefined();
@@ -104,7 +106,10 @@ describe('PipelineStrip', () => {
     bindings.commands.status.mockResolvedValue({ status: 'ok', data: [stage('cancelled')] });
     bindings.commands.rerun.mockResolvedValue({
       status: 'error',
-      error: { code: 'conflict', message: 'meeting meeting-1 cannot be processed while it is recording' },
+      error: {
+        code: 'conflict',
+        message: 'meeting meeting-1 cannot be processed while it is recording',
+      },
     });
     renderStrip();
 

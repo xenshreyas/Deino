@@ -1522,6 +1522,7 @@ dependencies = [
  "deino-db",
  "deino-domain",
  "deino-llm",
+ "deino-pipeline",
  "deino-secrets",
  "deino-stt",
  "deino-testkit",

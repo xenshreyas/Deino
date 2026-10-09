@@ -241,10 +241,7 @@ mod tests {
     async fn a_meeting_without_transcript_is_skipped_without_calling_the_summariser() {
         let harness = harness().await;
 
-        let outcome = harness
-            .stage
-            .run(&ctx(), MeetingId::new("meeting-a"))
-            .await;
+        let outcome = harness.stage.run(&ctx(), MeetingId::new("meeting-a")).await;
 
         assert_eq!(outcome, Ok(StageOutcome::Skipped(NO_TRANSCRIPT)));
         assert!(harness.summaries.requests().is_empty());
@@ -262,10 +259,7 @@ mod tests {
             .await
             .unwrap();
 
-        let outcome = harness
-            .stage
-            .run(&ctx(), MeetingId::new("meeting-a"))
-            .await;
+        let outcome = harness.stage.run(&ctx(), MeetingId::new("meeting-a")).await;
 
         assert_eq!(outcome, Ok(StageOutcome::Done));
         assert_eq!(

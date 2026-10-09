@@ -40,10 +40,20 @@ async fn quitting_mid_stage_leaves_it_pending_and_the_next_start_finishes_it() {
 async fn a_job_a_crash_left_running_is_recovered_and_counts_as_an_attempt() {
     let activity = Arc::new(Activity::default());
     let crashed = Harness::new(Vec::new()).await;
-    let meeting = crashed.meeting("meeting-a", MeetingStatus::Processing).await;
+    let meeting = crashed
+        .meeting("meeting-a", MeetingStatus::Processing)
+        .await;
     let notes = StageId::new("notes");
-    crashed.jobs.schedule(&meeting, &[notes], at(NOW)).await.unwrap();
-    crashed.jobs.start(&key(&meeting, "notes"), at(NOW)).await.unwrap();
+    crashed
+        .jobs
+        .schedule(&meeting, &[notes], at(NOW))
+        .await
+        .unwrap();
+    crashed
+        .jobs
+        .start(&key(&meeting, "notes"), at(NOW))
+        .await
+        .unwrap();
 
     let stages = vec![stage("notes", 50, Behavior::Succeed, &activity)];
     let restarted = Harness::on(crashed.database.clone(), stages, Waits::Instant).await;
@@ -85,7 +95,11 @@ async fn jobs_of_a_retired_stage_are_dropped_at_start() {
     let before = Harness::new(Vec::new()).await;
     let meeting = before.meeting("meeting-a", MeetingStatus::Ready).await;
     let retired = [StageId::new("legacy_thing")];
-    before.jobs.schedule(&meeting, &retired, at(NOW)).await.unwrap();
+    before
+        .jobs
+        .schedule(&meeting, &retired, at(NOW))
+        .await
+        .unwrap();
 
     let stages = vec![stage("notes", 50, Behavior::Succeed, &activity)];
     let after = Harness::on(before.database.clone(), stages, Waits::Instant).await;

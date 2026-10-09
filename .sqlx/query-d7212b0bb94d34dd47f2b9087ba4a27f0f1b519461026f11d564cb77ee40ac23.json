@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings with a pending or running job, for startup. Served by\n-- idx_jobs_status_meeting_id (asserted in repo_tests.rs).\nSELECT DISTINCT meeting_id AS \"meeting_id!: MeetingId\"\nFROM jobs\nWHERE status IN ('pending', 'running')\nORDER BY meeting_id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d7212b0bb94d34dd47f2b9087ba4a27f0f1b519461026f11d564cb77ee40ac23"
+}

@@ -42,7 +42,10 @@ fn pipeline_app() -> App<MockRuntime> {
     let service = Arc::new(PipelineService::new(PipelineDeps {
         jobs: Arc::new(SqliteJobRepo::new(database)),
         stages: registry::stages(&ports),
-        lifecycle: Arc::new(MeetingLifecycleService::new(meetings.clone(), clock.clone())),
+        lifecycle: Arc::new(MeetingLifecycleService::new(
+            meetings.clone(),
+            clock.clone(),
+        )),
         meetings,
         clock: clock.clone(),
         sleeper: Arc::new(FakeSleeper::new(clock)),

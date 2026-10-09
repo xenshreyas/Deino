@@ -28,7 +28,10 @@ impl PipelineService {
         let pruned = self.jobs.prune(&self.registry.ids()).await?;
         let interrupted = self.recover_interrupted().await?;
         self.runner.open();
-        let processing = self.meetings.list_by_status(MeetingStatus::Processing).await?;
+        let processing = self
+            .meetings
+            .list_by_status(MeetingStatus::Processing)
+            .await?;
         for meeting in &processing {
             if let Err(error) = self.resume(&meeting.id).await {
                 log::error!(target: "pipeline", "could not resume meeting {}: {error}", meeting.id);

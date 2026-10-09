@@ -39,8 +39,5 @@ async fn rerun(
     meeting_id: MeetingId,
     stage: Option<StageId>,
 ) -> Result<Vec<StageStatus>, AppError> {
-    pipeline
-        .rerun(&meeting_id, stage.as_ref())
-        .await
-        .into_ipc()
+    pipeline.rerun(&meeting_id, stage.as_ref()).await.into_ipc()
 }

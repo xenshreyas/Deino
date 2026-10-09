@@ -26,7 +26,12 @@ impl Inner {
         let Some(stage) = self.deps.registry.find(&job.stage).cloned() else {
             return Ok(());
         };
-        let Some(attempt) = self.deps.jobs.start(&job.key(), self.deps.clock.now()).await? else {
+        let Some(attempt) = self
+            .deps
+            .jobs
+            .start(&job.key(), self.deps.clock.now())
+            .await?
+        else {
             return Ok(());
         };
         self.report(job, JobStatus::Running);
@@ -39,7 +44,12 @@ impl Inner {
         let result = self.run_stage(&stage, &ctx, job.meeting_id.clone()).await;
         let settlement = settle(result, &self.settle_context(attempt));
         log_attempt(job, attempt, &settlement);
-        if self.deps.jobs.settle(&job.key(), JobStatus::Running, &settlement).await? {
+        if self
+            .deps
+            .jobs
+            .settle(&job.key(), JobStatus::Running, &settlement)
+            .await?
+        {
             self.report(job, settlement.status);
         }
         if settlement.status == JobStatus::Cancelled {
@@ -109,22 +119,34 @@ fn settle(result: Result<StageOutcome, StageError>, context: &SettleContext) -> 
     };
     match result {
         Ok(StageOutcome::Done) => settled(JobStatus::Succeeded, RunOutcome::Succeeded, None),
-        Ok(StageOutcome::Skipped(reason)) => {
-            settled(JobStatus::Skipped, RunOutcome::Skipped, Some(reason.to_owned()))
-        }
+        Ok(StageOutcome::Skipped(reason)) => settled(
+            JobStatus::Skipped,
+            RunOutcome::Skipped,
+            Some(reason.to_owned()),
+        ),
         Err(StageError::Cancelled) if context.shutting_down => Settlement {
             // Quitting is not the stage's fault: the attempt does not count.
             attempts: context.attempt.saturating_sub(1),
             ..settled(JobStatus::Pending, RunOutcome::Interrupted, None)
         },
         Err(StageError::Cancelled) => settled(JobStatus::Cancelled, RunOutcome::Cancelled, None),
-        Err(error) if error.is_retryable() && context.policy.allows_retry_after(context.attempt) => {
+        Err(error)
+            if error.is_retryable() && context.policy.allows_retry_after(context.attempt) =>
+        {
             Settlement {
                 not_before: Some(context.now + context.policy.delay_after(context.attempt)),
-                ..settled(JobStatus::Pending, RunOutcome::Failed, Some(error.to_string()))
+                ..settled(
+                    JobStatus::Pending,
+                    RunOutcome::Failed,
+                    Some(error.to_string()),
+                )
             }
         }
-        Err(error) => settled(JobStatus::Failed, RunOutcome::Failed, Some(error.to_string())),
+        Err(error) => settled(
+            JobStatus::Failed,
+            RunOutcome::Failed,
+            Some(error.to_string()),
+        ),
     }
 }
 
@@ -171,8 +193,14 @@ mod tests {
 
         assert_eq!(settlement.status, JobStatus::Pending);
         assert_eq!(settlement.outcome, RunOutcome::Failed);
-        assert_eq!(settlement.not_before, Some(at(NOW) + TimeDelta::seconds(10)));
-        assert_eq!(settlement.message.as_deref(), Some("the provider did not answer"));
+        assert_eq!(
+            settlement.not_before,
+            Some(at(NOW) + TimeDelta::seconds(10))
+        );
+        assert_eq!(
+            settlement.message.as_deref(),
+            Some("the provider did not answer")
+        );
     }
 
     #[test]
@@ -183,7 +211,10 @@ mod tests {
             &context(1),
         );
 
-        assert_eq!((exhausted.status, exhausted.not_before), (JobStatus::Failed, None));
+        assert_eq!(
+            (exhausted.status, exhausted.not_before),
+            (JobStatus::Failed, None)
+        );
         assert_eq!(permanent.status, JobStatus::Failed);
         assert_eq!(permanent.message.as_deref(), Some("no model"));
     }

@@ -13,13 +13,13 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use deino_core::settings::SettingsService;
 use deino_domain::{Clock, ErrorCode, MeetingId};
 use deino_pipeline::{StageError, StageOutcome, SummaryGenerator, SummaryRequest};
 use sqlx::SqlitePool;
 use tauri::{AppHandle, Runtime};
 use tokio_util::sync::CancellationToken;
 
-use crate::database::repositories::setting::SettingsRepository;
 use crate::database::repositories::summary::SummaryProcessesRepository;
 use crate::database::repositories::transcript_chunk::TranscriptChunksRepository;
 use crate::summary::SummaryService;
@@ -40,32 +40,43 @@ struct SummaryModel {
 pub struct LegacySummaryGenerator<R: Runtime> {
     app: AppHandle<R>,
     pool: SqlitePool,
+    settings: Arc<SettingsService>,
     clock: Arc<dyn Clock>,
 }
 
 impl<R: Runtime> LegacySummaryGenerator<R> {
-    /// A generator writing through the legacy writer `pool`.
-    pub fn new(app: AppHandle<R>, pool: SqlitePool, clock: Arc<dyn Clock>) -> Self {
-        Self { app, pool, clock }
+    /// A generator writing through the legacy writer `pool`, with the
+    /// provider and model chosen in `settings`.
+    pub fn new(
+        app: AppHandle<R>,
+        pool: SqlitePool,
+        settings: Arc<SettingsService>,
+        clock: Arc<dyn Clock>,
+    ) -> Self {
+        Self {
+            app,
+            pool,
+            settings,
+            clock,
+        }
     }
 
-    /// The provider and model to summarise with.
+    /// The provider and model to summarise with, by their legacy names.
     async fn model(&self) -> Result<SummaryModel, StageError> {
-        let settings = SettingsRepository::get_model_config(&self.pool)
-            .await
-            .map_err(|_| internal("could not read the summary settings"))?;
-        settings
-            .filter(|settings| !settings.provider.is_empty() && !settings.model.is_empty())
-            .map(|settings| SummaryModel {
-                provider: settings.provider,
-                model: settings.model,
-            })
-            .ok_or_else(|| {
-                StageError::permanent(
-                    ErrorCode::Unavailable,
-                    "Choose a summary model in Settings, then retry.",
-                )
-            })
+        let ai = self.settings.get().await.ai;
+        let provider = serde_json::to_value(ai.provider)
+            .ok()
+            .and_then(|name| name.as_str().map(str::to_owned));
+        match provider {
+            Some(provider) if !ai.model.trim().is_empty() => Ok(SummaryModel {
+                provider,
+                model: ai.model,
+            }),
+            _ => Err(StageError::permanent(
+                ErrorCode::Unavailable,
+                "Choose a summary model in Settings, then retry.",
+            )),
+        }
     }
 
     /// Opens the summary process and saves the transcript it reads; returns
@@ -99,9 +110,10 @@ impl<R: Runtime> LegacySummaryGenerator<R> {
     async fn run(&self, request: SummaryRequest, model: SummaryModel, process: Process) {
         let meeting = request.meeting_id.to_string();
         let legacy = SummaryService::register_cancellation_token(&meeting, process.started_at);
-        let template = request
-            .template
-            .map_or_else(|| DEFAULT_TEMPLATE.to_owned(), |template| template.to_string());
+        let template = request.template.map_or_else(
+            || DEFAULT_TEMPLATE.to_owned(),
+            |template| template.to_string(),
+        );
         let summary = SummaryService::process_transcript_background(
             self.app.clone(),
             self.pool.clone(),

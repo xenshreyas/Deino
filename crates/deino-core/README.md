@@ -10,7 +10,9 @@ the SQLite adapters behind those ports.
 - `meetings`: `MeetingService` (list, get, rename) over `MeetingRepo`;
   `MeetingLifecycleService` (status transitions by compare-and-set) over
   `MeetingLifecycleRepo` (create, timing, audio paths, calendar link,
-  template); `MeetingTrashRepo` (trash, restore, delete). One
+  template), which announces every stored change to subscribed
+  `MeetingStatusObserver`s (the pipeline's trigger, FND-08);
+  `MeetingTrashRepo` (trash, restore, delete). One
   `SqliteMeetingRepo` and one `FakeMeetingRepo` implement all three ports.
 - `settings`: the typed, versioned `Settings` document and its sections;
   `SettingsService` (get, merge-patch, typed update, change events);

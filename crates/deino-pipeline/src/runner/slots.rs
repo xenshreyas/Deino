@@ -50,7 +50,13 @@ impl Slots {
             return false;
         }
         let token = self.root.child_token();
-        slots.insert(meeting.clone(), Slot { token, rescan: false });
+        slots.insert(
+            meeting.clone(),
+            Slot {
+                token,
+                rescan: false,
+            },
+        );
         true
     }
 
@@ -140,7 +146,10 @@ mod tests {
 
         assert!(!slots.release(&meeting()), "the rescan request wins");
         assert!(slots.release(&meeting()));
-        assert!(slots.claim(&meeting()), "released, so a new worker may claim it");
+        assert!(
+            slots.claim(&meeting()),
+            "released, so a new worker may claim it"
+        );
     }
 
     #[test]
@@ -152,7 +161,10 @@ mod tests {
 
         assert!(slots.cancel(&meeting()));
         assert!(current.is_cancelled());
-        assert!(slots.token(&meeting()).is_cancelled(), "the next step sees it too");
+        assert!(
+            slots.token(&meeting()).is_cancelled(),
+            "the next step sees it too"
+        );
 
         slots.renew(&meeting());
         assert!(!slots.token(&meeting()).is_cancelled());

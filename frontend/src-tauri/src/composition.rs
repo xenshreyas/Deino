@@ -10,7 +10,8 @@
 //!
 //! 1. [`attach_settings`]: settings and Keychain secrets, which need no
 //!    database and which everything else reads;
-//! 2. [`attach_database`]: the database-backed [`Services`], once
+//! 2. [`attach_database`]: the database-backed [`Services`] and the
+//!    post-meeting [`Pipeline`] (started in the background), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
 //!    by [`legacy_settings_import`]).
 //!
@@ -169,19 +170,30 @@ pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    attach_llm(app, &database, Arc::clone(&clock));
+    attach_pipeline(app, &database, &clock);
+    #[cfg(debug_assertions)]
+    attach_fixture_seeder(app, &database);
+    features::db::forward_changes(app, database.changes());
+}
+
+/// Builds the pipeline with the app's adapters, starts it and manages it.
+/// Needs the settings ([`attach_settings`] runs first), which name the
+/// summary model the `legacy_summary` stage uses.
+fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
+    let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
+        return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
+    };
     let adapters = PipelineAdapters {
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         summaries: Arc::new(features::pipeline::LegacySummaryGenerator::new(
             app.clone(),
             database.writer().clone(),
-            Arc::clone(&clock),
+            Arc::clone(&settings),
+            Arc::clone(clock),
         )),
     };
-    Pipeline::build(&database, &clock, adapters).start_and_manage(app);
-    attach_llm(app, &database, clock);
-    #[cfg(debug_assertions)]
-    attach_fixture_seeder(app, &database);
-    features::db::forward_changes(app, database.changes());
+    Pipeline::build(database, clock, adapters).start_and_manage(app);
 }
 
 /// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>`,

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE job_runs SET finished_at = ?3, outcome = ?4, message = ?5\n         WHERE meeting_id = ?1 AND stage = ?2 AND finished_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "833a6f662821c47f05999e0c02bd342ab40e67e84328c02bae128b18cacd9577"
+}

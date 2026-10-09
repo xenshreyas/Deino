@@ -138,7 +138,10 @@ mod tests {
 
     #[test]
     fn all_stages_done_completes_and_no_jobs_is_empty() {
-        let done = [with("a", JobStatus::Succeeded), with("b", JobStatus::Skipped)];
+        let done = [
+            with("a", JobStatus::Succeeded),
+            with("b", JobStatus::Skipped),
+        ];
 
         assert_eq!(next_step(&done, at(NOW)), Step::Ended(Ending::Completed));
         assert_eq!(next_step(&[], at(NOW)), Step::Ended(Ending::Empty));

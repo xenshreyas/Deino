@@ -60,7 +60,10 @@ impl Harness {
     fn unstarted(database: Database, stages: Vec<Arc<dyn PipelineStage>>, waits: Waits) -> Self {
         let clock = Arc::new(FakeClock::new(at(NOW)));
         let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
-        let lifecycle = Arc::new(MeetingLifecycleService::new(meetings.clone(), clock.clone()));
+        let lifecycle = Arc::new(MeetingLifecycleService::new(
+            meetings.clone(),
+            clock.clone(),
+        ));
         let sleeper = Arc::new(match waits {
             Waits::Instant => FakeSleeper::new(clock.clone()),
             Waits::Stalled => FakeSleeper::stalled(clock.clone()),
@@ -139,12 +142,18 @@ impl Harness {
     /// Waits until `count` events reported `status`.
     pub(super) async fn wait_for(&self, status: JobStatus, count: usize) {
         self.progress
-            .wait_for(|events| events.iter().filter(|event| event.status == status).count() >= count)
+            .wait_for(|events| {
+                events.iter().filter(|event| event.status == status).count() >= count
+            })
             .await;
     }
 
     /// `(attempt, outcome)` of every attempt of `stage`, oldest first.
-    pub(super) async fn runs(&self, meeting: &MeetingId, stage: &str) -> Vec<(u32, Option<String>)> {
+    pub(super) async fn runs(
+        &self,
+        meeting: &MeetingId,
+        stage: &str,
+    ) -> Vec<(u32, Option<String>)> {
         sqlx::query_as(
             "SELECT attempt, outcome FROM job_runs WHERE meeting_id = ?1 AND stage = ?2 ORDER BY id",
         )
@@ -183,5 +192,9 @@ pub(super) fn stage(
 
 /// The stages `activity` saw start, in order.
 pub(super) fn started(activity: &Activity) -> Vec<String> {
-    activity.starts().into_iter().map(|(stage, _)| stage).collect()
+    activity
+        .starts()
+        .into_iter()
+        .map(|(stage, _)| stage)
+        .collect()
 }

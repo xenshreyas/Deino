@@ -27,7 +27,9 @@ async fn at_most_two_stages_run_at_once_across_meetings() {
         harness.record("meeting-b").await,
         harness.record("meeting-c").await,
     ];
-    harness.wait_for(JobStatus::Running, MAX_CONCURRENT_STAGES).await;
+    harness
+        .wait_for(JobStatus::Running, MAX_CONCURRENT_STAGES)
+        .await;
 
     let running_before_release = activity.starts().len();
     gate.add_permits(meetings.len());
@@ -56,7 +58,10 @@ async fn a_meetings_stages_never_overlap_even_when_it_is_woken_again() {
     gate.add_permits(1);
     harness.service.until_idle().await;
 
-    assert!(!enqueued_again, "the running pipeline is not scheduled twice");
+    assert!(
+        !enqueued_again,
+        "the running pipeline is not scheduled twice"
+    );
     assert_eq!(activity.peak(), 1);
     assert_eq!(started(&activity), ["notes", "index"]);
 }
@@ -77,12 +82,14 @@ async fn a_status_lists_stages_in_order_with_their_messages() {
     let stages: Vec<&str> = status.iter().map(|stage| stage.stage.as_str()).collect();
     assert_eq!(stages, ["notes", "index"]);
     assert_eq!(status[0].message.as_deref(), Some("nothing to do"));
-    assert!(harness
-        .service
-        .status(&MeetingId::new("meeting-x"))
-        .await
-        .unwrap()
-        .is_empty());
+    assert!(
+        harness
+            .service
+            .status(&MeetingId::new("meeting-x"))
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]
@@ -92,14 +99,18 @@ async fn rerun_refuses_unknown_meetings_and_stages_and_unfinished_recordings() {
     let recording = harness.meeting("meeting-a", MeetingStatus::Recording).await;
     let ready = harness.meeting("meeting-b", MeetingStatus::Ready).await;
 
-    let missing = harness.service.rerun(&MeetingId::new("meeting-x"), None).await;
+    let missing = harness
+        .service
+        .rerun(&MeetingId::new("meeting-x"), None)
+        .await;
     let unknown = harness
         .service
         .rerun(&ready, Some(&StageId::new("translate")))
         .await;
     let still_recording = harness.service.rerun(&recording, None).await;
 
-    let code = |result: Result<_, crate::PipelineError>| result.map(|_: Vec<_>| ()).unwrap_err().code();
+    let code =
+        |result: Result<_, crate::PipelineError>| result.map(|_: Vec<_>| ()).unwrap_err().code();
     assert_eq!(code(missing), ErrorCode::NotFound);
     assert_eq!(code(unknown), ErrorCode::Invalid);
     assert_eq!(code(still_recording), ErrorCode::Conflict);

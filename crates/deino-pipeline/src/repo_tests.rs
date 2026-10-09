@@ -53,12 +53,14 @@ async fn job(repo: &SqliteJobRepo, meeting: &str, stage: &str) -> Job {
 
 /// `(attempt, outcome)` of every attempt of a job, oldest first.
 async fn runs(database: &Database, job: &JobKey) -> Vec<(u32, Option<String>)> {
-    sqlx::query_as("SELECT attempt, outcome FROM job_runs WHERE meeting_id = ?1 AND stage = ?2 ORDER BY id")
-        .bind(&job.meeting_id)
-        .bind(&job.stage)
-        .fetch_all(database.reader())
-        .await
-        .unwrap()
+    sqlx::query_as(
+        "SELECT attempt, outcome FROM job_runs WHERE meeting_id = ?1 AND stage = ?2 ORDER BY id",
+    )
+    .bind(&job.meeting_id)
+    .bind(&job.stage)
+    .fetch_all(database.reader())
+    .await
+    .unwrap()
 }
 
 async fn query_plan(database: &Database, sql: &str) -> String {
@@ -112,7 +114,10 @@ async fn rescheduling_resets_finished_jobs_but_never_a_running_one() {
         (reset.status, reset.attempts, reset.message),
         (JobStatus::Pending, 0, None)
     );
-    assert_eq!(job(&repo, "meeting-a", "b").await.status, JobStatus::Running);
+    assert_eq!(
+        job(&repo, "meeting-a", "b").await.status,
+        JobStatus::Running
+    );
 }
 
 #[tokio::test]
@@ -126,7 +131,10 @@ async fn a_pending_job_is_claimed_once_and_opens_an_attempt() {
     let second = repo.start(&key("meeting-a", "a"), later(2)).await.unwrap();
 
     assert_eq!((first, second), (Some(1), None));
-    assert_eq!(job(&repo, "meeting-a", "a").await.status, JobStatus::Running);
+    assert_eq!(
+        job(&repo, "meeting-a", "a").await.status,
+        JobStatus::Running
+    );
     assert_eq!(runs(&database, &key("meeting-a", "a")).await, [(1, None)]);
 }
 
@@ -143,13 +151,22 @@ async fn settling_applies_only_from_the_expected_status_and_closes_the_attempt()
         ..settlement(JobStatus::Pending, RunOutcome::Failed, 1)
     };
 
-    let stale = repo.settle(&job_key, JobStatus::Pending, &retry).await.unwrap();
-    let applied = repo.settle(&job_key, JobStatus::Running, &retry).await.unwrap();
+    let stale = repo
+        .settle(&job_key, JobStatus::Pending, &retry)
+        .await
+        .unwrap();
+    let applied = repo
+        .settle(&job_key, JobStatus::Running, &retry)
+        .await
+        .unwrap();
 
     assert!(!stale && applied);
     let stored = job(&repo, "meeting-a", "a").await;
     assert_eq!(stored.not_before, Some(later(15)));
-    assert_eq!(stored.message.as_deref(), Some("the provider did not answer"));
+    assert_eq!(
+        stored.message.as_deref(),
+        Some("the provider did not answer")
+    );
     repo.start(&job_key, later(15)).await.unwrap();
     assert_eq!(
         runs(&database, &job_key).await,
@@ -186,9 +203,13 @@ async fn work_and_running_lists_see_only_unfinished_jobs() {
 #[tokio::test]
 async fn pruning_deletes_jobs_of_retired_stages_with_their_attempts() {
     let (repo, database) = repo_with_meetings(&["meeting-a"]).await;
-    repo.schedule(&MeetingId::new("meeting-a"), &stages(&["kept", "retired"]), at(NOW))
-        .await
-        .unwrap();
+    repo.schedule(
+        &MeetingId::new("meeting-a"),
+        &stages(&["kept", "retired"]),
+        at(NOW),
+    )
+    .await
+    .unwrap();
     repo.start(&key("meeting-a", "retired"), later(1))
         .await
         .unwrap();
@@ -204,7 +225,11 @@ async fn pruning_deletes_jobs_of_retired_stages_with_their_attempts() {
         .map(|job| job.stage)
         .collect();
     assert_eq!(left, stages(&["kept"]));
-    assert!(runs(&database, &key("meeting-a", "retired")).await.is_empty());
+    assert!(
+        runs(&database, &key("meeting-a", "retired"))
+            .await
+            .is_empty()
+    );
 }
 
 #[tokio::test]
@@ -219,7 +244,12 @@ async fn deleting_a_meeting_deletes_its_jobs() {
         .await
         .unwrap();
 
-    assert!(repo.jobs(&MeetingId::new("meeting-a")).await.unwrap().is_empty());
+    assert!(
+        repo.jobs(&MeetingId::new("meeting-a"))
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]
@@ -230,7 +260,16 @@ async fn job_queries_use_their_indexes() {
     let with_work = query_plan(&database, include_str!("queries/meetings_with_work.sql")).await;
     let running = query_plan(&database, include_str!("queries/running.sql")).await;
 
-    assert!(jobs.contains("USING INDEX sqlite_autoindex_jobs_1"), "{jobs}");
-    assert!(with_work.contains("USING COVERING INDEX idx_jobs_status_meeting_id"), "{with_work}");
-    assert!(running.contains("USING INDEX idx_jobs_status_meeting_id"), "{running}");
+    assert!(
+        jobs.contains("USING INDEX sqlite_autoindex_jobs_1"),
+        "{jobs}"
+    );
+    assert!(
+        with_work.contains("USING COVERING INDEX idx_jobs_status_meeting_id"),
+        "{with_work}"
+    );
+    assert!(
+        running.contains("USING INDEX idx_jobs_status_meeting_id"),
+        "{running}"
+    );
 }

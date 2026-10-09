@@ -79,7 +79,11 @@ async fn a_stage_that_fails_twice_is_retried_with_backoff_from_the_clock() {
     );
     assert_eq!(
         harness.runs(&meeting, "notes").await,
-        [outcome(1, "failed"), outcome(2, "failed"), outcome(3, "succeeded")]
+        [
+            outcome(1, "failed"),
+            outcome(2, "failed"),
+            outcome(3, "succeeded")
+        ]
     );
     assert_eq!(harness.status_of(&meeting).await, MeetingStatus::Ready);
 }
@@ -97,8 +101,14 @@ async fn retries_stop_after_three_attempts_and_fail_the_meeting() {
     harness.service.until_idle().await;
 
     let status = harness.service.status(&meeting).await.unwrap();
-    assert_eq!((status[0].status, status[0].attempts), (JobStatus::Failed, 3));
-    assert_eq!(status[0].message.as_deref(), Some("the provider did not answer"));
+    assert_eq!(
+        (status[0].status, status[0].attempts),
+        (JobStatus::Failed, 3)
+    );
+    assert_eq!(
+        status[0].message.as_deref(),
+        Some("the provider did not answer")
+    );
     assert_eq!(harness.status_of(&meeting).await, MeetingStatus::Failed);
 }
 
@@ -192,7 +202,10 @@ async fn cancelling_a_hung_stage_cancels_it_and_fails_the_meeting() {
             ("index".into(), JobStatus::Pending, 0),
         ]
     );
-    assert_eq!(harness.runs(&meeting, "notes").await, [outcome(1, "cancelled")]);
+    assert_eq!(
+        harness.runs(&meeting, "notes").await,
+        [outcome(1, "cancelled")]
+    );
     assert_eq!(harness.status_of(&meeting).await, MeetingStatus::Failed);
 }
 
