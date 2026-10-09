@@ -2,7 +2,7 @@
 # PARITY_PLAN §4.0 dependency rules, checked on the resolved graph:
 #
 #   - no crate under crates/ depends on `tauri` (the core stays Tauri-free);
-#   - `deino-stt` never depends on `deino-net` or `reqwest` (audio and
+#   - `deino-stt` never depends on `deino-net` or an HTTP client (audio and
 #     transcripts never leave the Mac, so the STT crate cannot reach the network).
 #
 # Every target is included, so a macOS-only dependency fails on Linux too.
@@ -49,7 +49,7 @@ done
 
 summary="$checked crates are Tauri-free"
 if [[ -f crates/deino-stt/Cargo.toml ]]; then
-    forbid deino-stt deino-net reqwest
+    forbid deino-stt deino-net reqwest hyper ureq
     summary="$summary; deino-stt has no network client"
 fi
 

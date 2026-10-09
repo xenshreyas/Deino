@@ -3,6 +3,7 @@
  * while idle, and the streaming transcript in a 720px column.
  */
 import { useMemo } from 'react';
+import { LiveTranscriptLine } from '@/features/transcription';
 
 import { PermissionWarning } from '@/components/PermissionWarning';
 import { VirtualizedTranscriptView } from '@/components/VirtualizedTranscriptView';
@@ -69,6 +70,7 @@ export function TranscriptPanel({ isProcessingStop, isStopping }: TranscriptPane
           enableStreaming={isRecording}
           showConfidence
         />
+        {isRecording ? <LiveTranscriptLine /> : null}
       </div>
     </div>
   );

@@ -24,6 +24,16 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     // ── FND-06 settings and secrets ──
     ("settings", &["get", "patch"]),
     ("secrets", &["set", "status", "delete"]),
+    // ── CAP-01 transcription (features/transcription.rs) ──
+    (
+        "transcription",
+        &[
+            "list_models",
+            "download_model",
+            "cancel_download",
+            "delete_model",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

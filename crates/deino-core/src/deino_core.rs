@@ -30,6 +30,7 @@ pub mod companies;
 mod fixture_tests;
 pub mod folders;
 pub mod meetings;
+pub mod models;
 pub mod people;
 pub mod segments;
 pub mod settings;

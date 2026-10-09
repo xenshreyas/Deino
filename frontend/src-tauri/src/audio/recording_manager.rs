@@ -216,6 +216,11 @@ impl RecordingManager {
 
     // Remove app handle storage for now - will be passed directly when saving
 
+    /// Sets the streaming live lane the next recording feeds (CAP-01).
+    pub(crate) fn set_live_sink(&mut self, live_sink: Option<Arc<dyn crate::stt::LiveAudioSink>>) {
+        self.pipeline_manager.set_live_sink(live_sink);
+    }
+
     /// Start recording with specified devices
     ///
     /// On macOS, the command entry points wake audio and verify microphone

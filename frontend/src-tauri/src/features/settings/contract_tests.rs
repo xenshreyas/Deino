@@ -35,7 +35,7 @@ fn get_returns_every_section_with_camel_case_fields() {
     assert_eq!(settings["ui"]["theme"], "system");
     assert_eq!(settings["ai"]["provider"], "builtin-ai");
     assert_eq!(settings["recording"]["autoSave"], true);
-    assert_eq!(settings["transcription"]["engine"], "parakeet");
+    assert_eq!(settings["transcription"]["engine"], "parakeet_unified");
 }
 
 #[test]

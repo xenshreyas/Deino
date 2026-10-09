@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { PARAKEET_UNIFIED_PROVIDER, activeModel, transcriptionApi } from '@/features/transcription';
 
 export interface RawModelInfo {
   name: string;
@@ -8,7 +9,7 @@ export interface RawModelInfo {
 }
 
 export interface ModelOption {
-  provider: 'whisper' | 'parakeet';
+  provider: 'whisper' | 'parakeet' | 'parakeetUnified';
   name: string;
   displayName: string;
   size_mb: number;
@@ -28,7 +29,7 @@ interface TranscriptModelConfig {
  * @param transcriptModelConfig - User's saved model configuration from context
  * @returns Object containing available models, selected model key, loading state, and fetch function
  */
-export function useTranscriptionModels(transcriptModelConfig: TranscriptModelConfig | undefined) {
+export function useTranscriptionModels(savedConfig: TranscriptModelConfig | undefined) {
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [selectedModelKey, setSelectedModelKey] = useState<string>('');
   const [loadingModels, setLoadingModels] = useState(false);
@@ -42,8 +43,30 @@ export function useTranscriptionModels(transcriptModelConfig: TranscriptModelCon
   }, []);
 
   const fetchModels = useCallback(async () => {
+    let transcriptModelConfig = savedConfig;
     setLoadingModels(true);
     const allModels: ModelOption[] = [];
+
+    // Parakeet Unified (the default engine): every downloaded quant.
+    try {
+      const unified = await transcriptionApi.listModels();
+      allModels.push(
+        ...unified
+          .filter((m) => m.state.kind === 'ready')
+          .map((m) => ({
+            provider: 'parakeetUnified' as const,
+            name: m.id,
+            displayName: `${m.name} (${m.quant})`,
+            size_mb: Math.round(m.sizeBytes / 1_000_000),
+          })),
+      );
+      if (transcriptModelConfig?.provider === PARAKEET_UNIFIED_PROVIDER && !transcriptModelConfig.model) {
+        // An empty configured model means the recommended file.
+        transcriptModelConfig = { ...transcriptModelConfig, model: activeModel(unified, undefined)?.id ?? '' };
+      }
+    } catch (err) {
+      console.error('Failed to fetch Parakeet Unified models:', err);
+    }
 
     // Fetch Whisper models
     try {
@@ -88,7 +111,8 @@ export function useTranscriptionModels(transcriptModelConfig: TranscriptModelCon
     const configuredMatch = allModels.find(
       (m) =>
         (configuredProvider === 'localWhisper' && m.provider === 'whisper' && m.name === configuredModel) ||
-        (configuredProvider === 'parakeet' && m.provider === 'parakeet' && m.name === configuredModel)
+        (configuredProvider === 'parakeet' && m.provider === 'parakeet' && m.name === configuredModel) ||
+        (configuredProvider === PARAKEET_UNIFIED_PROVIDER && m.provider === 'parakeetUnified' && m.name === configuredModel)
     );
 
     // Only set default model if user hasn't manually selected one
@@ -103,7 +127,7 @@ export function useTranscriptionModels(transcriptModelConfig: TranscriptModelCon
     }
 
     setLoadingModels(false);
-  }, [transcriptModelConfig]);
+  }, [savedConfig]);
 
   // Reset user selection tracking (call when dialog opens fresh)
   const resetSelection = useCallback(() => {

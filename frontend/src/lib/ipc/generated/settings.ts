@@ -427,11 +427,18 @@ export type Theme =
  */
 "dark"
 /**
- * A local speech-to-text engine.
+ * A local speech-to-text engine. New installs use [`Self::ParakeetUnified`];
+ * the others stay available under "Advanced".
  */
 export type TranscriptionEngine = 
 /**
- * NVIDIA Parakeet over ONNX Runtime.
+ * NVIDIA Parakeet Unified EN 0.6B over transcribe.cpp (CAP-01): streams
+ * live text while recording. Its `model` is a catalog file name, or empty
+ * for the quant this Mac's memory suits.
+ */
+"parakeet_unified" | 
+/**
+ * NVIDIA Parakeet TDT over ONNX Runtime.
  */
 "parakeet" | 
 /**
@@ -447,7 +454,9 @@ export type TranscriptionSettings = {
  */
 engine: TranscriptionEngine; 
 /**
- * The engine's model, for example `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`.
+ * The engine's model, for example `parakeet-unified-en-0.6b-Q8_0.gguf`,
+ * `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`; empty means the
+ * engine's recommended model.
  */
 model: string }
 /**

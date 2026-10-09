@@ -32,6 +32,13 @@ the SQLite adapters behind those ports.
     cycles) and `MeetingFolderRepo`;
   - `tags`: `TagRepo` and `MeetingTagRepo`;
   - `action_items`: `ActionItemRepo`.
+- `models` (CAP-01): the bundled model catalog (`catalog.json`: Parakeet
+  Unified EN 0.6B, six quants pinned to a revision, size and SHA-256),
+  `ModelService` (list with state, recommended quant by RAM, download, cancel,
+  delete, ready path), `ModelStore` (`<app_data_dir>/models/parakeet-unified/`)
+  and the resumable, verified download over the `ByteSource` port.
+  `FakeByteSource` and `RecordedModelEvents` are behind `test-support`. It
+  never touches `deino-stt`: the engine only receives a verified path.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

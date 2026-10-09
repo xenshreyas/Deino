@@ -24,10 +24,14 @@ json-patch = { version = "3.0.1", default-features = false }
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# Model file verification (models/download.rs).
+sha2 = "0.10.9"
 specta.workspace = true
 sqlx = { workspace = true, features = ["json"] }
 thiserror.workspace = true
+# Async file I/O, timeouts and cancellation for model downloads.
 tokio.workspace = true
+tokio-util = "0.7.18"
 
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }
@@ -35,6 +39,7 @@ deino-domain = { workspace = true, features = ["test-support"] }
 deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 tempfile = "3.3.0"
+tokio = { workspace = true, features = ["test-util"] }
 
 [lints]
 workspace = true

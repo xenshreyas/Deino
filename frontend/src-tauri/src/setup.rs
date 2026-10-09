@@ -24,6 +24,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     create_tray(handle);
     spawn_notification_manager(handle.clone());
     init_transcription_engines(&paths);
+    attach_stt(handle, &paths);
     spawn_summary_model_manager(handle.clone());
     tauri::async_runtime::block_on(database::setup::initialize_database_on_startup(handle))?;
     #[cfg(debug_assertions)]
@@ -58,7 +59,8 @@ fn spawn_notification_manager(app: AppHandle) {
     });
 }
 
-/// Points both STT engines at the models dir and warms them up in the background.
+/// Points the legacy STT engines at the models dir and warms them up in the
+/// background. Parakeet Unified (CAP-01) is wired in `composition::attach_stt`.
 fn init_transcription_engines(paths: &AppPaths) {
     whisper_engine::commands::set_models_directory(paths.models());
     parakeet_engine::commands::set_models_directory(paths.models());
@@ -72,6 +74,14 @@ fn init_transcription_engines(paths: &AppPaths) {
             log::error!("Failed to initialize Parakeet engine on startup: {e}");
         }
     });
+}
+
+/// Wires Parakeet Unified (CAP-01): the model service and the engine pool.
+/// A failure leaves the legacy engines working, so it is logged, not fatal.
+fn attach_stt(app: &AppHandle, paths: &AppPaths) {
+    if let Err(e) = composition::attach_stt(app, paths) {
+        log::error!("Failed to set up Parakeet Unified transcription: {e}");
+    }
 }
 
 /// Initializes the built-in summary model manager; it is lazily retried on first use.

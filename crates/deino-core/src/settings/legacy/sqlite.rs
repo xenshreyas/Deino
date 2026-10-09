@@ -165,9 +165,11 @@ fn apply_rows(
         let model = transcript.map(|row| row.model.clone()).unwrap_or_default();
         apply_if_valid(settings, "transcription", |s| {
             s.transcription.engine = engine;
-            if !model.trim().is_empty() {
-                s.transcription.model = model;
-            }
+            s.transcription.model = if model.trim().is_empty() {
+                engine.default_model().to_owned()
+            } else {
+                model
+            };
         });
     }
 }

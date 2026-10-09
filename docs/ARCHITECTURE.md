@@ -10,8 +10,9 @@ SQLite + sqlx (0005), crate layout (0006), typed IPC (0007), TanStack Query +
 `DbChanged` (0008), the error model (0009), cloud LLM for notes with local
 transcription (0010), the code-quality limits (0011), the core schema with
 its legacy `transcripts` view (0012), typed settings with Keychain secrets
-(0013), the native crash-safe recording format (0014) and the design tokens
-and app shell (0015).
+(0013), the native crash-safe recording format (0014), the design tokens
+and app shell (0015), and speech-to-text in supervised transcribe-cpp worker
+processes (0016).
 
 ## 1. Processes
 
@@ -23,15 +24,21 @@ flowchart LR
     UI <-- "IPC: plugin commands, legacy commands, events" --> Core
   end
   Core -- "stdin/stdout JSON lines" --> Llama["llama-helper sidecar<br/>(built-in local LLM)"]
+  Core -- "framed stdin/stdout, one per lane + batch" --> Workers["STT workers<br/>(deino --transcribe-worker,<br/>transcribe-cpp + Metal)"]
   Core -- "spawn per job" --> FFmpeg["ffmpeg sidecar<br/>(removed by FND-05, D11)"]
   Core --> Files[("app data dir<br/>deino.sqlite, settings.json, models/, templates/<br/>~/Movies/Deino/&lt;meeting&gt;/audio.mp4")]
   Core --> Keychain[("macOS Keychain<br/>API keys (service = bundle id)")]
   Core -. "only to services the user connects" .-> LLM["LLM provider APIs"]
 ```
 
-- Audio capture, voice activity detection and transcription (Parakeet over
-  ONNX Runtime, Whisper over whisper.cpp) run in the app process. Notes and
-  chat go to the LLM the user chose, or to the local llama-helper (ADR 0010).
+- Audio capture and voice activity detection run in the app process.
+  Transcription with Parakeet Unified EN 0.6B (the default) and Whisper runs
+  in worker processes: the app executable re-launched with
+  `--transcribe-worker`, one per live lane plus one for batch work, supervised
+  by `deino-stt` (ADR 0016), so a ggml abort or GPU hang never takes the app
+  down. Parakeet TDT (the "Advanced" ONNX engine) still runs in-process.
+  Notes and chat go to the LLM the user chose, or to the local llama-helper
+  (ADR 0010).
 - There is no Deino server and no telemetry. Network calls go only to the
   user's LLM provider and model downloads (FND-12 will put them all behind
   `deino-net`).
@@ -45,6 +52,7 @@ flowchart BT
   core["deino-core<br/>features: meetings, settings, segments, people, ..."]
   secrets["deino-secrets<br/>SecretStore, Keychain"]
   testkit["deino-testkit<br/>(dev-dependency)"]
+  stt["deino-stt<br/>transcribe-cpp workers, supervisor,<br/>live sessions (no network)"]
   app["deino (frontend/src-tauri)<br/>Tauri app: plugins, composition, legacy"]
   helper["llama-helper<br/>(separate binary)"]
   audio["deino-audio<br/>track writer, recovery, finalize"]
@@ -57,6 +65,7 @@ flowchart BT
   app --> core
   app --> db
   app --> secrets
+  app --> stt
   app -. "debug builds: dev plugin" .-> testkit
   testkit -.-> db
 ```
@@ -66,7 +75,8 @@ flowchart BT
 | `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), the closed sets the schema stores (`MeetingStatus` with its transitions, `Channel`, `AttendeeRole`, `Rsvp`, ...), `Millis`/`Seconds`, `Email`, `PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `DataMigration` (Rust steps between two schema migrations), `ChangeNotifier`, `Table`, `test_db()`. |
 | `deino-secrets` | `crates/deino-secrets` | `SecretStore` (set, status, delete, and `get` for Rust only), `KeychainSecretStore` over `keyring`, `InMemorySecretStore` (feature `test-support`). |
-| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). |
+| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). |
+| `deino-stt` | `crates/deino-stt` | Speech-to-text (CAP-01): the worker process and its protocol, `EngineSupervisor` (deadlines, GPU→CPU fallback, kill-to-cancel), `LiveSession` (continuous feeds, segments, batch fallback, rotation), `EnginePool` (a worker per lane), `StreamPerf`, the benchmark. Depends on no HTTP client. |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
@@ -92,7 +102,9 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `setup.rs`, `lifecycle.rs`, `state.rs` | Startup steps, window and exit handling, legacy `AppState`. |
 | `database/` | Legacy repositories, and `DatabaseManager`, which wraps `deino_db::Database`. |
 | `audio/` | Capture (cpal microphone, Core Audio process tap), mixing, VAD, recording, import, retranscription, the transcription worker. |
-| `parakeet_engine/`, `whisper_engine/` | Local STT engines and model management. |
+| `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity, the live lane), the live lane fed by the pipeline (`live.rs`, 48→16 kHz once), its event sink, the batch `TranscriptionProvider`, the temporary HTTP `ByteSource` (until FND-12), the worker entry and the `--transcribe-file` benchmark. |
+| `features/transcription*` | The `transcription` plugin: model list, download, cancel, delete; events `LiveTranscript`, `ModelChanged`, `ModelDownloadProgress`. |
+| `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. |
 | `summary/` | LLM clients, chunk → combine → final summaries, templates, the built-in model (`summary_engine/`). |
 | `notifications/`, `tray.rs`, `onboarding.rs`, `updater/` | OS integration. Notification switches and onboarding progress are sections of the typed settings. |
 | `anthropic/`, `openai/`, `groq/`, `ollama/`, `openrouter/` | Provider model lists (to be replaced by FND-09's gateway). |
@@ -122,8 +134,9 @@ sequenceDiagram
   participant UI as React UI
   participant DB as deino.sqlite
   Mic->>Core: cpal + Core Audio tap frames
-  Core->>Core: mix, VAD, Parakeet/Whisper (audio/pipeline.rs, transcription/worker.rs)
-  Core-->>UI: transcript-update events (legacy, untyped)
+  Core->>Core: mix (audio/pipeline.rs); Parakeet Unified: continuous audio to the live lane (stt/live.rs → deino-stt worker); other engines: VAD segments to transcription/worker.rs
+  Core-->>UI: plugin:transcription:live-transcript (growing segment, typed)
+  Core-->>UI: transcript-update events (closed segments, legacy, untyped)
   UI->>Core: stop: api_save_transcript (legacy)
   Core->>DB: INSERT meetings + transcripts view (writer connection)
   DB-->>Core: commit hook: tables {meetings, transcript_segments}
@@ -368,6 +381,9 @@ tables are omitted from the diagram's attributes.
 | A setting | A field in its section in `crates/deino-core/src/settings/` (with its default and any rule in `validate`); the bindings test; the default in `frontend/src/features/settings/settings-fixture.ts` and `dev/mock-ipc/settings.ts`. |
 | A secret | A `SecretName` variant in `crates/deino-secrets/src/name.rs`; the bindings test. |
 | A Rust data migration | A `deino_db::DataMigration` whose `runs_before` is the schema migration it precedes, passed to `Database::open_with` (`DatabaseManager::new_from_app_handle`). |
+| A downloadable model (file) | An entry in `crates/deino-core/src/models/catalog.json` with its pinned revision, exact size and SHA-256. |
+| A transcription lane | `deino_stt::Lane` + `EngineSlot::Live(lane)` (one worker each); start a `LiveSession` per lane from `stt/runtime.rs` (CAP-02 adds the microphone and system lanes). |
+| A transcription engine family | A `deino_stt::engine::Engine` implementation served by `worker::run` (transcribe-cpp covers Parakeet and Whisper GGUF/`.bin`). |
 | A pipeline stage | FND-08: one line in `crates/deino-pipeline/src/registry.rs`. |
 | An LLM route | FND-09: the `Route` enum in `crates/deino-llm`. |
 | An integration | INT-00: a `Destination` implementation. |

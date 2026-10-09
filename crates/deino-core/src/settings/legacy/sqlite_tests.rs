@@ -10,7 +10,8 @@ use deino_secrets::{InMemorySecretStore, SecretName};
 
 use super::*;
 use crate::settings::{
-    JsonFileSettingsStore, RecordedSettingsEvents, SettingsService, TranscriptionEngine,
+    DEFAULT_PARAKEET_MODEL, JsonFileSettingsStore, RecordedSettingsEvents, SettingsService,
+    TranscriptionEngine,
 };
 
 const OPENAI_KEY: &str = "sk-legacy-openai-0123456789";
@@ -157,6 +158,16 @@ async fn model_endpoint_and_transcription_settings_are_carried_over() {
     );
     assert_eq!(settings.transcription.engine, TranscriptionEngine::Whisper);
     assert_eq!(settings.transcription.model, "large-v3-turbo");
+}
+
+#[tokio::test]
+async fn a_legacy_parakeet_choice_keeps_its_engine_and_model() {
+    let rows = vec![transcript_row("parakeet", "")];
+
+    let settings = import(rows).await.settings.get().await;
+
+    assert_eq!(settings.transcription.engine, TranscriptionEngine::Parakeet);
+    assert_eq!(settings.transcription.model, DEFAULT_PARAKEET_MODEL);
 }
 
 #[tokio::test]

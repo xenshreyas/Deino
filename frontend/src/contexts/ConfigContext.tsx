@@ -30,6 +30,7 @@ import {
   useSaveModelSelection,
   useSettings,
 } from '@/features/settings';
+import { PARAKEET_UNIFIED_PROVIDER, engineOf, providerOf } from '@/features/transcription';
 
 export type { NotificationSettings } from '@/features/settings';
 
@@ -125,15 +126,15 @@ export function toModelSelection(config: ModelConfig): ModelSelection {
 /** The legacy transcript config for the saved transcription settings. */
 function toTranscriptConfig(transcription: TranscriptionSettings): TranscriptModelProps {
   return {
-    provider: transcription.engine === 'whisper' ? 'localWhisper' : 'parakeet',
+    provider: providerOf(transcription.engine),
     model: transcription.model,
   };
 }
 
 const FALLBACK_MODEL_CONFIG: ModelConfig = { provider: 'builtin-ai', model: '' };
 const FALLBACK_TRANSCRIPT_CONFIG: TranscriptModelProps = {
-  provider: 'parakeet',
-  model: 'parakeet-tdt-0.6b-v3-int8',
+  provider: PARAKEET_UNIFIED_PROVIDER,
+  model: '',
 };
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
@@ -193,7 +194,7 @@ function derivedSettings(
     setTranscriptModelConfig: (config: TranscriptModelProps) => {
       persist({
         transcription: {
-          engine: config.provider === 'localWhisper' ? 'whisper' : 'parakeet',
+          engine: engineOf(config.provider),
           model: config.model,
         },
       });

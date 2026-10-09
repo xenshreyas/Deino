@@ -12,6 +12,7 @@ import type { SeedReport } from '@/lib/ipc/generated/dev';
 import type { AppError, Table } from '@/lib/ipc/generated/shared';
 import type { CommandResult } from '@/lib/ipc/result';
 
+import { failure, ok } from './command-result';
 import type { FixtureMeeting } from './fixture-schema';
 
 /** Same limit as `deino_core::meetings::MAX_TITLE_CHARS`. */
@@ -28,15 +29,8 @@ export function charCount(text: string): number {
   return text.match(/./gsu)?.length ?? 0;
 }
 
-/** A successful command result. */
-export function ok<T>(data: T): CommandResult<T> {
-  return { status: 'ok', data };
-}
-
-/** A failed command result. */
-export function failure<T>(error: AppError): CommandResult<T> {
-  return { status: 'error', error };
-}
+/** Re-exported for the mocks that already import them from here. */
+export { failure, ok };
 
 /** The fixture meetings as mutable rows, with change notifications. */
 export class MockDatabase {

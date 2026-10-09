@@ -2065,6 +2065,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-05a `crates/deino-audio` crash-safe track writer | ✅ merged (ADR 0014) | 2026-10-09 |
 | FND-10 App shell, navigation, design system, dark mode | ✅ merged | 2026-10-09 |
 | FND-03 CI and quality gates | ✅ merged | 2026-10-09 |
+| CAP-01 Parakeet Unified EN 0.6B engine (default) | ☑️ done on branch `feat/CAP-01-parakeet-unified` | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2077,7 +2078,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-02 | ~~Four pre-existing clippy errors in legacy files.~~ Fixed by FND-13. | ✅ FND-13 |
 | FND-02 | ~~`whisper_engine.rs` logs transcript text.~~ Fixed by FND-13, together with the same leak in `transcription/worker.rs` and `parakeet_engine.rs`. | ✅ FND-13 |
 | FND-02 | Many legacy commands still take a vestigial `auth_token` parameter. Drop it when porting each command. | Each card that ports a legacy command |
-| FND-02 | `get_transcription_status` is a stub that always returns zeros. | CAP-01 |
+| FND-02 | ~~`get_transcription_status` is a stub that always returns zeros.~~ Reports queued chunks or live seconds, processing and idle time (CAP-01). | ✅ CAP-01 |
 | FND-02 | `generate_meeting_summary` has too many arguments. | FND-09 |
 | FND-02 | ~~The `llama-helper` `[profile.release]` is ignored.~~ Moved to `[profile.release.package.llama-helper]` by FND-13; `lto` cannot be set per package, so a fully LTO'd sidecar needs a custom `[profile.sidecar]` and a release-script change. | ✅ FND-13 (LTO: ✅ FND-03, `[profile.sidecar]` used by `release-macos.yml`) |
 | FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. FND-03 added no Windows job: Windows minutes bill at 2x on the private repo, and Linux `cargo check` already covers the non-macOS code paths. | Open: a manual `windows` job, or a check on a Windows machine, when Windows matters |
@@ -2118,7 +2119,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-04 | dev:mock always reports onboarding as completed; add a way (a search param or a dev toggle) to exercise the onboarding flow on mock data. | FND-11 |
 | FND-04 | AI evals: score notes, action items, insights and chat against each fixture's `groundTruth` (decisions, action items with owner and due date, facts with evidence quotes). | NOT-02 / AI-05 / AI-06 / AI-02 |
 | FND-06 | The `CredentialSource` port of the LLM gateway reads keys through `deino_secrets::SecretStore::get` (`Arc<dyn SecretStore>` is in Tauri state); delete `summary/credentials.rs` and the stored-key fallbacks in the `openai`/`anthropic`/`groq` model-list commands and `api_test_custom_openai_connection` when the gateway replaces them. | FND-09 |
-| FND-06 | The STT code still reads the engine through the string-typed bridge `api::current_transcript_config` (`"parakeet"`/`"localWhisper"`); read `Settings::transcription` (`TranscriptionEngine`) directly. | CAP-01 |
+| FND-06 | The STT code still reads the engine through the string-typed bridge `api::current_transcript_config` (`"parakeetUnified"`/`"parakeet"`/`"localWhisper"`; CAP-01 added `TranscriptionEngine::ParakeetUnified` as the default and kept the bridge, since the legacy engine code it feeds is what CAP-02/FND-05b replace); read `Settings::transcription` (`TranscriptionEngine`) directly. | CAP-02 / FND-05b |
 | FND-06 | ~~Wire the theme switch (`Settings::ui.theme`) to the app shell.~~ Settings → Appearance and the ⌘K palette save `ui.theme`; `SettingsSync` applies the saved theme, with `localStorage` (`deino.theme`) only as the first-paint cache. The settings screens are tokenised and sectioned; `ModelSettingsModal.tsx` (1.3k lines), `ConfigContext` and the inherited settings panels are still legacy markup: rebuild them as `features/settings/` sections and rows as their cards port them. | ✅ FND-10 (panels: next settings card) |
 | FND-06 | The onboarding commands (`onboarding.rs`) keep their legacy snake_case shape over `Settings::onboarding`; replace them with a typed onboarding plugin. | FND-11 |
 | FND-06 | `Settings::privacy` and `Settings::profile` are empty placeholder sections. | PRV-01 / NOT-05 |
@@ -2139,6 +2140,17 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-03 | Local `pnpm run tauri:build` in a checkout under `~/Documents` can still fail at `codesign` (provenance and File Provider attributes). Reuse `release-macos.yml`'s `beforeBundleCommand` override in a `tauri:build:dmg` script, or build outside `~/Documents`. | Next card that ships a local build script (or FND-05) |
 | FND-03 | `.github/verify-portable-ggml.cjs` and its test are no longer run by any workflow (the Windows distribution workflows were upstream's); `docs/BUILDING.md` documents running them by hand. | Delete with the Windows build story, or when a Windows job returns |
 | FND-03 | `scripts/ci-local.sh` runs its steps one after another. The frontend steps (about 80 s) could run beside the Rust compile once the machine is not shared by many agents. | Any later CI change |
+| CAP-01 | Persist the live lane's segments with their timed words (`FinalSegment.words` → `transcript_segments.words_json`, `deino_stt::Lane` → `Channel`, `deino_stt::Millis` (u64) → `deino_domain::Millis` (u32)) from Rust, instead of the legacy `transcript-update` event and the frontend save. | FND-05b |
+| CAP-01 | Split the live lane into microphone and system lanes: `EngineSlot::Live(Lane::Microphone/System)` already run in separate workers; feed each from its own capture track and label lines Me/Them. | CAP-02 |
+| CAP-01 | On a CPU fallback the live stream cannot keep up (spike: RTF 1.05 at the default window). Switch that lane to batch-after-utterance (VAD-bounded runs) or the 1040/1040 window, and raise a recording-health warning (the runtime logs `live transcription runs on the CPU`). | CAP-10 |
+| CAP-01 | Offer "Responsive" (5600/560/320, default) and "Accurate / low power" (5600/1040/1040) live windows in typed settings; read the window menu from the GGUF (`stt.parakeet.encoder.att_chunk_*_choices`) instead of probing a stream. | FND-06 |
+| CAP-01 | The model and download hosts go through `deino-net` as the `hf_models` service; replace `stt/http_source.rs` (the one temporary `reqwest::Client`) and log its egress. | FND-12 |
+| CAP-01 | Onboarding now downloads Parakeet Unified (recommended quant) through the `transcription` plugin; its "Transcription Engine" step still says "Parakeet" and shows no download speed. Rewrite it with the typed API and show the NVIDIA notice. | FND-11 |
+| CAP-01 | `build.rs` and `docs/GPU_ACCELERATION.md` still describe whisper.cpp/CoreML features; `coreml` and `openblas` are now no-op features kept for scripts; `.github/*-portable-ggml*` and `scripts/dev-env.sh` still mention whisper.cpp. Clean them up. | The next card that touches CI or the build |
+| CAP-01 | The Parakeet TDT (ONNX) and Whisper engines remain under "Advanced" with their legacy managers; Parakeet TDT v3 also exists as a transcribe-cpp GGUF (`handy-computer/parakeet-tdt-0.6b-v3-gguf`), which would let `ort` go once diarization no longer needs it. | CAP-03 / later cleanup |
+| CAP-01 | Batch fallback restarts a lost stream at the loss point, so a word spoken across that instant can be split; cut at the next decoded silence instead. | CAP-02 |
+| CAP-01 | A legacy install whose old database had no transcription row imports as the new default (Parakeet Unified), which needs a model download before the first recording; recording start reports the missing model. Consider keeping such installs on Parakeet TDT when its model is already on disk. | FND-11 |
+| CAP-01 | Per-process CPU accounting for the app and its STT workers (`EnginePool::worker_pids`), needed for CAP-02's "≤ 1.6× single lane" and CAP-08's 15% acceptance. | CAP-02 / CAP-08 |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02

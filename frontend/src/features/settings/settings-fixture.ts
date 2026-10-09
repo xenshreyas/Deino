@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS: Settings = {
   },
   audio: { preferredMicDevice: null, preferredSystemDevice: null },
   recording: { autoSave: true, showRecordingNotice: true },
-  transcription: { engine: 'parakeet', model: 'parakeet-tdt-0.6b-v3-int8' },
+  transcription: { engine: 'parakeet_unified', model: '' },
   notifications: {
     recordingNotifications: true,
     timeBasedReminders: true,

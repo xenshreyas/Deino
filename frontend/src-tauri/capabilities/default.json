@@ -40,6 +40,7 @@
         "system:default",
         "meetings:default",
         "secrets:default",
-        "settings:default"
+        "settings:default",
+        "transcription:default"
     ]
 }

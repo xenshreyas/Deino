@@ -707,6 +707,10 @@ pub struct AudioPipeline {
     mixer: ProfessionalAudioMixer,
     // Recording sender for pre-mixed audio
     recording_sender_for_mixed: Option<mpsc::UnboundedSender<AudioChunk>>,
+    /// CAP-01: the streaming live lane (Parakeet Unified). When set, every
+    /// mixed window goes to it, continuous and never VAD-gated, instead of
+    /// VAD segments going to the chunk transcription worker.
+    live_sink: Option<Arc<dyn crate::stt::LiveAudioSink>>,
 }
 
 impl AudioPipeline {
@@ -785,6 +789,7 @@ impl AudioPipeline {
             ring_buffer,
             mixer,
             recording_sender_for_mixed: None,  // Will be set by manager
+            live_sink: None,  // Will be set by manager
         })
     }
 
@@ -856,7 +861,11 @@ impl AudioPipeline {
                             // Previous 2x gain was causing excessive limiting/distortion
                             let mixed_with_gain = mixed_clean;
 
-                            // STEP 3: Send mixed audio for transcription (VAD + Whisper)
+                            // STEP 3: Send mixed audio for transcription: continuous audio to the
+                            // streaming live lane (CAP-01), or VAD segments to the chunk worker.
+                            if let Some(ref live_sink) = self.live_sink {
+                                live_sink.push(&mixed_with_gain, self.sample_rate);
+                            } else {
                             match self.vad_processor.process_audio(&mixed_with_gain) {
                                 Ok(speech_segments) => {
                                     for segment in speech_segments {
@@ -888,6 +897,7 @@ impl AudioPipeline {
                                 Err(e) => {
                                     warn!("⚠️ VAD error: {}", e);
                                 }
+                            }
                             }
 
                             // STEP 4: Send mixed audio for recording (WAV file)
@@ -969,6 +979,8 @@ impl AudioPipeline {
 pub struct AudioPipelineManager {
     pipeline_handle: Option<JoinHandle<Result<()>>>,
     audio_sender: Option<mpsc::UnboundedSender<AudioChunk>>,
+    /// The live lane the next pipeline feeds (CAP-01), if any.
+    live_sink: Option<Arc<dyn crate::stt::LiveAudioSink>>,
 }
 
 impl AudioPipelineManager {
@@ -976,7 +988,13 @@ impl AudioPipelineManager {
         Self {
             pipeline_handle: None,
             audio_sender: None,
+            live_sink: None,
         }
+    }
+
+    /// Sets the live lane the next `start` feeds with continuous mixed audio.
+    pub fn set_live_sink(&mut self, live_sink: Option<Arc<dyn crate::stt::LiveAudioSink>>) {
+        self.live_sink = live_sink;
     }
 
     /// Start the audio pipeline with device information for adaptive buffering
@@ -1018,6 +1036,7 @@ impl AudioPipelineManager {
         // CRITICAL FIX: Connect recording sender to receive pre-mixed audio
         // This ensures both mic AND system audio are captured in recordings
         pipeline.recording_sender_for_mixed = recording_sender;
+        pipeline.live_sink = self.live_sink.take();
 
         let handle = tokio::spawn(async move {
             pipeline.run().await

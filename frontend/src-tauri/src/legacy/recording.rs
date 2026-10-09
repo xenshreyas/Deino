@@ -80,8 +80,12 @@ pub async fn is_recording() -> bool {
     recorder::is_recording().await
 }
 
-/// Transcription queue status polled by the UI. The live pipeline does not
-/// track it yet, so this always reports an idle, empty queue.
+/// Transcription queue status polled by the stop flow until nothing is left.
+///
+/// `chunks_in_queue` counts queued chunks (Whisper, Parakeet TDT) or seconds
+/// of live audio not yet transcribed (Parakeet Unified); `is_processing` is
+/// true while a transcription job runs; `last_activity_ms` is the time since
+/// transcription last did anything.
 #[derive(Debug, Serialize, Clone)]
 pub struct TranscriptionStatus {
     chunks_in_queue: usize,
@@ -90,11 +94,12 @@ pub struct TranscriptionStatus {
 }
 
 #[tauri::command]
-pub fn get_transcription_status() -> TranscriptionStatus {
+pub fn get_transcription_status<R: Runtime>(app: AppHandle<R>) -> TranscriptionStatus {
+    let status = crate::stt::status(&app);
     TranscriptionStatus {
-        chunks_in_queue: 0,
-        is_processing: false,
-        last_activity_ms: 0,
+        chunks_in_queue: status.queued,
+        is_processing: status.processing,
+        last_activity_ms: status.idle_ms,
     }
 }
 
