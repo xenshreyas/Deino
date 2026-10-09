@@ -1,7 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/*",
+    "crates/deino-*",
+    # Vendored third-party crates, each with its licence files.
+    "crates/third_party/*",
     "frontend/src-tauri",
     "llama-helper",
 ]
