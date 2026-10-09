@@ -24,6 +24,10 @@
 //! (people and attendance), [`companies`], [`calendar`], [`folders`],
 //! [`tags`] and [`action_items`], plus the lifecycle and trash ports of
 //! [`meetings`].
+//!
+//! NOT-04 and NOT-05 added [`templates`] (the note templates, built-ins
+//! seeded from a versioned catalogue, auto selection) and [`profile`] (the
+//! user's profile as AI context, the "Me" person, internal vs external).
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -37,9 +41,11 @@ pub mod folders;
 pub mod meetings;
 pub mod models;
 pub mod people;
+pub mod profile;
 pub mod segments;
 pub mod settings;
 pub mod summaries;
 pub mod tags;
+pub mod templates;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;

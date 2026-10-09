@@ -23,8 +23,11 @@ deino-secrets.workspace = true
 # RFC 7396 merge patches for settings (already in the tree through Tauri).
 json-patch = { version = "3.0.1", default-features = false }
 log.workspace = true
-# Reasoning-envelope cleanup of model output (already in the tree through the app).
+# Reasoning-envelope cleanup of model output and template title patterns
+# (NOT-04 auto rules); already in the tree through the app.
 regex = "1.12.3"
+# Schemas for structured LLM answers (the template classifier); deino-llm's version.
+schemars = "1.2.1"
 serde.workspace = true
 serde_json.workspace = true
 # Model file verification (models/download.rs).
@@ -42,6 +45,8 @@ deino-domain = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
+# Snapshot tests of rendered prompts (profile context, template prompts).
+insta = "=1.43.1"
 tempfile = "3.3.0"
 tokio = { workspace = true, features = ["test-util"] }
 

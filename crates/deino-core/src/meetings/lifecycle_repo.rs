@@ -57,7 +57,8 @@ pub trait MeetingLifecycleRepo: Send + Sync {
         at: DateTime<Utc>,
     ) -> Result<bool, DbError>;
 
-    /// Chooses the meeting's note template, or clears it.
+    /// Chooses the meeting's note template, or clears it. Fails when no
+    /// template has the ID (`meetings.template_id` references `templates`).
     async fn set_template(
         &self,
         id: &MeetingId,

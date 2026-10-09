@@ -149,7 +149,7 @@ async fn list_by_status_finds_live_meetings_newest_first_through_its_index() {
 }
 
 #[tokio::test]
-async fn timing_audio_link_and_template_are_stored() {
+async fn timing_audio_and_link_are_stored() {
     let repo = repo_with(&[new_meeting(
         "meeting-a",
         MeetingStatus::Recording,
@@ -172,16 +172,9 @@ async fn timing_audio_link_and_template_are_stored() {
         calendar_event_id: None,
         series_id: Some(SeriesId::new("series-1")),
     };
-    let template = TemplateId::new("standard_meeting");
-
     assert!(repo.set_timing(&id, &timing, at(LATER)).await.unwrap());
     assert!(repo.set_audio(&id, &audio, at(LATER)).await.unwrap());
     assert!(repo.link(&id, &link, at(LATER)).await.unwrap());
-    assert!(
-        repo.set_template(&id, Some(&template), at(LATER))
-            .await
-            .unwrap()
-    );
 
     let state = state(&repo, "meeting-a").await;
     assert_eq!(
@@ -190,7 +183,29 @@ async fn timing_audio_link_and_template_are_stored() {
     );
     assert_eq!(state.audio, audio);
     assert_eq!(state.series_id, link.series_id);
-    assert_eq!(state.template_id, Some(template));
+}
+
+#[tokio::test]
+async fn a_template_is_stored_only_when_it_exists() {
+    let repo = repo_with(&[new_meeting("meeting-a", MeetingStatus::Ready, CREATED_AT)]).await;
+    let id = MeetingId::new("meeting-a");
+    // `meetings.template_id` references `templates` (NOT-04).
+    sqlx::query(
+        "INSERT INTO templates (id, name, created_at, updated_at)
+         VALUES ('general', 'General', '2026-10-09T08:00:00Z', '2026-10-09T08:00:00Z')",
+    )
+    .execute(repo.database.writer())
+    .await
+    .unwrap();
+    let template = TemplateId::new("general");
+    let missing = TemplateId::new("standard_meeting");
+
+    let dangling = repo.set_template(&id, Some(&missing), at(LATER)).await;
+    let stored = repo.set_template(&id, Some(&template), at(LATER)).await;
+
+    assert!(dangling.is_err());
+    assert!(stored.unwrap());
+    assert_eq!(state(&repo, "meeting-a").await.template_id, Some(template));
 }
 
 #[tokio::test]
