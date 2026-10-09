@@ -14,6 +14,8 @@ import './styles/globals.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 
+import { createQueryClient, IpcQueryProvider } from '@/lib/ipc';
+
 import { router } from './router';
 
 const rootElement = document.getElementById('root');
@@ -21,4 +23,11 @@ if (!rootElement) {
   throw new Error('index.html is missing the #root element');
 }
 
-createRoot(rootElement).render(<RouterProvider router={router} />);
+/** The app's one query cache for Rust data, refreshed by `DbChanged` events. */
+const queryClient = createQueryClient();
+
+createRoot(rootElement).render(
+  <IpcQueryProvider client={queryClient}>
+    <RouterProvider router={router} />
+  </IpcQueryProvider>,
+);

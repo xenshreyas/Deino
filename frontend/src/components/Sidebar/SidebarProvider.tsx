@@ -1,8 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
+import { meetingKeys, useMeetings, type Meeting } from '@/features/meetings';
 import type { SummaryProcessResponse } from '@/types';
+
+/** Stable empty list, so consumers do not re-render while meetings load. */
+const NO_MEETINGS: Meeting[] = [];
 
 
 
@@ -38,8 +43,8 @@ interface SidebarContextType {
   sidebarItems: SidebarItem[];
   isCollapsed: boolean;
   toggleCollapse: () => void;
-  meetings: CurrentMeeting[];
-  setMeetings: (meetings: CurrentMeeting[]) => void;
+  /** Every meeting, newest first, from the `meetings` plugin (kept fresh by DbChanged). */
+  meetings: Meeting[];
   isMeetingActive: boolean;
   setIsMeetingActive: (active: boolean) => void;
   handleRecordingToggle: () => void;
@@ -53,7 +58,7 @@ interface SidebarContextType {
     onUpdate: (result: SummaryProcessResponse) => void | Promise<void>
   ) => void;
   stopSummaryPolling: (meetingId: string, processId?: string) => void;
-  // Refetch meetings from backend
+  /** Refetches the meeting list now. DbChanged already does this after every write. */
   refetchMeetings: () => Promise<void>;
 
 }
@@ -71,8 +76,8 @@ export const useSidebar = () => {
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [currentMeeting, setCurrentMeeting] = useState<CurrentMeeting | null>({ id: 'intro-call', title: '+ New Call' });
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [meetings, setMeetings] = useState<CurrentMeeting[]>([]);
-  const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
+  const { data: meetings = NO_MEETINGS } = useMeetings();
+  const queryClient = useQueryClient();
   const [isMeetingActive, setIsMeetingActive] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -84,31 +89,19 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const navigate = useNavigate();
 
-  // Extract fetchMeetings as a reusable function
-  const fetchMeetings = React.useCallback(async () => {
-    try {
-      const meetings = await invoke<Array<{ id: string, title: string }>>('api_get_meetings');
-      setMeetings(meetings.map(({ id, title }) => ({ id, title })));
-    } catch (error) {
-      console.error('Error fetching meetings:', error);
-      setMeetings([]);
-    }
-  }, []);
+  const refetchMeetings = React.useCallback(
+    () => queryClient.invalidateQueries({ queryKey: meetingKeys.all }),
+    [queryClient],
+  );
 
-  useEffect(() => {
-    fetchMeetings();
-  }, [fetchMeetings]);
-
-  const baseItems: SidebarItem[] = [
+  const sidebarItems = React.useMemo<SidebarItem[]>(() => [
     {
       id: 'meetings',
       title: 'Meeting Notes',
       type: 'folder' as const,
-      children: [
-        ...meetings.map(meeting => ({ id: meeting.id, title: meeting.title, type: 'file' as const }))
-      ]
+      children: meetings.map(meeting => ({ id: meeting.id, title: meeting.title, type: 'file' as const })),
     },
-  ];
+  ], [meetings]);
 
 
   const toggleCollapse = () => {
@@ -120,13 +113,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     if (pathname === '/') {
       setCurrentMeeting({ id: 'intro-call', title: '+ New Call' });
     }
-    setSidebarItems(baseItems);
   }, [pathname]);
-
-  // Update sidebar items when meetings change
-  useEffect(() => {
-    setSidebarItems(baseItems);
-  }, [meetings]);
 
   // Function to handle recording toggle from sidebar
   const handleRecordingToggle = () => {
@@ -274,7 +261,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       isCollapsed,
       toggleCollapse,
       meetings,
-      setMeetings,
       isMeetingActive,
       setIsMeetingActive,
       handleRecordingToggle,
@@ -283,7 +269,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       isSearching,
       startSummaryPolling,
       stopSummaryPolling,
-      refetchMeetings: fetchMeetings,
+      refetchMeetings,
 
     }}>
       {children}

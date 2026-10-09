@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTranscripts } from '@/contexts/TranscriptContext';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { useRecordingState, RecordingStatus } from '@/contexts/RecordingStateContext';
+import { asMeetingId, meetingsApi } from '@/features/meetings';
 import { storageService } from '@/services/storageService';
 import { transcriptService } from '@/services/transcriptService';
 
@@ -56,8 +57,6 @@ export function useRecordingStop(
   const {
     refetchMeetings,
     setCurrentMeeting,
-    setMeetings,
-    meetings,
     setIsMeetingActive,
   } = useSidebar();
 
@@ -276,7 +275,7 @@ export function useRecordingStop(
           await refetchMeetings();
 
           try {
-            const meetingData = await storageService.getMeeting(meetingId);
+            const meetingData = await meetingsApi.get(asMeetingId(meetingId));
             if (meetingData) {
               setCurrentMeeting({
                 id: meetingId,
@@ -348,8 +347,6 @@ export function useRecordingStop(
     markMeetingAsSaved,
     refetchMeetings,
     setCurrentMeeting,
-    setMeetings,
-    meetings,
     setIsMeetingActive,
     navigate,
   ]);
