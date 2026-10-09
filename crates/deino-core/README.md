@@ -14,7 +14,9 @@ the SQLite adapters behind those ports.
   `MeetingStatusObserver`s (the pipeline's trigger, FND-08);
   `MeetingTrashRepo` (trash, restore, delete). One
   `SqliteMeetingRepo` and one `FakeMeetingRepo` implement all three ports.
-- `settings`: the typed, versioned `Settings` document and its sections;
+- `settings`: the typed, versioned `Settings` document and its sections
+  (including `network`: offline mode and the per-service switches that
+  `deino-net`'s policy reads, FND-12);
   `SettingsService` (get, merge-patch, typed update, change events);
   `SettingsPatch` (RFC 7396, validated back into `Settings`);
   `JsonFileSettingsStore` (atomic `settings.json`); and `legacy`, the
