@@ -74,7 +74,7 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
   // available (e.g. AirPods that have since disconnected). Without this the
   // dropdown keeps showing a device that's gone — Radix Select renders an
   // empty/stale trigger for a value not among its options — and start would
-  // send a name the backend can't open. Matches Pro's DeviceSelection prune.
+  // send a name the backend can't open.
   //
   // Format trap: selected values carry the " (input)"/" (output)" suffix (the
   // SelectItem value form below), while enumeration returns raw device names —
