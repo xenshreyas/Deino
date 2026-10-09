@@ -1,4 +1,4 @@
-//! Legacy command surface inherited from Meetily.
+//! Legacy command surface inherited from the upstream app (Deino's v0.4.1 base).
 //!
 //! Every pre-FND-02 Tauri command is registered here, in one
 //! `generate_handler!`, so `lib.rs` stays a small builder. These commands are
