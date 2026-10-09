@@ -42,4 +42,3 @@ frontend/src-tauri/src/tray.rs
 frontend/src-tauri/src/whisper_engine/commands.rs
 frontend/src-tauri/src/whisper_engine/parallel_processor.rs
 frontend/src-tauri/src/whisper_engine/whisper_engine.rs
-llama-helper/src/main.rs
