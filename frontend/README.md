@@ -42,4 +42,4 @@ The build script downloads a pinned FFmpeg sidecar on first build, and Tauri
 expects the `llama-helper` sidecar in `src-tauri/binaries/` (see the root README).
 
 More detail: [Building from Source](../docs/BUILDING.md),
-[GPU Acceleration](../docs/GPU_ACCELERATION.md), [Architecture](../docs/architecture.md).
+[GPU Acceleration](../docs/GPU_ACCELERATION.md), [Architecture](../docs/ARCHITECTURE.md).

@@ -16,6 +16,10 @@ every change**:
 | **§3B** | UI direction: calm, minimal, token-based design, light and dark themes |
 | **§3C** | macOS audio and system integration rules |
 
+Then read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (the map of the
+system), [`docs/TESTING.md`](docs/TESTING.md) and [`docs/REVIEW.md`](docs/REVIEW.md).
+Decisions are recorded in [`docs/adr/`](docs/adr/).
+
 If you implement a card, the card is your scope. Note anything outside it under
 "Follow-ups" instead of doing it.
 
@@ -36,38 +40,41 @@ no Deino server, and automatic updates are disabled (§8 D6).
 
 ## Commands
 
-All app work happens in `frontend/`.
-
 ```bash
-pnpm install --frozen-lockfile   # install dependencies
-pnpm dev                         # Vite dev server on http://localhost:3118
-pnpm build                       # tsc + Vite build into dist/ (must pass)
-pnpm test                        # Vitest (happy-dom, Testing Library), colocated *.test.ts(x)
-pnpm test:watch                  # Vitest in watch mode
-pnpm typecheck                   # tsc for the app and vite.config.ts
-pnpm lint                        # ESLint (flat config, eslint.config.mjs)
-pnpm run tauri:dev               # full app; GPU features auto-detected
-pnpm run tauri:build             # production bundle
+# Rust (repository root; the toolchain comes from rust-toolchain.toml)
+scripts/clippy.sh                    # clippy -D warnings on every target, then typos
+cargo fmt --all --check              # format
+cargo test --workspace               # or: cargo nextest run --workspace
+scripts/check-rust-file-size.sh      # 300-line cap, tests excluded
+scripts/sqlx-prepare.sh              # regenerate .sqlx/ after a query or migration change
+cargo test -p deino --lib bindings   # regenerate frontend/src/lib/ipc/generated/, then commit it
+cargo deny check licenses            # permissive licences only
 
-cd src-tauri
-cargo build                      # Rust core
-cargo test                       # Rust tests
+# Frontend (frontend/)
+pnpm install --frozen-lockfile
+pnpm dev                             # Vite dev server on http://localhost:3118
+pnpm typecheck                       # baseline + strict flags (scripts/typecheck.mjs)
+pnpm lint                            # ESLint; errors fail, warnings only in legacy files
+pnpm test                            # Vitest (happy-dom, Testing Library)
+pnpm format / pnpm format:check      # Prettier, skipping legacy files
+pnpm build                           # typecheck + Vite build into dist/
+pnpm run tauri:dev                   # full app; GPU features auto-detected
+pnpm run tauri:build                 # production bundle
+
 RUST_LOG=deino_lib::audio=debug pnpm run tauri:dev   # verbose audio logs
 ```
 
 Build prerequisites: the `llama-helper` sidecar must be staged as
-`src-tauri/binaries/llama-helper-<target-triple>` (see the root README), and the
-first build downloads a SHA-256-pinned FFmpeg into the same folder
-(`src-tauri/build/ffmpeg.rs`).
+`frontend/src-tauri/binaries/llama-helper-<target-triple>` (see the root README),
+and the first build downloads a SHA-256-pinned FFmpeg into the same folder.
+Optional local hooks: `lefthook install` (`lefthook.yml`).
 
 ## Architecture
 
 ```
 ┌──────────────────────────── Tauri 2 app ────────────────────────────┐
-│  Vite + React UI (frontend/src)  ⇄  invoke()/events  ⇄  Rust core     │
-│                                                (frontend/src-tauri)  │
-│        ↑ React contexts                      ↓ audio, STT, SQLite,   │
-│                                                summaries, tray       │
+│  React UI (frontend/src)  ⇄  typed plugins + legacy invoke/events  ⇄ │
+│  TanStack Query, DbChanged         Rust: frontend/src-tauri + crates/ │
 └───────────────────────┬───────────────────────────┬──────────────────┘
                         │ sidecars                  │ local files
               llama-helper (llama.cpp)      <app_data_dir>/deino.sqlite
@@ -75,133 +82,185 @@ first build downloads a SHA-256-pinned FFmpeg into the same folder
                                             ~/Movies/Deino/<meeting>/audio.mp4
 ```
 
-### Rust core (`frontend/src-tauri/src/`)
+### Rust workspace
 
-- `lib.rs`: the Tauri builder only (plugins, managed state, feature plugins).
-  Startup steps are in `setup.rs`, window/exit handling in `lifecycle.rs`.
-- `features.rs`, `features/`: new IPC, one inline Tauri plugin per feature (see
-  "Command registration" below). `features/manifest.rs` lists them.
-- `legacy.rs`, `legacy/`: every inherited command, in one `generate_handler!`.
-  Don't add commands there; cards port them into feature plugins.
-- `audio/`: capture, mixing, VAD, recording and import.
-  - `devices/`: device discovery and per-platform code (`platform/{macos,windows,linux}.rs`).
-  - `capture/microphone.rs`: cpal microphone stream.
-  - `capture/core_audio.rs`: **macOS system audio through a Core Audio process
-    tap** (`AudioHardwareCreateProcessTap` + an aggregate device named
-    `deino-audio-tap`, macOS 14.2+). ScreenCaptureKit is a fallback only.
-  - `pipeline.rs`: mixes mic and system audio (today they are mixed before
-    VAD/STT; CAP-02 separates them) and feeds the VAD → transcription path and
-    the recording path.
-  - `recording_manager.rs`, `recording_commands.rs`, `recording_saver.rs`:
-    recording lifecycle, Tauri commands, and `audio.mp4` output with checkpoints.
-  - `transcription/`: the `TranscriptionProvider` trait with Parakeet and
-    Whisper providers.
-- `parakeet_engine/`, `whisper_engine/`: model management and inference
-  (Parakeet over ONNX Runtime, Whisper over whisper-rs with Metal/CoreML on macOS).
-- `summary/`: LLM client, chunk → combine → final processing, templates
-  (`summary/templates/`, bundled JSON in `src-tauri/templates/`, user templates
-  in `<app_data_dir>/templates/`), and `summary_engine/` for the built-in model.
-- `database/`: sqlx SQLite (`deino.sqlite`), repositories and setup. Migrations
-  live in `src-tauri/migrations/`; never edit an existing one.
-- `notifications/`, `tray.rs`, `onboarding.rs`: OS integration.
-- `updater/`: the auto-update gate (`AUTO_UPDATE_ENABLED = false`).
+| Crate | Role |
+|---|---|
+| `crates/deino-domain` | Typed IDs, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
+| `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
+| `crates/deino-core` | Features as modules: `meetings`, `_example` (debug builds) |
+| `crates/deino-testkit` | Fixtures and re-exported fakes (dev-dependency only) |
+| `frontend/src-tauri` | The Tauri app (`deino_lib`) |
+| `llama-helper` | Local LLM sidecar |
+
+**No crate under `crates/` depends on `tauri`.** Each has a README (Role, Owns,
+Does Not Own, Invariants); read it before editing the crate.
+
+### The app crate (`frontend/src-tauri/src/`)
+
+- `lib.rs`: the builder only. `setup.rs` (startup), `lifecycle.rs` (window
+  and exit).
+- `composition.rs`: **the composition root.** Turns adapters (SQLite repos,
+  `SystemClock`, Tauri event adapters) into services and `app.manage`s them.
+- `features.rs`, `features/`: one inline plugin per feature (`system`,
+  `meetings`, `db`, and `example` in debug builds). `features/manifest.rs`
+  lists them for the ACL.
+- `error.rs`: `into_ipc()`, the command boundary (log the chain, return
+  `AppError`).
+- `bindings.rs`: the test that writes the TypeScript bindings.
+- `legacy_lints.rs` + `legacy_modules!` in `lib.rs`: the inherited modules and
+  the lints they are exempt from. `legacy.rs`: every inherited command.
+- `database/`: legacy repositories; `DatabaseManager` wraps `deino_db::Database`
+  and hands legacy code the writer pool.
+- `audio/` (capture via cpal and the Core Audio process tap `capture/core_audio.rs`,
+  mixing in `pipeline.rs`, VAD, recording, import), `parakeet_engine/`,
+  `whisper_engine/`, `summary/`, `notifications/`, `tray.rs`, `onboarding.rs`,
+  `updater/` (`AUTO_UPDATE_ENABLED = false`).
 
 ### Frontend (`frontend/src/`)
 
-Vite + React 18 + TanStack Router + Tailwind v4 ([ADR 0003](docs/adr/0003-vite-tanstack-router.md)).
+Vite + React 18 + TanStack Router + TanStack Query + Tailwind v4
+([ADR 0003](docs/adr/0003-vite-tanstack-router.md), [ADR 0008](docs/adr/0008-tanstack-query-and-dbchanged.md)).
 
 ```
-frontend/
-├── index.html  vite.config.ts (also Vitest)  eslint.config.mjs  tsconfig.json
-└── src/
-    ├── main.tsx  router.tsx  routeTree.gen.ts (generated, committed)
-    ├── routes/      file-based routes, thin: each renders one feature screen
-    │   ├── __root.tsx               app shell around every route
-    │   ├── index.tsx                /            record
-    │   ├── meetings/$meetingId.tsx  /meetings/$meetingId?source=recording
-    │   ├── meeting-details.tsx      /meeting-details?id= → redirect (old URL)
-    │   └── settings.tsx             /settings
-    ├── features/    shell/ (providers, onboarding gate, drop import, tray),
-    │                record/, meeting-details/, settings/
-    ├── components/  contexts/  hooks/  lib/  services/  types/   (legacy)
-    ├── styles/globals.css   Tailwind v4 theme + shadcn tokens
-    └── test-setup.ts        Vitest Tauri shim
+src/
+├── main.tsx                 query client + IpcQueryProvider + router
+├── routes/                  file routes, thin: each renders one feature screen
+├── features/<feature>/      api.ts  queries.ts  types.ts  copy.ts  index.ts
+│                            hooks/  components/  *.test.ts(x)
+├── lib/ipc/                 generated/ (never edit)  result.ts  query-client.ts
+│                            events.ts  ipc-query-provider.tsx
+├── ui/                      shared primitives; icons.ts is the only icon import
+└── components/ contexts/ hooks/ services/ lib/* types/   legacy (legacy-files.mjs)
 ```
 
+- Other code imports a feature through its `index.ts` only (`search.ts` for a
+  route's URL params). ESLint enforces it.
 - Navigate with TanStack Router, never string URLs:
   `navigate({ to: '/meetings/$meetingId', params: { meetingId } })`. Search
-  params are validated with zod (`validateSearch`).
-- `routeTree.gen.ts` is regenerated by `pnpm dev`/`pnpm build`; commit it with
-  any route change. Test files inside `routes/` need a `-` prefix.
-- State lives in React contexts under `contexts/` plus `components/Sidebar/SidebarProvider.tsx`.
-- Summary editor: BlockNote (`components/AISummary/`, `components/BlockNoteEditor/`).
-  ProseMirror stays single-instance through the `pnpm.overrides` pins.
-- New work follows §3 rule 4: routes in `routes/`, features in
-  `features/<feature>/`, typed IPC wrappers in `lib/ipc/<feature>.ts`. Use
-  `hooks/useMountEffect.ts` instead of a raw `useEffect` for mount-only sync.
-- Tests are colocated `*.test.ts(x)`; mock Tauri with
-  `vi.mock('@tauri-apps/api/core')`, and the router hooks with
-  `vi.mock('@tanstack/react-router')` when rendering components that navigate.
+  params are validated with zod. Commit `routeTree.gen.ts` with route changes;
+  test files inside `routes/` need a `-` prefix.
+- Summary editor: BlockNote (frozen until NOT-01 moves to TipTap). ProseMirror
+  stays single-instance through the `pnpm.overrides` pins.
 
-### Rust ↔ UI communication
+## How to add a feature: copy `_example`
 
-```typescript
-// UI → Rust: feature plugin command (new code), or a legacy app command
-const version = await invoke<string>('plugin:system|app_version');
-const meetings = await invoke<Meeting[]>('api_get_meetings');
+`_example` is the reference feature, compiled into debug builds only. Copy its
+three parts and rename:
 
-// Rust → UI: events
-await listen<TranscriptUpdate>('transcript-update', (event) => { /* … */ });
-```
-
-```rust
-#[tauri::command]
-async fn my_command(arg: String) -> Result<String, String> { /* thin: call a service */ }
-
-app.emit("transcript-update", payload)?;
-```
-
-Commands stay thin (§3A): parse input, call one service function, map errors.
-
-### Command registration: inline plugin
-
-Each feature is one inline Tauri plugin ([ADR 0002](docs/adr/0002-inline-tauri-plugins-per-feature.md)).
-Plugin commands are always checked against the capability ACL, so registering
-a feature takes three one-line edits: `features/manifest.rs` (from which
-`build.rs` generates the ACL permissions), `lib.rs` and
-`capabilities/default.json`. A guard test fails if the capability is missing.
+1. **Core:** `crates/deino-core/src/_example.rs` + `_example/` →
+   `crates/deino-core/src/<feature>.rs` + `<feature>/{model,error,repo,events,service,fake}.rs`.
+   Put the migration in `crates/deino-db/migrations/<UTC timestamp>_<card>_<desc>.sql`
+   (not next to the feature, which only the example does), add a `Table`
+   variant, run `scripts/sqlx-prepare.sh`. New ID types go in
+   `crates/deino-domain/src/id.rs`.
+2. **Plugin:** `frontend/src-tauri/src/features/_example.rs` + `_example/` →
+   `features/<feature>.rs` + `<feature>/{commands,events,contract_tests}.rs`.
+   Register it with one line each in `features/manifest.rs`, `lib.rs`
+   (`register_feature_plugins`), `capabilities/default.json`
+   (`"<feature>:default"`) and `features::builders()`, and build its service in
+   `composition.rs`. Then `cargo test -p deino --lib bindings`.
+3. **UI:** `frontend/src/features/_example/` → `features/<feature>/`: `api.ts`
+   calls the generated commands through `unwrap`, `queries.ts` declares
+   `meta.tables`, components split into a container and presentational parts.
 
 ```rust
-// src/features/meetings.rs (+ features/meetings/commands.rs)
-pub const NAME: &str = "meetings";
-pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
-    tauri::plugin::Builder::new(NAME)
-        .invoke_handler(tauri::generate_handler![commands::list, commands::rename])
-        .build()
+// features/<feature>/commands.rs: private commands, collected here
+pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
+    tauri_specta::collect_commands![list, rename]
 }
-// src/features/manifest.rs   (append-only)
-//     ("meetings", &["list", "rename"]),
-// src/lib.rs                 .plugin(features::meetings::init())
-// capabilities/default.json  "meetings:default"
-// UI                         invoke('plugin:meetings|list')
+
+/// Every meeting, newest first.
+#[tauri::command]
+#[specta::specta]
+async fn list(meetings: State<'_, Arc<MeetingService>>) -> Result<Vec<Meeting>, AppError> {
+    meetings.list().await.into_ipc()
+}
 ```
 
-`features/system.rs` is the smallest working example. FND-13 switches the
-plugin builder to tauri-specta for generated TypeScript bindings. Never add an
+```ts
+// features/<feature>/queries.ts
+export const meetingListQuery = () =>
+  queryOptions({
+    queryKey: meetingKeys.list(),
+    queryFn: meetingsApi.list,
+    meta: { tables: ['meetings'] }, // DbChanged keeps it fresh
+  });
+```
+
+Layers (§3A): `commands.rs` parses, calls one service method and maps the
+error; `service.rs` holds the rules over ports and `Clock` (no SQL, no Tauri);
+`repo.rs` is SQL only (`sqlx::query*!`); fakes live behind `test-support`.
+
+## Strict rules and the legacy strategy
+
+All new code passes every rule with **zero errors and zero warnings**:
+
+- **Rust:** `[workspace.lints]` (root `Cargo.toml`) + `clippy.toml` thresholds
+  (40-line functions, cognitive complexity 15, 4 arguments, nesting) and
+  architecture bans (`reqwest::Client` outside `deino-net`, `tokio::spawn`,
+  `SystemTime::now`/`Instant::now`/`Utc::now` outside `SystemClock`). Every
+  `#[allow]` needs `reason = "…"`. No `unwrap`/`expect`/`panic` outside tests.
+- **TypeScript:** `strictTypeChecked`, react-hooks, TanStack Query rules,
+  sonarjs complexity 15, `max-lines` 300, `max-lines-per-function` 40,
+  `max-params` 4, `max-depth` 3, `noUncheckedIndexedAccess`,
+  `exactOptionalPropertyTypes`. No `any`, no unchecked `as`.
+
+Inherited code is exempt through **one list per language, which only shrinks**:
+
+| List | Covers |
+|---|---|
+| `frontend/src-tauri/src/legacy_lints.rs` (`legacy_modules!` in `lib.rs`) | Rust lints for inherited modules |
+| `scripts/legacy-rust-files.txt` | Rust files over 300 lines |
+| `frontend/legacy-files.mjs` | ESLint (as warnings), strict TS flags, Prettier |
+
+When a card ports a module or file, it moves it out of the list in the same
+PR and makes it pass. Never add new code to a list.
+
+## Rules that are easy to break
+
+- **No raw `useEffect`.** Derive state, use a query or mutation, an event
+  handler, or `useMountEffect` (`hooks/useMountEffect.ts`) for mount-only sync
+  with something outside React. Reset state by remounting with `key`.
+- **Never hand-write `invoke()`.** Call generated bindings through `api.ts`.
+- **Never edit an applied migration** or `frontend/src/lib/ipc/generated/`.
+- **Commands are private functions** collected in `commands.rs`: a `pub`
+  `#[tauri::command]` exports a crate-root macro and collides across features.
+- **Every write goes through the writer** (`Database::writer()` or legacy
+  `DatabaseManager::pool()`), or the UI never hears about it.
+- **A `#[macro_export]` inside a legacy module** cannot be imported by
+  `crate::` path; use `pub(crate) use name;`.
+- **Never log transcript text, notes, titles, prompts or secrets.** Log IDs
+  and counts. Use `perf_debug!()`/`perf_trace!()` on hot paths.
+- **Audio callbacks must not allocate, lock or log** (§3C).
+- **Paths come from Tauri's resolver** (`app.path().app_data_dir()`), never
+  `dirs::` or hard-coded folders.
+- Rendering anything under `SidebarProvider` in a test needs a
+  `QueryClientProvider`.
+
+## Rust ↔ UI communication
+
+```ts
+// UI → Rust: generated bindings through a feature's api.ts, read with TanStack Query
+const meetings = await unwrap(commands.list());     // plugin:meetings|list
+// Rust → UI: typed events
+useIpcEvent(events.noteAdded, ({ note }) => { /* … */ });
+// DbChanged (plugin:db:db-changed) invalidates queries by meta.tables automatically.
+```
+
+Errors cross IPC as `AppError { code, message }` and arrive as `IpcError`
+([ADR 0009](docs/adr/0009-error-model.md)). Legacy commands (`invoke('api_…')`)
+and untyped events still exist until cards port them; never add new ones
+([ADR 0002](docs/adr/0002-inline-tauri-plugins-per-feature.md),
+[ADR 0007](docs/adr/0007-typed-ipc-with-tauri-specta.md)). Never add an
 `AppManifest`: it would put every legacy command under the ACL at once.
 
 ## Patterns worth knowing
 
-- **Hot-path logging:** use `perf_debug!()` / `perf_trace!()` (compiled out in
-  release builds). Never log transcript text, notes, prompts or secrets; log IDs
-  and counts.
-- **Shared state:** `Arc<RwLock<T>>` across async tasks, `Arc<AtomicBool>` for
-  flags. Audio callbacks must not allocate, lock or log (§3C).
-- **Paths:** resolve directories through Tauri's path resolver
-  (`app.path().app_data_dir()`), never a hard-coded or `dirs::`-based app folder.
+- **Shared state:** services in Tauri state as `Arc<Service>`; legacy code uses
+  `Arc<RwLock<T>>` and `Arc<AtomicBool>`. No new global statics.
 - **Models:** downloaded into `<app_data_dir>/models/` (`parakeet/`, `summary/`,
-  Whisper files at the root). Downloads are pinned (HuggingFace revisions,
-  exact byte sizes).
+  Whisper files at the root), pinned by revision and byte size.
 - **Settings:** many still live in localStorage or Tauri store files. FND-06
   introduces the typed settings store and Keychain secrets; use it for anything
   new.
@@ -218,8 +277,11 @@ plugin builder to tauri-specta for generated TypeScript bindings. Never add an
 ## Conventions
 
 - Branches: `feat/<CARD-ID>-<slug>`; never push to `main` or to the `upstream` remote.
-- Commits: Conventional Commits (`feat(scope): …`, `fix(…)`, `refactor(…)`, `chore(…)`).
+- Commits: Conventional Commits (`feat(scope): …`, `fix(…)`, `refactor(…)`,
+  `build(…)`, `docs(…)`); `lefthook.yml` checks them. PRs use
+  `.github/pull_request_template.md`.
 - Naming: audio sources are "microphone" and "system", not "input"/"output".
-- Dependencies: pinned, permissive licences only (MIT, Apache-2.0, BSD, ISC).
-  Any binary downloaded at build time needs a SHA-256 pin.
-- Code copied from MIT projects gets an entry in `THIRD_PARTY_NOTICES.md`.
+- Dependencies: pinned, permissive licences only (MIT, Apache-2.0, BSD, ISC);
+  `cargo deny check licenses` enforces it. Any binary downloaded at build time
+  needs a SHA-256 pin.
+- Code copied from MIT/Apache projects gets an entry in `THIRD_PARTY_NOTICES.md`.
