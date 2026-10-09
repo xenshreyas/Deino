@@ -20,6 +20,9 @@ fi
 # their own platforms. Dev-dependencies already enable every `test-support`.
 cargo clippy "${packages[@]}" --all-targets --locked -- --deny warnings
 
+# FND-12: deino-net is the only HTTP client; audio and STT never reach the network.
+scripts/check-net-isolation.sh
+
 # Spelling, when typos-cli is installed (CI installs it).
 if command -v typos >/dev/null 2>&1; then
     typos
