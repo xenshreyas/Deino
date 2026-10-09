@@ -15,12 +15,15 @@
 //! 3. [`attach_database`]: the database-backed [`Services`] and the
 //!    post-meeting [`Pipeline`] (started in the background), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
-//!    by [`legacy_settings_import`]), and the egress log's table.
+//!    by [`legacy_settings_import`]), the egress log's table, the LLM
+//!    gateway (`llm.rs`), and templates and the profile (`notes.rs`: the
+//!    built-in catalogue is synced before the pipeline starts).
 //!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
 mod diarize;
+mod llm;
 mod network;
 mod notes;
 mod stt;
@@ -33,15 +36,12 @@ pub(crate) use stt::attach_stt;
 use deino_core::diarization::TrackDiarizer;
 use deino_core::meetings::{MeetingLifecycleService, MeetingService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
-use deino_core::profile::ProfileContext;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
-    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, LlmAccess, SettingsError,
-    SettingsService,
+    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
-use deino_llm::Gateway;
 use deino_pipeline::{
     ClockSleeper, PipelineDeps, PipelineService, PipelineTrigger, ProgressSink, SqliteJobRepo,
     StagePorts, Summarizer, registry,
@@ -204,7 +204,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         log::error!(target: "startup", "settings were not wired before the database; AI, templates and the profile are unavailable");
         return;
     };
-    let gateway = attach_llm(app, &database, &settings, clock.clone());
+    let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
     let deps = NoteDeps {
         settings,
         gateway,
@@ -249,45 +249,6 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
         )),
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
-}
-
-/// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>`,
-/// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
-/// that saves `llm_calls`. Every prompt starts with the user's profile
-/// (`ProfileContext`). Needs [`attach_settings`] to have run.
-fn attach_llm(
-    app: &AppHandle,
-    database: &Database,
-    settings: &Arc<SettingsService>,
-    clock: Arc<dyn Clock>,
-) -> Option<Arc<Gateway>> {
-    let (Some(secrets), Some(net)) = (
-        app.try_state::<Arc<dyn SecretStore>>(),
-        app.try_state::<deino_net::Net>(),
-    ) else {
-        log::error!(target: "llm", "the Keychain or the network were not wired before the database; AI is unavailable");
-        return None;
-    };
-    let access = Arc::new(LlmAccess::new(Arc::clone(settings), Arc::clone(&secrets)));
-    let app_data_dir = app.path().app_data_dir().unwrap_or_default();
-    let services = crate::llm::build(crate::llm::LlmPorts {
-        access,
-        database: database.clone(),
-        app_data_dir,
-        context: Arc::new(ProfileContext::new(Arc::clone(settings))),
-        clock,
-        net: net.inner().clone(),
-    });
-    // Owned for the app's lifetime: it ends when the gateway, and with it the
-    // last usage channel, is dropped at exit.
-    tauri::async_runtime::spawn(services.usage_writer.run());
-    app.manage(services.gateway.clone());
-    app.manage(services.admin);
-    app.manage(services.summaries);
-    let pull_events: Arc<dyn features::llm::PullEvents> =
-        Arc::new(features::llm::TauriPullEvents::new(app.clone()));
-    app.manage(pull_events);
-    Some(services.gateway)
 }
 
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
