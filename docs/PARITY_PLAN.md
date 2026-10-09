@@ -2022,6 +2022,32 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | **5** | CAP-05 ∥ CAP-12 ∥ TRN-06 ∥ NOT-06 ∥ NOT-07 ∥ NOT-08 ∥ AI-03 ∥ AI-04 ∥ INT-04 ∥ INT-05 ∥ DEV-04 | |
 | **6** | CAP-13 ∥ NOT-09 ∥ ORG-09 ∥ AI-07 ∥ AI-08 ∥ PRV-02 | At this point **Deino matches Granola and Circleback on every local feature.** |
 
+### 7.1 Progress log
+
+| Card | Status | Merged |
+|---|---|---|
+| FND-01 Rebrand | ✅ merged | 2026-10-08 |
+| FND-02 Cleanup, English-only, inline plugins | ✅ merged | 2026-10-08 |
+| FND-10a Vite migration | 🔄 in progress | |
+| Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
+| Spike: STT streaming (transcribe-cpp) | 🔄 running | |
+| Spike: diarization bake-off | 🔄 running | |
+
+### 7.2 Follow-ups raised by merged cards (assign to the named card)
+
+| From | Follow-up | Goes to |
+|---|---|---|
+| FND-01/02 | Two hardware-dependent `device_detection` tests fail on real Macs. Guard them or inject a fake device source. | FND-03 |
+| FND-02 | Four pre-existing clippy errors in legacy files (`backend_config.rs` `to_string` shadowing `Display`, tests in `system_audio_commands.rs` and `whisper_engine.rs`). | FND-13 |
+| FND-02 | `whisper_engine.rs` logs transcript text via `perf_debug!`/`perf_trace!`, which violates §3A privacy. | FND-13 (or CAP-01 when it drops whisper-rs) |
+| FND-02 | Many legacy commands still take a vestigial `auth_token` parameter. Drop it when porting each command. | Each card that ports a legacy command |
+| FND-02 | `get_transcription_status` is a stub that always returns zeros. | CAP-01 |
+| FND-02 | `generate_meeting_summary` has too many arguments. | FND-09 |
+| FND-02 | The `llama-helper` `[profile.release]` is ignored inside the workspace. Move it to the root with a per-package profile override. | FND-13 |
+| FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. | FND-03 (Windows check job, optional) |
+| FND-01 | `onnxruntime.rs` and `ffmpeg.rs` duplicate the sha256 helper. Moot once FFmpeg is removed (D11). | FND-05 |
+| FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. | FND-06 / FND-13 |
+
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02
 
