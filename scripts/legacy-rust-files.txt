@@ -19,7 +19,6 @@ frontend/src-tauri/src/audio/recording_saver.rs
 frontend/src-tauri/src/audio/recording_state.rs
 frontend/src-tauri/src/audio/retranscription.rs
 frontend/src-tauri/src/audio/stream.rs
-frontend/src-tauri/src/audio/system_detector.rs
 frontend/src-tauri/src/audio/transcription/engine.rs
 frontend/src-tauri/src/audio/transcription/worker.rs
 frontend/src-tauri/src/audio/vad.rs

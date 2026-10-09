@@ -31,8 +31,6 @@ pub mod post_processor;
 pub mod hardware_detector;
 pub mod async_logger;
 pub mod batch_processor;
-pub mod system_detector;
-pub mod system_audio_commands;
 pub mod device_monitor;  // NEW: Device disconnect/reconnect monitoring
 pub mod playback_monitor; // NEW: Playback device detection for BT warnings
 
@@ -63,20 +61,6 @@ pub use capture::{
     SystemAudioCapture, SystemAudioStream,
     start_system_audio_capture, list_system_audio_devices,
     check_system_audio_permissions
-};
-
-// Export system audio detection functionality
-pub use system_detector::{
-    SystemAudioDetector, SystemAudioEvent, SystemAudioCallback,
-    new_system_audio_callback
-};
-
-// Export system audio commands
-pub use system_audio_commands::{
-    start_system_audio_capture_command, list_system_audio_devices_command,
-    check_system_audio_permissions_command, start_system_audio_monitoring,
-    stop_system_audio_monitoring, get_system_audio_monitoring_status,
-    init_system_audio_state
 };
 
 // Export new simplified components

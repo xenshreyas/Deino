@@ -111,6 +111,18 @@ preferredMicDevice: string | null;
  */
 preferredSystemDevice: string | null }
 /**
+ * "Auto-start after N-second countdown" (off by default).
+ */
+export type AutoStartSettings = { 
+/**
+ * Whether a detected meeting starts recording after the countdown.
+ */
+enabled: boolean; 
+/**
+ * The countdown, in seconds, during which "Don't record" cancels it.
+ */
+countdownSeconds: number }
+/**
  * The beta section of `Settings`: features still being proven.
  */
 export type BetaSettings = { 
@@ -118,6 +130,17 @@ export type BetaSettings = {
  * Import audio files and re-transcribe meetings with another model.
  */
 importAndRetranscribe: boolean }
+/**
+ * A macOS bundle identifier, such as `com.tinyspeck.slackmacgap`.
+ * 
+ * Meeting detection names apps by it, and the user's "always ignore" list
+ * stores it. A process without a bundle gets a synthetic identifier from
+ * its executable name (`process.ffmpeg`), so every app that holds the
+ * microphone can be ignored. Any non-empty text without whitespace or
+ * control characters, up to 255 bytes, is accepted unchanged; comparisons
+ * are exact, as the bundle tables use the identifiers apps ship with.
+ */
+export type BundleId = string & { readonly __brand: "BundleId" }
 /**
  * An OpenAI-compatible endpoint. Its key is the Keychain secret
  * [`SecretName::CustomOpenAiApiKey`].
@@ -143,6 +166,23 @@ temperature: number | null;
  * Nucleus sampling, 0 to 1.
  */
 topP: number | null }
+/**
+ * The detection section of `Settings`.
+ */
+export type DetectionSettings = { 
+/**
+ * Prompt to take notes when another app starts using the microphone.
+ */
+enabled: boolean; 
+/**
+ * Apps that never prompt ("Always ignore this app"), in the order added.
+ */
+ignoredApps: IgnoredApp[]; 
+/**
+ * Start recording on its own after a countdown, instead of waiting for
+ * "Take notes".
+ */
+autoStart: AutoStartSettings }
 /**
  * An email address in canonical form: lower case, no surrounding
  * whitespace, one `@` between a non-empty local part and a dotted domain.
@@ -194,6 +234,18 @@ export type ErrorCode =
  * A bug or an unexpected failure; the details are in the log.
  */
 "internal"
+/**
+ * An app the user chose to always ignore.
+ */
+export type IgnoredApp = { 
+/**
+ * The app's bundle identifier, which detection matches.
+ */
+bundleId: BundleId; 
+/**
+ * The app's name when it was ignored, shown in Settings.
+ */
+name: string }
 export type JsonValue = null | boolean | number | string | JsonValue[] | Partial<{ [key in string]: JsonValue }>
 /**
  * An LLM provider. Serialized names match the ones the app has always used.
@@ -616,6 +668,10 @@ transcription: TranscriptionSettings;
  * System notifications.
  */
 notifications: NotificationSettings; 
+/**
+ * Meeting detection and auto-start (CAP-06).
+ */
+detection: DetectionSettings; 
 /**
  * Privacy controls (PRV-01).
  */

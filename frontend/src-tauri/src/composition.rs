@@ -22,6 +22,7 @@
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod detection;
 mod diarize;
 mod llm;
 mod network;
@@ -31,6 +32,7 @@ mod stt;
 
 use std::sync::Arc;
 
+pub(crate) use detection::attach_detection;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use stt::attach_stt;
 

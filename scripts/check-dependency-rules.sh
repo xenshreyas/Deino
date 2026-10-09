@@ -2,9 +2,10 @@
 # PARITY_PLAN §4.0 dependency rules, checked on the resolved graph:
 #
 #   - no crate under crates/ depends on `tauri` (the core stays Tauri-free);
-#   - `deino-audio` and `deino-stt` never depend, even indirectly, on
-#     `deino-net` or an HTTP client (audio and transcripts never leave the
-#     Mac, so those crates cannot reach the network; FND-12);
+#   - `deino-audio`, `deino-detect` and `deino-stt` never depend, even
+#     indirectly, on `deino-net` or an HTTP client (audio, transcripts and
+#     what runs on the Mac never leave it, so those crates cannot reach the
+#     network; FND-12, CAP-06);
 #   - no crate under crates/ except `deino-net` depends directly on an HTTP
 #     client (FND-12: deino-net owns the only one; the app crate's inherited
 #     LLM clients are the exception until FND-09, and clippy's
@@ -21,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # The crates that must have no route to the network.
-readonly OFFLINE_CRATES=(deino-audio deino-stt)
+readonly OFFLINE_CRATES=(deino-audio deino-detect deino-stt)
 # Every HTTP client crate a dependency could bring in.
 readonly HTTP_CLIENTS=(reqwest hyper ureq isahc surf attohttpc curl)
 

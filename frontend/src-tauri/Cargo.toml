@@ -146,6 +146,8 @@ deino-secrets.workspace = true
 deino-testkit.workspace = true
 # Speech-to-text: transcribe-cpp in supervised worker processes (CAP-01).
 deino-stt.workspace = true
+# Meeting detection and the prompt's rules (CAP-06).
+deino-detect.workspace = true
 # `serde_json` types the settings merge patch (`plugin:settings|patch`).
 specta = { workspace = true, features = ["serde_json"] }
 tauri-specta.workspace = true
@@ -175,6 +177,9 @@ core-graphics = "0.23"
 cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
 dasp = "0.11.0"
 futures-channel = "0.3.31"
+# The meeting prompt as a non-activating NSPanel, so it never steals focus
+# from the call (CAP-06; Handy's overlay pattern). MIT/Apache-2.0, pinned.
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", rev = "da9c9a8d4eb7f0524a2508988df1a7d9585b4904" }
 
 # Windows-specific dependencies
 # Default: CPU-only build (no BLAS)
@@ -198,6 +203,7 @@ futures-channel = "0.3.31"
 
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
+deino-detect = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 # Structured-output types in the LLM smoke tests (llm/smoke_tests.rs).
 schemars = "1.2.1"

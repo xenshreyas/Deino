@@ -1522,6 +1522,7 @@ dependencies = [
  "dasp",
  "deino-core",
  "deino-db",
+ "deino-detect",
  "deino-diarize",
  "deino-doc",
  "deino-domain",
@@ -1567,6 +1568,7 @@ dependencies = [
  "sysinfo",
  "tauri",
  "tauri-build",
+ "tauri-nspanel",
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-log",
@@ -1653,6 +1655,28 @@ dependencies = [
  "specta",
  "sqlx",
  "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "deino-detect"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "block2",
+ "chrono",
+ "cidre",
+ "deino-detect",
+ "deino-domain",
+ "log",
+ "objc2-app-kit",
+ "objc2-core-media-io",
+ "objc2-foundation",
+ "serde",
+ "serde_json",
+ "specta",
+ "sysinfo",
  "thiserror 2.0.18",
  "tokio",
 ]
@@ -4285,9 +4309,17 @@ checksum = "d49e936b501e5c5bf01fda3a9452ff86dc3ea98ad5f283e1455153142d97518c"
 dependencies = [
  "bitflags 2.11.1",
  "block2",
+ "libc",
  "objc2",
+ "objc2-cloud-kit",
+ "objc2-core-data",
  "objc2-core-foundation",
+ "objc2-core-graphics",
+ "objc2-core-image",
+ "objc2-core-text",
+ "objc2-core-video",
  "objc2-foundation",
+ "objc2-quartz-core",
 ]
 
 [[package]]
@@ -4342,6 +4374,7 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b402a653efbb5e82ce4df10683b6b28027616a2715e90009947d50b8dd298fa"
 dependencies = [
+ "bitflags 2.11.1",
  "objc2",
  "objc2-foundation",
 ]
@@ -4403,6 +4436,18 @@ dependencies = [
  "objc2-core-audio-types",
  "objc2-core-foundation",
  "objc2-core-video",
+]
+
+[[package]]
+name = "objc2-core-media-io"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "705c4d968c0c4ca4827d6af083648809370c2276c286fe1ec468d339a0089fc0"
+dependencies = [
+ "block2",
+ "dispatch2",
+ "objc2",
+ "objc2-foundation",
 ]
 
 [[package]]
@@ -4737,6 +4782,12 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "pastey"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
 
 [[package]]
 name = "pbkdf2"
@@ -7064,6 +7115,18 @@ dependencies = [
  "syn 2.0.117",
  "tauri-codegen",
  "tauri-utils",
+]
+
+[[package]]
+name = "tauri-nspanel"
+version = "2.1.0"
+source = "git+https://github.com/ahkohd/tauri-nspanel?rev=da9c9a8d4eb7f0524a2508988df1a7d9585b4904#da9c9a8d4eb7f0524a2508988df1a7d9585b4904"
+dependencies = [
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "pastey",
+ "tauri",
 ]
 
 [[package]]

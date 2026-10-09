@@ -16,6 +16,7 @@
 
 mod ai;
 mod audio;
+mod detection;
 mod error;
 mod events;
 #[cfg(any(test, feature = "test-support"))]
@@ -37,6 +38,10 @@ mod ui;
 
 pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
 pub use audio::{AudioSettings, RecordingSettings};
+pub use detection::{
+    AutoStartSettings, DetectionSettings, IgnoredApp, MAX_AUTO_START_SECONDS,
+    MIN_AUTO_START_SECONDS,
+};
 pub use error::SettingsError;
 pub use events::SettingsEvents;
 #[cfg(any(test, feature = "test-support"))]

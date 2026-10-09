@@ -24,6 +24,10 @@ export const settingsCopy = {
       label: 'Recording',
       description: 'Where recordings are saved and how audio is captured.',
     },
+    detection: {
+      label: 'Meeting detection',
+      description: 'Offer to take notes when a call starts, and which apps to ignore.',
+    },
     transcription: {
       label: 'Transcription',
       description: 'The local speech-to-text engine and its models.',

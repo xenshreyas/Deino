@@ -74,6 +74,8 @@ allow-git = [
     "https://github.com/RustAudio/cpal",
     # Core Audio and ScreenCaptureKit bindings, pinned by revision.
     "https://github.com/yury/cidre",
+    # Non-activating NSPanel for the meeting prompt (CAP-06), pinned by revision.
+    "https://github.com/ahkohd/tauri-nspanel",
     "https://github.com/emotechlab/silero-rs",
     "https://github.com/nathanbabcock/ffmpeg-sidecar",
 ]

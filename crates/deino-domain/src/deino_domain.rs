@@ -12,6 +12,7 @@
 //! - [`job`]: the post-meeting pipeline's [`JobStatus`] and [`RunOutcome`];
 //! - [`units`]: [`Millis`] and [`Seconds`], so durations carry their unit;
 //! - [`email`]: [`Email`], a normalised address (people, attendees, fixtures);
+//! - [`bundle_id`]: [`BundleId`], a macOS app identifier (meeting detection);
 //! - [`error`]: [`AppError`], the only error that crosses IPC, its
 //!   [`ErrorCode`] and the [`ErrorClass`] trait that module errors implement;
 //! - [`service`]: [`ServiceId`], every outside service Deino may talk to
@@ -24,6 +25,7 @@
 #[macro_use]
 mod db_enum;
 
+pub mod bundle_id;
 pub mod clock;
 pub mod color;
 pub mod email;
@@ -35,6 +37,7 @@ pub mod service;
 pub mod status;
 pub mod units;
 
+pub use bundle_id::{BundleId, InvalidBundleId};
 #[cfg(any(test, feature = "test-support"))]
 pub use clock::FakeClock;
 pub use clock::{Clock, SystemClock};

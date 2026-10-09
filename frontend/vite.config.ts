@@ -82,6 +82,13 @@ export default defineConfig(({ mode }) => ({
     // web. The meeting route carries BlockNote (~930 kB) until NOT-01.
     chunkSizeWarningLimit: 1024,
     sourcemap: isTauriDebugBuild,
+    // Two pages: the app, and the meeting prompt's own small window (CAP-06).
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        'detection-prompt': fileURLToPath(new URL('./detection-prompt.html', import.meta.url)),
+      },
+    },
   },
   test: {
     environment: 'happy-dom',

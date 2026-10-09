@@ -38,6 +38,8 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
+# Tests add `features = ["test-support"]` for the fakes of its ports.
+deino-detect = { path = "crates/deino-detect" }
 deino-diarize = { path = "crates/deino-diarize" }
 deino-doc = { path = "crates/deino-doc" }
 deino-domain = { path = "crates/deino-domain" }

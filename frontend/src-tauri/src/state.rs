@@ -11,7 +11,7 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::database::manager::DatabaseManager;
 use crate::notifications::{commands::NotificationManagerState, manager::NotificationManager};
-use crate::{audio, summary, whisper_engine};
+use crate::{summary, whisper_engine};
 
 /// State available after the database has been opened.
 pub struct AppState {
@@ -25,6 +25,5 @@ pub(crate) fn manage_initial_state(builder: Builder<Wry>) -> Builder<Wry> {
     builder
         .manage(whisper_engine::parallel_commands::ParallelProcessorState::new())
         .manage(notifications)
-        .manage(audio::init_system_audio_state())
         .manage(summary::summary_engine::ModelManagerState(Arc::new(Mutex::new(None))))
 }

@@ -49,6 +49,11 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "delete_model",
         ],
     ),
+    // ── CAP-06 meeting detection (features/detection.rs) ──
+    (
+        "detection",
+        &["current", "take_notes", "dismiss", "ignore_app", "settings"],
+    ),
     // ── FND-09 LLM gateway: Settings → AI ──
     (
         "llm",

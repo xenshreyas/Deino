@@ -38,6 +38,7 @@
             ]
         },
         "system:default",
+        "detection:default",
         "meetings:default",
         "network:default",
         "pipeline:default",

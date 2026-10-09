@@ -15,8 +15,8 @@ and app shell (0015), speech-to-text in supervised transcribe-cpp worker
 processes (0016), the LLM gateway with task routes (0017), and the
 post-meeting pipeline's stage model (0018), the network egress policy
 (0019), local speaker diarization (0020), note templates in the database
-with a versioned built-in catalogue (0021) and the note document model:
-TipTap JSON with `deino-doc` (0022).
+with a versioned built-in catalogue (0021), the note document model:
+TipTap JSON with `deino-doc` (0022), and meeting detection (0023).
 
 ## 1. Processes
 
@@ -33,6 +33,8 @@ flowchart LR
   Core --> Files[("app data dir<br/>deino.sqlite, settings.json, models/<br/>~/Movies/Deino/&lt;meeting&gt;/audio.mp4")]
   Core --> Keychain[("macOS Keychain<br/>API keys (service = bundle id)")]
   Core -. "deino-net only: scoped per service, logged" .-> LLM["LLM provider APIs,<br/>model hosts, integrations"]
+  Core -- "listeners: process objects,<br/>default input, cameras" --> HAL[("Core Audio HAL,<br/>CoreMediaIO, AX")]
+  Core --> Prompt["Meeting prompt<br/>(non-activating NSPanel,<br/>detection-prompt.html)"]
 ```
 
 - Audio capture and voice activity detection run in the app process.
@@ -44,6 +46,10 @@ flowchart LR
   Notes and chat go to the LLM the user chose, or to the local llama-helper
   (ADR 0010), always through the `deino-llm` gateway, by task route
   (ADR 0017).
+- Meeting detection (CAP-06, ADR 0023) runs on one `deino-detect` thread in
+  the app process: Core Audio and CoreMediaIO listeners only wake it, it
+  re-reads who captures audio, and its prompt is a second webview in a
+  non-activating panel that never takes focus from the call.
 - There is no Deino server and no telemetry. Network calls go only to the
   services the user allows, through `deino-net` (FND-12, ADR 0019): each
   caller holds a client scoped to one service's hosts, every request is
@@ -75,6 +81,9 @@ flowchart BT
   net --> domain
   app --> net
   diarize["deino-diarize<br/>pyannote + WeSpeaker (ONNX, Core ML),<br/>clustering, voiceprints"]
+  detect["deino-detect<br/>process/camera/AX signals,<br/>resolver, policy (no network)"]
+  detect --> domain
+  app --> detect
   knf["knf-rs (vendored)<br/>Kaldi filterbank"]
   diarize --> core
   diarize --> audio
@@ -114,6 +123,7 @@ flowchart BT
 | `knf-rs` | `crates/third_party/knf-rs` | Vendored knf-rs 0.3.2 (MIT) over kaldi-native-fbank 1.20.1 (Apache-2.0): the filterbank features the speaker-embedding model reads, built with `cc`. |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
+| `deino-detect` | `crates/deino-detect` | Meeting detection (CAP-06, ADR 0023): the `Sensor` ports and their macOS adapters (Core Audio process objects with per-object listeners, the default input, CoreMediaIO cameras through a small safe FFI layer, `NSWorkspace`, Accessibility browser URLs), attribution to the outermost `.app`, the bundle tables and meeting-URL normaliser, Muesli's resolver, the Clock-driven `DetectionPolicy`, `DetectionService` (answers, auto-start countdown, the `DetectionEvent` stream) and the `Detector` thread. No `tauri`, no `deino-net`. |
 | `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `diarize` at 30, `legacy_summary` at 50), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar: `generate` (legacy), `stream`, `grammar` (a JSON schema turned into a GBNF grammar) and `embed` requests over JSON lines. |
@@ -131,7 +141,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri event adapters) and `app.manage`s them. `attach_settings` runs first at startup, then `attach_network` (the one `deino_net::Net` and its policy over the settings, `composition/network.rs`); `attach_database` once `deino.sqlite` is open, which also starts persisting the egress log. |
 | `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, the pre-NOT-04 templates folder to import). |
 | `llm.rs`, `llm/` | The gateway's wiring: builds `Gateway`, `LlmAdmin` and `SummaryGenerator` over the app's adapters: `NetTransport` (`llm/http.rs`: one `deino-net` scoped client per provider) and `SidecarLocalModels` (`llm/local.rs`, the built-in models over llama-helper). |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `templates`, `profile`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `templates`, `profile`, `detection`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -140,6 +150,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `database/` | Legacy repositories, and `DatabaseManager`, which wraps `deino_db::Database`. |
 | `audio/` | Capture (cpal microphone, Core Audio process tap), mixing, VAD, recording, import, retranscription, the transcription worker. |
 | `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity, the live lane), the live lane fed by the pipeline (`live.rs`, 48→16 kHz once), its event sink, the batch `TranscriptionProvider`, `NetByteSource` (the model `ByteSource` over `deino-net`'s model-download client), the worker entry and the `--transcribe-file` benchmark. |
+| `features/detection*`, `composition/detection.rs` | The `detection` plugin (CAP-06): `current`, `take_notes`, `dismiss`, `ignore_app`, `settings`; events `MeetingDetected`, `MeetingEnded`, `PromptClosed`, `RecordingRequested`. `prompt.rs` builds the prompt window (a `tauri-nspanel` panel on macOS, `capabilities/detection-prompt.json`), `adapters.rs` implements the service's ports (events and window, recording through the shell, the legacy recording flag, the settings). `attach_detection` starts the detector at launch. |
 | `features/transcription*` | The `transcription` plugin: model list, download, cancel, delete; events `LiveTranscript`, `ModelChanged`, `ModelDownloadProgress`. |
 | `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. Their downloads, and the built-in model's, take a `deino-net` client per call (`composition::model_downloads`); no engine holds one. |
 | `summary/` | The legacy summary commands and `summary_processes` lifecycle (`service.rs`, generation through `deino_core::summaries`, templates from the database through `features/templates/summary_bridge.rs`), and the built-in model manager and sidecar process (`summary_engine/`). |
@@ -363,6 +374,22 @@ DiarizeService::run(meeting)
   SegmentWriter::reattribute      one transaction; the first piece keeps the segment's ID
 ```
 
+### Meeting detection (CAP-06, ADR 0023)
+
+```text
+Core Audio / CMIO listener ─wake─▶ Detector thread (also: next deadline, 5 s heartbeat, 1 s poll fallback)
+  SignalReader: process objects → attribute (outermost .app, call daemons) → MicClients (full duplex)
+                + default input running + camera running + frontmost app
+                + browser rooms (AX kAXDocumentAttribute → url::normalize, only while capturing)
+                + CalendarLookup (NoCalendar until ORG-01)
+  resolve: room in a capturing browser → focused room → meeting app (weak = full duplex)
+           → frontmost meeting app with camera → browser audio (15 s) → other app (15 s)
+  DetectionPolicy: dwell 2.5 s / 15 s → Prompt; 30 s → Close; gone 2 s → End;
+                   Ignore → 10 min cooldown; recording or off → Close, meeting handled
+  DetectionService → DetectionSink (plugin events + prompt panel)
+                   → RecordingStarter on Take notes / countdown (shell's start path until CAP-02)
+```
+
 ### Reads and writes in a feature
 
 `commands.rs` → `Service` (rules, `Clock`) → `Repo` port → `SqliteXRepo`
@@ -577,7 +604,7 @@ tables are omitted from the diagram's attributes.
   `plugin:notes:notes-saved` (`NotesSaved`, every autosave, for other windows),
   `plugin:settings:settings-changed` (`SettingsChanged`, the whole settings
   document), `plugin:llm:ollama-pull` (Ollama download progress), `plugin:pipeline:pipeline-progress` (`PipelineProgress { meetingId, stage,
-  status }`, every stage status change), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
+  status }`, every stage status change), `plugin:detection:meeting-detected` / `meeting-ended` / `prompt-closed` (the prompt window) and `recording-requested` (the main window's shell starts recording), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
   `recording-stopped`, …).
 - **Legacy commands** (`invoke('api_…')`): about 150 app commands, not
   ACL-checked, in `legacy.rs`. Never add to them.
@@ -600,6 +627,7 @@ tables are omitted from the diagram's attributes.
 | A downloadable model (file) | An entry in `crates/deino-core/src/models/catalog.json` with its pinned revision, exact size and SHA-256. |
 | A transcription lane | `deino_stt::Lane` + `EngineSlot::Live(lane)` (one worker each); start a `LiveSession` per lane from `stt/runtime.rs` (CAP-02 adds the microphone and system lanes). |
 | A transcription engine family | A `deino_stt::engine::Engine` implementation served by `worker::run` (transcribe-cpp covers Parakeet and Whisper GGUF/`.bin`). |
+| A meeting app, browser or denied app | `crates/deino-detect/src/classify/tables.rs` (bundle ID, platform, weak or strong); a meeting URL shape in `url.rs`; both are table-tested. |
 | A pipeline stage | A `PipelineStage` in `crates/deino-pipeline/src/stages/<stage>.rs` (idempotent; user-safe messages), one line in `registry::stages` (plus a `StagePorts` field and its adapter in `composition.rs` if it needs a new port), and its label in `frontend/src/features/pipeline/copy.ts`. |
 | A diarization model or parameter | `crates/deino-diarize/src/models.rs` (pinned URL, size, SHA-256; a new embedding model needs a new `EMBEDDING_MODEL_ID`) or `policy.rs`; re-run `diarize-bench` (`docs/perf/diarization.md`). |
 | A built-in note template | A `BuiltinTemplate` in `crates/deino-core/src/templates/builtin/*.rs` and its line in `CATALOG`; bump `version` whenever an existing one changes, so `BuiltinSync` upgrades installs (user copies are never touched). `builtin_tests.rs` validates every entry. |
