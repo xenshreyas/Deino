@@ -145,7 +145,12 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
 11. **Platform guards.** macOS-only code goes behind `#[cfg(target_os = "macos")]` with a stub for other platforms, and `cargo check` must pass on Linux in CI.
 12. **Keep it single-user.** Do not invent auth, users or tenants.
 13. **Code quality.** Follow §3A for all new code. Remove dead code you replace. When you touch a legacy file that breaks §3A, improve the part you touch, but don't rewrite unrelated code.
-14. **Reference code you may port.** Meetily community PRs are MIT, and so is Handy (`~/Documents/GitHub/Handy`). If you copy code, add an entry to `THIRD_PARTY_NOTICES.md`. Do **not** copy from Granola, Circleback or Meetily PRO.
+14. **Benchmark against the best open-source projects.**
+    - Local clones live in `~/Documents/GitHub/deino-references/`. **`docs/REFERENCES.md` maps each card to the exact reference files to study first.** Read them before designing, and match or beat their code quality and performance.
+    - **Copyable** (MIT/Apache; port with an entry in `THIRD_PARTY_NOTICES.md`): Handy (owner's daily-driver STT, Parakeet), Anarlog (ex-Hyprnote; closest product analog), Spacedrive, Muesli, OpenWhispr, sherpa-onnx, tauri plugins-workspace, tauri-specta, shadcn/ui. Meetily community PRs are also MIT.
+    - **Reference-only** (copyleft; learn the patterns, never copy code): Cap and Zed.
+    - Do **not** copy from Granola, Circleback or Meetily PRO.
+    - In the PR description, name the reference you benchmarked against and how Deino compares (structure, latency, CPU, memory).
 
 ---
 
