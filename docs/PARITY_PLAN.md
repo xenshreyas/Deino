@@ -37,12 +37,15 @@ This document does two jobs:
 **Fixed constraints (from the owner)**
 - **English only.** Remove language pickers, translation and auto-detect. Hard-code `en` everywhere.
 - **Transcription model quality is out of scope.** The default engine is **Parakeet Unified EN 0.6B** (`nvidia/parakeet-unified-en-0.6b`, GGUF via `transcribe-cpp`, see CAP-01). Do not spend effort on model accuracy beyond wiring that engine in.
+- **Local-only.** Recording, transcription, notes, search and AI all run on the user's own Mac. **Nothing leaves the machine by default.** An **Offline mode** switch (FND-12) is ON by default and blocks every outbound request except model downloads the user approves. Online features (a cloud LLM key, Slack, Notion, Gmail, CRMs, Google/Microsoft calendar APIs) only work when the user switches Offline mode off **and** connects that specific service.
+- **No meeting bot, no Deino server.** Recording only ever happens on the computer running Deino. There is no hosted backend, so there are no share links, cloud sync or mobile apps (§5.8).
 - **Proprietary.** Do not add open-source licence headers. Keep `THIRD_PARTY_NOTICES.md` up to date whenever code is copied from MIT projects such as Meetily, Handy or community PRs.
 
 **Defaults unless §8 says otherwise**
 - **Platform:** macOS 14.2+ on Apple Silicon is the primary target. Windows and Linux must still compile (`cargo check`), but new OS-specific features may be stubbed with `#[cfg(not(target_os = "macos"))]` returning `Err("unsupported on this platform")`.
 - **Users:** a single user on a single machine. Team, workspace and admin features are deferred to Phase 7 (§6.12).
-- **Data location:** everything stays local under the app data dir. Nothing leaves the machine unless the user has connected a provider or integration for that purpose.
+- **Data location:** everything stays local under the app data dir.
+- **Distribution:** the owner may hand the app to other people. Each copy is fully independent and keeps its own data on its own computer.
 
 **Where Deino should be *better* than both products**
 Each of these comes from a top complaint in `community.md` §6.2:
@@ -223,8 +226,9 @@ Stages register through a trait: `trait PipelineStage { fn id(&self)->&'static s
   - `followup.email`
   - `embed`
 - **Default routing (§8 D3):**
-  - If a Claude API key is set: `claude-sonnet-5-5` for `notes.*`, `chat`, `brief` and `followup.email`; `claude-haiku-5-5` for `extract.*`, `tagging`, `title` and `entity.summary`.
-  - Otherwise, everything goes to the built-in local model.
+  - Everything goes to the built-in local model by default.
+  - If Offline mode is off and a Claude API key is set: `claude-sonnet-5-5` for `notes.*`, `chat`, `brief` and `followup.email`; `claude-haiku-5-5` for `extract.*`, `tagging`, `title` and `entity.summary`.
+  - Every cloud route must go through the FND-12 network guard.
 - **Logging:** usage per call (tokens, latency, route) goes to a local `llm_calls` table for a usage page. Prompts are never logged unless the user turns on debug mode.
 - **Testing:** `MockProvider` returns canned responses keyed by route, for tests.
 
@@ -294,8 +298,8 @@ Legend:
 | Audio file import | — | ✅ (2 GB) | ✅ (beta flag) | CAP-11 (promote, add video, link to event) |
 | **Folder watcher auto-import** | — | — | ❌ (OSS peers have it) | CAP-11 |
 | **Import from other note-takers** (Granola, Circleback, Fathom, Fireflies, Read AI) | ✅ (account move) | ✅ | ❌ | CAP-12 |
-| **Phone and in-person mobile capture, Apple Watch** | ✅ | ✅ | ❌ | CLD-05 |
-| **Meeting bot** (Zoom/Meet/Teams/Webex), auto-join rules | — | ✅ | ❌ | CLD-06 |
+| Phone and in-person mobile capture, Apple Watch | ✅ | ✅ | ❌ | **Won't build** (needs sync); in-person meetings are recorded on the Mac with CAP-03 |
+| Meeting bot (Zoom/Meet/Teams/Webex) | — | ✅ | ❌ | **Won't build** (owner decision) |
 | Slack huddles | ✅ (desktop audio) | ✅ (bot) | ✅ (desktop audio) | — |
 | **Consent tools** (automatic chat message, watermark camera) | ✅ | 🟡 (bot message) | ❌ | CAP-13 |
 | Device hot-swap, Bluetooth warning | ✅ | ✅ | ✅ | — |
@@ -379,6 +383,8 @@ Legend:
 
 ### 5.6 Automations, integrations, export, developer platform
 
+The integrations here (INT-*) send data off the Mac by their nature. They are **online opt-in features**: they stay disabled until the user turns Offline mode off and connects that service (FND-12). The automations engine, exports, webhooks to localhost, MCP, the local API and the CLI all run locally.
+
 | Feature | G | C | Deino today | Card |
 |---|---|---|---|---|
 | **Automations engine** (condition groups with AND/OR, chained actions, auto or manual, re-run on past meetings, run log) | 🟡 (folder auto-post) | ✅ | ❌ | AUT-01 |
@@ -411,18 +417,17 @@ Legend:
 | **Onboarding** (calendar, permissions including Accessibility, model download, sample meeting) | ✅ | 🟡 | 🟡 | FND-11 |
 | Auto-update | ✅ | ✅ | ✅ (points at Zackriya) | FND-01 (disable or re-point) |
 
-### 5.8 Sharing, sync, mobile, teams (needs a server; Phase 6–7)
+### 5.8 Won't build: needs a server, or the owner said no
 
-| Feature | G | C | Deino today | Card |
+| Feature | G | C | Why not | Local alternative |
 |---|---|---|---|---|
-| Share link (web viewer) with Limited viewer / Viewer / Editor levels; request access | ✅ | ✅ | ❌ | CLD-02 |
-| Email the recap to attendees (with tick-to-complete action items) | — | ✅ | ❌ | CLD-03 |
-| Multi-device sync | ✅ | ✅ | ❌ | CLD-04 |
-| iOS / Android / Watch apps | ✅ | ✅ | ❌ | CLD-05 |
-| Meeting bot | — | ✅ | ❌ | CLD-06 |
-| Slack app (ask in Slack, link unfurls) | ✅ | ✅ | ❌ | CLD-07 |
-| Workspaces, teams, shared folders/templates/recipes/automations, comment notifications | ✅ | ✅ | ❌ | TEAM-01 |
-| Admin: default/enforced settings, retention policy, usage dashboard, SSO/SCIM, audit log, legal hold, HIPAA | ✅ | ✅ | ❌ | TEAM-02 |
+| Meeting bot | — | ✅ | Owner decision: recording stays on the local computer | Desktop capture (CAP-*) |
+| Share links / web viewer | ✅ | ✅ | Needs a hosted server | Export a PDF, DOCX or Markdown file and send it yourself (EXP-01) |
+| Email recap sent automatically to attendees | — | ✅ | Needs a server | Follow-up email draft opened in Mail.app (NOT-07) |
+| Multi-device sync | ✅ | ✅ | Needs a server | Auto-export to a folder you control (EXP-02) |
+| iOS / Android / Watch apps | ✅ | ✅ | Need sync | Record in-person meetings on the Mac |
+| Slack bot (ask in Slack, link unfurls) | ✅ | ✅ | Needs a server | Post notes to Slack yourself (INT-01, online opt-in) |
+| Teams, workspaces, admin, SSO/SCIM, audit log | ✅ | ✅ | Single-user app | — |
 
 ---
 
@@ -616,6 +621,20 @@ Card format:
   - [ ] A new nav item or tab can be added by editing one registry file.
   - [ ] Screenshots of `dev:mock` are in the PR.
 
+#### FND-12 · Offline mode and network guard
+- **Wave** 1 · **Depends on** FND-06 · **Size** M
+- **Owns:** `net/` (new), the Settings → Privacy → Network page
+- **Build:**
+  - **One HTTP client:** a shared `net::Client` that every Rust module must use for outbound requests. Add a CI check (grep or clippy lint) that fails on direct `reqwest::Client` use elsewhere.
+  - **Offline mode switch,** ON by default. While it's on, every request fails fast with an `OfflineModeError`. The only exception is model downloads (Parakeet, the local LLM, the embedding model, the diarization models), which ask for confirmation, name the host, and reach only an allowlist of HuggingFace URLs.
+  - **Per-service toggles:** when Offline mode is off, each online service (Claude/OpenAI, Slack, Notion, Gmail, CRMs, Google/Microsoft calendar API, web search) still needs its own toggle. Requests go out only for services that are switched on.
+  - **Network log:** Settings → Network lists every outbound request (time, host, feature, bytes), with no bodies.
+  - **Frontend:** a CSP `connect-src` restricted to `self`, `ipc:` and `asset:`. All online calls go through Rust.
+  - In the UI, features that need the internet show a small globe icon and explain why they're disabled in Offline mode.
+- **Accept:**
+  - [ ] With Offline mode on, a full meeting (record → notes → chat → export) makes zero outbound connections. Verify with Little Snitch or `nettop` and record the result in the PR.
+  - [ ] The CI check catches direct `reqwest` use.
+
 #### FND-11 · Onboarding v2
 - **Wave** 4 · **Depends on** CAP-01, ORG-01, CAP-06 · **Size** M
 - **Owns:** `components/onboarding/*`, `onboarding.rs`
@@ -623,7 +642,7 @@ Card format:
   - **Steps:**
     1. Welcome.
     2. Permissions: mic, system audio, notifications, **Accessibility** (optional, for speaker names and the consent message), **Calendar** (EventKit).
-    3. Model download: Parakeet Unified EN and the built-in LLM, or paste a Claude key.
+    3. Model download: Parakeet Unified EN, the built-in LLM and the embedding model (local by default; a Claude key is an optional online upgrade).
     4. Connect calendar.
     5. Profile (NOT-05).
     6. Try it: record a 20 s test or open the sample meeting from fixtures.
@@ -919,7 +938,7 @@ Card format:
 - **Parity:** C §7.3
 - **Build:**
   - Select text in the transcript or notes → comment, with threaded replies, a resolve action, and a highlight on the commented span.
-  - Single-user use: comments are annotations. TEAM-01 adds notifications later.
+  - Single-user use: comments are private annotations.
 - **Accept:**
   - [ ] Comments survive transcript re-indexing (anchored by segment id and offset).
 
@@ -1656,73 +1675,9 @@ Card format:
   - [ ] An encrypted DB can't be opened without the key.
   - [ ] Migration is lossless.
 
-### 6.8 Phase 6: Cloud, sharing, mobile (needs a server; get owner sign-off first, §8 D2)
+### 6.8 Removed cards
 
-These cards need hosted infrastructure. The defaults are **Supabase** (Postgres, Auth, Storage) and a **Vercel** web app. **Ask the owner before starting any of them.**
-
-#### CLD-01 · Deino Cloud foundation
-- **Wave** 7 · **Size** L
-- **Build:** a Supabase project with an `auth` single-user/owner model plus invited viewers, a schema mirroring published notes, and a Vercel Next.js web viewer app (`web/` in this repo).
-- **Privacy rule:** the desktop app only uploads what the user explicitly publishes.
-
-#### CLD-02 · Share links
-- **Wave** 7 · **Depends on** CLD-01 · **Size** M
-- **Parity:** G §8.1, C §13.2
-- **Build:**
-  - Publish a meeting: choose sections (notes, action items, transcript, audio) and an access level (Limited viewer, Viewer, Editor), restricted to invited emails or anyone with the link.
-  - Optional expiry. Revoke. Request access.
-  - Viewers get a read-only page with meeting chat (server-side LLM, owner's key, rate-limited).
-  - Default visibility is **private / invited only**, not public (the opposite of Granola's default).
-
-#### CLD-03 · Email recap to attendees
-- **Wave** 7 · **Depends on** CLD-02, INT-07 · **Size** S
-- **Parity:** C §13.1 (tick-to-complete action items without an account)
-- **Build:** after the meeting, optionally email notes and action items to invitees through Gmail, with a link to the share page. Recipients can tick their own action items on the web page.
-
-#### CLD-04 · Multi-device sync
-- **Wave** 7 · **Depends on** CLD-01 · **Size** XL
-- **Build:** end-to-end-encrypted sync of the SQLite entities (not audio by default) between the user's desktops and mobile, using CRDT or last-writer-wins per row with an op log.
-
-#### CLD-05 · Mobile and Watch apps
-- **Wave** 8 · **Depends on** CLD-04 · **Size** XL
-- **Parity:** G §2.6–§2.9, C §3.6–§3.8
-- **Build:**
-  - An iOS app (Tauri 2 mobile or native Swift; decide in a spike):
-    - in-person recording with background mode, Live Activity, Lock Screen widget and Action button
-    - offline recording
-    - on-device transcription if Parakeet runs acceptably, otherwise hand off to the desktop through sync
-    - view notes, chat and action items
-    - share-sheet import of call recordings and voice memos
-  - Then Android and the Apple Watch recorder.
-
-#### CLD-06 · Meeting bot
-- **Wave** 8 · **Depends on** CLD-01 · **Size** L
-- **Parity:** C §3.2–§3.3 (auto-join rules, one bot per meeting, chat announcement, fallback to desktop)
-- **Build:**
-  - A vendor integration (Recall.ai, paid) or self-hosted Vexa (Apache-2.0).
-  - Bot name and avatar.
-  - Auto-join through the ORG-02 rules for meetings the user **isn't attending**.
-  - The recording is downloaded to the desktop and runs through the normal pipeline.
-
-#### CLD-07 · Slack app (ask in Slack, unfurls)
-- **Wave** 8 · **Depends on** CLD-02, AI-02 · **Size** M
-- **Parity:** C §9.4, G §8.1 (unfurls)
-- **Build:** a hosted Slack app relaying to the user's desktop agent through Supabase Realtime, or to a server-side agent on synced data.
-
-### 6.9 Phase 7: Teams and admin (only if Deino becomes multi-user)
-
-#### TEAM-01 · Workspaces and collaboration
-- **Build:**
-  - Workspaces, members and roles (Admin, Member, free Viewer), and teams.
-  - Shared folders and spaces; shared templates, recipes and automations (running on the creator's connections).
-  - Comment notifications, @mention emails, "Shared with me", and meeting de-duplication across members.
-
-#### TEAM-02 · Admin and compliance
-- **Build:**
-  - Default and enforced settings (lock icon).
-  - Workspace retention policy, usage dashboard and leaderboard.
-  - SSO (SAML/OIDC), SCIM, audit log API, legal holds.
-  - Data-export permissions, HIPAA mode, MDM config.
+The cloud cards (CLD-01 to CLD-07: hosted backend, share links, email recaps, sync, mobile apps, meeting bot, Slack bot) and the team cards (TEAM-01, TEAM-02) were removed on 2026-10-08. The owner wants recording to stay local and nothing to leave the Mac. See §5.8 for the local alternatives. Do not build them.
 
 ---
 
@@ -1733,14 +1688,12 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | Wave | Cards (✅ = merged) | Notes |
 |---|---|---|
 | **0** | FND-01 → FND-02 → (FND-03 ∥ FND-04) | One after another. Everything touches `lib.rs` and branding. |
-| **1** | FND-05 ∥ FND-06 ∥ FND-07 ∥ FND-10 ∥ CAP-01; then FND-09 (after FND-06) | FND-05 and FND-07 coordinate on `transcript_segments`. Land FND-07's migration first and FND-05 rebases onto it. |
+| **1** | FND-05 ∥ FND-06 ∥ FND-07 ∥ FND-10 ∥ CAP-01; then FND-09 and FND-12 (after FND-06) | FND-05 and FND-07 coordinate on `transcript_segments`. Land FND-07's migration first and FND-05 rebases onto it. |
 | **2** | FND-08, then in parallel: CAP-02 ∥ CAP-06 ∥ CAP-10 ∥ NOT-01 ∥ NOT-04 ∥ NOT-05 ∥ ORG-01 ∥ ORG-05 ∥ ORG-06 ∥ EXP-01 ∥ INT-00 | FND-08 merges first, because many cards add stages. |
 | **3** | CAP-03 ∥ CAP-07 ∥ CAP-08 ∥ CAP-11 ∥ TRN-01 ∥ TRN-05 ∥ NOT-02 ∥ ORG-02 ∥ ORG-03 ∥ ORG-04 ∥ ORG-08 ∥ AI-05 ∥ EXP-02 ∥ DEV-01 ∥ PRV-01; then TRN-03 (after TRN-01), ORG-07 (after ORG-04), AI-01 (after ORG-08) | The heaviest wave. NOT-02 is on the critical path. |
 | **4** | CAP-04 ∥ CAP-09 ∥ TRN-02 ∥ TRN-04 ∥ NOT-03 ∥ AI-02 ∥ AI-06 ∥ AUT-01 ∥ INT-07 ∥ DEV-02 ∥ DEV-03 ∥ DEV-05 ∥ FND-11; then INT-01 ∥ INT-02 ∥ INT-03 (after AUT-01) | |
 | **5** | CAP-05 ∥ CAP-12 ∥ TRN-06 ∥ NOT-06 ∥ NOT-07 ∥ NOT-08 ∥ AI-03 ∥ AI-04 ∥ INT-04 ∥ INT-05 ∥ DEV-04 | |
 | **6** | CAP-13 ∥ NOT-09 ∥ ORG-09 ∥ AI-07 ∥ AI-08 ∥ PRV-02 | At this point **Deino matches Granola and Circleback on every local feature.** |
-| **7–8** | CLD-01 → CLD-02 → CLD-03; CLD-04 → CLD-05; CLD-06; CLD-07 | Only after owner sign-off (§8 D2). |
-| **later** | TEAM-01, TEAM-02 | Only if Deino becomes multi-user. |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02
@@ -1764,14 +1717,13 @@ Agents use these defaults. The owner can change any of them.
 | ID | Decision | Default |
 |---|---|---|
 | D1 | Platforms | macOS (Apple Silicon) first-class. Windows and Linux compile-only for new features. |
-| D2 | Cloud features (Phase 6–7) | **Deferred.** Build them only after Phase 0–6, with Supabase and Vercel. |
-| D3 | Default AI | Claude when a key is set (`claude-sonnet-5-5` for notes, chat, briefs and email; `claude-haiku-5-5` for extraction, tagging and titles). Otherwise the built-in local model. Embeddings are always local by default. |
+| D2 | Cloud features | **None.** There is no Deino server, meeting bot, sync or mobile app (§5.8). |
+| D3 | Default AI | **The built-in local model** (llama-helper). Embeddings are local too. Claude is an opt-in upgrade: with Offline mode off and a key added, use `claude-sonnet-5-5` for notes, chat, briefs and email and `claude-haiku-5-5` for extraction, tagging and titles. |
 | D4 | Web search in chat | Off by default. When the chat route is Claude, use Claude's server-side web search tool; otherwise a user-provided Brave or Tavily key. |
 | D5 | Bundle id | `com.xenshreyas.deino`. Change it before the first real install, because changing it later moves the data dir. |
 | D6 | Auto-update | Disabled. Install DMGs by hand from CI artifacts. Re-enable later with your own minisign key and a release host (the private GitHub repo needs a token, so use a separate public releases repo or R2/S3). |
 | D7 | Audio retention | Keep forever by default, since playback is a selling point. Users can configure it under PRV-01. |
 | D8 | Telemetry | None. There is no analytics code at all. |
-| D9 | Meeting bot vendor | Undecided (Recall.ai or Vexa) and only matters in Phase 6. |
 | D10 | Upstream merges | Keep the `upstream` remote fetch-only. Cherry-pick upstream Meetily fixes by hand when useful. Never merge wholesale after FND-02, because the trees diverge heavily. |
 
 ## 9. Setup only the owner can do
@@ -1787,7 +1739,8 @@ Agents should build with config fields for these and document the steps in `docs
 ## 10. Explicitly out of scope
 
 - Transcription model accuracy and benchmarking, multilingual support and translation (owner constraint).
-- Granola "Heads Up" Calendar add-on; Granola phone dialer (CLD-05 may revisit it); Crunched-style social sharing.
+- Everything in §5.8: meeting bot, share links, sync, mobile and Watch apps, Slack bot, teams and admin.
+- Granola "Heads Up" Calendar add-on, Granola phone dialer, Crunched-style social sharing.
 - Sales conversation analytics (talk ratios, call scoring). Neither target has it, and Circleback concedes it to Gong.
 - Billing, plans, referrals and paywalls (this is a personal tool).
 
