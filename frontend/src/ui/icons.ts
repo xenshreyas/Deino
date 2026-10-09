@@ -43,6 +43,7 @@ export {
   Pencil,
   Play,
   Plus,
+  RotateCcw,
   ScrollText,
   Search,
   Settings,
