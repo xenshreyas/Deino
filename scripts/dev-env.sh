@@ -13,4 +13,7 @@ if command -v sccache >/dev/null 2>&1; then
   export SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE:-80G}"
   # Dependencies are cached by sccache. Workspace crates keep incremental
   # compilation, which sccache skips, so edit-compile loops stay fast.
+  # Several agents build in parallel on one machine. Capping jobs per build
+  # avoids oversubscription (load 140+ on 16 cores), which made every build slower.
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-6}"
 fi
