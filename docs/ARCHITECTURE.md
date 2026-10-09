@@ -355,10 +355,13 @@ tables are omitted from the diagram's attributes.
 
 ## 9. Quality gates
 
-One command each, run locally and in CI (FND-03): `scripts/clippy.sh`,
-`cargo fmt --check`, `cargo test --workspace` (or `cargo nextest run
---workspace`), `scripts/check-rust-file-size.sh`, `scripts/sqlx-prepare.sh
---check`, `cargo deny check`, and in `frontend/`: `pnpm typecheck`,
-`pnpm lint`, `pnpm test`, `pnpm format:check`, `pnpm build`, and the
-Playwright smoke tests `pnpm test:e2e` over `pnpm dev:mock`. See
+`scripts/ci-local.sh` is the gate: `cargo fmt --check`,
+`scripts/check-rust-file-size.sh`, `scripts/check-dependency-rules.sh`,
+`cargo deny check licenses bans sources`, the frontend's typecheck, lint,
+format check, Vitest, Vite build and the Playwright smoke tests
+(`pnpm test:e2e` over `pnpm dev:mock`), `scripts/clippy.sh`, nextest plus
+doctests, the bindings freshness check and `scripts/sqlx-prepare.sh --check`.
+`.github/workflows/ci.yml` runs the same steps by name on Linux for every push
+(the macOS job is manual; `docs/setup/self-hosted-runner.md`), and
+`release-macos.yml` builds the unsigned DMG by hand. See
 [`TESTING.md`](TESTING.md) and [`REVIEW.md`](REVIEW.md).
