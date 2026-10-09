@@ -54,6 +54,25 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── FND-08 pipeline ──
     ("pipeline", &["status", "rerun"]),
+    // ── NOT-04 templates (features/templates.rs) ──
+    (
+        "templates",
+        &[
+            "list",
+            "get",
+            "create",
+            "update",
+            "duplicate",
+            "delete",
+            "import_json",
+            "export_json",
+            "preview",
+            "meeting_template",
+            "set_meeting_template",
+        ],
+    ),
+    // ── NOT-05 profile (features/profile.rs) ──
+    ("profile", &["update", "context"]),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

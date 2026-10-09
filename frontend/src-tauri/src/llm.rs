@@ -24,7 +24,7 @@ use deino_domain::{Clock, ServiceId};
 use deino_llm::{
     AdminParts, AnthropicProvider, BuiltInProvider, Flavor, Gateway, GatewayParts, HttpTransport,
     LlmAdmin, LlmProvider, LocalModels, ModelCatalog, OllamaProvider, OpenAiCompatProvider,
-    ProviderId, Providers, Router, SqliteLlmCallRepo, UsageChannel, UsageWriter,
+    ProviderId, Providers, Router, SqliteLlmCallRepo, SystemContext, UsageChannel, UsageWriter,
 };
 use deino_net::Net;
 
@@ -36,6 +36,8 @@ pub(crate) struct LlmPorts {
     pub database: Database,
     /// `<app_data_dir>`, for the built-in models.
     pub app_data_dir: PathBuf,
+    /// The user's standing context for every prompt (NOT-05).
+    pub context: Arc<dyn SystemContext>,
     /// Time for latencies and usage records.
     pub clock: Arc<dyn Clock>,
     /// The network; each provider gets a client scoped to its own service.
@@ -64,13 +66,14 @@ pub(crate) fn build(ports: LlmPorts) -> LlmServices {
     ));
     let (providers, catalogs) = registry(adapters(&ports.net, &ports.access, &local), &ollama);
     let (usage, usage_writer) = UsageChannel::new(Arc::new(SqliteLlmCallRepo::new(ports.database)));
-    let gateway = Arc::new(Gateway::new(GatewayParts {
+    let gateway = Gateway::new(GatewayParts {
         providers,
         router: Router::new(ports.access.clone(), ports.access.clone(), local.clone()),
         local,
         usage: Arc::new(usage),
         clock: ports.clock.clone(),
-    }));
+    });
+    let gateway = Arc::new(gateway.with_system_context(ports.context));
     let admin = Arc::new(LlmAdmin::new(AdminParts {
         gateway: gateway.clone(),
         catalogs,

@@ -26,9 +26,11 @@ pub mod manifest;
 pub mod meetings;
 pub mod network;
 pub mod pipeline;
+pub mod profile;
 pub mod secrets;
 pub mod settings;
 pub mod system;
+pub mod templates;
 pub mod transcription;
 
 /// Every feature's bindings builder, keyed by the file it is exported to
@@ -42,7 +44,9 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (pipeline::NAME, pipeline::specta()),
         (secrets::NAME, secrets::specta()),
         (llm::NAME, llm::specta()),
+        (profile::NAME, profile::specta()),
         (settings::NAME, settings::specta()),
+        (templates::NAME, templates::specta()),
         (transcription::NAME, transcription::specta()),
         (system::NAME, system::specta()),
     ];

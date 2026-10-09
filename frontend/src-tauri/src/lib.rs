@@ -79,11 +79,13 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::meetings::init())
         .plugin(features::network::init())
         .plugin(features::pipeline::init())
+        .plugin(features::profile::init())
         .plugin(features::secrets::init())
         .plugin(features::llm::init())
         .plugin(features::settings::init())
         .plugin(features::transcription::init())
-        .plugin(features::system::init());
+        .plugin(features::system::init())
+        .plugin(features::templates::init());
     #[cfg(debug_assertions)]
     let builder = builder
         .plugin(features::_example::init())
