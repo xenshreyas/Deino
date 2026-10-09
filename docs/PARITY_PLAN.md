@@ -2043,6 +2043,7 @@ Agents use these defaults. The owner can change any of them.
 | D6 | Auto-update | Disabled. Install DMGs by hand from CI artifacts. Re-enable later with your own minisign key and a release host (the private GitHub repo needs a token, so use a separate public releases repo or R2/S3). |
 | D7 | Audio retention | Keep forever by default, since playback is a selling point. Users can configure it under PRV-01. |
 | D8 | Telemetry | None. There is no analytics code at all. |
+| D11 | FFmpeg (GPL builds) | **Remove the FFmpeg sidecar.**<br>• **Encode** AAC/fragmented MP4 natively with AudioToolbox/AVFoundation (FND-05).<br>• **Decode** imports with `symphonia` (already a dependency), falling back to AVFoundation (`AVAssetReader`) for video containers (CAP-11).<br>• **Cut clips** with AVFoundation (TRN-04).<br>• **Until then:** the sidecar runs as a separate executable (aggregation, not linking), and the last card that uses it deletes `build/ffmpeg.rs`. Never link libav* into the app. |
 | D10 | Upstream merges | Keep the `upstream` remote fetch-only. Cherry-pick upstream Meetily fixes by hand when useful. Never merge wholesale after FND-02, because the trees diverge heavily. |
 
 ## 9. Setup only the owner can do
