@@ -9,6 +9,7 @@ use deino_core::export::FullExportService;
 use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
+use crate::composition::CalendarSchedule;
 use crate::features::notes::DroppedFiles;
 use crate::{state::AppState, summary};
 
@@ -70,6 +71,9 @@ async fn cleanup(app: &AppHandle) {
     // A running account export is cancelled; its partial archive is deleted.
     if let Some(export) = app.try_state::<Arc<FullExportService>>() {
         export.shutdown().await;
+    }
+    if let Some(calendar) = app.try_state::<CalendarSchedule>() {
+        calendar.stop();
     }
     match app.try_state::<AppState>() {
         Some(state) => state.db_manager.cleanup().await,

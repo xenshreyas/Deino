@@ -140,6 +140,21 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         "recording",
         &["start", "stop", "pause", "resume", "state", "transcript"],
     ),
+    // ── ORG-01 calendar sync (features/calendar.rs) ──
+    (
+        "calendar",
+        &[
+            "status",
+            "enable",
+            "disable",
+            "refresh",
+            "open_access_settings",
+            "list_calendars",
+            "set_calendar_visible",
+            "upcoming",
+            "event",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

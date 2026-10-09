@@ -137,6 +137,8 @@ deino-diarize.workspace = true
 deino-domain.workspace = true
 # Meeting renderers (EXP-01): the export plugin names their format and section types.
 deino-export.workspace = true
+# macOS Calendar through EventKit, the default calendar source (ORG-01).
+deino-eventkit.workspace = true
 deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.
 deino-net.workspace = true
