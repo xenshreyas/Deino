@@ -977,6 +977,15 @@ Card format:
   - Make it the default for new installs and keep Whisper and Parakeet TDT as alternatives under "Advanced".
   - Add Handy's notice to `THIRD_PARTY_NOTICES.md`.
 - **Accept:**
+  - **Spike-decided parameters** (`docs/references/spike-stt-streaming.md`):
+    - streaming window (5600, 560, 320) ms, giving about 0.85 s onset-to-text at the same WER;
+    - batch only on VAD chunks of 30 s or less (batch `run()` can stop partway through long files);
+    - roll the stream every 2–5 min at a silence;
+    - group tokens into words yourself;
+    - Q8_0 at 32 GB RAM or more, otherwise Q5_K_M;
+    - load timeout of at least 60 s (Metal shader compile);
+    - **whisper-rs must be removed** (it aborts at runtime alongside transcribe-cpp).
+  - **Model licence: NVIDIA Open Model License** (not CC-BY). Commercial use and redistribution are allowed. Ship a `NOTICE` entry with the exact text "Licensed by NVIDIA Corporation under the NVIDIA Open Model License", link the agreement (https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) in `THIRD_PARTY_NOTICES.md` and the About screen, and don't bypass model guardrails.
   - [ ] Live transcript appears within about 2 s of speech on an M-series Mac (target 1.5 s), measured and logged with Handy-style `StreamPerf` metrics.
   - [ ] Import and retranscribe use the same engine.
   - [ ] Real-time factor is logged.
@@ -2045,7 +2054,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-10a Vite migration | ✅ merged | 2026-10-08 |
 | FND-13 Code-quality baseline and workspace skeleton | ✅ merged | 2026-10-09 |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
-| Spike: STT streaming (transcribe-cpp) | 🔄 running | |
+| Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | 🔄 running | |
 
 ### 7.2 Follow-ups raised by merged cards (assign to the named card)
