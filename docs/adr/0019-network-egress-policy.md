@@ -1,4 +1,4 @@
-# 0018. Send every request through deino-net, scoped per service and logged
+# 0019. Send every request through deino-net, scoped per service and logged
 
 - **Status:** Accepted
 - **Date:** 2026-10-09
