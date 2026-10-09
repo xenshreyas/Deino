@@ -1,0 +1,39 @@
+# Installs the Rust toolchain pinned in rust-toolchain.toml and, on hosted
+# runners, restores the build cache (the pattern of anarlog's rust_install
+# action). A self-hosted runner keeps its target/ between runs and has
+# sccache, so it skips the cache instead of uploading gigabytes to GitHub.
+name: Rust
+description: Pinned toolchain plus Swatinem/rust-cache.
+
+inputs:
+  cache-key:
+    description: Cache name for this job's build (jobs that build different things need different keys).
+    required: true
+  cache:
+    description: Restore and save the build cache ("false" on self-hosted runners).
+    default: "true"
+  targets:
+    description: Extra compilation targets, comma-separated.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Read the pinned toolchain
+      id: toolchain
+      shell: bash
+      run: echo "channel=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)" >> "$GITHUB_OUTPUT"
+
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.toolchain.outputs.channel }}
+        components: clippy, rustfmt
+        targets: ${{ inputs.targets }}
+
+    - uses: Swatinem/rust-cache@v2
+      if: inputs.cache == 'true'
+      with:
+        shared-key: ${{ inputs.cache-key }}
+        # Only main writes the cache: branches restore main's, so they never
+        # evict it from the repository's 10 GB cache budget.
+        save-if: ${{ github.ref == 'refs/heads/main' }}

@@ -1,0 +1,37 @@
+# Installs the cargo tools scripts/ci-local.sh needs, at pinned versions.
+# Prebuilt binaries through taiki-e/install-action; sqlx-cli has none, so it
+# is compiled once and cached by version.
+name: Cargo tools
+description: Pinned cargo-deny, cargo-nextest, typos and (optionally) sqlx-cli.
+
+inputs:
+  tools:
+    description: taiki-e/install-action tool list, comma-separated (name@version).
+    default: ""
+  sqlx:
+    description: Install sqlx-cli (for scripts/sqlx-prepare.sh --check).
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: taiki-e/install-action@v2
+      if: inputs.tools != ''
+      with:
+        tool: ${{ inputs.tools }}
+
+    - name: Restore sqlx-cli
+      id: sqlx-cache
+      if: inputs.sqlx == 'true'
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cargo/bin/sqlx
+          ~/.cargo/bin/cargo-sqlx
+        # Matches the version scripts/sqlx-prepare.sh documents.
+        key: sqlx-cli-0.8.6-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Install sqlx-cli
+      if: inputs.sqlx == 'true' && steps.sqlx-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: cargo install sqlx-cli --version 0.8.6 --locked --no-default-features --features sqlite

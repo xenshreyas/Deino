@@ -84,10 +84,17 @@ debug = false
 
 # The local LLM sidecar is loaded on demand, so it is optimised for size.
 # Cargo honours `[profile]` only in the workspace root; the member's own
-# `[profile.release]` was silently ignored. `lto` cannot be set per package,
-# so the sidecar shares the workspace's release LTO setting (off).
+# `[profile.release]` was silently ignored.
 [profile.release.package.llama-helper]
 codegen-units = 1
+opt-level = "s"
+
+# Release builds of the sidecar add LTO, which Cargo cannot set per package:
+# `cargo build --profile sidecar -p llama-helper` (release-macos.yml).
+[profile.sidecar]
+inherits = "release"
+codegen-units = 1
+lto = "fat"
 opt-level = "s"
 
 # Cargo only honours [patch] in the workspace root manifest; in a member's

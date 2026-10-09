@@ -15,8 +15,7 @@ Write this yourself: intent and evidence, not a file-by-file recap. Review stand
 
 <!-- Commands you ran and their results; new tests and the regression each prevents; manual QA on real hardware (audio, permissions). -->
 
-- [ ] `scripts/clippy.sh`, `cargo fmt --all --check`, `cargo test --workspace`
-- [ ] `cd frontend && pnpm typecheck && pnpm lint && pnpm test && pnpm build`
+- [ ] `scripts/ci-local.sh` passes (paste its summary)
 - [ ] Bindings regenerated (`cargo test -p deino --lib bindings`) and committed
 - [ ] Manual QA:
 
