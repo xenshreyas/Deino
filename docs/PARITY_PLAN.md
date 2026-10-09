@@ -858,7 +858,9 @@ Card format:
     - **Meeting-specific differences from Handy:**
       - Feed the stream **wall-clock-continuous audio**: do not VAD-gate the input, so timestamps stay on meeting time. VAD is used only for segmentation and UI.
       - Read **token timestamps** from the crate API (Handy doesn't). Check the crate source after `cargo fetch`.
-      - Support **two concurrent streams** (mic and system lanes for CAP-02), either as two workers or one worker with two sessions; benchmark both.
+      - **Two concurrent streams** for the mic and system lanes (CAP-02). A loaded model accepts only one stream (a second gets `Error::Busy`), so run **two worker processes**, about 1.5 GB at Q8_0. On Macs with 16 GB or less RAM, default to Q5_K_M, or fall back to alternating the lanes.
+      - **Drop `whisper-rs`.** It and `transcribe-cpp` each bundle their own ggml, which risks a link clash. Run Whisper (when chosen) through `transcribe-cpp`, as Handy does.
+      - **Latency:** the default stream window gives about 2.1 s to first text. Tune the commit policy and window to reach about 1.5 s without losing accuracy, and record what you measured.
       - Verify sha256 on the HuggingFace download path too.
   - **Model:** `handy-computer/parakeet-unified-en-0.6b-gguf` at revision `7e948f21b7bdbac698d3318db9d350f1096f3b6c`. Default quant `Q8_0` (731,357,568 bytes, sha256 `4b50b6dd…f38795`; copy all six quant entries and hashes from Handy's catalog). Download from HuggingFace with resume and sha256 verification.
   - **Streaming mode for live transcription**, with token timestamps stored in `words_json`.
@@ -866,7 +868,7 @@ Card format:
   - Make it the default for new installs and keep Whisper and Parakeet TDT as alternatives under "Advanced".
   - Add Handy's notice to `THIRD_PARTY_NOTICES.md`.
 - **Accept:**
-  - [ ] Live transcript appears within about 1.5 s of speech on an M-series Mac.
+  - [ ] Live transcript appears within about 2 s of speech on an M-series Mac (target 1.5 s), measured and logged with Handy-style `StreamPerf` metrics.
   - [ ] Import and retranscribe use the same engine.
   - [ ] Real-time factor is logged.
 
@@ -878,7 +880,9 @@ Card format:
   - Run VAD and STT **per channel**: two worker lanes, mic and system, and tag every segment with its `channel`. The mixed stream is still saved for playback.
   - **Echo and bleed suppression:** when the user is on speakers, the mic picks up system audio.
     - **Primary:** acoustic echo cancellation. Run a WebRTC AEC (e.g. the `webrtc-audio-processing` crate; check its licence) in 10 ms chunks, with the **system track as the reference stream** and the mic as the capture stream (pattern: Zed `livekit_client/playback.rs:50-80`, reference only).
-    - **Fallback:** if AEC leaves residue, drop or merge mic segments when the system channel was active over the same window and the texts are similar (normalized Levenshtein ratio > 0.6).
+    - **Fallback:** if AEC leaves residue, **hold back** mic finals while the system channel is speaking (3 s) and drop them **only on a text match** with system-channel text (normalized similarity > 0.6) — the OpenWhispr holdback pattern.
+    - **Never drop mic audio on correlation alone:** OpenWhispr's field data shows real double-talk correlates 0.73–0.81 with the system audio.
+    - **Run VAD on the AEC-cleaned mic** (the Muesli pattern).
   - **Timeline:** use the sample-count timeline with gap filling, and anchor the system track to the recording epoch so both tracks align at t=0. See `docs/REFERENCES.md` → "Cap/Zed audio patterns".
   - Add a setting "I use headphones" that skips suppression.
   - Default speakers: mic → the "Me" speaker (`is_me=1`, linked to the `people.is_me` row); system → "Them" until CAP-03 runs.
@@ -893,7 +897,11 @@ Card format:
 - **Owns:** `diarization/` (new), pipeline stage `diarize`, the `speakers` writes
 - **Parity:** C §6 (Participant N, hybrid-room separation); G §2.6 (Speaker A/B)
 - **Build:**
-  - Use the **official `sherpa-onnx` crate 1.13.8** (Apache-2.0, static link, CPU provider), not `sherpa-rs`. Models: pyannote `segmentation-3.0` plus ONE frozen English speaker-embedding model, chosen by measured DER on fixtures (candidates: CAM++ VoxCeleb, WeSpeaker ResNet34-LM, TitaNet-small). Download models on demand with sha256 pins. Read `docs/REFERENCES.md` → "Diarization" first.
+  - **Primary choice: port Anarlog's `crates/pyannote-local` plus `crates/embedding` plus `crates/voiceprint` (MIT).**
+    - It uses the same `ort` that Deino already depends on, returns the per-speaker centroid embeddings CAP-04 needs, and ships a DER eval binary.
+    - Attribute the embedding model (probably WeSpeaker, CC-BY-4.0) in `THIRD_PARTY_NOTICES.md`.
+    - Its own eval allows RTF 0.15, but the 60-minutes-in-2-minutes target needs about 0.033, so profile and tune early (batching, threads, `window_shift`).
+  - **Alternative:** the official `sherpa-onnx` crate 1.13.8 (Apache-2.0, static link, CPU provider), not `sherpa-rs`. Models: pyannote `segmentation-3.0` plus ONE frozen English speaker-embedding model, chosen by measured DER on fixtures (candidates: CAM++ VoxCeleb, WeSpeaker ResNet34-LM, TitaNet-small). Download models on demand with sha256 pins. Read `docs/REFERENCES.md` → "Diarization" first.
   - **Scaling:** use `window_shift_ratio` 0.25 or more for meetings over 30 minutes; the clustering memory grows with the square of the number of embeddings.
   - **Progress bar:** add an `extern "C"` binding for `SherpaOnnxOfflineSpeakerDiarizationProcessWithCallback`.
   - **Linking:** check that `ort` and sherpa's static onnxruntime link together.
