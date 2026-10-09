@@ -24,6 +24,8 @@ export const statusLabels: Record<JobStatus, string> = {
 const stageLabels: Partial<Record<string, string>> = {
   diarize: 'Speakers',
   legacy_summary: 'Summary',
+  auto_tag: 'Tags',
+  auto_folder: 'Folders',
 };
 
 /** The readable name of `stage`. */

@@ -56,6 +56,7 @@ const DEFAULT_SETTINGS: Settings = {
     context: '',
   },
   templates: { defaultTemplate: null },
+  organize: { autoTag: true },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

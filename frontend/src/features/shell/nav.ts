@@ -6,6 +6,9 @@
  * all pick it up. An item with `comingSoon` shows a calm placeholder page
  * until the named card ships and removes the field.
  */
+import type { ComponentType } from 'react';
+
+import { FolderNavSection } from '@/features/folders';
 import type { FileRoutesByTo } from '@/routeTree.gen';
 import {
   Building2,
@@ -39,6 +42,11 @@ export interface NavItem {
   section: NavSection;
   /** Set while the feature is unbuilt: the card that builds it and one line on what it will do. */
   comingSoon?: { card: string; description: string };
+  /**
+   * Renders the entry instead of the plain link, for an entry that is more
+   * than a link (the Folders tree). It must still link to `to`.
+   */
+  Component?: ComponentType;
 }
 
 /** Section labels; `primary` and `footer` have none. */
@@ -103,7 +111,8 @@ export const NAV_ITEMS = [
     to: '/folders',
     order: 30,
     section: 'workspace',
-    comingSoon: { card: 'ORG-05', description: 'Group meetings by project, client or team.' },
+    // ORG-05: the entry is the folder tree (with Unfiled), not a plain link.
+    Component: FolderNavSection,
   },
   {
     id: 'tags',
@@ -112,10 +121,6 @@ export const NAV_ITEMS = [
     to: '/tags',
     order: 40,
     section: 'workspace',
-    comingSoon: {
-      card: 'ORG-06',
-      description: 'Label meetings by hand or let Deino tag them for you.',
-    },
   },
   {
     id: 'insights',

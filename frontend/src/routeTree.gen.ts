@@ -15,14 +15,16 @@ import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as MeetingDetailsRouteImport } from './routes/meeting-details'
 import { Route as InsightsRouteImport } from './routes/insights'
-import { Route as FoldersRouteImport } from './routes/folders'
 import { Route as DesignRouteImport } from './routes/design'
 import { Route as CompaniesRouteImport } from './routes/companies'
 import { Route as AutomationsRouteImport } from './routes/automations'
 import { Route as ActionItemsRouteImport } from './routes/action-items'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MeetingsIndexRouteImport } from './routes/meetings/index'
+import { Route as FoldersIndexRouteImport } from './routes/folders/index'
 import { Route as MeetingsMeetingIdRouteImport } from './routes/meetings/$meetingId'
+import { Route as FoldersUnfiledRouteImport } from './routes/folders/unfiled'
+import { Route as FoldersFolderIdRouteImport } from './routes/folders/$folderId'
 
 const TagsRoute = TagsRouteImport.update({
   id: '/tags',
@@ -52,11 +54,6 @@ const MeetingDetailsRoute = MeetingDetailsRouteImport.update({
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FoldersRoute = FoldersRouteImport.update({
-  id: '/folders',
-  path: '/folders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesignRoute = DesignRouteImport.update({
@@ -89,9 +86,24 @@ const MeetingsIndexRoute = MeetingsIndexRouteImport.update({
   path: '/meetings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FoldersIndexRoute = FoldersIndexRouteImport.update({
+  id: '/folders/',
+  path: '/folders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MeetingsMeetingIdRoute = MeetingsMeetingIdRouteImport.update({
   id: '/meetings/$meetingId',
   path: '/meetings/$meetingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoldersUnfiledRoute = FoldersUnfiledRouteImport.update({
+  id: '/folders/unfiled',
+  path: '/folders/unfiled',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoldersFolderIdRoute = FoldersFolderIdRouteImport.update({
+  id: '/folders/$folderId',
+  path: '/folders/$folderId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -101,14 +113,16 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AutomationsRoute
   '/companies': typeof CompaniesRoute
   '/design': typeof DesignRoute
-  '/folders': typeof FoldersRoute
   '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
+  '/folders/$folderId': typeof FoldersFolderIdRoute
+  '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/folders/': typeof FoldersIndexRoute
   '/meetings/': typeof MeetingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -117,14 +131,16 @@ export interface FileRoutesByTo {
   '/automations': typeof AutomationsRoute
   '/companies': typeof CompaniesRoute
   '/design': typeof DesignRoute
-  '/folders': typeof FoldersRoute
   '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
+  '/folders/$folderId': typeof FoldersFolderIdRoute
+  '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/folders': typeof FoldersIndexRoute
   '/meetings': typeof MeetingsIndexRoute
 }
 export interface FileRoutesById {
@@ -134,14 +150,16 @@ export interface FileRoutesById {
   '/automations': typeof AutomationsRoute
   '/companies': typeof CompaniesRoute
   '/design': typeof DesignRoute
-  '/folders': typeof FoldersRoute
   '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
+  '/folders/$folderId': typeof FoldersFolderIdRoute
+  '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/folders/': typeof FoldersIndexRoute
   '/meetings/': typeof MeetingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -152,14 +170,16 @@ export interface FileRouteTypes {
     | '/automations'
     | '/companies'
     | '/design'
-    | '/folders'
     | '/insights'
     | '/meeting-details'
     | '/people'
     | '/recipes'
     | '/settings'
     | '/tags'
+    | '/folders/$folderId'
+    | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/folders/'
     | '/meetings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -168,14 +188,16 @@ export interface FileRouteTypes {
     | '/automations'
     | '/companies'
     | '/design'
-    | '/folders'
     | '/insights'
     | '/meeting-details'
     | '/people'
     | '/recipes'
     | '/settings'
     | '/tags'
+    | '/folders/$folderId'
+    | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/folders'
     | '/meetings'
   id:
     | '__root__'
@@ -184,14 +206,16 @@ export interface FileRouteTypes {
     | '/automations'
     | '/companies'
     | '/design'
-    | '/folders'
     | '/insights'
     | '/meeting-details'
     | '/people'
     | '/recipes'
     | '/settings'
     | '/tags'
+    | '/folders/$folderId'
+    | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/folders/'
     | '/meetings/'
   fileRoutesById: FileRoutesById
 }
@@ -201,14 +225,16 @@ export interface RootRouteChildren {
   AutomationsRoute: typeof AutomationsRoute
   CompaniesRoute: typeof CompaniesRoute
   DesignRoute: typeof DesignRoute
-  FoldersRoute: typeof FoldersRoute
   InsightsRoute: typeof InsightsRoute
   MeetingDetailsRoute: typeof MeetingDetailsRoute
   PeopleRoute: typeof PeopleRoute
   RecipesRoute: typeof RecipesRoute
   SettingsRoute: typeof SettingsRoute
   TagsRoute: typeof TagsRoute
+  FoldersFolderIdRoute: typeof FoldersFolderIdRoute
+  FoldersUnfiledRoute: typeof FoldersUnfiledRoute
   MeetingsMeetingIdRoute: typeof MeetingsMeetingIdRoute
+  FoldersIndexRoute: typeof FoldersIndexRoute
   MeetingsIndexRoute: typeof MeetingsIndexRoute
 }
 
@@ -256,13 +282,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/folders': {
-      id: '/folders'
-      path: '/folders'
-      fullPath: '/folders'
-      preLoaderRoute: typeof FoldersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/design': {
       id: '/design'
       path: '/design'
@@ -305,11 +324,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/folders/': {
+      id: '/folders/'
+      path: '/folders'
+      fullPath: '/folders/'
+      preLoaderRoute: typeof FoldersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/meetings/$meetingId': {
       id: '/meetings/$meetingId'
       path: '/meetings/$meetingId'
       fullPath: '/meetings/$meetingId'
       preLoaderRoute: typeof MeetingsMeetingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/folders/unfiled': {
+      id: '/folders/unfiled'
+      path: '/folders/unfiled'
+      fullPath: '/folders/unfiled'
+      preLoaderRoute: typeof FoldersUnfiledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/folders/$folderId': {
+      id: '/folders/$folderId'
+      path: '/folders/$folderId'
+      fullPath: '/folders/$folderId'
+      preLoaderRoute: typeof FoldersFolderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -321,14 +361,16 @@ const rootRouteChildren: RootRouteChildren = {
   AutomationsRoute: AutomationsRoute,
   CompaniesRoute: CompaniesRoute,
   DesignRoute: DesignRoute,
-  FoldersRoute: FoldersRoute,
   InsightsRoute: InsightsRoute,
   MeetingDetailsRoute: MeetingDetailsRoute,
   PeopleRoute: PeopleRoute,
   RecipesRoute: RecipesRoute,
   SettingsRoute: SettingsRoute,
   TagsRoute: TagsRoute,
+  FoldersFolderIdRoute: FoldersFolderIdRoute,
+  FoldersUnfiledRoute: FoldersUnfiledRoute,
   MeetingsMeetingIdRoute: MeetingsMeetingIdRoute,
+  FoldersIndexRoute: FoldersIndexRoute,
   MeetingsIndexRoute: MeetingsIndexRoute,
 }
 export const routeTree = rootRouteImport

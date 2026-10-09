@@ -20,4 +20,7 @@ export const meetingsCopy = {
   deleted: 'Meeting deleted',
   deleteFailed: 'Could not delete the meeting',
   renamed: 'Meeting renamed',
+  noTaggedTitle: 'No meetings with these tags',
+  noTaggedDescription: 'Choose other tags, or clear the filter to see every meeting.',
+  clearFilter: 'Clear filter',
 } as const;

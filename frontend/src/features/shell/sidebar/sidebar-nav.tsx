@@ -33,9 +33,13 @@ function NavGroup({ section }: { section: NavSection }) {
           {label}
         </h2>
       )}
-      {navItemsIn(section).map((item) => (
-        <NavLink key={item.id} item={item} />
-      ))}
+      {navItemsIn(section).map((item) =>
+        item.Component === undefined ? (
+          <NavLink key={item.id} item={item} />
+        ) : (
+          <item.Component key={item.id} />
+        ),
+      )}
     </div>
   );
 }

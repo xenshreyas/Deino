@@ -46,12 +46,33 @@ export const commands = {
   },
 } satisfies typeof Generated.commands;
 
+/** The organising stages after the summary (ORG-06, ORG-05), as processed. */
+const ORGANISE_STAGES: readonly StageStatus[] = [
+  {
+    stage: 'auto_tag' as Generated.StageId,
+    status: 'succeeded',
+    attempts: 1,
+    retryAt: null,
+    message: null,
+    updatedAt: PROCESSED_AT,
+  },
+  {
+    stage: 'auto_folder' as Generated.StageId,
+    status: 'skipped',
+    attempts: 1,
+    retryAt: null,
+    message: 'No folder has auto-add rules.',
+    updatedAt: PROCESSED_AT,
+  },
+];
+
 /** The meeting's stages: re-run ones, else the fixture state. */
 function stagesOf(meetingId: MeetingId): StageStatus[] {
   const rerun = stages.get(meetingId);
-  if (rerun) return rerun.map((stage) => ({ ...stage }));
+  const organise = ORGANISE_STAGES.map((stage) => ({ ...stage }));
+  if (rerun) return [...rerun.map((stage) => ({ ...stage })), ...organise];
   if (mockDatabase.meeting(meetingId).status === 'error') return [];
-  return [fixtureStage(meetingId === FAILED_MEETING)];
+  return [fixtureStage(meetingId === FAILED_MEETING), ...organise];
 }
 
 function fixtureStage(failed: boolean): StageStatus {

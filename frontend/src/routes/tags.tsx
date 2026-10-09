@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ComingSoonScreen } from '@/features/shell';
+import { tagListQuery, TagsScreen } from '@/features/tags';
 
-/** `/tags`: Tags, a placeholder until its feature card ships (see `nav.ts`). */
-export const Route = createFileRoute('/tags')({ component: Placeholder });
-
-function Placeholder() {
-  return <ComingSoonScreen navId="tags" />;
-}
+/** `/tags`: every tag, and the auto-tagging switch (ORG-06). */
+export const Route = createFileRoute('/tags')({
+  loader: async ({ context }) => {
+    await context.queryClient.query(tagListQuery()).catch(() => undefined);
+  },
+  component: TagsScreen,
+});
