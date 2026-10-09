@@ -4,6 +4,6 @@ This software and its source code are proprietary and confidential.
 No part of it may be copied, modified, distributed, or used without
 prior written permission from the copyright holder.
 
-Portions of this software are derived from Meetily, Copyright (c) 2024
-Zackriya Solutions, and are used under the MIT License. See
-THIRD_PARTY_NOTICES.md for the full text of that license.
+Portions of this software are derived from third-party open-source
+software used under the MIT License. See THIRD_PARTY_NOTICES.md for the
+attributions and the full text of that license.

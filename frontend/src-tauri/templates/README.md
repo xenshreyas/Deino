@@ -45,11 +45,13 @@ Each template JSON file follows this schema:
 
 ## Custom Templates
 
-Users can add custom templates to the application data directory:
+Users can add custom templates to `<app_data_dir>/templates/`. The app data
+directory is resolved by Tauri from the bundle identifier
+(`com.xenshreyas.deino`):
 
-- **macOS**: `~/Library/Application Support/Meetily/templates/`
-- **Windows**: `%APPDATA%\Meetily\templates\`
-- **Linux**: `~/.config/Meetily/templates/`
+- **macOS**: `~/Library/Application Support/com.xenshreyas.deino/templates/`
+- **Windows**: `%APPDATA%\com.xenshreyas.deino\templates\`
+- **Linux**: `~/.local/share/com.xenshreyas.deino/templates/`
 
 Custom templates override built-in templates with the same filename.
 

@@ -1,152 +1,20 @@
-# Contributing to Meeting Minutes Updates
+# Contributing to Deino
 
-Thank you for your interest in contributing to Meetily! This document provides guidelines and instructions for contributing to this project.
+Deino is a private repository. Work is organised as task cards in
+[`docs/PARITY_PLAN.md`](docs/PARITY_PLAN.md) (§6), scheduled in waves (§7).
 
-## Development Workflow
+## Workflow
 
-### Branch Strategy
-
-- `main` - Production branch
-- `devtest` - Development and testing branch
-- Feature branches should be created from `devtest`
-
-### Getting Started
-
-1. Fork the repository
-2. Clone your fork:
+1. Pick a card whose dependencies are merged to `main`.
+2. Work in its own branch, `feat/<CARD-ID>-<slug>`, ideally in a separate git worktree.
+3. Follow the engineering rules in §3, §3A, §3B and §3C of the plan.
+4. Use Conventional Commits (`feat(scope): …`, `fix(…)`, `refactor(…)`, `chore(…)`, `docs(…)`).
+5. Before opening a pull request, make sure these pass:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/meeting-minutes.git
+   cd frontend && pnpm run build && bun test
+   cd frontend/src-tauri && cargo build && cargo test
    ```
-3. Add the original repository as upstream:
-   ```bash
-   git remote add upstream https://github.com/Zackriya-Solutions/meeting-minutes.git
-   ```
-4. Create a new branch from `devtest`:
-   ```bash
-   git checkout devtest
-   git pull upstream devtest
-   git checkout -b feature/your-feature-name
-   ```
+6. In the pull request, describe what changed, why, how it was tested (with
+   screenshots for UI), which docs were updated, and any follow-ups.
 
-### Development Process
-
-1. Always start your work from the `devtest` branch
-2. Create a new branch for each feature/fix
-3. Make your changes
-4. Write or update tests as needed
-5. Ensure all tests pass
-6. Update documentation if necessary
-
-### Issue Creation
-
-Before starting work on a new feature or bug fix:
-
-1. Check if an issue already exists
-2. If not, create a new issue with:
-   - Clear title
-   - Detailed description
-   - Steps to reproduce (for bugs)
-   - Expected behavior
-   - Screenshots (if applicable)
-   - Labels (bug, enhancement, etc.)
-
-### Pull Request Process
-
-1. Create a PR from your feature branch to `devtest`
-2. Link the PR to the related issue using the issue number (e.g., "Fixes #123")
-3. Fill out the PR template completely
-4. Ensure CI checks pass
-5. Request review from at least one maintainer
-6. Address any review comments
-7. Once approved, the PR will be merged into `devtest`
-
-### PR Template
-
-```markdown
-## Description
-[Describe your changes here]
-
-## Related Issue
-[Link to the issue this PR addresses]
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Code refactoring
-- [ ] Other (please describe)
-
-## Testing
-- [ ] Unit tests added/updated
-- [ ] Manual testing performed
-- [ ] All tests pass
-
-## Documentation
-- [ ] Documentation updated
-- [ ] No documentation needed
-
-## Checklist
-- [ ] Code follows project style
-- [ ] Self-reviewed the code
-- [ ] Added comments for complex code
-- [ ] Updated README if needed
-```
-
-## Code Style
-
-- Follow the existing code style
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Keep functions small and focused
-- Write clear commit messages
-
-## Commit Message Format
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-Types:
-- feat: New feature
-- fix: Bug fix
-- docs: Documentation changes
-- style: Code style changes
-- refactor: Code refactoring
-- test: Adding/updating tests
-- chore: Maintenance tasks
-
-## Testing
-
-- Write unit tests for new features
-- Update existing tests when modifying code
-- Ensure all tests pass before submitting PR
-- Include integration tests for complex features
-
-## Documentation
-
-- Update documentation for new features
-- Keep README up to date
-- Document API changes
-- Add comments for complex code
-
-## Review Process
-
-1. PRs require at least one review
-2. Address all review comments
-3. Keep the PR up to date with `devtest`
-4. Squash commits if requested
-
-## Getting Help
-
-- Create an issue for questions
-- Join our community chat
-- Contact maintainers
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the project's MIT License. 
+Never push directly to `main`, and never push to the `upstream` remote.
