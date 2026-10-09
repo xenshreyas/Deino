@@ -6,7 +6,8 @@
 #   portable   fmt, file sizes, dependency rules, cargo-deny, then clippy and
 #              tests for every crate except the app and the sidecar
 #   app        the whole workspace compiles on Linux (macOS-only code cfg'd
-#              out), the TypeScript bindings are fresh, .sqlx/ is current
+#              out), the TypeScript bindings are fresh, the app's unit tests
+#              pass, .sqlx/ is current
 #   frontend   typecheck, lint, format, Vitest, Vite build
 #   pr-title   Conventional Commits, on pull requests
 # The full macOS gate (clippy and every test, Core Audio included) runs only
@@ -41,8 +42,9 @@ env:
   # No debug info in CI builds: smaller caches, faster links, enough disk.
   CARGO_PROFILE_DEV_DEBUG: "0"
   CARGO_PROFILE_TEST_DEBUG: "0"
-  # One place for the tool versions every job installs.
-  CARGO_TOOLS: cargo-deny@0.20.2,cargo-nextest@0.9.148,typos@1.51.1
+  # One place for the tool versions every job installs: the newest each
+  # taiki-e/install-action has prebuilt binaries for.
+  CARGO_TOOLS: cargo-deny@0.20.2,cargo-nextest@0.9.146,typos@1.50.3
 
 jobs:
   # Which parts of the tree a push touched. Pull requests skip the build jobs
@@ -129,7 +131,7 @@ jobs:
         with:
           path: frontend/src-tauri/binaries/ffmpeg-*
           key: ffmpeg-${{ runner.os }}-${{ hashFiles('frontend/src-tauri/build/ffmpeg.rs') }}
-      - run: scripts/ci-local.sh check bindings sqlx
+      - run: scripts/ci-local.sh check bindings test-app sqlx
 
   frontend:
     if: >-

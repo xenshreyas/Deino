@@ -30,7 +30,7 @@ RUST_STEPS=(fmt file-size deps deny clippy test bindings sqlx)
 # Cheap, compile-free checks first, so a typo fails in seconds, not minutes.
 ALL_STEPS=(fmt file-size deps deny "${FRONTEND_STEPS[@]}" clippy test bindings sqlx)
 # Not in the default run: Linux CI's stand-ins for clippy and test.
-EXTRA_STEPS=(check clippy-portable test-portable)
+EXTRA_STEPS=(check clippy-portable test-portable test-app)
 
 # ── Steps ────────────────────────────────────────────────────────────────────
 
@@ -69,6 +69,12 @@ step_test() {
 
 step_test_portable() { run_tests "${PORTABLE[@]}"; }
 
+# Linux CI: the app's unit tests, from the test binary `bindings` builds anyway.
+step_test_app() {
+    stage_sidecar
+    run_unit_tests -p deino --lib
+}
+
 # Linux CI: the whole workspace compiles with the macOS-only code cfg'd out.
 step_check() {
     stage_sidecar
@@ -106,15 +112,19 @@ warn() {
     fi
 }
 
-# Unit and integration tests through nextest (one process per test), then the
-# doctests, which nextest cannot run.
+# Unit and integration tests, then the doctests, which nextest cannot run.
 run_tests() {
+    run_unit_tests "$@"
+    cargo test --locked --doc "$@"
+}
+
+# Through nextest (one process per test) when it is available.
+run_unit_tests() {
     if ensure_nextest; then
         cargo nextest run --locked "$@"
     else
         cargo test --locked "$@"
     fi
-    cargo test --locked --doc "$@"
 }
 
 ensure_nextest() {

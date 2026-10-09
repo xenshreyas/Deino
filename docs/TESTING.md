@@ -40,7 +40,7 @@ Pushes run on Linux (macOS minutes cost 10x on the private repo):
 | Job | Steps |
 |---|---|
 | `rust (portable crates)` | `fmt file-size deps deny clippy-portable test-portable`: clippy and tests for every crate except the app and the sidecar |
-| `rust (app on Linux)` | `check bindings sqlx`: the workspace compiles with macOS code cfg'd out, bindings and `.sqlx/` are fresh |
+| `rust (app on Linux)` | `check bindings test-app sqlx`: the workspace compiles with macOS code cfg'd out, bindings and `.sqlx/` are fresh, the app's unit tests pass |
 | `frontend` | `frontend` |
 | `pr title` | Conventional Commits, on pull requests |
 
