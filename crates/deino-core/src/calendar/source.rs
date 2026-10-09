@@ -235,4 +235,11 @@ pub trait CalendarSource: Send + Sync {
 
     /// Every account, calendar and event overlapping `window`.
     async fn fetch(&self, window: SyncWindow) -> Result<SourceSnapshot, SourceError>;
+
+    /// Opens the system page where the user grants or revokes this source's
+    /// access (System Settings → Privacy & Security → Calendars). False when
+    /// the source has none or it could not be opened.
+    fn open_access_settings(&self) -> bool {
+        false
+    }
 }

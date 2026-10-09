@@ -130,6 +130,12 @@ impl CalendarService {
         Ok(self.announce().await)
     }
 
+    /// Opens System Settings at Calendars access, where a denied permission
+    /// is changed. False when there is no such page.
+    pub fn open_access_settings(&self) -> bool {
+        self.source.open_access_settings()
+    }
+
     /// Syncs now if sync is on, and returns the status.
     pub async fn refresh(&self) -> CalendarStatus {
         self.sync_if_enabled().await;
