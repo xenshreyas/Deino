@@ -233,6 +233,21 @@ export type ModelDownloadState =
  */
 "downloaded"
 /**
+ * The network section of `Settings`.
+ */
+export type NetworkSettings = { 
+/**
+ * Send nothing at all, except model downloads the user starts. Notes
+ * then fall back to the built-in local model. Off by default.
+ */
+offlineMode: boolean; 
+/**
+ * The user's own on/off switch per service. A service without an entry
+ * uses its default (on for the LLM providers and model downloads, which
+ * only send when the user sets them up; off for everything else).
+ */
+services: Partial<{ [key in ServiceId]: boolean }> }
+/**
  * Which kinds of notification to show.
  */
 export type NotificationPreferences = { 
@@ -441,6 +456,95 @@ export type Route =
  */
 "embed"
 /**
+ * An outside service. Stored in `egress_log.service`; keys the
+ * `network.services` switches in the settings.
+ */
+export type ServiceId = 
+/**
+ * Anthropic's Claude API.
+ */
+"llm_anthropic" | 
+/**
+ * The OpenAI API.
+ */
+"llm_openai" | 
+/**
+ * The Groq API.
+ */
+"llm_groq" | 
+/**
+ * The OpenRouter API.
+ */
+"llm_openrouter" | 
+/**
+ * The user's own OpenAI-compatible endpoint; its host comes from the settings.
+ */
+"llm_custom" | 
+/**
+ * An Ollama server: this Mac by default, or the endpoint in the settings.
+ */
+"llm_ollama" | 
+/**
+ * Model files on Hugging Face (transcription and the built-in LLM).
+ */
+"hf_models" | 
+/**
+ * Google Calendar (ORG-01).
+ */
+"google_calendar" | 
+/**
+ * Google Drive and Docs (INT-05).
+ */
+"google_drive" | 
+/**
+ * Gmail (INT-07).
+ */
+"gmail" | 
+/**
+ * Microsoft Graph: Outlook calendar and mail (ORG-01, INT-07).
+ */
+"microsoft_graph" | 
+/**
+ * Slack (INT-01).
+ */
+"slack" | 
+/**
+ * Notion (INT-02).
+ */
+"notion" | 
+/**
+ * Linear (INT-03).
+ */
+"linear" | 
+/**
+ * Todoist (INT-03).
+ */
+"todoist" | 
+/**
+ * Asana (INT-03).
+ */
+"asana" | 
+/**
+ * HubSpot (INT-04).
+ */
+"hubspot" | 
+/**
+ * Attio (INT-04).
+ */
+"attio" | 
+/**
+ * Salesforce (INT-04).
+ */
+"salesforce" | 
+/**
+ * Web search for chat with a user-provided key (D4).
+ */
+"web_search" | 
+/**
+ * Outbound webhooks to URLs the user enters (DEV-01).
+ */
+"webhooks"
+/**
  * Every user preference. Secrets are never here; they live in the Keychain.
  * 
  * Each section, and each field in it, falls back to its default when the
@@ -475,6 +579,10 @@ notifications: NotificationSettings;
  * Privacy controls (PRV-01).
  */
 privacy: PrivacySettings; 
+/**
+ * Which outside services may send data, and offline mode (FND-12).
+ */
+network: NetworkSettings; 
 /**
  * The user's profile (NOT-05).
  */

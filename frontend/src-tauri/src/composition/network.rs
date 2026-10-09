@@ -27,7 +27,7 @@ pub(crate) fn attach_network(app: &AppHandle) -> Result<(), NetError> {
     let settings = Arc::clone(&*app.state::<Arc<SettingsService>>());
     let policy = Arc::new(SettingsServicePolicy::new(settings));
     let net = Net::new(NetParts {
-        client: Arc::new(ReqwestNetClient::new()?),
+        client: Arc::new(root_client()?),
         policy: policy.clone(),
         egress: Arc::new(EgressLog::default()),
         clock: Arc::new(SystemClock),
@@ -35,6 +35,15 @@ pub(crate) fn attach_network(app: &AppHandle) -> Result<(), NetError> {
     app.manage(net);
     app.manage(policy);
     Ok(())
+}
+
+/// Identifies the app to the services it calls.
+const USER_AGENT: &str = concat!("Deino/", env!("CARGO_PKG_VERSION"));
+
+/// The root HTTP client. Only [`attach_network`] wraps it for the app;
+/// tests use it directly to reach their loopback servers.
+pub(crate) fn root_client() -> Result<ReqwestNetClient, NetError> {
+    ReqwestNetClient::with_user_agent(USER_AGENT)
 }
 
 /// Persists the egress log in `database` and manages the Network page's

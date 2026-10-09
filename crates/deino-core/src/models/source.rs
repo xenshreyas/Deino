@@ -2,7 +2,7 @@
 //!
 //! The core decides what to fetch, where to resume and whether the result is
 //! trustworthy; a [`ByteSource`] only moves bytes. The app implements it over
-//! HTTP (until FND-12's `deino-net` owns the client); tests use an in-memory
+//! `deino-net` (`net.approved_download(ServiceId::HfModels)`); tests use an in-memory
 //! fake. Nothing in `deino-stt` can reach this port (§4.0).
 
 use async_trait::async_trait;

@@ -1354,7 +1354,7 @@ mod tests {
     /// would refuse the loopback host).
     fn test_source(base_url: &str) -> ModelSource {
         ModelSource {
-            http: Arc::new(deino_net::ReqwestNetClient::new().expect("build the HTTP client")),
+            http: Arc::new(crate::composition::root_client().expect("build the HTTP client")),
             base_url: base_url.to_owned(),
         }
     }

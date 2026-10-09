@@ -24,8 +24,8 @@ use crate::{Headers, Method, NetClient, NetError, Request, Response, Status};
 /// How long to wait for a TCP and TLS connection.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Identifies Deino to the services it calls.
-const USER_AGENT: &str = concat!("Deino/", env!("CARGO_PKG_VERSION"));
+/// Identifies Deino to the services it calls when the app names no version.
+const DEFAULT_USER_AGENT: &str = "Deino";
 
 /// Sends requests over the network, with no policy of its own.
 #[derive(Clone, Debug)]
@@ -34,10 +34,17 @@ pub struct ReqwestNetClient {
 }
 
 impl ReqwestNetClient {
-    /// Builds the client: native TLS, no redirects, a connect timeout.
+    /// Builds the client: native TLS, no redirects, a connect timeout, and
+    /// the `User-Agent` `Deino`.
     pub fn new() -> Result<Self, NetError> {
+        Self::with_user_agent(DEFAULT_USER_AGENT)
+    }
+
+    /// Like [`ReqwestNetClient::new`], sending `user_agent` (the app sends
+    /// `Deino/<app version>`).
+    pub fn with_user_agent(user_agent: &str) -> Result<Self, NetError> {
         let client = reqwest::Client::builder()
-            .user_agent(USER_AGENT)
+            .user_agent(user_agent)
             .redirect(reqwest::redirect::Policy::none())
             .connect_timeout(CONNECT_TIMEOUT)
             .tcp_nodelay(true)

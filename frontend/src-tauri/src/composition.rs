@@ -48,7 +48,7 @@ use crate::features::settings::TauriSettingsEvents;
 use crate::paths::AppPaths;
 use crate::state::AppState;
 
-pub(crate) use network::{attach_network, model_downloads};
+pub(crate) use network::{attach_network, model_downloads, root_client};
 
 /// Loads the settings, moves the legacy JSON stores into them, opens the
 /// Keychain, and manages `Arc<SettingsService>` and `Arc<dyn SecretStore>`.
@@ -206,11 +206,12 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
 /// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
 /// that saves `llm_calls`. Needs [`attach_settings`] to have run.
 fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
-    let (Some(settings), Some(secrets)) = (
+    let (Some(settings), Some(secrets), Some(net)) = (
         app.try_state::<Arc<SettingsService>>(),
         app.try_state::<Arc<dyn SecretStore>>(),
+        app.try_state::<deino_net::Net>(),
     ) else {
-        log::error!(target: "llm", "settings were not wired before the database; AI is unavailable");
+        log::error!(target: "llm", "settings or the network were not wired before the database; AI is unavailable");
         return;
     };
     let access = Arc::new(LlmAccess::new(Arc::clone(&settings), Arc::clone(&secrets)));
@@ -220,6 +221,7 @@ fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
         database: database.clone(),
         app_data_dir,
         clock,
+        net: net.inner().clone(),
     });
     // Owned for the app's lifetime: it ends when the gateway, and with it the
     // last usage channel, is dropped at exit.

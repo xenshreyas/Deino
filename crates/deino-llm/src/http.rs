@@ -1,10 +1,10 @@
 //! The HTTP port: the one way providers reach the network.
 //!
 //! Providers never hold an HTTP client. They build an [`HttpRequest`] and
-//! hand it to an [`HttpTransport`], which the app wires in. Until FND-12's
-//! `deino-net` lands, the app crate implements it over `reqwest`; then the
-//! transport becomes a `ScopedClient` per provider service, with the egress
-//! log and offline mode, and nothing in this crate changes.
+//! hand it to an [`HttpTransport`], which the app wires in: one `deino-net`
+//! `ScopedClient` per provider's service (FND-12), so each provider reaches
+//! only its own hosts, honours the user's switches and offline mode, and
+//! every request lands in the egress log.
 //!
 //! Headers carry API keys, so transports must never log them, and no
 //! [`HttpError`] message contains a header or a body.

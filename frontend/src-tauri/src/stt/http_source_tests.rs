@@ -13,7 +13,13 @@ use deino_core::models::{FetchError, ModelError, Sha256Digest};
 use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
 
-use super::http_source::HttpByteSource;
+use super::http_source::NetByteSource;
+
+/// A source over the root `deino-net` client: the test server is on the
+/// loopback, which the app's model-download scope would refuse.
+fn test_source() -> NetByteSource {
+    NetByteSource::new(Arc::new(crate::composition::root_client().unwrap()))
+}
 
 /// How the server answers one connection.
 #[derive(Clone, Copy, Debug)]
@@ -134,7 +140,7 @@ impl Target {
             cancel: &cancel,
             progress: &mut progress,
         };
-        fetch(&HttpByteSource::new().unwrap(), &job, &mut control).await
+        fetch(&test_source(), &job, &mut control).await
     }
 }
 
@@ -216,7 +222,7 @@ async fn real_hugging_face_download_is_verified() {
     let service = ModelService::new(ModelServiceParts {
         catalog,
         store: ModelStore::new(dir.path()),
-        source: Arc::new(HttpByteSource::new().unwrap()),
+        source: Arc::new(test_source()),
         events: Arc::new(RecordedModelEvents::default()),
         memory_bytes: 8 << 30,
     });

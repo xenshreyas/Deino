@@ -15,7 +15,7 @@
 //!    [`Gateway::embed`], and usage metering into `llm_calls`.
 //!
 //! The crate reaches the outside world only through ports the app wires:
-//! [`HttpTransport`] (until FND-12's `deino-net`), [`CredentialSource`] and
+//! [`HttpTransport`] (a `deino-net` scoped client per provider), [`CredentialSource`] and
 //! [`EndpointSource`] (until FND-06's Keychain secrets and settings),
 //! [`RouteStore`], [`LocalModels`] (the sidecar) and [`UsageRecorder`]. It does
 //! not depend on Tauri, and nothing it logs contains prompt or answer content.

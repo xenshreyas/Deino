@@ -18,7 +18,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::features::transcription::TauriModelEvents;
 use crate::paths::AppPaths;
-use crate::stt::{HttpByteSource, MODEL_OVERRIDE_ENV, SttParts, SttRuntime};
+use crate::stt::{MODEL_OVERRIDE_ENV, NetByteSource, SttParts, SttRuntime};
 
 /// The model store's folder under the models dir.
 const MODELS_FOLDER: &str = "parakeet-unified";
@@ -57,7 +57,7 @@ fn model_service(
     Ok(ModelService::new(ModelServiceParts {
         catalog: Catalog::bundled()?,
         store: ModelStore::new(root),
-        source: Arc::new(HttpByteSource::new()?),
+        source: Arc::new(NetByteSource::new(super::network::model_downloads(app)?)),
         events: Arc::new(TauriModelEvents::new(app.clone())),
         memory_bytes: total_memory(),
     }))
