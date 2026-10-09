@@ -28,4 +28,6 @@ pub const FEATURES: &[(&str, &[&str])] = &[
 pub const DEV_FEATURES: &[(&str, &[&str])] = &[
     // ── FND-13 reference feature (features/_example.rs) ──
     ("example", &["list", "add"]),
+    // ── FND-04 developer tools (features/dev.rs) ──
+    ("dev", &["seed_fixtures"]),
 ];

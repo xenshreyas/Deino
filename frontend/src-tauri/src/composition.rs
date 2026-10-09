@@ -53,7 +53,17 @@ pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    #[cfg(debug_assertions)]
+    attach_fixture_seeder(app, &database);
     features::db::forward_changes(app, database.changes());
+}
+
+/// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
+/// meetings into the app's database (Settings → Developer).
+#[cfg(debug_assertions)]
+fn attach_fixture_seeder(app: &AppHandle, database: &Database) {
+    let seeder = deino_testkit::FixtureSeeder::new(database.clone());
+    app.manage(Arc::new(seeder));
 }
 
 /// Wires the debug-only reference feature over its private in-memory database.

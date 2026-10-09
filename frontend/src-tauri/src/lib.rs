@@ -81,7 +81,9 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::meetings::init())
         .plugin(features::system::init());
     #[cfg(debug_assertions)]
-    let builder = builder.plugin(features::_example::init());
+    let builder = builder
+        .plugin(features::_example::init())
+        .plugin(features::dev::init());
     builder
 }
 

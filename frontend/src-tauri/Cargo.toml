@@ -146,6 +146,9 @@ sqlx = { workspace = true, features = ["json"] }
 deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
+# The fixture seeder behind the debug-only `dev` plugin (features/dev.rs); its
+# fakes stay behind `test-support`, which only the dev-dependency enables.
+deino-testkit.workspace = true
 specta.workspace = true
 tauri-specta.workspace = true
 
@@ -204,7 +207,7 @@ futures-channel = "0.3.31"
 
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
-deino-testkit.workspace = true
+deino-testkit = { workspace = true, features = ["test-support"] }
 specta-typescript.workspace = true
 # Mock runtime for end-to-end IPC/ACL tests of feature plugins (features/ipc_tests.rs).
 tauri = { version = "2.6.2", features = ["test"] }

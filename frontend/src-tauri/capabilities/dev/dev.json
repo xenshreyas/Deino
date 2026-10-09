@@ -1,0 +1,11 @@
+{
+    "$schema": "../../gen/schemas/desktop-schema.json",
+    "identifier": "dev-tools",
+    "description": "Debug builds only: developer tools such as seeding fixture meetings (src/features/dev.rs). build.rs leaves capabilities/dev/ out of release builds.",
+    "windows": [
+        "main"
+    ],
+    "permissions": [
+        "dev:default"
+    ]
+}
