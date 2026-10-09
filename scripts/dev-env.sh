@@ -11,6 +11,6 @@ if command -v sccache >/dev/null 2>&1; then
   export CMAKE_C_COMPILER_LAUNCHER="sccache"
   export CMAKE_CXX_COMPILER_LAUNCHER="sccache"
   export SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE:-80G}"
-  # Incremental compilation defeats sccache; the workspace crates rebuild fast anyway.
-  export CARGO_INCREMENTAL=0
+  # Dependencies are cached by sccache. Workspace crates keep incremental
+  # compilation, which sccache skips, so edit-compile loops stay fast.
 fi
