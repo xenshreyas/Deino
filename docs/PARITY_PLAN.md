@@ -2062,8 +2062,9 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-04 Test fixtures and mocked-IPC dev mode | ☑️ done on branch `feat/FND-04-fixtures-mock-ipc` | |
 | FND-07 Core schema | ☑️ done on branch `feat/FND-07-core-schema` | |
 | FND-06 Typed settings store and Keychain secrets | ☑️ done on branch `feat/FND-06-settings-secrets` | |
-| FND-05a `crates/deino-audio` crash-safe track writer | ☑️ done on branch `feat/FND-05a-audio-writer` (ADR 0014) | |
-| FND-10 App shell, navigation, design system, dark mode | ☑️ done on branch `feat/FND-10-app-shell-design-system` | |
+| FND-05a `crates/deino-audio` crash-safe track writer | ✅ merged (ADR 0014) | 2026-10-09 |
+| FND-10 App shell, navigation, design system, dark mode | ✅ merged | 2026-10-09 |
+| FND-03 CI and quality gates | ✅ merged | 2026-10-09 |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2072,21 +2073,21 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 
 | From | Follow-up | Goes to |
 |---|---|---|
-| FND-01/02 | Two hardware-dependent `device_detection` tests fail on real Macs. Guard them or inject a fake device source. | FND-03 |
+| FND-01/02 | ~~Two hardware-dependent `device_detection` tests fail on real Macs.~~ Fixed by FND-03: `classify` takes the native answer as an argument (tests pass `None`); the second failure was an f32 rounding bug in `calculate_buffer_timeout` (160 ms became 159.999996 ms on every machine). | ✅ FND-03 |
 | FND-02 | ~~Four pre-existing clippy errors in legacy files.~~ Fixed by FND-13. | ✅ FND-13 |
 | FND-02 | ~~`whisper_engine.rs` logs transcript text.~~ Fixed by FND-13, together with the same leak in `transcription/worker.rs` and `parakeet_engine.rs`. | ✅ FND-13 |
 | FND-02 | Many legacy commands still take a vestigial `auth_token` parameter. Drop it when porting each command. | Each card that ports a legacy command |
 | FND-02 | `get_transcription_status` is a stub that always returns zeros. | CAP-01 |
 | FND-02 | `generate_meeting_summary` has too many arguments. | FND-09 |
-| FND-02 | ~~The `llama-helper` `[profile.release]` is ignored.~~ Moved to `[profile.release.package.llama-helper]` by FND-13; `lto` cannot be set per package, so a fully LTO'd sidecar needs a custom `[profile.sidecar]` and a release-script change. | ✅ FND-13 (LTO: FND-03 release workflow) |
-| FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. | FND-03 (Windows check job, optional) |
+| FND-02 | ~~The `llama-helper` `[profile.release]` is ignored.~~ Moved to `[profile.release.package.llama-helper]` by FND-13; `lto` cannot be set per package, so a fully LTO'd sidecar needs a custom `[profile.sidecar]` and a release-script change. | ✅ FND-13 (LTO: ✅ FND-03, `[profile.sidecar]` used by `release-macos.yml`) |
+| FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. FND-03 added no Windows job: Windows minutes bill at 2x on the private repo, and Linux `cargo check` already covers the non-macOS code paths. | Open: a manual `windows` job, or a check on a Windows machine, when Windows matters |
 | FND-01 | `onnxruntime.rs` and `ffmpeg.rs` duplicate the sha256 helper. Moot once FFmpeg is removed (D11). FND-05a added no FFmpeg; `build/ffmpeg.rs` stays while legacy recording, import and re-transcription still call the sidecar. | The last card that removes an FFmpeg caller (FND-05b / CAP-11 / TRN-04) |
 | FND-10a | The record screen's permission card still tells macOS users to install BlackHole. Rewrite it for the process tap (§3C). | FND-11 |
 | FND-10a | ~~The sidebar has no `shrink-0` and squeezes at narrow widths.~~ The new sidebar is `shrink-0`, resizable (200–320px) and collapsible. | ✅ FND-10 |
-| FND-10a | `tauri build` codesign fails in worktrees under `~/Documents` (file attributes). Run `xattr -cr` on the bundle in the release script. | FND-03 |
+| FND-10a | ~~`tauri build` codesign fails in worktrees under `~/Documents` (file attributes).~~ `release-macos.yml` clears extended attributes in a `beforeBundleCommand`, before Tauri signs the bundle. Local `pnpm run tauri:build` under `~/Documents` still needs the same override (see FND-03 below). | ✅ FND-03 |
 | FND-10a | ~~Tailwind v4 default palette replaced the v3 hex values.~~ Every palette colour is now a design token; ESLint bans palette classes and hex values. | ✅ FND-10 |
 | FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. FND-06 resolves every folder once in `AppPaths` (`paths.rs`) and injects them; the `MODELS_DIR` and template-dir statics remain because the global STT engines and the template loader still read them. Remove them when those modules take the paths as constructor arguments. | CAP-01 (STT engines) / NOT-04 (templates) |
-| FND-13 | `cargo deny check advisories` fails on inherited dependencies (unmaintained `atty`, `paste`, `proc-macro-error`, `rustls-pemfile`, `unic-*`; RUSTSEC findings in `h2`, `rustls`, `quick-xml`, `crossbeam-epoch`, `ringbuf`, an html5ever parser). Licences, bans and sources pass. Triage, upgrade or document each before CI gates on advisories. | FND-03 |
+| FND-13 | ~~`cargo deny check advisories` fails on inherited dependencies.~~ FND-03 upgraded `anyhow`, `crossbeam-epoch`, `rustls`, `quick-xml` (via `plist`), `der`, `spin`, dropped `atty` (nnnoiseless without `bin`), and documented the rest in `deny.toml`. Each ignore names its card: `h2` 0.3 and `rustls-pemfile` → FND-12 (reqwest 0.11 goes); `ringbuf` 0.4 → FND-05 / CAP-02 (0.5 API); `paste`, `proc-macro-error`, `unic-*` → upstream specta / tauri. | ✅ FND-03 |
 | FND-13 | The app crate is still edition 2021 (the new crates are 2024). Migrate it with `cargo fix --edition` once enough legacy code is ported. | Any later card, as its own PR |
 | FND-13 | `rustfmt` cannot see modules declared through `legacy_modules!`, so legacy files are not format-checked; each card formats the files it ports out of the list. | Every card that ports legacy code |
 | FND-13 | `api_delete_meeting` and the meeting page's metadata and transcript commands are still legacy; port them into the `meetings` plugin. | ORG-07 / TRN-01 |
@@ -2112,7 +2113,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-05a | Not covered: real power loss, WKWebView playback of the fragmented `.m4a.part` files (finalize writes flat files), two recordings at once. cidre a9587fa lacks `finishWritingWithCompletionHandler:`, `AVAssetExportSession` and `ExtAudioFileSetProperty`, so `deino-audio` uses objc2 and a three-function FFI; drop them when cidre gains the bindings. | FND-05b / any cidre upgrade |
 | FND-04 | Seed `userNotes` into `meeting_notes` once the notepad reads it, and serve it from the notes mock. | NOT-01 |
 | FND-04 | The meeting page's legacy commands (`api_get_meeting_metadata`, `api_get_meeting_transcripts`, `api_get_summary`) are answered by the dev:mock legacy shim (`src/dev/mock-ipc/legacy-meetings.ts`); move them into the typed `meetings` mock when the commands are ported, and delete the shim entries. | ORG-07 / TRN-01 |
-| FND-04 | Run `pnpm test:e2e` (Playwright, installed Chrome, macOS runner) and upload `frontend/test-results/` screenshots in CI. | FND-03 |
+| FND-04 | ~~Run `pnpm test:e2e` and upload `frontend/test-results/` screenshots in CI.~~ FND-03 runs it as the `e2e` step of `scripts/ci-local.sh` and in the Linux `frontend` job (ubuntu-24.04 has Google Chrome), and uploads the screenshots as an artifact. | ✅ FND-03 |
 | FND-04 | ~~The sidebar starts collapsed.~~ The sidebar starts open and meetings live on the Meetings page; the smoke tests now go through it. | ✅ FND-10 |
 | FND-04 | dev:mock always reports onboarding as completed; add a way (a search param or a dev toggle) to exercise the onboarding flow on mock data. | FND-11 |
 | FND-04 | AI evals: score notes, action items, insights and chat against each fixture's `groundTruth` (decisions, action items with owner and due date, facts with evidence quotes). | NOT-02 / AI-05 / AI-06 / AI-02 |
@@ -2132,7 +2133,12 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-10 | The Notes and Transcript tabs render the inherited panels through `features/meeting/legacy/` (`panels-context.tsx`). Replace each slot in `features/meeting/slots.ts` and delete the bridge: the Enhanced / My notes `SegmentedControl` (NOT-01/NOT-02) and transcript bubbles with speaker colours (TRN-01). | NOT-01 / TRN-01 |
 | FND-10 | The inherited settings panels (General, Recording, Transcription, Summary models, Beta) are tokenised but keep their own card markup. Rebuild them on settings sections and rows (ui.md §3 Settings layout) as their values move into the settings store. | FND-06 |
 | FND-10 | dev:mock does not answer `api_delete_meeting`, so deleting a meeting fails there (the real app works). Answer it in the legacy shim, or in the typed mock once ported. | ORG-07 |
-| FND-13 | The real-app UI click-through of the sidebar rename was not completed (the background UI session was interrupted); the IPC path is covered by contract tests and the app was verified to start and migrate an existing database. | FND-03 / next card touching the sidebar |
+| FND-13 | The real-app UI click-through of the sidebar rename was not completed (the background UI session was interrupted); the IPC path is covered by contract tests and the app was verified to start and migrate an existing database. FND-03 (CI only) did not take it. | Next card touching the sidebar (FND-10) |
+| FND-03 | Coverage is not reported in CI yet (`cargo llvm-cov` for the portable crates is cheap on Linux; Vitest coverage needs `@vitest/coverage-v8`). | The next card that touches CI |
+| FND-03 | Branch protection that requires `rust (portable crates)`, `rust (app on Linux)`, `frontend` and `pr title` needs GitHub Pro (or a public repo) for a private personal repository. Until then, `scripts/ci-local.sh` before every merge is the gate. | Owner |
+| FND-03 | Local `pnpm run tauri:build` in a checkout under `~/Documents` can still fail at `codesign` (provenance and File Provider attributes). Reuse `release-macos.yml`'s `beforeBundleCommand` override in a `tauri:build:dmg` script, or build outside `~/Documents`. | Next card that ships a local build script (or FND-05) |
+| FND-03 | `.github/verify-portable-ggml.cjs` and its test are no longer run by any workflow (the Windows distribution workflows were upstream's); `docs/BUILDING.md` documents running them by hand. | Delete with the Windows build story, or when a Windows job returns |
+| FND-03 | `scripts/ci-local.sh` runs its steps one after another. The frontend steps (about 80 s) could run beside the Rust compile once the machine is not shared by many agents. | Any later CI change |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02

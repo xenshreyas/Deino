@@ -1,0 +1,213 @@
+# Deino CI (PARITY_PLAN FND-03). Every job runs steps of scripts/ci-local.sh,
+# so CI and the local gate share one definition of each check.
+#
+# Budget: the repository is private, and GitHub bills macOS minutes at 10x.
+# Pushes therefore run on Linux only:
+#   portable   fmt, file sizes, dependency rules, cargo-deny, then clippy and
+#              tests for every crate except the app and the sidecar
+#   app        the whole workspace compiles on Linux (macOS-only code cfg'd
+#              out), the TypeScript bindings are fresh, the app's unit tests
+#              pass, .sqlx/ is current
+#   frontend   typecheck, lint, format, Vitest, Vite build, Playwright smoke
+#              tests over dev:mock (screenshots kept as an artifact)
+#   pr-title   Conventional Commits, on pull requests
+# The full macOS gate (clippy and every test, Core Audio included) runs only
+# by hand or, with a self-hosted runner, weekly: docs/setup/self-hosted-runner.md.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC: new advisories, toolchain drift
+  workflow_dispatch:
+    inputs:
+      macos_gate:
+        description: "macOS job: 'macos' runs clippy and tests (what Linux cannot cover); 'full' runs every step"
+        type: choice
+        options: [macos, full]
+        default: macos
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: short
+  # No debug info in CI builds: smaller caches, faster links, enough disk.
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+  # One place for the tool versions every job installs: the newest each
+  # taiki-e/install-action has prebuilt binaries for.
+  CARGO_TOOLS: cargo-deny@0.20.2,cargo-nextest@0.9.146,typos@1.50.3
+
+jobs:
+  # Which parts of the tree a push touched. Pull requests skip the build jobs
+  # (the push of the same commit already ran them); schedule and manual runs
+  # build everything.
+  changes:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            ci: &ci
+              - .github/actions/**
+              - .github/workflows/ci.yml
+              - scripts/ci-local.sh
+              - scripts/dev-env.sh
+            app:
+              - *ci
+              - Cargo.toml
+              - Cargo.lock
+              - rust-toolchain.toml
+              - .cargo/**
+              - .sqlx/**
+              - crates/**
+              - llama-helper/**
+              - frontend/src-tauri/**
+              - frontend/src/lib/ipc/generated/**
+              - scripts/sqlx-prepare.sh
+            frontend:
+              - *ci
+              - frontend/*
+              - frontend/public/**
+              - frontend/scripts/**
+              - frontend/src/**
+
+  portable:
+    name: rust (portable crates)
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/rust
+        with:
+          cache-key: portable
+      - uses: ./.github/actions/tools
+        with:
+          tools: ${{ env.CARGO_TOOLS }}
+      - run: scripts/ci-local.sh fmt file-size deps deny clippy-portable test-portable
+
+  app:
+    name: rust (app on Linux)
+    if: >-
+      ${{ !cancelled() && github.event_name != 'pull_request'
+      && (github.event_name != 'push' || needs.changes.outputs.app == 'true') }}
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the Tauri and ALSA build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+            libxdo-dev libssl-dev libasound2-dev
+      - uses: ./.github/actions/rust
+        with:
+          cache-key: app-linux
+      - uses: ./.github/actions/tools
+        with:
+          tools: ${{ env.CARGO_TOOLS }}
+          sqlx: "true"
+      # The build script downloads a SHA-256-pinned FFmpeg; keep it between runs.
+      - uses: actions/cache@v6
+        with:
+          path: frontend/src-tauri/binaries/ffmpeg-*
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('frontend/src-tauri/build/ffmpeg.rs') }}
+      - run: scripts/ci-local.sh check bindings test-app sqlx
+
+  frontend:
+    if: >-
+      ${{ !cancelled() && github.event_name != 'pull_request'
+      && (github.event_name != 'push' || needs.changes.outputs.frontend == 'true') }}
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/pnpm
+      - run: scripts/ci-local.sh frontend
+      # The smoke tests' screenshots (pass or fail), for reviewing UI changes.
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-screenshots
+          path: frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  pr-title:
+    name: pr title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    steps:
+      # The same types and scope shape as lefthook.yml's commit-msg hook.
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            build
+            chore
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            revert
+            style
+            test
+          scopes: |
+            [a-z0-9-]+
+
+  # The full gate on macOS. Manual on GitHub-hosted runners (a cold run costs
+  # several hundred of the ~2,000 monthly minutes); weekly only when the
+  # repository variable MACOS_RUNNER points at a self-hosted Mac, for example
+  # ["self-hosted", "macOS", "ARM64"].
+  macos:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'schedule' && vars.MACOS_RUNNER != '') }}
+    runs-on: ${{ fromJSON(vars.MACOS_RUNNER || '"macos-15"') }}
+    timeout-minutes: 120
+    env:
+      SELF_HOSTED: ${{ vars.MACOS_RUNNER != '' }}
+      GATE: ${{ (github.event_name == 'schedule' || inputs.macos_gate == 'full') && 'all' || 'clippy test' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/rust
+        with:
+          cache-key: app-macos
+          cache: ${{ env.SELF_HOSTED != 'true' }}
+      # A self-hosted Mac uses the owner's own tools (ci-local.sh names any
+      # that are missing) rather than having them overwritten.
+      - uses: ./.github/actions/tools
+        if: env.SELF_HOSTED != 'true'
+        with:
+          tools: ${{ env.CARGO_TOOLS }}
+          sqlx: ${{ env.GATE == 'all' }}
+      - uses: ./.github/actions/pnpm
+        if: env.SELF_HOSTED != 'true' && env.GATE == 'all'
+      - run: scripts/ci-local.sh ${{ env.GATE }}

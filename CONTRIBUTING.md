@@ -9,10 +9,9 @@ Deino is a private repository. Work is organised as task cards in
 2. Work in its own branch, `feat/<CARD-ID>-<slug>`, ideally in a separate git worktree.
 3. Follow the engineering rules in §3, §3A, §3B and §3C of the plan.
 4. Use Conventional Commits (`feat(scope): …`, `fix(…)`, `refactor(…)`, `chore(…)`, `docs(…)`).
-5. Before opening a pull request, make sure these pass:
+5. Before merging, run the whole gate (the same steps CI runs):
    ```bash
-   cd frontend && pnpm build && pnpm test && pnpm lint
-   cd frontend/src-tauri && cargo build && cargo test
+   scripts/ci-local.sh
    ```
 6. In the pull request, describe what changed, why, how it was tested (with
    screenshots for UI), which docs were updated, and any follow-ups.

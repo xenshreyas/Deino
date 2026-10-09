@@ -1,5 +1,5 @@
 # cargo-deny: dependency licences, advisories and sources (PARITY_PLAN §3
-# rule 10). Run `cargo deny check licenses` locally; CI runs `cargo deny check`.
+# rule 10). `scripts/ci-local.sh deny` runs the gate CI runs.
 
 [graph]
 # Lint the dependency graph the app actually ships on its primary platform,
@@ -41,6 +41,25 @@ ignore = true
 [advisories]
 version = 2
 yanked = "warn"
+# Every ignore names why it is safe for now and the card that removes it.
+# Delete an entry as soon as its card lands; `cargo deny` warns about an
+# ignore that no longer matches anything. CI gates on licences, bans and
+# sources; advisories run as a warning there (the database changes daily).
+ignore = [
+    # reqwest 0.11 (the app crate and its build script) brings these in.
+    { id = "RUSTSEC-2026-0258", reason = "h2 0.3 DoS from a hostile HTTP/2 server; fixed only in h2 0.4. FND-12 moves all HTTP to deino-net on a current reqwest" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile 1 is unmaintained, no vulnerability. FND-12 replaces reqwest 0.11" },
+    # Ring buffer between the Core Audio callback and the mixer.
+    { id = "RUSTSEC-2026-0293", reason = "ringbuf 0.4 double free needs an element whose Drop panics; Deino only buffers f32, which has no Drop. The 0.5 API change lands with the audio rewrite (FND-05 / CAP-02)" },
+    # Upstream: no fix is possible from Deino's side until the parent updates.
+    { id = "RUSTSEC-2024-0436", reason = "paste is unmaintained, no vulnerability; a compile-time proc macro of specta 2.0.0-rc. Revisit when the specta set is bumped" },
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error is unmaintained, no vulnerability; a compile-time proc macro of gtk-rs, only on Linux through tauri's tray. Upstream tauri" },
+    { id = "RUSTSEC-2025-0075", reason = "unic-char-range is unmaintained, no vulnerability; urlpattern inside tauri-utils. Upstream tauri" },
+    { id = "RUSTSEC-2025-0080", reason = "unic-common is unmaintained, no vulnerability; urlpattern inside tauri-utils. Upstream tauri" },
+    { id = "RUSTSEC-2025-0081", reason = "unic-char-property is unmaintained, no vulnerability; urlpattern inside tauri-utils. Upstream tauri" },
+    { id = "RUSTSEC-2025-0098", reason = "unic-ucd-version is unmaintained, no vulnerability; urlpattern inside tauri-utils. Upstream tauri" },
+    { id = "RUSTSEC-2025-0100", reason = "unic-ucd-ident is unmaintained, no vulnerability; urlpattern inside tauri-utils. Upstream tauri" },
+]
 
 [bans]
 multiple-versions = "allow"

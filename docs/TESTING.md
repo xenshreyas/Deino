@@ -6,17 +6,20 @@ philosophy is adapted from anarlog's testing guide (MIT).
 
 ## Commands
 
-Run from the repository root unless noted. Each is one command, locally and in
-CI (FND-03).
+Run from the repository root unless noted. `scripts/ci-local.sh` runs all of
+them in order, fails fast and prints timings; GitHub CI calls the same steps by
+name, so a green local run is a green CI run. Each row is also one command.
 
 | Check | Command |
 |---|---|
-| Rust tests | `cargo nextest run --workspace` if installed, else `cargo test --workspace` |
+| Everything (the merge gate) | `scripts/ci-local.sh` (`--list` for steps and groups) |
+| Rust tests | `cargo nextest run --workspace` (else `cargo test --workspace`), then `cargo test --doc --workspace` |
+| Dependency rules | `scripts/check-dependency-rules.sh` |
 | Rust lints and spelling | `scripts/clippy.sh` |
 | Rust format | `cargo fmt --all --check` |
 | Rust file size | `scripts/check-rust-file-size.sh` |
 | sqlx offline data | `scripts/sqlx-prepare.sh --check` (needs sqlx-cli 0.8) |
-| Licences | `cargo deny check licenses` |
+| Licences, bans, sources | `cargo deny check licenses bans sources` (advisories warn; ignores in `deny.toml`) |
 | TypeScript bindings | `cargo test -p deino --lib bindings`, then `git diff --exit-code frontend/src/lib/ipc/generated` |
 | Frontend tests | `cd frontend && pnpm test` |
 | Frontend types | `cd frontend && pnpm typecheck` |
@@ -27,8 +30,24 @@ CI (FND-03).
 | Recording acceptance (macOS, real time) | `cargo test -p deino-audio --test kill_harness -- --ignored --nocapture --test-threads=1` (`kill -9` loss and CPU per track) |
 | UI by hand | `cd frontend && pnpm dev:mock`, then open http://localhost:3119 |
 
-Two `audio::device_detection` tests read the real audio devices and fail on
-some Macs; FND-03 guards them (PARITY_PLAN §7.2). Every other test must pass.
+Every test must pass on every machine. A test never reads real hardware:
+inject the platform's answer instead (`InputDeviceKind::classify` takes the
+native detection result as an argument, so its tests pass `None`).
+
+## Where CI runs what
+
+Pushes run on Linux (macOS minutes cost 10x on the private repo):
+
+| Job | Steps |
+|---|---|
+| `rust (portable crates)` | `fmt file-size deps deny clippy-portable test-portable`: clippy and tests for every crate except the app and the sidecar |
+| `rust (app on Linux)` | `check bindings test-app sqlx`: the workspace compiles with macOS code cfg'd out, bindings and `.sqlx/` are fresh, the app's unit tests pass |
+| `frontend` | `frontend`: install, typecheck, lint, format, Vitest, Vite build, Playwright smoke tests (screenshots uploaded as the `e2e-screenshots` artifact) |
+| `pr title` | Conventional Commits, on pull requests |
+
+The macOS-only code (Core Audio, the app's clippy and tests on macOS) is
+covered by `scripts/ci-local.sh` before every merge, and by the manual (or,
+with a self-hosted runner, weekly) `macos` job.
 
 ## Write a test when
 
@@ -92,5 +111,5 @@ Conventions:
 ## Coverage
 
 New service and repository code should reach about 80% line coverage
-(`cargo llvm-cov`, `vitest --coverage`); CI reports it without failing
-(FND-03).
+(`cargo llvm-cov`, `vitest --coverage`), measured on demand; CI does not
+report it yet (PARITY_PLAN §7.2).

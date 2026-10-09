@@ -41,6 +41,10 @@ no Deino server, and automatic updates are disabled (§8 D6).
 ## Commands
 
 ```bash
+# The whole gate, exactly as CI runs it; run it before every merge
+scripts/ci-local.sh                  # every step, cheapest first, fails fast; --list for steps
+scripts/ci-local.sh rust             # or a group (rust, frontend) or single steps (clippy test)
+
 # Rust (repository root; the toolchain comes from rust-toolchain.toml)
 scripts/clippy.sh                    # clippy -D warnings on every target, then typos
 cargo fmt --all --check              # format
@@ -48,7 +52,8 @@ cargo test --workspace               # or: cargo nextest run --workspace
 scripts/check-rust-file-size.sh      # 300-line cap, tests excluded
 scripts/sqlx-prepare.sh              # regenerate .sqlx/ after a query or migration change
 cargo test -p deino --lib bindings   # regenerate frontend/src/lib/ipc/generated/, then commit it
-cargo deny check licenses            # permissive licences only
+scripts/check-dependency-rules.sh    # no tauri under crates/; deino-stt has no network client
+cargo deny check licenses bans sources   # permissive licences only (advisories: deny.toml)
 
 # Frontend (frontend/)
 pnpm install --frozen-lockfile
@@ -69,6 +74,9 @@ RUST_LOG=deino_lib::audio=debug pnpm run tauri:dev   # verbose audio logs
 Build prerequisites: the `llama-helper` sidecar must be staged as
 `frontend/src-tauri/binaries/llama-helper-<target-triple>` (see the root README),
 and the first build downloads a SHA-256-pinned FFmpeg into the same folder.
+`scripts/ci-local.sh` stages a self-describing placeholder when the sidecar is
+missing (enough to build and test, not to run the local LLM). CI: Linux on
+every push, macOS by hand (`docs/setup/self-hosted-runner.md`).
 Optional local hooks: `lefthook install` (`lefthook.yml`).
 
 ## Architecture

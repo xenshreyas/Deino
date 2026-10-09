@@ -1,0 +1,83 @@
+# Builds an unsigned (ad-hoc signed) Apple Silicon DMG and keeps it as a
+# workflow artifact (PARITY_PLAN FND-03, §8 D6: install DMGs by hand; there is
+# no updater and no release upload). Manual only.
+#
+# Budget: a cold build on a GitHub-hosted Mac bills hundreds of the ~2,000
+# monthly minutes (macOS counts 10x). Prefer a self-hosted Mac: set the
+# repository variable MACOS_RUNNER (docs/setup/self-hosted-runner.md), or
+# build locally with `cd frontend && pnpm run tauri:build`.
+name: Release (macOS)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  TARGET: aarch64-apple-darwin
+
+jobs:
+  dmg:
+    runs-on: ${{ fromJSON(vars.MACOS_RUNNER || '"macos-15"') }}
+    timeout-minutes: 120
+    env:
+      SELF_HOSTED: ${{ vars.MACOS_RUNNER != '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/rust
+        with:
+          cache-key: release-macos
+          cache: ${{ env.SELF_HOSTED != 'true' }}
+          targets: ${{ env.TARGET }}
+
+      - uses: ./.github/actions/pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm --dir frontend install --frozen-lockfile
+
+      # The `sidecar` profile is release + LTO; Cargo cannot set LTO per
+      # package, so the sidecar gets its own profile (root Cargo.toml).
+      - name: Build and stage the llama-helper sidecar
+        run: |
+          cargo build --locked --profile sidecar --target "$TARGET" -p llama-helper --features metal
+          mkdir -p frontend/src-tauri/binaries
+          cp "target/$TARGET/sidecar/llama-helper" "frontend/src-tauri/binaries/llama-helper-$TARGET"
+
+      # Tauri ad-hoc signs the bundle ("signingIdentity": "-"), and codesign
+      # rejects files that carry extended attributes (Finder info, provenance)
+      # with "resource fork, Finder information, or similar detritus not
+      # allowed". Clear them from everything the bundler copies in, after the
+      # compile and before the bundle is assembled and signed.
+      - name: Clear extended attributes before signing
+        run: |
+          cat > "$RUNNER_TEMP/tauri.release.json" <<JSON
+          {
+            "build": {
+              "beforeBundleCommand": {
+                "script": "xattr -cr frontend/src-tauri && find target/$TARGET/release -maxdepth 1 -type f -exec xattr -c {} +",
+                "cwd": "$GITHUB_WORKSPACE"
+              }
+            }
+          }
+          JSON
+
+      - name: Build the app and the DMG
+        id: tauri
+        uses: tauri-apps/tauri-action@v1
+        with:
+          projectPath: frontend
+          args: --target ${{ env.TARGET }} --bundles app,dmg --config ${{ runner.temp }}/tauri.release.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: deino-${{ steps.tauri.outputs.appVersion }}-${{ env.TARGET }}-dmg
+          path: target/${{ env.TARGET }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 30
