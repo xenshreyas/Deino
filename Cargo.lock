@@ -227,7 +227,7 @@ dependencies = [
  "memchr",
  "proc-macro2",
  "quote",
- "rustc-hash 2.1.2",
+ "rustc-hash",
  "serde",
  "serde_derive",
  "syn 2.0.117",
@@ -248,7 +248,7 @@ version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d0af3691ba3af77949c0b5a3925444b85cb58a0184cc7fec16c68ba2e7be868"
 dependencies = [
- "rustc-hash 2.1.2",
+ "rustc-hash",
  "serde",
  "serde_derive",
  "unicode-ident",
