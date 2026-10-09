@@ -54,7 +54,7 @@ function SummaryView(props: ContentProps) {
   const data = useMeetingData(props);
   summaryState = useSummaryGeneration({
     meeting: props.meeting, initialSummary: props.initialSummary, transcripts: data.transcripts,
-    modelConfig: { provider: 'ollama', model: 'test', whisperModel: 'base' }, isModelConfigLoading: false,
+    modelConfig: { provider: 'ollama', model: 'test' }, isModelConfigLoading: false,
     selectedTemplate: 'daily_standup', setAiSummary: data.setAiSummary, updateMeetingTitle: data.updateMeetingTitle,
   });
   refresh = props.onRefetchTranscripts;

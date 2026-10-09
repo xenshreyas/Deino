@@ -25,23 +25,23 @@ describe('listenToDbChanges', () => {
   it('invalidates the queries that read a changed table, and no others', async () => {
     const client = createQueryClient();
     const meetings = vi.fn(() => Promise.resolve([]));
-    const settings = vi.fn(() => Promise.resolve({}));
+    const notes = vi.fn(() => Promise.resolve([]));
     await client.query({
       queryKey: ['meetings'],
       queryFn: meetings,
       meta: { tables: ['meetings'] },
     });
     await client.query({
-      queryKey: ['settings'],
-      queryFn: settings,
-      meta: { tables: ['settings'] },
+      queryKey: ['notes'],
+      queryFn: notes,
+      meta: { tables: ['meeting_notes'] },
     });
 
     const stop = listenToDbChanges(client);
     emit({ tables: ['meetings'], seq: 1 });
 
     expect(client.getQueryState(['meetings'])?.isInvalidated).toBe(true);
-    expect(client.getQueryState(['settings'])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(['notes'])?.isInvalidated).toBe(false);
     stop();
   });
 

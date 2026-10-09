@@ -10,7 +10,7 @@ use super::SettingsError;
 /// The longest reminder lead time, in minutes (a day).
 pub const MAX_REMINDER_MINUTES: u16 = 1440;
 
-/// The notifications section of [`super::Settings`].
+/// The notifications section of `Settings`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 #[allow(

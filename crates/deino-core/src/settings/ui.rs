@@ -24,7 +24,7 @@ pub enum Theme {
     Dark,
 }
 
-/// The UI section of [`super::Settings`].
+/// The UI section of `Settings`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct UiSettings {
@@ -60,7 +60,7 @@ impl UiSettings {
     }
 }
 
-/// The beta section of [`super::Settings`]: features still being proven.
+/// The beta section of `Settings`: features still being proven.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct BetaSettings {

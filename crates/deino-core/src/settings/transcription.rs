@@ -20,7 +20,7 @@ pub enum TranscriptionEngine {
     Whisper,
 }
 
-/// The transcription section of [`super::Settings`].
+/// The transcription section of `Settings`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TranscriptionSettings {

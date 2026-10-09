@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { invoke } from "@tauri-apps/api/core";
 import { LoaderIcon } from "lucide-react";
 import { useConfig } from "@/contexts/ConfigContext";
+import { settingsApi } from "@/features/settings";
 import { usePaginatedTranscripts } from "@/hooks/usePaginatedTranscripts";
 import { parseSummaryContent } from "@/lib/summary-content";
 
@@ -88,29 +89,25 @@ export function MeetingDetailsScreen({ meetingId, source }: MeetingDetailsScreen
     }
 
     try {
-      // Check what's currently in database
-      const currentConfig = await invoke('api_get_model_config') as any;
+      // The saved model choice is the source of truth (FND-06 settings)
+      const { ai } = await settingsApi.get();
 
-      // If DB already has a model, use it (never override!)
-      if (currentConfig && currentConfig.model) {
-        console.log('Using existing model from DB:', currentConfig.model);
+      // If a model is already chosen, use it (never override!)
+      if (ai.model) {
+        console.log('Using the saved summary model');
         setShouldAutoGenerate(true);
         setHasCheckedAutoGen(true);
         return;
       }
 
-      // DB is empty - check if gemma3:1b exists as fallback
+      // Nothing chosen - check if gemma3:1b exists as fallback
       const hasGemma = await checkForGemmaModel();
 
       if (hasGemma) {
-        console.log('💾 DB empty, using gemma3:1b as initial default');
+        console.log('💾 No model chosen, using gemma3:1b as initial default');
 
-        await invoke('api_save_model_config', {
-          provider: 'ollama',
-          model: 'gemma3:1b',
-          whisperModel: 'large-v3',
-          apiKey: null,
-          ollamaEndpoint: null,
+        await settingsApi.patch({
+          ai: { provider: 'ollama', model: 'gemma3:1b', providerModels: { ollama: 'gemma3:1b' } },
         });
 
         setShouldAutoGenerate(true);

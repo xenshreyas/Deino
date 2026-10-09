@@ -48,7 +48,7 @@ settingsChanged: "plugin:settings:settings-changed"
 /** user-defined types **/
 
 /**
- * The AI section of [`super::Settings`].
+ * The AI section of `Settings`.
  */
 export type AiSettings = { 
 /**
@@ -94,7 +94,7 @@ code: ErrorCode;
  */
 message: string }
 /**
- * The audio section of [`super::Settings`].
+ * The audio section of `Settings`.
  */
 export type AudioSettings = { 
 /**
@@ -106,7 +106,7 @@ preferredMicDevice: string | null;
  */
 preferredSystemDevice: string | null }
 /**
- * The beta section of [`super::Settings`]: features still being proven.
+ * The beta section of `Settings`: features still being proven.
  */
 export type BetaSettings = { 
 /**
@@ -264,7 +264,7 @@ showSystemErrors: boolean;
  */
 meetingReminderMinutes: number[] }
 /**
- * The notifications section of [`super::Settings`].
+ * The notifications section of `Settings`.
  */
 export type NotificationSettings = { 
 /**
@@ -304,7 +304,7 @@ manualDndMode: boolean;
  */
 preferences: NotificationPreferences }
 /**
- * The onboarding section of [`super::Settings`].
+ * The onboarding section of `Settings`.
  */
 export type OnboardingSettings = { 
 /**
@@ -332,15 +332,15 @@ selectedSummaryModel: string | null;
  */
 updatedAt: string | null }
 /**
- * The privacy section of [`super::Settings`]. Empty until PRV-01.
+ * The privacy section of `Settings`. Empty until PRV-01.
  */
 export type PrivacySettings = Record<string, never>
 /**
- * The profile section of [`super::Settings`]. Empty until NOT-05.
+ * The profile section of `Settings`. Empty until NOT-05.
  */
 export type ProfileSettings = Record<string, never>
 /**
- * The recording section of [`super::Settings`].
+ * The recording section of `Settings`.
  */
 export type RecordingSettings = { 
 /**
@@ -439,7 +439,7 @@ export type TranscriptionEngine =
  */
 "whisper"
 /**
- * The transcription section of [`super::Settings`].
+ * The transcription section of `Settings`.
  */
 export type TranscriptionSettings = { 
 /**
@@ -451,7 +451,7 @@ engine: TranscriptionEngine;
  */
 model: string }
 /**
- * The UI section of [`super::Settings`].
+ * The UI section of `Settings`.
  */
 export type UiSettings = { 
 /**

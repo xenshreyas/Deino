@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FileText, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-const STORAGE_KEY = 'deino.meetingDetails.transcriptPaneRatio';
+import { usePatchSettings, useSettings } from '@/features/settings';
 const DEFAULT_RATIO = 0.3;
 const MIN_RATIO = 0.3;
 const MAX_RATIO = 0.5;
@@ -10,25 +10,6 @@ const TABS = [
   { value: 'transcript' as const, label: 'Transcript', icon: FileText },
   { value: 'summary' as const, label: 'Summary', icon: Sparkles },
 ];
-
-function readStoredRatio(): number {
-  if (typeof window === 'undefined') return DEFAULT_RATIO;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const n = raw == null ? NaN : Number(raw);
-    return Number.isFinite(n) && n >= MIN_RATIO && n <= MAX_RATIO ? n : DEFAULT_RATIO;
-  } catch {
-    return DEFAULT_RATIO;
-  }
-}
-
-function writeStoredRatio(value: number): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, String(value));
-  } catch {
-    // Layout persistence is optional.
-  }
-}
 
 export type MeetingDetailsTab = 'transcript' | 'summary';
 
@@ -46,14 +27,18 @@ export function MeetingDetailsSplitView({
   onTabChange,
 }: MeetingDetailsSplitViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ratio, setRatio] = useState(DEFAULT_RATIO);
+  // The saved width is a typed setting (`ui.transcriptPaneRatio`); a drag
+  // shows its own value until it is saved.
+  const { data: settings } = useSettings();
+  const { mutate: patchSettings } = usePatchSettings();
+  const [draggedRatio, setRatio] = useState<number | null>(null);
+  const ratio = draggedRatio ?? settings?.ui.transcriptPaneRatio ?? DEFAULT_RATIO;
+  const writeStoredRatio = useCallback((value: number) => {
+    patchSettings({ ui: { transcriptPaneRatio: value } });
+  }, [patchSettings]);
   const [isDesktop, setIsDesktop] = useState(true);
   const dragging = useRef(false);
   const clampRatio = (value: number) => Math.min(MAX_RATIO, Math.max(MIN_RATIO, value));
-
-  useEffect(() => {
-    setRatio(readStoredRatio());
-  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -78,11 +63,8 @@ export function MeetingDetailsSplitView({
   const onPointerUp = useCallback(() => {
     if (!dragging.current) return;
     dragging.current = false;
-    setRatio((current) => {
-      writeStoredRatio(current);
-      return current;
-    });
-  }, []);
+    if (draggedRatio !== null) writeStoredRatio(draggedRatio);
+  }, [draggedRatio, writeStoredRatio]);
 
   const onSeparatorKeyDown = useCallback((event: React.KeyboardEvent) => {
     const current = ratio;
@@ -96,7 +78,7 @@ export function MeetingDetailsSplitView({
     event.preventDefault();
     setRatio(next);
     writeStoredRatio(next);
-  }, [ratio]);
+  }, [ratio, writeStoredRatio]);
 
   const transcriptPanelProps = isDesktop
     ? { role: 'region' as const, 'aria-label': 'Transcript', tabIndex: -1 }

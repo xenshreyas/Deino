@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { settingsApi } from '@/features/settings';
 import { useTranscripts } from '@/contexts/TranscriptContext';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -22,10 +23,6 @@ const isTranscriptionRuntimeStartError = (error: unknown) =>
 interface UseRecordingStartReturn {
   handleRecordingStart: () => Promise<void>;
   isAutoStarting: boolean;
-}
-
-interface TranscriptConfig {
-  provider?: string;
 }
 
 /**
@@ -68,8 +65,8 @@ export function useRecordingStart(
 
   const getTranscriptionProvider = useCallback(async (): Promise<string> => {
     try {
-      const config = await invoke<TranscriptConfig | null>('api_get_transcript_config');
-      return config?.provider || 'parakeet';
+      const { transcription } = await settingsApi.get();
+      return transcription.engine === 'whisper' ? 'localWhisper' : 'parakeet';
     } catch (error) {
       console.error('Failed to load transcription provider:', error);
       return 'parakeet';

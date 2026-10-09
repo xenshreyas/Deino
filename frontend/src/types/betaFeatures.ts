@@ -9,6 +9,9 @@
  * 3. Add UI strings in BETA_FEATURE_NAMES and BETA_FEATURE_DESCRIPTIONS
  * 4. Use in components: `betaFeatures.yourFeatureName`
  *
+ * The values are stored in the typed settings (`Settings.beta`, FND-06); a
+ * new flag also needs its field in `crates/deino-core/src/settings/ui.rs`.
+ *
  * ## Graduating a Feature to Stable
  * 1. Remove property from BetaFeatures interface
  * 2. TypeScript will error at all usage sites
@@ -47,42 +50,3 @@ export const BETA_FEATURE_DESCRIPTIONS: Record<keyof BetaFeatures, string> = {
  * This ensures only valid feature keys can be used
  */
 export type BetaFeatureKey = keyof BetaFeatures;
-
-/**
- * Load beta features from localStorage
- *
- * @returns BetaFeatures object with values from localStorage or defaults
- */
-export function loadBetaFeatures(): BetaFeatures {
-  if (typeof window === 'undefined') {
-    return { ...DEFAULT_BETA_FEATURES };
-  }
-
-  try {
-    const saved = localStorage.getItem('betaFeatures');
-    if (saved) {
-      const parsed = JSON.parse(saved) as Partial<BetaFeatures>;
-      // Merge with defaults to handle missing keys (graceful degradation)
-      return { ...DEFAULT_BETA_FEATURES, ...parsed };
-    }
-  } catch (error) {
-    console.error('[BetaFeatures] Failed to load from localStorage:', error);
-  }
-
-  return { ...DEFAULT_BETA_FEATURES };
-}
-
-/**
- * Save beta features to localStorage
- *
- * @param features - BetaFeatures object to save
- */
-export function saveBetaFeatures(features: BetaFeatures): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.setItem('betaFeatures', JSON.stringify(features));
-  } catch (error) {
-    console.error('[BetaFeatures] Failed to save to localStorage:', error);
-  }
-}

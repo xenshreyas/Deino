@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// The audio section of [`super::Settings`].
+/// The audio section of `Settings`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AudioSettings {
@@ -13,7 +13,7 @@ pub struct AudioSettings {
     pub preferred_system_device: Option<String>,
 }
 
-/// The recording section of [`super::Settings`].
+/// The recording section of `Settings`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RecordingSettings {

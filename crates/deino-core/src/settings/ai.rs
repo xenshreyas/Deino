@@ -73,7 +73,7 @@ impl LlmProvider {
     }
 }
 
-/// The AI section of [`super::Settings`].
+/// The AI section of `Settings`.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AiSettings {

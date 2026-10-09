@@ -1,21 +1,22 @@
 import { toast } from 'sonner';
 
+import { settingsApi } from '@/features/settings';
+
 /**
  * Shows the recording notification toast with compliance message.
- * Checks user preferences and displays a dismissible toast with:
+ * Checks the "tell participants" setting (`recording.showRecordingNotice`)
+ * and displays a dismissible toast with:
  * - notice to inform participants
- * - "Don't show again" checkbox
+ * - "Don't show again" checkbox, which turns the setting off
  * - Acknowledgment button
  *
  * @returns Promise<void> - Resolves when notification is shown or skipped
  */
 export async function showRecordingNotification(): Promise<void> {
   try {
-    const { Store } = await import('@tauri-apps/plugin-store');
-    const store = await Store.load('preferences.json');
-    const showNotification = await store.get<boolean>('show_recording_notification') ?? true;
+    const { recording } = await settingsApi.get();
 
-    if (showNotification) {
+    if (recording.showRecordingNotice) {
       let dontShowAgain = false;
 
       const toastId = toast.info('🔴 Recording Started', {
@@ -37,10 +38,7 @@ export async function showRecordingNotification(): Promise<void> {
             <button
               onClick={async () => {
                 if (dontShowAgain) {
-                  const { Store } = await import('@tauri-apps/plugin-store');
-                  const store = await Store.load('preferences.json');
-                  await store.set('show_recording_notification', false);
-                  await store.save();
+                  await settingsApi.patch({ recording: { showRecordingNotice: false } });
                 }
                 toast.dismiss(toastId);
               }}

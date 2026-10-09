@@ -21,7 +21,7 @@ pub enum ModelDownloadState {
     Downloaded,
 }
 
-/// The onboarding section of [`super::Settings`].
+/// The onboarding section of `Settings`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct OnboardingSettings {

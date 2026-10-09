@@ -26,8 +26,6 @@ export const LEGACY_FILES = [
   'src/features/record/components/transcript-panel.tsx',
   'src/features/record/record-screen.tsx',
   'src/features/settings/settings-screen.tsx',
-  // Calls legacy onboarding commands with `invoke` until FND-11 ports onboarding.
-  'src/features/shell/hooks/use-onboarding-gate.ts',
   // The theme stylesheet, rewritten as design tokens by FND-10.
   'src/styles/**',
   // GPU build helpers behind `pnpm tauri:dev` and `pnpm tauri:build`.
