@@ -1,0 +1,13 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "detection-prompt",
+    "description": "The meeting prompt window (CAP-06): its own commands and events, and its theme",
+    "windows": [
+        "detection_prompt"
+    ],
+    "permissions": [
+        "core:event:default",
+        "core:window:allow-set-theme",
+        "detection:default"
+    ]
+}

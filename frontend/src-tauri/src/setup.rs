@@ -23,6 +23,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     composition::attach_network(handle)?;
     onnx_runtime::init_bundled(handle);
     create_tray(handle);
+    composition::attach_detection(handle);
     spawn_notification_manager(handle.clone());
     init_transcription_engines(&paths);
     attach_stt(handle, &paths);

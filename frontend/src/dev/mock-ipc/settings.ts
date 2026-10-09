@@ -9,7 +9,7 @@
 import type * as Generated from '@/lib/ipc/generated/settings';
 
 import { latency } from './latency';
-import { ok } from './mock-database';
+import { ok } from './command-result';
 import { mockEvent } from './mock-event';
 
 /** The settings a returning user has: onboarding done, Claude for notes. */
@@ -46,6 +46,11 @@ let settings: Generated.Settings = {
       showSystemErrors: true,
       meetingReminderMinutes: [15, 5],
     },
+  },
+  detection: {
+    enabled: true,
+    ignoredApps: [],
+    autoStart: { enabled: false, countdownSeconds: 10 },
   },
   privacy: {},
   network: { offlineMode: false, services: {} },

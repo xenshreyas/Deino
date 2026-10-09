@@ -31,9 +31,11 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  Video,
   Wrench,
 } from '@/ui/icons';
 
+import { DetectionSettingsPage } from './components/detection-settings';
 import { settingsCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
 import type { SettingsSectionId } from './search';
@@ -109,6 +111,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'general', group: 'app', icon: Settings, Component: PreferenceSettings },
   { id: 'appearance', group: 'app', icon: Palette, Component: AppearanceSection },
   { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
+  { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },

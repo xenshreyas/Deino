@@ -18,6 +18,7 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod db;
+pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
 pub mod llm;
@@ -39,6 +40,7 @@ pub mod transcription;
 pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>)> {
     let mut builders = vec![
         (db::NAME, db::specta()),
+        (detection::NAME, detection::specta()),
         (meetings::NAME, meetings::specta()),
         (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),
@@ -62,8 +64,9 @@ mod tests {
     use super::manifest::{DEV_FEATURES, FEATURES};
 
     /// The capability files that grant feature plugins.
-    const CAPABILITIES: [&str; 3] = [
+    const CAPABILITIES: [&str; 4] = [
         include_str!("../capabilities/default.json"),
+        include_str!("../capabilities/detection-prompt.json"),
         include_str!("../capabilities/dev/example.json"),
         include_str!("../capabilities/dev/dev.json"),
     ];

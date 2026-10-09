@@ -76,6 +76,7 @@ pub fn run() {
 fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     let builder = builder
         .plugin(features::db::init())
+        .plugin(features::detection::init())
         .plugin(features::meetings::init())
         .plugin(features::network::init())
         .plugin(features::pipeline::init())
@@ -100,6 +101,9 @@ fn register_platform_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         log::info!("Second app instance requested with args: {args:?}, cwd: {cwd:?}");
         tray::focus_main_window(app);
     }));
+    // The meeting prompt is a non-activating panel (features/detection/prompt.rs).
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_nspanel::init());
     updater::register(builder)
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())

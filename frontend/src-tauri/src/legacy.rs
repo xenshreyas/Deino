@@ -144,12 +144,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         notifications::commands::test_notification_with_auto_consent,
         notifications::commands::get_notification_stats,
         // System audio capture and permissions
-        audio::system_audio_commands::start_system_audio_capture_command,
-        audio::system_audio_commands::list_system_audio_devices_command,
-        audio::system_audio_commands::check_system_audio_permissions_command,
-        audio::system_audio_commands::start_system_audio_monitoring,
-        audio::system_audio_commands::stop_system_audio_monitoring,
-        audio::system_audio_commands::get_system_audio_monitoring_status,
         audio::permissions::check_screen_recording_permission_command,
         audio::permissions::request_screen_recording_permission_command,
         audio::permissions::trigger_system_audio_permission_command,

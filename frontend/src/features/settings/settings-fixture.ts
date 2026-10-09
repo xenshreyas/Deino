@@ -39,6 +39,11 @@ const DEFAULT_SETTINGS: Settings = {
       meetingReminderMinutes: [15, 5],
     },
   },
+  detection: {
+    enabled: true,
+    ignoredApps: [],
+    autoStart: { enabled: false, countdownSeconds: 10 },
+  },
   privacy: {},
   network: { offlineMode: false, services: {} },
   profile: {

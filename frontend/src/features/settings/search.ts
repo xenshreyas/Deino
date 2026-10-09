@@ -9,6 +9,7 @@ export const settingsSectionSchema = z.enum([
   'general',
   'appearance',
   'recording',
+  'detection',
   'transcription',
   'ai',
   'models',
