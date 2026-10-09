@@ -1,5 +1,3 @@
-'use client'
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useUpdateCheck } from '@/hooks/useUpdateCheck';
 import { UpdateInfo } from '@/services/updateService';

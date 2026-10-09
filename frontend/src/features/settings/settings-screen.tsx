@@ -1,8 +1,6 @@
-'use client';
-
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { ArrowLeft, Settings2, Mic, Database as DatabaseIcon, SparkleIcon, FlaskConical } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { motion } from 'framer-motion';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
@@ -22,7 +20,8 @@ const TABS = [
   { value: 'beta', label: 'Beta', icon: FlaskConical }
 ] as const;
 
-export default function SettingsPage() {
+/** The settings screen: one tab per settings area. */
+export function SettingsScreen() {
   const router = useRouter();
   const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
 
@@ -68,7 +67,7 @@ export default function SettingsPage() {
         <div className="max-w-6xl mx-auto px-8 py-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.history.back()}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -131,4 +130,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-};
+}

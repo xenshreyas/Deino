@@ -32,7 +32,7 @@ import {
 import { toast } from 'sonner';
 import { useConfig } from '@/contexts/ConfigContext';
 import { useImportAudio, ImportResult } from '@/hooks/useImportAudio';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useSidebar } from '../Sidebar/SidebarProvider';
 import { useTranscriptionModels, ModelOption } from '@/hooks/useTranscriptionModels';
 
@@ -68,7 +68,7 @@ export function ImportAudioDialog({
   preselectedFile,
   onComplete,
 }: ImportAudioDialogProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { refetchMeetings } = useSidebar();
   const { transcriptModelConfig } = useConfig();
 
@@ -98,8 +98,8 @@ export function ImportAudioDialog({
     refetchMeetings();
     onComplete?.();
     onOpenChange(false);
-    router.push(`/meeting-details?id=${result.meeting_id}`);
-  }, [router, refetchMeetings, onComplete, onOpenChange]);
+    void navigate({ to: '/meetings/$meetingId', params: { meetingId: result.meeting_id } });
+  }, [navigate, refetchMeetings, onComplete, onOpenChange]);
 
   const handleImportError = useCallback((error: string) => {
     toast.error('Import failed', { description: error });
@@ -259,7 +259,7 @@ export function ImportAudioDialog({
               {fileInfo ? (
                 <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                   <div className="flex items-start gap-3">
-                    <FileAudio className="h-8 w-8 text-blue-600 flex-shrink-0" />
+                    <FileAudio className="h-8 w-8 text-blue-600 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{fileInfo.filename}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">

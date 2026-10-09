@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -106,7 +104,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   });
   const [permissionsSkipped, setPermissionsSkipped] = useState(false);
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const initializeSummaryModelSelection = async (preferredModel = selectedSummaryModel) => {
     try {
@@ -383,7 +381,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     // Determine the correct step based on verified status
     // New simplified flow: Step 1: Welcome, Step 2: Setup Overview, Step 3: Download Progress, Step 4: Permissions (macOS)
     let currentStep = savedStatus.current_step;
-    let completed = savedStatus.completed;
+    const completed = savedStatus.completed;
 
     // Clamp step to new max (4)
     if (currentStep > 4) {

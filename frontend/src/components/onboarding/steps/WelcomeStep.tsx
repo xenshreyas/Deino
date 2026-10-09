@@ -34,12 +34,12 @@ export function WelcomeStep() {
         <div className="w-16 h-px bg-gray-300" />
 
         {/* Features Card */}
-        <div className="w-full max-w-md bg-white rounded-lg border border-gray-200 shadow-sm p-6 space-y-4">
+        <div className="w-full max-w-md bg-white rounded-lg border border-gray-200 shadow-xs p-6 space-y-4">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div key={index} className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
+                <div className="shrink-0 mt-0.5">
                   <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                     <Icon className="w-3 h-3 text-gray-700" />
                   </div>

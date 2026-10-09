@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

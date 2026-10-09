@@ -4,14 +4,13 @@
 set -e
 
 echo "Cleaning up previous builds..."
-rm -rf .next
-rm -rf out
+rm -rf dist
 rm -rf src-tauri/target/release
 
 echo "Installing dependencies..."
 pnpm install
 
-echo "Building Next.js app..."
+echo "Building the UI..."
 pnpm build
 
 echo "Building Tauri app..."

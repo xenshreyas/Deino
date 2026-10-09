@@ -1,5 +1,3 @@
-'use client';
-
 import { motion } from 'framer-motion';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
 import { useEffect, useState } from 'react';

@@ -1266,7 +1266,7 @@ export function ModelSettingsModal({
                             </div>
                             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                                className="h-full bg-linear-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
                                 style={{ width: `${getProgress('gemma3:1b')}%` }}
                               />
                             </div>
@@ -1322,7 +1322,7 @@ export function ModelSettingsModal({
                               </div>
                               <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                                  className="h-full bg-linear-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
                                   style={{ width: `${progress}%` }}
                                 />
                               </div>
@@ -1355,7 +1355,7 @@ export function ModelSettingsModal({
       <div className="mt-6 flex justify-end">
         <Button
           className={cn(
-            'px-4 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
+            'px-4 text-sm font-medium text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
             isDoneDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
           )}
           onClick={handleSave}

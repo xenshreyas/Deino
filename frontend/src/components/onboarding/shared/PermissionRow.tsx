@@ -28,7 +28,7 @@ export function PermissionRow({ icon, title, description, status, isPending = fa
         {/* Icon */}
         <div
           className={cn(
-            'flex size-10 items-center justify-center rounded-full flex-shrink-0',
+            'flex size-10 items-center justify-center rounded-full shrink-0',
             isAuthorized ? 'bg-gray-200' : isDenied ? 'bg-red-100' : 'bg-neutral-50'
           )}
         >
@@ -57,7 +57,7 @@ export function PermissionRow({ icon, title, description, status, isPending = fa
       </div>
 
       {/* Right side: Action button or checkmark */}
-      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+      <div className="flex items-center gap-2 shrink-0 ml-3">
         {!isAuthorized && (
           <Button
             variant={isDenied ? "destructive" : "outline"}

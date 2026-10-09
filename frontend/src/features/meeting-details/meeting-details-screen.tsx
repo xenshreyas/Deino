@@ -1,9 +1,9 @@
-"use client"
 import { useSidebar } from "@/components/Sidebar/SidebarProvider";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MeetingSummary, SummaryProcessResponse, Transcript } from "@/types";
-import PageContent from "./page-content";
-import { useRouter, useSearchParams } from "next/navigation";
+import PageContent from "./meeting-details-content";
+import type { MeetingSource } from "./search";
+import { useNavigate } from "@tanstack/react-router";
 import { invoke } from "@tauri-apps/api/core";
 import { LoaderIcon } from "lucide-react";
 import { useConfig } from "@/contexts/ConfigContext";
@@ -19,13 +19,20 @@ interface MeetingDetailsResponse {
   folder_path?: string;
 }
 
-function MeetingDetailsContent() {
-  const searchParams = useSearchParams();
-  const meetingId = searchParams.get('id');
-  const source = searchParams.get('source'); // Check if navigated from recording
+interface MeetingDetailsScreenProps {
+  meetingId: string;
+  /** How the user got here; `'recording'` may auto-generate the summary. */
+  source?: MeetingSource;
+}
+
+/**
+ * One meeting: loads its transcript pages and summary, then shows the
+ * transcript and summary panels.
+ */
+export function MeetingDetailsScreen({ meetingId, source }: MeetingDetailsScreenProps) {
   const { setCurrentMeeting, refetchMeetings } = useSidebar();
   const { isAutoSummary } = useConfig(); // Get auto-summary toggle state
-  const router = useRouter();
+  const navigate = useNavigate();
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsResponse | null>(null);
   const [summaryResponse, setSummaryResponse] = useState<SummaryProcessResponse | null>(null);
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null);
@@ -251,7 +258,7 @@ function MeetingDetailsContent() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => void navigate({ to: '/' })}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Go Back
@@ -290,16 +297,4 @@ function MeetingDetailsContent() {
     loadedCount={loadedCount}
     onLoadMore={loadMore}
   />;
-}
-
-export default function MeetingDetails() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen">
-        <LoaderIcon className="animate-spin size-6" />
-      </div>
-    }>
-      <MeetingDetailsContent />
-    </Suspense>
-  );
 }

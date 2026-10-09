@@ -47,7 +47,7 @@ export function OnboardingContainer({
       <div className={cn('w-full max-w-2xl h-full max-h-screen flex flex-col px-6 py-6', className)}>
         {/* Progress Indicator with Navigation - Fixed */}
         {step && !hideProgress && (
-          <div className="mb-2 relative flex-shrink-0">
+          <div className="mb-2 relative shrink-0">
             {/* Navigation Buttons */}
             {showNavigation && (
               <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between pointer-events-none">
@@ -55,7 +55,7 @@ export function OnboardingContainer({
                   onClick={handlePrevious}
                   disabled={!canGoPrevious || step === 1}
                   className={cn(
-                    'pointer-events-auto w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center transition-all duration-200',
+                    'pointer-events-auto w-8 h-8 rounded-full bg-white border border-gray-200 shadow-xs flex items-center justify-center transition-all duration-200',
                     canGoPrevious && step !== 1
                       ? 'hover:bg-gray-50 hover:shadow-md hover:scale-110 text-gray-700'
                       : 'opacity-0 cursor-not-allowed'
@@ -68,7 +68,7 @@ export function OnboardingContainer({
                   onClick={handleNext}
                   disabled={!canGoNext || step === totalSteps}
                   className={cn(
-                    'pointer-events-auto w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center transition-all duration-200',
+                    'pointer-events-auto w-8 h-8 rounded-full bg-white border border-gray-200 shadow-xs flex items-center justify-center transition-all duration-200',
                     canGoNext && step !== totalSteps
                       ? 'hover:bg-gray-50 hover:shadow-md hover:scale-110 text-gray-700'
                       : 'opacity-0 cursor-not-allowed'
@@ -85,7 +85,7 @@ export function OnboardingContainer({
         )}
 
         {/* Header - Fixed */}
-        <div className="mb-4 text-center space-y-3 flex-shrink-0">
+        <div className="mb-4 text-center space-y-3 shrink-0">
           <h1 className="text-4xl font-semibold text-gray-900 animate-fade-in-up">{title}</h1>
           {description && (
             <p className="text-base text-gray-600 max-w-md mx-auto animate-fade-in-up delay-75">

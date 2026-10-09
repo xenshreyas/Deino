@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode, MutableRefObject } from 'react';
 import { Transcript, TranscriptUpdate } from '@/types';
 import { toast } from 'sonner';
@@ -181,9 +179,9 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let unlistenFn: (() => void) | undefined;
     let transcriptCounter = 0;
-    let transcriptBuffer = new Map<number, Transcript>();
+    const transcriptBuffer = new Map<number, Transcript>();
     let lastProcessedSequence = 0;
-    let processingTimer: NodeJS.Timeout | undefined;
+    let processingTimer: ReturnType<typeof setTimeout> | undefined;
 
     const processBufferedTranscripts = (forceFlush = false) => {
       const sortedTranscripts: Transcript[] = [];

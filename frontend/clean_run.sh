@@ -22,18 +22,17 @@ echo "Cleaning up previous builds..."
 #rm -rf src-tauri/target
 #rm -rf src-tauri/gen
 
-# Clean up npm, pnp and next
-echo "Cleaning up npm, pnp and next..."
+# Clean up dependencies and the UI build
+echo "Cleaning up dependencies and the UI build..."
 rm -rf node_modules
-rm -rf .next
 rm -rf .pnp.cjs
-rm -rf out
+rm -rf dist
 
 echo "Installing dependencies..."
 pnpm install
 
-# Build the Next.js application first
-echo "Building Next.js application..."
+# Build the UI (Vite) first
+echo "Building the UI..."
 pnpm run build
 
 # Set environment variables for the build

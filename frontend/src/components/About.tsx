@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
-import Image from 'next/image';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UpdateDialog } from './UpdateDialog';
@@ -33,7 +32,7 @@ export function About() {
   return (
     <div className="p-4 space-y-5">
       <div className="text-center space-y-1">
-        <Image src="icon_128x128.png" alt="Deino" width={64} height={64} className="mx-auto mb-2" />
+        <img src="/icon_128x128.png" alt="Deino" width={64} height={64} className="mx-auto mb-2" />
         <h1 className="text-lg font-semibold text-gray-900">Deino</h1>
         {currentVersion && <p className="text-sm text-gray-500">Version {currentVersion}</p>}
         <p className="text-sm text-gray-600">A private, local-first AI meeting notepad.</p>

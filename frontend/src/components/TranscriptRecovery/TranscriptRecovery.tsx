@@ -155,11 +155,11 @@ export function TranscriptRecovery({
                       </div>
                       {meeting.folderPath ? (
                         <span title="Audio available">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                         </span>
                       ) : (
                         <span title="No audio">
-                          <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                          <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
                         </span>
                       )}
                     </div>

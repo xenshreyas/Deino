@@ -1,17 +1,12 @@
-"use client";
-
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
-import dynamic from 'next/dynamic';
 import { Summary, SummaryDataResponse, SummaryFormat, BlockNoteBlock } from '@/types';
 import { AISummary } from './index';
+import Editor from '../BlockNoteEditor/Editor';
 import { Block } from '@blocknote/core';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { blocksToMarkdownSafely } from '@/lib/blocknote-markdown';
 import "@blocknote/shadcn/style.css";
-
-// Dynamically import BlockNote Editor to avoid SSR issues
-const Editor = dynamic(() => import('../BlockNoteEditor/Editor'), { ssr: false });
 
 interface BlockNoteSummaryViewProps {
   summaryData: SummaryDataResponse | Summary | null;

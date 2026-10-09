@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { RecordingControls } from '@/components/RecordingControls';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
@@ -7,9 +5,9 @@ import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import { useRecordingState, RecordingStatus } from '@/contexts/RecordingStateContext';
 import { useTranscripts } from '@/contexts/TranscriptContext';
 import { useConfig } from '@/contexts/ConfigContext';
-import { StatusOverlays } from '@/app/_components/StatusOverlays';
-import { SettingsModals } from './_components/SettingsModal';
-import { TranscriptPanel } from './_components/TranscriptPanel';
+import { StatusOverlays } from './components/status-overlays';
+import { SettingsModals } from './components/settings-modals';
+import { TranscriptPanel } from './components/transcript-panel';
 import { useModalState } from '@/hooks/useModalState';
 import { useRecordingStateSync } from '@/hooks/useRecordingStateSync';
 import { useRecordingStart } from '@/hooks/useRecordingStart';
@@ -18,9 +16,10 @@ import { useTranscriptRecovery } from '@/hooks/useTranscriptRecovery';
 import { TranscriptRecovery } from '@/components/TranscriptRecovery';
 import { indexedDBService } from '@/services/indexedDBService';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 
-export default function Home() {
+/** The home screen: live transcript, recording controls and recovery. */
+export function RecordScreen() {
   // Local page state (not moved to contexts)
   const [isRecording, setIsRecordingState] = useState(false);
   const [barHeights, setBarHeights] = useState(['58%', '76%', '58%']);
@@ -58,7 +57,7 @@ export default function Home() {
     deleteRecoverableMeeting
   } = useTranscriptRecovery();
 
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Startup recovery check
   useEffect(() => {
@@ -116,15 +115,16 @@ export default function Home() {
     try {
       const result = await recoverMeeting(meetingId);
 
+      const recoveredMeetingId = result.meetingId;
       if (result.success) {
         toast.success('Meeting recovered successfully!', {
           description: result.audioRecoveryStatus?.status === 'success'
             ? 'Transcripts and audio recovered'
             : 'Transcripts recovered (no audio available)',
-          action: result.meetingId ? {
+          action: recoveredMeetingId ? {
             label: 'View Meeting',
             onClick: () => {
-              router.push(`/meeting-details?id=${result.meetingId}`);
+              void navigate({ to: '/meetings/$meetingId', params: { meetingId: recoveredMeetingId } });
             }
           } : undefined,
           duration: 10000,
@@ -139,9 +139,9 @@ export default function Home() {
         }
 
         // Auto-navigate after a short delay
-        if (result.meetingId) {
+        if (recoveredMeetingId) {
           setTimeout(() => {
-            router.push(`/meeting-details?id=${result.meetingId}`);
+            void navigate({ to: '/meetings/$meetingId', params: { meetingId: recoveredMeetingId } });
           }, 2000);
         }
       }
