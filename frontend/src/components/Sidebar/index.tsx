@@ -53,7 +53,6 @@ const Sidebar: React.FC = () => {
     isSearching,
     meetings,
     setMeetings,
-    serverAddress
   } = useSidebar();
 
   // Get recording state from RecordingStateContext (single source of truth)
@@ -107,12 +106,6 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     // Note: Don't set hardcoded defaults - let DB be the source of truth
     const fetchModelConfig = async () => {
-      // Only make API call if serverAddress is loaded
-      if (!serverAddress) {
-        console.log('Waiting for server address to load before fetching model config');
-        return;
-      }
-
       try {
         const data = await invoke('api_get_model_config') as any;
         if (data && data.provider !== null) {
@@ -135,18 +128,12 @@ const Sidebar: React.FC = () => {
     };
 
     fetchModelConfig();
-  }, [serverAddress]);
+  }, []);
 
 
   useEffect(() => {
     // Note: Don't set hardcoded defaults - let DB be the source of truth
     const fetchTranscriptSettings = async () => {
-      // Only make API call if serverAddress is loaded
-      if (!serverAddress) {
-        console.log('Waiting for server address to load before fetching transcript settings');
-        return;
-      }
-
       try {
         const data = await invoke('api_get_transcript_config') as any;
         if (data && data.provider !== null) {
@@ -157,7 +144,7 @@ const Sidebar: React.FC = () => {
       }
     };
     fetchTranscriptSettings();
-  }, [serverAddress]);
+  }, []);
 
   // Listen for model config updates from other components
   useEffect(() => {
