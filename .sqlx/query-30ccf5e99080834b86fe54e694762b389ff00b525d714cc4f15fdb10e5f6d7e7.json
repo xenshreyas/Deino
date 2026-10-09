@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM egress_log WHERE id <= (SELECT MAX(id) FROM egress_log) - ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "30ccf5e99080834b86fe54e694762b389ff00b525d714cc4f15fdb10e5f6d7e7"
+}

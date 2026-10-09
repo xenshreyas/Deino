@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO egress_log\n                    (at, service, host, method, status, outcome, bytes_up, bytes_down)\n                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "ba32e6fee65ba9906371a357609c0f2f7f40d1feb450c6c82dba84cfad2431c8"
+}
