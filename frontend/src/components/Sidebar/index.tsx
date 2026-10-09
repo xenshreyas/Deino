@@ -195,17 +195,9 @@ const Sidebar: React.FC = () => {
   const handleSaveTranscriptConfig = async (updatedConfig?: TranscriptModelProps) => {
     try {
       const configToSave = updatedConfig || transcriptModelConfig;
-      const payload = {
+      await invoke('api_save_transcript_config', {
         provider: configToSave.provider,
         model: configToSave.model,
-        apiKey: configToSave.apiKey ?? null
-      };
-      console.log('Saving transcript config with payload:', payload);
-
-      await invoke('api_save_transcript_config', {
-        provider: payload.provider,
-        model: payload.model,
-        apiKey: payload.apiKey,
       });
 
 
