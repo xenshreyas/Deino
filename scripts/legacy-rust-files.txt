@@ -25,15 +25,10 @@ frontend/src-tauri/src/audio/transcription/worker.rs
 frontend/src-tauri/src/audio/vad.rs
 frontend/src-tauri/src/notifications/commands.rs
 frontend/src-tauri/src/notifications/manager.rs
-frontend/src-tauri/src/ollama/metadata.rs
-frontend/src-tauri/src/ollama/ollama.rs
 frontend/src-tauri/src/parakeet_engine/commands.rs
 frontend/src-tauri/src/parakeet_engine/model.rs
 frontend/src-tauri/src/parakeet_engine/parakeet_engine.rs
 frontend/src-tauri/src/summary/commands.rs
-frontend/src-tauri/src/summary/llm_client.rs
-frontend/src-tauri/src/summary/processor.rs
-frontend/src-tauri/src/summary/service.rs
 frontend/src-tauri/src/summary/summary_engine/commands.rs
 frontend/src-tauri/src/summary/summary_engine/model_manager.rs
 frontend/src-tauri/src/summary/summary_engine/models.rs
@@ -42,4 +37,3 @@ frontend/src-tauri/src/tray.rs
 frontend/src-tauri/src/whisper_engine/commands.rs
 frontend/src-tauri/src/whisper_engine/parallel_processor.rs
 frontend/src-tauri/src/whisper_engine/whisper_engine.rs
-llama-helper/src/main.rs

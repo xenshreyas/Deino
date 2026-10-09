@@ -14,6 +14,7 @@ import { SummaryModelSettings } from '@/components/SummaryModelSettings';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
+import { AiSettings } from '@/features/llm';
 import {
   AudioLines,
   Cpu,
@@ -23,6 +24,7 @@ import {
   Mic,
   Palette,
   Settings,
+  Sparkles,
   Wrench,
 } from '@/ui/icons';
 
@@ -95,6 +97,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'appearance', group: 'app', icon: Palette, Component: AppearanceSection },
   { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
+  { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },

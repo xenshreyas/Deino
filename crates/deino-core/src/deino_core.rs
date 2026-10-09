@@ -12,7 +12,8 @@
 //! The app crate wires adapters into services (`composition.rs`) and exposes
 //! each service through one inline Tauri plugin. [`_example`] is the template
 //! to copy; [`meetings`] is the first real feature built from it, and
-//! [`settings`] holds every user preference.
+//! [`settings`] holds every user preference; [`summaries`] generates the
+//! legacy template summaries through the LLM gateway (`deino-llm`).
 //!
 //! FND-07 added one module per aggregate of the core schema, each with its
 //! ports, a SQLite repository and a fake, so feature cards add services and
@@ -34,6 +35,7 @@ pub mod models;
 pub mod people;
 pub mod segments;
 pub mod settings;
+pub mod summaries;
 pub mod tags;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;

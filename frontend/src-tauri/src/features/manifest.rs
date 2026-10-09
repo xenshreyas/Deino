@@ -34,6 +34,19 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "delete_model",
         ],
     ),
+    // ── FND-09 LLM gateway: Settings → AI ──
+    (
+        "llm",
+        &[
+            "providers",
+            "models",
+            "routes",
+            "set_route",
+            "test_route",
+            "ollama_pull",
+            "ollama_delete",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

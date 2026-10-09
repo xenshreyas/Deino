@@ -134,6 +134,10 @@ export type Table =
  */
 "action_items" | 
 /**
+ * One row per LLM provider call: usage, never content.
+ */
+"llm_calls" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -143,4 +147,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","llm_calls","example_notes"] as const satisfies readonly Table[]

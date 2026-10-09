@@ -21,6 +21,7 @@ mod events;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
 pub mod legacy;
+mod llm_access;
 mod model;
 mod notifications;
 mod onboarding;
@@ -38,6 +39,7 @@ pub use events::SettingsEvents;
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{FakeSettingsStore, RecordedSettingsEvents};
 pub use legacy::{LegacyFileImport, LegacySqliteImport};
+pub use llm_access::{LlmAccess, secret_for};
 pub use model::{SETTINGS_VERSION, Settings};
 pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, NotificationSettings};
 pub use onboarding::{ModelDownloadState, OnboardingSettings};

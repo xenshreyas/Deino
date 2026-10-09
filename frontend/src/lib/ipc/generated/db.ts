@@ -110,6 +110,10 @@ export type Table =
  */
 "action_items" | 
 /**
+ * One row per LLM provider call: usage, never content.
+ */
+"llm_calls" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

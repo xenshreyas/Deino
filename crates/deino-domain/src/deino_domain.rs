@@ -43,8 +43,8 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, IdError, MeetingId,
-    PersonId, SegmentId, SeriesId, SpeakerId, TagId, TemplateId,
+    ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, IdError, LlmCallId,
+    MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, TagId, TemplateId,
 };
 pub use status::{InvalidTransition, MeetingEvent, MeetingStatus};
 pub use units::{Millis, Seconds};

@@ -11,6 +11,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:e2e": "playwright test",
+        "eval": "node scripts/eval.mjs",
         "typecheck": "tsc --noEmit -p tsconfig.legacy.json && node scripts/typecheck.mjs && tsc --noEmit -p tsconfig.node.json",
         "lint": "eslint .",
         "format": "node scripts/format.mjs --write",

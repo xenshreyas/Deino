@@ -27,6 +27,10 @@ export const settingsCopy = {
       label: 'Transcription',
       description: 'The local speech-to-text engine and its models.',
     },
+    ai: {
+      label: 'AI models',
+      description: 'Which provider and model serve each AI task, and a quick test for each.',
+    },
     models: { label: 'Summary models', description: 'The language model that writes your notes.' },
     beta: { label: 'Beta', description: 'Features that are still being finished.' },
     about: { label: 'About', description: 'Version, privacy and updates.' },

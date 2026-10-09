@@ -130,6 +130,7 @@ sqlx = { workspace = true, features = ["json"] }
 deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
+deino-llm.workspace = true
 deino-secrets.workspace = true
 # The fixture seeder behind the debug-only `dev` plugin (features/dev.rs); its
 # fakes stay behind `test-support`, which only the dev-dependency enables.
@@ -188,6 +189,9 @@ futures-channel = "0.3.31"
 
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
+deino-llm = { workspace = true, features = ["test-support"] }
+# Structured-output types in the LLM smoke tests (llm/smoke_tests.rs).
+schemars = "1.2.1"
 deino-secrets = { workspace = true, features = ["test-support"] }
 deino-stt = { workspace = true, features = ["test-support"] }
 # Test catalogs and downloads are checked against real SHA-256 digests.

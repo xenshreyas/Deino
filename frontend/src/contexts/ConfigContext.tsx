@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 
 import type { ModelConfig } from '@/components/ModelSettingsModal';
+import { legacyOllamaModels } from '@/features/llm';
 import type { TranscriptModelProps } from '@/components/TranscriptSettings';
 import type { SelectedDevices } from '@/components/DeviceSelection';
 import { BetaFeatures, BetaFeatureKey, DEFAULT_BETA_FEATURES } from '@/types/betaFeatures';
@@ -231,7 +232,7 @@ function derivedSettings(
 function useOllamaModels(endpoint: string | null): { models: OllamaModel[]; error: string } {
   const query = useQuery({
     queryKey: ['ollama-models', endpoint],
-    queryFn: () => invoke<OllamaModel[]>('get_ollama_models', { endpoint }),
+    queryFn: () => legacyOllamaModels(endpoint),
     retry: false,
   });
   const error = query.error ? query.error.message || 'Failed to load Ollama models' : '';

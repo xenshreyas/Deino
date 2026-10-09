@@ -3,7 +3,7 @@ use crate::database::repositories::{
     summary::SummaryProcessesRepository, transcript_chunk::TranscriptChunksRepository,
 };
 use crate::state::AppState;
-use crate::summary::processor::{clean_llm_markdown_detailed, contains_reasoning_marker};
+use deino_core::summaries::{clean_markdown, contains_reasoning_marker};
 use crate::summary::service::SummaryService;
 use log::{error as log_error, info as log_info, warn as log_warn};
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
@@ -148,7 +148,7 @@ fn summary_is_renderable(value: &serde_json::Value) -> bool {
     if let Some(markdown) = object.get("markdown") {
         return markdown
             .as_str()
-            .is_some_and(|markdown| !clean_llm_markdown_detailed(markdown).markdown.is_empty());
+            .is_some_and(|markdown| !clean_markdown(markdown).markdown.is_empty());
     }
     if let Some(blocks) = object.get("summary_json") {
         return blocknote_has_visible_text(blocks);
@@ -163,7 +163,7 @@ fn sanitize_markdown_value(value: Option<&mut serde_json::Value>) -> bool {
     let Some(serde_json::Value::String(markdown)) = value else {
         return false;
     };
-    let cleaned = clean_llm_markdown_detailed(markdown);
+    let cleaned = clean_markdown(markdown);
     let reasoning_stripped = cleaned.reasoning_stripped;
     *markdown = cleaned.markdown;
     reasoning_stripped
@@ -359,21 +359,18 @@ pub async fn api_process_transcript<R: Runtime>(
     let cancellation_token =
         SummaryService::register_cancellation_token(&m_id, started_at);
     let meeting_id_clone = m_id.clone();
-    tauri::async_runtime::spawn(async move {
-        SummaryService::process_transcript_background(
-            app,
-            pool,
-            meeting_id_clone,
-            started_at,
-            cancellation_token,
-            text,
-            model,
-            model_name,
-            final_prompt,
-            final_template_id,
-        )
-        .await;
-    });
+    let job = crate::summary::service::SummaryJob {
+        pool,
+        meeting_id: meeting_id_clone,
+        started_at,
+        cancellation: cancellation_token,
+        text,
+        provider: model,
+        model: model_name,
+        custom_prompt: final_prompt,
+        template_id: final_template_id,
+    };
+    tauri::async_runtime::spawn(SummaryService::process_transcript_background(app, job));
 
     log_info!("🚀 Background task spawned for meeting_id: {}", &m_id);
     Ok(ProcessTranscriptResponse {

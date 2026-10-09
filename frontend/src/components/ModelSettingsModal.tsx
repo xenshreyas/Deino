@@ -6,6 +6,7 @@ import { BuiltInModelManager } from '@/components/BuiltInModelManager';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/controls';
 import { useConfig } from '@/contexts/ConfigContext';
+import { legacyModelIds, legacyOllamaModels, legacyOpenRouterModels, llmApi } from '@/features/llm';
 import {
   ApiKeyStatus,
   apiKeyPlaceholder,
@@ -63,20 +64,6 @@ interface OpenRouterModel {
   context_length?: number;
   prompt_price?: string;
   completion_price?: string;
-}
-
-interface OpenAIModel {
-  id: string;
-}
-
-interface AnthropicModel {
-  id: string;
-  display_name?: string;
-}
-
-interface GroqModel {
-  id: string;
-  owned_by?: string;
 }
 
 // Fallback models for when API fetch fails or no API key provided
@@ -341,7 +328,7 @@ export function ModelSettingsModal({
 
     try {
       const endpoint = trimmedEndpoint || null;
-      const modelList = (await invoke('get_ollama_models', { endpoint })) as OllamaModel[];
+      const modelList = await legacyOllamaModels(endpoint);
       setModels(modelList);
       setLastFetchedEndpoint(trimmedEndpoint); // Track successful fetch
 
@@ -401,7 +388,7 @@ export function ModelSettingsModal({
     try {
       setIsLoadingOpenRouter(true);
       setOpenRouterError('');
-      const data = (await invoke('get_openrouter_models')) as OpenRouterModel[];
+      const data = await legacyOpenRouterModels();
       setOpenRouterModels(data);
     } catch (err) {
       console.error('Error loading OpenRouter models:', err);
@@ -441,8 +428,7 @@ export function ModelSettingsModal({
     }
     setIsLoadingOpenAI(true);
     try {
-      const data = (await invoke('get_openai_models', { apiKey: key?.trim() || null })) as OpenAIModel[];
-      setOpenaiModels(data.map((m) => m.id));
+      setOpenaiModels(await legacyModelIds('openai', { apiKey: key?.trim() || null }));
     } catch (err) {
       console.error('Error loading OpenAI models:', err);
       setOpenaiModels([]); // Will use fallback via modelOptions
@@ -459,8 +445,7 @@ export function ModelSettingsModal({
     }
     setIsLoadingClaude(true);
     try {
-      const data = (await invoke('get_anthropic_models', { apiKey: key?.trim() || null })) as AnthropicModel[];
-      setClaudeModels(data.map((m) => m.id));
+      setClaudeModels(await legacyModelIds('anthropic', { apiKey: key?.trim() || null }));
     } catch (err) {
       console.error('Error loading Claude models:', err);
       setClaudeModels([]); // Will use fallback via modelOptions
@@ -477,8 +462,7 @@ export function ModelSettingsModal({
     }
     setIsLoadingGroq(true);
     try {
-      const data = (await invoke('get_groq_models', { apiKey: key?.trim() || null })) as GroqModel[];
-      setGroqModels(data.map((m) => m.id));
+      setGroqModels(await legacyModelIds('groq', { apiKey: key?.trim() || null }));
     } catch (err) {
       console.error('Error loading Groq models:', err);
       setGroqModels([]); // Will use fallback via modelOptions
@@ -589,14 +573,9 @@ export function ModelSettingsModal({
     }
 
     try {
-      const endpoint = ollamaEndpoint.trim() || null;
-
-      // The download will be tracked by the global context via events
-      // Progress toasts are shown automatically by OllamaDownloadContext
-      await invoke('pull_ollama_model', {
-        modelName: recommendedModel,
-        endpoint
-      });
+      // The download is tracked by OllamaDownloadContext through the `llm`
+      // plugin's ollamaPull events, which also show the progress toasts.
+      await llmApi.ollamaPull(recommendedModel);
 
       // Refresh the models list after successful download
       await fetchOllamaModels(true);
@@ -627,11 +606,7 @@ export function ModelSettingsModal({
   // Function to delete Ollama model
   const deleteOllamaModel = async (modelName: string) => {
     try {
-      const endpoint = ollamaEndpoint.trim() || null;
-      await invoke('delete_ollama_model', {
-        modelName,
-        endpoint
-      });
+      await llmApi.ollamaDelete(modelName);
 
       toast.success(`Model ${modelName} deleted`);
       await fetchOllamaModels(true); // Refresh list

@@ -25,7 +25,8 @@ pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::settings::{
-    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
+    JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, LlmAccess, SettingsError,
+    SettingsService,
 };
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
@@ -107,9 +108,40 @@ pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    attach_llm(app, &database, clock);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, &database);
     features::db::forward_changes(app, database.changes());
+}
+
+/// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>`,
+/// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
+/// that saves `llm_calls`. Needs [`attach_settings`] to have run.
+fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
+    let (Some(settings), Some(secrets)) = (
+        app.try_state::<Arc<SettingsService>>(),
+        app.try_state::<Arc<dyn SecretStore>>(),
+    ) else {
+        log::error!(target: "llm", "settings were not wired before the database; AI is unavailable");
+        return;
+    };
+    let access = Arc::new(LlmAccess::new(Arc::clone(&settings), Arc::clone(&secrets)));
+    let app_data_dir = app.path().app_data_dir().unwrap_or_default();
+    let services = crate::llm::build(crate::llm::LlmPorts {
+        access,
+        database: database.clone(),
+        app_data_dir,
+        clock,
+    });
+    // Owned for the app's lifetime: it ends when the gateway, and with it the
+    // last usage channel, is dropped at exit.
+    tauri::async_runtime::spawn(services.usage_writer.run());
+    app.manage(services.gateway);
+    app.manage(services.admin);
+    app.manage(services.summaries);
+    let pull_events: Arc<dyn features::llm::PullEvents> =
+        Arc::new(features::llm::TauriPullEvents::new(app.clone()));
+    app.manage(pull_events);
 }
 
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture

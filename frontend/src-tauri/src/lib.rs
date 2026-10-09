@@ -21,6 +21,7 @@ pub mod config;
 mod error;
 pub mod features;
 mod lifecycle;
+mod llm;
 pub mod onboarding;
 mod onnx_runtime;
 mod paths;
@@ -29,17 +30,12 @@ pub mod stt;
 pub mod updater;
 
 legacy_modules! {
-    pub mod anthropic;
     pub mod api;
     pub mod audio;
     pub mod console_utils;
     pub mod database;
-    pub mod groq;
     mod legacy;
     pub mod notifications;
-    pub mod ollama;
-    pub mod openai;
-    pub mod openrouter;
     pub mod parakeet_engine;
     pub mod state;
     pub mod summary;
@@ -82,6 +78,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::db::init())
         .plugin(features::meetings::init())
         .plugin(features::secrets::init())
+        .plugin(features::llm::init())
         .plugin(features::settings::init())
         .plugin(features::transcription::init())
         .plugin(features::system::init());

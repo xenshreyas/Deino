@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: Settings = {
     ollamaEndpoint: null,
     customOpenai: null,
     autoSummary: false,
+    routes: {},
   },
   audio: { preferredMicDevice: null, preferredSystemDevice: null },
   recording: { autoSave: true, showRecordingNotice: true },

@@ -19,6 +19,12 @@ the SQLite adapters behind those ports.
   one-time importers of the pre-FND-06 stores (`LegacySqliteImport`, a
   `deino_db::DataMigration`, and `LegacyFileImport`). Fakes:
   `FakeSettingsStore`, `RecordedSettingsEvents`.
+  `LlmAccess` implements the LLM gateway's `CredentialSource` (Keychain),
+  `EndpointSource` and `RouteStore` (`ai.routes`) ports.
+- `summaries`: the legacy template summaries (chunk → combine → fill the
+  template) as `SummaryGenerator` over `deino_llm::Gateway`, with the
+  reasoning cleanup and chunking they need. FND-08 makes it a pipeline stage;
+  NOT-02 replaces it.
 - The core-schema aggregates (FND-07), each with small ports, a SQLite
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:

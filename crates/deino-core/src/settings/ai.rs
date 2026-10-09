@@ -5,6 +5,7 @@
 
 use std::collections::BTreeMap;
 
+use deino_llm::{Route, Target};
 use deino_secrets::SecretName;
 use serde::{Deserialize, Serialize};
 
@@ -91,6 +92,9 @@ pub struct AiSettings {
     pub custom_openai: Option<CustomOpenAiSettings>,
     /// Generate notes automatically when a recording stops.
     pub auto_summary: bool,
+    /// The provider and model the user pinned per LLM task route (Settings →
+    /// AI); routes not listed use the defaults of PARITY_PLAN §4.3.
+    pub routes: BTreeMap<Route, Target>,
 }
 
 impl AiSettings {

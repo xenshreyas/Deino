@@ -58,7 +58,6 @@ const STATIC_RESPONSES: Record<string, unknown> = {
   whisper_get_available_models: [],
   builtin_ai_list_models: [],
   builtin_ai_is_model_ready: false,
-  get_ollama_models: [],
 };
 
 /** Every mocked legacy command. */
