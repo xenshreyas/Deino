@@ -7,6 +7,7 @@ import {
   Transcript,
 } from '@/types';
 import { ModelConfig } from '@/components/ModelSettingsModal';
+import { legacyOllamaModels } from '@/features/llm';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { invoke as invokeTauri } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
@@ -349,9 +350,7 @@ export function useSummaryGeneration({
 
     try {
       if (modelConfig.provider === 'ollama') {
-        const models = await invokeTauri<unknown[]>('get_ollama_models', {
-          endpoint: modelConfig.ollamaEndpoint || null,
-        });
+        const models = await legacyOllamaModels(modelConfig.ollamaEndpoint || null);
         if (models.length === 0) {
           showPreflightError('No Ollama models found. Please download gemma3:1b from Model Settings.');
           return;

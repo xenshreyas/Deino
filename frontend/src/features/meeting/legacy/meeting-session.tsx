@@ -7,6 +7,7 @@ import { LegacyMeetingPanelsProvider } from "./panels-context";
 import type { MeetingSource } from "../search";
 import { invoke } from "@tauri-apps/api/core";
 import { useConfig } from "@/contexts/ConfigContext";
+import { legacyOllamaModels } from "@/features/llm";
 import { settingsApi } from "@/features/settings";
 import { usePaginatedTranscripts } from "@/hooks/usePaginatedTranscripts";
 import { parseSummaryContent } from "@/lib/summary-content";
@@ -63,8 +64,8 @@ export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeet
   // Check if gemma3:1b model is available in Ollama
   const checkForGemmaModel = useCallback(async (): Promise<boolean> => {
     try {
-      const models = await invoke('get_ollama_models', { endpoint: null }) as any[];
-      const hasGemma = models.some((m: any) => m.name === 'gemma3:1b');
+      const models = await legacyOllamaModels();
+      const hasGemma = models.some((m) => m.name === 'gemma3:1b');
       console.log('🔍 Checked for gemma3:1b:', hasGemma);
       return hasGemma;
     } catch (error) {

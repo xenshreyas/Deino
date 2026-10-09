@@ -41,7 +41,9 @@ invoke.mockImplementation(async (command: string, args?: Record<string, unknown>
   if (command === 'api_get_meeting_transcripts') {
     return { transcripts: [{ text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1 };
   }
-  if (command === 'get_ollama_models') return [{ name: 'test' }];
+  if (command === 'plugin:llm|models') {
+    return [{ id: 'test', displayName: null, contextLength: null, sizeBytes: null, modifiedAt: null, ready: true }];
+  }
   if (command === 'api_process_transcript') return startProcess();
   if (command === 'api_cancel_summary') return { cancelled: true };
   throw new Error(`Unexpected command: ${command}`);
