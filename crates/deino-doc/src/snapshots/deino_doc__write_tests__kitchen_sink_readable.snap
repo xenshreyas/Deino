@@ -1,0 +1,26 @@
+---
+source: crates/deino-doc/src/write_tests.rs
+expression: "to_markdown(&kitchen_sink(), Flavor::Readable)"
+---
+# Q4 roadmap
+
+Agreed with @Priya to **narrow** Q3.
+
+- push notifications first
+  - retention fell 40% without push [1:02:04]
+- *SMB paused*
+
+1. scope doc
+2. design
+
+- [x] book room
+- [ ] send deck
+
+> ship it
+> *— Maya*
+
+---
+
+![whiteboard](images/0192f3a0.png)
+
+`run` then [docs](https://a.io/docs)

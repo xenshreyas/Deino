@@ -13,7 +13,7 @@ excessive-nesting-threshold = 5
 
 # Words that are not code, so `doc_markdown` does not ask for backticks.
 # ".." keeps clippy's defaults (macOS, SQLite, TypeScript, ...).
-doc-valid-idents = ["..", "CMake", "FFmpeg", "HubSpot", "OpenAI", "OpenRouter", "OpenWhispr", "OSStatus", "PARITY_PLAN", "ResNet34", "SQLite", "TanStack", "UUIDv4", "UUIDv7", "VoxCeleb", "WeSpeaker", "WKWebView"]
+doc-valid-idents = ["..", "CMake", "CommonMark", "FFmpeg", "HubSpot", "OpenAI", "OpenRouter", "OpenWhispr", "OSStatus", "PARITY_PLAN", "ProseMirror", "ResNet34", "SQLite", "TanStack", "TipTap", "UUIDv4", "UUIDv7", "VoxCeleb", "WeSpeaker", "WKWebView"]
 
 # Tests may panic loudly; production code may not.
 allow-dbg-in-tests = true

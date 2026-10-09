@@ -1508,6 +1508,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64 0.22.1",
  "bytemuck",
  "bytes",
  "chrono",
@@ -1522,6 +1523,7 @@ dependencies = [
  "deino-core",
  "deino-db",
  "deino-diarize",
+ "deino-doc",
  "deino-domain",
  "deino-llm",
  "deino-net",
@@ -1617,6 +1619,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "deino-db",
+ "deino-doc",
  "deino-domain",
  "deino-llm",
  "deino-secrets",
@@ -1635,6 +1638,7 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
+ "uuid",
 ]
 
 [[package]]
@@ -1673,6 +1677,19 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "deino-doc"
+version = "0.1.0"
+dependencies = [
+ "deino-domain",
+ "insta",
+ "markdown",
+ "serde",
+ "serde_json",
+ "specta",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -1797,6 +1814,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "deino-db",
+ "deino-doc",
  "deino-domain",
  "serde",
  "serde_json",
@@ -3341,6 +3359,7 @@ checksum = "154934ea70c58054b556dd430b99a98c2a7ff5309ac9891597e339b5c28f4371"
 dependencies = [
  "console",
  "once_cell",
+ "serde",
  "similar",
 ]
 
@@ -3839,6 +3858,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "markdown"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5cab8f2cadc416a82d2e783a1946388b31654d391d1c7d92cc1f03e295b1deb"
+dependencies = [
+ "unicode-id",
 ]
 
 [[package]]
@@ -7912,6 +7940,12 @@ name = "unicode-bidi"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c1cb5db39152898a79168971543b1cb5020dff7fe43c8dc468b0885f5e29df5"
+
+[[package]]
+name = "unicode-id"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65dd75ab2d9d379dbe86d4059e91d8b5a6e7054865eaba1ddbfc7a817ff96392"
 
 [[package]]
 name = "unicode-ident"

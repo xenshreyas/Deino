@@ -1,0 +1,26 @@
+---
+source: crates/deino-doc/src/write_tests.rs
+expression: "to_markdown(&kitchen_sink(), Flavor::Lossless)"
+---
+# Q4 roadmap
+
+Agreed with <mention data-id="0192f3a0-6c1e-7b2a-9d4e-1f2a3b4c5d6e" data-label="Priya" /> to **narrow** Q3.
+
+- <span data-origin="user">push notifications first</span>
+  - <span data-origin="ai">retention fell 40% without push <citation data-segment-id="0192f3a0-6c1e-7b2a-9d4e-aaaaaaaaaaaa" data-start-ms="3724000" /></span>
+- <span data-origin="ai" data-edited="true">*SMB paused*</span>
+
+1. scope doc
+2. <u>design</u>
+
+- [x] book room
+- [ ] send deck
+
+> ship it\
+> *— Maya*
+
+---
+
+![whiteboard](images/0192f3a0.png)
+
+`run` then [docs](https://a.io/docs)
