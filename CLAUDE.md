@@ -136,7 +136,8 @@ src/
 │                            hooks/  components/  *.test.ts(x)
 ├── lib/ipc/                 generated/ (never edit)  result.ts  query-client.ts
 │                            events.ts  ipc-query-provider.tsx
-├── ui/                      shared primitives; icons.ts is the only icon import
+├── ui/                      shared primitives on the tokens; icons.ts is the only icon import
+├── styles/tokens.css        design tokens, light + dark (ADR 0015); /design shows them (dev)
 └── components/ contexts/ hooks/ services/ lib/* types/   legacy (legacy-files.mjs)
 ```
 
@@ -243,6 +244,13 @@ PR and makes it pass. Never add new code to a list.
   `dirs::` or hard-coded folders.
 - Rendering anything under `SidebarProvider` in a test needs a
   `QueryClientProvider`.
+- **Colours come from the design tokens** (`bg-bg-muted`, `text-fg-muted`,
+  `border-border`, `bg-accent`, …), never Tailwind palette classes or hex
+  values (ESLint rejects them), so both themes keep working. Sidebar entries,
+  meeting tabs and panels, palette results and settings pages are added
+  through their registries (`features/shell/nav.ts`,
+  `features/meeting/slots.ts`, `command-palette/providers.ts`,
+  `features/settings/sections.tsx`).
 
 ## Rust ↔ UI communication
 

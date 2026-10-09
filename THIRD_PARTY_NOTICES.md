@@ -48,6 +48,11 @@ Adapted in Deino:
   test, from `plugins/settings/src/lib.rs`.
 - `docs/TESTING.md`: the "write a test when / do not write a test for"
   guidance, adapted from `.agents/skills/testing/SKILL.md`.
+- `frontend/public/theme-boot.js`: applying the saved theme before the first
+  paint, after `apps/desktop/public/theme-boot.js`; the System / Light / Dark
+  picker with a diagonally split System preview
+  (`frontend/src/features/appearance/components/theme-picker.tsx`) follows
+  `apps/desktop/src/settings/appearance/theme.tsx`.
 
 MIT License
 
@@ -137,3 +142,52 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## shadcn/ui
+
+Source: https://github.com/shadcn-ui/ui, MIT License.
+
+Adapted in Deino:
+
+- `frontend/src/ui/`: the Radix-based primitives (button, dialog, popover,
+  dropdown menu, select, tabs, tooltip, command, scroll area, accordion,
+  alert, switch, label, separator, progress, button group), restyled to
+  Deino's design tokens.
+
+MIT License
+
+Copyright (c) 2023 shadcn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Inter (font)
+
+Source: https://github.com/rsms/inter, bundled through `@fontsource-variable/inter`.
+
+Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter).
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The full licence ships with the package (`@fontsource-variable/inter/LICENSE`)
+and is available with a FAQ at https://openfontlicense.org. The font is used
+unmodified and is not sold on its own.
+
