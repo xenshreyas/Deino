@@ -65,3 +65,22 @@ test('turning sync off replaces Coming up with the prompt to connect', async ({ 
   await page.getByRole('button', { name: 'Set up calendars' }).click();
   await expect(page).toHaveURL('/settings?section=calendar');
 });
+
+test('a direct connection connects once its app registration is saved', async ({ page }) => {
+  await openCalendarSettings(page);
+  const outlook = page.getByRole('group', { name: 'Microsoft Outlook' });
+  await expect(outlook.getByText('Add your app registration to connect.')).toBeVisible();
+  await expect(outlook.getByRole('button', { name: 'Connect' })).toBeDisabled();
+
+  await outlook.getByLabel('Client ID').fill('00000000-0000-0000-0000-000000000000');
+  await outlook.getByLabel('Client ID').blur();
+  await outlook.getByRole('button', { name: 'Connect' }).click();
+
+  await expect(outlook.getByText(/^Connected · Synced/)).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath('settings-connectors.png'),
+    fullPage: true,
+  });
+  await outlook.getByRole('button', { name: 'Disconnect' }).click();
+  await expect(outlook.getByText('Not connected')).toBeVisible();
+});

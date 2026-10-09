@@ -21,7 +21,13 @@ import { events } from '@/lib/ipc/generated/calendar';
 import type { Table } from '@/lib/ipc/generated/shared';
 
 import { calendarApi } from './api';
-import type { CalendarId, CalendarStatus, CalendarView, TimeRange } from './types';
+import type {
+  CalendarId,
+  CalendarProvider,
+  CalendarStatus,
+  CalendarView,
+  TimeRange,
+} from './types';
 
 /** The tables the calendar lists read. */
 const CALENDAR_TABLES = [
@@ -105,6 +111,25 @@ export function useRefreshCalendars() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: calendarApi.refresh,
+    onSuccess: (status) => {
+      applyStatus(client, status);
+    },
+  });
+}
+
+/** Input of {@link useConnectCalendar}. */
+export interface ConnectorChange {
+  provider: CalendarProvider;
+  /** Connect (`true`, opens the browser) or disconnect (`false`). */
+  connected: boolean;
+}
+
+/** Connects or disconnects a Google or Microsoft account. */
+export function useConnectCalendar() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ provider, connected }: ConnectorChange) =>
+      connected ? calendarApi.connect(provider) : calendarApi.disconnect(provider),
     onSuccess: (status) => {
       applyStatus(client, status);
     },

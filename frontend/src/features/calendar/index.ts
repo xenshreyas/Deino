@@ -5,7 +5,8 @@
  * - `ComingUp`: the next two weeks, a simple list ORG-02 places on Home
  *   (shown on the current Home while nothing records);
  * - `CalendarSettings`: Settings → Calendar (sync switch, macOS access,
- *   calendars with colour dots and visibility, refresh).
+ *   the optional Google and Microsoft direct connections, calendars with
+ *   colour dots and visibility, refresh).
  */
 export { calendarApi } from './api';
 export { CalendarSettings } from './components/calendar-settings';

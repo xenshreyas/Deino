@@ -25,6 +25,8 @@ export function calendarBindings() {
     setCalendarVisible: vi.fn<typeof Generated.commands.setCalendarVisible>(),
     upcoming: vi.fn<typeof Generated.commands.upcoming>(),
     event: vi.fn<typeof Generated.commands.event>(),
+    connect: vi.fn<typeof Generated.commands.connect>(),
+    disconnect: vi.fn<typeof Generated.commands.disconnect>(),
   } satisfies typeof Generated.commands;
   const listen = vi.fn<(handler: EventCallback<Generated.CalendarChanged>) => Promise<() => void>>(
     () => Promise.resolve(vi.fn()),
@@ -32,7 +34,7 @@ export function calendarBindings() {
   return { commands, events: { calendarChanged: { listen } } };
 }
 
-/** A status: sync on with access by default. */
+/** A status: sync on with access by default, and no direct connectors. */
 export function status(
   overrides: Partial<Generated.CalendarStatus> = {},
 ): Generated.CalendarStatus {
@@ -40,6 +42,22 @@ export function status(
     syncEnabled: true,
     access: 'granted',
     lastSyncedAt: new Date().toISOString(),
+    lastError: null,
+    connectors: [],
+    ...overrides,
+  };
+}
+
+/** A direct connector: set up but not connected by default. */
+export function connector(
+  provider: Generated.CalendarProvider,
+  overrides: Partial<Generated.ConnectorStatus> = {},
+): Generated.ConnectorStatus {
+  return {
+    provider,
+    configured: true,
+    connected: false,
+    lastSyncedAt: null,
     lastError: null,
     ...overrides,
   };

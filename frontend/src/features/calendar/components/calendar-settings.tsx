@@ -1,6 +1,7 @@
 /**
  * Settings → Calendar (ORG-01): turn macOS Calendar sync on or off, see what
- * macOS allows and when the last sync ran, and choose which calendars show.
+ * macOS allows and when the last sync ran, connect Google or Microsoft
+ * directly, and choose which calendars show.
  * Container: state comes from the `calendar` plugin's queries, kept current
  * by `CalendarChanged` and `DbChanged`.
  */
@@ -19,6 +20,7 @@ import {
   useSetCalendarVisible,
 } from '../queries';
 import { CalendarList } from './calendar-list';
+import { ConnectorsSection } from './connectors-section';
 import { SyncCard } from './sync-card';
 
 /** The macOS Calendar section: the switch, access and the last sync. */
@@ -104,6 +106,7 @@ export function CalendarSettings() {
   return (
     <div className="flex flex-col gap-8">
       <SyncSection />
+      <ConnectorsSection />
       <CalendarsSection />
     </div>
   );

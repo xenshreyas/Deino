@@ -1,4 +1,4 @@
-import type { CalendarAccess, ConferencePlatform } from './types';
+import type { CalendarAccess, CalendarProvider, ConferencePlatform } from './types';
 
 /** Every visible string of the calendar feature. */
 export const calendarCopy = {
@@ -59,5 +59,35 @@ export const calendarCopy = {
     toggleFailed: 'Could not show or hide that calendar.',
     show: (title: string) => `Show ${title}`,
     untitled: 'Untitled calendar',
+  },
+
+  connectors: {
+    title: 'Direct connections',
+    description:
+      'Optional, for an account that is not on this Mac. Uses your own app registration; events go straight from the provider to this Mac.',
+    names: {
+      apple: 'macOS Calendar',
+      google: 'Google Calendar',
+      microsoft: 'Microsoft Outlook',
+    } satisfies Record<CalendarProvider, string>,
+    setup: {
+      apple: '',
+      google: 'Create a Desktop app OAuth client in Google Cloud, then paste its ID and secret.',
+      microsoft: 'Register a public client app in Microsoft Entra, then paste its client ID.',
+    } satisfies Record<CalendarProvider, string>,
+    clientId: 'Client ID',
+    clientIdPlaceholder: 'Paste the client ID',
+    clientSecret: 'Client secret',
+    secretStored: 'Saved in the Keychain',
+    secretMissing: 'Paste the client secret',
+    needsSetup: 'Add your app registration to connect.',
+    notConnected: 'Not connected',
+    connected: (synced: string) => `Connected · ${synced}`,
+    connect: 'Connect',
+    waiting: 'Finish signing in in your browser…',
+    disconnect: 'Disconnect',
+    connectFailed: 'Could not connect. Check the app registration and try again.',
+    disconnectFailed: 'Could not disconnect.',
+    saveFailed: 'Could not save the app registration.',
   },
 } as const;

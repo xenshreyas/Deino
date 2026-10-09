@@ -74,7 +74,12 @@ const DEFAULT_SETTINGS: Settings = {
     transcriptSidecar: false,
     obsidian: false,
   },
-  calendar: { syncEnabled: false, hiddenCalendars: [] },
+  calendar: {
+    syncEnabled: false,
+    hiddenCalendars: [],
+    google: { clientId: '' },
+    microsoft: { clientId: '' },
+  },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

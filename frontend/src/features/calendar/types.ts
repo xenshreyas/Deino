@@ -9,6 +9,7 @@ export type {
   CalendarStatus,
   CalendarView,
   ConferencePlatform,
+  ConnectorStatus,
   EventAttendee,
   TimeRange,
 } from '@/lib/ipc/generated/calendar';

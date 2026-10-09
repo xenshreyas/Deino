@@ -3,14 +3,13 @@
  * macOS allows, a way to System Settings when access is off, and when the
  * last sync ran. Presentational.
  */
-import { differenceInMinutes, formatDistanceStrict } from 'date-fns';
-
 import { Button } from '@/ui/button';
 import { Switch } from '@/ui/controls';
 import { RotateCcw, ICON_PROPS } from '@/ui/icons';
 import { SettingsCard } from '@/ui/settings-section';
 
 import { calendarCopy } from '../copy';
+import { syncedLabel } from '../synced';
 import type { CalendarAccess, CalendarStatus } from '../types';
 
 /** Access states that only System Settings can change. */
@@ -25,16 +24,6 @@ export interface SyncCardProps {
   onToggle: (enabled: boolean) => void;
   onRefresh: () => void;
   onOpenSettings: () => void;
-}
-
-/** "Synced 3 minutes ago", or "Not synced yet". */
-function lastSynced(status: CalendarStatus, now: Date): string {
-  if (status.lastSyncedAt === null) return calendarCopy.sync.neverSynced;
-  const syncedAt = new Date(status.lastSyncedAt);
-  if (differenceInMinutes(now, syncedAt) < 1)
-    return calendarCopy.sync.synced(calendarCopy.sync.justNow);
-  const when = formatDistanceStrict(syncedAt, now, { addSuffix: true });
-  return calendarCopy.sync.synced(when);
 }
 
 /** The switch row. */
@@ -72,7 +61,7 @@ function StatusRow({
     <div className="flex min-h-[44px] items-center justify-between gap-4 px-4 py-2">
       <div className="min-w-0">
         <p className="text-xs text-fg-muted">
-          {busy ? calendarCopy.sync.refreshing : lastSynced(status, now)}
+          {busy ? calendarCopy.sync.refreshing : syncedLabel(status.lastSyncedAt, now)}
         </p>
         {status.lastError === null ? null : (
           <p role="alert" className="text-xs text-danger">

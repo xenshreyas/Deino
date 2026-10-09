@@ -9,6 +9,7 @@ import type {
   CalendarEvent,
   CalendarEventId,
   CalendarId,
+  CalendarProvider,
   CalendarStatus,
   CalendarView,
   TimeRange,
@@ -34,4 +35,13 @@ export const calendarApi = {
   upcoming: (range: TimeRange): Promise<CalendarEvent[]> => unwrap(commands.upcoming(range)),
   /** One synced event. */
   event: (id: CalendarEventId): Promise<CalendarEvent> => unwrap(commands.event(id)),
+  /**
+   * Signs in to Google or Microsoft in the browser, then syncs. Resolves
+   * once the user finishes (or gives up) there.
+   */
+  connect: (provider: CalendarProvider): Promise<CalendarStatus> =>
+    unwrap(commands.connect(provider)),
+  /** Forgets a Google or Microsoft sign-in and its synced calendars. */
+  disconnect: (provider: CalendarProvider): Promise<CalendarStatus> =>
+    unwrap(commands.disconnect(provider)),
 };
