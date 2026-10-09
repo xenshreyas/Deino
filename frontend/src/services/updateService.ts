@@ -1,15 +1,22 @@
 /**
  * Update Service
  *
- * Handles automatic software updates using Tauri updater plugin.
- * Provides update checking, downloading, and installation functionality.
+ * Handles software updates using the Tauri updater plugin, behind the
+ * Rust-side update gate (`updates_enabled`, see `src-tauri/src/updater/mod.rs`).
+ *
+ * Updates are disabled in Deino for now (PARITY_PLAN §8 D6). While the gate is
+ * off, every check resolves to `{ enabled: false, available: false }` without
+ * calling the updater plugin, which is not registered in that case.
  */
 
+import { invoke } from '@tauri-apps/api/core';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 
 export interface UpdateInfo {
+  /** False when this build has update checks turned off. */
+  enabled: boolean;
   available: boolean;
   currentVersion: string;
   version?: string;
@@ -31,7 +38,20 @@ export interface UpdateProgress {
 export class UpdateService {
   private updateCheckInProgress = false;
   private lastCheckTime: number | null = null;
+  private enabledPromise: Promise<boolean> | null = null;
   private readonly CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+  /**
+   * Whether this build allows update checks. The answer is fixed at build
+   * time, so it is fetched once and cached.
+   */
+  isEnabled(): Promise<boolean> {
+    this.enabledPromise ??= invoke<boolean>('updates_enabled').catch((error: unknown) => {
+      console.error('Failed to read the update gate; treating updates as disabled:', error);
+      return false;
+    });
+    return this.enabledPromise;
+  }
 
   /**
    * Check for available updates
@@ -39,6 +59,10 @@ export class UpdateService {
    * @returns Promise with update information
    */
   async checkForUpdates(force = false): Promise<UpdateInfo> {
+    if (!(await this.isEnabled())) {
+      return { enabled: false, available: false, currentVersion: await getVersion() };
+    }
+
     // Prevent concurrent update checks
     if (this.updateCheckInProgress) {
       throw new Error('Update check already in progress');
@@ -50,6 +74,7 @@ export class UpdateService {
       if (timeSinceLastCheck < this.CHECK_INTERVAL_MS) {
         console.log('Skipping update check - checked recently');
         return {
+          enabled: true,
           available: false,
           currentVersion: await getVersion(),
         };
@@ -65,6 +90,7 @@ export class UpdateService {
 
       if (update?.available) {
         return {
+          enabled: true,
           available: true,
           currentVersion,
           version: update.version,
@@ -74,6 +100,7 @@ export class UpdateService {
       }
 
       return {
+        enabled: true,
         available: false,
         currentVersion,
       };

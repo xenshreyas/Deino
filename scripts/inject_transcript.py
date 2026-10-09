@@ -2,7 +2,7 @@
 """
 Meeting Transcript Database Injector
 
-Injects CSV-based transcript data into the Meetily SQLite database,
+Injects CSV-based transcript data into the Deino SQLite database,
 creating meeting entries identical to those from normal recordings.
 
 Usage:
@@ -25,23 +25,26 @@ import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Tauri app identifier; the app data directory is named after it.
+APP_IDENTIFIER = "com.xenshreyas.deino"
+
 
 def get_default_db_path() -> Path:
     """Get the default database path based on the platform."""
     system = platform.system()
 
     if system == "Darwin":  # macOS
-        base_path = Path.home() / "Library" / "Application Support" / "Meetily"
+        base_path = Path.home() / "Library" / "Application Support" / APP_IDENTIFIER
     elif system == "Windows":
         appdata = os.environ.get("APPDATA", "")
         if appdata:
-            base_path = Path(appdata) / "Meetily"
+            base_path = Path(appdata) / APP_IDENTIFIER
         else:
-            base_path = Path.home() / "AppData" / "Roaming" / "Meetily"
+            base_path = Path.home() / "AppData" / "Roaming" / APP_IDENTIFIER
     else:  # Linux and others
-        base_path = Path.home() / ".config" / "Meetily"
+        base_path = Path.home() / ".local" / "share" / APP_IDENTIFIER
 
-    return base_path / "meeting_minutes.sqlite"
+    return base_path / "deino.sqlite"
 
 
 def estimate_duration(text: str) -> float:
@@ -227,7 +230,7 @@ def verify_injection(db_path: str, meeting_id: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Inject CSV transcript data into Meetily database",
+        description="Inject CSV transcript data into the Deino database",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 CSV Format (minimal - just 'text' column required):
@@ -281,7 +284,7 @@ Example usage:
 
     if not db_path.exists():
         print(f"Error: Database not found at {db_path}", file=sys.stderr)
-        print("Make sure Meetily has been run at least once to create the database.", file=sys.stderr)
+        print("Make sure Deino has been run at least once to create the database.", file=sys.stderr)
         sys.exit(1)
 
     # Resolve CSV path
@@ -344,7 +347,7 @@ Example usage:
     except Exception as e:
         print(f"Warning: Verification failed: {e}", file=sys.stderr)
 
-    print("\nThe meeting should now appear in the Meetily sidebar.")
+    print("\nThe meeting should now appear in the Deino sidebar.")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,9 @@ use std::sync::RwLock;
 // Global storage for the bundled templates directory path
 static BUNDLED_TEMPLATES_DIR: Lazy<RwLock<Option<PathBuf>>> = Lazy::new(|| RwLock::new(None));
 
+// Global storage for the user's custom templates directory path
+static CUSTOM_TEMPLATES_DIR: Lazy<RwLock<Option<PathBuf>>> = Lazy::new(|| RwLock::new(None));
+
 /// Set the bundled templates directory path (called once at app startup)
 pub fn set_bundled_templates_dir(path: PathBuf) {
     info!("Bundled templates directory set to: {:?}", path);
@@ -16,17 +19,20 @@ pub fn set_bundled_templates_dir(path: PathBuf) {
     }
 }
 
-/// Get the user's custom templates directory path
+/// Set the user's custom templates directory (called once at app startup).
 ///
-/// Returns the platform-specific application data directory for custom templates:
-/// - macOS: ~/Library/Application Support/Meetily/templates/
-/// - Windows: %APPDATA%\Meetily\templates\
-/// - Linux: ~/.config/Meetily/templates/
+/// The caller resolves it through Tauri's path resolver as
+/// `<app_data_dir>/templates`, so it follows the bundle identifier.
+pub fn set_custom_templates_dir(path: PathBuf) {
+    info!("Custom templates directory set to: {:?}", path);
+    if let Ok(mut dir) = CUSTOM_TEMPLATES_DIR.write() {
+        *dir = Some(path);
+    }
+}
+
+/// Get the user's custom templates directory, if startup has configured it.
 fn get_custom_templates_dir() -> Option<PathBuf> {
-    let mut path = dirs::data_dir()?;
-    path.push("Meetily");
-    path.push("templates");
-    Some(path)
+    CUSTOM_TEMPLATES_DIR.read().ok()?.clone()
 }
 
 /// Load a template from the bundled resources directory

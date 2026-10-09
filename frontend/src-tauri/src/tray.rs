@@ -23,7 +23,7 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
 
     TrayIconBuilder::with_id("main-tray")
         .menu(&menu)
-        .tooltip("Meetily")
+        .tooltip(crate::APP_NAME)
         .icon(app.default_window_icon().unwrap().clone())
         .on_menu_event(|app, event| handle_menu_event(app, event.id.as_ref()))
         .build(app)?;
@@ -90,7 +90,7 @@ fn toggle_recording_handler<R: Runtime>(app: &AppHandle<R>) {
                     log::info!("Tray toggle: Recording stopped successfully");
 
                     // Trigger frontend post-processing via event (works from any page)
-                    // (SQLite save, navigation, analytics)
+                    // (SQLite save, navigation)
                     if let Err(e) = app_clone.emit("recording-stop-complete", true) {
                         log::error!("Tray toggle: Failed to emit recording-stop-complete event: {}", e);
                     }
@@ -186,7 +186,7 @@ fn stop_recording_handler<R: Runtime>(app: &AppHandle<R>) {
                 log::info!("Tray: Recording stopped successfully");
 
                 // Trigger frontend post-processing via event (works from any page)
-                // (SQLite save, navigation, analytics)
+                // (SQLite save, navigation)
                 if let Err(e) = app_clone.emit("recording-stop-complete", true) {
                     log::error!("Tray: Failed to emit recording-stop-complete event: {}", e);
                 }
@@ -381,11 +381,18 @@ fn build_menu<R: Runtime>(
         }
     }
 
-    builder
+    builder = builder
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItemBuilder::with_id("open_window", "Open Main Window").build(app)?)
-        .item(&MenuItemBuilder::with_id("settings", "Settings").build(app)?)
-        .item(&MenuItemBuilder::with_id("check_updates", "Check for Updates").build(app)?)
+        .item(&MenuItemBuilder::with_id("settings", "Settings").build(app)?);
+
+    // Only offer update checks when the updater gate is on (PARITY_PLAN §8 D6).
+    if crate::updater::AUTO_UPDATE_ENABLED {
+        builder = builder
+            .item(&MenuItemBuilder::with_id("check_updates", "Check for Updates").build(app)?);
+    }
+
+    builder
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItemBuilder::with_id("quit", "Quit").build(app)?)
         .build()

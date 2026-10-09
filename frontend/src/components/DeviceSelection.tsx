@@ -6,7 +6,6 @@ import { AudioLevelMeter, CompactAudioLevelMeter } from './AudioLevelMeter';
 import { AudioBackendSelector } from './AudioBackendSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import Analytics from '@/lib/analytics';
 
 export interface AudioDevice {
   name: string;
@@ -75,7 +74,7 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
   // available (e.g. AirPods that have since disconnected). Without this the
   // dropdown keeps showing a device that's gone — Radix Select renders an
   // empty/stale trigger for a value not among its options — and start would
-  // send a name the backend can't open. Matches Pro's DeviceSelection prune.
+  // send a name the backend can't open.
   //
   // Format trap: selected values carry the " (input)"/" (output)" suffix (the
   // SelectItem value form below), while enumeration returns raw device names —
@@ -166,30 +165,6 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
     await fetchDevices();
   };
 
-  // Helper function to detect device category and Bluetooth status
-  const getDeviceMetadata = (deviceName: string) => {
-    const nameLower = deviceName.toLowerCase();
-
-    // Detect if it's Bluetooth
-    const isBluetooth = nameLower.includes('airpods')
-      || nameLower.includes('bluetooth')
-      || nameLower.includes('wireless')
-      || nameLower.includes('wh-')  // Sony WH-* series
-      || nameLower.includes('bt ');
-
-    // Categorize device
-    let category = 'wired';
-    if (deviceName === 'default') {
-      category = 'default';
-    } else if (nameLower.includes('airpods')) {
-      category = 'airpods';
-    } else if (isBluetooth) {
-      category = 'bluetooth';
-    }
-
-    return { isBluetooth, category };
-  };
-
   // Handle microphone device selection
   const handleMicDeviceChange = (deviceName: string) => {
     const newDevices = {
@@ -197,14 +172,6 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
       micDevice: deviceName === 'default' ? null : deviceName
     };
     onDeviceChange(newDevices);
-
-    // Track device selection analytics with enhanced metadata
-    const metadata = getDeviceMetadata(deviceName);
-    Analytics.track('microphone_selected', {
-      device_category: metadata.category,
-      is_bluetooth: metadata.isBluetooth.toString(),
-      has_system_audio: (!!selectedDevices.systemDevice).toString()
-    }).catch(err => console.error('Failed to track microphone selection:', err));
   };
 
   // Handle system audio device selection
@@ -214,14 +181,6 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
       systemDevice: deviceName === 'default' ? null : deviceName
     };
     onDeviceChange(newDevices);
-
-    // Track device selection analytics with enhanced metadata
-    const metadata = getDeviceMetadata(deviceName);
-    Analytics.track('system_audio_selected', {
-      device_category: metadata.category,
-      is_bluetooth: metadata.isBluetooth.toString(),
-      has_microphone: (!!selectedDevices.micDevice).toString()
-    }).catch(err => console.error('Failed to track system audio selection:', err));
   };
 
   // Start audio level monitoring

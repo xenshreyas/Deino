@@ -39,41 +39,28 @@ impl Default for RecordingPreferences {
     }
 }
 
+/// Name of the folder that holds recordings inside the user's media folder.
+const RECORDINGS_FOLDER_NAME: &str = "Deino";
+
 /// Get the default recordings folder based on platform
+///
+/// - macOS: `~/Movies/Deino`
+/// - Windows: `%USERPROFILE%\Music\Deino`
+/// - Linux and others: `~/Documents/Deino`
+///
+/// Falls back to the Documents folder when the media folder is unavailable.
 pub fn get_default_recordings_folder() -> PathBuf {
     #[cfg(target_os = "windows")]
-    {
-        // Windows: %USERPROFILE%\Music\meetily-recordings
-        if let Some(music_dir) = dirs::audio_dir() {
-            music_dir.join("meetily-recordings")
-        } else {
-            // Fallback to Documents if Music folder is not available
-            dirs::document_dir()
-                .unwrap_or_else(|| PathBuf::from("."))
-                .join("meetily-recordings")
-        }
-    }
-
+    let media_dir = dirs::audio_dir();
     #[cfg(target_os = "macos")]
-    {
-        // macOS: ~/Movies/meetily-recordings
-        if let Some(movies_dir) = dirs::video_dir() {
-            movies_dir.join("meetily-recordings")
-        } else {
-            // Fallback to Documents if Movies folder is not available
-            dirs::document_dir()
-                .unwrap_or_else(|| PathBuf::from("."))
-                .join("meetily-recordings")
-        }
-    }
-
+    let media_dir = dirs::video_dir();
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    {
-        // Linux/Others: ~/Documents/meetily-recordings
-        dirs::document_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join("meetily-recordings")
-    }
+    let media_dir: Option<PathBuf> = None;
+
+    media_dir
+        .or_else(dirs::document_dir)
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join(RECORDINGS_FOLDER_NAME)
 }
 
 /// Ensure the recordings directory exists

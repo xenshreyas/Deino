@@ -32,8 +32,8 @@ pub fn set_models_directory<R: Runtime>(app: &AppHandle<R>) {
     *guard = Some(models_dir);
 }
 
-/// Get the configured models directory
-fn get_models_directory() -> Option<PathBuf> {
+/// Get the models directory configured by [`set_models_directory`], if any.
+pub(crate) fn configured_models_dir() -> Option<PathBuf> {
     MODELS_DIR.lock().unwrap().clone()
 }
 
@@ -44,7 +44,7 @@ pub async fn whisper_init() -> Result<(), String> {
         return Ok(());
     }
 
-    let models_dir = get_models_directory();
+    let models_dir = configured_models_dir();
     let engine = WhisperEngine::new_with_models_dir(models_dir)
         .map_err(|e| format!("Failed to initialize whisper engine: {}", e))?;
     *guard = Some(Arc::new(engine));
@@ -75,7 +75,7 @@ pub async fn whisper_get_available_models() -> Result<Vec<ModelInfo>, String> {
 fn discover_models_standalone() -> Result<Vec<ModelInfo>, String> {
     use crate::whisper_engine::ModelStatus;
 
-    let models_dir = get_models_directory()
+    let models_dir = configured_models_dir()
         .ok_or_else(|| "Models directory not initialized".to_string())?;
 
     // Whisper models are stored directly in the models directory (not in a whisper subdirectory)
@@ -528,7 +528,7 @@ pub async fn whisper_delete_corrupted_model(model_name: String) -> Result<String
 /// Open the models folder in the system file explorer
 #[command]
 pub async fn open_models_folder() -> Result<(), String> {
-    let models_dir = get_models_directory()
+    let models_dir = configured_models_dir()
         .ok_or_else(|| "Models directory not initialized".to_string())?;
 
     // Ensure directory exists before trying to open it

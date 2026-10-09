@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize};
 use anyhow::{Result, anyhow};
 use log::info as log_info;
 use std::path::PathBuf;
-use tauri::{AppHandle, Runtime};
-use dirs;
+use tauri::{AppHandle, Manager, Runtime};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationSettings {
@@ -102,7 +101,7 @@ pub struct ConsentManager<R: Runtime> {
 
 impl<R: Runtime> ConsentManager<R> {
     pub fn new(app_handle: AppHandle<R>) -> Result<Self> {
-        let settings_path = Self::get_settings_path()?;
+        let settings_path = Self::settings_path(&app_handle)?;
 
         Ok(Self {
             app_handle,
@@ -110,13 +109,16 @@ impl<R: Runtime> ConsentManager<R> {
         })
     }
 
-    /// Get the path where notification settings are stored
-    fn get_settings_path() -> Result<PathBuf> {
-        let mut path = dirs::config_dir()
-            .ok_or_else(|| anyhow!("Could not find config directory"))?;
-
-        path.push("meetily");
-        path.push("notifications.json");
+    /// Path of the notification settings file, `<app_data_dir>/notifications.json`.
+    ///
+    /// The app data dir comes from Tauri's path resolver, so it follows the
+    /// bundle identifier.
+    fn settings_path(app_handle: &AppHandle<R>) -> Result<PathBuf> {
+        let path = app_handle
+            .path()
+            .app_data_dir()
+            .map_err(|e| anyhow!("Could not resolve app data directory: {}", e))?
+            .join("notifications.json");
 
         // Ensure parent directory exists
         if let Some(parent) = path.parent() {

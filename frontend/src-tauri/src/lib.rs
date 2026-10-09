@@ -32,10 +32,12 @@ macro_rules! perf_trace {
 pub(crate) use perf_debug;
 pub(crate) use perf_trace;
 
+/// User-visible product name, used for notification titles and the tray tooltip.
+pub const APP_NAME: &str = "Deino";
+
 // Re-export async logging macros for external use (removed due to macro conflicts)
 
 // Declare audio module
-pub mod analytics;
 pub mod api;
 pub mod audio;
 pub mod config;
@@ -52,6 +54,7 @@ pub mod parakeet_engine;
 pub mod state;
 pub mod summary;
 pub mod tray;
+pub mod updater;
 pub mod utils;
 pub mod whisper_engine;
 
@@ -334,8 +337,6 @@ async fn is_audio_level_monitoring() -> bool {
     audio::simple_level_monitor::is_monitoring()
 }
 
-// Analytics commands are now handled by analytics::commands module
-
 // Whisper commands are now handled by whisper_engine::commands module
 
 #[tauri::command]
@@ -462,11 +463,12 @@ pub fn run() {
         }));
     }
 
+    builder = updater::register(builder);
+
     builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(whisper_engine::parallel_commands::ParallelProcessorState::new())
         .manage(Arc::new(RwLock::new(
@@ -595,6 +597,14 @@ pub fn run() {
                 log::warn!("Failed to resolve resource directory for templates");
             }
 
+            // User templates live in the app-identifier data dir
+            match _app.handle().path().app_data_dir() {
+                Ok(app_data_dir) => {
+                    summary::templates::set_custom_templates_dir(app_data_dir.join("templates"));
+                }
+                Err(e) => log::warn!("Failed to resolve app data directory for templates: {}", e),
+            }
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -616,31 +626,6 @@ pub fn run() {
             get_transcription_status,
             read_audio_file,
             save_transcript,
-            analytics::commands::init_analytics,
-            analytics::commands::disable_analytics,
-            analytics::commands::track_event,
-            analytics::commands::identify_user,
-            analytics::commands::track_meeting_started,
-            analytics::commands::track_recording_started,
-            analytics::commands::track_recording_stopped,
-            analytics::commands::track_meeting_deleted,
-            analytics::commands::track_settings_changed,
-            analytics::commands::track_feature_used,
-            analytics::commands::is_analytics_enabled,
-            analytics::commands::start_analytics_session,
-            analytics::commands::end_analytics_session,
-            analytics::commands::track_daily_active_user,
-            analytics::commands::track_user_first_launch,
-            analytics::commands::is_analytics_session_active,
-            analytics::commands::track_summary_generation_started,
-            analytics::commands::track_summary_generation_completed,
-            analytics::commands::track_summary_regenerated,
-            analytics::commands::track_model_changed,
-            analytics::commands::track_custom_prompt_used,
-            analytics::commands::track_meeting_ended,
-            analytics::commands::track_analytics_enabled,
-            analytics::commands::track_analytics_disabled,
-            analytics::commands::track_analytics_transparency_viewed,
             whisper_engine::commands::whisper_init,
             whisper_engine::commands::whisper_get_available_models,
             whisper_engine::commands::whisper_load_model,
@@ -830,6 +815,8 @@ pub fn run() {
             audio::import::start_import_audio_command,
             audio::import::cancel_import_command,
             audio::import::is_import_in_progress_command,
+            // ── FND-01 updater ──
+            updater::updates_enabled,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

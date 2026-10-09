@@ -3,6 +3,15 @@ use std::fs;
 use std::path::Path;
 use tauri::Manager;
 
+/// File name of Deino's SQLite database inside the app data dir.
+pub const DB_FILE_NAME: &str = "deino.sqlite";
+
+/// File name of a legacy database staged in the app data dir for import.
+///
+/// When [`DB_FILE_NAME`] does not exist yet, [`DatabaseManager::new`] copies
+/// this file to it and runs the migrations on the copy.
+pub const LEGACY_IMPORT_FILE_NAME: &str = "legacy-import.db";
+
 #[derive(Clone)]
 pub struct DatabaseManager {
     pool: SqlitePool,
@@ -53,18 +62,18 @@ impl DatabaseManager {
 
         // Define database paths
         let tauri_db_path = app_data_dir
-            .join("meeting_minutes.sqlite")
+            .join(DB_FILE_NAME)
             .to_string_lossy()
             .to_string();
         // Legacy backend DB path (for auto-migration if exists)
         let backend_db_path = app_data_dir
-            .join("meeting_minutes.db")
+            .join(LEGACY_IMPORT_FILE_NAME)
             .to_string_lossy()
             .to_string();
 
         // WAL file paths for defensive cleanup
-        let wal_path = app_data_dir.join("meeting_minutes.sqlite-wal");
-        let shm_path = app_data_dir.join("meeting_minutes.sqlite-shm");
+        let wal_path = app_data_dir.join(format!("{DB_FILE_NAME}-wal"));
+        let shm_path = app_data_dir.join(format!("{DB_FILE_NAME}-shm"));
 
         log::info!("Tauri DB path: {}", tauri_db_path);
         log::info!("Legacy backend DB path: {}", backend_db_path);
@@ -124,7 +133,7 @@ impl DatabaseManager {
             .app_data_dir()
             .expect("failed to get app data dir");
 
-        let tauri_db_path = app_data_dir.join("meeting_minutes.sqlite");
+        let tauri_db_path = app_data_dir.join(DB_FILE_NAME);
 
         Ok(!tauri_db_path.exists())
     }
@@ -143,8 +152,8 @@ impl DatabaseManager {
             fs::create_dir_all(&app_data_dir).map_err(|e| sqlx::Error::Io(e))?;
         }
 
-        // Copy legacy database to app data directory as meeting_minutes.db
-        let target_legacy_path = app_data_dir.join("meeting_minutes.db");
+        // Stage the legacy database in the app data directory for migration
+        let target_legacy_path = app_data_dir.join(LEGACY_IMPORT_FILE_NAME);
         log::info!(
             "Copying legacy database from {} to {}",
             legacy_db_path,

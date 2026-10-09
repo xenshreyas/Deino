@@ -1,351 +1,282 @@
-// ============================================================================
-// FFmpeg Binary Bundling
-// ============================================================================
-// Download and bundle FFmpeg binaries at build-time to eliminate runtime download delays
+//! Build-time provisioning of the FFmpeg sidecar.
+//!
+//! Tauri bundles `binaries/ffmpeg-<target-triple>[.exe]` as an external binary
+//! (`bundle.externalBin` in `tauri.conf.json`). This module makes sure that file
+//! exists before `tauri_build::build()` runs.
+//!
+//! Every download is pinned twice (PARITY_PLAN §3 rule 10):
+//! - the **archive** by URL, byte size and SHA-256, and
+//! - the **extracted executable** by byte size and SHA-256.
+//!
+//! A cached executable is reused only when it still matches its pin, so bumping
+//! a pin forces a fresh download. The build never executes the downloaded
+//! binary, which also keeps cross-compilation working.
+//!
+//! Sources (all FFmpeg 8.0.1):
+//! - macOS and Linux: Martin Riedl's FFmpeg build server, whose release builds
+//!   are kept under permanent, versioned URLs and published with `.sha256` files.
+//! - Windows: Gyan Doshi's "essentials" build from the `GyanD/codexffmpeg`
+//!   GitHub release, whose digest GitHub also reports for the asset.
 
-/// Download and bundle FFmpeg binary for current target platform
-/// Checks cache first, downloads only if missing or corrupted
+use sha2::{Digest, Sha256};
+use std::{
+    env,
+    fs::{self, File},
+    io::{Read, Write},
+    path::{Path, PathBuf},
+    process,
+    time::Duration,
+};
+
+/// The FFmpeg release every pinned build below was cut from.
+const FFMPEG_VERSION: &str = "8.0.1";
+
+/// Upper bound for a single archive download; the largest pinned archive is ~106 MB.
+const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(600);
+
+/// Read buffer used while hashing files.
+const HASH_BUFFER_BYTES: usize = 64 * 1024;
+
+/// Expected byte size and lowercase hex SHA-256 of a file.
+struct FilePin {
+    size: u64,
+    sha256: &'static str,
+}
+
+/// One pinned FFmpeg distribution for a single OS and CPU architecture.
+struct FfmpegBuild {
+    /// Immutable download URL of the archive.
+    archive_url: &'static str,
+    /// Pin for the archive as served.
+    archive: FilePin,
+    /// Path of the `ffmpeg` executable inside the zip archive.
+    member: &'static str,
+    /// Pin for the extracted executable.
+    binary: FilePin,
+}
+
+const MACOS_ARM64: FfmpegBuild = FfmpegBuild {
+    archive_url: "https://ffmpeg.martin-riedl.de/download/macos/arm64/1766430132_8.0.1/ffmpeg.zip",
+    archive: FilePin {
+        size: 26_953_718,
+        sha256: "c56f4e2b2ce26a61becf890d8da3415347a1d7d4418cb514915f21612358b790",
+    },
+    member: "ffmpeg",
+    binary: FilePin {
+        size: 62_024_672,
+        sha256: "3b586ff896c0339e8fd574c143aaccac23c80789341e22d4202f8013a133d3a4",
+    },
+};
+
+const MACOS_X86_64: FfmpegBuild = FfmpegBuild {
+    archive_url: "https://ffmpeg.martin-riedl.de/download/macos/amd64/1766437297_8.0.1/ffmpeg.zip",
+    archive: FilePin {
+        size: 32_877_318,
+        sha256: "a6c41c69e829697e408308f1ecd6acdfd0d0a84973ff3a6bf782beba83885ed6",
+    },
+    member: "ffmpeg",
+    binary: FilePin {
+        size: 92_506_128,
+        sha256: "0d9a45766a11804a598731e95b9bf1bc4306850150073e394bb63be8bed50add",
+    },
+};
+
+const LINUX_X86_64: FfmpegBuild = FfmpegBuild {
+    archive_url: "https://ffmpeg.martin-riedl.de/download/linux/amd64/1766430728_8.0.1/ffmpeg.zip",
+    archive: FilePin {
+        size: 32_323_774,
+        sha256: "90cdb6066c3b11489df4b8bae1999d2e056e66e728fc482834db92769bf5d202",
+    },
+    member: "ffmpeg",
+    binary: FilePin {
+        size: 89_374_336,
+        sha256: "aa4a1c02351ff62d3cb80173f7796b93cd540922af1577e075674fc222c4fc1f",
+    },
+};
+
+const LINUX_ARM64: FfmpegBuild = FfmpegBuild {
+    archive_url: "https://ffmpeg.martin-riedl.de/download/linux/arm64/1766429332_8.0.1/ffmpeg.zip",
+    archive: FilePin {
+        size: 27_730_206,
+        sha256: "a032a323119086c2dd71f5e9e27f0cb55c010a3dcc0dd7d5591d06b0a2d87702",
+    },
+    member: "ffmpeg",
+    binary: FilePin {
+        size: 58_113_240,
+        sha256: "8342efa7d256df6d46e10b4994e234d78498c9254a785b2c6d804b4b609b4e0b",
+    },
+};
+
+const WINDOWS_X86_64: FfmpegBuild = FfmpegBuild {
+    archive_url: "https://github.com/GyanD/codexffmpeg/releases/download/8.0.1/ffmpeg-8.0.1-essentials_build.zip",
+    archive: FilePin {
+        size: 106_259_850,
+        sha256: "e2aaeaa0fdbc397d4794828086424d4aaa2102cef1fb6874f6ffd29c0b88b673",
+    },
+    member: "ffmpeg-8.0.1-essentials_build/bin/ffmpeg.exe",
+    binary: FilePin {
+        size: 99_264_000,
+        sha256: "5af82a0d4fe2b9eae211b967332ea97edfc51c6b328ca35b827e73eac560dc0d",
+    },
+};
+
+/// Ensures `binaries/ffmpeg-<target>[.exe]` exists and matches its pin.
+///
+/// Panics (failing the build) when the target is unsupported or a download
+/// does not match its pin.
 pub fn ensure_ffmpeg_binary() {
-    let target = std::env::var("TARGET")
-        .or_else(|_| std::env::var("HOST"))
-        .expect("Neither TARGET nor HOST environment variable set");
+    let target = env_var("TARGET");
+    let build = select_build().unwrap_or_else(|error| panic!("FFmpeg: {error}"));
+    let output = sidecar_path(&target);
 
-    println!("cargo:warning=🎬 Checking FFmpeg binary for target: {}", target);
-
-    let binary_name = if target.contains("windows") {
-        format!("ffmpeg-{}.exe", target)
-    } else {
-        format!("ffmpeg-{}", target)
-    };
-
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR environment variable not set");
-    let binaries_dir = std::path::PathBuf::from(&manifest_dir).join("binaries");
-    let binary_path = binaries_dir.join(&binary_name);
-
-    // Cache check: Skip download if binary exists and works
-    if binary_path.exists() {
-        println!("cargo:warning=🔍 Found cached FFmpeg binary: {}", binary_name);
-        if verify_ffmpeg_binary(&binary_path) {
-            println!("cargo:warning=✅ FFmpeg binary already cached and verified: {}", binary_name);
-            return;
-        } else {
-            println!("cargo:warning=⚠️  Cached FFmpeg binary appears corrupted, re-downloading...");
-            let _ = std::fs::remove_file(&binary_path);
-        }
+    if verify_file(&output, &build.binary).is_ok() {
+        println!("cargo:warning=FFmpeg {FFMPEG_VERSION}: using verified cached sidecar");
+        return;
     }
 
-    println!("cargo:warning=📥 FFmpeg binary not found, downloading for {}", target);
+    println!("cargo:warning=FFmpeg {FFMPEG_VERSION}: downloading {}", build.archive_url);
+    install(build, &target, &output).unwrap_or_else(|error| panic!("FFmpeg: {error}"));
+    println!("cargo:warning=FFmpeg {FFMPEG_VERSION}: installed {}", output.display());
+}
 
-    // Create binaries directory if it doesn't exist
-    if !binaries_dir.exists() {
-        std::fs::create_dir_all(&binaries_dir)
-            .expect("Failed to create binaries directory");
-    }
-
-    // Download and extract
-    match download_and_extract_ffmpeg(&target, &binary_path) {
-        Ok(()) => {
-            println!("cargo:warning=✅ FFmpeg binary downloaded successfully: {}", binary_name);
-
-            // Verify downloaded binary works
-            if !verify_ffmpeg_binary(&binary_path) {
-                panic!("⚠️  Downloaded FFmpeg binary verification failed!");
-            }
-        }
-        Err(e) => {
-            panic!("⚠️  Failed to download FFmpeg: {}", e);
-        }
+/// Picks the pinned build for the target OS and CPU architecture.
+fn select_build() -> Result<&'static FfmpegBuild, String> {
+    let os = env_var("CARGO_CFG_TARGET_OS");
+    let arch = env_var("CARGO_CFG_TARGET_ARCH");
+    match (os.as_str(), arch.as_str()) {
+        ("macos", "aarch64") => Ok(&MACOS_ARM64),
+        ("macos", "x86_64") => Ok(&MACOS_X86_64),
+        ("linux", "x86_64") => Ok(&LINUX_X86_64),
+        ("linux", "aarch64") => Ok(&LINUX_ARM64),
+        ("windows", "x86_64") => Ok(&WINDOWS_X86_64),
+        _ => Err(format!("no pinned build for {os}/{arch}")),
     }
 }
 
-/// Download FFmpeg from platform-specific URL and extract to target location
-fn download_and_extract_ffmpeg(
-    target: &str,
-    output_path: &std::path::PathBuf,
-) -> Result<(), String> {
-    use std::io::Write;
+/// Path Tauri expects for the sidecar of `target`.
+fn sidecar_path(target: &str) -> PathBuf {
+    let extension = if target.contains("windows") { ".exe" } else { "" };
+    PathBuf::from(env_var("CARGO_MANIFEST_DIR"))
+        .join("binaries")
+        .join(format!("ffmpeg-{target}{extension}"))
+}
 
-    println!("cargo:warning=🌐 Fetching FFmpeg download URL for {}", target);
+/// Downloads, verifies and atomically installs the executable at `output`.
+fn install(build: &FfmpegBuild, target: &str, output: &Path) -> Result<(), String> {
+    let parent = output
+        .parent()
+        .ok_or_else(|| format!("{} has no parent directory", output.display()))?;
+    fs::create_dir_all(parent)
+        .map_err(|error| format!("failed to create {}: {error}", parent.display()))?;
 
-    // Get platform-specific download URL
-    let url = get_ffmpeg_url_for_target(target)?;
+    // Process-unique scratch names, so parallel builds never share a file.
+    let archive = env::temp_dir().join(format!("deino-ffmpeg-{}-{target}.zip", process::id()));
+    let staged = parent.join(format!(".ffmpeg-{}-{target}.partial", process::id()));
 
-    println!("cargo:warning=⬇️  Downloading from: {}", url);
+    let result = download_and_stage(build, &archive, &staged).and_then(|()| {
+        fs::rename(&staged, output)
+            .map_err(|error| format!("failed to install {}: {error}", output.display()))
+    });
+    let _ = fs::remove_file(&archive);
+    let _ = fs::remove_file(&staged);
+    result
+}
 
-    // Download with timeout (using reqwest from build-dependencies)
+/// Fetches the archive, checks both pins and writes the executable to `staged`.
+fn download_and_stage(build: &FfmpegBuild, archive: &Path, staged: &Path) -> Result<(), String> {
+    download(build.archive_url, archive, &build.archive)?;
+    verify_file(archive, &build.archive)?;
+    extract_member(archive, build.member, staged)?;
+    verify_file(staged, &build.binary)?;
+    make_executable(staged)
+}
+
+/// Streams `url` into `destination`, refusing anything larger than the pin.
+fn download(url: &str, destination: &Path, pin: &FilePin) -> Result<(), String> {
     let client = reqwest::blocking::Client::builder()
-        .timeout(std::time::Duration::from_secs(600)) // 10 min timeout for large downloads
+        .timeout(DOWNLOAD_TIMEOUT)
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-
+        .map_err(|error| format!("failed to create HTTP client: {error}"))?;
     let response = client
-        .get(&url)
+        .get(url)
         .send()
-        .map_err(|e| format!("Failed to download: {}", e))?;
+        .and_then(reqwest::blocking::Response::error_for_status)
+        .map_err(|error| format!("download of {url} failed: {error}"))?;
+    let mut file = File::create(destination)
+        .map_err(|error| format!("failed to create {}: {error}", destination.display()))?;
 
-    if !response.status().is_success() {
-        return Err(format!("HTTP error: {}", response.status()));
-    }
+    // Read one byte past the pin so an oversized body is detected by `verify_file`.
+    std::io::copy(&mut response.take(pin.size + 1), &mut file)
+        .map_err(|error| format!("download of {url} failed: {error}"))?;
+    file.flush()
+        .map_err(|error| format!("failed to write {}: {error}", destination.display()))
+}
 
-    let total_size = response.content_length().unwrap_or(0);
-    println!("cargo:warning=📦 Download size: {:.1} MB", total_size as f64 / 1_048_576.0);
-
-    // Download to temp file
-    let temp_dir = std::env::temp_dir();
-    let archive_filename = url.split('/').last().unwrap_or("ffmpeg-archive");
-    let archive_path = temp_dir.join(format!("ffmpeg-build-{}-{}", target, archive_filename));
-
-    {
-        let mut file = std::fs::File::create(&archive_path)
-            .map_err(|e| format!("Failed to create temp file: {}", e))?;
-
-        let content = response.bytes()
-            .map_err(|e| format!("Failed to read response: {}", e))?;
-
-        file.write_all(&content)
-            .map_err(|e| format!("Failed to write archive: {}", e))?;
-    }
-
-    println!("cargo:warning=📦 Downloaded to: {:?}", archive_path);
-    println!("cargo:warning=📂 Extracting FFmpeg binary...");
-
-    // Extract binary (platform-specific)
-    extract_ffmpeg_from_archive(&archive_path, target, output_path)?;
-
-    // Cleanup archive
-    let _ = std::fs::remove_file(&archive_path);
-
-    println!("cargo:warning=✨ Extraction complete");
-
+/// Copies the zip entry `member` out of `archive` into `destination`.
+fn extract_member(archive: &Path, member: &str, destination: &Path) -> Result<(), String> {
+    let file = File::open(archive)
+        .map_err(|error| format!("failed to open {}: {error}", archive.display()))?;
+    let mut zip =
+        zip::ZipArchive::new(file).map_err(|error| format!("invalid FFmpeg archive: {error}"))?;
+    let mut entry = zip
+        .by_name(member)
+        .map_err(|error| format!("{member} missing from FFmpeg archive: {error}"))?;
+    let mut output = File::create(destination)
+        .map_err(|error| format!("failed to create {}: {error}", destination.display()))?;
+    std::io::copy(&mut entry, &mut output)
+        .map_err(|error| format!("failed to extract {member}: {error}"))?;
     Ok(())
 }
 
-/// Get FFmpeg download URL for specific target triple
-fn get_ffmpeg_url_for_target(target: &str) -> Result<String, String> {
-    // Platform-specific URLs
-    let url = if target.contains("windows") {
-        // Windows
-        "https://github.com/Zackriya-Solutions/ffmpeg-binaries/releases/download/0.0.1/ffmpeg-8.0.1-essentials_build.zip"
-    } else if target.contains("apple") {
-        if target.contains("aarch64") {
-            // Apple Silicon (M1/M2/M3)
-            "https://github.com/Zackriya-Solutions/ffmpeg-binaries/releases/download/0.0.1/ffmpeg80arm.zip"
-        } else {
-            // Intel Mac
-            "https://github.com/Zackriya-Solutions/ffmpeg-binaries/releases/download/0.0.1/ffmpeg-8.0.1.zip"
-        }
-    } else if target.contains("linux") {
-        if target.contains("aarch64") || target.contains("arm") {
-            // Linux ARM64
-            "https://github.com/Zackriya-Solutions/ffmpeg-binaries/releases/download/0.0.1/ffmpeg-release-arm64-static.tar.xz"
-        } else {
-            // Linux x86_64
-            "https://github.com/Zackriya-Solutions/ffmpeg-binaries/releases/download/0.0.1/ffmpeg-release-amd64-static.tar.xz"
-        }
-    } else {
-        return Err(format!("Unsupported target platform: {}", target));
-    };
-
-    Ok(url.to_string())
-}
-
-/// Extract FFmpeg binary from downloaded archive (handles ZIP and TAR.XZ)
-fn extract_ffmpeg_from_archive(
-    archive_path: &std::path::Path,
-    target: &str,
-    output_path: &std::path::PathBuf,
-) -> Result<(), String> {
-    let extract_dir = std::env::temp_dir().join(format!("ffmpeg-extract-{}", target));
-
-    // Clean old extraction directory
-    let _ = std::fs::remove_dir_all(&extract_dir);
-    std::fs::create_dir_all(&extract_dir)
-        .map_err(|e| format!("Failed to create extract dir: {}", e))?;
-
-    // Determine archive format from extension
-    let archive_str = archive_path.to_string_lossy();
-
-    if archive_str.ends_with(".zip") {
-        extract_zip(archive_path, &extract_dir)?;
-    } else if archive_str.ends_with(".tar.xz") || archive_str.ends_with(".txz") {
-        extract_tar_xz(archive_path, &extract_dir)?;
-    } else {
-        return Err(format!("Unsupported archive format: {}", archive_str));
-    }
-
-    // Find extracted FFmpeg binary (platform-specific locations)
-    let ffmpeg_binary = find_ffmpeg_in_extracted_dir(&extract_dir, target)?;
-
-    println!("cargo:warning=📋 Found FFmpeg at: {:?}", ffmpeg_binary);
-
-    // Copy to target location
-    std::fs::copy(&ffmpeg_binary, output_path)
-        .map_err(|e| format!("Failed to copy binary to binaries/: {}", e))?;
-
-    // Set executable permissions on Unix systems
+/// Marks the staged executable `rwxr-xr-x` (no-op on Windows).
+fn make_executable(path: &Path) -> Result<(), String> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(output_path)
-            .map_err(|e| format!("Failed to get metadata: {}", e))?
-            .permissions();
-        perms.set_mode(0o755); // rwxr-xr-x
-        std::fs::set_permissions(output_path, perms)
-            .map_err(|e| format!("Failed to set executable permissions: {}", e))?;
-        println!("cargo:warning=🔐 Set executable permissions");
+        fs::set_permissions(path, fs::Permissions::from_mode(0o755))
+            .map_err(|error| format!("failed to chmod {}: {error}", path.display()))?;
     }
-
-    // Cleanup extraction directory
-    let _ = std::fs::remove_dir_all(&extract_dir);
-
+    #[cfg(not(unix))]
+    let _ = path;
     Ok(())
 }
 
-/// Extract ZIP archive (Windows, macOS)
-fn extract_zip(
-    archive_path: &std::path::Path,
-    extract_dir: &std::path::Path,
-) -> Result<(), String> {
-    use std::io::Read;
-
-    let file = std::fs::File::open(archive_path)
-        .map_err(|e| format!("Failed to open ZIP: {}", e))?;
-
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Failed to read ZIP archive: {}", e))?;
-
-    for i in 0..archive.len() {
-        let mut file = archive.by_index(i)
-            .map_err(|e| format!("Failed to read ZIP entry {}: {}", i, e))?;
-
-        // Use enclosed_name() to prevent Zip Slip path traversal attacks
-        let outpath = match file.enclosed_name() {
-            Some(name) => extract_dir.join(name),
-            None => {
-                // Skip entries with path traversal sequences (e.g., "../")
-                println!("cargo:warning=⚠️  Skipping suspicious ZIP entry: {}", file.name());
-                continue;
-            }
-        };
-
-        if file.is_dir() {
-            // Directory
-            std::fs::create_dir_all(&outpath)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
-        } else {
-            // File
-            if let Some(parent) = outpath.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("Failed to create parent directory: {}", e))?;
-            }
-
-            let mut outfile = std::fs::File::create(&outpath)
-                .map_err(|e| format!("Failed to create output file: {}", e))?;
-
-            std::io::copy(&mut file, &mut outfile)
-                .map_err(|e| format!("Failed to extract file: {}", e))?;
-        }
-
-        // Set Unix permissions if available
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            if let Some(mode) = file.unix_mode() {
-                std::fs::set_permissions(&outpath, std::fs::Permissions::from_mode(mode))
-                    .ok();
-            }
-        }
+/// Checks that `path` has exactly the pinned size and SHA-256.
+fn verify_file(path: &Path, pin: &FilePin) -> Result<(), String> {
+    let name = path.display();
+    let size = fs::metadata(path)
+        .map_err(|error| format!("failed to inspect {name}: {error}"))?
+        .len();
+    if size != pin.size {
+        return Err(format!("{name} has size {size}, expected {}", pin.size));
     }
 
+    let actual = sha256_hex(path)?;
+    if actual != pin.sha256 {
+        return Err(format!("{name} has SHA-256 {actual}, expected {}", pin.sha256));
+    }
     Ok(())
 }
 
-/// Extract TAR.XZ archive (Linux)
-fn extract_tar_xz(
-    archive_path: &std::path::Path,
-    extract_dir: &std::path::Path,
-) -> Result<(), String> {
-    let file = std::fs::File::open(archive_path)
-        .map_err(|e| format!("Failed to open TAR.XZ: {}", e))?;
-
-    // Decompress XZ
-    let decompressor = xz2::read::XzDecoder::new(file);
-
-    // Extract TAR
-    let mut archive = tar::Archive::new(decompressor);
-    archive.unpack(extract_dir)
-        .map_err(|e| format!("Failed to extract TAR: {}", e))?;
-
-    Ok(())
+/// Lowercase hex SHA-256 of the file at `path`.
+fn sha256_hex(path: &Path) -> Result<String, String> {
+    let mut file = File::open(path)
+        .map_err(|error| format!("failed to open {}: {error}", path.display()))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = vec![0_u8; HASH_BUFFER_BYTES];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(|error| format!("failed to hash {}: {error}", path.display()))?;
+        if read == 0 {
+            return Ok(format!("{:x}", hasher.finalize()));
+        }
+        hasher.update(&buffer[..read]);
+    }
 }
 
-/// Find FFmpeg binary in extracted directory (handles nested structures)
-fn find_ffmpeg_in_extracted_dir(
-    extract_dir: &std::path::Path,
-    target: &str,
-) -> Result<std::path::PathBuf, String> {
-    let executable_name = if target.contains("windows") {
-        "ffmpeg.exe"
-    } else {
-        "ffmpeg"
-    };
-
-    // Search patterns (in priority order)
-    let search_patterns = [
-        extract_dir.join(executable_name),                    // Flat: ffmpeg
-        extract_dir.join("bin").join(executable_name),        // Nested: bin/ffmpeg
-    ];
-
-    // Try direct paths first
-    for pattern in &search_patterns {
-        if pattern.exists() && pattern.is_file() {
-            return Ok(pattern.clone());
-        }
-    }
-
-    // Recursive search for nested directories (e.g., ffmpeg-6.0-full_build/bin/ffmpeg.exe)
-    for entry in std::fs::read_dir(extract_dir)
-        .map_err(|e| format!("Failed to read extract dir: {}", e))?
-    {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let path = entry.path();
-
-        if path.is_dir() {
-            // Check bin/ subdirectory
-            let bin_path = path.join("bin").join(executable_name);
-            if bin_path.exists() && bin_path.is_file() {
-                return Ok(bin_path);
-            }
-
-            // Check root of subdirectory
-            let root_path = path.join(executable_name);
-            if root_path.exists() && root_path.is_file() {
-                return Ok(root_path);
-            }
-        }
-    }
-
-    Err(format!("FFmpeg binary '{}' not found in extracted archive", executable_name))
-}
-
-/// Verify FFmpeg binary is functional (runs -version successfully)
-fn verify_ffmpeg_binary(path: &std::path::PathBuf) -> bool {
-    match std::process::Command::new(path)
-        .arg("-version")
-        .output()
-    {
-        Ok(output) => {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                if let Some(version_line) = stdout.lines().next() {
-                    println!("cargo:warning=✅ FFmpeg verification passed: {}", version_line);
-                }
-                true
-            } else {
-                false
-            }
-        }
-        Err(_) => false,
-    }
+/// Reads an environment variable Cargo always sets for build scripts.
+fn env_var(name: &str) -> String {
+    // Cargo sets TARGET, CARGO_MANIFEST_DIR and CARGO_CFG_* for every build script.
+    env::var(name).unwrap_or_else(|_| panic!("Cargo did not set {name}"))
 }

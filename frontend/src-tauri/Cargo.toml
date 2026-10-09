@@ -1,17 +1,16 @@
 [package]
-name = "meetily"
+name = "deino"
 version = "0.4.1"
-description = "A Tauri App for meeting minutes"
-authors = ["Sujith S"]
-license = "MIT"
-repository = "https://github.com/Zackriya-Solutions/meeting-minutes"
+description = "Deino: a private, local-first AI meeting notepad for macOS"
+authors = ["Shreyas"]
+publish = false
 edition = "2021"
 rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "app_lib"
+name = "deino_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 
@@ -56,10 +55,8 @@ openmp = ["whisper-rs/openmp"]     # OpenMP parallel processing
 tauri-build = { version = "2.3.0", features = [] }
 reqwest = { version = "0.11", features = ["blocking", "multipart", "json", "stream"] }
 which = "6.0.1"
-zip = "2.2"           # ZIP extraction (Windows, macOS)
-tar = "0.4"           # TAR extraction (Linux)
-xz2 = "0.1"           # XZ decompression (Linux)
-sha2 = "0.10"
+zip = "2.2"           # Archive extraction for the FFmpeg and ONNX Runtime downloads
+sha2 = "0.10"         # SHA-256 pins for build-time downloads
 
 
 [dependencies]
@@ -68,7 +65,6 @@ serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0"
 once_cell = "1.17.1"
 uuid = { version = "1.0", features = ["v4", "serde"] }
-posthog-rs = "0.3.7"
 
 # Cross-platform audio capture
 cpal = "0.15.3"

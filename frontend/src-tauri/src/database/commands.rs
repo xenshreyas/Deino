@@ -3,8 +3,12 @@ use serde::Serialize;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter, Manager};
 
-use super::manager::DatabaseManager;
+use super::manager::{DatabaseManager, LEGACY_IMPORT_FILE_NAME};
 use crate::state::AppState;
+
+/// Database file name used by the legacy Python backend this app was forked
+/// from. Only the legacy import flow looks for it (removed in FND-02).
+const UPSTREAM_BACKEND_DB_FILE_NAME: &str = "meeting_minutes.db";
 
 #[derive(Serialize)]
 pub struct DatabaseCheckResult {
@@ -60,9 +64,9 @@ pub async fn detect_legacy_database(selected_path: String) -> Result<Option<Stri
         }
     }
 
-    // Case 2: User selected directory containing meeting_minutes.db
+    // Case 2: User selected directory containing the legacy backend database
     if path.is_dir() {
-        let direct_db = path.join("meeting_minutes.db");
+        let direct_db = path.join(UPSTREAM_BACKEND_DB_FILE_NAME);
         if direct_db.exists() && direct_db.is_file() {
             let db_path = direct_db.to_string_lossy().to_string();
             info!("Found database in selected directory: {}", db_path);
@@ -70,7 +74,7 @@ pub async fn detect_legacy_database(selected_path: String) -> Result<Option<Stri
         }
 
         // Case 3: User selected root repo (check backend subdirectory)
-        let backend_db = path.join("backend").join("meeting_minutes.db");
+        let backend_db = path.join("backend").join(UPSTREAM_BACKEND_DB_FILE_NAME);
         if backend_db.exists() && backend_db.is_file() {
             let db_path = backend_db.to_string_lossy().to_string();
             info!("Found database in backend subdirectory: {}", db_path);
@@ -90,7 +94,7 @@ pub async fn check_default_legacy_database(app: AppHandle) -> Result<Option<Stri
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
 
-    let legacy_db = app_data_dir.join("meeting_minutes.db");
+    let legacy_db = app_data_dir.join(LEGACY_IMPORT_FILE_NAME);
     info!("Checking for default legacy database at: {:?}", legacy_db);
 
     if legacy_db.exists() && legacy_db.is_file() {
