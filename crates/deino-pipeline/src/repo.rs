@@ -205,7 +205,10 @@ async fn close_run(
     settlement: &Settlement,
 ) -> Result<(), DbError> {
     sqlx::query!(
-        "UPDATE job_runs SET finished_at = ?3, outcome = ?4, message = ?5
+        // Never before the start: a wall clock set back must not trip the CHECK.
+        "UPDATE job_runs
+         SET finished_at = CASE WHEN julianday(?3) < julianday(started_at) THEN started_at ELSE ?3 END,
+             outcome = ?4, message = ?5
          WHERE meeting_id = ?1 AND stage = ?2 AND finished_at IS NULL",
         job.meeting_id,
         job.stage,

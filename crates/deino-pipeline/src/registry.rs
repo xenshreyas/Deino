@@ -10,7 +10,7 @@ use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::segments::SegmentReader;
 use deino_domain::StageId;
 
-use crate::stages::{LegacySummaryStage, SummaryGenerator};
+use crate::stages::{LegacySummaryStage, Summarizer};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -22,7 +22,7 @@ pub struct StagePorts {
     /// Meeting state: template, timing, files.
     pub meetings: Arc<dyn MeetingLifecycleRepo>,
     /// The legacy summariser (until NOT-02).
-    pub summaries: Arc<dyn SummaryGenerator>,
+    pub summaries: Arc<dyn Summarizer>,
 }
 
 /// Every stage of the post-meeting pipeline, sorted by order.

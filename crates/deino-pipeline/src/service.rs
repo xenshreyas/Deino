@@ -130,6 +130,7 @@ impl PipelineService {
         let service = Arc::clone(self);
         self.runner.spawn(async move {
             if let Err(error) = service.reconcile().await {
+                let error = crate::error::ErrorChain(&error);
                 log::error!(target: "pipeline", "could not resume the pipeline: {error}");
             }
         });

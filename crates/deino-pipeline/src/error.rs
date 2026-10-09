@@ -44,3 +44,36 @@ impl ErrorClass for PipelineError {
         }
     }
 }
+
+/// Displays an error with its sources, `a: b: c`, for the log. Every error
+/// in the chain is user-safe (IDs, codes, SQLite's messages), never content.
+pub(crate) struct ErrorChain<'a>(pub(crate) &'a dyn std::error::Error);
+
+impl std::fmt::Display for ErrorChain<'_> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "{}", self.0)?;
+        let mut source = self.0.source();
+        while let Some(error) = source {
+            write!(formatter, ": {error}")?;
+            source = error.source();
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_chain_shows_each_source_after_the_error() {
+        let error = PipelineError::Storage(DbError::Query(sqlx::Error::RowNotFound));
+
+        let shown = ErrorChain(&error).to_string();
+
+        assert!(
+            shown.starts_with("could not load or save pipeline jobs: a database query failed: "),
+            "{shown}"
+        );
+    }
+}

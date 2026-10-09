@@ -34,7 +34,7 @@ use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
 use deino_pipeline::{
     ClockSleeper, PipelineDeps, PipelineService, PipelineTrigger, ProgressSink, SqliteJobRepo,
-    StagePorts, SummaryGenerator, registry,
+    StagePorts, Summarizer, registry,
 };
 use deino_secrets::{KeychainSecretStore, SecretStore};
 use tauri::{AppHandle, Manager, Runtime};
@@ -105,7 +105,7 @@ impl Services {
 /// summary service behind the `legacy_summary` stage.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
-    pub(crate) summaries: Arc<dyn SummaryGenerator>,
+    pub(crate) summaries: Arc<dyn Summarizer>,
 }
 
 /// The meetings lifecycle and the post-meeting pipeline it starts (FND-08).
@@ -186,7 +186,7 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
     };
     let adapters = PipelineAdapters {
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
-        summaries: Arc::new(features::pipeline::LegacySummaryGenerator::new(
+        summaries: Arc::new(features::pipeline::LegacySummarizer::new(
             app.clone(),
             database.writer().clone(),
             Arc::clone(&settings),

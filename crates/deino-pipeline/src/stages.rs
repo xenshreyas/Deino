@@ -11,4 +11,4 @@ mod legacy_summary;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use legacy_summary::RecordedSummaries;
-pub use legacy_summary::{LegacySummaryStage, SummaryGenerator, SummaryRequest};
+pub use legacy_summary::{LegacySummaryStage, Summarizer, SummaryInput};

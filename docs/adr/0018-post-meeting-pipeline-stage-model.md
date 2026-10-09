@@ -88,7 +88,7 @@ reconciliation that leaves no zombie `running` rows
 
 - New post-meeting work is a stage: no card adds background tasks.
 - The `legacy_summary` stage (order 50) bridges to the inherited summary
-  service through the `SummaryGenerator` port until NOT-02's
+  service through the `Summarizer` port until NOT-02's
   `enhance_notes`; its jobs are pruned automatically once it is removed.
 - A stage must be idempotent and keep its messages free of meeting content.
 - Per-meeting cancellation exists in Rust but has no command yet; meeting

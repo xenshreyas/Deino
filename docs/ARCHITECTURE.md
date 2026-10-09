@@ -91,7 +91,7 @@ flowchart BT
 | `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
-| `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `finalize_audio` at 10, `legacy_summary` at 50), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
+| `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages; `legacy_summary` at order 50 for now), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar: `generate` (legacy), `stream`, `grammar` (a JSON schema turned into a GBNF grammar) and `embed` requests over JSON lines. |
 
@@ -199,12 +199,11 @@ runs: it deletes jobs of unregistered stages, settles `running` rows a crash
 left (back to `pending`, or `failed` once a crash ate the last attempt),
 schedules `processing` meetings without jobs and wakes every meeting with
 pending work. On exit `lifecycle.rs` calls `shutdown`, which leaves an
-interrupted stage pending for the next start. `finalize_audio` (order 10)
-finalises the meeting's recording directory through `deino_audio`, and
-`legacy_summary` (order 50) runs the summary through
-`deino_core::summaries::SummaryGenerator` until NOT-02's `enhance_notes`
-replaces it; both reach the app through ports adapted in
-`features/pipeline/`.
+interrupted stage pending for the next start. `legacy_summary` (order 50)
+runs the legacy summary job (`summary/service.rs`, over
+`deino_core::summaries::SummaryGenerator`) through the `Summarizer` port,
+adapted in `features/pipeline/legacy_summary.rs`, until NOT-02's
+`enhance_notes` replaces it.
 
 ### An LLM call (FND-09)
 

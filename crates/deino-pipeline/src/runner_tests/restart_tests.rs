@@ -109,3 +109,35 @@ async fn jobs_of_a_retired_stage_are_dropped_at_start() {
     assert!(activity.starts().is_empty());
     assert_eq!(after.status_of(&meeting).await, MeetingStatus::Ready);
 }
+
+#[tokio::test]
+async fn a_clock_set_back_since_the_crash_does_not_block_recovery() {
+    let activity = Arc::new(Activity::default());
+    let crashed = Harness::new(Vec::new()).await;
+    let meeting = crashed
+        .meeting("meeting-a", MeetingStatus::Processing)
+        .await;
+    let notes = [StageId::new("notes")];
+    crashed
+        .jobs
+        .schedule(&meeting, &notes, at(NOW))
+        .await
+        .unwrap();
+    // The attempt started an hour after what the restarted app's clock reads.
+    let later = at(NOW) + chrono::TimeDelta::hours(1);
+    crashed
+        .jobs
+        .start(&key(&meeting, "notes"), later)
+        .await
+        .unwrap();
+
+    let stages = vec![stage("notes", 50, Behavior::Succeed, &activity)];
+    let restarted = Harness::on(crashed.database.clone(), stages, Waits::Instant).await;
+    restarted.service.until_idle().await;
+
+    assert_eq!(
+        restarted.runs(&meeting, "notes").await,
+        [outcome(1, "interrupted"), outcome(2, "succeeded")]
+    );
+    assert_eq!(restarted.status_of(&meeting).await, MeetingStatus::Ready);
+}

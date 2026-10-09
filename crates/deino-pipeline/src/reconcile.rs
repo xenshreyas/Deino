@@ -16,6 +16,7 @@
 use deino_db::DbError;
 use deino_domain::{JobStatus, MeetingId, MeetingStatus, RunOutcome};
 
+use crate::error::ErrorChain;
 use crate::{Job, PipelineError, PipelineService, RetryPolicy, Settlement};
 
 /// Shown on a stage that was interrupted on its last allowed attempt.
@@ -24,9 +25,12 @@ const INTERRUPTED_TOO_OFTEN: &str = "The app quit while this step ran, too many 
 impl PipelineService {
     /// Reconciles the queue, opens the runner and resumes pending work.
     /// [`PipelineService::start`] runs it in the background at startup.
+    ///
+    /// Repairs are best effort: a row that cannot be repaired is logged and
+    /// left alone, so one bad row never keeps the whole pipeline closed.
     pub async fn reconcile(&self) -> Result<(), PipelineError> {
-        let pruned = self.jobs.prune(&self.registry.ids()).await?;
-        let interrupted = self.recover_interrupted().await?;
+        let pruned = self.prune_retired().await;
+        let interrupted = self.recover_interrupted().await;
         self.runner.open();
         let processing = self
             .meetings
@@ -34,6 +38,7 @@ impl PipelineService {
             .await?;
         for meeting in &processing {
             if let Err(error) = self.resume(&meeting.id).await {
+                let error = ErrorChain(&error);
                 log::error!(target: "pipeline", "could not resume meeting {}: {error}", meeting.id);
             }
         }
@@ -62,17 +67,45 @@ impl PipelineService {
         Ok(())
     }
 
-    /// Settles every job left running by the last session; returns how many.
-    async fn recover_interrupted(&self) -> Result<usize, DbError> {
-        let running = self.jobs.running().await?;
-        let now = self.clock.now();
+    /// Deletes the jobs of stages no longer registered; returns how many.
+    async fn prune_retired(&self) -> u64 {
+        self.jobs
+            .prune(&self.registry.ids())
+            .await
+            .unwrap_or_else(|error| {
+                let error = ErrorChain(&error);
+                log::error!(target: "pipeline", "could not remove retired jobs: {error}");
+                0
+            })
+    }
+
+    /// Settles every job left running by the last session; returns how
+    /// many it settled.
+    async fn recover_interrupted(&self) -> usize {
+        let running = match self.jobs.running().await {
+            Ok(running) => running,
+            Err(error) => {
+                let error = ErrorChain(&error);
+                log::error!(target: "pipeline", "could not list interrupted jobs: {error}");
+                return 0;
+            }
+        };
+        let mut recovered = 0;
         for job in &running {
-            let settlement = interrupted(job, &RetryPolicy::DEFAULT, now);
-            self.jobs
+            let settlement = interrupted(job, &RetryPolicy::DEFAULT, self.clock.now());
+            match self
+                .jobs
                 .settle(&job.key(), JobStatus::Running, &settlement)
-                .await?;
+                .await
+            {
+                Ok(settled) => recovered += usize::from(settled),
+                Err(error) => {
+                    let (meeting, stage, error) = (&job.meeting_id, &job.stage, ErrorChain(&error));
+                    log::error!(target: "pipeline", "could not recover {stage} of meeting {meeting}: {error}");
+                }
+            }
         }
-        Ok(running.len())
+        recovered
     }
 }
 

@@ -15,7 +15,7 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
 - The registry (`registry.rs`): `stages(&StagePorts)`, the one list of
   stages. **Adding a stage is one line there.**
 - The stages (`stages/`): `legacy_summary` (order 50) over the
-  `SummaryGenerator` port, until NOT-02 replaces it.
+  `Summarizer` port, until NOT-02 replaces it.
 - The queue: the `jobs` and `job_runs` tables (migration
   `20261009071429_fnd08_pipeline_jobs.sql` in `deino-db`), behind the
   `JobRepo` port and `SqliteJobRepo`.

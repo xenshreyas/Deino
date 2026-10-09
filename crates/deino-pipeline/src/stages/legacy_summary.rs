@@ -2,7 +2,7 @@
 //!
 //! A temporary bridge until NOT-02's `enhance_notes` replaces it. The stage
 //! reads the meeting's transcript and template and hands them to the
-//! [`SummaryGenerator`] port; the app implements the port over the legacy
+//! [`Summarizer`] port; the app implements the port over the legacy
 //! summary service (`features/pipeline/legacy_summary.rs`), the one place
 //! that calls it, so FND-09's gateway rewrite of the summary code touches
 //! only that adapter.
@@ -28,7 +28,7 @@ const SECONDS_PER_MINUTE: u32 = 60;
 
 /// What to summarise.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SummaryRequest {
+pub struct SummaryInput {
     /// The meeting the summary is for.
     pub meeting_id: MeetingId,
     /// The transcript, one `[MM:SS] text` line per segment, as the meeting
@@ -40,11 +40,11 @@ pub struct SummaryRequest {
 
 /// Generates and stores a meeting's summary.
 #[async_trait]
-pub trait SummaryGenerator: Send + Sync {
+pub trait Summarizer: Send + Sync {
     /// Summarises `request`, stopping early when `cancel` fires.
     async fn generate(
         &self,
-        request: SummaryRequest,
+        request: SummaryInput,
         cancel: CancellationToken,
     ) -> Result<StageOutcome, StageError>;
 }
@@ -53,7 +53,7 @@ pub trait SummaryGenerator: Send + Sync {
 pub struct LegacySummaryStage {
     segments: Arc<dyn SegmentReader>,
     meetings: Arc<dyn MeetingLifecycleRepo>,
-    summaries: Arc<dyn SummaryGenerator>,
+    summaries: Arc<dyn Summarizer>,
 }
 
 impl LegacySummaryStage {
@@ -67,7 +67,7 @@ impl LegacySummaryStage {
     }
 
     /// The transcript and template of `meeting`, or `None` when it has no transcript.
-    async fn request(&self, meeting: MeetingId) -> Result<Option<SummaryRequest>, StageError> {
+    async fn request(&self, meeting: MeetingId) -> Result<Option<SummaryInput>, StageError> {
         let segments = self
             .segments
             .list(&meeting, Page::ALL)
@@ -81,7 +81,7 @@ impl LegacySummaryStage {
             .state(&meeting)
             .await
             .map_err(|error| StageError::retryable_from(&error))?;
-        Ok(Some(SummaryRequest {
+        Ok(Some(SummaryInput {
             meeting_id: meeting,
             transcript: transcript_text(&segments),
             template: state.and_then(|state| state.template_id),
@@ -130,18 +130,18 @@ mod recorded {
     use async_trait::async_trait;
     use tokio_util::sync::CancellationToken;
 
-    use super::{SummaryGenerator, SummaryRequest};
+    use super::{Summarizer, SummaryInput};
     use crate::{StageError, StageOutcome};
 
-    /// A [`SummaryGenerator`] for tests: records each request and succeeds.
+    /// A [`Summarizer`] for tests: records each request and succeeds.
     #[derive(Debug, Default)]
     pub struct RecordedSummaries {
-        requests: Mutex<Vec<SummaryRequest>>,
+        requests: Mutex<Vec<SummaryInput>>,
     }
 
     impl RecordedSummaries {
         /// Every request so far, oldest first.
-        pub fn requests(&self) -> Vec<SummaryRequest> {
+        pub fn requests(&self) -> Vec<SummaryInput> {
             self.requests
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
@@ -150,10 +150,10 @@ mod recorded {
     }
 
     #[async_trait]
-    impl SummaryGenerator for RecordedSummaries {
+    impl Summarizer for RecordedSummaries {
         async fn generate(
             &self,
-            request: SummaryRequest,
+            request: SummaryInput,
             _cancel: CancellationToken,
         ) -> Result<StageOutcome, StageError> {
             self.requests
@@ -264,7 +264,7 @@ mod tests {
         assert_eq!(outcome, Ok(StageOutcome::Done));
         assert_eq!(
             harness.summaries.requests(),
-            [SummaryRequest {
+            [SummaryInput {
                 meeting_id: MeetingId::new("meeting-a"),
                 transcript: "[00:01] hello\n[01:01] next item".into(),
                 template: Some(template),

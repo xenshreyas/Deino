@@ -4,7 +4,7 @@
 //! - `commands.rs`: `status` and `rerun`, thin over `PipelineService`;
 //! - `events.rs`: the typed `PipelineProgress` event, emitted for every
 //!   stage status change by [`TauriPipelineProgress`];
-//! - `legacy_summary.rs`: [`LegacySummaryGenerator`], the adapter that lets
+//! - `legacy_summary.rs`: [`LegacySummarizer`], the adapter that lets
 //!   the `legacy_summary` stage call the inherited summary service.
 //!
 //! The service is built and started in `composition.rs`; the meeting page's
@@ -18,7 +18,7 @@ mod events;
 mod legacy_summary;
 
 pub use events::{PipelineProgress, TauriPipelineProgress};
-pub use legacy_summary::LegacySummaryGenerator;
+pub use legacy_summary::LegacySummarizer;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 

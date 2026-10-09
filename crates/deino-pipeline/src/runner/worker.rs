@@ -10,6 +10,7 @@ use deino_db::DbError;
 use deino_domain::{JobStatus, MeetingEvent, MeetingId, RunOutcome};
 
 use super::Inner;
+use crate::error::ErrorChain;
 use crate::plan::{self, Ending, Step};
 use crate::{Job, PipelineProgress, Settlement};
 
@@ -25,6 +26,7 @@ pub(super) async fn drive(inner: Arc<Inner>, meeting: MeetingId) {
             Ok(false) => return,
             // The jobs stay as stored; the next wake or start resumes them.
             Err(error) => {
+                let error = ErrorChain(&error);
                 log::error!(target: "pipeline", "stopped processing meeting {meeting}: {error}");
                 break;
             }
@@ -115,11 +117,12 @@ impl Inner {
         };
         match self.deps.lifecycle.transition(meeting, event).await {
             Ok(status) => {
-                log::info!(target: "pipeline", "pipeline of meeting {meeting} ended: {status}")
+                log::info!(target: "pipeline", "pipeline of meeting {meeting} ended: {status}");
             }
             // The meeting is not processing (a re-run of a ready meeting's stage).
             Err(MeetingError::InvalidTransition(_)) => {}
             Err(error) => {
+                let error = ErrorChain(&error);
                 log::warn!(target: "pipeline", "could not finish meeting {meeting}: {error}");
             }
         }

@@ -1,13 +1,14 @@
-//! [`LegacySummaryGenerator`]: the `legacy_summary` stage's bridge to the
-//! inherited summary service.
+//! [`LegacySummarizer`]: the `legacy_summary` stage's bridge to the
+//! legacy summary job.
 //!
-//! The one place the pipeline calls the legacy summary code. It does what
+//! The one place the pipeline calls the summary code. It does what
 //! `api_process_transcript` does for the meeting page (open a
-//! `summary_processes` row, save the transcript to `transcript_chunks`,
-//! run the summary), but waits for the result instead of returning at once,
-//! so the stage succeeds or fails with it. The meeting page keeps reading
-//! the summary from `summary_processes` as before. FND-09's gateway rewrite
-//! and NOT-02's `enhance_notes` replace this file.
+//! `summary_processes` row, save the transcript to `transcript_chunks`, run
+//! a `SummaryJob`, which asks `deino_core::summaries::SummaryGenerator`
+//! through the LLM gateway), but awaits the job instead of spawning it, so
+//! the stage succeeds or fails with it. The meeting page keeps reading the
+//! summary from `summary_processes` as before. NOT-02's `enhance_notes`
+//! replaces this file.
 
 use std::sync::Arc;
 
@@ -15,7 +16,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_core::settings::SettingsService;
 use deino_domain::{Clock, ErrorCode, MeetingId};
-use deino_pipeline::{StageError, StageOutcome, SummaryGenerator, SummaryRequest};
+use deino_pipeline::{StageError, StageOutcome, Summarizer, SummaryInput};
 use sqlx::SqlitePool;
 use tauri::{AppHandle, Runtime};
 use tokio_util::sync::CancellationToken;
@@ -23,6 +24,7 @@ use tokio_util::sync::CancellationToken;
 use crate::database::repositories::summary::SummaryProcessesRepository;
 use crate::database::repositories::transcript_chunk::TranscriptChunksRepository;
 use crate::summary::SummaryService;
+use crate::summary::service::SummaryJob;
 
 /// The template the meeting page selects by default.
 const DEFAULT_TEMPLATE: &str = "standard_meeting";
@@ -36,15 +38,15 @@ struct SummaryModel {
     model: String,
 }
 
-/// Generates summaries through the legacy `SummaryService`.
-pub struct LegacySummaryGenerator<R: Runtime> {
+/// Generates summaries through the legacy `SummaryService` job.
+pub struct LegacySummarizer<R: Runtime> {
     app: AppHandle<R>,
     pool: SqlitePool,
     settings: Arc<SettingsService>,
     clock: Arc<dyn Clock>,
 }
 
-impl<R: Runtime> LegacySummaryGenerator<R> {
+impl<R: Runtime> LegacySummarizer<R> {
     /// A generator writing through the legacy writer `pool`, with the
     /// provider and model chosen in `settings`.
     pub fn new(
@@ -83,7 +85,7 @@ impl<R: Runtime> LegacySummaryGenerator<R> {
     /// the process's start time, which identifies it.
     async fn open(
         &self,
-        request: &SummaryRequest,
+        request: &SummaryInput,
         model: &SummaryModel,
     ) -> Result<DateTime<Utc>, StageError> {
         let meeting = request.meeting_id.as_str();
@@ -105,27 +107,27 @@ impl<R: Runtime> LegacySummaryGenerator<R> {
         Ok(started_at)
     }
 
-    /// Runs the summary to the end. When `cancel` fires, it cancels the
-    /// legacy run, which then stores itself as cancelled.
-    async fn run(&self, request: SummaryRequest, model: SummaryModel, process: Process) {
+    /// Runs the summary job to the end. When `cancel` fires, it cancels the
+    /// job, which then stores itself as cancelled.
+    async fn run(&self, request: SummaryInput, model: SummaryModel, process: Process) {
         let meeting = request.meeting_id.to_string();
         let legacy = SummaryService::register_cancellation_token(&meeting, process.started_at);
-        let template = request.template.map_or_else(
+        let template_id = request.template.map_or_else(
             || DEFAULT_TEMPLATE.to_owned(),
             |template| template.to_string(),
         );
-        let summary = SummaryService::process_transcript_background(
-            self.app.clone(),
-            self.pool.clone(),
-            meeting,
-            process.started_at,
-            legacy.clone(),
-            request.transcript,
-            model.provider,
-            model.model,
-            String::new(),
-            template,
-        );
+        let job = SummaryJob {
+            pool: self.pool.clone(),
+            meeting_id: meeting,
+            started_at: process.started_at,
+            cancellation: legacy.clone(),
+            text: request.transcript,
+            provider: model.provider,
+            model: model.model,
+            custom_prompt: String::new(),
+            template_id,
+        };
+        let summary = SummaryService::process_transcript_background(self.app.clone(), job);
         tokio::pin!(summary);
         tokio::select! {
             () = &mut summary => {}
@@ -170,10 +172,10 @@ struct Process {
 }
 
 #[async_trait]
-impl<R: Runtime> SummaryGenerator for LegacySummaryGenerator<R> {
+impl<R: Runtime> Summarizer for LegacySummarizer<R> {
     async fn generate(
         &self,
-        request: SummaryRequest,
+        request: SummaryInput,
         cancel: CancellationToken,
     ) -> Result<StageOutcome, StageError> {
         let model = self.model().await?;

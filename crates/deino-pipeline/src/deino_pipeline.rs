@@ -61,5 +61,5 @@ pub use sleeper::{ClockSleeper, Sleeper};
 pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::RecordedSummaries;
-pub use stages::{LegacySummaryStage, SummaryGenerator, SummaryRequest};
+pub use stages::{LegacySummaryStage, Summarizer, SummaryInput};
 pub use trigger::PipelineTrigger;
