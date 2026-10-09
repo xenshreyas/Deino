@@ -167,16 +167,6 @@ temperature: number | null;
  */
 topP: number | null }
 /**
- * An email address in canonical form: lower case, no surrounding
- * whitespace, one `@` between a non-empty local part and a dotted domain.
- * 
- * [`Email::parse`] normalises user input into this form. Deserializing and
- * [`TryFrom<String>`] accept only the canonical form and never rewrite a
- * value, so stored and fixture data are checked rather than silently
- * changed. Stored as TEXT; `people.email` is UNIQUE, which the lower case
- * makes case-insensitive.
- */
-export type Email = string
  * The detection section of `Settings`.
  */
 export type DetectionSettings = { 
@@ -193,6 +183,17 @@ ignoredApps: IgnoredApp[];
  * "Take notes".
  */
 autoStart: AutoStartSettings }
+/**
+ * An email address in canonical form: lower case, no surrounding
+ * whitespace, one `@` between a non-empty local part and a dotted domain.
+ * 
+ * [`Email::parse`] normalises user input into this form. Deserializing and
+ * [`TryFrom<String>`] accept only the canonical form and never rewrite a
+ * value, so stored and fixture data are checked rather than silently
+ * changed. Stored as TEXT; `people.email` is UNIQUE, which the lower case
+ * makes case-insensitive.
+ */
+export type Email = string
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it.
  */

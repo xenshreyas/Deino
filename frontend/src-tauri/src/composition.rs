@@ -31,8 +31,8 @@ mod stt;
 
 use std::sync::Arc;
 
-use notes::{NoteDeps, NoteServices};
 pub(crate) use detection::attach_detection;
+use notes::{NoteDeps, NoteServices};
 pub(crate) use stt::attach_stt;
 
 use deino_core::diarization::TrackDiarizer;

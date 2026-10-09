@@ -2,7 +2,7 @@
 
 ## Role
 
-Meeting detection (CAP-06, [ADR 0021](../../docs/adr/0021-meeting-detection.md)):
+Meeting detection (CAP-06, [ADR 0022](../../docs/adr/0022-meeting-detection.md)):
 notice that a call started on this Mac, decide whether it is a meeting, and
 drive the prompt that offers to take notes, including the auto-start
 countdown.

@@ -1,4 +1,4 @@
-# 0021. Detect meetings from Core Audio process objects, decided by a pure policy
+# 0022. Detect meetings from Core Audio process objects, decided by a pure policy
 
 - **Status:** Accepted
 - **Date:** 2026-10-09
