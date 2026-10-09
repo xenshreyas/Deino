@@ -7,7 +7,8 @@
 //!   connectors later. Adapters report plain values and apply no rules.
 //! - **Rules.** [`mapping`](self::mapping) reads every provider's events the
 //!   same way: the join link ([`find_conference`]), people but no rooms,
-//!   the user's RSVP, internal vs external ([`OwnAddresses`]) and the
+//!   the user's RSVP, internal vs external (NOT-05's
+//!   [`InternalDomains`](crate::profile::InternalDomains)) and the
 //!   recurring series. [`filter`](self::filter) drops cancelled events and
 //!   out-of-office, focus and working-location blocks at sync, and hides
 //!   declined events, hidden calendars and duplicates on read.
@@ -25,7 +26,6 @@
 //! events do not point back (ADR 0012). ORG-02 and ORG-03 read these tables.
 
 mod account_repo;
-mod audience;
 mod batch;
 mod calendar_repo;
 #[cfg(test)]
@@ -63,7 +63,6 @@ mod test_events;
 mod view;
 
 pub use account_repo::{CalendarAccountRepo, SqliteCalendarRepo};
-pub use audience::OwnAddresses;
 pub use batch::{SyncBatch, SyncReport, SyncedAccount, SyncedCalendar, SyncedEvent};
 pub use calendar_repo::CalendarRepo;
 pub use color::{CalendarColor, InvalidCalendarColor};

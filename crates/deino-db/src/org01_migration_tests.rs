@@ -5,8 +5,8 @@
 use super::migration_tests::migrator_before;
 use super::*;
 
-/// The version of `20261009155147_org01_calendars.sql`.
-const ORG01_VERSION: i64 = 20_261_009_155_147;
+/// The version of `20261011090000_org01_calendars.sql`.
+const ORG01_VERSION: i64 = 20_261_011_090_000;
 
 const ACCOUNT: &str = "01926b2c-0000-7000-8000-000000000001";
 const EVENT: &str = "01926b2c-0000-7000-8000-000000000002";

@@ -11,6 +11,7 @@ fn context(clock: &FakeClock) -> BatchContext<'_> {
         provider: CalendarProvider::Apple,
         window: SyncWindow::around(deino_testkit::at(NOW)),
         clock,
+        profile_emails: &[],
     }
 }
 
@@ -55,6 +56,29 @@ fn a_meeting_among_colleagues_is_internal() {
     colleagues.attendees.pop();
 
     assert!(!mapped(colleagues).is_external);
+}
+
+#[test]
+fn the_profiles_addresses_make_colleagues_internal_without_a_self_entry() {
+    let mut colleagues = meeting("evt-1", 1);
+    colleagues.attendees.pop();
+    colleagues.attendees[0].is_self = false;
+    let clock = clock();
+    let profile = [deino_domain::Email::parse("maya@deino.dev").unwrap()];
+    let context = BatchContext {
+        profile_emails: &profile,
+        ..context(&clock)
+    };
+    let guest = SourceEvent {
+        attendees: meeting("evt-2", 1).attendees,
+        ..meeting("evt-2", 2)
+    };
+
+    let (batch, _) = to_batch(&snapshot(vec![colleagues, guest]), &context);
+
+    let events = &batch.accounts[0].calendars[0].events;
+    assert!(!events[0].is_external);
+    assert!(events[1].is_external);
 }
 
 #[test]

@@ -4,16 +4,18 @@
 //! [`to_batch`] drops what [`filter::keeps`] rejects, finds the join link
 //! ([`find_conference`]), keeps only people as attendees (no rooms, no
 //! resources), works out the user's answer and whether the event is
-//! external ([`OwnAddresses`], from the user's own entries in the
-//! invitations), and names its recurring series.
+//! external ([`InternalDomains`], over the profile's addresses and the
+//! user's own entries in the invitations), and names its recurring series.
 
 use std::collections::BTreeSet;
 
 use deino_domain::{
-    CalendarAccountId, CalendarEventId, CalendarId, CalendarProvider, Clock, Email, Rsvp, SeriesId,
+    Audience, CalendarAccountId, CalendarEventId, CalendarId, CalendarProvider, Clock, Email, Rsvp,
+    SeriesId,
 };
 
-use super::audience::OwnAddresses;
+use crate::profile::InternalDomains;
+
 use super::batch::{SyncBatch, SyncedAccount, SyncedCalendar, SyncedEvent};
 use super::conference::{Conference, ConferenceFields, find_conference};
 use super::filter;
@@ -40,14 +42,16 @@ pub struct BatchContext<'a> {
     pub window: SyncWindow,
     /// Stamps the sync and the candidate IDs.
     pub clock: &'a dyn Clock,
+    /// The user's addresses from Settings → Profile.
+    pub profile_emails: &'a [Email],
 }
 
 /// The batch to store for `snapshot`, and the user's own addresses it shows.
 pub fn to_batch(
     snapshot: &SourceSnapshot,
     context: &BatchContext<'_>,
-) -> (SyncBatch, OwnAddresses) {
-    let own = own_addresses(snapshot);
+) -> (SyncBatch, InternalDomains) {
+    let own = own_addresses(snapshot, context.profile_emails);
     let accounts = snapshot
         .accounts
         .iter()
@@ -70,22 +74,28 @@ pub fn to_batch(
     (batch, own)
 }
 
-/// Every address the snapshot marks as the user's.
-fn own_addresses(snapshot: &SourceSnapshot) -> OwnAddresses {
+/// The profile's addresses and every address the snapshot marks as the user's.
+fn own_addresses(snapshot: &SourceSnapshot, profile: &[Email]) -> InternalDomains {
     let participants = snapshot
         .accounts
         .iter()
         .flat_map(|account| &account.calendars)
         .flat_map(|calendar| &calendar.events)
         .flat_map(|event| event.attendees.iter().chain(&event.organizer));
-    OwnAddresses::from_emails(
+    let mut own: BTreeSet<Email> = profile.iter().cloned().collect();
+    own.extend(
         participants
             .filter(|participant| participant.is_self)
             .filter_map(email_of),
-    )
+    );
+    InternalDomains::from_emails(&own.into_iter().collect::<Vec<_>>())
 }
 
-fn to_calendar(calendar: &SourceCalendar, own: &OwnAddresses, clock: &dyn Clock) -> SyncedCalendar {
+fn to_calendar(
+    calendar: &SourceCalendar,
+    own: &InternalDomains,
+    clock: &dyn Clock,
+) -> SyncedCalendar {
     SyncedCalendar {
         id: CalendarId::generate(clock),
         provider_calendar_id: calendar.provider_id.clone(),
@@ -100,7 +110,7 @@ fn to_calendar(calendar: &SourceCalendar, own: &OwnAddresses, clock: &dyn Clock)
     }
 }
 
-fn to_event(event: &SourceEvent, own: &OwnAddresses, clock: &dyn Clock) -> SyncedEvent {
+fn to_event(event: &SourceEvent, own: &InternalDomains, clock: &dyn Clock) -> SyncedEvent {
     let attendees = attendees_of(event);
     let emails: Vec<Email> = attendees
         .iter()
@@ -131,7 +141,7 @@ fn to_event(event: &SourceEvent, own: &OwnAddresses, clock: &dyn Clock) -> Synce
             .and_then(email_of)
             .map(String::from),
         my_rsvp: my_rsvp(event, own),
-        is_external: own.any_external(&emails),
+        is_external: own.classify(&emails) == Some(Audience::External),
         attendees,
     }
 }
@@ -176,7 +186,7 @@ fn attendee(participant: &Participant, is_organizer: bool) -> EventAttendee {
 
 /// The user's answer: their own entry's, accepted when they organised it,
 /// or the answer of an attendee with one of their addresses.
-fn my_rsvp(event: &SourceEvent, own: &OwnAddresses) -> Option<Rsvp> {
+fn my_rsvp(event: &SourceEvent, own: &InternalDomains) -> Option<Rsvp> {
     if let Some(me) = event
         .attendees
         .iter()

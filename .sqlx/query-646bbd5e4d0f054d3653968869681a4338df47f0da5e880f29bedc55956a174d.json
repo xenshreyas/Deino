@@ -1,0 +1,134 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Events starting in [?1, ?2), by start time. Served by\n-- idx_calendar_events_start_at (asserted in event_repo_tests.rs).\n-- Timestamps are RFC 3339 UTC text, whose text order is time order.\nSELECT\n    id AS \"id: CalendarEventId\",\n    account_id AS \"account_id: CalendarAccountId\",\n    calendar_id AS \"calendar_id: CalendarId\",\n    provider_event_id,\n    ical_uid,\n    series_id AS \"series_id: SeriesId\",\n    title,\n    description,\n    start_at AS \"start_at: DateTime<Utc>\",\n    end_at AS \"end_at: DateTime<Utc>\",\n    is_all_day AS \"is_all_day: bool\",\n    conference_url,\n    platform AS \"platform: ConferencePlatform\",\n    organizer_email,\n    attendees_json AS \"attendees: Json<Vec<EventAttendee>>\",\n    my_rsvp AS \"my_rsvp: Rsvp\",\n    is_external AS \"is_external: bool\",\n    record_override AS \"record_override: bool\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM calendar_events\nWHERE start_at >= ?1 AND start_at < ?2\nORDER BY start_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarEventId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "account_id: CalendarAccountId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "calendar_id: CalendarId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider_event_id",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "ical_uid",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "end_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_all_day: bool",
+        "ordinal": 10,
+        "type_info": "Integer"
+      },
+      {
+        "name": "conference_url",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "platform: ConferencePlatform",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "organizer_email",
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "attendees: Json<Vec<EventAttendee>>",
+        "ordinal": 14,
+        "type_info": "Text"
+      },
+      {
+        "name": "my_rsvp: Rsvp",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_external: bool",
+        "ordinal": 16,
+        "type_info": "Integer"
+      },
+      {
+        "name": "record_override: bool",
+        "ordinal": 17,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 18,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 19,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "646bbd5e4d0f054d3653968869681a4338df47f0da5e880f29bedc55956a174d"
+}

@@ -157,7 +157,10 @@ impl CalendarService {
     async fn sync_now(&self) -> Option<SyncReport> {
         let _running = self.running.lock().await;
         let result = match self.source.access().await {
-            CalendarAccess::Granted => self.sync.run(self.source.as_ref()).await,
+            CalendarAccess::Granted => {
+                let profile = self.settings.get().await.profile;
+                self.sync.run(self.source.as_ref(), &profile.emails).await
+            }
             _ => Err(super::SourceError::AccessDenied.into()),
         };
         let now = self.clock.now();

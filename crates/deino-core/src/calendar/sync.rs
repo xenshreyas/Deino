@@ -8,7 +8,7 @@
 
 use std::sync::Arc;
 
-use deino_domain::Clock;
+use deino_domain::{Clock, Email};
 
 use super::batch::{SyncBatch, SyncReport};
 use super::entities::AttendeeDirectory;
@@ -36,8 +36,14 @@ impl CalendarSync {
         }
     }
 
-    /// Reads `source` around now and stores what it has.
-    pub async fn run(&self, source: &dyn CalendarSource) -> Result<SyncReport, CalendarError> {
+    /// Reads `source` around now and stores what it has. `profile_emails`
+    /// (Settings → Profile) and the user's own entries in the invitations
+    /// tell internal meetings from external ones.
+    pub async fn run(
+        &self,
+        source: &dyn CalendarSource,
+        profile_emails: &[Email],
+    ) -> Result<SyncReport, CalendarError> {
         let window = SyncWindow::around(self.clock.now());
         let snapshot = source.fetch(window).await?;
         if snapshot.accounts.is_empty() {
@@ -51,6 +57,7 @@ impl CalendarSync {
             provider: source.provider(),
             window,
             clock: self.clock.as_ref(),
+            profile_emails,
         };
         let (batch, own) = to_batch(&snapshot, &context);
         let report = self.repo.apply(&batch).await?;

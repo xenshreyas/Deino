@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: CalendarAccountId\", name FROM calendar_accounts WHERE provider = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarAccountId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "999a5c57bfda2d6c9562812212879d45e775bfc8ce31d868605082d86bc980e5"
+}

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Stores an event, or refreshes the stored copy with the same account and\n-- provider ID. A refresh keeps the stored id, created_at and the user's\n-- record_override, and touches the row only when something the provider\n-- sent changed: an unchanged re-sync writes nothing, so it raises no\n-- DbChanged and returns no row (the caller then looks the ID up).\n-- ON CONFLICT DO UPDATE, never REPLACE: the update hook misses REPLACE\n-- deletions, and REPLACE would drop the override.\nINSERT INTO calendar_events (\n    id, account_id, calendar_id, provider_event_id, ical_uid, series_id, title, description,\n    start_at, end_at, is_all_day, conference_url, platform, organizer_email, attendees_json,\n    my_rsvp, is_external, record_override, created_at, updated_at\n)\nVALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)\nON CONFLICT (account_id, provider_event_id) DO UPDATE SET\n    calendar_id = excluded.calendar_id,\n    ical_uid = excluded.ical_uid,\n    series_id = excluded.series_id,\n    title = excluded.title,\n    description = excluded.description,\n    start_at = excluded.start_at,\n    end_at = excluded.end_at,\n    is_all_day = excluded.is_all_day,\n    conference_url = excluded.conference_url,\n    platform = excluded.platform,\n    organizer_email = excluded.organizer_email,\n    attendees_json = excluded.attendees_json,\n    my_rsvp = excluded.my_rsvp,\n    is_external = excluded.is_external,\n    updated_at = excluded.updated_at\nWHERE calendar_events.calendar_id IS NOT excluded.calendar_id\n    OR calendar_events.ical_uid IS NOT excluded.ical_uid\n    OR calendar_events.series_id IS NOT excluded.series_id\n    OR calendar_events.title IS NOT excluded.title\n    OR calendar_events.description IS NOT excluded.description\n    OR calendar_events.start_at IS NOT excluded.start_at\n    OR calendar_events.end_at IS NOT excluded.end_at\n    OR calendar_events.is_all_day IS NOT excluded.is_all_day\n    OR calendar_events.conference_url IS NOT excluded.conference_url\n    OR calendar_events.platform IS NOT excluded.platform\n    OR calendar_events.organizer_email IS NOT excluded.organizer_email\n    OR calendar_events.attendees_json IS NOT excluded.attendees_json\n    OR calendar_events.my_rsvp IS NOT excluded.my_rsvp\n    OR calendar_events.is_external IS NOT excluded.is_external\nRETURNING id AS \"id: CalendarEventId\"\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarEventId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 20
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a546dc68ab812b452aabc402d6762d105ae9dfe4095dd71a69bbdddb40e3ff9a"
+}

@@ -30,12 +30,13 @@ fn harness() -> Harness {
 }
 
 /// `events` as stored, with the user's own addresses they show.
-fn synced(events: Vec<crate::calendar::SourceEvent>) -> (Vec<SyncedEvent>, OwnAddresses) {
+fn synced(events: Vec<crate::calendar::SourceEvent>) -> (Vec<SyncedEvent>, InternalDomains) {
     let clock = clock();
     let context = BatchContext {
         provider: deino_domain::CalendarProvider::Apple,
         window: SyncWindow::around(deino_testkit::at(NOW)),
         clock: &clock,
+        profile_emails: &[],
     };
     let (batch, own) = to_batch(&snapshot(events), &context);
     (batch.accounts[0].calendars[0].events.clone(), own)

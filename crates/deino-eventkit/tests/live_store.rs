@@ -1,6 +1,8 @@
 //! Reads this Mac's real calendars (manual QA, never CI):
 //!
-//!   cargo test -p deino-eventkit --test live_store -- --ignored --nocapture
+//! ```text
+//! cargo test -p deino-eventkit --test live_store -- --ignored --nocapture
+//! ```
 //!
 //! It never asks for access: grant it first (System Settings → Privacy &
 //! Security → Calendars, for the app running the test). It prints counts,
@@ -40,5 +42,8 @@ async fn reads_this_macs_accounts_calendars_and_events() {
             account.calendars.len()
         );
     }
-    assert!(!snapshot.accounts.is_empty(), "a Mac always has a calendar account");
+    assert!(
+        !snapshot.accounts.is_empty(),
+        "a Mac always has a calendar account"
+    );
 }

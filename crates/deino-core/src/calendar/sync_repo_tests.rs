@@ -22,6 +22,7 @@ fn batch_at(source: &SourceSnapshot, provider: CalendarProvider, clock: &FakeClo
         provider,
         window: SyncWindow::around(clock.now()),
         clock,
+        profile_emails: &[],
     };
     to_batch(source, &context).0
 }

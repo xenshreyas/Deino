@@ -15,11 +15,11 @@ use deino_db::DbError;
 use deino_domain::{Clock, CompanyId, Email, PersonId, Rsvp};
 
 use super::EventAttendee;
-use super::audience::OwnAddresses;
 use super::batch::SyncedEvent;
 use super::names::{company_name, person_name};
 use crate::companies::{Company, CompanyDomain, CompanyRepo, is_public_email_domain};
 use crate::people::{Person, PersonRepo};
+use crate::profile::InternalDomains;
 
 /// Invitations with more attendees than this are broadcasts (all-hands,
 /// webinars), not people the user meets; they add nobody.
@@ -55,7 +55,7 @@ impl AttendeeDirectory {
     pub async fn record<'a>(
         &self,
         events: impl IntoIterator<Item = &'a SyncedEvent>,
-        own: &OwnAddresses,
+        own: &InternalDomains,
     ) -> Result<usize, DbError> {
         let invitees: BTreeSet<(Email, Option<String>)> = events
             .into_iter()

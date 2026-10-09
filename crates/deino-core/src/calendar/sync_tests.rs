@@ -45,7 +45,7 @@ async fn a_sync_reads_the_window_around_now_and_stores_events_and_people() {
     } = harness();
     source.set_snapshot(snapshot(vec![meeting("evt-1", 1)]));
 
-    let report = sync.run(&source).await.unwrap();
+    let report = sync.run(&source, &[]).await.unwrap();
 
     assert_eq!(source.windows(), [SyncWindow::around(at(NOW))]);
     assert_eq!(report.events_added, 1);
@@ -60,10 +60,10 @@ async fn a_store_that_reports_no_accounts_deletes_nothing() {
         sync, source, repo, ..
     } = harness();
     source.set_snapshot(snapshot(vec![meeting("evt-1", 1)]));
-    sync.run(&source).await.unwrap();
+    sync.run(&source, &[]).await.unwrap();
     source.set_snapshot(SourceSnapshot::default());
 
-    let report = sync.run(&source).await.unwrap();
+    let report = sync.run(&source, &[]).await.unwrap();
 
     assert!(!report.changed());
     assert_eq!(repo.accounts().await.unwrap().len(), 1);
@@ -76,7 +76,7 @@ async fn a_failed_read_stores_nothing_and_says_why() {
     } = harness();
     source.set_failing(true);
 
-    let error = sync.run(&source).await.unwrap_err();
+    let error = sync.run(&source, &[]).await.unwrap_err();
 
     assert!(matches!(
         error,

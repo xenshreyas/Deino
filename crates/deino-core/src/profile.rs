@@ -19,7 +19,7 @@ mod service;
 #[cfg(test)]
 mod service_tests;
 
-pub use audience::{InternalDomains, PERSONAL_EMAIL_DOMAINS};
+pub use audience::InternalDomains;
 pub use context::{ProfileContext, render_profile_context};
 pub use error::ProfileError;
 pub use input::ProfileInput;
