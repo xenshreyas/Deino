@@ -28,6 +28,8 @@ name, so a green local run is a green CI run. Each row is also one command.
 | Frontend build | `cd frontend && pnpm build` |
 | UI smoke tests | `cd frontend && pnpm test:e2e` (Playwright in the installed Chrome over `pnpm dev:mock`; screenshots in `frontend/test-results/`) |
 | Recording acceptance (macOS, real time) | `cargo test -p deino-audio --test kill_harness -- --ignored --nocapture --test-threads=1` (`kill -9` loss and CPU per track) |
+| LLM evals (never CI) | `cd frontend && DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval <route>` (offline contract and smoke trials run with `cargo test`) |
+| Real-model smoke | `DEINO_SMOKE_APP_DATA=<dir with models/summary/*.gguf> DEINO_LLAMA_HELPER=target/release/llama-helper cargo test -p deino --lib llm::smoke_tests -- --ignored` |
 | UI by hand | `cd frontend && pnpm dev:mock`, then open http://localhost:3119 |
 
 Every test must pass on every machine. A test never reads real hardware:
@@ -83,6 +85,7 @@ Every test's name says the regression it prevents
 | Bindings | Export, manifest drift, ID branding | `frontend/src-tauri/src/bindings.rs` |
 | Hook | Vitest + Testing Library with the generated bindings mocked and typed (`satisfies typeof Generated.commands`) | `frontend/src/features/meetings/queries.test.tsx` |
 | Component | Vitest, render with a `QueryClient`, interact through roles and labels | `frontend/src/features/_example/components/example-notes.test.tsx` |
+| LLM feature | `deino_llm::mock_gateway` with `MockProvider` turns scripted by route (text, tool calls, errors); provider wire tests replay recorded SSE in `crates/deino-llm/tests/fixtures/` through `FakeHttp` | `crates/deino-llm/src/tools/tools_tests.rs` |
 | Main flow | Playwright over `pnpm dev:mock`, fixture data, one spec per flow | `frontend/e2e/meeting.spec.ts` |
 
 Conventions:

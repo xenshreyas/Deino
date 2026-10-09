@@ -53,10 +53,55 @@ Adapted in Deino:
   picker with a diagonally split System preview
   (`frontend/src/features/appearance/components/theme-picker.tsx`) follows
   `apps/desktop/src/settings/appearance/theme.tsx`.
+- `crates/deino-llm/src/prompts.rs` and `crates/deino-llm/prompts/`: built-in
+  prompts as askama `.md.jinja` templates with inline insta snapshots (the
+  `prompt_snapshot!` macro), after `crates/template-app` and
+  `crates/askama-utils/src/lib.rs` (`tpl_snapshot!`).
+- `crates/deino-llm/src/user_templates.rs`: strict-undefined minijinja user
+  templates validated against a variable allowlist, after
+  `crates/template-app/src/enhance.rs`.
+- `crates/deino-llm/tests/llm_eval/`: the libtest-mimic eval harness
+  (contract, smoke and live trials) and its `Expectation` enum, after
+  `crates/template-eval/src/eval/{expectations.rs,harness.rs}`.
 
 MIT License
 
 Copyright (c) 2023-present Fastrepl, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Handy
+
+Source: https://github.com/cjpais/Handy, MIT License.
+
+Adapted in Deino:
+
+- `crates/deino-llm/src/providers/openai_compat.rs`: retrying an
+  OpenAI-compatible request without its optional fields (`response_format:
+  json_schema` and friends) when the server answers 400 or 422, after
+  `src-tauri/src/llm_client.rs`.
+
+MIT License
+
+Copyright (c) 2025 CJ Pais
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
