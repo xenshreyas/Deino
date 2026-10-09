@@ -26,7 +26,7 @@ This document does two jobs:
 **Implementing sub-agent**
 - Your card is your spec. Do what it says, and do not grow scope into another card. If you find a gap another card should fill, note it in your PR description under "Follow-ups".
 - Every card's **Parity** line points at sections of `docs/research/*.md`. Read them for exact UX details such as wording, limits and edge cases.
-- **Done** means: every acceptance box passes, `cargo test` and `pnpm test` are green, `pnpm run build` succeeds, and the PR description lists what you verified and how.
+- **Done** means: every acceptance box passes, `cargo nextest run --workspace` and `pnpm test` (Vitest) are green, `pnpm build` succeeds, and the PR description lists what you verified and how.
 
 ---
 
@@ -122,20 +122,23 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
    - Name new files `frontend/src-tauri/migrations/<YYYYMMDDHHMMSS>_<card_id_lowercase>_<desc>.sql`, using the real current UTC time so two agents never produce the same name.
    - Only change tables your card **owns** (see §4.1). Adding nullable columns to `meetings` is allowed for any card, but list them in your PR.
    - Never edit an existing migration.
-3. **Tauri command registration.**
-   - New features go in their own Rust module, `frontend/src-tauri/src/<feature>/`, containing `mod.rs`, `commands.rs`, and `repo.rs` if it touches the DB.
-   - Register commands using the convention FND-02 sets up. Until then, append them to `generate_handler![]` inside a comment banner `// ── <CARD-ID> <feature> ──`. Keep the change append-only, so merge conflicts stay trivial.
+3. **Where code goes (§4.0 is authoritative).**
+   - **Feature logic** (service, repo, model, error) goes in `crates/deino-core/src/<feature>.rs` + `crates/deino-core/src/<feature>/`, which is Tauri-free.
+   - **IPC** goes in **one inline Tauri plugin per feature**: `frontend/src-tauri/src/features/<feature>.rs` + `features/<feature>/{commands.rs, events.rs}`, with its own `tauri_specta::Builder`. Register it with one line each in `features/manifest.rs`, `lib.rs` (`.plugin(..)`) and `capabilities/default.json` (`"<feature>:default"`).
+   - **No new `mod.rs` files.** Use the `foo.rs` + `foo/` style.
+   - **Legacy Meetily commands** stay in `src/legacy/` under one `generate_handler!` until a card ports them.
 4. **Frontend structure.**
    - New pages go under `frontend/src/app/<route>/`.
    - Feature components go under `frontend/src/features/<feature>/`, which FND-10 creates.
    - Add sidebar entries **only** through the nav registry (`frontend/src/features/shell/nav.ts`, also from FND-10).
-   - Every `invoke()` call goes through the typed wrapper `frontend/src/lib/ipc/<feature>.ts`.
+   - **Never hand-write `invoke()`.** Call the **generated** tauri-specta bindings in `frontend/src/lib/ipc/generated/` through TanStack Query hooks in `features/<feature>/queries.ts`.
+   - **No raw `useEffect`.** Derive state, or use queries/mutations, event handlers or `useMountEffect` (anarlog rule).
 5. **Settings.** New settings go in the typed settings store from FND-06. Never use `localStorage` for anything durable, and never write new plaintext secrets: **secrets go in the macOS Keychain** through FND-06.
 6. **LLM calls.** Every LLM call goes through the LLM gateway (FND-09) and names a **task route**, such as `notes.enhance`, `chat`, `extract.action_items` or `tagging`. Never call a provider directly.
 7. **Background work.** Anything that runs after a meeting is a **pipeline stage** (FND-08). Never chain work with ad-hoc `tokio::spawn`.
 8. **Tests are required.**
-   - Rust: write unit tests for pure logic and repository tests against an in-memory SQLite (`sqlite::memory:` with all migrations applied, using the FND-04 helper).
-   - Frontend: write `bun:test` tests for hooks and libs.
+   - Rust: write unit tests for pure logic and repository tests against `deino_db::test_db()` (in-memory SQLite, all migrations applied). Run them with `cargo nextest`.
+   - Frontend: write **Vitest** tests (Testing Library, happy-dom) colocated as `*.test.ts(x)`, plus Playwright smoke tests over `pnpm dev:mock`.
    - Any LLM-dependent logic must be testable with the gateway's `MockProvider` (FND-09).
 9. **UI verification.** Run `pnpm dev:mock` (FND-04), which runs the Next app in a browser with Tauri IPC mocked from fixture data. Screenshot your UI in the browser pane and attach what you saw to the PR. Real-hardware checks of audio, permissions or AX go in a "Manual QA" checklist in the PR.
 10. **Dependencies.**
@@ -195,7 +198,7 @@ Owner goal: **extremely high-quality, beautiful code. Nothing less is acceptable
   - The FTS5 and vector index tables.
   - Write-once snapshots, such as an `enhanced_notes` version.
   - Every denormalized column has a comment in its migration naming its **source of truth** and the **one place** that keeps it in sync: a repo method in the same transaction, or a trigger.
-- **JSON columns** are allowed only for opaque payloads that are never queried by field (the BlockNote document, raw provider payloads). Each has a typed Rust struct.
+- **JSON columns** are allowed only for opaque payloads that are never queried by field (the TipTap document JSON, raw provider payloads). Each has a typed Rust struct.
 - **Integrity and performance:**
   - Foreign keys ON (`PRAGMA foreign_keys=ON`) with explicit `ON DELETE` behaviour.
   - `CHECK` constraints for enums.
@@ -207,7 +210,7 @@ Owner goal: **extremely high-quality, beautiful code. Nothing less is acceptable
 
 ### Structure (Rust)
 - **Layers.** Each feature module has these layers. Each layer may only call the one below it.
-  1. `commands.rs`: thin Tauri commands. They parse input, call one service function and map errors. No logic.
+  1. `commands.rs` (in the app crate's feature plugin): thin Tauri commands. They parse input, call one service function and map errors. No logic.
   2. `service.rs`: business logic. It has no Tauri types and no SQL, and it is pure where it can be.
   3. `repo.rs`: SQL only, through sqlx. One function per query, returning typed structs.
   4. `adapters/`: anything external (LLM, HTTP, OS APIs, audio devices, filesystem, clock), each **behind a trait**.
@@ -247,9 +250,9 @@ Owner goal: **extremely high-quality, beautiful code. Nothing less is acceptable
 - **Unit tests** for every service function, using fakes for adapters and `Clock` for anything time-based.
 - **Repository tests** against an in-memory SQLite with all migrations applied (`test_db()`).
 - **Contract tests** for every Tauri command: input → output JSON shape, so the frontend can rely on it.
-- **Frontend:** component and hook tests with bun:test, Testing Library and happy-dom. Use Playwright smoke tests for main flows against `pnpm dev:mock`.
+- **Frontend:** component and hook tests with Vitest, Testing Library and happy-dom. Use Playwright smoke tests for main flows against `pnpm dev:mock`.
 - **LLM features:** prompt-snapshot tests with `MockProvider`, plus a small **eval set** (fixtures and expected facts) runnable on demand with a real key (`pnpm eval <feature>`). Evals are not part of CI.
-- **Coverage:** new service and repository code should reach about 80% line coverage. CI reports it (`cargo llvm-cov`, bun coverage).
+- **Coverage:** new service and repository code should reach about 80% line coverage. CI reports it (`cargo llvm-cov`, Vitest coverage).
 - **Bug fixes** start with a failing test that reproduces the bug.
 
 ### Tooling enforced in CI (FND-03 and FND-13)
@@ -319,6 +322,68 @@ Owner goal: **extremely high-quality, beautiful code. Nothing less is acceptable
 
 ## 4. Target architecture (shared foundations)
 
+### 4.0 Repository architecture (authoritative; decided 2026-10-08 from `docs/references/architecture.md`)
+
+**If a card's file paths conflict with this section, this section wins.** Cards written earlier mention paths like `frontend/src-tauri/src/<feature>/` or `pipeline/`; map them to the layout below.
+
+```
+Deino/
+├── Cargo.toml                 # workspace; [workspace.dependencies]; [workspace.lints]; dev deps opt-level=1
+├── rust-toolchain.toml  clippy.toml  rustfmt.toml  deny.toml  typos.toml  lefthook.yml  cliff.toml
+├── .cargo/config.toml         # SQLX_OFFLINE=true, MACOSX_DEPLOYMENT_TARGET=14.2
+├── .sqlx/                     # committed sqlx offline query data
+├── crates/                    # NONE of these depend on tauri
+│   ├── deino-domain/          # newtype IDs, enums (sqlx::Type + specta::Type), DTOs, AppError/ErrorCode, Clock
+│   ├── deino-db/              # pool (WAL, 1 writer + readers), migrations/, MIGRATOR, change notifier, test_db()
+│   ├── deino-core/            # features as modules: meetings/, people/, folders/, tags/, action_items/, settings/, …
+│   ├── deino-pipeline/        # Runner, PipelineStage trait, registry.rs, job repo
+│   ├── deino-llm/             # gateway, routes, providers, structured output, tools, askama/minijinja prompts, mock, evals
+│   ├── deino-net/             # the ONLY reqwest owner: ServiceId registry, ScopedClient, egress log, offline mode
+│   ├── deino-secrets/         # SecretStore trait, Keychain + in-memory impls
+│   ├── deino-audio/           # capture (cpal, Core Audio tap via cidre), rings, tracks, AudioSource trait, mock source
+│   ├── deino-stt/             # transcribe-cpp worker supervisor, engines; MUST NOT depend on deino-net
+│   ├── deino-doc/             # TipTap JSON <-> Markdown (adapted from anarlog crates/tiptap, MIT)
+│   └── deino-testkit/         # fixture loaders + fakes (dev-dependency only)
+├── llama-helper/              # local LLM sidecar (separate process)
+├── fixtures/meetings/*.json  fixtures/audio/<meeting>/{mic,system}.m4a
+└── frontend/
+    ├── vite.config.ts  vitest.config.ts  playwright.config.ts  eslint.config.js  tsconfig.json
+    ├── src-tauri/
+    │   ├── build.rs                     # tauri_build + InlinedPlugin per features/manifest.rs
+    │   ├── capabilities/default.json
+    │   └── src/  main.rs  lib.rs (≤150 lines)  composition.rs (DI root)  bindings.rs (export test)
+    │             features.rs  features/manifest.rs  features/<feature>.rs  features/<feature>/{commands,events}.rs
+    │             legacy/ (Meetily commands until ported)
+    └── src/
+        ├── main.tsx  router.tsx  routes/ (TanStack Router, file-based, thin)
+        ├── features/<feature>/{components/, hooks/, api.ts, queries.ts, copy.ts, types.ts, index.ts}
+        ├── features/shell/{nav.ts, command-palette/, sidebar/}   features/meeting/slots.ts
+        ├── lib/ipc/{generated/, result.ts, events.ts, query-client.ts}
+        ├── ui/ (shadcn primitives on tokens; icons.ts)   styles/tokens.css
+        └── dev/mock-ipc/<feature>.ts    # `satisfies typeof generated.<feature>.commands`
+```
+
+**Dependency rules**
+- `domain ← db ← core ← pipeline ← app`. `llm → net`. `stt ↛ net`, checked in CI with `cargo tree`.
+- No crate under `crates/` depends on `tauri`.
+- A feature becomes its own crate only when it gains heavy native deps or grows past about 3k lines.
+
+**Frontend stack**
+- Vite, React 18, TanStack Router (file-based, typed params, zod search params), TanStack Query (Rust data, invalidated by `DbChanged` events from SQLite commit hooks), Zustand (small shared UI state).
+- Tailwind v4 with semantic tokens (`ui.md`), shadcn/Radix, lucide icons through one `ui/icons.ts`.
+- Editor: **TipTap 3**, replacing BlockNote from NOT-01 on. TipTap JSON is the stored document format, so Rust can convert it with `deino-doc`.
+- Tests: Vitest and Playwright.
+
+**IPC**
+- tauri-specta (`=2.0.0-rc.21`, matching Handy) generates the TS bindings from a `#[test]`; CI fails if they are stale.
+- All errors are `AppError { code, message }`.
+- LLM token streams use a per-request typed `tauri::ipc::Channel`.
+
+**Process isolation**
+- transcribe-cpp runs in **child worker processes** (Handy's supervisor pattern).
+- The local LLM runs in the llama-helper sidecar.
+- A native crash or hang can't take the app down.
+
 ### 4.1 Data model: core tables and who owns them
 
 FND-07 creates the core schema in one migration so later cards don't collide. Feature-specific tables are created by the card that owns them. All IDs are TEXT UUIDv7 unless noted, and all timestamps are TEXT ISO-8601 UTC.
@@ -335,7 +400,7 @@ FND-07 creates the core schema in one migration so later cards don't collide. Fe
 | `folders`, `meeting_folders` | FND-07 | Folders are nested via `parent_id`, plus `name`, `icon`, `description`, `auto_rules_json`. A meeting can sit in many folders. |
 | `tags`, `meeting_tags` | FND-07 | Tag: `name`, `color`, `description`, `auto_apply`. Link: `meeting_id`, `tag_id`, `applied_by` (`user`/`ai`/`automation`) |
 | `action_items` | FND-07 | `id`, `meeting_id` nullable, `title`, `description`, `assignee_person_id`, `due_at`, `status` (`open`/`done`), `priority`, `source_segment_id`, `external_refs_json`, `completed_at`, `created_by` (`ai`/`user`) |
-| `meeting_notes` (exists, unused) | NOT-01 | User notes: `notes_markdown`, `notes_json` (BlockNote) |
+| `meeting_notes` (exists, unused) | NOT-01 | User notes: `notes_markdown`, `notes_json` (TipTap JSON) |
 | `enhanced_notes` | NOT-02 | `meeting_id`, `version`, `blocks_json` (blocks carry provenance and citations), `markdown`, `template_id`, `model`, `created_at`, `is_user_edited` |
 | `templates` | NOT-04 | Moves templates from JSON files into the DB; built-ins are seeded |
 | `jobs`, `job_runs` | FND-08 | The pipeline queue |
@@ -376,7 +441,7 @@ A durable, SQLite-backed job runner. When a meeting changes to `processing`, the
 | 98 | `follow_up_draft` | NOT-07 |
 | 99 | `auto_export` | EXP-02 |
 
-Stages register through a trait: `trait PipelineStage { fn id(&self)->&'static str; fn order(&self)->u16; async fn run(&self, ctx:&StageCtx, meeting_id:&str)->anyhow::Result<StageOutcome>; }`. Adding a stage means one line in `pipeline/registry.rs`.
+Stages register through a trait: `trait PipelineStage { fn id(&self)->&'static str; fn order(&self)->u16; async fn run(&self, ctx:&StageCtx, meeting: MeetingId)->Result<StageOutcome, StageError>; }` (`StageError::is_retryable()`). Adding a stage means one line in `crates/deino-pipeline/src/registry.rs`.
 
 ### 4.3 LLM gateway (FND-09)
 
@@ -664,37 +729,46 @@ Card format:
     - Remove the language picker, `set_language_preference`, summary translation and language detection (`whatlang`).
     - Hard-code transcription language `en`.
     - Keep the prompt "English normalization" only where it is harmless.
-  - **Command registration:**
-    - Try making each feature module an inline Tauri plugin (`tauri::plugin::Builder::new("deino-<feature>").invoke_handler(generate_handler![..])`, added with `.plugin(feature::init())`), and check that Tauri 2 ACL lets those commands run with the app's capabilities.
-    - If it works, document the pattern in `CLAUDE.md` with a 15-line example and use it for all new modules.
-    - If ACL blocks inline plugins, keep the single `generate_handler!` and switch to the comment-banner rule (§3.3).
-    - Either way, document which one you chose.
+  - **Command registration (decided: inline plugins, §4.0):**
+    - Move capabilities from `tauri.conf.json` into `capabilities/default.json`.
+    - Move all legacy commands into `src/legacy/`, still under one `generate_handler!`, with a short `src/legacy.rs` doc saying they will be ported card by card. Don't add an `AppManifest`.
+    - Create `features.rs`, `features/manifest.rs` and the `build.rs` `InlinedPlugin` loop (`architecture.md` §1 has the code).
+    - Add a capability guard test asserting every manifest feature is granted.
+    - FND-13 adds the first real plugin.
 - **Accept:**
   - [ ] `cargo build`, `cargo clippy -D warnings` (new code only), and `pnpm run build` all pass.
   - [ ] Recording, import, summary and settings still work end to end.
-  - [ ] `CLAUDE.md` documents the command-registration pattern.
+  - [ ] `CLAUDE.md` documents the command-registration pattern, and ADR 0002 records it.
 
 #### FND-03 · CI and quality gates
-- **Wave** 0 · **Depends on** FND-02 · **Size** S
+- **Wave** 0 · **Depends on** FND-13 · **Size** S
 - **Owns:** `.github/workflows/`, `frontend/package.json` scripts
 - **Build:**
-  - Add `pnpm test` (bun) and `pnpm typecheck` (`tsc --noEmit`).
-  - **PR workflow:** `cargo fmt --check`, `cargo clippy`, `cargo test --workspace` on macOS and Linux (`cargo check` only on Linux for macOS-gated code), plus `pnpm test`, `pnpm typecheck` and `pnpm run build`.
+  - Follow `architecture.md` (b) FND-03.
+  - **One `ci.yml`** with path filters and `cancel-in-progress`.
+    - macOS job: fmt, `scripts/clippy.sh`, `cargo nextest run --workspace`, the file-size check and `cargo tree` dependency-rule checks.
+    - Linux job: `cargo check --workspace`.
+    - Frontend job: `pnpm install --frozen-lockfile`, typecheck, lint, `vitest run`, `vite build`.
+    - Bindings job: regenerate, then `git diff --exit-code`.
+    - PR-title Conventional Commits check.
+  - Use `Swatinem/rust-cache`. Add `lefthook.yml` for local hooks.
   - Delete or disable the upstream release workflows that reference S3/Zackriya secrets, and keep one manual `release-macos.yml` (unsigned DMG artifact).
 - **Accept:**
   - [ ] A PR that breaks a test fails CI.
   - [ ] CI passes on `main`.
 
 #### FND-04 · Test fixtures and mocked-IPC dev mode
-- **Wave** 0 · **Depends on** FND-02 · **Size** M
-- **Owns:** `frontend/src/dev/mock-ipc/`, `frontend/src-tauri/src/dev_fixtures/`, `fixtures/`
+- **Wave** 0 · **Depends on** FND-13 · **Size** M
+- **Owns:** `frontend/src/dev/mock-ipc/`, `crates/deino-testkit/`, `frontend/src-tauri/src/dev_fixtures.rs`, `fixtures/`
 - **Build:**
   - **Fixtures:** `fixtures/meetings/*.json` with 8 realistic English meetings:
     - 1:1, standup, sales discovery (external), interview, board update, customer support, in-person brainstorm, a 90-minute planning meeting
     - each with segments (channel, speaker, ms timestamps), attendees with emails and domains, calendar event data, and a short audio clip for 2 of them
   - **Rust:** a test helper `test_db()` that creates an in-memory SQLite with all migrations applied, plus `seed_fixtures(&pool)`.
   - **Debug-only command** `dev_seed_fixtures`, available from Settings → Developer when `debug_assertions` is on.
-  - **`pnpm dev:mock`:** runs the Next dev server with `@tauri-apps/api/mocks` `mockIPC`, answering known commands from the fixtures and an in-memory store, so agents can screenshot UI in a normal browser. Each feature card extends the mock handlers for its own commands in `frontend/src/dev/mock-ipc/<feature>.ts`.
+  - **`pnpm dev:mock` = `vite --mode mock`.** A `resolve.alias` swaps `@/lib/ipc/generated/*` for `@/dev/mock-ipc/*`. Each mock module `satisfies typeof generated.<feature>.commands`, so a stale mock fails typecheck. Mocks serve fixture data from an in-memory store. Each feature card adds its own mock module.
+  - **`MockAudioSource`** (`deino-audio` test-support) plays fixture mic/system tracks. In debug builds it is selected with `DEINO_MOCK_AUDIO` (pattern: anarlog `crates/audio-mock`).
+  - See `architecture.md` (b) FND-04.
 - **Accept:**
   - [ ] `pnpm dev:mock` shows the meeting list and a meeting page with fixture data in a browser.
   - [ ] `test_db()` is used by at least one repository test.
@@ -778,8 +852,30 @@ Card format:
   - [ ] Tool-calling loop tests run against `MockProvider`.
   - [ ] Streaming works against Claude and the built-in model.
 
+#### FND-10a · Migrate the frontend to Vite + TanStack Router + Tailwind v4 + Vitest
+- **Wave** 0 · **Depends on** FND-02 · **Size** M
+- **Owns:** `frontend/package.json`, `frontend/vite.config.ts`, `frontend/vitest.config.ts`, `frontend/src/main.tsx`, `frontend/src/router.tsx`, `frontend/src/routes/`; deletes `next.config.js` and `src/app/`
+- **Read:** `docs/references/architecture.md` §7 and (b) FND-10. Reference: `~/Documents/GitHub/deino-references/anarlog/apps/desktop/{vite.config.ts,src/main.tsx,src/routes/}`.
+- **Build:**
+  - **Vite + React plugin** with TanStack Router (file-based, `autoCodeSplitting`). Update the Tauri `devUrl` and `frontendDist`.
+  - **Port the existing routes:**
+    - `/` → `routes/index.tsx`
+    - `/meeting-details?id=` → `routes/meetings/$meetingId.tsx`, keeping a redirect for the old URL
+    - `/settings`
+    - Delete `/notes/[id]`.
+  - Replace `next/link`, `next/navigation`, `next/image` and the `metadata` exports.
+  - **Remove the ProseMirror webpack alias hack.** BlockNote stays frozen until NOT-01 swaps it for TipTap.
+  - **Tailwind v4** via `@tailwindcss/vite`. Keep the existing look for now; FND-10 restyles it.
+  - **Tests:** move the 10 existing bun tests to Vitest (happy-dom, Testing Library) and add the anarlog `test-setup.ts` Tauri shim.
+  - Add scripts: `dev`, `build`, `test`, `typecheck`, `lint`.
+  - Remove `next`, `eslint-config-next` and the other Next-only dependencies.
+- **Accept:**
+  - [ ] `pnpm tauri dev` runs the app with every existing screen working: record, meeting details, settings, onboarding, import.
+  - [ ] `pnpm build` and `pnpm test` pass.
+  - [ ] No `next` packages remain.
+
 #### FND-10 · App shell, navigation, design system, dark mode
-- **Wave** 1 · **Depends on** FND-02 · **Size** L
+- **Wave** 1 · **Depends on** FND-10a, FND-13 · **Size** L
 - **Owns:** `frontend/src/app/layout.tsx`, `components/Sidebar/*` (replace), `frontend/src/features/shell/`, `globals.css`, `tailwind.config`
 - **Build:**
   - Build the shell from §4.6 with a nav registry (`features/shell/nav.ts`, an append-only array of `{id, label, icon, href, order}`).
@@ -795,10 +891,16 @@ Card format:
   - [ ] A new nav item or tab can be added by editing one registry file.
   - [ ] Screenshots of `dev:mock` are in the PR.
 
-#### FND-13 · Code-quality baseline
-- **Wave** 0 · **Depends on** FND-02 · **Size** M
+#### FND-13 · Code-quality baseline and workspace skeleton
+- **Wave** 0 · **Depends on** FND-10a · **Size** L
+- **Read:** `docs/references/architecture.md` §1–3, §8, §10, §11, and (b) FND-13 and (c), which has the exact config files to copy.
 - **Owns:** `docs/ARCHITECTURE.md`, `docs/adr/`, `.github/pull_request_template.md`, `clippy.toml`, ESLint/Prettier config, `frontend/src-tauri/src/error.rs`, the IPC type generation, the TanStack Query setup
 - **Build:**
+  - **Workspace skeleton (§4.0):**
+    - Create `crates/deino-domain`, `crates/deino-db` (move the existing migrations here) and `crates/deino-testkit`, each with a README (Role / Owns / Does Not Own / Invariants).
+    - Create the other crates as empty stubs only when their owning card starts.
+    - Set up `[workspace.lints]`, `[workspace.dependencies]`, the dev profile, `.cargo/config.toml`, `rust-toolchain.toml`, `rustfmt.toml`, `deny.toml`, `typos.toml` and the file-size script.
+  - **First real inline plugin:** port the meetings list commands into `crates/deino-core/src/meetings` (service, repo, model, error) and `frontend/src-tauri/src/features/meetings.rs`, with tauri-specta bindings and the TanStack Query hook. This is the worked example everyone copies.
   - **`docs/ARCHITECTURE.md`:** an accurate map of the system as it is after FND-02: processes, modules, data flow, schema and extension points.
   - **ADRs:** `docs/adr/0001-record-architecture-decisions.md` plus a template. Write ADRs for the decisions already taken in this plan: Tauri + Rust core, SQLite + sqlx, the pipeline-stage pattern, the LLM gateway with routes, and cloud LLM for notes with local transcription.
   - **`AppError`:** the shared `{code, message}` type, serializable to TS, with a conversion pattern from module `thiserror` enums.
@@ -806,7 +908,7 @@ Card format:
   - **TanStack Query:** set up the provider plus a helper that invalidates queries on Rust events. Convert the meetings list as the example.
   - **Lint and format configs:** a `clippy.toml` with curated pedantic lints, ESLint (typescript-eslint strict, react-hooks), and Prettier. Fix or explicitly allow the existing violations so CI starts green.
   - **PR template** and Conventional Commits check.
-  - **Coverage reporting** in CI: `cargo llvm-cov` and bun coverage, informational.
+  - **Coverage reporting** in CI: `cargo llvm-cov` and Vitest coverage, informational.
   - **Reference module:** `frontend/src-tauri/src/_example_feature/`, a tiny commands → service → repo + adapter-trait module with full docs and tests. Agents copy it as their starting point. Exclude it from release builds.
 - **Accept:**
   - [ ] The example module and the converted meetings list follow every §3A rule.
@@ -1166,7 +1268,7 @@ Card format:
 - **Owns:** `meeting_notes` usage, `features/notepad/`
 - **Parity:** G §3.1 (editor, markdown shortcuts, checkboxes, images, @mentions, focus mode), C §7.2 (private notes before, during and after)
 - **Build:**
-  - A BlockNote editor shown **on the recording screen and the meeting page** (tab "My notes"), also reachable from the record panel's **Open notes** window.
+  - A **TipTap 3** editor (replacing BlockNote; remove BlockNote and its dependencies here) shown **on the recording screen and the meeting page** (tab "My notes"), also reachable from the record panel's **Open notes** window.
   - **Editor features:** markdown shortcuts, headings, bullets, `[]` checkboxes, bold/italic, ⌘⇧V paste as plain text, image paste and drag (saved to the meeting folder), and **@mentions** of people (inserts a person chip).
   - Autosave every 1 s, debounced, to `meeting_notes.notes_json` and `notes_markdown`.
   - **Before a meeting:** opening an upcoming calendar event creates its meeting row (`status='scheduled'`) so notes and agenda can be written ahead of time (ORG-02 links it in).
@@ -1189,7 +1291,7 @@ Card format:
     - the template (NOT-04),
     - screen context (CAP-09) and vocabulary,
     - recent previous meetings in the same series (the last notes only).
-  - **Output:** a `structured<EnhancedDoc>` call where `EnhancedDoc = { title, sections:[{heading, blocks:[{kind: bullet|para|todo, text, origin: user|ai, evidence:[{segment_id, start_ms}]}]}] }`.
+  - **Output:** a `structured<EnhancedDoc>` (converted to TipTap JSON by `deino-doc`) call where `EnhancedDoc = { title, sections:[{heading, blocks:[{kind: bullet|para|todo, text, origin: user|ai, evidence:[{segment_id, start_ms}]}]}] }`.
     - The prompt must quote user-origin lines verbatim, place them under the right section, and add AI detail beneath.
   - **Long meetings:** map-reduce over 20-minute windows (keep the existing chunking ideas) and keep evidence ids through the reduce step.
   - Validate that every evidence `segment_id` exists. Drop citations that don't.
@@ -1198,7 +1300,7 @@ Card format:
   - **Regenerating** keeps old versions (version history dropdown). **Confirm before regenerating** when `is_user_edited`.
   - **Regenerate prompts** appear when attendees change, transcript chunks are deleted or edited, the user's notes are edited after enhancement, or new audio is appended.
 - **Build (02b, renderer):**
-  - BlockNote custom inline style for origin: **user text in the primary colour, AI text in a muted grey** (both readable in dark mode).
+  - TipTap custom mark for origin (`origin=user|ai`), plus a citation mark or node, converted to and from Markdown in Rust by `deino-doc`: **user text in the primary colour, AI text in a muted grey** (both readable in dark mode).
   - Fully editable. Editing an AI block flips it to user-edited (keep it grey but mark it edited).
   - Table of contents on the right for documents with three or more headings.
   - Copy as Markdown or rich text.
@@ -1904,7 +2006,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 
 | Wave | Cards (✅ = merged) | Notes |
 |---|---|---|
-| **0** | FND-01 → FND-02 → (FND-03 ∥ FND-04 ∥ FND-13) | One after another. Everything touches `lib.rs` and branding. |
+| **0** | FND-01 → FND-02 → FND-10a → FND-13 → (FND-03 ∥ FND-04) | One after another. These reshape the whole repo. |
 | **1** | FND-05 ∥ FND-06 ∥ FND-07 ∥ FND-10 ∥ CAP-01; then FND-09 and FND-12 (after FND-06) | FND-05 and FND-07 coordinate on `transcript_segments`. Land FND-07's migration first and FND-05 rebases onto it. |
 | **2** | FND-08, then in parallel: CAP-02 ∥ CAP-06 ∥ CAP-10 ∥ NOT-01 ∥ NOT-04 ∥ NOT-05 ∥ ORG-01 ∥ ORG-05 ∥ ORG-06 ∥ EXP-01 ∥ INT-00 | FND-08 merges first, because many cards add stages. |
 | **3** | CAP-03 ∥ CAP-07 ∥ CAP-08 ∥ CAP-11 ∥ TRN-01 ∥ TRN-05 ∥ NOT-02 ∥ ORG-02 ∥ ORG-03 ∥ ORG-04 ∥ ORG-08 ∥ AI-05 ∥ EXP-02 ∥ DEV-01 ∥ PRV-01; then TRN-03 (after TRN-01), ORG-07 (after ORG-04), AI-01 (after ORG-08) | The heaviest wave. NOT-02 is on the critical path. |
