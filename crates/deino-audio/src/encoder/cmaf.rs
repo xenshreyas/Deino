@@ -4,7 +4,7 @@
 //! writing a file, hands Deino an init segment (`ftyp` + `moov`) and then one
 //! `moof` + `mdat` media segment per second through a delegate. Deino appends
 //! those bytes to its own `.m4a.part` file, so it decides when bytes hit the
-//! disk and knows exactly what is durable (ADR 0012, measured in
+//! disk and knows exactly what is durable (ADR 0013, measured in
 //! `docs/references/spike-native-recording.md`: `kill -9` loses 0.03–0.84 s,
 //! about 1.7 % of one core per track, no FFmpeg).
 

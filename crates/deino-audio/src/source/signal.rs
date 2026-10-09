@@ -1,8 +1,10 @@
 //! Generated test signals: deterministic audio as a pure function of time.
 //!
-//! The mock source plays these until FND-04's fixture tracks are wired in
-//! ([`TestSignal::Looped`] plays any decoded clip). Each sample depends only
-//! on its frame index, so a test can predict exactly what a file must hold.
+//! The mock source plays generated voices by default, or FND-04's fixture
+//! tracks through [`TestSignal::from_pcm`] (`deino_testkit::fixture::PcmTrack`
+//! decodes them; the fixtures are 16 kHz, so they are resampled to 48 kHz).
+//! Each sample depends only on its frame index, so a test can predict exactly
+//! what a file must hold.
 
 use std::f32::consts::TAU;
 use std::sync::Arc;
@@ -42,7 +44,7 @@ pub enum TestSignal {
         /// Pitch of the voiced parts.
         hz: f32,
     },
-    /// A recorded clip, looped (fixture audio once FND-04 lands).
+    /// A recorded 48 kHz clip, looped (fixture audio; see [`Self::from_pcm`]).
     Looped(Arc<[f32]>),
 }
 
@@ -55,6 +57,12 @@ impl TestSignal {
     /// The system preset: a 330 Hz speech-like voice.
     pub fn system() -> Self {
         Self::Speechlike { hz: 330.0 }
+    }
+
+    /// Loops a decoded mono clip recorded at `sample_rate`, resampled to
+    /// 48 kHz by linear interpolation (enough for a mock voice).
+    pub fn from_pcm(samples: &[f32], sample_rate: u32) -> Self {
+        Self::Looped(resample(samples, sample_rate).into())
     }
 
     /// The sample at timeline frame `frame`.
@@ -73,6 +81,26 @@ impl TestSignal {
             *slot = self.sample(start + Frames(offset));
         }
     }
+}
+
+/// Linear-interpolation resampling of `samples` from `rate` to 48 kHz.
+fn resample(samples: &[f32], rate: u32) -> Vec<f32> {
+    if rate == STORAGE_RATE || rate == 0 {
+        return samples.to_vec();
+    }
+    let len = Frames::of_len(samples.len()).0;
+    let out_len = len * u64::from(STORAGE_RATE) / u64::from(rate);
+    (0..out_len)
+        .map(|frame| {
+            let position = frame * u64::from(rate);
+            let index = usize::try_from(position / u64::from(STORAGE_RATE)).unwrap_or(usize::MAX);
+            #[allow(clippy::cast_precision_loss, reason = "both values are below 48 000")]
+            let weight = (position % u64::from(STORAGE_RATE)) as f32 / STORAGE_RATE as f32;
+            let left = samples.get(index).copied().unwrap_or_default();
+            let right = samples.get(index + 1).copied().unwrap_or(left);
+            left + (right - left) * weight
+        })
+        .collect()
 }
 
 /// `sin(2π · hz · t)` at `frame`, with the phase kept small for precision.
@@ -169,6 +197,17 @@ mod tests {
             TestSignal::Looped(Arc::from(Vec::new())).sample(Frames(9)),
             0.0
         );
+    }
+
+    #[test]
+    fn pcm_at_another_rate_is_resampled_to_48_khz() {
+        let ramp: Vec<f32> = (0..160_u16).map(|i| f32::from(i) / 160.0).collect();
+        let TestSignal::Looped(clip) = TestSignal::from_pcm(&ramp, 16_000) else {
+            panic!("expected a looped clip");
+        };
+        assert_eq!(clip.len(), 480);
+        assert_eq!(clip[3], ramp[1]);
+        assert!(clip[4] > clip[3] && clip[4] < clip[6]);
     }
 
     #[test]

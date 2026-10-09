@@ -61,14 +61,20 @@ impl MockAudioSource {
     /// A pretend meeting: a microphone voice, and a system voice that starts
     /// [`MOCK_SYSTEM_DELAY`] late.
     pub fn meeting(clock: &Arc<dyn HostClock>) -> [Self; 2] {
+        Self::playing(clock, TestSignal::microphone(), TestSignal::system())
+    }
+
+    /// A pretend meeting playing the given voices, for example a fixture's
+    /// tracks (`TestSignal::from_pcm` over `deino_testkit`'s `PcmTrack`).
+    /// The system voice starts [`MOCK_SYSTEM_DELAY`] late.
+    pub fn playing(
+        clock: &Arc<dyn HostClock>,
+        microphone: TestSignal,
+        system: TestSignal,
+    ) -> [Self; 2] {
         [
-            Self::new(
-                Track::Microphone,
-                TestSignal::microphone(),
-                Arc::clone(clock),
-            ),
-            Self::new(Track::System, TestSignal::system(), Arc::clone(clock))
-                .starting_after(MOCK_SYSTEM_DELAY),
+            Self::new(Track::Microphone, microphone, Arc::clone(clock)),
+            Self::new(Track::System, system, Arc::clone(clock)).starting_after(MOCK_SYSTEM_DELAY),
         ]
     }
 }

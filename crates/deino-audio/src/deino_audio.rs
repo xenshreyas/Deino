@@ -2,7 +2,7 @@
 //!
 //! Records the microphone and system audio as two separate, sample-aligned
 //! tracks that survive `kill -9` (≤ 1 s lost) and power loss (≤ 5 s lost),
-//! without FFmpeg (ADR 0012, `docs/references/spike-native-recording.md`).
+//! without FFmpeg (ADR 0013, `docs/references/spike-native-recording.md`).
 //!
 //! ```text
 //!  AudioSource ─RT─▶ RtSink ═ring═▶ writer thread ──▶ TrackEncoder ──▶ TrackSink

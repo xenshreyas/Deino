@@ -8,7 +8,7 @@
 //!
 //! The mix is a pure function of the two tracks, which is how "checkpoint
 //! recovery for all three files" holds without a third live encoder
-//! (ADR 0012). Each output is written to a temporary name, synced and
+//! (ADR 0013). Each output is written to a temporary name, synced and
 //! renamed, so a crash never leaves a half-written file under the final name.
 //! Running it again after a crash simply redoes the work.
 
