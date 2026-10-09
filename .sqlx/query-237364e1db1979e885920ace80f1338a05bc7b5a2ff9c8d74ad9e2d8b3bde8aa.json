@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every meeting, newest first. Served by idx_meetings_created_at_id\n-- (asserted in repo.rs tests), so the list never sorts in a temporary B-tree.\nSELECT\n    id AS \"id!: MeetingId\",\n    title,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings\nORDER BY created_at DESC, id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "237364e1db1979e885920ace80f1338a05bc7b5a2ff9c8d74ad9e2d8b3bde8aa"
+}

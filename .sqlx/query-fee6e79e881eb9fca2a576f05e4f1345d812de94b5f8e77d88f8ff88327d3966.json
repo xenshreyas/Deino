@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every note, newest first. Queries that tests inspect with EXPLAIN QUERY PLAN\n-- live in files like this one, so the test checks the exact text the app runs.\nSELECT\n    id AS \"id: ExampleNoteId\",\n    text,\n    created_at AS \"created_at: DateTime<Utc>\"\nFROM example_notes\nORDER BY created_at DESC, id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ExampleNoteId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "text",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fee6e79e881eb9fca2a576f05e4f1345d812de94b5f8e77d88f8ff88327d3966"
+}
