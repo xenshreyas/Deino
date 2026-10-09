@@ -36,20 +36,15 @@ impl InputDeviceKind {
     /// The detected device kind
     pub fn detect(device_name: &str, buffer_size: u32, sample_rate: u32) -> Self {
         info!("🔍 Detecting device type for: '{}'", device_name);
+        // Layer 1: Platform-specific native detection (highest accuracy). On
+        // macOS it queries the audio hardware, so it depends on the machine.
+        Self::classify(Self::detect_native(device_name), device_name, buffer_size, sample_rate)
+    }
 
-        // Layer 1: Platform-specific native detection (highest accuracy)
-        #[cfg(target_os = "macos")]
-        if let Some(kind) = Self::detect_macos_native(device_name) {
-            return kind;
-        }
-
-        #[cfg(target_os = "windows")]
-        if let Some(kind) = Self::detect_windows_native(device_name) {
-            return kind;
-        }
-
-        #[cfg(target_os = "linux")]
-        if let Some(kind) = Self::detect_linux_native(device_name) {
+    /// Combines the platform's answer (`native`, injected so tests never
+    /// depend on the machine's audio devices) with the heuristic layers.
+    fn classify(native: Option<Self>, device_name: &str, buffer_size: u32, sample_rate: u32) -> Self {
+        if let Some(kind) = native {
             return kind;
         }
 
@@ -235,7 +230,7 @@ impl InputDeviceKind {
     ///
     /// This is the most accurate detection method on macOS, querying the
     /// actual hardware transport type from Core Audio.
-    fn detect_macos_native(device_name: &str) -> Option<Self> {
+    fn detect_native(device_name: &str) -> Option<Self> {
         use cidre::core_audio::hardware::System;
 
         // Query Core Audio device list and find device by name
@@ -284,7 +279,7 @@ impl InputDeviceKind {
     ///
     /// Windows WASAPI exposes Bluetooth devices with specific naming patterns.
     /// This method checks for common Windows Bluetooth device prefixes.
-    fn detect_windows_native(device_name: &str) -> Option<Self> {
+    fn detect_native(device_name: &str) -> Option<Self> {
         let name_lower = device_name.to_lowercase();
 
         // Windows-specific Bluetooth device naming patterns
@@ -331,7 +326,7 @@ impl InputDeviceKind {
     ///
     /// Linux exposes Bluetooth devices through BlueZ with specific naming patterns.
     /// PulseAudio also includes codec information that helps identify Bluetooth devices.
-    fn detect_linux_native(device_name: &str) -> Option<Self> {
+    fn detect_native(device_name: &str) -> Option<Self> {
         let name_lower = device_name.to_lowercase();
 
         // Pattern 1: BlueZ devices (most common)
@@ -375,6 +370,14 @@ impl InputDeviceKind {
     }
 }
 
+// Other platforms: no native source, so the heuristics decide.
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+impl InputDeviceKind {
+    fn detect_native(_device_name: &str) -> Option<Self> {
+        None
+    }
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -406,8 +409,9 @@ pub fn calculate_buffer_timeout(
     // Calculate base timeout from reported buffer size
     let base = Duration::from_secs_f64(buffer_size as f64 / sample_rate as f64);
 
-    // Add 2x headroom for jitter (Cap's strategy)
-    let with_headroom = base.mul_f32(2.0);
+    // Add 2x headroom for jitter (Cap's strategy). Integer multiplication is
+    // exact; `mul_f32(2.0)` turned 80 ms into 159.999996 ms.
+    let with_headroom = base * 2;
 
     // Clamp to device-specific range
     clamp_duration(with_headroom, min_timeout, max_timeout)
@@ -432,15 +436,28 @@ fn clamp_duration(duration: Duration, min: Duration, max: Duration) -> Duration 
 mod tests {
     use super::*;
 
+    /// Classifies with no answer from the platform, as on a machine without
+    /// the named device. `detect` itself queries the real audio hardware on
+    /// macOS, so its result would depend on what is plugged in.
+    fn heuristics(device_name: &str, buffer_size: u32, sample_rate: u32) -> InputDeviceKind {
+        InputDeviceKind::classify(None, device_name, buffer_size, sample_rate)
+    }
+
+    #[test]
+    fn native_answer_wins_over_the_name_heuristics() {
+        let kind = InputDeviceKind::classify(Some(InputDeviceKind::Wired), "AirPods Pro", 3840, 48000);
+        assert_eq!(kind, InputDeviceKind::Wired);
+    }
+
     #[test]
     fn test_airpods_detection() {
-        let kind = InputDeviceKind::detect("AirPods Pro", 0, 0);
+        let kind = heuristics("AirPods Pro", 0, 0);
         assert_eq!(kind, InputDeviceKind::Bluetooth);
     }
 
     #[test]
     fn test_builtin_mic_detection() {
-        let kind = InputDeviceKind::detect("MacBook Pro Microphone", 0, 0);
+        let kind = heuristics("MacBook Pro Microphone", 0, 0);
         // Should fall through to Unknown (no Bluetooth pattern, no buffer size)
         assert_eq!(kind, InputDeviceKind::Unknown);
     }
@@ -448,14 +465,14 @@ mod tests {
     #[test]
     fn test_bluetooth_by_buffer_size() {
         // 3840 frames at 48kHz = 80ms (Bluetooth-like)
-        let kind = InputDeviceKind::detect("Unknown Device", 3840, 48000);
+        let kind = heuristics("Unknown Device", 3840, 48000);
         assert_eq!(kind, InputDeviceKind::Bluetooth);
     }
 
     #[test]
     fn test_wired_by_buffer_size() {
         // 512 frames at 48kHz = 10.67ms (Wired-like)
-        let kind = InputDeviceKind::detect("Unknown Device", 512, 48000);
+        let kind = heuristics("Unknown Device", 512, 48000);
         assert_eq!(kind, InputDeviceKind::Wired);
     }
 
@@ -503,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_virtual_device_detection() {
-        let kind = InputDeviceKind::detect("BlackHole 2ch", 0, 0);
+        let kind = heuristics("BlackHole 2ch", 0, 0);
         assert_eq!(kind, InputDeviceKind::Wired);
     }
 }
