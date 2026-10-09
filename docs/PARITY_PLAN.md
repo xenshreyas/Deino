@@ -151,7 +151,54 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
 
 ## 3A. Code quality standards
 
-Owner goal: code that is **readable, maintainable, well documented and easy to test**, so later features and bug fixes are cheap. Reviewers reject PRs that break these rules. FND-13 sets up the tooling and the examples.
+Owner goal: **extremely high-quality, beautiful code. Nothing less is acceptable.** It must be readable, maintainable, well documented and easy to test, so later features and bug fixes are cheap. Reviewers reject PRs that break these rules. FND-13 sets up the tooling, lint enforcement and a reference module.
+
+### Hard limits (enforced by lint where possible)
+- **Functions: 40 lines maximum** (clippy `too_many_lines` threshold 40; ESLint `max-lines-per-function` 40, which excludes JSX-only render bodies of presentational components when those are split into sub-components).
+- **Files: 300 lines maximum**, tests excluded (ESLint `max-lines`, plus a CI script for Rust). This is a hard cap for new code. Legacy files over the cap get split when a card substantially changes them.
+- **Function arguments: 4 maximum.** Use a typed params struct or object beyond that.
+- **Nesting depth: 3 maximum.** Prefer early returns.
+- **Cognitive complexity:** clippy `cognitive_complexity` 15, ESLint `sonarjs/cognitive-complexity` 15.
+
+### Design principles
+- **SOLID:**
+  - **Single responsibility:** each module, type and function does one thing you can name in a short phrase.
+  - **Open/closed:** extend through registries and traits (pipeline stages, LLM providers, integrations, MCP tools, note templates) without editing the core.
+  - **Liskov:** every implementation of a trait honours its documented contract, and contract tests run against every implementation.
+  - **Interface segregation:** keep traits small (`TranscriptReader` vs `TranscriptWriter`, not one `TranscriptStore` god-trait).
+  - **Dependency inversion:** services depend on traits, and concrete adapters are wired up in one composition root (`app_state.rs`).
+- **Object-oriented design where it fits.** Rust has no inheritance, so model "is-a" with **traits, with default methods for shared behaviour** and composition for "has-a". Use the newtype pattern for domain IDs (`MeetingId(Uuid)`, `PersonId`, …) so IDs can never be mixed up. Use enums and state machines for lifecycle (`MeetingStatus`, `RecordingState`) with explicit transition methods. In TypeScript, use classes only where they model a real object with behaviour (a player controller, for example). Otherwise use functions, hooks and discriminated unions.
+- **Names** are clean, short and descriptive: `enhance_notes`, `MeetingRepo`, `useMeeting`. No abbreviations except well-known ones (id, url, db, llm, ui). No `data`, `info`, `manager`, `helper` or `utils` dumping grounds.
+- **DRY, but no premature abstraction.** Abstract on the third use.
+
+### Typing (zero tolerance)
+- **TypeScript:**
+  - `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`.
+  - **No `any`, no `as` casts except at validated boundaries, no `object`/`{}`/`Record<string, unknown>` as a lazy type, and no `// @ts-ignore`.** ESLint `no-explicit-any` and `no-unsafe-*` are errors.
+  - Use discriminated unions for variants and branded types for IDs.
+  - External data (IPC, JSON files) is validated with **zod** at the boundary when it isn't covered by generated types.
+- **Rust:**
+  - Newtypes for IDs and units (`Millis(u64)`, `Seconds`).
+  - Enums instead of stringly-typed fields. Every DB TEXT enum column maps to a Rust enum via `sqlx::Type`.
+  - No `serde_json::Value` passed around inside the core. Parse it into a typed struct at the edge.
+  - No `String` errors inside the core.
+
+### Database design
+- **Normalize to 3NF by default:** entities in their own tables, many-to-many through join tables (`meeting_attendees`, `meeting_tags`, `meeting_folders`), and no repeated groups in JSON columns when they need to be queried.
+- **Denormalize deliberately, and document it:**
+  - Cached aggregates the UI lists need fast, for example `meetings.duration_s`, `meetings.attendee_count`, `people.last_met_at`, `people.meeting_count`.
+  - The FTS5 and vector index tables.
+  - Write-once snapshots, such as an `enhanced_notes` version.
+  - Every denormalized column has a comment in its migration naming its **source of truth** and the **one place** that keeps it in sync: a repo method in the same transaction, or a trigger.
+- **JSON columns** are allowed only for opaque payloads that are never queried by field (the BlockNote document, raw provider payloads). Each has a typed Rust struct.
+- **Integrity and performance:**
+  - Foreign keys ON (`PRAGMA foreign_keys=ON`) with explicit `ON DELETE` behaviour.
+  - `CHECK` constraints for enums.
+  - `NOT NULL` by default.
+  - Indexes for every FK and every filter or sort used by a list screen. Check with `EXPLAIN QUERY PLAN` in a test for the hot queries.
+  - Multi-row writes happen in transactions.
+  - WAL mode, with one write connection and a read pool.
+  - Queries use the sqlx `query_as!` macros (compile-time checked) with the offline `.sqlx` data committed.
 
 ### Structure (Rust)
 - **Layers.** Each feature module has these layers. Each layer may only call the one below it.
@@ -165,7 +212,7 @@ Owner goal: code that is **readable, maintainable, well documented and easy to t
   - Commands convert errors to the shared serializable `AppError { code, message }` (FND-13), so the UI can react to `code`.
   - `anyhow` is allowed only at the edges, such as `main` and one-off scripts.
   - No `unwrap`/`expect` outside tests unless it guards a real invariant, with a comment saying why it can't fail.
-- **Size.** Aim for functions of 60 lines or fewer and files of 400 lines or fewer. Split by responsibility, not arbitrarily.
+- **Size.** See the hard limits above. Split by responsibility, not arbitrarily.
 - **Constants.** No magic numbers or strings: use named `const`s with a doc comment (for example `const AUTO_STOP_SILENCE: Duration = …`).
 - **Logging.** Use the `log` crate with the module as target. **Never log transcript text, notes, prompts, emails or secrets**; log IDs and counts instead.
 
@@ -174,7 +221,7 @@ Owner goal: code that is **readable, maintainable, well documented and easy to t
 - **Types shared with Rust are generated, not hand-written.** Use `tauri-specta` (or `ts-rs`), so the IPC types can't drift (FND-13).
 - **Feature folders.** `features/<name>/` contains `components/` (presentational, props in, events out), `hooks/` (data and state), `api.ts` (typed IPC calls) and `types.ts`.
 - **Server state.** Data that comes from Rust goes through **TanStack Query** hooks over IPC: caching, invalidation on Rust events, and loading and error states. UI-only state stays local, or in a small Zustand store when shared.
-- **UI.** Build with shadcn/Radix components and Tailwind design tokens. Keep visible strings in one `copy.ts` per feature.
+- **UI.** Build with shadcn/Radix components and Tailwind design tokens (see §3B). Keep visible strings in one `copy.ts` per feature.
 
 ### Documentation
 - **Rust.** Every module starts with a `//!` doc covering what it does, how it fits in and its main types. Every `pub` item has `///` docs.
@@ -213,6 +260,55 @@ Owner goal: code that is **readable, maintainable, well documented and easy to t
 - [ ] Module docs and public-item docs are written, and `ARCHITECTURE.md` and any ADR are updated.
 - [ ] No new lint suppressions without a comment.
 - [ ] No secrets or meeting content in logs.
+
+---
+
+## 3B. UI design direction
+
+**Benchmarks:** Granola, Circleback, Gumloop (gumloop.com), Linear, Notion and Things. The UI must be **very clean, minimal, simple, modern and elegant**.
+- **Themes:** Light and dark, **following the system by default** and configurable in Settings (System / Light / Dark). Both themes are designed equally, not "dark = inverted".
+- **Layout:**
+  - Lots of whitespace and a content-first layout.
+  - A slim sidebar.
+  - The notepad reads like a document: a max width of about 720 px, generous line height.
+  - No cards inside cards, no heavy borders, no gradients except the subtle accent of the recording state.
+- **Typography:**
+  - One family: Inter, or the SF system stack.
+  - A 4-step type scale (12/14/16/24) and 2 weights (400/600).
+  - Muted grey for secondary text, and AI-generated text grey vs user text in the primary colour (NOT-02).
+- **Colour:**
+  - Neutral greys (warm-neutral, like Granola) plus **one** accent (for example a calm green for recording or brand).
+  - Semantic tokens only: `--bg`, `--bg-subtle`, `--fg`, `--fg-muted`, `--border`, `--accent`, `--danger`, … **No hard-coded colours in components.**
+- **Components:**
+  - shadcn/Radix restyled to the tokens, with 8 px radius and hairline 1 px borders.
+  - Soft shadows only on floating layers (popovers, the record panel).
+  - Lucide icons at 16 px with a 1.5 stroke.
+- **Motion:** 120–200 ms ease-out on hover, open and close; respect `prefers-reduced-motion`; no bouncy animations.
+- **Interaction:**
+  - Keyboard-first: ⌘K, ⌘J, ⌘N, and shortcuts shown in tooltips.
+  - Every list has an empty state with one clear action.
+  - Loading uses skeletons, not spinners.
+  - Errors are inline and human-readable.
+- **Recording UI:**
+  - Calm and unobtrusive: the floating panel is a small pill with a level meter.
+  - Never a modal during a meeting.
+- **Design system:** FND-10 builds the tokens, primitives and a `/design` route (dev-only) that shows every primitive in both themes. Every UI card follows it and attaches light and dark screenshots to its PR.
+
+## 3C. macOS audio and system integration rules
+
+- **System audio:** use the **Core Audio process tap** (`AudioHardwareCreateProcessTap` + aggregate device, macOS 14.2+), as the current code does. No virtual drivers (BlackHole), no kernel extensions. Keep ScreenCaptureKit audio as a fallback backend only.
+- **Microphone:** use cpal/Core Audio with the user's chosen device or the system default.
+  - Follow default-device changes (`kAudioHardwarePropertyDefaultInputDevice` listener).
+  - Handle Bluetooth headsets: warn when HFP lowers quality, and prefer the built-in mic when headphones are in use (Granola's tip).
+  - Never request exclusive access.
+- **Per-process detection:** use the Core Audio process objects (`kAudioHardwarePropertyProcessObjectList`, `kAudioProcessPropertyIsRunningInput`, `kAudioProcessPropertyBundleID`), not polling `ps`.
+- **Real-time safety:** audio callbacks never allocate, lock or log. Copy frames into a lock-free ring buffer (`rtrb` or the existing ring buffer) and process on a worker thread.
+- **Format:** capture at the device's native rate and resample once (`rubato`) to 16 kHz mono for STT and 48 kHz for storage. Keep mic and system **as separate tracks** end to end (CAP-02).
+- **Lifecycle:**
+  - Handle sleep and wake (`NSWorkspace` notifications), device disconnects, sample-rate changes and the tap being invalidated, with automatic recovery and a health event (CAP-10).
+  - Tear down the tap and aggregate device cleanly on stop and crash, with no leaked aggregate devices (clean up stale `deino-audio-tap*` devices on launch).
+- **Permissions:** request mic, audio capture (`NSAudioCaptureUsageDescription`), screen recording only if CAP-09 is enabled, and Accessibility, Calendars and Reminders only when the feature needing them is first turned on. Every permission has a clear explainer screen and a deep link to the right System Settings pane.
+- **Native APIs from Rust:** use the `objc2` family of crates (`objc2-core-audio`, `objc2-event-kit`, `objc2-vision`, `objc2-app-kit`) or the existing `cidre`. No shelling out to AppleScript except for the Apple Notes export.
 
 ---
 
