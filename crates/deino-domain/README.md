@@ -8,7 +8,8 @@ crate and across IPC. No I/O, no Tauri.
 ## Owns
 
 - Typed IDs (`id.rs`): opaque text IDs declared with `text_id!` (`MeetingId`,
-  legacy `meeting-<uuid>`; `SeriesId`; `TemplateId`) and UUIDv7 ID newtypes
+  legacy `meeting-<uuid>`; `SeriesId`; `TemplateId`, a built-in's slug or a
+  UUIDv7 from `TemplateId::generate`) and UUIDv7 ID newtypes
   declared with `uuid_id!` (`SegmentId`, `PersonId`, `FolderId`, ...), each
   serde-, sqlx- and specta-transparent.
 - The closed sets the core schema stores (`enums.rs`, `status.rs`), declared
@@ -16,7 +17,9 @@ crate and across IPC. No I/O, no Tauri.
   `CHECK` list: `MeetingStatus` (a state machine: `apply(MeetingEvent)` and
   one method per transition), `MeetingSource`, `Channel`, `AttendeeRole`,
   `Rsvp`, `ActionItemStatus`, `ActionItemPriority`, `ActionItemOrigin`,
-  `TagSource`, `CalendarProvider`, `ConferencePlatform`; and the pipeline's
+  `TagSource`, `CalendarProvider`, `ConferencePlatform`, `SectionFormat`
+  (template sections), `Audience` (internal or external, NOT-04/NOT-05);
+  and the pipeline's
   `JobStatus` and `RunOutcome` (`job.rs`, FND-08) with its `StageId`.
 - `ServiceId` and `ServiceKind` (`service.rs`): every outside service Deino may
   talk to (FND-12), stored in `egress_log.service` and keying the settings'
