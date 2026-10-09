@@ -30,6 +30,8 @@ sqlx = { version = "0.8.6", default-features = false, features = ["chrono", "mac
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 thiserror = "2.0.16"
 tokio = { version = "1.52.3", features = ["full"] }
+# `CancellationToken` and `TaskTracker` (feature `rt`) for owned background work.
+tokio-util = { version = "0.7.18", features = ["rt"] }
 uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 
 deino-core = { path = "crates/deino-core" }
@@ -37,6 +39,7 @@ deino-db = { path = "crates/deino-db" }
 deino-domain = { path = "crates/deino-domain" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }
+deino-pipeline = { path = "crates/deino-pipeline" }
 deino-secrets = { path = "crates/deino-secrets" }
 deino-stt = { path = "crates/deino-stt" }
 # Tests add `features = ["test-support"]` for its fakes; the app's debug-only

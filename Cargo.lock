@@ -1688,6 +1688,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "deino-pipeline"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "deino-core",
+ "deino-db",
+ "deino-domain",
+ "deino-testkit",
+ "log",
+ "serde",
+ "specta",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "deino-secrets"
 version = "0.1.0"
 dependencies = [
@@ -7464,6 +7483,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "pin-project-lite",
  "tokio",
 ]
