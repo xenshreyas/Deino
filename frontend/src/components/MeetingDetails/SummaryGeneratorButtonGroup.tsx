@@ -23,7 +23,6 @@ interface SummaryGeneratorButtonGroupProps {
   onSaveModelConfig: (config?: ModelConfig) => Promise<void>;
   onGenerateSummary: (customPrompt: string) => Promise<void>;
   onStopGeneration: () => void;
-  customPrompt: string;
   summaryStatus: 'idle' | 'processing' | 'summarizing' | 'regenerating' | 'completed' | 'error';
   availableTemplates: Array<{ id: string, name: string, description: string }>;
   selectedTemplate: string;
@@ -40,7 +39,6 @@ export function SummaryGeneratorButtonGroup({
   onSaveModelConfig,
   onGenerateSummary,
   onStopGeneration,
-  customPrompt,
   summaryStatus,
   availableTemplates,
   selectedTemplate,
@@ -97,7 +95,7 @@ export function SummaryGeneratorButtonGroup({
           size="sm"
           className="gap-2 px-3 text-fg"
           onClick={() => {
-            void onGenerateSummary(customPrompt);
+            void onGenerateSummary('');
           }}
           disabled={isModelConfigLoading}
           title={

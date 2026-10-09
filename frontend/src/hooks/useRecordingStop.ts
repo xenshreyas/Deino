@@ -6,6 +6,7 @@ import { useTranscripts } from '@/contexts/TranscriptContext';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { useRecordingState, RecordingStatus } from '@/contexts/RecordingStateContext';
 import { asMeetingId, meetingsApi } from '@/features/meetings';
+import { adoptLiveNotes } from '@/features/notepad';
 import { storageService } from '@/services/storageService';
 import { transcriptService } from '@/services/transcriptService';
 
@@ -259,6 +260,10 @@ export function useRecordingStop(
           }
 
           console.log('✅ Successfully saved COMPLETE meeting with ID:', meetingId);
+
+          // NOT-01: move the record screen's notes into the saved meeting
+          // (before navigation, so the summary sees them). Never throws.
+          await adoptLiveNotes(asMeetingId(meetingId));
           console.log('   Transcripts:', freshTranscripts.length);
           console.log('   folder_path:', folderPath);
 

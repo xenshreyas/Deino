@@ -35,9 +35,6 @@
         "tauri:build:hipblas": "tauri build -- --features hipblas"
     },
     "dependencies": {
-        "@blocknote/core": "0.36.0",
-        "@blocknote/react": "0.36.0",
-        "@blocknote/shadcn": "0.36.0",
         "@fontsource-variable/inter": "5.3.0",
         "@hookform/resolvers": "^5.1.1",
         "@radix-ui/react-accordion": "^1.2.12",
@@ -62,6 +59,14 @@
         "@tauri-apps/plugin-os": "^2.3.2",
         "@tauri-apps/plugin-process": "^2.3.0",
         "@tauri-apps/plugin-updater": "^2.3.0",
+        "@tiptap/core": "3.31.3",
+        "@tiptap/extension-list": "3.31.3",
+        "@tiptap/extension-mention": "3.31.3",
+        "@tiptap/extensions": "3.31.3",
+        "@tiptap/pm": "3.31.3",
+        "@tiptap/react": "3.31.3",
+        "@tiptap/starter-kit": "3.31.3",
+        "@tiptap/suggestion": "3.31.3",
         "@types/lodash": "^4.17.13",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -80,15 +85,6 @@
         "tailwind-merge": "^3.3.1",
         "zod": "^3.25.71",
         "zustand": "5.0.15"
-    },
-    "pnpm": {
-        "overrides": {
-            "prosemirror-model": "1.25.3",
-            "prosemirror-state": "1.4.3",
-            "prosemirror-view": "1.41.3",
-            "prosemirror-transform": "1.10.4",
-            "prosemirror-tables": "1.8.1"
-        }
     },
     "devDependencies": {
         "@eslint/js": "9.39.4",

@@ -12,7 +12,7 @@
 /* shadcn's Tailwind v4 replacement for the tailwindcss-animate plugin. */
 @import 'tw-animate-css';
 @import './tokens.css';
-@import './blocknote.css';
+@import './notes.css';
 
 /* Rendered Markdown in summaries (react-markdown `prose` blocks). */
 @plugin '@tailwindcss/typography';

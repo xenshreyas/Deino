@@ -1,0 +1,244 @@
+/*
+  Note typography (NOT-01): the notepad, the record screen's live notes and
+  the summary share one document style (ui.md §1 rule 1, §2.4). The note is
+  the page: 16/26 body, small bold section heads, hairline quote, checklists
+  in the accent. Every colour is a token, so both themes follow.
+*/
+
+@layer components {
+  .note-content {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    letter-spacing: var(--text-base--letter-spacing);
+    color: var(--user-text);
+    caret-color: var(--fg);
+    outline: none;
+    overflow-wrap: anywhere;
+  }
+
+  .note-content > * + * {
+    margin-top: 4px;
+  }
+
+  .note-content :is(h1, h2, h3) {
+    font-weight: 600;
+    margin-top: 20px;
+  }
+
+  .note-content > :first-child {
+    margin-top: 0;
+  }
+
+  .note-content h1 {
+    font-size: var(--text-base);
+    color: var(--fg);
+  }
+
+  .note-content :is(h2, h3) {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    color: var(--fg-muted);
+  }
+
+  .note-content strong {
+    font-weight: 600;
+  }
+
+  .note-content a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  .note-content code {
+    border-radius: var(--radius-xs);
+    background: var(--bg-muted);
+    padding: 1px 4px;
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+
+  .note-content pre {
+    border-radius: var(--radius-md);
+    background: var(--bg-muted);
+    padding: 12px 14px;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    overflow-x: auto;
+  }
+
+  .note-content pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .note-content blockquote {
+    border-left: 1px solid var(--border-strong);
+    padding-left: 14px;
+    color: var(--fg-muted);
+  }
+
+  .note-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .note-content :is(ul, ol) {
+    padding-left: 22px;
+  }
+
+  .note-content ul {
+    list-style: disc;
+  }
+
+  .note-content ul ul {
+    list-style: circle;
+  }
+
+  .note-content ol {
+    list-style: decimal;
+  }
+
+  .note-content li::marker {
+    color: var(--fg-subtle);
+  }
+
+  .note-content li > p + * {
+    margin-top: 2px;
+  }
+
+  .note-content ul[data-type='taskList'] {
+    list-style: none;
+    padding-left: 2px;
+  }
+
+  .note-content ul[data-type='taskList'] > li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .note-content ul[data-type='taskList'] > li > label {
+    display: flex;
+    height: var(--text-base--line-height);
+    align-items: center;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .note-content ul[data-type='taskList'] > li > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .note-content ul[data-type='taskList'] > li input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border-radius: var(--radius-xs);
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .note-content li[data-checked='true'] > div {
+    color: var(--fg-subtle);
+    text-decoration: line-through;
+    text-decoration-color: var(--border-strong);
+  }
+
+  /* The calm hint on an empty note. */
+  .note-content p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: var(--fg-subtle);
+    pointer-events: none;
+  }
+
+  /* Provenance (NOT-02): user text in ink, AI text grey, edited AI still grey. */
+  .note-content [data-origin='ai'] {
+    color: var(--ai-text);
+  }
+
+  .note-content [data-origin='user'] {
+    color: var(--user-text);
+  }
+
+  /* A person chip (ui.md §3 Speaker chip, inline in notes). */
+  .note-mention {
+    display: inline-flex;
+    height: 20px;
+    align-items: center;
+    gap: 4px;
+    border-radius: 9999px;
+    background: var(--bg-muted);
+    padding: 0 6px 0 2px;
+    vertical-align: 1px;
+    font-size: var(--text-sm);
+    line-height: 1;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+
+  .note-mention-avatar {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  /* A transcript citation (NOT-02/NOT-03): a quiet timestamp chip. */
+  .note-citation {
+    display: inline-flex;
+    height: 18px;
+    align-items: center;
+    border-radius: var(--radius-xs);
+    background: var(--bg-muted);
+    padding: 0 5px;
+    margin-left: 2px;
+    vertical-align: 1px;
+    font-size: var(--text-xs);
+    line-height: 1;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .note-image {
+    display: block;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    margin: 8px 0;
+  }
+
+  .note-content .ProseMirror-selectednode,
+  .note-content .note-image.ProseMirror-selectednode {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .note-content .ProseMirror-gapcursor::after {
+    border-top-color: var(--fg);
+  }
+}
+
+/* Focus mode: the chrome steps back while the user writes. */
+[data-chrome] {
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+[data-focus-mode='true'] [data-chrome] {
+  opacity: 0;
+}
+
+[data-focus-mode='true'] [data-chrome]:focus-within {
+  opacity: 1;
+}

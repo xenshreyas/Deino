@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { MeetingSummary, Summary, Transcript } from '@/types';
-import { BlockNoteSummaryViewRef } from '@/components/AISummary/BlockNoteSummaryView';
+import type { SummaryDocumentHandle } from '@/features/notepad';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { invoke as invokeTauri } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
@@ -21,8 +21,8 @@ export function useMeetingData({ meeting, summaryData, onMeetingUpdated }: UseMe
   const [isSaving, setIsSaving] = useState(false);
   const [isSummaryDirty, setIsSummaryDirty] = useState(false);
 
-  // Ref for BlockNoteSummaryView
-  const blockNoteSummaryRef = useRef<BlockNoteSummaryViewRef>(null);
+  // Ref for the summary document (TipTap)
+  const summaryDocumentRef = useRef<SummaryDocumentHandle>(null);
 
   // Sidebar context
   const { setCurrentMeeting } = useSidebar();
@@ -56,10 +56,10 @@ export function useMeetingData({ meeting, summaryData, onMeetingUpdated }: UseMe
   const saveAllChanges = useCallback(async () => {
     setIsSaving(true);
     try {
-      // Save BlockNote editor changes if dirty
-      if (blockNoteSummaryRef.current?.isDirty) {
-        console.log('💾 Saving BlockNote editor changes...');
-        await blockNoteSummaryRef.current.saveSummary();
+      // Save the summary editor's changes if dirty
+      if (summaryDocumentRef.current?.isDirty) {
+        console.log('💾 Saving summary editor changes...');
+        await summaryDocumentRef.current.saveSummary();
       } else if (aiSummary) {
         await handleSaveSummary(aiSummary);
       }
@@ -88,7 +88,7 @@ export function useMeetingData({ meeting, summaryData, onMeetingUpdated }: UseMe
     aiSummary,
     isSaving,
     isSummaryDirty,
-    blockNoteSummaryRef,
+    summaryDocumentRef,
 
     // Setters
     setMeetingTitle,

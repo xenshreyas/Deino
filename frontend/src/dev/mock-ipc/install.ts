@@ -9,6 +9,7 @@
  */
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 
+import { mockNotes } from './database';
 import { handleLegacyInvoke } from './legacy';
 
 /** What `@tauri-apps/plugin-os` reads synchronously: a Mac on Apple Silicon. */
@@ -27,4 +28,12 @@ export function installMockIpc(): void {
   mockWindows('main');
   Object.defineProperty(window, '__TAURI_OS_PLUGIN_INTERNALS__', { value: OS_PLUGIN_INTERNALS });
   mockIPC(handleLegacyInvoke, { shouldMockEvents: true });
+  mockAssetProtocol();
+}
+
+/** `convertFileSrc` for note images: the mock keeps them as data URLs. */
+function mockAssetProtocol(): void {
+  const internals: unknown = Reflect.get(window, '__TAURI_INTERNALS__');
+  if (typeof internals !== 'object' || internals === null) return;
+  Reflect.set(internals, 'convertFileSrc', (path: string) => mockNotes.imageUrl(path) ?? '');
 }

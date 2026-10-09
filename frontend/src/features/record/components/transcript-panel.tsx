@@ -1,6 +1,6 @@
 /**
- * The record screen's live transcript: a copy button, the permission notice
- * while idle, and the streaming transcript in a 720px column.
+ * The record screen's live transcript, beside the notes: a copy button, the permission notice
+ * while idle, and the streaming transcript.
  */
 import { useMemo } from 'react';
 import { LiveTranscriptLine } from '@/features/transcription';
@@ -44,7 +44,7 @@ export function TranscriptPanel({ isProcessingStop, isStopping }: TranscriptPane
 
   return (
     <div ref={transcriptContainerRef} className="flex w-full flex-col overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-[720px] flex-col px-6 pb-28">
+      <div className="flex w-full flex-col px-5 pb-28">
         <div className="flex h-10 items-center justify-end">
           {transcripts.length > 0 ? (
             <Button variant="ghost" size="sm" onClick={copyTranscript}>

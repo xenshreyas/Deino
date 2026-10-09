@@ -56,6 +56,7 @@ export function Sidebar() {
   const width = useShellLayout((state) => state.sidebarWidth);
   return (
     <aside
+      data-chrome
       aria-label={shellCopy.sidebarLabel}
       style={{ width: open ? width : 0 }}
       className={cn(

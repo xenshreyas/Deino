@@ -2,9 +2,10 @@
  * UI entry point: loads the font and global styles, applies the saved theme,
  * then mounts the router.
  *
- * React StrictMode stays off, as it was under Next.js, where
- * `reactStrictMode: false` was set for BlockNote compatibility. NOT-01
- * revisits this when TipTap replaces BlockNote.
+ * React StrictMode stays off. It was off for BlockNote, which NOT-01 replaced
+ * with TipTap (StrictMode-safe); the legacy contexts still start recordings,
+ * listeners and recovery checks in mount effects that are not idempotent, so
+ * turning it on waits until they are ported.
  */
 import '@fontsource-variable/inter';
 import './styles/globals.css';

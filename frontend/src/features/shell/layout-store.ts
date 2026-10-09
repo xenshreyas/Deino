@@ -22,6 +22,8 @@ export interface ShellLayout {
   rightPanelOpen: boolean;
   paletteOpen: boolean;
   chatOpen: boolean;
+  /** Focus mode: the chrome fades while the user types in a note; any pointer movement ends it. */
+  focusMode: boolean;
   /** Where pages portal their title-bar actions (see `TitleBarActions`). */
   titleBarSlot: HTMLElement | null;
   toggleSidebar: () => void;
@@ -30,6 +32,7 @@ export interface ShellLayout {
   setPaletteOpen: (open: boolean) => void;
   setChatOpen: (open: boolean) => void;
   setTitleBarSlot: (slot: HTMLElement | null) => void;
+  setFocusMode: (focusMode: boolean) => void;
 }
 
 /** Builds a layout store; tests create their own. */
@@ -41,6 +44,7 @@ export function createShellLayoutStore() {
     paletteOpen: false,
     chatOpen: false,
     titleBarSlot: null,
+    focusMode: false,
     toggleSidebar: () => {
       set((state) => ({ sidebarOpen: !state.sidebarOpen }));
     },
@@ -58,6 +62,9 @@ export function createShellLayoutStore() {
     },
     setTitleBarSlot: (titleBarSlot) => {
       set({ titleBarSlot });
+    },
+    setFocusMode: (focusMode) => {
+      set((state) => (state.focusMode === focusMode ? state : { focusMode }));
     },
   }));
 }

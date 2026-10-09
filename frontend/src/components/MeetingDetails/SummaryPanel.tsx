@@ -1,5 +1,5 @@
 import { MeetingSummary, Summary, Transcript } from '@/types';
-import { BlockNoteSummaryView, BlockNoteSummaryViewRef } from '@/components/AISummary/BlockNoteSummaryView';
+import { SummaryDocument, type SummaryDocumentHandle } from '@/features/notepad';
 import { EmptyStateSummary } from '@/components/EmptyStateSummary';
 import { ModelConfig } from '@/components/ModelSettingsModal';
 import { SummaryGeneratorButtonGroup } from './SummaryGeneratorButtonGroup';
@@ -16,7 +16,7 @@ interface SummaryPanelProps {
   };
   meetingTitle: string;
   isSummaryDirty: boolean;
-  summaryRef: RefObject<BlockNoteSummaryViewRef>;
+  summaryRef: RefObject<SummaryDocumentHandle>;
   isSaving: boolean;
   onSaveAll: () => Promise<void>;
   onCopySummary: () => Promise<void>;
@@ -28,7 +28,6 @@ interface SummaryPanelProps {
   onSaveModelConfig: (config?: ModelConfig) => Promise<void>;
   onGenerateSummary: (customPrompt: string) => Promise<void>;
   onStopGeneration: () => void;
-  customPrompt: string;
   onSaveSummary: (summary: MeetingSummary) => Promise<void>;
   onSummaryChange: (summary: Summary) => void;
   onDirtyChange: (isDirty: boolean) => void;
@@ -58,7 +57,6 @@ export function SummaryPanel({
   onSaveModelConfig,
   onGenerateSummary,
   onStopGeneration,
-  customPrompt,
   onSaveSummary,
   onSummaryChange,
   onDirtyChange,
@@ -86,7 +84,6 @@ export function SummaryPanel({
               onSaveModelConfig={onSaveModelConfig}
               onGenerateSummary={onGenerateSummary}
               onStopGeneration={onStopGeneration}
-              customPrompt={customPrompt}
               summaryStatus={summaryStatus}
               availableTemplates={availableTemplates}
               selectedTemplate={selectedTemplate}
@@ -118,7 +115,7 @@ export function SummaryPanel({
         </div>
       ) : !hasSummary ? (
         <EmptyStateSummary
-          onGenerate={() => onGenerateSummary(customPrompt)}
+          onGenerate={() => onGenerateSummary('')}
           hasModel={modelConfig.provider !== null && modelConfig.model !== null}
           isGenerating={isSummaryLoading}
           error={summaryError}
@@ -126,22 +123,11 @@ export function SummaryPanel({
       ) : (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
           <div className="py-4 w-full">
-            <BlockNoteSummaryView
+            <SummaryDocument
               ref={summaryRef}
-              summaryData={aiSummary}
+              summary={aiSummary}
               onSave={onSaveSummary}
-              onSummaryChange={onSummaryChange}
               onDirtyChange={onDirtyChange}
-              status={summaryStatus}
-              error={summaryError}
-              onRegenerateSummary={() => {
-                onRegenerateSummary();
-              }}
-              meeting={{
-                id: meeting.id,
-                title: meetingTitle,
-                created_at: meeting.created_at
-              }}
             />
           </div>
           {summaryStatus !== 'idle' && summaryStatus !== 'completed' && (

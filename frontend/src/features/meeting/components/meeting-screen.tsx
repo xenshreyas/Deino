@@ -69,7 +69,7 @@ function MeetingTabs({
   };
   return (
     <Tabs value={tab} onValueChange={select} className="flex min-h-0 flex-1 flex-col">
-      <TabsList aria-label={meetingCopy.tabsLabel} className="mt-4 shrink-0">
+      <TabsList data-chrome aria-label={meetingCopy.tabsLabel} className="mt-4 shrink-0">
         {MEETING_TABS.map((slot) => (
           <TabsTrigger key={slot.id} value={slot.id} title={`${slot.label} ${slot.shortcut}`}>
             {slot.label}

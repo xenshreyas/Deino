@@ -18,10 +18,10 @@ import type { FixtureMeeting } from './fixture-schema';
 /** Same limit as `deino_core::meetings::MAX_TITLE_CHARS`. */
 const MAX_TITLE_CHARS = 200;
 
-/** One meeting row and the fixture it came from. */
+/** One meeting row and the fixture it came from (none for a scheduled note). */
 interface Row {
   meeting: Meeting;
-  fixture: FixtureMeeting;
+  fixture?: FixtureMeeting;
 }
 
 /** Unicode scalar values in `text`, which is what Rust's `chars().count()` counts. */
@@ -75,6 +75,31 @@ export class MockDatabase {
     return ok({ ...row.meeting });
   }
 
+  /** Adds a scheduled meeting for notes written ahead (`notes|create_scheduled`). */
+  addScheduled(input: string, now: Date): CommandResult<Meeting> {
+    const title = input.trim();
+    if (title === '') return failure(invalid('a meeting title cannot be empty'));
+    const meeting: Meeting = {
+      id: asMeetingId(`meeting-${crypto.randomUUID()}`),
+      title,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    this.rows.set(meeting.id, { meeting });
+    this.onChange(['meetings']);
+    return ok({ ...meeting });
+  }
+
+  /** Deletes a meeting (an adopted draft). */
+  remove(id: MeetingId): void {
+    if (this.rows.delete(id)) this.onChange(['meetings', 'meeting_notes']);
+  }
+
+  /** Reports a write to `tables`, as a commit would. */
+  touch(tables: Table[]): void {
+    this.onChange(tables);
+  }
+
   /** Restores every fixture meeting, like the Rust `FixtureSeeder`. */
   reseed(): SeedReport {
     this.load();
@@ -87,6 +112,7 @@ export class MockDatabase {
       'meeting_attendees',
       'speakers',
       'transcript_segments',
+      'meeting_notes',
     ]);
     const segments = this.fixtures.reduce((sum, fixture) => sum + fixture.segments.length, 0);
     return { meetings: this.fixtures.length, segments };

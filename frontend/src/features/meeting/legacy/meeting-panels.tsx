@@ -13,6 +13,7 @@ import { useLegacyTemplateChoice } from '@/features/templates';
 import { useCopyOperations } from '@/hooks/meeting-details/useCopyOperations';
 import { useMeetingOperations } from '@/hooks/meeting-details/useMeetingOperations';
 import { useConfig } from '@/contexts/ConfigContext';
+import { hasVisibleSummaryContent } from '@/lib/summary-content';
 
 export default function PageContent({
   meeting,
@@ -55,7 +56,6 @@ export default function PageContent({
   });
 
   // State
-  const [customPrompt, setCustomPrompt] = useState<string>('');
   const isRecording = false;
 
   // Ref to store the modal open function from SummaryGeneratorButtonGroup
@@ -115,7 +115,7 @@ export default function PageContent({
     transcripts: meetingData.transcripts,
     meetingTitle: meetingData.meetingTitle,
     aiSummary: meetingData.aiSummary,
-    blockNoteSummaryRef: meetingData.blockNoteSummaryRef,
+    summaryDocumentRef: meetingData.summaryDocumentRef,
   });
 
   const meetingOperations = useMeetingOperations({
@@ -157,11 +157,10 @@ export default function PageContent({
         regenerateNotes: meetingData.aiSummary
           ? () => { void summaryGeneration.handleRegenerateSummary(); }
           : null,
+        hasSummary: hasVisibleSummaryContent(meetingData.aiSummary),
         transcript: (
             <TranscriptPanel
               transcripts={meetingData.transcripts}
-              customPrompt={customPrompt}
-              onPromptChange={setCustomPrompt}
               onCopyTranscript={copyOperations.handleCopyTranscript}
               onOpenMeetingFolder={meetingOperations.handleOpenMeetingFolder}
               isRecording={isRecording}
@@ -182,7 +181,7 @@ export default function PageContent({
             <SummaryPanel
               meeting={meeting}
               meetingTitle={meetingData.meetingTitle}
-              summaryRef={meetingData.blockNoteSummaryRef}
+              summaryRef={meetingData.summaryDocumentRef}
               isSaving={meetingData.isSaving}
               isSummaryDirty={meetingData.isSummaryDirty}
               onSaveAll={meetingData.saveAllChanges}
@@ -195,7 +194,6 @@ export default function PageContent({
               onSaveModelConfig={handleSaveModelConfig}
               onGenerateSummary={summaryGeneration.handleGenerateSummary}
               onStopGeneration={summaryGeneration.handleStopGeneration}
-              customPrompt={customPrompt}
               onSaveSummary={meetingData.handleSaveSummary}
               onSummaryChange={meetingData.handleSummaryChange}
               onDirtyChange={meetingData.setIsSummaryDirty}
