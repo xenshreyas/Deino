@@ -16,17 +16,21 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
+import { ProfilePage } from '@/features/profile';
+import { TemplatesPage } from '@/features/templates';
 import {
   AudioLines,
   Cpu,
   FlaskConical,
   type Icon,
   Info,
+  LayoutTemplate,
   Mic,
   Palette,
   Settings,
   ShieldCheck,
   Sparkles,
+  UserRound,
   Wrench,
 } from '@/ui/icons';
 
@@ -108,6 +112,8 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
+  { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },
+  { id: 'profile', group: 'ai', icon: UserRound, Component: ProfilePage },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },

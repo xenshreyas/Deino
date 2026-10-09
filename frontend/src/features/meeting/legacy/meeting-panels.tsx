@@ -9,7 +9,7 @@ import { LegacyMeetingPanelsProvider } from './panels-context';
 // Custom hooks
 import { useMeetingData } from '@/hooks/meeting-details/useMeetingData';
 import { useSummaryGeneration } from '@/hooks/meeting-details/useSummaryGeneration';
-import { useTemplates } from '@/hooks/meeting-details/useTemplates';
+import { useLegacyTemplateChoice } from '@/features/templates';
 import { useCopyOperations } from '@/hooks/meeting-details/useCopyOperations';
 import { useMeetingOperations } from '@/hooks/meeting-details/useMeetingOperations';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -67,7 +67,7 @@ export default function PageContent({
 
   // Custom hooks
   const meetingData = useMeetingData({ meeting, summaryData, onMeetingUpdated });
-  const templates = useTemplates();
+  const templates = useLegacyTemplateChoice(meeting.id);
 
   // Callback to register the modal open function
   const handleRegisterModalOpen = (openFn: () => void) => {
@@ -154,6 +154,9 @@ export default function PageContent({
     <LegacyMeetingPanelsProvider
       value={{
         status: 'ready',
+        regenerateNotes: meetingData.aiSummary
+          ? () => { void summaryGeneration.handleRegenerateSummary(); }
+          : null,
         transcript: (
             <TranscriptPanel
               transcripts={meetingData.transcripts}

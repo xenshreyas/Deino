@@ -15,7 +15,13 @@ import { createContext, type ReactNode, useContext } from 'react';
 export type LegacyMeetingPanels =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; notes: ReactNode; transcript: ReactNode };
+  | {
+      status: 'ready';
+      notes: ReactNode;
+      transcript: ReactNode;
+      /** Regenerates the notes with the meeting's template; `null` before there are notes. */
+      regenerateNotes: (() => void) | null;
+    };
 
 const PanelsContext = createContext<LegacyMeetingPanels>({ status: 'loading' });
 

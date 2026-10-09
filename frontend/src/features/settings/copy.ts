@@ -33,6 +33,14 @@ export const settingsCopy = {
       description: 'Which provider and model serve each AI task, and a quick test for each.',
     },
     models: { label: 'Summary models', description: 'The language model that writes your notes.' },
+    templates: {
+      label: 'Templates',
+      description: 'What your notes contain for each kind of meeting, and when each is used.',
+    },
+    profile: {
+      label: 'Profile',
+      description: 'Who you are and how you like notes written, for every AI prompt.',
+    },
     network: {
       label: 'Network',
       description: 'What may leave this Mac, and a log of everything that did.',

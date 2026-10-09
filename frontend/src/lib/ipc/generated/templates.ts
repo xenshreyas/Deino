@@ -352,7 +352,8 @@ template: Template;
  */
 reason: ChoiceReason }
 /**
- * Everything about a template the user can edit.
+ * Everything about a template the user can edit. A file may leave out any
+ * field; what is missing is empty, which validation then judges.
  */
 export type TemplateContent = { 
 /**
@@ -363,12 +364,12 @@ name: string;
  * One line on what it is for; the picker shows it and the LLM
  * classifier chooses by it.
  */
-description?: string; 
+description: string; 
 /**
  * Who the meeting is with and what the notes are for, given to the LLM
  * with every section.
  */
-meetingContext?: string; 
+meetingContext: string; 
 /**
  * The sections, in order.
  */
@@ -376,7 +377,7 @@ sections: TemplateSection[];
 /**
  * When to choose this template automatically.
  */
-autoRules?: AutoRule[] }
+autoRules: AutoRule[] }
 /**
  * Identifies a note template (NOT-04).
  * 
@@ -405,7 +406,7 @@ title: string;
 /**
  * What the LLM should put in it; may be empty for an obvious title.
  */
-instructions?: string; 
+instructions: string; 
 /**
  * How it is rendered.
  */
