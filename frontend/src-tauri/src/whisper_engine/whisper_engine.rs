@@ -130,18 +130,13 @@ impl WhisperEngine {
             let current_dir = std::env::current_dir()
                 .map_err(|e| anyhow!("Failed to get current directory: {}", e))?;
 
-            // Development: Use frontend/models or backend directories
-            // Production: Use system directories (should be overridden by caller)
+            // Development: use a local `models/` directory.
+            // Production: the caller must configure the directory.
             if cfg!(debug_assertions) {
-                // Development mode - try frontend and backend directories
                 if current_dir.join("models").exists() {
                     current_dir.join("models")
                 } else if current_dir.join("../models").exists() {
                     current_dir.join("../models")
-                } else if current_dir.join("backend/whisper-server-package/models").exists() {
-                    current_dir.join("backend/whisper-server-package/models")
-                } else if current_dir.join("../backend/whisper-server-package/models").exists() {
-                    current_dir.join("../backend/whisper-server-package/models")
                 } else {
                     // Create models directory in current directory for development
                     current_dir.join("models")
@@ -336,16 +331,9 @@ impl WhisperEngine {
                     acceleration.gpu_device,
                 );
 
-                // PERFORMANCE: Suppress verbose C library logs during model loading
-                // This hides the excessive Metal/GGML initialization logs in release builds
-                let ctx = {
-                    // let _suppressor = crate::whisper_engine::StderrSuppressor::new();
-
-                    // Load whisper context with hardware-optimized parameters
-                    WhisperContext::new_with_params(&model_info.path.to_string_lossy(), context_param)
-                        .map_err(|e| anyhow!("Failed to load model {}: {}", model_name, e))?
-                    // Suppressor dropped here, stderr restored
-                };
+                // Load the whisper context with hardware-optimized parameters.
+                let ctx = WhisperContext::new_with_params(&model_info.path.to_string_lossy(), context_param)
+                    .map_err(|e| anyhow!("Failed to load model {}: {}", model_name, e))?;
 
                 // Update current context and model
                 *self.current_context.write().await = Some(ctx);
@@ -608,18 +596,9 @@ impl WhisperEngine {
         let duration_seconds = audio_data.len() as f64 / 16000.0;
         let is_partial = duration_seconds < 15.0; // Consider chunks under 15s as partial
 
-        // PERFORMANCE: Suppress verbose C library logs during transcription
-        // This hides whisper_full_with_state debug logs and beam search details
-        let (num_segments, state) = {
-            // let _suppressor = crate::whisper_engine::StderrSuppressor::new();
-
-            let mut state = ctx.create_state()?;
-            state.full(params, &audio_data)?;
-            let num_segments = state.full_n_segments();
-
-            (num_segments, state)
-            // Suppressor dropped here, stderr restored
-        };
+        let mut state = ctx.create_state()?;
+        state.full(params, &audio_data)?;
+        let num_segments = state.full_n_segments();
         let mut result = String::new();
         let mut total_confidence = 0.0;
         let mut segment_count = 0;
