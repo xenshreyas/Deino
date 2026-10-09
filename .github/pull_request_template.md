@@ -1,36 +1,36 @@
-## Description
-[Provide a detailed description of your changes]
+<!--
+Title: a Conventional Commit stating the outcome, e.g. "feat(meetings): rename meetings from the sidebar".
+Write this yourself: intent and evidence, not a file-by-file recap. Review standards: docs/REVIEW.md.
+-->
 
-## Related Issue
-[Link to the issue this PR addresses (e.g., "Fixes #123")]
+## What
 
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Code refactoring
-- [ ] Other (please describe)
+<!-- The card (e.g. FND-13) and what this PR changes, in two or three sentences. -->
 
-## Testing
-- [ ] Unit tests added/updated
-- [ ] Manual testing performed
-- [ ] All tests pass
+## Why
 
-## Documentation
-- [ ] Documentation updated
-- [ ] No documentation needed
+<!-- The problem, or the PARITY_PLAN section this delivers. Name the reference project you benchmarked against and how Deino compares. -->
 
-## Checklist
-- [ ] Code follows project style
-- [ ] Self-reviewed the code
-- [ ] Added comments for complex code
-- [ ] Updated README if needed
-- [ ] Branch is up to date with devtest
-- [ ] No merge conflicts
+## How tested
 
-## Screenshots (if applicable)
-[Add screenshots here if your changes affect the UI]
+<!-- Commands you ran and their results; new tests and the regression each prevents; manual QA on real hardware (audio, permissions). -->
 
-## Additional Notes
-[Add any additional information that might be helpful for reviewers] 
+- [ ] `scripts/clippy.sh`, `cargo fmt --all --check`, `cargo test --workspace`
+- [ ] `cd frontend && pnpm typecheck && pnpm lint && pnpm test && pnpm build`
+- [ ] Bindings regenerated (`cargo test -p deino --lib bindings`) and committed
+- [ ] Manual QA:
+
+## Screenshots
+
+<!-- Light and dark for any UI change (§3B). "N/A" with one line on why nothing visible changed. -->
+
+## Docs updated
+
+- [ ] `docs/ARCHITECTURE.md` (processes, crates, modules, data flow, schema, extension points)
+- [ ] ADR in `docs/adr/` for a significant decision
+- [ ] Crate README, `CLAUDE.md`, `docs/setup/<provider>.md`, as relevant
+- [ ] Legacy lists only shrank (`legacy_lints.rs`, `scripts/legacy-rust-files.txt`, `frontend/legacy-files.mjs`)
+
+## Follow-ups
+
+<!-- Gaps found that belong to another card, with the card ID. -->
