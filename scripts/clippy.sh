@@ -4,14 +4,21 @@
 # thresholds are PARITY_PLAN §3A, and inherited code is exempted only through
 # frontend/src-tauri/src/legacy_lints.rs.
 #
-#   scripts/clippy.sh            # lint the whole workspace, every target
+#   scripts/clippy.sh                                  # the whole workspace, every target
+#   scripts/clippy.sh --workspace --exclude deino      # another package selection (Linux CI)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# The packages to lint: the arguments, or the whole workspace.
+packages=("$@")
+if ((${#packages[@]} == 0)); then
+    packages=(--workspace)
+fi
+
 # No --all-features: the GPU backends (cuda, vulkan, hipblas) only build on
 # their own platforms. Dev-dependencies already enable every `test-support`.
-cargo clippy --workspace --all-targets --locked -- --deny warnings
+cargo clippy "${packages[@]}" --all-targets --locked -- --deny warnings
 
 # Spelling, when typos-cli is installed (CI installs it).
 if command -v typos >/dev/null 2>&1; then
