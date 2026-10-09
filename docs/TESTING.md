@@ -24,6 +24,7 @@ CI (FND-03).
 | Frontend format | `cd frontend && pnpm format:check` |
 | Frontend build | `cd frontend && pnpm build` |
 | UI smoke tests | `cd frontend && pnpm test:e2e` (Playwright in the installed Chrome over `pnpm dev:mock`; screenshots in `frontend/test-results/`) |
+| Recording acceptance (macOS, real time) | `cargo test -p deino-audio --test kill_harness -- --ignored --nocapture --test-threads=1` (`kill -9` loss and CPU per track) |
 | UI by hand | `cd frontend && pnpm dev:mock`, then open http://localhost:3119 |
 
 Two `audio::device_detection` tests read the real audio devices and fail on

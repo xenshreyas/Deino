@@ -28,8 +28,14 @@ Conexant = "Conexant"
 conexant = "conexant"
 # LokalBot, a product named in the research.
 Lokal = "Lokal"
+# The MP4 track fragment run box (`moof → traf → trun`).
+trun = "trun"
+# The numerator field of mach_timebase_info.
+numer = "numer"
 
 [default.extend-identifiers]
+# A module name misspelt upstream in cidre (`av::audio::settings`).
+encoder_propery_keys = "encoder_propery_keys"
 # Inherited identifiers, renamed when their files are ported.
 IInpuItemProps = "IInpuItemProps"
 IInpuSwitchProps = "IInpuSwitchProps"
