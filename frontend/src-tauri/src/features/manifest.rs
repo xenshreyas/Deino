@@ -4,17 +4,28 @@
 // items (no `//!` docs, no `use`):
 // - `build.rs` `include!`s it to generate each plugin's ACL permissions
 //   (`allow-<command>`, `deny-<command>` and the `<name>:default` set);
-// - the app compiles it as `features::manifest`, where the capability guard
-//   test checks that every feature is granted in `capabilities/default.json`.
+// - the app compiles it as `features::manifest`, where the guard tests check
+//   that every feature is granted in `capabilities/` and that these command
+//   lists equal the commands in the generated TypeScript bindings.
 //
 // Append-only: adding a feature is one line here, one `.plugin(..)` call in
-// `lib.rs` and one `"<name>:default"` entry in `capabilities/default.json`.
+// `lib.rs`, one entry in `features::builders()` and one `"<name>:default"`
+// entry in `capabilities/default.json`.
 
 /// Every inline feature plugin as `(plugin name, command names)`.
 ///
 /// The plugin name must equal the feature module's `NAME`, and the command
-/// names must match the functions in its `generate_handler!` exactly.
+/// names must match the functions in its `collect_commands!` exactly.
 pub const FEATURES: &[(&str, &[&str])] = &[
     // ── FND-02 system ──
     ("system", &["app_version"]),
+    // ── FND-13 meetings ──
+    ("meetings", &["list", "get", "rename"]),
+];
+
+/// Feature plugins compiled into debug builds only. `build.rs` registers
+/// them, and `capabilities/dev/` grants them, only when debug assertions are on.
+pub const DEV_FEATURES: &[(&str, &[&str])] = &[
+    // ── FND-13 reference feature (features/_example.rs) ──
+    ("example", &["list", "add"]),
 ];

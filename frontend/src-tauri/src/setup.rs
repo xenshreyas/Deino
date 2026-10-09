@@ -7,7 +7,7 @@
 
 use tauri::{App, AppHandle, Manager, Wry};
 
-use crate::notifications::commands::{initialize_notification_manager, NotificationManagerState};
+use crate::notifications::commands::{NotificationManagerState, initialize_notification_manager};
 use crate::{database, onnx_runtime, parakeet_engine, summary, tray, whisper_engine};
 
 /// Error type accepted by Tauri's setup hook.
@@ -22,6 +22,8 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     init_transcription_engines(handle);
     spawn_summary_model_manager(handle.clone());
     tauri::async_runtime::block_on(database::setup::initialize_database_on_startup(handle))?;
+    #[cfg(debug_assertions)]
+    tauri::async_runtime::block_on(crate::composition::attach_example(handle))?;
     configure_template_dirs(handle);
     log::info!("Application setup complete");
     Ok(())
@@ -29,7 +31,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
 
 fn create_tray(app: &AppHandle) {
     if let Err(e) = tray::create_tray(app) {
-        log::error!("Failed to create system tray: {}", e);
+        log::error!("Failed to create system tray: {e}");
     }
 }
 
@@ -38,13 +40,13 @@ fn spawn_notification_manager(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         let manager = match initialize_notification_manager(app.clone()).await {
             Ok(manager) => manager,
-            Err(e) => return log::error!("Failed to initialize notification manager: {}", e),
+            Err(e) => return log::error!("Failed to initialize notification manager: {e}"),
         };
         if let Err(e) = manager.set_consent(true).await {
-            log::error!("Failed to set initial notification consent: {}", e);
+            log::error!("Failed to set initial notification consent: {e}");
         }
         if let Err(e) = manager.request_permission().await {
-            log::error!("Failed to request initial notification permission: {}", e);
+            log::error!("Failed to request initial notification permission: {e}");
         }
         let state = app.state::<NotificationManagerState<Wry>>();
         *state.write().await = Some(manager);
@@ -58,12 +60,12 @@ fn init_transcription_engines(app: &AppHandle) {
     parakeet_engine::commands::set_models_directory(app);
     tauri::async_runtime::spawn(async {
         if let Err(e) = whisper_engine::commands::whisper_init().await {
-            log::error!("Failed to initialize Whisper engine on startup: {}", e);
+            log::error!("Failed to initialize Whisper engine on startup: {e}");
         }
     });
     tauri::async_runtime::spawn(async {
         if let Err(e) = parakeet_engine::commands::parakeet_init().await {
-            log::error!("Failed to initialize Parakeet engine on startup: {}", e);
+            log::error!("Failed to initialize Parakeet engine on startup: {e}");
         }
     });
 }
@@ -73,8 +75,8 @@ fn spawn_summary_model_manager(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         let result = summary::summary_engine::commands::init_model_manager_at_startup(&app).await;
         match result {
-            Ok(_) => log::info!("ModelManager initialized at startup"),
-            Err(e) => log::warn!("ModelManager startup init failed, will retry lazily: {}", e),
+            Ok(()) => log::info!("ModelManager initialized at startup"),
+            Err(e) => log::warn!("ModelManager startup init failed, will retry lazily: {e}"),
         }
     });
 }
@@ -83,10 +85,10 @@ fn spawn_summary_model_manager(app: AppHandle) {
 fn configure_template_dirs(app: &AppHandle) {
     match app.path().resource_dir() {
         Ok(resources) => summary::templates::set_bundled_templates_dir(resources.join("templates")),
-        Err(e) => log::warn!("Failed to resolve resource directory for templates: {}", e),
+        Err(e) => log::warn!("Failed to resolve resource directory for templates: {e}"),
     }
     match app.path().app_data_dir() {
         Ok(app_data) => summary::templates::set_custom_templates_dir(app_data.join("templates")),
-        Err(e) => log::warn!("Failed to resolve app data directory for templates: {}", e),
+        Err(e) => log::warn!("Failed to resolve app data directory for templates: {e}"),
     }
 }

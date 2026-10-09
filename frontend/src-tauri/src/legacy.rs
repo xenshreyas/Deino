@@ -108,8 +108,7 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         anthropic::anthropic::get_anthropic_models,
         groq::groq::get_groq_models,
         openrouter::get_openrouter_models,
-        // Meetings, transcripts and model settings
-        api::api_get_meetings,
+        // Meetings, transcripts and model settings (list/get/rename: the meetings plugin)
         api::api_search_transcripts,
         api::api_get_model_config,
         api::api_save_model_config,
@@ -117,10 +116,8 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         api::api_get_transcript_config,
         api::api_save_transcript_config,
         api::api_delete_meeting,
-        api::api_get_meeting,
         api::api_get_meeting_metadata,
         api::api_get_meeting_transcripts,
-        api::api_save_meeting_title,
         api::api_save_transcript,
         api::open_meeting_folder,
         api::open_external_url,

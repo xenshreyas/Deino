@@ -1,21 +1,28 @@
 //! `system` feature: facts about the running app, exposed as the inline
 //! plugin `plugin:system|<command>`.
 //!
-//! This is the smallest possible feature plugin and the worked example of the
-//! registration pattern (ADR 0002). It has no service layer because it only
-//! reads Tauri's package info.
+//! The smallest feature plugin. It has no service layer because it only reads
+//! Tauri's package info; see `features/_example.rs` for the full pattern.
 
 mod commands;
 
-use tauri::plugin::{Builder, TauriPlugin};
 use tauri::Runtime;
+use tauri::plugin::{Builder, TauriPlugin};
 
 /// Plugin name; must match this feature's entry in `features::manifest`.
 pub const NAME: &str = "system";
 
+/// The plugin's commands, for the invoke handler and the TypeScript bindings.
+pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
+    tauri_specta::Builder::new()
+        .plugin_name(NAME)
+        .commands(commands::collect())
+        .error_handling(tauri_specta::ErrorHandlingMode::Result)
+}
+
 /// Builds the `system` plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new(NAME)
-        .invoke_handler(tauri::generate_handler![commands::app_version])
+        .invoke_handler(specta().invoke_handler())
         .build()
 }

@@ -1,11 +1,34 @@
-#[path = "build/ffmpeg.rs"]
-mod ffmpeg;
-#[path = "build/onnxruntime.rs"]
-mod onnxruntime;
+//! Build script: stages the pinned FFmpeg and ONNX Runtime binaries, reports
+//! the GPU backend, and generates the ACL of every inline feature plugin.
+
+// Inherited downloaders that predate PARITY_PLAN §3A. FND-05 removes FFmpeg (D11).
+#[allow(
+    clippy::disallowed_types,
+    clippy::doc_markdown,
+    clippy::duration_suboptimal_units,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::large_stack_arrays,
+    clippy::let_underscore_must_use,
+    clippy::manual_assert,
+    clippy::panic,
+    clippy::too_many_lines,
+    reason = "inherited build-time downloaders; see legacy_lints.rs for the policy"
+)]
+#[path = "build"]
+mod downloads {
+    pub mod ffmpeg;
+    pub mod onnxruntime;
+}
+use downloads::{ffmpeg, onnxruntime};
 
 // `FEATURES`: the inline feature plugins and their commands (ADR 0002).
 include!("src/features/manifest.rs");
 
+#[allow(
+    clippy::expect_used,
+    reason = "a build script reports failure by panicking"
+)]
 fn main() {
     // GPU Acceleration Detection and Build Guidance
     detect_and_report_gpu_capabilities();
@@ -27,22 +50,42 @@ fn main() {
     tauri_build::try_build(tauri_attributes()).expect("tauri build failed");
 }
 
+/// Capability files for release builds: `capabilities/dev/` (debug-only
+/// feature plugins) is left out, because its plugins do not exist there.
+const RELEASE_CAPABILITIES: &str = "./capabilities/*.json";
+
 /// Registers every feature in `src/features/manifest.rs` as an inline plugin,
 /// so tauri-build generates its `allow-*`/`deny-*` permissions and a
-/// `<name>:default` set that allows all of its commands.
+/// `<name>:default` set that allows all of its commands. `DEV_FEATURES` and
+/// their capabilities are only registered when debug assertions are on.
 fn tauri_attributes() -> tauri_build::Attributes {
     println!("cargo:rerun-if-changed=src/features/manifest.rs");
-    FEATURES.iter().fold(tauri_build::Attributes::new(), |attributes, &(name, commands)| {
-        attributes.plugin(
-            name,
-            tauri_build::InlinedPlugin::new()
-                .commands(commands)
-                .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
-        )
-    })
+    let debug = std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_some();
+    let dev_features: &[(&str, &[&str])] = if debug { DEV_FEATURES } else { &[] };
+    let attributes = FEATURES.iter().chain(dev_features).fold(
+        tauri_build::Attributes::new(),
+        |attributes, &(name, commands)| {
+            attributes.plugin(
+                name,
+                tauri_build::InlinedPlugin::new()
+                    .commands(commands)
+                    .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
+            )
+        },
+    );
+    if debug {
+        attributes
+    } else {
+        attributes.capabilities_path_pattern(RELEASE_CAPABILITIES)
+    }
 }
 
 /// Detects GPU acceleration capabilities and provides build guidance
+#[allow(
+    clippy::too_many_lines,
+    clippy::uninlined_format_args,
+    reason = "inherited build guidance that predates PARITY_PLAN §3A"
+)]
 fn detect_and_report_gpu_capabilities() {
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
 
@@ -62,14 +105,22 @@ fn detect_and_report_gpu_capabilities() {
             } else if cfg!(feature = "openblas") {
                 println!("cargo:warning=✅ Windows: OpenBLAS CPU optimization ENABLED");
             } else {
-                println!("cargo:warning=⚠️  Windows: Using CPU-only mode (no GPU or BLAS acceleration)");
+                println!(
+                    "cargo:warning=⚠️  Windows: Using CPU-only mode (no GPU or BLAS acceleration)"
+                );
                 println!("cargo:warning=💡 For NVIDIA GPU: cargo build --release --features cuda");
-                println!("cargo:warning=💡 For AMD/Intel GPU: cargo build --release --features vulkan");
-                println!("cargo:warning=💡 For CPU optimization: cargo build --release --features openblas");
+                println!(
+                    "cargo:warning=💡 For AMD/Intel GPU: cargo build --release --features vulkan"
+                );
+                println!(
+                    "cargo:warning=💡 For CPU optimization: cargo build --release --features openblas"
+                );
 
                 // Try to detect NVIDIA GPU
                 if which::which("nvidia-smi").is_ok() {
-                    println!("cargo:warning=🎯 NVIDIA GPU detected! Consider rebuilding with --features cuda");
+                    println!(
+                        "cargo:warning=🎯 NVIDIA GPU detected! Consider rebuilding with --features cuda"
+                    );
                 }
             }
         }
@@ -83,20 +134,30 @@ fn detect_and_report_gpu_capabilities() {
             } else if cfg!(feature = "openblas") {
                 println!("cargo:warning=✅ Linux: OpenBLAS CPU optimization ENABLED");
             } else {
-                println!("cargo:warning=⚠️  Linux: Using CPU-only mode (no GPU or BLAS acceleration)");
+                println!(
+                    "cargo:warning=⚠️  Linux: Using CPU-only mode (no GPU or BLAS acceleration)"
+                );
                 println!("cargo:warning=💡 For NVIDIA GPU: cargo build --release --features cuda");
                 println!("cargo:warning=💡 For AMD GPU: cargo build --release --features hipblas");
-                println!("cargo:warning=💡 For other GPUs: cargo build --release --features vulkan");
-                println!("cargo:warning=💡 For CPU optimization: cargo build --release --features openblas");
+                println!(
+                    "cargo:warning=💡 For other GPUs: cargo build --release --features vulkan"
+                );
+                println!(
+                    "cargo:warning=💡 For CPU optimization: cargo build --release --features openblas"
+                );
 
                 // Try to detect NVIDIA GPU
                 if which::which("nvidia-smi").is_ok() {
-                    println!("cargo:warning=🎯 NVIDIA GPU detected! Consider rebuilding with --features cuda");
+                    println!(
+                        "cargo:warning=🎯 NVIDIA GPU detected! Consider rebuilding with --features cuda"
+                    );
                 }
 
                 // Try to detect AMD GPU
                 if which::which("rocm-smi").is_ok() {
-                    println!("cargo:warning=🎯 AMD GPU detected! Consider rebuilding with --features hipblas");
+                    println!(
+                        "cargo:warning=🎯 AMD GPU detected! Consider rebuilding with --features hipblas"
+                    );
                 }
             }
         }
@@ -106,8 +167,15 @@ fn detect_and_report_gpu_capabilities() {
     }
 
     // Performance guidance
-    if !cfg!(feature = "cuda") && !cfg!(feature = "vulkan") && !cfg!(feature = "hipblas") && !cfg!(feature = "openblas") && target_os != "macos" {
-        println!("cargo:warning=📊 Performance: CPU-only builds are significantly slower than GPU/BLAS builds");
+    if !cfg!(feature = "cuda")
+        && !cfg!(feature = "vulkan")
+        && !cfg!(feature = "hipblas")
+        && !cfg!(feature = "openblas")
+        && target_os != "macos"
+    {
+        println!(
+            "cargo:warning=📊 Performance: CPU-only builds are significantly slower than GPU/BLAS builds"
+        );
         println!("cargo:warning=📚 See README.md for GPU/BLAS setup instructions");
     }
 }

@@ -1,32 +1,55 @@
-//! Feature IPC: one inline Tauri plugin per feature.
+//! Feature IPC: one inline Tauri plugin per feature (ADR 0002, ADR 0007).
 //!
-//! Each feature exposes its commands as `plugin:<feature>|<command>` from a
-//! module `features/<feature>.rs` + `features/<feature>/commands.rs` with an
-//! `init()` that builds a [`tauri::plugin::TauriPlugin`]. Plugin commands are
-//! always checked against the capability ACL, so a feature is registered in
-//! three places, one line each (ADR 0002):
+//! Each feature exposes `NAME`, `specta()` (its `tauri_specta::Builder`) and
+//! `init()` from `features/<feature>.rs`, with thin commands in
+//! `features/<feature>/commands.rs`. Plugin commands are always checked
+//! against the capability ACL, so a feature is registered in four places,
+//! one line each:
 //!
-//! 1. [`manifest::FEATURES`]: plugin name and command names, from which
+//! 1. [`manifest::FEATURES`]: the plugin name and command names, from which
 //!    `build.rs` generates the plugin's ACL permissions;
 //! 2. `lib.rs`: `.plugin(features::<feature>::init())`;
-//! 3. `capabilities/default.json`: `"<feature>:default"`.
+//! 3. `capabilities/default.json`: `"<feature>:default"`;
+//! 4. [`builders`]: its bindings builder, exported to TypeScript.
 //!
-//! The tests below fail when (1) and (3) drift apart, and prove that a
-//! granted plugin command is callable through the real ACL.
+//! The guard tests below and in `bindings.rs` fail when these drift apart.
+//! [`_example`] is the reference feature to copy.
 
+#[cfg(debug_assertions)]
+pub mod _example;
+pub mod db;
+/// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
+pub mod meetings;
 pub mod system;
+
+/// Every feature's bindings builder, keyed by the file it is exported to
+/// under `frontend/src/lib/ipc/generated/`.
+#[cfg(test)]
+pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>)> {
+    let mut builders = vec![
+        (db::NAME, db::specta()),
+        (meetings::NAME, meetings::specta()),
+        (system::NAME, system::specta()),
+    ];
+    #[cfg(debug_assertions)]
+    builders.push((_example::NAME, _example::specta()));
+    builders
+}
 
 #[cfg(test)]
 mod tests {
-    use super::manifest::FEATURES;
+    use super::manifest::{DEV_FEATURES, FEATURES};
 
-    /// The app's main capability file, which must grant every feature plugin.
-    const DEFAULT_CAPABILITY: &str = include_str!("../capabilities/default.json");
+    /// The capability files that grant feature plugins.
+    const CAPABILITIES: [&str; 2] = [
+        include_str!("../capabilities/default.json"),
+        include_str!("../capabilities/dev/example.json"),
+    ];
 
-    fn granted_permissions() -> Vec<String> {
+    fn granted_permissions(capability: &str) -> Vec<String> {
         let capability: serde_json::Value =
-            serde_json::from_str(DEFAULT_CAPABILITY).expect("capabilities/default.json is valid JSON");
+            serde_json::from_str(capability).expect("capability files are valid JSON");
         capability["permissions"]
             .as_array()
             .expect("capability has a permissions array")
@@ -36,31 +59,48 @@ mod tests {
     }
 
     #[test]
-    fn every_manifest_feature_is_granted_by_the_default_capability() {
-        let granted = granted_permissions();
-        for (name, _) in FEATURES {
+    fn every_manifest_feature_is_granted_by_a_capability() {
+        let granted: Vec<String> = CAPABILITIES
+            .iter()
+            .flat_map(|c| granted_permissions(c))
+            .collect();
+        for (name, _) in FEATURES.iter().chain(DEV_FEATURES) {
             let permission = format!("{name}:default");
             assert!(
                 granted.contains(&permission),
-                "capabilities/default.json must grant \"{permission}\""
+                "no capability grants \"{permission}\""
+            );
+        }
+    }
+
+    #[test]
+    fn release_capabilities_grant_no_dev_feature() {
+        let granted = granted_permissions(CAPABILITIES[0]);
+        for (name, _) in DEV_FEATURES {
+            assert!(
+                !granted.contains(&format!("{name}:default")),
+                "capabilities/default.json ships in release builds, where \"{name}\" does not exist"
             );
         }
     }
 
     #[test]
     fn manifest_names_are_unique_and_list_commands() {
-        let mut names: Vec<&str> = FEATURES.iter().map(|(name, _)| *name).collect();
+        let mut names: Vec<&str> = FEATURES
+            .iter()
+            .chain(DEV_FEATURES)
+            .map(|(name, _)| *name)
+            .collect();
+        let count = names.len();
         names.sort_unstable();
         names.dedup();
-        assert_eq!(names.len(), FEATURES.len(), "duplicate feature in the manifest");
-        assert!(FEATURES.iter().all(|(_, commands)| !commands.is_empty()));
-    }
-
-    #[test]
-    fn system_feature_is_in_the_manifest() {
-        assert!(FEATURES.iter().any(|(name, commands)| {
-            *name == super::system::NAME && commands.contains(&"app_version")
-        }));
+        assert_eq!(names.len(), count, "duplicate feature in the manifest");
+        assert!(
+            FEATURES
+                .iter()
+                .chain(DEV_FEATURES)
+                .all(|(_, commands)| !commands.is_empty())
+        );
     }
 }
 
