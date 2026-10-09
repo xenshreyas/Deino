@@ -25,10 +25,15 @@ use crate::prune;
 use crate::units::{SAMPLE_RATE, samples_to_duration};
 
 /// The ONNX diarizer as a `TrackDiarizer`.
+///
+/// Runs are serialised: two meetings processed at once would otherwise
+/// download into the same `.partial` files and compile the Core ML model into
+/// the same cache, and each run holds a whole decoded track in memory.
 pub struct OnnxTrackDiarizer {
     store: ModelStore,
     source: Arc<dyn ByteSource>,
     runtime: RuntimeConfig,
+    one_at_a_time: tokio::sync::Mutex<()>,
 }
 
 impl OnnxTrackDiarizer {
@@ -39,6 +44,7 @@ impl OnnxTrackDiarizer {
             store,
             source,
             runtime,
+            one_at_a_time: tokio::sync::Mutex::new(()),
         }
     }
 }
@@ -50,6 +56,7 @@ impl TrackDiarizer for OnnxTrackDiarizer {
     }
 
     async fn diarize(&self, request: TrackRequest) -> Result<TrackDiarization, TrackError> {
+        let _running = self.one_at_a_time.lock().await;
         let models = self
             .store
             .ensure(self.source.as_ref())

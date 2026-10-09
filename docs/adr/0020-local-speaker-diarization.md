@@ -1,4 +1,4 @@
-# 0019. Diarize locally with anarlog's pyannote port and WeSpeaker on Core ML
+# 0020. Diarize locally with anarlog's pyannote port and WeSpeaker on Core ML
 
 - **Status:** Accepted
 - **Date:** 2026-10-09
@@ -87,16 +87,19 @@ anarlog commits its models as blobs with no download source, embeds them with
   `-fapple-link-rtlib` link argument anarlog sets is not needed with pyke's
   rc.10 binaries (the app and every test binary link).
 - Core ML compiles models into a cache: the caller passes
-  `RuntimeConfig::accelerator_cache`. Diarizers are built one at a time (the
-  pipeline runs one stage at a time), so there is no process-wide compile
-  lock.
+  `RuntimeConfig::accelerator_cache`. `OnnxTrackDiarizer` serialises its
+  runs (the pipeline may process two meetings at once), so downloads, the
+  Core ML compile and the decoded track's memory never overlap, without a
+  process-wide static lock.
 - Thresholds were measured on synthetic voices. Re-tune on AMI dev and on
   real meetings before changing them.
 - The stage: `deino-pipeline`'s `DiarizeStage` (order 30) runs
   `DiarizeService`; the app builds `OnnxTrackDiarizer` over the STT models'
-  `HttpByteSource` (`composition/diarize.rs`). Missing models are retried and
+  `NetByteSource` over `deino-net`'s scoped `hf_models` client
+  (`composition/diarize.rs`; not `approved_download`: the stage downloads on
+  its own, so offline mode and the network switches apply). Missing models are retried and
   then skipped on the last attempt, so notes never wait for speakers; a meeting
   without its track file is skipped.
-- Follow-ups: move the downloads to `deino-net`; attribute WeSpeaker in the About screen; CAP-02 drives
+- Follow-ups: attribute WeSpeaker in the About screen; CAP-02 drives
   `online::LiveSpeakerTracker`; CAP-04 uses `voiceprint` and the stored
   centroids.

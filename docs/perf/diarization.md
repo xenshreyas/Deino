@@ -1,6 +1,6 @@
 # Diarization: accuracy and speed (CAP-03)
 
-How Deino's local diarizer (`crates/deino-diarize`, ADR 0019) was measured,
+How Deino's local diarizer (`crates/deino-diarize`, ADR 0020) was measured,
 and what it scored. Re-run it after any change to the models, the parameters
 (`policy.rs`) or the post-processing (`prune.rs`).
 

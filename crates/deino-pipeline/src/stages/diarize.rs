@@ -1,4 +1,4 @@
-//! `diarize` (order 30): who said what, on the Mac (CAP-03, ADR 0019).
+//! `diarize` (order 30): who said what, on the Mac (CAP-03, ADR 0020).
 //!
 //! The rules are `deino_core::diarization::DiarizeService`: plan the
 //! channels, diarize the planned track through the `TrackDiarizer` port

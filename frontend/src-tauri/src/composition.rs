@@ -204,10 +204,7 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
     let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
         return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
     };
-    let diarizer = AppPaths::resolve(app)
-        .map_err(Into::into)
-        .and_then(|paths| diarize::track_diarizer(&paths));
-    let diarizer = match diarizer {
+    let diarizer = match diarize::track_diarizer(app) {
         Ok(diarizer) => diarizer,
         Err(error) => {
             return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");

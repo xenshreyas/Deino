@@ -2069,7 +2069,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-09 LLM gateway | ✅ merged (ADR 0017) | 2026-10-09 |
 | FND-08 Post-meeting pipeline (job runner) | ☑️ done on branch `feat/FND-08-pipeline` (ADR 0018) | |
 | FND-12 Network client and data-egress controls | ☑️ done on branch `feat/FND-12-net` (ADR 0019) | |
-| CAP-03 Local speaker diarization | ☑️ done on branch `feat/CAP-03-diarization` (ADR 0019; stage `diarize` registered) | |
+| CAP-03 Local speaker diarization | ☑️ done on branch `feat/CAP-03-diarization` (ADR 0020; stage `diarize` registered) | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2180,7 +2180,6 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-12 | The Network page's `SettingsSection`/`SettingsCard` (`features/network/components/settings-section.tsx`) are the ui.md settings section and card; promote them to `ui/` when the inherited settings pages are rebuilt on them. | FND-10 follow-up (settings panels) |
 | FND-12 | Acceptance "a full meeting with no services connected makes zero outbound connections" was checked on a fresh smoke build (`com.xenshreyas.deino.smoke-fnd12`) from launch to idle only: `lsof -i` and `nettop` showed no sockets. Repeat it for record → notes with the local model → export once FND-05b lands. | FND-05b |
 | CAP-03 | The `diarize` stage downloads its 32 MB of models on the first meeting it processes (retried, then skipped so notes still run); offer the download in the model manager and onboarding instead, so the first meeting is not the trigger. | FND-11 / model manager UI |
-| CAP-03 | The diarization models download through the same temporary `ByteSource` as the STT models (`stt/http_source.rs`); move both to `deino-net`'s `hf_models` service. | FND-12 |
 | CAP-03 | Attribute WeSpeaker ResNet34-LM (CC-BY-4.0, text in `THIRD_PARTY_NOTICES.md`) on the About screen. | FND-10 / the About screen's next card |
 | CAP-03 | Drive `deino_diarize::online::LiveSpeakerTracker` from the system lane: embed finalized utterances ≥ 1.5 s off the lane thread with `Diarizer::embedder()` (or an `EmbeddingExtractor`), label live speakers, and let the post-meeting pass replace them (map live renames by word overlap). | CAP-02 |
 | CAP-03 | Use the stored centroids (`SpeakerRepo::voice`), `deino_diarize::voiceprint` (`pick_unique`, `complete_by_elimination`, `select_speaker_spans`) and `KnownSpeaker`s in `DiarizeRequest` (add them to `TrackRequest`) for `identify_speakers`; link "Me" to the `people.is_me` row. | CAP-04 |
