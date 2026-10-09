@@ -104,7 +104,7 @@ This document provides a quick overview of all available CI/CD workflows in this
 - All platforms in parallel
 - Uses reusable `build.yml` workflow
 - 30-day artifact retention
-- Artifacts prefixed with `meetily-test-`
+- Artifacts prefixed with `deino-test-`
 
 **Triggers:**
 - Manual dispatch only
@@ -263,13 +263,13 @@ Standalone (don't use build.yml):
 ## Artifact Naming Convention
 
 ```
-meetily-{workflow}-{platform}-{target}-{version}
+deino-{workflow}-{platform}-{target}-{version}
 ```
 
 **Examples:**
-- `meetily-devtest-macOS-aarch64-apple-darwin-0.1.3`
-- `meetily-test-windows-x86_64-pc-windows-msvc-0.1.3`
-- `meetily-macos-aarch64-release-0.1.3`
+- `deino-devtest-macOS-aarch64-apple-darwin-0.1.3`
+- `deino-test-windows-x86_64-pc-windows-msvc-0.1.3`
+- `deino-macos-aarch64-release-0.1.3`
 
 ---
 
@@ -297,7 +297,6 @@ All workflows require these secrets to be configured:
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` - Key password
 
 ### Application Configuration
-- `MEETILY_RSA_PUBLIC_KEY` - License validation public key
 - `SUPABASE_URL` - Online license verification
 - `SUPABASE_ANON_KEY` - Supabase anonymous key
 
@@ -317,7 +316,7 @@ All workflows require these secrets to be configured:
 
 ### Build fails with version error (Windows MSI)
 - Ensure version in `tauri.conf.json` doesn't contain non-numeric pre-release identifiers
-- Use `0.1.3` not `0.1.2-pro-trial`
+- Use `0.1.3` not `0.1.2-beta`
 
 ### Signing fails
 - Verify all required secrets are configured
