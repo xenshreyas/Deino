@@ -1,9 +1,18 @@
-//! Owns the SQLite connection pool: opening `deino.sqlite` in the app data dir,
-//! running the bundled migrations, and closing the pool cleanly on exit.
+//! The legacy handle to Deino's database.
+//!
+//! Opens `deino.sqlite` in the app data dir through [`deino_db::Database`]
+//! (WAL, one writer, a read pool, every migration in `crates/deino-db`).
+//! Inherited commands reach SQLite through [`DatabaseManager::pool`], which is
+//! the writer connection: its commit hooks report every legacy write to the
+//! UI as `DbChanged`, so the new TanStack Query caches stay fresh even when
+//! legacy code writes. New code receives the `Database` from the composition
+//! root instead (`composition.rs`).
 
-use sqlx::{migrate::MigrateDatabase, Result, Sqlite, SqlitePool, Transaction};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use deino_db::{Database, DbError, DbLocation, MIGRATOR};
+use sqlx::SqlitePool;
 use tauri::Manager;
 
 /// File name of Deino's SQLite database inside the app data dir.
@@ -12,53 +21,41 @@ pub const DB_FILE_NAME: &str = "deino.sqlite";
 /// Suffixes of the SQLite side files that can be orphaned by a crash in WAL mode.
 const WAL_SIDE_FILE_SUFFIXES: [&str; 2] = ["-wal", "-shm"];
 
-/// Shared handle to the application's SQLite pool.
-#[derive(Clone)]
+/// Shared handle to the application's database.
+#[derive(Clone, Debug)]
 pub struct DatabaseManager {
-    pool: SqlitePool,
+    database: Database,
 }
 
 impl DatabaseManager {
     /// Opens (creating it if needed) the database at `db_path` and runs all migrations.
-    pub async fn new(db_path: &Path) -> Result<Self> {
-        if let Some(parent_dir) = db_path.parent() {
-            fs::create_dir_all(parent_dir).map_err(sqlx::Error::Io)?;
-        }
-
-        let url = db_path.to_string_lossy();
-        if !db_path.exists() {
-            log::info!("Creating database at {}", url);
-            Sqlite::create_database(&url).await?;
-        }
-
-        let pool = SqlitePool::connect(&url).await?;
-        sqlx::migrate!("./migrations").run(&pool).await?;
-
-        Ok(DatabaseManager { pool })
+    pub async fn open(db_path: &Path) -> Result<Self, DbError> {
+        let database = Database::open(&DbLocation::File(db_path.to_path_buf()), &MIGRATOR).await?;
+        Ok(Self { database })
     }
 
     /// Opens the database in the app data dir, retrying once after removing
     /// orphaned WAL side files when SQLite reports corruption.
-    pub async fn new_from_app_handle(app_handle: &tauri::AppHandle) -> Result<Self> {
+    pub async fn new_from_app_handle(app_handle: &tauri::AppHandle) -> Result<Self, DbError> {
         let db_path = Self::db_path(app_handle);
         log::info!("Database path: {}", db_path.display());
 
-        match Self::new(&db_path).await {
+        match Self::open(&db_path).await {
             Ok(db_manager) => Ok(db_manager),
-            Err(e) if Self::is_corruption_error(&e) => {
-                log::warn!("Database appears corrupted, likely an orphaned WAL file: {}", e);
+            Err(e) if e.is_corruption() => {
+                log::warn!("Database appears corrupted, likely an orphaned WAL file: {:?}", e);
                 Self::remove_wal_side_files(&db_path);
-                Self::new(&db_path).await
+                Self::open(&db_path).await
             }
             Err(e) => {
-                log::error!("Database connection failed: {}", e);
+                log::error!("Database connection failed: {:?}", e);
                 Err(e)
             }
         }
     }
 
     /// Returns true when no database file exists yet (first launch).
-    pub async fn is_first_launch(app_handle: &tauri::AppHandle) -> Result<bool> {
+    pub async fn is_first_launch(app_handle: &tauri::AppHandle) -> Result<bool, DbError> {
         Ok(!Self::db_path(app_handle).exists())
     }
 
@@ -68,11 +65,6 @@ impl DatabaseManager {
             .app_data_dir()
             .expect("failed to get app data dir")
             .join(DB_FILE_NAME)
-    }
-
-    fn is_corruption_error(error: &sqlx::Error) -> bool {
-        let message = error.to_string();
-        message.contains("malformed") || message.contains("corrupt")
     }
 
     /// Deletes the WAL side files next to `db_path`, if present.
@@ -91,72 +83,21 @@ impl DatabaseManager {
         }
     }
 
+    /// The database, for the composition root.
+    pub fn database(&self) -> &Database {
+        &self.database
+    }
+
+    /// The writer connection that legacy commands read and write through.
     pub fn pool(&self) -> &SqlitePool {
-        &self.pool
+        self.database.writer()
     }
 
-    pub async fn with_transaction<T, F, Fut>(&self, f: F) -> Result<T>
-    where
-        F: FnOnce(&mut Transaction<'_, Sqlite>) -> Fut,
-        Fut: std::future::Future<Output = Result<T>>,
-    {
-        let mut tx = self.pool.begin().await?;
-        let result = f(&mut tx).await;
-
-        match result {
-            Ok(val) => {
-                tx.commit().await?;
-                Ok(val)
-            }
-            Err(err) => {
-                tx.rollback().await?;
-                Err(err)
-            }
-        }
-    }
-
-    /// Cleanup database connection and checkpoint WAL
-    /// This should be called on application shutdown to ensure:
-    /// - All WAL changes are written to the main database file
-    /// - The .wal and .shm files are deleted
-    /// - Connection pool is gracefully closed
-    pub async fn cleanup(&self) -> Result<()> {
+    /// Checkpoints the WAL into the main file and closes every connection.
+    /// Called on application shutdown, so no `-wal`/`-shm` files remain.
+    pub async fn cleanup(&self) {
         log::info!("Starting database cleanup...");
-
-        // Force checkpoint of WAL to main database file and remove WAL file
-        // TRUNCATE mode: checkpoints all pages AND deletes the WAL file
-        match sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
-            .execute(&self.pool)
-            .await
-        {
-            Ok(_) => log::info!("WAL checkpoint completed successfully"),
-            Err(e) => log::warn!("WAL checkpoint failed (non-fatal): {}", e),
-        }
-
-        // Close the connection pool gracefully
-        self.pool.close().await;
+        self.database.close().await;
         log::info!("Database connection pool closed");
-
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn fresh_database_applies_migrations_without_licensing_table() {
-        let dir = tempfile::tempdir().unwrap();
-        let manager = DatabaseManager::new(&dir.path().join(DB_FILE_NAME)).await.unwrap();
-
-        let tables: Vec<String> =
-            sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type = 'table'")
-                .fetch_all(manager.pool())
-                .await
-                .unwrap();
-
-        assert!(tables.iter().any(|t| t == "meetings"));
-        assert!(!tables.iter().any(|t| t == "licensing"));
     }
 }

@@ -22,7 +22,7 @@ interface MeetingDetailsResponse {
 interface MeetingDetailsScreenProps {
   meetingId: string;
   /** How the user got here; `'recording'` may auto-generate the summary. */
-  source?: MeetingSource;
+  source?: MeetingSource | undefined;
 }
 
 /**

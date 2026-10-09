@@ -36,6 +36,7 @@
                 }
             ]
         },
-        "system:default"
+        "system:default",
+        "meetings:default"
     ]
 }

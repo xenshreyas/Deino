@@ -1,0 +1,7 @@
+# The one Rust toolchain for local builds, hooks and CI (CI reads this file).
+# Bump it in its own PR together with `rust-version` in Cargo.toml, and fix any
+# new clippy findings in the same PR.
+[toolchain]
+channel = "1.96.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

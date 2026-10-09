@@ -119,7 +119,7 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
 
 1. **Branch and worktree.** Use one card per branch, `feat/<CARD-ID>-<slug>`. Never push to `main` directly. Never push to the `upstream` remote, which is disabled anyway.
 2. **Migrations.**
-   - Name new files `frontend/src-tauri/migrations/<YYYYMMDDHHMMSS>_<card_id_lowercase>_<desc>.sql`, using the real current UTC time so two agents never produce the same name.
+   - Name new files `crates/deino-db/migrations/<YYYYMMDDHHMMSS>_<card_id_lowercase>_<desc>.sql` (moved there from `frontend/src-tauri/migrations/` by FND-13), using the real current UTC time so two agents never produce the same name. Add a `Table` variant for each new table and run `scripts/sqlx-prepare.sh`.
    - Only change tables your card **owns** (see §4.1). Adding nullable columns to `meetings` is allowed for any card, but list them in your PR.
    - Never edit an existing migration.
 3. **Where code goes (§4.0 is authoritative).**
@@ -2029,7 +2029,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-01 Rebrand | ✅ merged | 2026-10-08 |
 | FND-02 Cleanup, English-only, inline plugins | ✅ merged | 2026-10-08 |
 | FND-10a Vite migration | ✅ merged | 2026-10-08 |
-| FND-13 Quality baseline and workspace | 🔄 in progress | |
+| FND-13 Code-quality baseline and workspace skeleton | ✅ merged | 2026-10-09 |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | 🔄 running | |
 | Spike: diarization bake-off | 🔄 running | |
@@ -2039,19 +2039,26 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | From | Follow-up | Goes to |
 |---|---|---|
 | FND-01/02 | Two hardware-dependent `device_detection` tests fail on real Macs. Guard them or inject a fake device source. | FND-03 |
-| FND-02 | Four pre-existing clippy errors in legacy files (`backend_config.rs` `to_string` shadowing `Display`, tests in `system_audio_commands.rs` and `whisper_engine.rs`). | FND-13 |
-| FND-02 | `whisper_engine.rs` logs transcript text via `perf_debug!`/`perf_trace!`, which violates §3A privacy. | FND-13 (or CAP-01 when it drops whisper-rs) |
+| FND-02 | ~~Four pre-existing clippy errors in legacy files.~~ Fixed by FND-13. | ✅ FND-13 |
+| FND-02 | ~~`whisper_engine.rs` logs transcript text.~~ Fixed by FND-13, together with the same leak in `transcription/worker.rs` and `parakeet_engine.rs`. | ✅ FND-13 |
 | FND-02 | Many legacy commands still take a vestigial `auth_token` parameter. Drop it when porting each command. | Each card that ports a legacy command |
 | FND-02 | `get_transcription_status` is a stub that always returns zeros. | CAP-01 |
 | FND-02 | `generate_meeting_summary` has too many arguments. | FND-09 |
-| FND-02 | The `llama-helper` `[profile.release]` is ignored inside the workspace. Move it to the root with a per-package profile override. | FND-13 |
+| FND-02 | ~~The `llama-helper` `[profile.release]` is ignored.~~ Moved to `[profile.release.package.llama-helper]` by FND-13; `lto` cannot be set per package, so a fully LTO'd sidecar needs a custom `[profile.sidecar]` and a release-script change. | ✅ FND-13 (LTO: FND-03 release workflow) |
 | FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. | FND-03 (Windows check job, optional) |
 | FND-01 | `onnxruntime.rs` and `ffmpeg.rs` duplicate the sha256 helper. Moot once FFmpeg is removed (D11). | FND-05 |
 | FND-10a | The record screen's permission card still tells macOS users to install BlackHole. Rewrite it for the process tap (§3C). | FND-11 |
 | FND-10a | The sidebar has no `shrink-0` and squeezes at narrow widths. | FND-10 |
 | FND-10a | `tauri build` codesign fails in worktrees under `~/Documents` (file attributes). Run `xattr -cr` on the bundle in the release script. | FND-03 |
 | FND-10a | Tailwind v4 default palette replaced the v3 hex values (slightly different greys). Superseded by the token restyle. | FND-10 |
-| FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. | FND-06 / FND-13 |
+| FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. | FND-06 (FND-13 added `composition.rs`; the statics belong to the STT and summary code that FND-06/CAP-01/FND-09 rewrite) |
+| FND-13 | `cargo deny check advisories` fails on inherited dependencies (unmaintained `atty`, `paste`, `proc-macro-error`, `rustls-pemfile`, `unic-*`; RUSTSEC findings in `h2`, `rustls`, `quick-xml`, `crossbeam-epoch`, `ringbuf`, an html5ever parser). Licences, bans and sources pass. Triage, upgrade or document each before CI gates on advisories. | FND-03 |
+| FND-13 | The app crate is still edition 2021 (the new crates are 2024). Migrate it with `cargo fix --edition` once enough legacy code is ported. | Any later card, as its own PR |
+| FND-13 | `rustfmt` cannot see modules declared through `legacy_modules!`, so legacy files are not format-checked; each card formats the files it ports out of the list. | Every card that ports legacy code |
+| FND-13 | `api_delete_meeting` and the meeting page's metadata and transcript commands are still legacy; port them into the `meetings` plugin. | ORG-07 / TRN-01 |
+| FND-13 | `_example` has no dev route; add it to FND-10's dev-only `/design` page so the template can be clicked through in `pnpm dev:mock`. | FND-10 / FND-04 |
+| FND-13 | Wire `createRootRouteWithContext({ queryClient })` so route loaders can `ensureQueryData`. | FND-10 |
+| FND-13 | The real-app UI click-through of the sidebar rename was not completed (the background UI session was interrupted); the IPC path is covered by contract tests and the app was verified to start and migrate an existing database. | FND-03 / next card touching the sidebar |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02

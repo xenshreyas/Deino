@@ -19,11 +19,15 @@ pub(crate) fn on_window_event(window: &Window, event: &WindowEvent) {
     api.prevent_close();
     match window.hide() {
         Ok(()) => log::info!("Main window hidden to tray on close request"),
-        Err(e) => log::error!("Failed to hide main window on close request: {}", e),
+        Err(e) => log::error!("Failed to hide main window on close request: {e}"),
     }
 }
 
 /// Handles app-level run events: dock re-open (macOS) and exit cleanup.
+#[allow(
+    clippy::needless_pass_by_value,
+    reason = "the signature Tauri requires of a run-event handler"
+)]
 pub(crate) fn on_run_event(app: &AppHandle, event: RunEvent) {
     match event {
         #[cfg(target_os = "macos")]
@@ -40,14 +44,10 @@ pub(crate) fn on_run_event(app: &AppHandle, event: RunEvent) {
 /// Checkpoints the database WAL and stops the llama-helper sidecar.
 async fn cleanup(app: &AppHandle) {
     match app.try_state::<AppState>() {
-        Some(state) => {
-            if let Err(e) = state.db_manager.cleanup().await {
-                log::error!("Failed to cleanup database: {}", e);
-            }
-        }
+        Some(state) => state.db_manager.cleanup().await,
         None => log::warn!("AppState not available for database cleanup (likely first launch)"),
     }
     if let Err(e) = summary::summary_engine::force_shutdown_sidecar().await {
-        log::error!("Failed to force shutdown sidecar: {}", e);
+        log::error!("Failed to force shutdown sidecar: {e}");
     }
 }

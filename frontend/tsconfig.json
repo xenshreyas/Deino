@@ -1,4 +1,8 @@
 {
+  // The app's TypeScript config, with every PARITY_PLAN §3A flag on. Editors
+  // use it. `pnpm typecheck` runs it through scripts/typecheck.mjs, which
+  // fails on any error outside the legacy paths in legacy-files.mjs, and runs
+  // tsconfig.legacy.json (these flags without the two newest) over everything.
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
@@ -18,7 +22,10 @@
     },
 
     "strict": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": ["src"]
 }

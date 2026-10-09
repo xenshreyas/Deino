@@ -1,12 +1,23 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, render, type RenderResult } from '@testing-library/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createQueryClient } from '@/lib/ipc';
 import { SidebarProvider, useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { parseSummaryContent } from '@/lib/summary-content';
 import type { MeetingSummary, SummaryProcessResponse } from '@/types';
 
 import { useSummaryGeneration } from './useSummaryGeneration';
+
+/** The sidebar reads meetings through TanStack Query, so it needs a client. */
+function WithSidebar({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={useState(createQueryClient)[0]}>
+      <SidebarProvider>{children}</SidebarProvider>
+    </QueryClientProvider>
+  );
+}
 
 const { invoke, notify } = vi.hoisted(() => ({ invoke: vi.fn(), notify: vi.fn() }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
@@ -25,7 +36,7 @@ vi.mock('@tanstack/react-router', () => ({
 let startProcess: () => Promise<{ process_id: string }>;
 let getSummary: (meetingId: string) => Promise<SummaryProcessResponse>;
 invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
-  if (command === 'api_get_meetings') return [];
+  if (command === 'plugin:meetings|list') return [];
   if (command === 'api_get_summary') return getSummary(String(args?.meetingId));
   if (command === 'api_get_meeting_transcripts') {
     return { transcripts: [{ text: 'Meeting transcript', timestamp: '00:00' }], total_count: 1 };
@@ -86,9 +97,9 @@ afterEach(async () => {
 });
 async function show(initialSummary: SummaryProcessResponse | null, meetingId = 'meeting-a') {
   const ui = (
-    <SidebarProvider>
+    <WithSidebar>
       {initialSummary && <Status key={meetingId} initialSummary={initialSummary} meetingId={meetingId} />}
-    </SidebarProvider>
+    </WithSidebar>
   );
   await act(async () => {
     if (view) view.rerender(ui); else view = render(ui);
@@ -134,7 +145,7 @@ describe('summary state restored when returning to a meeting', () => {
       return null;
     }
     await act(async () => {
-      view = render(<SidebarProvider><RejectingConsumer /></SidebarProvider>);
+      view = render(<WithSidebar><RejectingConsumer /></WithSidebar>);
     });
     getSummary = async () => {
       if (failure === 'read') throw new Error('Database unavailable');

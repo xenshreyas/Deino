@@ -1,13 +1,24 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, render, type RenderResult } from '@testing-library/react';
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createQueryClient } from '@/lib/ipc';
 import { SidebarProvider } from '@/components/Sidebar/SidebarProvider';
 import { useMeetingData } from '@/hooks/meeting-details/useMeetingData';
 import { useSummaryGeneration } from '@/hooks/meeting-details/useSummaryGeneration';
 import type { MeetingSummary, SummaryProcessResponse, Transcript } from '@/types';
 
 import { MeetingDetailsScreen } from './meeting-details-screen';
+
+/** The sidebar reads meetings through TanStack Query, so it needs a client. */
+function WithSidebar({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={useState(createQueryClient)[0]}>
+      <SidebarProvider>{children}</SidebarProvider>
+    </QueryClientProvider>
+  );
+}
 
 const { invoke, notify } = vi.hoisted(() => ({ invoke: vi.fn(), notify: vi.fn() }));
 vi.mock('@tauri-apps/api/core', async (importOriginal) => ({
@@ -62,7 +73,7 @@ const transcriptPage = {
 let savedSummary: SummaryProcessResponse;
 invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
   const meetingId = String(args?.meetingId);
-  if (command === 'api_get_meetings') return [];
+  if (command === 'plugin:meetings|list') return [];
   if (command === 'api_get_summary') return { ...savedSummary, meeting_id: meetingId };
   if (command === 'api_get_meeting_metadata') return readMetadata(meetingId);
   if (command === 'api_get_meeting_transcripts') return readTranscripts(meetingId);
@@ -100,7 +111,7 @@ afterEach(async () => {
   globalThis.clearInterval = realClearInterval;
 });
 async function show() {
-  const ui = <SidebarProvider><MeetingDetailsScreen meetingId={selectedMeeting} /></SidebarProvider>;
+  const ui = <WithSidebar><MeetingDetailsScreen meetingId={selectedMeeting} /></WithSidebar>;
   await act(async () => {
     if (view) view.rerender(ui); else view = render(ui);
   });

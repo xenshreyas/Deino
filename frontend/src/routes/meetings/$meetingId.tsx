@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { MeetingDetailsScreen } from '@/features/meeting-details/meeting-details-screen';
+import { MeetingDetailsScreen } from '@/features/meeting-details';
 import { meetingSearchSchema } from '@/features/meeting-details/search';
 
 /** `/meetings/$meetingId`: one meeting's transcript and summary. */

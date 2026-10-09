@@ -21,8 +21,9 @@ interface AppProvidersProps {
  * The app-wide React contexts, in dependency order (outermost first).
  *
  * The order is load-bearing: later providers read earlier ones (for example
- * `SidebarProvider` reads recording state). FND-13 starts replacing these
- * contexts with TanStack Query and small Zustand stores.
+ * `SidebarProvider` reads recording state). Rust data is moving out of these
+ * contexts into TanStack Query (the meetings list already lives in
+ * `@/features/meetings`); the query client itself is provided in `main.tsx`.
  */
 export function AppProviders({ onOpenImportDialog, children }: AppProvidersProps) {
   return (
@@ -35,7 +36,9 @@ export function AppProviders({ onOpenImportDialog, children }: AppProvidersProps
                 <SidebarProvider>
                   <TooltipProvider>
                     <RecordingPostProcessingProvider>
-                      <ImportDialogProvider onOpen={onOpenImportDialog}>{children}</ImportDialogProvider>
+                      <ImportDialogProvider onOpen={onOpenImportDialog}>
+                        {children}
+                      </ImportDialogProvider>
                     </RecordingPostProcessingProvider>
                   </TooltipProvider>
                 </SidebarProvider>

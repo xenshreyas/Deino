@@ -118,10 +118,8 @@ mod tests {
     async fn test_list_system_audio_devices() {
         let devices = list_system_audio_devices_command().await;
         match devices {
-            Ok(device_list) => {
-                println!("System audio devices: {:?}", device_list);
-                assert!(device_list.len() >= 0); // Should at least not crash
-            }
+            // Returning at all is the assertion: listing devices must not panic.
+            Ok(device_list) => println!("System audio devices: {:?}", device_list),
             Err(e) => {
                 println!("Error listing devices: {}", e);
                 // This might fail on CI or systems without audio

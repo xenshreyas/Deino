@@ -25,10 +25,14 @@ export function holdSubscriptions(pending: readonly Promise<UnlistenFn>[]): Unsu
         if (disposed) unlisten();
         else active.push(unlisten);
       })
-      .catch((error: unknown) => console.error('[shell] Tauri event subscription failed', error));
+      .catch((error: unknown) => {
+        console.error('[shell] Tauri event subscription failed', error);
+      });
   }
   return () => {
     disposed = true;
-    active.splice(0).forEach((unlisten) => unlisten());
+    active.splice(0).forEach((unlisten) => {
+      unlisten();
+    });
   };
 }

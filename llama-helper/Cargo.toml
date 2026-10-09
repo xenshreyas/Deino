@@ -2,6 +2,7 @@
 name = "llama-helper"
 version = "0.1.0"
 edition = "2021"
+publish.workspace = true
 
 [dependencies]
 anyhow = "1.0"
@@ -16,7 +17,8 @@ metal = ["llama-cpp-2/metal"]
 cuda = ["llama-cpp-2/cuda"]
 vulkan = ["llama-cpp-2/vulkan"]
 
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = "s"  # Optimize for size for faster loading
+[lints]
+workspace = true
+
+# Release profile settings live in the workspace root
+# (`[profile.release.package.llama-helper]`): Cargo ignores `[profile]` here.

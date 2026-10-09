@@ -1,0 +1,30 @@
+[package]
+name = "deino-db"
+version = "0.1.0"
+description = "Deino's SQLite substrate: pools, migrations and commit-time change signals"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_db.rs"
+
+[features]
+# `test_db()`: an in-memory database with every migration applied.
+test-support = []
+
+[dependencies]
+deino-domain.workspace = true
+log.workspace = true
+serde.workspace = true
+specta.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile = "3.3.0"
+
+[lints]
+workspace = true

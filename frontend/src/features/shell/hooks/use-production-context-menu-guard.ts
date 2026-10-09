@@ -14,6 +14,8 @@ export function useProductionContextMenuGuard(): void {
   useMountEffect(() => {
     if (!import.meta.env.PROD) return undefined;
     document.addEventListener('contextmenu', preventContextMenu);
-    return () => document.removeEventListener('contextmenu', preventContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', preventContextMenu);
+    };
   });
 }

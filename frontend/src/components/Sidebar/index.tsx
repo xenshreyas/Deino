@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight, File, Settings, ChevronLeftCircle, ChevronRightCircle, Calendar, StickyNote, Home, Trash2, Mic, Square, Plus, Search, Pencil, NotebookPen, SearchIcon, X, Upload } from 'lucide-react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useSidebar } from './SidebarProvider';
-import type { CurrentMeeting } from '@/components/Sidebar/SidebarProvider';
 import { ConfirmationModal } from '../ConfirmationModel/confirmation-modal';
 import { ModelConfig } from '@/components/ModelSettingsModal';
 import { SettingTabs } from '../SettingTabs';
@@ -13,6 +12,7 @@ import { toast } from 'sonner';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
 import { useImportDialog } from '@/contexts/ImportDialogContext';
 import { useConfig } from '@/contexts/ConfigContext';
+import { asMeetingId, useRenameMeeting } from '@/features/meetings';
 
 import {
   Dialog,
@@ -49,9 +49,8 @@ const Sidebar: React.FC = () => {
     searchTranscripts,
     searchResults,
     isSearching,
-    meetings,
-    setMeetings,
   } = useSidebar();
+  const renameMeeting = useRenameMeeting();
 
   // Get recording state from RecordingStateContext (single source of truth)
   const { isRecording } = useRecordingState();
@@ -299,8 +298,7 @@ const Sidebar: React.FC = () => {
         meetingId: itemId,
       });
       console.log('Meeting deleted successfully');
-      const updatedMeetings = meetings.filter((m: CurrentMeeting) => m.id !== itemId);
-      setMeetings(updatedMeetings);
+      // The meetings list refreshes itself: the delete commits a DbChanged event.
 
       // Show success toast
       toast.success("Meeting deleted successfully", {
@@ -350,16 +348,8 @@ const Sidebar: React.FC = () => {
     }
 
     try {
-      await invoke('api_save_meeting_title', {
-        meetingId: meetingId,
-        title: newTitle,
-      });
-
-      // Update local state
-      const updatedMeetings = meetings.map((m: CurrentMeeting) =>
-        m.id === meetingId ? { ...m, title: newTitle } : m
-      );
-      setMeetings(updatedMeetings);
+      // Updates the cached meetings list too; no manual refetch needed.
+      await renameMeeting.mutateAsync({ id: asMeetingId(meetingId), title: newTitle });
 
       // Update current meeting if it's the one being edited
       if (currentMeeting?.id === meetingId) {

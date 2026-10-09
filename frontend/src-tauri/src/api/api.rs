@@ -157,40 +157,6 @@ pub struct TranscriptSegment {
 // API Commands for Tauri
 
 #[tauri::command]
-pub async fn api_get_meetings<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    auth_token: Option<String>,
-) -> Result<Vec<Meeting>, String> {
-    log_info!(
-        "api_get_meetings called with auth_token(native) : {}",
-        auth_token.is_some()
-    );
-    let pool = state.db_manager.pool();
-    let meetings: Result<Vec<MeetingModel>, sqlx::Error> =
-        MeetingsRepository::get_meetings(pool).await;
-
-    match meetings {
-        Ok(meeting_models) => {
-            log_info!("Successfully got {} meetings", meeting_models.len());
-
-            let result: Vec<Meeting> = meeting_models
-                .into_iter()
-                .map(|m| Meeting {
-                    id: m.id,
-                    title: m.title,
-                })
-                .collect();
-            Ok(result)
-        }
-        Err(e) => {
-            log_error!("Error getting meetings: {}", e);
-            Err(e.to_string())
-        }
-    }
-}
-
-#[tauri::command]
 pub async fn api_search_transcripts<R: Runtime>(
     _app: AppHandle<R>,
     state: tauri::State<'_, AppState>,
@@ -477,37 +443,6 @@ pub async fn api_delete_meeting<R: Runtime>(
     }
 }
 
-#[tauri::command]
-pub async fn api_get_meeting<R: Runtime>(
-    _app: AppHandle<R>,
-    meeting_id: String,
-    state: tauri::State<'_, AppState>,
-    auth_token: Option<String>,
-) -> Result<MeetingDetails, String> {
-    log_info!(
-        "api_get_meeting called(native) for meeting_id: {}, auth_token: {}",
-        meeting_id,
-        auth_token.is_some()
-    );
-
-    let pool = state.db_manager.pool();
-
-    match MeetingsRepository::get_meeting(pool, &meeting_id).await {
-        Ok(Some(meeting)) => {
-            log_info!("Successfully retrieved meeting {}", meeting_id);
-            Ok(meeting)
-        }
-        Ok(None) => {
-            log_warn!("Meeting not found: {}", meeting_id);
-            Err(format!("Meeting not found: {}", meeting_id))
-        }
-        Err(e) => {
-            log_error!("Error retrieving meeting {}: {}", meeting_id, e);
-            Err(format!("Failed to retrieve meeting: {}", e))
-        }
-    }
-}
-
 /// Get meeting metadata without transcripts (for pagination)
 #[tauri::command]
 pub async fn api_get_meeting_metadata<R: Runtime>(
@@ -592,36 +527,6 @@ pub async fn api_get_meeting_transcripts<R: Runtime>(
         Err(e) => {
             log_error!("Error retrieving transcripts for meeting {}: {}", meeting_id, e);
             Err(format!("Failed to retrieve transcripts: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_save_meeting_title<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    meeting_id: String,
-    title: String,
-    auth_token: Option<String>,
-) -> Result<serde_json::Value, String> {
-    log_info!(
-        "api_save_meeting_title called for meeting_id: {}, auth_token: {}",
-        meeting_id,
-        auth_token.is_some()
-    );
-    let pool = state.db_manager.pool();
-    match MeetingsRepository::update_meeting_title(pool, &meeting_id, &title).await {
-        Ok(true) => {
-            log_info!("Successfully saved meeting title");
-            Ok(serde_json::json!({"message": "Meeting title saved successfully"}))
-        }
-        Ok(false) => {
-            log_error!("No meeting found with id {}", meeting_id);
-            Err(format!("No meeting found with id {}", meeting_id))
-        }
-        Err(e) => {
-            log_error!("Failed to update meeting {}", e);
-            Err(format!("Failed to update meeting: {}", e))
         }
     }
 }

@@ -1,0 +1,20 @@
+# Build settings for every cargo invocation in this workspace (builds, tests,
+# clippy, rust-analyzer), from any directory. This is the only cargo config:
+# a second one under frontend/src-tauri/ would conflict when merged.
+
+# Deino targets macOS 14.2+ (Core Audio process taps).
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-mmacosx-version-min=14.2"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-mmacosx-version-min=14.2"]
+
+[env]
+# Keeps the C and C++ dependencies (whisper.cpp, llama.cpp, ONNX Runtime) from
+# linking symbols newer than macOS 14.2.
+MACOSX_DEPLOYMENT_TARGET = { value = "14.2", force = true }
+CMAKE_OSX_DEPLOYMENT_TARGET = "14.2"
+# The `sqlx::query*!` macros read the committed `.sqlx/` query data instead of
+# a live database. Not forced, so `scripts/sqlx-prepare.sh` can switch it off
+# while it regenerates the data.
+SQLX_OFFLINE = "true"

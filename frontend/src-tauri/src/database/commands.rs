@@ -5,7 +5,6 @@ use log::{error, info};
 use tauri::{AppHandle, Emitter, Manager};
 
 use super::manager::DatabaseManager;
-use crate::state::AppState;
 
 /// Check if this is the first launch (no database exists yet)
 #[tauri::command]
@@ -27,8 +26,8 @@ pub async fn initialize_fresh_database(app: AppHandle) -> Result<(), String> {
             format!("Failed to initialize database: {}", e)
         })?;
 
-    // Update app state with the new manager
-    app.manage(AppState { db_manager: db_manager.clone() });
+    // Wire the new database into the legacy state, the services and the UI bridge.
+    crate::composition::attach_database(&app, db_manager.clone());
 
     // Set default model configuration for fresh installs
     let pool = db_manager.pool();

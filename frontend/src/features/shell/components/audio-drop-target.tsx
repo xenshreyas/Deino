@@ -31,7 +31,9 @@ function handleDrop(paths: readonly string[], onAudioFile: (path: string) => voi
   const outcome = classifyAudioDrop(paths, importEnabled());
   if (outcome.kind === 'audio') onAudioFile(outcome.path);
   if (outcome.kind === 'import-disabled') {
-    toast.error(shellCopy.importDisabledTitle, { description: shellCopy.importDisabledDescription });
+    toast.error(shellCopy.importDisabledTitle, {
+      description: shellCopy.importDisabledDescription,
+    });
   }
   if (outcome.kind === 'unsupported') {
     toast.error(shellCopy.unsupportedDropTitle, {
@@ -51,8 +53,12 @@ export function AudioDropTarget({ onAudioFile }: AudioDropTargetProps) {
 
   useMountEffect(() =>
     holdSubscriptions([
-      listen('tauri://drag-enter', () => setOverlayVisible(importEnabled())),
-      listen('tauri://drag-leave', () => setOverlayVisible(false)),
+      listen('tauri://drag-enter', () => {
+        setOverlayVisible(importEnabled());
+      }),
+      listen('tauri://drag-leave', () => {
+        setOverlayVisible(false);
+      }),
       listen<DragDropPayload>('tauri://drag-drop', (event) => {
         setOverlayVisible(false);
         handleDrop(event.payload.paths, onAudioFile);

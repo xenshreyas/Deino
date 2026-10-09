@@ -199,7 +199,6 @@ impl Default for AudioMetricsBatcher {
 }
 
 /// Macro for batched audio metrics logging
-#[macro_export]
 macro_rules! batch_audio_metric {
     ($batcher:expr, $chunk_id:expr, $sample_count:expr, $duration_ms:expr, $level:expr) => {
         if let Some(batcher) = $batcher {
@@ -214,3 +213,5 @@ macro_rules! batch_audio_metric {
         }
     };
 }
+// A path import, because modules declared through `legacy_modules!` cannot `#[macro_export]`.
+pub(crate) use batch_audio_metric;

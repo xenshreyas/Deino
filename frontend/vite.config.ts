@@ -24,11 +24,7 @@ const tauriDevHost = process.env.TAURI_DEV_HOST;
 const isTauriDebugBuild = Boolean(process.env.TAURI_ENV_DEBUG);
 
 export default defineConfig({
-  plugins: [
-    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
   resolve: {
     // BlockNote needs one ProseMirror instance. No alias or `dedupe` is
     // needed for that: the `pnpm.overrides` in package.json pin every

@@ -1,0 +1,31 @@
+# Local git hooks (https://lefthook.dev). Install once: `brew install lefthook && lefthook install`.
+# Each hook runs the same scripts CI runs; skip one in an emergency with LEFTHOOK=0.
+
+pre-commit:
+  parallel: true
+  commands:
+    rustfmt:
+      glob: "*.rs"
+      run: cargo fmt --all -- --check
+    prettier:
+      root: "frontend/"
+      glob: "*.{ts,tsx,js,mjs,json,css,md}"
+      run: node scripts/format.mjs --check {staged_files}
+    eslint:
+      root: "frontend/"
+      glob: "*.{ts,tsx}"
+      # Warnings are allowed only in legacy-files.mjs paths; errors fail the commit.
+      run: pnpm exec eslint {staged_files}
+
+commit-msg:
+  commands:
+    conventional-commits:
+      # type(scope)!: subject, per https://www.conventionalcommits.org
+      run: >-
+        head -1 {1} | grep -Eq '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9-]+\))?!?: .+'
+        || { echo "commit message must be a Conventional Commit, e.g. 'feat(meetings): rename from the sidebar'"; exit 1; }
+
+pre-push:
+  commands:
+    clippy:
+      run: scripts/clippy.sh
