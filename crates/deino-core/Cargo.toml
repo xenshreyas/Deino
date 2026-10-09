@@ -27,7 +27,7 @@ thiserror.workspace = true
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }
-deino-testkit.workspace = true
+deino-testkit = { workspace = true, features = ["test-support"] }
 serde_json.workspace = true
 tokio.workspace = true
 

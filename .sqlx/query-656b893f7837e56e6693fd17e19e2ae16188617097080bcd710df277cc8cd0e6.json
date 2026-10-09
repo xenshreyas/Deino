@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO transcripts\n                (id, meeting_id, transcript, timestamp, speaker,\n                 audio_start_time, audio_end_time, duration)\n            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "656b893f7837e56e6693fd17e19e2ae16188617097080bcd710df277cc8cd0e6"
+}

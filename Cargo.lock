@@ -1611,10 +1611,17 @@ dependencies = [
 name = "deino-testkit"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "deino-db",
  "deino-domain",
+ "serde",
+ "serde_json",
+ "specta",
  "sqlx",
+ "symphonia",
+ "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
