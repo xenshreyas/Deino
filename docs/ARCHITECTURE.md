@@ -47,6 +47,7 @@ flowchart BT
   core --> domain
   app --> core
   app --> db
+  app -. "debug builds: dev plugin" .-> testkit
   testkit -.-> db
 ```
 
@@ -55,7 +56,7 @@ flowchart BT
 | `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `ChangeNotifier`, `Table`, `test_db()`. |
 | `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `meetings`, and `_example` (debug builds). |
-| `deino-testkit` | `crates/deino-testkit` | Fixtures and re-exported fakes for tests. |
+| `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar. |
 
@@ -70,7 +71,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 |---|---|
 | `lib.rs` | The builder only: plugins, state, setup, run loop. |
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, Tauri event adapters) and `app.manage`s them. |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `db`, and `example` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -91,6 +92,8 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `routes/` | TanStack Router file routes, thin: each renders one feature screen. |
 | `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings`, `_example`, plus `shell`, `record`, `meeting-details`, `settings` from FND-10a. |
 | `lib/ipc/` | `generated/` (tauri-specta output, never edited), `result.ts` (`unwrap`, `IpcError`), `query-client.ts`, `events.ts` (`DbChanged` bridge, `useIpcEvent`), `ipc-query-provider.tsx`. |
+| `dev/mock-ipc/` | `pnpm dev:mock` only (never in a production bundle): one mock per generated module (`<feature>.ts`, `satisfies typeof Generated.commands`), an in-memory `MockDatabase` over the fixture meetings that emits `DbChanged`, and a small, shrinking legacy `invoke` shim (`legacy*.ts`). |
+| `features/developer/` | Settings → Developer (debug builds only, loaded lazily): seed the fixture meetings through the `dev` plugin. |
 | `ui/` | Shared primitives; `icons.ts` is the only icon import (FND-10 moves shadcn here). |
 | `components/`, `contexts/`, `hooks/`, `services/`, `lib/*`, `types/` | Legacy code, listed in `legacy-files.mjs`. |
 
@@ -200,7 +203,8 @@ code does the same). FND-07 adds the core schema of §4.1.
 |---|---|
 | A feature | Copy `crates/deino-core/src/_example*`, `frontend/src-tauri/src/features/_example*` and `frontend/src/features/_example/`; then one line each in `features/manifest.rs`, `lib.rs` (`.plugin`), `capabilities/default.json`, `features::builders()`, and the service in `composition.rs`. |
 | A table | A migration in `crates/deino-db/migrations/` (`<UTC timestamp>_<card>_<desc>.sql`), a `Table` variant in `crates/deino-db/src/table.rs`, then `scripts/sqlx-prepare.sh` and the bindings test. |
-| A command | The function in `features/<feature>/commands.rs` and its `collect_commands!`, the manifest line, the bindings test. |
+| A command | The function in `features/<feature>/commands.rs` and its `collect_commands!`, the manifest line, the bindings test, and its mock in `frontend/src/dev/mock-ipc/<feature>.ts` (typecheck fails until the mock matches). |
+| A fixture scenario | A file in `fixtures/meetings/` (see `fixtures/README.md`); a new table group gets a `SeedTarget` in `FixtureSeeder::targets()`. |
 | A typed event | A `#[derive(tauri_specta::Event)]` type in `features/<feature>/events.rs`, `collect_events!`, an event port in the core service if the core raises it. |
 | A query | `features/<feature>/queries.ts` with `meta: { tables: [...] }`. |
 | A pipeline stage | FND-08: one line in `crates/deino-pipeline/src/registry.rs`. |
@@ -215,5 +219,6 @@ One command each, run locally and in CI (FND-03): `scripts/clippy.sh`,
 `cargo fmt --check`, `cargo test --workspace` (or `cargo nextest run
 --workspace`), `scripts/check-rust-file-size.sh`, `scripts/sqlx-prepare.sh
 --check`, `cargo deny check`, and in `frontend/`: `pnpm typecheck`,
-`pnpm lint`, `pnpm test`, `pnpm format:check`, `pnpm build`. See
+`pnpm lint`, `pnpm test`, `pnpm format:check`, `pnpm build`, and the
+Playwright smoke tests `pnpm test:e2e` over `pnpm dev:mock`. See
 [`TESTING.md`](TESTING.md) and [`REVIEW.md`](REVIEW.md).

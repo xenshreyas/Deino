@@ -2030,6 +2030,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-02 Cleanup, English-only, inline plugins | ✅ merged | 2026-10-08 |
 | FND-10a Vite migration | ✅ merged | 2026-10-08 |
 | FND-13 Code-quality baseline and workspace skeleton | ✅ merged | 2026-10-09 |
+| FND-04 Test fixtures and mocked-IPC dev mode | ☑️ done on branch `feat/FND-04-fixtures-mock-ipc` | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | 🔄 running | |
 | Spike: diarization bake-off | 🔄 running | |
@@ -2056,8 +2057,16 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-13 | The app crate is still edition 2021 (the new crates are 2024). Migrate it with `cargo fix --edition` once enough legacy code is ported. | Any later card, as its own PR |
 | FND-13 | `rustfmt` cannot see modules declared through `legacy_modules!`, so legacy files are not format-checked; each card formats the files it ports out of the list. | Every card that ports legacy code |
 | FND-13 | `api_delete_meeting` and the meeting page's metadata and transcript commands are still legacy; port them into the `meetings` plugin. | ORG-07 / TRN-01 |
-| FND-13 | `_example` has no dev route; add it to FND-10's dev-only `/design` page so the template can be clicked through in `pnpm dev:mock`. | FND-10 / FND-04 |
+| FND-13 | `_example` has no dev route; add it to FND-10's dev-only `/design` page so the template can be clicked through in `pnpm dev:mock`. FND-04 added its mock (`src/dev/mock-ipc/example.ts`), so only the route is left. | FND-10 |
 | FND-13 | Wire `createRootRouteWithContext({ queryClient })` so route loaders can `ensureQueryData`. | FND-10 |
+| FND-04 | Seed the core schema: add a `SeedTarget` (in `deino_testkit::FixtureSeeder::targets()`) per FND-07 table group: people + companies + `meeting_attendees`, `speakers` + `transcript_segments` (channel, `words_json`), `calendar_events`; and the same rows to the frontend `MockDatabase`. Promote the fixture vocabulary FND-07 also needs (`Channel`, `Millis`, `Email`, attendee role/RSVP) into `deino-domain` and make `crates/deino-testkit/src/fixture/vocab.rs` reuse it. | FND-07 |
+| FND-04 | `MockAudioSource` (`deino-audio`, `test-support`): play a fixture's `mic`/`system` tracks through the `AudioSource` trait from `deino_testkit::fixture::PcmTrack::frames` (16 kHz mono; symphonia ignores the ~44 ms AAC priming), selected in `composition.rs` by `DEINO_MOCK_AUDIO=<fixture id>` in debug builds (anarlog `crates/audio-mock`). The expected transcript is the fixture's segments that end by `audio.clipEndMs`. | FND-05 |
+| FND-04 | Seed `userNotes` into `meeting_notes` once the notepad reads it, and serve it from the notes mock. | NOT-01 |
+| FND-04 | The meeting page's legacy commands (`api_get_meeting_metadata`, `api_get_meeting_transcripts`, `api_get_summary`) are answered by the dev:mock legacy shim (`src/dev/mock-ipc/legacy-meetings.ts`); move them into the typed `meetings` mock when the commands are ported, and delete the shim entries. | ORG-07 / TRN-01 |
+| FND-04 | Run `pnpm test:e2e` (Playwright, installed Chrome, macOS runner) and upload `frontend/test-results/` screenshots in CI. | FND-03 |
+| FND-04 | The sidebar starts collapsed, so Home shows no meeting list until "Expand sidebar" (the smoke tests click it; FND-04 gave the button that accessible name). | FND-10 |
+| FND-04 | dev:mock always reports onboarding as completed; add a way (a search param or a dev toggle) to exercise the onboarding flow on mock data. | FND-11 |
+| FND-04 | AI evals: score notes, action items, insights and chat against each fixture's `groundTruth` (decisions, action items with owner and due date, facts with evidence quotes). | NOT-02 / AI-05 / AI-06 / AI-02 |
 | FND-13 | The real-app UI click-through of the sidebar rename was not completed (the background UI session was interrupted); the IPC path is covered by contract tests and the app was verified to start and migrate an existing database. | FND-03 / next card touching the sidebar |
 
 **Critical path to "Granola-equivalent daily driver":**
