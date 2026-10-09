@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT centroid, embedding_model, speech_ms AS \"speech_ms: Millis\"\n        FROM speakers WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "centroid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "embedding_model",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "speech_ms: Millis",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c25f448b2d4fcf9dff6fad881699d06cbbddb58ff50d7fbd8621113c9bcfb3db"
+}

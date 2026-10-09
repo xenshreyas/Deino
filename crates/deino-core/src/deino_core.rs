@@ -15,6 +15,9 @@
 //! [`settings`] holds every user preference; [`summaries`] generates the
 //! legacy template summaries through the LLM gateway (`deino-llm`).
 //!
+//! [`diarization`] holds the `diarize` stage's rules (CAP-03) over an engine
+//! port that `deino-diarize` implements.
+//!
 //! FND-07 added one module per aggregate of the core schema, each with its
 //! ports, a SQLite repository and a fake, so feature cards add services and
 //! commands on top: [`segments`] (transcript and speakers), [`people`]
@@ -27,6 +30,7 @@ pub mod _example;
 pub mod action_items;
 pub mod calendar;
 pub mod companies;
+pub mod diarization;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;

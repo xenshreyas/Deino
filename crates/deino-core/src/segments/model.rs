@@ -99,6 +99,55 @@ pub struct Speaker {
     pub color: PaletteColor,
 }
 
+/// The voice a diarized speaker was clustered from (CAP-03), for voiceprint
+/// matching (CAP-04). Never sent to the UI.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpeakerVoice {
+    /// The mean speaker embedding, L2-normalised.
+    pub centroid: Vec<f32>,
+    /// The model that produced it; vectors of different models never meet.
+    pub embedding_model: String,
+    /// Total length of the speaker's turns.
+    pub speech: Millis,
+}
+
+/// A speaker to store, with the voice diarization found for it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NewSpeaker {
+    /// The speaker row.
+    pub speaker: Speaker,
+    /// Its voice, when diarization produced it.
+    pub voice: Option<SpeakerVoice>,
+}
+
+/// One stretch of a segment after attribution: who said it, when, what.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SegmentPiece {
+    /// Who said it.
+    pub speaker_id: Option<SpeakerId>,
+    /// Start, from the start of the recording.
+    pub start: Millis,
+    /// End; never before `start`.
+    pub end: Millis,
+    /// What was said in this stretch.
+    pub text: String,
+    /// The stretch's word timings.
+    pub words: Vec<WordTiming>,
+}
+
+/// A segment re-attributed to speakers. The first piece keeps the segment's
+/// ID (and anything that points at it); each further piece becomes a new
+/// segment on the same meeting and channel, with the ID beside it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Reattribution {
+    /// The segment.
+    pub id: SegmentId,
+    /// Its first (often only) piece.
+    pub head: SegmentPiece,
+    /// The pieces split off after a speaker change, in time order.
+    pub tail: Vec<(SegmentId, SegmentPiece)>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

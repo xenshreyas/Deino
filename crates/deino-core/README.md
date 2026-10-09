@@ -32,7 +32,10 @@ the SQLite adapters behind those ports.
 - The core-schema aggregates (FND-07), each with small ports, a SQLite
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:
-  - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
+  - `diarization` (CAP-03): `DiarizeService` (the `diarize` stage's rules)
+  over the `TrackDiarizer` engine port, `plan_channels` and `attribute`
+  (pure), `FakeTrackDiarizer`. The engine lives in `deino-diarize`.
+- `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
     batch) and `SpeakerRepo`;
   - `people`: `PersonRepo` and `AttendeeRepo`;
   - `companies`: `CompanyRepo`;

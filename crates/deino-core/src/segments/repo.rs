@@ -14,7 +14,7 @@ use deino_domain::{Channel, MeetingId, Millis, SegmentId, SpeakerId};
 use sqlx::SqliteConnection;
 use sqlx::types::Json;
 
-use super::{NewSegment, Page, Segment, WordTiming};
+use super::{NewSegment, Page, Reattribution, Segment, WordTiming, voices};
 
 /// Reads a meeting's transcript.
 #[async_trait]
@@ -55,6 +55,12 @@ pub trait SegmentWriter: Send + Sync {
         id: &SegmentId,
         speaker: Option<&SpeakerId>,
     ) -> Result<bool, DbError>;
+
+    /// Re-attributes segments to speakers in one transaction (CAP-03): each
+    /// segment becomes its head piece and gains its tail pieces as new
+    /// segments on its meeting and channel. `edited_at` and `is_deleted`
+    /// are left alone. A change to a missing segment is a no-op.
+    async fn reattribute(&self, changes: &[Reattribution]) -> Result<(), DbError>;
 }
 
 /// [`SegmentReader`], [`SegmentWriter`] and [`SpeakerRepo`](super::SpeakerRepo)
@@ -165,6 +171,10 @@ impl SegmentWriter for SqliteSegmentRepo {
         .execute(self.database.writer())
         .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    async fn reattribute(&self, changes: &[Reattribution]) -> Result<(), DbError> {
+        voices::reattribute(&self.database, changes).await
     }
 }
 
