@@ -12,6 +12,13 @@ the SQLite adapters behind those ports.
   `MeetingLifecycleRepo` (create, timing, audio paths, calendar link,
   template); `MeetingTrashRepo` (trash, restore, delete). One
   `SqliteMeetingRepo` and one `FakeMeetingRepo` implement all three ports.
+- `settings`: the typed, versioned `Settings` document and its sections;
+  `SettingsService` (get, merge-patch, typed update, change events);
+  `SettingsPatch` (RFC 7396, validated back into `Settings`);
+  `JsonFileSettingsStore` (atomic `settings.json`); and `legacy`, the
+  one-time importers of the pre-FND-06 stores (`LegacySqliteImport`, a
+  `deino_db::DataMigration`, and `LegacyFileImport`). Fakes:
+  `FakeSettingsStore`, `RecordedSettingsEvents`.
 - The core-schema aggregates (FND-07), each with small ports, a SQLite
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:
@@ -53,4 +60,6 @@ Each feature is `<feature>.rs` plus `<feature>/`:
 - Each port method is one unit of work; multi-statement writes run in one
   transaction on the writer.
 - Time comes from `Clock`; logs carry IDs and counts, never content.
+- Settings never hold a secret; keys go through `deino-secrets`. A settings
+  file from an older build always loads (every section is `#[serde(default)]`).
 - Fakes honour their port's whole contract, ordering included.

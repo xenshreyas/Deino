@@ -2056,6 +2056,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-13 Code-quality baseline and workspace skeleton | ✅ merged | 2026-10-09 |
 | FND-04 Test fixtures and mocked-IPC dev mode | ☑️ done on branch `feat/FND-04-fixtures-mock-ipc` | |
 | FND-07 Core schema | ☑️ done on branch `feat/FND-07-core-schema` | |
+| FND-06 Typed settings store and Keychain secrets | ☑️ done on branch `feat/FND-06-settings-secrets` | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | 🔄 running | |
@@ -2077,7 +2078,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-10a | The sidebar has no `shrink-0` and squeezes at narrow widths. | FND-10 |
 | FND-10a | `tauri build` codesign fails in worktrees under `~/Documents` (file attributes). Run `xattr -cr` on the bundle in the release script. | FND-03 |
 | FND-10a | Tailwind v4 default palette replaced the v3 hex values (slightly different greys). Superseded by the token restyle. | FND-10 |
-| FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. | FND-06 (FND-13 added `composition.rs`; the statics belong to the STT and summary code that FND-06/CAP-01/FND-09 rewrite) |
+| FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. FND-06 resolves every folder once in `AppPaths` (`paths.rs`) and injects them; the `MODELS_DIR` and template-dir statics remain because the global STT engines and the template loader still read them. Remove them when those modules take the paths as constructor arguments. | CAP-01 (STT engines) / NOT-04 (templates) |
 | FND-13 | `cargo deny check advisories` fails on inherited dependencies (unmaintained `atty`, `paste`, `proc-macro-error`, `rustls-pemfile`, `unic-*`; RUSTSEC findings in `h2`, `rustls`, `quick-xml`, `crossbeam-epoch`, `ringbuf`, an html5ever parser). Licences, bans and sources pass. Triage, upgrade or document each before CI gates on advisories. | FND-03 |
 | FND-13 | The app crate is still edition 2021 (the new crates are 2024). Migrate it with `cargo fix --edition` once enough legacy code is ported. | Any later card, as its own PR |
 | FND-13 | `rustfmt` cannot see modules declared through `legacy_modules!`, so legacy files are not format-checked; each card formats the files it ports out of the list. | Every card that ports legacy code |
@@ -2101,6 +2102,13 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-04 | The sidebar starts collapsed, so Home shows no meeting list until "Expand sidebar" (the smoke tests click it; FND-04 gave the button that accessible name). | FND-10 |
 | FND-04 | dev:mock always reports onboarding as completed; add a way (a search param or a dev toggle) to exercise the onboarding flow on mock data. | FND-11 |
 | FND-04 | AI evals: score notes, action items, insights and chat against each fixture's `groundTruth` (decisions, action items with owner and due date, facts with evidence quotes). | NOT-02 / AI-05 / AI-06 / AI-02 |
+| FND-06 | The `CredentialSource` port of the LLM gateway reads keys through `deino_secrets::SecretStore::get` (`Arc<dyn SecretStore>` is in Tauri state); delete `summary/credentials.rs` and the stored-key fallbacks in the `openai`/`anthropic`/`groq` model-list commands and `api_test_custom_openai_connection` when the gateway replaces them. | FND-09 |
+| FND-06 | The STT code still reads the engine through the string-typed bridge `api::current_transcript_config` (`"parakeet"`/`"localWhisper"`); read `Settings::transcription` (`TranscriptionEngine`) directly. | CAP-01 |
+| FND-06 | `ModelSettingsModal.tsx` (1.3k lines), `ConfigContext` and the other settings screens are still legacy files that now read the typed settings; rebuild them as `features/settings/` components on the design tokens, with the theme switch (`Settings::ui.theme`, already stored) wired to the app shell. | FND-10 |
+| FND-06 | The onboarding commands (`onboarding.rs`) keep their legacy snake_case shape over `Settings::onboarding`; replace them with a typed onboarding plugin. | FND-11 |
+| FND-06 | `Settings::privacy` and `Settings::profile` are empty placeholder sections. | PRV-01 / NOT-05 |
+| FND-06 | Transient UI state still uses localStorage (`downloading-models`, `transcription_progress`); move it into Rust-owned state when the model manager and import cards are ported. | CAP-01 / CAP-11 |
+| FND-06 | A crash between the first launch's legacy import and the first clean shutdown leaves the dropped keys' zeroed pages in the WAL until the next checkpoint (the import itself checkpoints right after it runs). Consider a `wal_checkpoint(TRUNCATE)` on every open. | FND-05 / FND-07 |
 | FND-13 | The real-app UI click-through of the sidebar rename was not completed (the background UI session was interrupted); the IPC path is covered by contract tests and the app was verified to start and migrate an existing database. | FND-03 / next card touching the sidebar |
 
 **Critical path to "Granola-equivalent daily driver":**
