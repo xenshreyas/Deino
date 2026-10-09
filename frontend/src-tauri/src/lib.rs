@@ -3,7 +3,8 @@
 //! This file only assembles the app: module declarations, Tauri plugins,
 //! managed state, the setup hook, window/run-loop handlers and command
 //! registration. Startup steps live in [`setup`], event handlers in
-//! [`lifecycle`] and legacy commands in [`legacy`] (PARITY_PLAN §4.0).
+//! [`lifecycle`], legacy commands in [`legacy`], and new IPC in one inline
+//! plugin per feature under [`features`] (PARITY_PLAN §4.0, ADR 0002).
 
 // Declared first so `perf_debug!`/`perf_trace!` are in scope in every module.
 #[macro_use]
@@ -15,6 +16,7 @@ pub mod audio;
 pub mod config;
 pub mod console_utils;
 pub mod database;
+pub mod features;
 pub mod groq;
 mod legacy;
 mod lifecycle;
@@ -44,6 +46,8 @@ pub fn run() {
 
     let builder = register_platform_plugins(Builder::default());
     state::manage_initial_state(builder)
+        // ── Feature plugins: one line per entry in features/manifest.rs ──
+        .plugin(features::system::init())
         .setup(setup::run)
         .on_window_event(lifecycle::on_window_event)
         .invoke_handler(legacy::invoke_handler())
