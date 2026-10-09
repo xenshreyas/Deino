@@ -3,7 +3,7 @@
 //! - **Model.** A [`Template`] is [`TemplateContent`] (name, description,
 //!   meeting context, ordered [`TemplateSection`]s with a `SectionFormat`,
 //!   and [`AutoRule`]s) plus its ID and whether it is built-in. Stored in
-//!   `templates` and `template_sections` (ADR 0018).
+//!   `templates` and `template_sections` (ADR 0021).
 //! - **Built-ins.** [`CATALOG`] holds 30 versioned, immutable templates;
 //!   [`BuiltinSync`] writes them at startup without touching the user's own.
 //! - **Library.** [`TemplateService`]: list, create, edit, duplicate, delete,

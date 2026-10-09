@@ -1,4 +1,4 @@
--- NOT-04: note templates move from JSON files into the database (ADR 0016).
+-- NOT-04: note templates move from JSON files into the database (ADR 0021).
 --
 -- A template is a row in `templates` plus its ordered `template_sections`.
 -- Built-ins carry the catalogue version they were last written from

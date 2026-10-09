@@ -37,7 +37,8 @@ the SQLite adapters behind those ports.
   (pure), `FakeTrackDiarizer`. The engine lives in `deino-diarize`.
 - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
     batch) and `SpeakerRepo`;
-  - `people`: `PersonRepo` and `AttendeeRepo`;
+  - `people`: `PersonRepo`, `AttendeeRepo` and `MeRepo` (the one person
+    who is the user, moved in one transaction);
   - `companies`: `CompanyRepo`;
   - `calendar`: `CalendarAccountRepo` and `CalendarEventRepo` (upsert by
     provider ID);
@@ -52,6 +53,21 @@ the SQLite adapters behind those ports.
   and the resumable, verified download over the `ByteSource` port.
   `FakeByteSource` and `RecordedModelEvents` are behind `test-support`. It
   never touches `deino-stt`: the engine only receives a verified path.
+- `templates` (NOT-04, ADR 0021): `Template` / `TemplateContent` (sections,
+  `SectionFormat`, typed `AutoRule`s), validated on the way in; the
+  30-template `CATALOG` and `BuiltinSync` (versioned seeding that never
+  touches user templates); `TemplateService` (library, duplicate,
+  import/export, the legacy-folder import, the legacy summary's
+  instructions); `MeetingTemplateService` (a meeting's template and its
+  `ChoiceReason`, choosing one, previews) over the pure `RuleEngine` and the
+  `TemplateClassifier` port (`GatewayTemplateClassifier` on route `tagging`,
+  `NoClassifier`); `SqliteTemplateRepo` (`TemplateRepo`, `BuiltinStore`,
+  `MeetingFactsReader`). Fakes: `FakeTemplateRepo`, `FakeMeetingFacts`,
+  `FixedClassifier`.
+- `profile` (NOT-05): `ProfileService` (normalises a `ProfileInput` into
+  `settings.profile`, keeps the "Me" person in step), `render_profile_context`
+  and `ProfileContext` (the gateway's `SystemContext`), `InternalDomains`
+  (internal vs external by email domain, personal mail providers excluded).
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 
@@ -80,6 +96,9 @@ Each feature is `<feature>.rs` plus `<feature>/`:
 - Each port method is one unit of work; multi-statement writes run in one
   transaction on the writer.
 - Time comes from `Clock`; logs carry IDs and counts, never content.
+- Built-in templates are written only by `BuiltinSync`; user templates
+  (`builtin_version IS NULL`) only by `TemplateService`. At most one person
+  is the user.
 - Settings never hold a secret; keys go through `deino-secrets`. A settings
   file from an older build always loads (every section is `#[serde(default)]`).
 - Fakes honour their port's whole contract, ordering included.

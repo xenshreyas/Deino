@@ -23,6 +23,9 @@ and model, streams the answer, and meters the call into `llm_calls`.
 - `CompletionEvent` (`Text | ToolUse | Usage | Stop`), `Completion`,
   `LlmError` with `retry_after` and `is_retryable`.
 - The SSE parser (`sse.rs`) every HTTP provider shares, with a property test.
+- `SystemContext` (`context.rs`): standing context the gateway puts in front
+  of every system prompt (`Gateway::with_system_context`; the app wires the
+  user's profile, NOT-05).
 - Ports: `HttpTransport`, `CredentialSource`, `EndpointSource`,
   `RouteStore`, `LocalModels`, `UsageRecorder`, `ModelCatalog`, `LlmCallRepo`
   (`SqliteLlmCallRepo` writes `llm_calls`).

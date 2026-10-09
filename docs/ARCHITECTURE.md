@@ -14,7 +14,8 @@ its legacy `transcripts` view (0012), typed settings with Keychain secrets
 and app shell (0015), speech-to-text in supervised transcribe-cpp worker
 processes (0016), the LLM gateway with task routes (0017), and the
 post-meeting pipeline's stage model (0018), the network egress policy
-(0019) and local speaker diarization (0020).
+(0019), local speaker diarization (0020) and note templates in the database
+with a versioned built-in catalogue (0021).
 
 ## 1. Processes
 
@@ -28,7 +29,7 @@ flowchart LR
   Core -- "stdin/stdout JSON lines:<br/>stream, grammar, embed" --> Llama["llama-helper sidecar<br/>(built-in local LLM)"]
   Core -- "framed stdin/stdout, one per lane + batch" --> Workers["STT workers<br/>(deino --transcribe-worker,<br/>transcribe-cpp + Metal)"]
   Core -- "spawn per job" --> FFmpeg["ffmpeg sidecar<br/>(removed by FND-05, D11)"]
-  Core --> Files[("app data dir<br/>deino.sqlite, settings.json, models/, templates/<br/>~/Movies/Deino/&lt;meeting&gt;/audio.mp4")]
+  Core --> Files[("app data dir<br/>deino.sqlite, settings.json, models/<br/>~/Movies/Deino/&lt;meeting&gt;/audio.mp4")]
   Core --> Keychain[("macOS Keychain<br/>API keys (service = bundle id)")]
   Core -. "deino-net only: scoped per service, logged" .-> LLM["LLM provider APIs,<br/>model hosts, integrations"]
 ```
@@ -99,9 +100,9 @@ flowchart BT
 | `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), the closed sets the schema stores (`MeetingStatus` with its transitions, `Channel`, `AttendeeRole`, `Rsvp`, ...), `Millis`/`Seconds`, `Email`, `PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `DataMigration` (Rust steps between two schema migrations), `ChangeNotifier`, `Table`, `test_db()`. |
 | `deino-secrets` | `crates/deino-secrets` | `SecretStore` (set, status, delete, and `get` for Rust only), `KeychainSecretStore` over `keyring`, `InMemorySecretStore` (feature `test-support`). |
-| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). |
+| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). `templates` (NOT-04, ADR 0021): the template model, the 30-template versioned `CATALOG` and `BuiltinSync`, the library (`TemplateService`), per-meeting selection and previews (`MeetingTemplateService` over the pure `RuleEngine` and the `TemplateClassifier` port, with `GatewayTemplateClassifier` on route `tagging`), JSON import/export and the one-time legacy-folder import. `profile` (NOT-05): `ProfileService` (saves Settings → Profile, keeps the `people.is_me` person in step through `MeRepo`), `render_profile_context` and `ProfileContext` (the gateway's system context), and `InternalDomains` (internal vs external by email domain). Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). |
 | `deino-stt` | `crates/deino-stt` | Speech-to-text (CAP-01): the worker process and its protocol, `EngineSupervisor` (deadlines, GPU→CPU fallback, kill-to-cancel), `LiveSession` (continuous feeds, segments, batch fallback, rotation), `EnginePool` (a worker per lane), `StreamPerf`, the benchmark. Depends on no HTTP client. |
-| `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
+| `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, the `SystemContext` port that puts the user's profile in front of every system prompt, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
 | `deino-net` | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `NetClient` (send, body, JSON and SSE helpers), `ReqwestNetClient`, the `ServiceId` host registry, `Net::scoped` → `ScopedClient` (host checks, redirects hop by hop, the `ServicePolicy` port, offline mode), the egress log (ring, persister, `SqliteEgressLog`), `HttpDownloader` (resume, size cap, stall timeout, SHA-256), `NetworkControls`. `deino-audio` and `deino-stt` never depend on it (`scripts/check-dependency-rules.sh`). |
 | `deino-diarize` | `crates/deino-diarize` | Local speaker diarization (CAP-03, ADR 0020), ported from anarlog: `Diarizer` (batched pyannote segmentation on the CPU, WeSpeaker ResNet34-LM embeddings on Core ML, centroid-linkage clustering under calendar bounds), `policy` (parameters by meeting length), `prune` (phantom speakers), `models` (pinned files downloaded through `deino-core`'s verified downloader), `track::OnnxTrackDiarizer` (the core's `TrackDiarizer` port), `voiceprint` (CAP-04), `online` (live clustering for CAP-02), DER `metrics` and the `diarize-bench` harness. No `tauri`, no `deino-net`. |
 | `knf-rs` | `crates/third_party/knf-rs` | Vendored knf-rs 0.3.2 (MIT) over kaldi-native-fbank 1.20.1 (Apache-2.0): the filterbank features the speaker-embedding model reads, built with `cc`. |
@@ -122,9 +123,9 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 |---|---|
 | `lib.rs` | The builder only: plugins, state, setup, run loop. |
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri event adapters) and `app.manage`s them. `attach_settings` runs first at startup, then `attach_network` (the one `deino_net::Net` and its policy over the settings, `composition/network.rs`); `attach_database` once `deino.sqlite` is open, which also starts persisting the egress log. |
-| `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, templates). |
+| `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, the pre-NOT-04 templates folder to import). |
 | `llm.rs`, `llm/` | The gateway's wiring: builds `Gateway`, `LlmAdmin` and `SummaryGenerator` over the app's adapters: `NetTransport` (`llm/http.rs`: one `deino-net` scoped client per provider) and `SidecarLocalModels` (`llm/local.rs`, the built-in models over llama-helper). |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `templates`, `profile`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -135,7 +136,8 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity, the live lane), the live lane fed by the pipeline (`live.rs`, 48→16 kHz once), its event sink, the batch `TranscriptionProvider`, `NetByteSource` (the model `ByteSource` over `deino-net`'s model-download client), the worker entry and the `--transcribe-file` benchmark. |
 | `features/transcription*` | The `transcription` plugin: model list, download, cancel, delete; events `LiveTranscript`, `ModelChanged`, `ModelDownloadProgress`. |
 | `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. Their downloads, and the built-in model's, take a `deino-net` client per call (`composition::model_downloads`); no engine holds one. |
-| `summary/` | The legacy summary commands and `summary_processes` lifecycle (`service.rs`, generation through `deino_core::summaries`), templates, and the built-in model manager and sidecar process (`summary_engine/`). |
+| `summary/` | The legacy summary commands and `summary_processes` lifecycle (`service.rs`, generation through `deino_core::summaries`, templates from the database through `features/templates/summary_bridge.rs`), and the built-in model manager and sidecar process (`summary_engine/`). |
+| `features/templates*`, `features/profile*` | The `templates` plugin (library, import/export, preview, a meeting's template and its reason) and the `profile` plugin (save the profile, read the AI context); `composition/notes.rs` builds both services and, at startup, syncs the built-in catalogue, imports the legacy templates folder and makes sure the "Me" person exists. |
 | `notifications/`, `tray.rs`, `onboarding.rs`, `updater/` | OS integration. Notification switches and onboarding progress are sections of the typed settings. |
 
 ## 4. Frontend (`frontend/src`)
@@ -145,7 +147,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `main.tsx` | Applies the saved theme, creates the query client and the router (`router.tsx`, which passes `{ queryClient }` to every route's context for loaders) and mounts them. |
 | `routes/` | TanStack Router file routes, thin: each renders one feature screen. `/design` (dev builds only) shows every token and primitive in both themes. |
 | `styles/` | `tokens.css` (the `ui.md` §2 design tokens for light and dark, mapped to Tailwind utilities with `@theme inline`; ADR 0015), `globals.css` (base layer), `blocknote.css` (the summary editor's bridge to the tokens). |
-| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `pipeline` (the processing-status strip in the meeting header: stage statuses, retry, `PipelineProgress` refresh), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `network` (Settings → Privacy → Network: offline mode, services, the egress log), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `record`, `developer`, `design-system` (dev only), `_example`. |
+| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `pipeline` (the processing-status strip in the meeting header: stage statuses, retry, `PipelineProgress` refresh), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `network` (Settings → Privacy → Network: offline mode, services, the egress log), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `templates` (Settings → Templates: library, editor with reorderable sections, auto rules and a prompt preview; the Notes tab's template picker with its reason and regenerate prompt; the notepad's `/template` TipTap suggestion), `profile` (Settings → Profile and the "What the AI sees" preview), `record`, `developer`, `design-system` (dev only), `_example`. |
 | `lib/ipc/` | `generated/` (tauri-specta output, never edited), `result.ts` (`unwrap`, `IpcError`), `query-client.ts`, `events.ts` (`DbChanged` bridge, `useIpcEvent`), `ipc-query-provider.tsx`. |
 | `dev/mock-ipc/` | `pnpm dev:mock` only (never in a production bundle): one mock per generated module (`<feature>.ts`, `satisfies typeof Generated.commands`), an in-memory `MockDatabase` over the fixture meetings that emits `DbChanged`, and a small, shrinking legacy `invoke` shim (`legacy*.ts`). |
 | `features/developer/` | Settings → Developer (debug builds only, loaded lazily): seed the fixture meetings through the `dev` plugin. |
@@ -245,6 +247,22 @@ sequenceDiagram
 The legacy summaries (`api_process_transcript`) pin the provider and model
 chosen in their UI on the `notes.enhance` route; Settings → AI tests any
 route and streams the reply over a per-request `Channel<LlmStreamEvent>`.
+Before every call the gateway asks its `SystemContext` (the app wires
+`ProfileContext`, NOT-05) and puts the user's profile in front of the system
+prompt, so every route writes for this user.
+
+### A meeting's template (NOT-04, ADR 0021)
+
+The Notes tab asks `plugin:templates|meeting_template`. `MeetingTemplateService`
+reads the meeting's facts (title, attendees' emails, calendar description)
+and every template, then takes the first that applies: the template chosen
+for the meeting; the most specific matching auto rule (`RuleEngine`, with
+internal/external from the profile's email domains); the default template in
+Settings; only in the post-meeting pipeline (`auto_choice`) and only when the
+default is "Auto", the LLM classifier on `tagging`; else General. The answer
+carries a `ChoiceReason` the picker shows. The `legacy_summary` stage uses
+`auto_choice` for meetings without a chosen template, and the legacy summary
+reads the template's instructions and skeleton from the database.
 
 ### Settings and secrets (FND-06)
 
@@ -370,6 +388,8 @@ erDiagram
   meetings |o--o{ action_items : yields
   people |o--o{ action_items : "assigned"
   transcript_segments |o--o{ action_items : "evidence"
+  templates |o--o{ meetings : "used by"
+  templates ||--o{ template_sections : has
   meetings ||--o| summary_processes : has
   meetings ||--o| transcript_chunks : has
   meetings ||--o| meeting_notes : has
@@ -385,7 +405,7 @@ erDiagram
     INTEGER duration_s "denormalised: audio length"
     TEXT calendar_event_id FK
     TEXT series_id
-    TEXT template_id "NOT-04 makes it a reference"
+    TEXT template_id FK "SET NULL: back to automatic"
     TEXT deleted_at "trash"
     TEXT audio_path "and mic, system, video paths"
     TEXT created_at
@@ -468,6 +488,21 @@ erDiagram
     TEXT due_at
     TEXT source_segment_id FK
   }
+  templates {
+    TEXT id PK "slug (built-in) or UUIDv7"
+    TEXT name
+    TEXT description
+    TEXT meeting_context
+    TEXT auto_rules_json "Vec<AutoRule>"
+    INTEGER builtin_version "NULL for the user's"
+  }
+  template_sections {
+    TEXT template_id PK
+    INTEGER position PK
+    TEXT title
+    TEXT instructions
+    TEXT format "bullets|paragraph|table|todo"
+  }
 ```
 
 The core schema is FND-07's one migration (`20261009060435_fnd07_core_schema.sql`):
@@ -506,6 +541,11 @@ tables are omitted from the diagram's attributes.
   `bytes_down`. There is no column for a URL, query, header or body, and a
   `CHECK` refuses a host with `/` or `?`. The INTEGER rowid orders it;
   `SqliteEgressLog::append` keeps the newest 10,000 rows.
+- **Templates** (NOT-04, ADR 0021): `templates` (built-ins carry the
+  catalogue `builtin_version` they were written from; the user's have NULL)
+  and their ordered `template_sections` (`PRIMARY KEY (template_id,
+  position)`). Auto rules are a typed JSON column, evaluated in Rust only.
+  `meetings.template_id` references `templates` with `ON DELETE SET NULL`.
 - **Settings are not tables:** FND-06 dropped the single-row `settings` and
   `transcript_settings` tables (migration `20261009061225`); settings live in
   `settings.json` and API keys in the Keychain (ADR 0013).
@@ -545,6 +585,7 @@ tables are omitted from the diagram's attributes.
 | A transcription engine family | A `deino_stt::engine::Engine` implementation served by `worker::run` (transcribe-cpp covers Parakeet and Whisper GGUF/`.bin`). |
 | A pipeline stage | A `PipelineStage` in `crates/deino-pipeline/src/stages/<stage>.rs` (idempotent; user-safe messages), one line in `registry::stages` (plus a `StagePorts` field and its adapter in `composition.rs` if it needs a new port), and its label in `frontend/src/features/pipeline/copy.ts`. |
 | A diarization model or parameter | `crates/deino-diarize/src/models.rs` (pinned URL, size, SHA-256; a new embedding model needs a new `EMBEDDING_MODEL_ID`) or `policy.rs`; re-run `diarize-bench` (`docs/perf/diarization.md`). |
+| A built-in note template | A `BuiltinTemplate` in `crates/deino-core/src/templates/builtin/*.rs` and its line in `CATALOG`; bump `version` whenever an existing one changes, so `BuiltinSync` upgrades installs (user copies are never touched). `builtin_tests.rs` validates every entry. |
 | An LLM route | A `Route` variant (name, tier) in `crates/deino-llm/src/route.rs`, a migration widening the `llm_calls.route` CHECK, its label in `frontend/src/features/llm/copy.ts`; then call `Gateway` with it. |
 | An LLM provider | An adapter in `crates/deino-llm/src/providers/` implementing `LlmProvider` (and `ModelCatalog`), a `ProviderId` variant (and the `llm_calls.provider` CHECK), and one registration in `frontend/src-tauri/src/llm.rs`. |
 | A built-in prompt | A `prompts/<name>.<role>.md.jinja` template and its struct and snapshot test in `crates/deino-llm/src/prompts.rs`. |
