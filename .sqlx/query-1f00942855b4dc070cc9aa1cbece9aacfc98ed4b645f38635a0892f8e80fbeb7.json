@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO speakers (id, meeting_id, label, person_id, is_me, color)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "1f00942855b4dc070cc9aa1cbece9aacfc98ed4b645f38635a0892f8e80fbeb7"
+}

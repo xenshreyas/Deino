@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Stores an event, or refreshes the stored copy with the same account and\n-- provider ID. A refresh keeps the stored id, created_at and the user's\n-- record_override. ON CONFLICT DO UPDATE, never REPLACE: the update hook\n-- misses REPLACE deletions, and REPLACE would drop the override.\nINSERT INTO calendar_events (\n    id, account_id, provider_event_id, ical_uid, series_id, title, description, start_at, end_at,\n    conference_url, platform, organizer_email, attendees_json, my_rsvp, is_external, record_override,\n    created_at, updated_at\n)\nVALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)\nON CONFLICT (account_id, provider_event_id) DO UPDATE SET\n    ical_uid = excluded.ical_uid,\n    series_id = excluded.series_id,\n    title = excluded.title,\n    description = excluded.description,\n    start_at = excluded.start_at,\n    end_at = excluded.end_at,\n    conference_url = excluded.conference_url,\n    platform = excluded.platform,\n    organizer_email = excluded.organizer_email,\n    attendees_json = excluded.attendees_json,\n    my_rsvp = excluded.my_rsvp,\n    is_external = excluded.is_external,\n    updated_at = excluded.updated_at\nRETURNING id AS \"id: CalendarEventId\"\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarEventId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 18
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2729da20172bde61b4b9d0bdbd47f640f694bc6b5e8999312df37a50e2366119"
+}

@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every tag by name, ignoring case (the column's collation). Served by the\n-- UNIQUE name index (asserted in tag_tests.rs).\nSELECT\n    id AS \"id: TagId\",\n    name,\n    color AS \"color: PaletteColor\",\n    description,\n    auto_apply AS \"auto_apply: bool\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM tags\nORDER BY name\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: TagId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "color: PaletteColor",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "auto_apply: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b9e98827e31ffaf222e1a98aece4581ae2fe7c1a494d852e642aac7c79dc95ab"
+}

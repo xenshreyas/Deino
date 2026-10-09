@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "-- Every meeting, newest first. Served by idx_meetings_created_at_id\n-- (asserted in repo.rs tests), so the list never sorts in a temporary B-tree.\nSELECT\n    id AS \"id!: MeetingId\",\n    title,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings\nORDER BY created_at DESC, id DESC\n",
+  "query": "-- Meetings outside the trash in one status (?1), newest first. Served by\n-- idx_meetings_status_created_at (asserted in lifecycle_repo_tests.rs).\nSELECT\n    id AS \"id!: MeetingId\",\n    title,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings\nWHERE status = ?1 AND deleted_at IS NULL\nORDER BY created_at DESC, id DESC\n",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       true,
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "237364e1db1979e885920ace80f1338a05bc7b5a2ff9c8d74ad9e2d8b3bde8aa"
+  "hash": "efa0f55b27cc808eba1ec332f8b168991610238ae5cbce2166eb16e8c5562bba"
 }

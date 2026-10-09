@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_attendees (meeting_id, person_id, role, rsvp) VALUES (?1, ?2, ?3, ?4)\n             ON CONFLICT (meeting_id, person_id) DO UPDATE SET role = excluded.role, rsvp = excluded.rsvp",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "03e483766ceb7b9a27d65a9b91462a50d0e0a5d5052b7b2094da519bdaac7cd5"
+}

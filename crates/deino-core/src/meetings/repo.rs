@@ -15,7 +15,7 @@ use super::{Meeting, MeetingTitle};
 /// Where meetings are stored.
 #[async_trait]
 pub trait MeetingRepo: Send + Sync {
-    /// Every meeting, newest first.
+    /// Every meeting outside the trash, newest first.
     async fn list(&self) -> Result<Vec<Meeting>, DbError>;
 
     /// The meeting with `id`, if it exists.
@@ -32,10 +32,11 @@ pub trait MeetingRepo: Send + Sync {
     ) -> Result<Option<Meeting>, DbError>;
 }
 
-/// [`MeetingRepo`] over Deino's SQLite database.
+/// [`MeetingRepo`], [`MeetingLifecycleRepo`](super::MeetingLifecycleRepo) and
+/// [`MeetingTrashRepo`](super::MeetingTrashRepo) over Deino's SQLite database.
 #[derive(Clone, Debug)]
 pub struct SqliteMeetingRepo {
-    database: Database,
+    pub(super) database: Database,
 }
 
 impl SqliteMeetingRepo {
@@ -116,6 +117,7 @@ mod tests {
     use deino_testkit::{at, seed};
 
     use super::*;
+    use crate::testing::query_plan;
 
     async fn repo_with(meetings: &[(&str, &str, &str)]) -> SqliteMeetingRepo {
         let database = test_db().await;
@@ -146,19 +148,32 @@ mod tests {
     #[tokio::test]
     async fn list_is_an_index_scan_without_a_sort() {
         let repo = repo_with(&[]).await;
-        let explain = format!("EXPLAIN QUERY PLAN {}", include_str!("queries/list.sql"));
 
-        // Rows are (id, parent, unused, detail); the detail names the access path.
-        let steps: Vec<(i64, i64, i64, String)> = sqlx::query_as(&explain)
-            .fetch_all(repo.database.reader())
-            .await
-            .unwrap();
-        let plan: Vec<&str> = steps.iter().map(|(.., detail)| detail.as_str()).collect();
+        let plan = query_plan(&repo.database, include_str!("queries/list.sql")).await;
 
         assert_eq!(
             plan,
-            ["SCAN meetings USING INDEX idx_meetings_created_at_id"]
+            ["SCAN meetings USING INDEX idx_meetings_live_created_at_id"]
         );
+    }
+
+    #[tokio::test]
+    async fn list_hides_meetings_in_the_trash() {
+        let repo = repo_with(&[
+            ("meeting-a", "Kept", "2026-10-01T09:00:00Z"),
+            ("meeting-b", "Trashed", "2026-10-02T09:00:00Z"),
+        ])
+        .await;
+        sqlx::query(
+            "UPDATE meetings SET deleted_at = '2026-10-03T09:00:00Z' WHERE id = 'meeting-b'",
+        )
+        .execute(repo.database.writer())
+        .await
+        .unwrap();
+
+        let meetings = repo.list().await.unwrap();
+
+        assert_eq!(ids(&meetings), ["meeting-a"]);
     }
 
     #[tokio::test]

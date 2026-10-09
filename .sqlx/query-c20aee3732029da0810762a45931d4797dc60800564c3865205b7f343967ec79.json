@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The folders a meeting (?1) sits in, by name. Filtered through the\n-- meeting_folders primary key (asserted in folder_tests.rs).\nSELECT\n    f.id AS \"id: FolderId\",\n    f.parent_id AS \"parent_id: FolderId\",\n    f.name,\n    f.icon,\n    f.description,\n    f.created_at AS \"created_at: DateTime<Utc>\",\n    f.updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meeting_folders AS mf\nJOIN folders AS f ON f.id = mf.folder_id\nWHERE mf.meeting_id = ?1\nORDER BY f.name COLLATE NOCASE, f.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: FolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "parent_id: FolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "icon",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c20aee3732029da0810762a45931d4797dc60800564c3865205b7f343967ec79"
+}

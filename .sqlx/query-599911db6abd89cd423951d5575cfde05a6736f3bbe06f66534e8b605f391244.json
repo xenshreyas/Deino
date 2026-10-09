@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings in the trash, most recently trashed first. Served by the partial\n-- index idx_meetings_trashed_deleted_at (asserted in trash_repo_tests.rs).\nSELECT\n    id AS \"id!: MeetingId\",\n    title,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings\nWHERE deleted_at IS NOT NULL\nORDER BY deleted_at DESC, id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "599911db6abd89cd423951d5575cfde05a6736f3bbe06f66534e8b605f391244"
+}

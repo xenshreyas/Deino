@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every person not merged into another, by name. Served by the partial\n-- index idx_people_listed_name (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: PersonId\",\n    name,\n    email AS \"email: EmailAddress\",\n    company_id AS \"company_id: CompanyId\",\n    title,\n    avatar_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    is_me AS \"is_me: bool\",\n    merged_into AS \"merged_into: PersonId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM people\nWHERE merged_into IS NULL\nORDER BY name COLLATE NOCASE, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "email: EmailAddress",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "company_id: CompanyId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "avatar_path",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_md",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_md",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_updated_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me: bool",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "merged_into: PersonId",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "89abbc55e12377dde18ea3f8fe6454baa3462ad72677355a0b32bfae208fdcd4"
+}

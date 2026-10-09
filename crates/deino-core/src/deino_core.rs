@@ -12,7 +12,23 @@
 //! The app crate wires adapters into services (`composition.rs`) and exposes
 //! each service through one inline Tauri plugin. [`_example`] is the template
 //! to copy; [`meetings`] is the first real feature built from it.
+//!
+//! FND-07 added one module per aggregate of the core schema, each with its
+//! ports, a SQLite repository and a fake, so feature cards add services and
+//! commands on top: [`segments`] (transcript and speakers), [`people`]
+//! (people and attendance), [`companies`], [`calendar`], [`folders`],
+//! [`tags`] and [`action_items`], plus the lifecycle and trash ports of
+//! [`meetings`].
 
 #[cfg(debug_assertions)]
 pub mod _example;
+pub mod action_items;
+pub mod calendar;
+pub mod companies;
+pub mod folders;
 pub mod meetings;
+pub mod people;
+pub mod segments;
+pub mod tags;
+#[cfg(any(test, feature = "test-support"))]
+mod testing;

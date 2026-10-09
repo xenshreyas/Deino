@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM meeting_tags WHERE meeting_id = ?1 AND tag_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ae7620fb11366bbef9c3db0854da4f9751c52fc2fb62decf99d956de32daeb77"
+}

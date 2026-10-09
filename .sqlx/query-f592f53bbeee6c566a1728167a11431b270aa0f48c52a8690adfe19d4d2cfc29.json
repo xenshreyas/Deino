@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) attendees in the order they were first added (rowid).\n-- Served by the (meeting_id, person_id) primary key (asserted in\n-- attendee_repo_tests.rs).\nSELECT\n    meeting_id AS \"meeting_id: MeetingId\",\n    person_id AS \"person_id: PersonId\",\n    role AS \"role: AttendeeRole\",\n    rsvp AS \"rsvp: Rsvp\"\nFROM meeting_attendees\nWHERE meeting_id = ?1\nORDER BY rowid\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id: PersonId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "role: AttendeeRole",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "rsvp: Rsvp",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "f592f53bbeee6c566a1728167a11431b270aa0f48c52a8690adfe19d4d2cfc29"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meetings\n             SET audio_path = ?1, audio_mic_path = ?2, audio_system_path = ?3, video_path = ?4, updated_at = ?5\n             WHERE id = ?6",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "7e480b9a129b7ffb61aaa7e212e143d5269f0c3fdddf9e737063e63a2472c8c8"
+}

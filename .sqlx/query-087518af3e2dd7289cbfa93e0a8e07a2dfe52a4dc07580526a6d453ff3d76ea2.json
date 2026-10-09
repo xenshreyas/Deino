@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_folders (meeting_id, folder_id, added_at) VALUES (?1, ?2, ?3)\n             ON CONFLICT (meeting_id, folder_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "087518af3e2dd7289cbfa93e0a8e07a2dfe52a4dc07580526a6d453ff3d76ea2"
+}

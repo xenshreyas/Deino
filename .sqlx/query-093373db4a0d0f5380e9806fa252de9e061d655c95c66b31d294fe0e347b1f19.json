@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The tags on a meeting (?1), by name, with who applied them. Filtered\n-- through the meeting_tags primary key (asserted in tag_tests.rs).\nSELECT\n    t.id AS \"id: TagId\",\n    t.name,\n    t.color AS \"color: PaletteColor\",\n    t.description,\n    t.auto_apply AS \"auto_apply: bool\",\n    t.created_at AS \"created_at: DateTime<Utc>\",\n    t.updated_at AS \"updated_at: DateTime<Utc>\",\n    mt.applied_by AS \"applied_by: TagSource\",\n    mt.applied_at AS \"applied_at: DateTime<Utc>\"\nFROM meeting_tags AS mt\nJOIN tags AS t ON t.id = mt.tag_id\nWHERE mt.meeting_id = ?1\nORDER BY t.name\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: TagId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "color: PaletteColor",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "auto_apply: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "applied_by: TagSource",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "applied_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "093373db4a0d0f5380e9806fa252de9e061d655c95c66b31d294fe0e347b1f19"
+}

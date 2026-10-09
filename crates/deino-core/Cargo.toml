@@ -21,7 +21,7 @@ deino-domain.workspace = true
 log.workspace = true
 serde.workspace = true
 specta.workspace = true
-sqlx.workspace = true
+sqlx = { workspace = true, features = ["json"] }
 thiserror.workspace = true
 
 [dev-dependencies]

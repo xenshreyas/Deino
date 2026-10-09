@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE tags SET name = ?1, color = ?2, description = ?3, auto_apply = ?4, updated_at = ?5\n             WHERE id = ?6",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "ecd8969d9419c4af4a8c371fa5927d42511dd6c43bf16cdb9bbb96759d0411d4"
+}

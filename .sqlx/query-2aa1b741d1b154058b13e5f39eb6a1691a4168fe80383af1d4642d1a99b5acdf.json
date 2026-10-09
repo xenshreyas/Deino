@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The folders directly under ?1 (NULL: the top level), by name. Served by\n-- idx_folders_parent_id (asserted in folder_tests.rs).\nSELECT\n    id AS \"id: FolderId\",\n    parent_id AS \"parent_id: FolderId\",\n    name,\n    icon,\n    description,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM folders\nWHERE parent_id IS ?1\nORDER BY name COLLATE NOCASE\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: FolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "parent_id: FolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "icon",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2aa1b741d1b154058b13e5f39eb6a1691a4168fe80383af1d4642d1a99b5acdf"
+}

@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- One folder by ID (?1).\nSELECT\n    id AS \"id: FolderId\",\n    parent_id AS \"parent_id: FolderId\",\n    name,\n    icon,\n    description,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM folders\nWHERE id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: FolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "parent_id: FolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "icon",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4e41cb4e43a8de63da10b60cf76d9db306641d19442a4bc63452a7e4fb16287e"
+}
