@@ -20,6 +20,14 @@ fi
 # their own platforms. Dev-dependencies already enable every `test-support`.
 cargo clippy "${packages[@]}" --all-targets --locked -- --deny warnings
 
+# PARITY_PLAN §4.0: speech-to-text has no route to the network. deino-stt
+# must not depend, even indirectly, on deino-net or an HTTP client.
+if cargo tree --locked -p deino-stt --edges normal,build --prefix none |
+    grep -Eq '^(deino-net|reqwest|hyper|ureq) '; then
+    echo "clippy.sh: deino-stt must not depend on deino-net or an HTTP client (§4.0)" >&2
+    exit 1
+fi
+
 # Spelling, when typos-cli is installed (CI installs it).
 if command -v typos >/dev/null 2>&1; then
     typos

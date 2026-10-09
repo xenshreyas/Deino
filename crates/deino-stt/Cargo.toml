@@ -1,0 +1,54 @@
+[package]
+name = "deino-stt"
+version = "0.1.0"
+description = "Deino's speech-to-text engine: the transcribe-cpp worker process, its supervisor and live stream sessions"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_stt.rs"
+
+[features]
+# The scripted fake engine, the in-process fake streaming engine and the fake
+# worker binary that supervisor tests drive. Never enable outside dev-dependencies.
+test-support = []
+# GPU backends, chosen by the app's features. Metal is always on for macOS.
+metal = ["transcribe-cpp/metal"]
+cuda = ["transcribe-cpp/cuda"]
+vulkan = ["transcribe-cpp/vulkan"]
+rocm = ["transcribe-cpp/rocm"]
+openmp = ["transcribe-cpp/openmp"]
+
+[[bin]]
+# A worker process around the scripted engine, with fault injection, so the
+# supervisor's crash, hang and fallback handling is tested against real
+# processes without a model (tests/supervisor.rs).
+name = "deino-stt-fake-worker"
+path = "src/bin/fake_worker.rs"
+required-features = ["test-support"]
+
+[dependencies]
+hound = "3.5.1"
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+# Pinned exactly: the worker protocol and stream options follow this release
+# (docs/references/audio-stt.md §0). `serde` carries results across the worker
+# protocol; the GPU backend is chosen per platform below.
+transcribe-cpp = { version = "=0.3.1", default-features = false, features = ["serde"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.186"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+transcribe-cpp = { version = "=0.3.1", default-features = false, features = ["metal", "serde"] }
+
+[dev-dependencies]
+# Enables `test-support` for this crate's own unit and integration tests.
+deino-stt = { path = ".", features = ["test-support"] }
+tempfile = "3.3.0"
+
+[lints]
+workspace = true
