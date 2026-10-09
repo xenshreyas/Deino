@@ -40,9 +40,7 @@ const PERSIST_QUEUE: usize = 1024;
 const PERSIST_BATCH: usize = 64;
 
 /// How a request ended.
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, specta::Type, sqlx::Type,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, specta::Type, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
 #[sqlx(rename_all = "snake_case")]
 pub enum EgressOutcome {
@@ -161,7 +159,9 @@ impl EgressPersister {
         while let Some(first) = self.receiver.recv().await {
             let mut batch = vec![first];
             while batch.len() < PERSIST_BATCH {
-                let Ok(next) = self.receiver.try_recv() else { break };
+                let Ok(next) = self.receiver.try_recv() else {
+                    break;
+                };
                 batch.push(next);
             }
             write(writer.as_ref(), &batch).await;

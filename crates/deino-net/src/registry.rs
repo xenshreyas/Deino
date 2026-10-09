@@ -103,8 +103,7 @@ mod hosts {
         HostPattern::SubdomainsOf("huggingface.co"),
         HostPattern::SubdomainsOf("hf.co"),
     ];
-    pub(super) const GOOGLE_CALENDAR: &[HostPattern] =
-        &[exact("www.googleapis.com"), GOOGLE_OAUTH];
+    pub(super) const GOOGLE_CALENDAR: &[HostPattern] = &[exact("www.googleapis.com"), GOOGLE_OAUTH];
     pub(super) const GOOGLE_DRIVE: &[HostPattern] = &[
         exact("www.googleapis.com"),
         exact("docs.googleapis.com"),
@@ -181,7 +180,11 @@ mod tests {
     #[test]
     fn hugging_face_covers_its_cdn_redirects() {
         let hosts = spec(ServiceId::HfModels).hosts;
-        for host in ["huggingface.co", "cdn-lfs.huggingface.co", "cas-bridge.xethub.hf.co"] {
+        for host in [
+            "huggingface.co",
+            "cdn-lfs.huggingface.co",
+            "cas-bridge.xethub.hf.co",
+        ] {
             assert!(hosts.iter().any(|pattern| pattern.matches(host)), "{host}");
         }
     }

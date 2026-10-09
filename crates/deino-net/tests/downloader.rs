@@ -18,8 +18,8 @@ use deino_net::{
     DownloadError, DownloadRequest, Downloaded, Downloader, HttpDownloader, ReqwestNetClient,
     Sha256Digest,
 };
-use sha2::{Digest, Sha256};
 use server::{Reply, Server};
+use sha2::{Digest, Sha256};
 use tempfile::TempDir;
 use tokio_util::sync::CancellationToken;
 
@@ -87,7 +87,9 @@ async fn a_fresh_download_is_verified_and_moved_into_place() {
     let fixture = Fixture::new();
     let server = Server::start(vec![Reply::new(200, MODEL)]).await;
 
-    let done = download(&fixture.request(&server, Some(MODEL.len() as u64))).await.unwrap();
+    let done = download(&fixture.request(&server, Some(MODEL.len() as u64)))
+        .await
+        .unwrap();
 
     assert_eq!(read(&fixture.destination), MODEL);
     assert_eq!((done.bytes, done.resumed_from), (MODEL.len() as u64, 0));
@@ -101,7 +103,9 @@ async fn a_partial_file_resumes_with_a_range_request() {
     let range = format!("bytes 20-{}/{}", MODEL.len() - 1, MODEL.len());
     let server = Server::start(vec![Reply::new(206, rest).header("content-range", &range)]).await;
 
-    let done = download(&fixture.request(&server, Some(MODEL.len() as u64))).await.unwrap();
+    let done = download(&fixture.request(&server, Some(MODEL.len() as u64)))
+        .await
+        .unwrap();
 
     assert_eq!(done.resumed_from, 20);
     assert_eq!(read(&fixture.destination), MODEL);
@@ -205,7 +209,9 @@ async fn a_pinned_size_partial_file_needs_no_request() {
     let fixture = Fixture::new().with_part(MODEL);
     let server = Server::start(Vec::new()).await;
 
-    download(&fixture.request(&server, Some(MODEL.len() as u64))).await.unwrap();
+    download(&fixture.request(&server, Some(MODEL.len() as u64)))
+        .await
+        .unwrap();
 
     assert!(server.requests().is_empty());
     assert_eq!(read(&fixture.destination), MODEL);

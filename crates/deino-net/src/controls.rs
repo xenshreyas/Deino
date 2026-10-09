@@ -106,7 +106,12 @@ impl NetworkControls {
         ServiceStatus {
             id: service,
             kind: service.kind(),
-            hosts: spec.hosts.iter().chain(custom).map(HostPattern::display).collect(),
+            hosts: spec
+                .hosts
+                .iter()
+                .chain(custom)
+                .map(HostPattern::display)
+                .collect(),
             enabled: grant.enabled,
         }
     }
@@ -141,7 +146,10 @@ mod tests {
             .unwrap();
         assert!(ollama.enabled);
         assert!(ollama.hosts.contains(&"gpu-box.local".to_owned()));
-        let hf = services.iter().find(|s| s.id == ServiceId::HfModels).unwrap();
+        let hf = services
+            .iter()
+            .find(|s| s.id == ServiceId::HfModels)
+            .unwrap();
         assert!(hf.hosts.contains(&"*.hf.co".to_owned()));
     }
 

@@ -75,7 +75,11 @@ fn switching_a_service_returns_its_new_status() {
 
 #[test]
 fn the_egress_log_carries_sizes_and_hosts_but_no_url() {
-    let log = invoke(&window(), "plugin:network|egress_log", json!({ "limit": 50 }));
+    let log = invoke(
+        &window(),
+        "plugin:network|egress_log",
+        json!({ "limit": 50 }),
+    );
 
     assert_eq!(
         log,

@@ -56,7 +56,12 @@ async fn a_service_reaches_its_own_hosts_and_the_exchange_is_logged() {
         .unwrap()
         .body("12345");
 
-    let body = h.net.scoped(ServiceId::LlmAnthropic).fetch(request).await.unwrap();
+    let body = h
+        .net
+        .scoped(ServiceId::LlmAnthropic)
+        .fetch(request)
+        .await
+        .unwrap();
 
     assert_eq!(body.len(), 12);
     let log = h.log().await;
@@ -90,11 +95,18 @@ async fn a_disabled_service_sends_nothing_until_it_is_switched_on() {
     let h = harness();
     let slack = h.net.scoped(ServiceId::Slack);
 
-    let off = slack.send(get("https://slack.com/api/chat.postMessage")).await;
+    let off = slack
+        .send(get("https://slack.com/api/chat.postMessage"))
+        .await;
     h.policy.set_enabled(ServiceId::Slack, true).await.unwrap();
-    let on = slack.send(get("https://slack.com/api/chat.postMessage")).await;
+    let on = slack
+        .send(get("https://slack.com/api/chat.postMessage"))
+        .await;
 
-    assert!(matches!(off, Err(NetError::ServiceDisabled(ServiceId::Slack))));
+    assert!(matches!(
+        off,
+        Err(NetError::ServiceDisabled(ServiceId::Slack))
+    ));
     assert!(on.is_ok());
     assert_eq!(h.wire.requests().len(), 1);
 }
@@ -119,8 +131,10 @@ async fn a_user_switch_overrides_a_default_on_service() {
 #[tokio::test]
 async fn a_custom_endpoint_is_reachable_only_by_the_service_that_takes_it() {
     let h = harness();
-    h.policy.add_custom_host(ServiceId::LlmCustom, "llm.internal.test");
-    h.policy.add_custom_host(ServiceId::LlmAnthropic, "llm.internal.test");
+    h.policy
+        .add_custom_host(ServiceId::LlmCustom, "llm.internal.test");
+    h.policy
+        .add_custom_host(ServiceId::LlmAnthropic, "llm.internal.test");
 
     let custom = h
         .net
@@ -137,7 +151,10 @@ async fn a_custom_endpoint_is_reachable_only_by_the_service_that_takes_it() {
     drop(custom.unwrap());
     let log = h.log().await;
     assert_eq!(log.len(), 2);
-    assert!(log.iter().all(|entry| entry.host == "llm.internal.test:8000"));
+    assert!(
+        log.iter()
+            .all(|entry| entry.host == "llm.internal.test:8000")
+    );
 }
 
 #[tokio::test]
@@ -145,7 +162,11 @@ async fn offline_mode_blocks_every_service_but_approved_model_downloads() {
     let h = harness();
     h.policy.set_offline(true);
 
-    for &service in &[ServiceId::LlmAnthropic, ServiceId::LlmOllama, ServiceId::HfModels] {
+    for &service in &[
+        ServiceId::LlmAnthropic,
+        ServiceId::LlmOllama,
+        ServiceId::HfModels,
+    ] {
         let url = match service {
             ServiceId::LlmAnthropic => "https://api.anthropic.com/v1/messages",
             ServiceId::LlmOllama => "http://localhost:11434/api/tags",
@@ -192,7 +213,12 @@ async fn redirects_are_followed_within_the_service_and_each_hop_is_logged() {
     let request = get("https://huggingface.co/m/resolve/main/model.gguf")
         .header("authorization", "Bearer hf_token");
 
-    let body = h.net.scoped(ServiceId::HfModels).fetch(request).await.unwrap();
+    let body = h
+        .net
+        .scoped(ServiceId::HfModels)
+        .fetch(request)
+        .await
+        .unwrap();
 
     assert_eq!(&body[..], b"weights");
     let sent = h.wire.requests();
@@ -204,7 +230,10 @@ async fn redirects_are_followed_within_the_service_and_each_hop_is_logged() {
 #[tokio::test]
 async fn a_redirect_off_the_service_is_refused() {
     let h = harness();
-    h.wire.reply(FakeReply::redirect(Status::FOUND, "https://evil.test/steal"));
+    h.wire.reply(FakeReply::redirect(
+        Status::FOUND,
+        "https://evil.test/steal",
+    ));
 
     let result = h
         .net
@@ -219,13 +248,19 @@ async fn a_redirect_off_the_service_is_refused() {
 #[tokio::test]
 async fn the_egress_log_never_holds_a_path_a_query_a_header_or_a_body() {
     let h = harness();
-    h.wire.reply(FakeReply::ok("the model said something private"));
+    h.wire
+        .reply(FakeReply::ok("the model said something private"));
     let request = Request::post("https://api.openai.com/v1/chat/completions?api-key=sk-query")
         .unwrap()
         .header("authorization", "Bearer sk-header")
         .body("the meeting transcript");
 
-    let response = h.net.scoped(ServiceId::LlmOpenAi).send(request).await.unwrap();
+    let response = h
+        .net
+        .scoped(ServiceId::LlmOpenAi)
+        .send(request)
+        .await
+        .unwrap();
     let _received: Vec<_> = response.body.collect().await;
 
     let entries = h.log().await;
@@ -238,7 +273,10 @@ async fn the_egress_log_never_holds_a_path_a_query_a_header_or_a_body() {
         "transcript",
         "private",
     ] {
-        assert!(!logged.contains(secret), "the egress log leaks {secret}: {logged}");
+        assert!(
+            !logged.contains(secret),
+            "the egress log leaks {secret}: {logged}"
+        );
     }
     assert!(logged.contains("api.openai.com"));
 }

@@ -211,8 +211,14 @@ mod tests {
     fn only_absolute_http_urls_make_requests() {
         assert!(Request::get("https://api.anthropic.com/v1/messages").is_ok());
         assert!(Request::get("http://localhost:11434/api/tags").is_ok());
-        assert!(matches!(Request::get("file:///etc/hosts"), Err(NetError::InvalidUrl)));
-        assert!(matches!(Request::get("/relative"), Err(NetError::InvalidUrl)));
+        assert!(matches!(
+            Request::get("file:///etc/hosts"),
+            Err(NetError::InvalidUrl)
+        ));
+        assert!(matches!(
+            Request::get("/relative"),
+            Err(NetError::InvalidUrl)
+        ));
     }
 
     #[test]
@@ -247,7 +253,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(request.body.as_deref(), Some(b"[1,2]".as_slice()));
-        assert_eq!(request.headers.get("Content-Type"), Some("application/json"));
+        assert_eq!(
+            request.headers.get("Content-Type"),
+            Some("application/json")
+        );
     }
 
     #[tokio::test]

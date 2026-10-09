@@ -80,7 +80,10 @@ mod tests {
         fake.reply(FakeReply::status(Status::NOT_FOUND));
         let client: &dyn NetClient = &fake;
 
-        let models: Models = client.get_json("https://api.openai.com/v1/models").await.unwrap();
+        let models: Models = client
+            .get_json("https://api.openai.com/v1/models")
+            .await
+            .unwrap();
         let missing = client
             .get_json::<Models>("https://api.openai.com/v1/models")
             .await;
@@ -97,7 +100,10 @@ mod tests {
         let request = Request::post("https://api.anthropic.com/v1/messages").unwrap();
         let events: Vec<_> = fake.events(request).await.unwrap().collect().await;
 
-        let data: Vec<String> = events.into_iter().map(|event| event.unwrap().data).collect();
+        let data: Vec<String> = events
+            .into_iter()
+            .map(|event| event.unwrap().data)
+            .collect();
         assert_eq!(data, ["one", "two"]);
         let sent = fake.requests();
         assert_eq!(sent[0].headers.get("accept"), Some("text/event-stream"));

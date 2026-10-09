@@ -52,12 +52,18 @@ pub(crate) fn attach_network_log(app: &AppHandle, database: &Database) {
     // Lives as long as the app: it drains the log's queue into the table.
     tauri::async_runtime::spawn(persister.run(store.clone()));
     let policy = Arc::clone(&*policy);
-    app.manage(Arc::new(NetworkControls::new(policy.clone(), policy, store)));
+    app.manage(Arc::new(NetworkControls::new(
+        policy.clone(),
+        policy,
+        store,
+    )));
 }
 
 /// The client for model downloads the user starts (Hugging Face, allowed in
 /// offline mode), for the legacy model managers that only have an `AppHandle`.
-pub(crate) fn model_downloads<R: Runtime>(app: &AppHandle<R>) -> Result<Arc<dyn NetClient>, String> {
+pub(crate) fn model_downloads<R: Runtime>(
+    app: &AppHandle<R>,
+) -> Result<Arc<dyn NetClient>, String> {
     let net = app
         .try_state::<Net>()
         .ok_or("the network client is not ready yet")?;
@@ -111,7 +117,10 @@ impl ServiceSwitch for SettingsServicePolicy {
 /// The host a service's configured endpoint adds, if it takes one.
 fn custom_hosts(ai: &AiSettings, service: ServiceId) -> Vec<HostPattern> {
     let endpoint = match service {
-        ServiceId::LlmCustom => ai.custom_openai.as_ref().map(|custom| custom.endpoint.as_str()),
+        ServiceId::LlmCustom => ai
+            .custom_openai
+            .as_ref()
+            .map(|custom| custom.endpoint.as_str()),
         ServiceId::LlmOllama => ai.ollama_endpoint.as_deref(),
         _ => None,
     };
@@ -169,7 +178,16 @@ mod tests {
 
         assert!(ollama.offline_mode);
         assert_eq!(ollama.custom_hosts, [HostPattern::exact("gpu-box.local")]);
-        assert_eq!(custom.custom_hosts, [HostPattern::exact("llm.example.test")]);
-        assert!(policy.grant(ServiceId::LlmOpenAi).await.custom_hosts.is_empty());
+        assert_eq!(
+            custom.custom_hosts,
+            [HostPattern::exact("llm.example.test")]
+        );
+        assert!(
+            policy
+                .grant(ServiceId::LlmOpenAi)
+                .await
+                .custom_hosts
+                .is_empty()
+        );
     }
 }

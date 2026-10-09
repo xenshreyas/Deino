@@ -63,7 +63,10 @@ mod tests {
 
     #[test]
     fn a_cross_origin_hop_drops_credentials_but_keeps_the_range() {
-        let response = redirect(Status::TEMPORARY_REDIRECT, "https://cdn-lfs.hf.co/blob?sig=1");
+        let response = redirect(
+            Status::TEMPORARY_REDIRECT,
+            "https://cdn-lfs.hf.co/blob?sig=1",
+        );
 
         let next = next(&api_request(), &response).unwrap().unwrap();
 
@@ -90,7 +93,9 @@ mod tests {
     #[test]
     fn see_other_and_a_found_post_become_a_bodyless_get() {
         for status in [Status::SEE_OTHER, Status::FOUND] {
-            let next = next(&api_request(), &redirect(status, "/done")).unwrap().unwrap();
+            let next = next(&api_request(), &redirect(status, "/done"))
+                .unwrap()
+                .unwrap();
             assert_eq!(next.method, Method::Get);
             assert_eq!(next.body, None);
         }

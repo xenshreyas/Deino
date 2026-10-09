@@ -71,9 +71,10 @@ impl HttpDownloader {
         let response = self.client.send(http.clone()).await?;
         match response.status {
             Status::OK => Ok(Opened::Body { start: 0, response }),
-            Status::PARTIAL_CONTENT if range_start(&response) == Some(offset) => {
-                Ok(Opened::Body { start: offset, response })
-            }
+            Status::PARTIAL_CONTENT if range_start(&response) == Some(offset) => Ok(Opened::Body {
+                start: offset,
+                response,
+            }),
             Status::PARTIAL_CONTENT => Err(DownloadError::BadRange),
             Status::RANGE_NOT_SATISFIABLE if unsatisfied_total(&response) == Some(offset) => {
                 Ok(Opened::Complete)
@@ -95,7 +96,12 @@ impl HttpDownloader {
 
     /// Fetches what the partial file lacks; returns the offset the transfer
     /// resumed from (0 when the server sent the whole file again).
-    async fn fetch(&self, part: &PartFile, offset: u64, job: &Job<'_>) -> Result<u64, DownloadError> {
+    async fn fetch(
+        &self,
+        part: &PartFile,
+        offset: u64,
+        job: &Job<'_>,
+    ) -> Result<u64, DownloadError> {
         let opened = tokio::select! {
             biased;
             () = job.cancel.cancelled() => return Err(DownloadError::Cancelled),

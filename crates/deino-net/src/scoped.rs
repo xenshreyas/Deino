@@ -113,7 +113,12 @@ impl ScopedClient {
         let host = request.url.host_str().unwrap_or_default();
         let spec = registry::spec(self.service);
         let custom = grant.custom_hosts.iter().filter(|_| spec.custom_hosts);
-        if !spec.hosts.iter().chain(custom).any(|allowed| allowed.matches(host)) {
+        if !spec
+            .hosts
+            .iter()
+            .chain(custom)
+            .any(|allowed| allowed.matches(host))
+        {
             return Err(NetError::HostNotAllowed {
                 service: self.service,
                 host: host.to_owned(),

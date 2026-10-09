@@ -50,7 +50,10 @@ impl PartFile {
     /// that is already too large for `request`.
     pub(super) async fn resume_offset(&self, request: &DownloadRequest) -> io::Result<u64> {
         let len = self.len().await?;
-        let limit = request.size.unwrap_or(request.max_bytes).min(request.max_bytes);
+        let limit = request
+            .size
+            .unwrap_or(request.max_bytes)
+            .min(request.max_bytes);
         if len > limit {
             self.discard().await?;
             return Ok(0);
