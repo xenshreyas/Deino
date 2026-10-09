@@ -40,6 +40,7 @@ const DEFAULT_SETTINGS: Settings = {
     },
   },
   privacy: {},
+  network: { offlineMode: false, services: {} },
   profile: {},
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },

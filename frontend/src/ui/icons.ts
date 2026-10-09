@@ -47,6 +47,7 @@ export {
   ScrollText,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
   Square,
   SquarePen,

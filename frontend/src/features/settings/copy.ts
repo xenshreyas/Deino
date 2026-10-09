@@ -14,6 +14,7 @@ export const settingsCopy = {
     app: 'App',
     capture: 'Capture',
     ai: 'AI',
+    privacy: 'Privacy',
     more: 'More',
   },
   sections: {
@@ -32,6 +33,10 @@ export const settingsCopy = {
       description: 'Which provider and model serve each AI task, and a quick test for each.',
     },
     models: { label: 'Summary models', description: 'The language model that writes your notes.' },
+    network: {
+      label: 'Network',
+      description: 'What may leave this Mac, and a log of everything that did.',
+    },
     beta: { label: 'Beta', description: 'Features that are still being finished.' },
     about: { label: 'About', description: 'Version, privacy and updates.' },
     developer: { label: 'Developer', description: 'Tools for development builds only.' },

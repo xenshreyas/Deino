@@ -15,6 +15,7 @@ import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { AiSettings } from '@/features/llm';
+import { NetworkSettings } from '@/features/network';
 import {
   AudioLines,
   Cpu,
@@ -24,11 +25,13 @@ import {
   Mic,
   Palette,
   Settings,
+  ShieldCheck,
   Sparkles,
   Wrench,
 } from '@/ui/icons';
 
 import { settingsCopy } from './copy';
+import { useOfflineMode } from './offline-mode';
 import type { SettingsSectionId } from './search';
 import { useSaveTheme, useThemePreference } from './theme';
 
@@ -69,6 +72,12 @@ function TranscriptionSection() {
   );
 }
 
+/** Privacy → Network: offline mode, services and the egress log (FND-12). */
+function NetworkSection() {
+  const { offlineMode, setOfflineMode } = useOfflineMode();
+  return <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />;
+}
+
 /** Settings → Developer (FND-04), loaded lazily so release builds drop it. */
 const DeveloperSettings = import.meta.env.DEV
   ? lazy(() =>
@@ -99,6 +108,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
+  { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },
   ...DEBUG_SECTIONS,
