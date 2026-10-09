@@ -24,6 +24,34 @@ export function SettingsSection({ title, description, children }: SettingsSectio
   );
 }
 
+/** Props of {@link SettingsRow}. */
+export interface SettingsRowProps {
+  label: string;
+  /** At most two lines of explanation under the label. */
+  description?: string;
+  /** The id of the control, so the label names it. */
+  htmlFor?: string;
+  /** The control on the right: a switch, a 200px input or a button. */
+  children: ReactNode;
+}
+
+/** One setting: label and description on the left, its control on the right. */
+export function SettingsRow({ label, description, htmlFor, children }: SettingsRowProps) {
+  return (
+    <div className="grid min-h-[52px] grid-cols-[1fr_auto] items-center gap-4 px-4 py-3">
+      <div className="min-w-0">
+        <label htmlFor={htmlFor} className="text-sm text-fg">
+          {label}
+        </label>
+        {description === undefined ? null : (
+          <p className="mt-0.5 line-clamp-2 text-xs text-fg-muted">{description}</p>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 /** The card that holds a section's rows. */
 export function SettingsCard({ children, label }: { children: ReactNode; label?: string }) {
   return (

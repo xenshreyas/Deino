@@ -11,7 +11,7 @@ import { networkCopy } from '../copy';
 import { formatBytes, formatTime } from '../format';
 import { useEgressLog } from '../queries';
 import type { EgressEntry } from '../types';
-import { SettingsSection } from './settings-section';
+import { SettingsSection } from '@/ui/settings-section';
 
 /** What happened to a request: its status, or why it never got one. */
 function outcomeLabel(entry: EgressEntry): string {

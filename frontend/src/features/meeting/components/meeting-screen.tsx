@@ -7,6 +7,7 @@
  */
 import { Link } from '@tanstack/react-router';
 
+import { ShareMenu } from '@/features/export';
 import { asMeetingId, type MeetingId } from '@/features/meetings';
 import { TitleBarActions, useShellLayout } from '@/features/shell';
 import { buttonVariants } from '@/ui/button';
@@ -30,8 +31,8 @@ export interface MeetingScreenProps {
   onTabChange: (tab: MeetingTabId) => void;
 }
 
-/** "‹ Meetings" on the left of the title bar, the panel toggle on the right. */
-function MeetingTitleBar() {
+/** "‹ Meetings" on the left of the title bar; Share and the panel toggle on the right. */
+function MeetingTitleBar({ meetingId }: { meetingId: MeetingId }) {
   const toggleRightPanel = useShellLayout((state) => state.toggleRightPanel);
   return (
     <TitleBarActions>
@@ -47,6 +48,7 @@ function MeetingTitleBar() {
         {meetingCopy.back}
       </Link>
       <div data-tauri-drag-region className="h-full flex-1" />
+      <ShareMenu meetingId={meetingId} />
       <IconButton
         icon={PanelRight}
         label={meetingCopy.togglePanel}
@@ -93,7 +95,7 @@ export function MeetingScreen({ meetingId, source, tab, onTabChange }: MeetingSc
   const Player = MEETING_PLAYER;
   return (
     <LegacyMeetingSession key={meetingId} meetingId={meetingId} source={source}>
-      <MeetingTitleBar />
+      <MeetingTitleBar meetingId={id} />
       <div className="flex h-full min-w-0">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col px-6">
