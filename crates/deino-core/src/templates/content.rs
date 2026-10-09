@@ -30,30 +30,27 @@ pub struct TemplateSection {
     /// The heading, for example "Action items".
     pub title: String,
     /// What the LLM should put in it; may be empty for an obvious title.
-    #[serde(default)]
     pub instructions: String,
     /// How it is rendered.
     pub format: SectionFormat,
 }
 
-/// Everything about a template the user can edit.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
+/// Everything about a template the user can edit. A file may leave out any
+/// field; what is missing is empty, which validation then judges.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
 pub struct TemplateContent {
     /// The name in pickers, for example "Sales discovery".
     pub name: String,
     /// One line on what it is for; the picker shows it and the LLM
     /// classifier chooses by it.
-    #[serde(default)]
     pub description: String,
     /// Who the meeting is with and what the notes are for, given to the LLM
     /// with every section.
-    #[serde(default)]
     pub meeting_context: String,
     /// The sections, in order.
     pub sections: Vec<TemplateSection>,
     /// When to choose this template automatically.
-    #[serde(default)]
     pub auto_rules: Vec<AutoRule>,
 }
 
@@ -217,7 +214,7 @@ mod tests {
 
     #[test]
     fn content_round_trips_through_json_with_optional_fields_defaulted() {
-        let json = r#"{ "name": "Mine", "sections": [{ "title": "Notes", "format": "todo" }] }"#;
+        let json = r#"{ "name": "Mine", "sections": [{ "title": "Notes", "instructions": "", "format": "todo" }] }"#;
 
         let parsed: TemplateContent = serde_json::from_str(json).unwrap();
 
