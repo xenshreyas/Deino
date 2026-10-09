@@ -1,4 +1,4 @@
-//! Deino's post-meeting pipeline (PARITY_PLAN §4.2, ADR 0016).
+//! Deino's post-meeting pipeline (PARITY_PLAN §4.2, ADR 0018).
 //!
 //! When a meeting enters `processing`, the pipeline runs every registered
 //! [`PipelineStage`] for it, in order: finalising audio, transcription

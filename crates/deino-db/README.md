@@ -20,7 +20,7 @@ commit-time change signals (ADR 0005).
 - `Table` (`table.rs`): every table the UI can be told about.
 - The core schema (FND-07, ADR 0012), including the legacy `transcripts`
   compatibility view over `transcript_segments`, and the pipeline queue
-  tables `jobs` and `job_runs` (FND-08, ADR 0016; their SQL lives in
+  tables `jobs` and `job_runs` (FND-08, ADR 0018; their SQL lives in
   `deino-pipeline`).
 - `test_db()` (feature `test-support`): an in-memory database with every
   migration applied.

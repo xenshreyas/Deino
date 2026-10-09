@@ -12,7 +12,8 @@ transcription (0010), the code-quality limits (0011), the core schema with
 its legacy `transcripts` view (0012), typed settings with Keychain secrets
 (0013), the native crash-safe recording format (0014), the design tokens
 and app shell (0015), speech-to-text in supervised transcribe-cpp worker
-processes (0016), and the LLM gateway with task routes (0017).
+processes (0016), the LLM gateway with task routes (0017), and the
+post-meeting pipeline's stage model (0018).
 
 ## 1. Processes
 
@@ -52,6 +53,7 @@ flowchart BT
   db["deino-db<br/>pools, migrations, change notifier"]
   core["deino-core<br/>features: meetings, settings, segments, people, ..."]
   secrets["deino-secrets<br/>SecretStore, Keychain"]
+  pipeline["deino-pipeline<br/>stages, registry, job runner"]
   testkit["deino-testkit<br/>(dev-dependency)"]
   stt["deino-stt<br/>transcribe-cpp workers, supervisor,<br/>live sessions (no network)"]
   app["deino (frontend/src-tauri)<br/>Tauri app: plugins, composition, legacy"]
@@ -68,6 +70,9 @@ flowchart BT
   core --> domain
   core --> secrets
   secrets --> domain
+  pipeline --> core
+  pipeline --> db
+  app --> pipeline
   app --> core
   app --> db
   app --> secrets
@@ -86,6 +91,7 @@ flowchart BT
 | `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
+| `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `finalize_audio` at 10, `legacy_summary` at 50), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar: `generate` (legacy), `stream`, `grammar` (a JSON schema turned into a GBNF grammar) and `embed` requests over JSON lines. |
 
@@ -102,7 +108,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri event adapters) and `app.manage`s them. `attach_settings` runs first at startup; `attach_database` once `deino.sqlite` is open. |
 | `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, templates). |
 | `llm.rs`, `llm/` | The gateway's wiring: builds `Gateway`, `LlmAdmin` and `SummaryGenerator` over the app's adapters: the temporary `reqwest` `HttpTransport` (`llm/http.rs`, until FND-12) and `SidecarLocalModels` (`llm/local.rs`, the built-in models over llama-helper). |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `pipeline`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -123,7 +129,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `main.tsx` | Applies the saved theme, creates the query client and the router (`router.tsx`, which passes `{ queryClient }` to every route's context for loaders) and mounts them. |
 | `routes/` | TanStack Router file routes, thin: each renders one feature screen. `/design` (dev builds only) shows every token and primitive in both themes. |
 | `styles/` | `tokens.css` (the `ui.md` §2 design tokens for light and dark, mapped to Tailwind utilities with `@theme inline`; ADR 0015), `globals.css` (base layer), `blocknote.css` (the summary editor's bridge to the tokens). |
-| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `record`, `developer`, `design-system` (dev only), `_example`. |
+| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `pipeline` (the processing-status strip in the meeting header: stage statuses, retry, `PipelineProgress` refresh), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `record`, `developer`, `design-system` (dev only), `_example`. |
 | `lib/ipc/` | `generated/` (tauri-specta output, never edited), `result.ts` (`unwrap`, `IpcError`), `query-client.ts`, `events.ts` (`DbChanged` bridge, `useIpcEvent`), `ipc-query-provider.tsx`. |
 | `dev/mock-ipc/` | `pnpm dev:mock` only (never in a production bundle): one mock per generated module (`<feature>.ts`, `satisfies typeof Generated.commands`), an in-memory `MockDatabase` over the fixture meetings that emits `DbChanged`, and a small, shrinking legacy `invoke` shim (`legacy*.ts`). |
 | `features/developer/` | Settings → Developer (debug builds only, loaded lazily): seed the fixture meetings through the `dev` plugin. |
@@ -157,8 +163,48 @@ What changes next: FND-05b moves persistence into Rust during the recording:
 it creates the meeting through `MeetingLifecycleRepo::create` (`recording`),
 appends each batch of finalized segments with `SegmentWriter::append` (one
 transaction, one `DbChanged` per batch) and stops through
-`MeetingLifecycleService::transition` (`processing`). FND-08 turns everything after "stop" into durable pipeline stages
-(`finalize_audio` → … → `enhance_notes` → `index`).
+`MeetingLifecycleService::transition` (`processing`), which starts the
+post-meeting pipeline below.
+
+### Post-meeting pipeline (FND-08, ADR 0018)
+
+```mermaid
+sequenceDiagram
+  participant Life as MeetingLifecycleService
+  participant Trig as PipelineTrigger
+  participant Pipe as PipelineService
+  participant Run as Runner (worker per meeting)
+  participant Stage as PipelineStage (registry order)
+  participant DB as jobs / job_runs
+  participant UI as React UI
+  Life->>Trig: status_changed(recording → processing)
+  Trig->>Pipe: enqueue(meeting)
+  Pipe->>DB: schedule every registered stage (pending)
+  Pipe-->>UI: PipelineProgress(pending) per stage
+  Pipe->>Run: wake(meeting)
+  loop each stage, in order (2 stages at once across meetings)
+    Run->>DB: start: pending → running, open a job_run
+    Run-->>UI: PipelineProgress(running)
+    Run->>Stage: run(ctx, meeting)
+    Stage-->>Run: Done | Skipped | Retryable | Permanent | Cancelled
+    Run->>DB: settle (retry: pending with not_before = now + backoff)
+    Run-->>UI: PipelineProgress(new status)
+  end
+  Run->>Life: Complete (ready) or Fail (failed)
+  UI->>Pipe: plugin:pipeline|rerun(meeting, stage?) from the status strip
+```
+
+At startup `PipelineService::start` reconciles the queue before any worker
+runs: it deletes jobs of unregistered stages, settles `running` rows a crash
+left (back to `pending`, or `failed` once a crash ate the last attempt),
+schedules `processing` meetings without jobs and wakes every meeting with
+pending work. On exit `lifecycle.rs` calls `shutdown`, which leaves an
+interrupted stage pending for the next start. `finalize_audio` (order 10)
+finalises the meeting's recording directory through `deino_audio`, and
+`legacy_summary` (order 50) runs the summary through
+`deino_core::summaries::SummaryGenerator` until NOT-02's `enhance_notes`
+replaces it; both reach the app through ports adapted in
+`features/pipeline/`.
 
 ### An LLM call (FND-09)
 
@@ -267,6 +313,8 @@ erDiagram
   meetings ||--o| summary_processes : has
   meetings ||--o| transcript_chunks : has
   meetings ||--o| meeting_notes : has
+  meetings ||--o{ jobs : "processed by"
+  jobs ||--o{ job_runs : "attempts"
   meetings {
     TEXT id PK "meeting-<uuid> (opaque text)"
     TEXT title
@@ -383,6 +431,12 @@ tables are omitted from the diagram's attributes.
 - **`llm_calls`** (FND-09): one row per provider call (route, provider,
   model, tokens, latency, outcome, error kind), never prompt or answer
   content; written by `SqliteLlmCallRepo` through a usage channel.
+- **Pipeline queue** (FND-08, migration `20261009071429`): `jobs` has one
+  row per (meeting, stage), keyed by both, with the stage's status in the
+  current run, its attempts, retry time and user-safe message; `job_runs`
+  keeps every attempt (an `INTEGER` rowid key: history rows are never
+  referenced). Stage IDs come from the code's registry, not a table;
+  startup deletes the jobs of stages that are no longer registered.
 - **Settings are not tables:** FND-06 dropped the single-row `settings` and
   `transcript_settings` tables (migration `20261009061225`); settings live in
   `settings.json` and API keys in the Keychain (ADR 0013).
@@ -397,7 +451,8 @@ tables are omitted from the diagram's attributes.
   throws `IpcError { code, message }` (ADR 0007, ADR 0009).
 - **Events:** `plugin:db:db-changed` (`DbChanged`),
   `plugin:settings:settings-changed` (`SettingsChanged`, the whole settings
-  document), `plugin:llm:ollama-pull` (Ollama download progress), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
+  document), `plugin:llm:ollama-pull` (Ollama download progress), `plugin:pipeline:pipeline-progress` (`PipelineProgress { meetingId, stage,
+  status }`, every stage status change), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
   `recording-stopped`, …).
 - **Legacy commands** (`invoke('api_…')`): about 150 app commands, not
   ACL-checked, in `legacy.rs`. Never add to them.
@@ -418,7 +473,7 @@ tables are omitted from the diagram's attributes.
 | A downloadable model (file) | An entry in `crates/deino-core/src/models/catalog.json` with its pinned revision, exact size and SHA-256. |
 | A transcription lane | `deino_stt::Lane` + `EngineSlot::Live(lane)` (one worker each); start a `LiveSession` per lane from `stt/runtime.rs` (CAP-02 adds the microphone and system lanes). |
 | A transcription engine family | A `deino_stt::engine::Engine` implementation served by `worker::run` (transcribe-cpp covers Parakeet and Whisper GGUF/`.bin`). |
-| A pipeline stage | FND-08: one line in `crates/deino-pipeline/src/registry.rs`. |
+| A pipeline stage | A `PipelineStage` in `crates/deino-pipeline/src/stages/<stage>.rs` (idempotent; user-safe messages), one line in `registry::stages` (plus a `StagePorts` field and its adapter in `composition.rs` if it needs a new port), and its label in `frontend/src/features/pipeline/copy.ts`. |
 | An LLM route | A `Route` variant (name, tier) in `crates/deino-llm/src/route.rs`, a migration widening the `llm_calls.route` CHECK, its label in `frontend/src/features/llm/copy.ts`; then call `Gateway` with it. |
 | An LLM provider | An adapter in `crates/deino-llm/src/providers/` implementing `LlmProvider` (and `ModelCatalog`), a `ProviderId` variant (and the `llm_calls.provider` CHECK), and one registration in `frontend/src-tauri/src/llm.rs`. |
 | A built-in prompt | A `prompts/<name>.<role>.md.jinja` template and its struct and snapshot test in `crates/deino-llm/src/prompts.rs`. |

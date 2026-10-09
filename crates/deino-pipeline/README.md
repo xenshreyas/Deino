@@ -2,7 +2,7 @@
 
 ## Role
 
-The post-meeting pipeline (PARITY_PLAN §4.2, ADR 0016): a durable,
+The post-meeting pipeline (PARITY_PLAN §4.2, ADR 0018): a durable,
 SQLite-backed job runner that runs every registered stage for a meeting once
 it enters `processing`, then moves the meeting to `ready` or `failed`.
 
