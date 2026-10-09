@@ -5,16 +5,17 @@ use chrono::{DateTime, Utc};
 use deino_db::DbError;
 use deino_domain::{MeetingId, PaletteColor, TagId, TagSource};
 
-use super::{AppliedTag, SqliteTagRepo, Tag, TagApplication};
+use super::{AppliedTag, MeetingTagLink, SqliteTagRepo, Tag, TagApplication};
 use crate::meetings::Meeting;
 
 /// Puts tags on meetings and takes them off.
 #[async_trait]
 pub trait MeetingTagRepo: Send + Sync {
-    /// Puts the tag on the meeting. Applying a tag the meeting already has
-    /// changes nothing, so the first applier is kept (a user's manual tag
-    /// stays manual when the auto-tagger agrees).
-    async fn apply_tag(&self, application: &TagApplication) -> Result<(), DbError>;
+    /// Puts the tag on the meeting and returns true. Applying a tag the
+    /// meeting already has changes nothing and returns false, so the first
+    /// applier is kept (a user's manual tag stays manual when the auto-tagger
+    /// agrees). Fails if the meeting or the tag does not exist.
+    async fn apply_tag(&self, application: &TagApplication) -> Result<bool, DbError>;
 
     /// Takes the tag off the meeting.
     async fn remove_tag(&self, meeting: &MeetingId, tag: &TagId) -> Result<bool, DbError>;
@@ -24,12 +25,15 @@ pub trait MeetingTagRepo: Send + Sync {
 
     /// The meetings outside the trash carrying the tag, newest first.
     async fn meetings_tagged(&self, tag: &TagId) -> Result<Vec<Meeting>, DbError>;
+
+    /// Every tag on every meeting outside the trash, by meeting then tag.
+    async fn links(&self) -> Result<Vec<MeetingTagLink>, DbError>;
 }
 
 #[async_trait]
 impl MeetingTagRepo for SqliteTagRepo {
-    async fn apply_tag(&self, application: &TagApplication) -> Result<(), DbError> {
-        sqlx::query!(
+    async fn apply_tag(&self, application: &TagApplication) -> Result<bool, DbError> {
+        let result = sqlx::query!(
             "INSERT INTO meeting_tags (meeting_id, tag_id, applied_by, applied_at) VALUES (?1, ?2, ?3, ?4)
              ON CONFLICT (meeting_id, tag_id) DO NOTHING",
             application.meeting_id,
@@ -39,7 +43,7 @@ impl MeetingTagRepo for SqliteTagRepo {
         )
         .execute(self.database.writer())
         .await?;
-        Ok(())
+        Ok(result.rows_affected() > 0)
     }
 
     async fn remove_tag(&self, meeting: &MeetingId, tag: &TagId) -> Result<bool, DbError> {
@@ -65,6 +69,13 @@ impl MeetingTagRepo for SqliteTagRepo {
             .fetch_all(self.database.reader())
             .await?;
         Ok(meetings)
+    }
+
+    async fn links(&self) -> Result<Vec<MeetingTagLink>, DbError> {
+        let links = sqlx::query_file_as!(MeetingTagLink, "src/tags/queries/links.sql")
+            .fetch_all(self.database.reader())
+            .await?;
+        Ok(links)
     }
 }
 

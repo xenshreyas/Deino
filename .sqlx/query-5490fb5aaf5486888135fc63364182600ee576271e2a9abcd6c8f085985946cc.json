@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT text FROM transcript_segments\n             WHERE meeting_id = ?1 AND is_deleted = 0\n             ORDER BY start_ms, id\n             LIMIT ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "text",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5490fb5aaf5486888135fc63364182600ee576271e2a9abcd6c8f085985946cc"
+}

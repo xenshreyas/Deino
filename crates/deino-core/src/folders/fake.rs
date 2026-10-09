@@ -1,5 +1,6 @@
 //! An in-memory store for the folder ports.
 
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
@@ -7,28 +8,45 @@ use chrono::{DateTime, Utc};
 use deino_db::DbError;
 use deino_domain::{FolderId, MeetingId};
 
-use super::{Folder, FolderMove, FolderRepo, MeetingFolderRepo};
+use super::{Folder, FolderMove, FolderRepo, MeetingFacts, MeetingFolderRepo, NewFolderRule};
 use crate::meetings::Meeting;
 use crate::testing::lock;
 
-/// Keeps folders and filings in `Vec`s and honours the [`FolderRepo`] and
-/// [`MeetingFolderRepo`] contracts: orderings, cycle refusal and subtree
-/// deletion. `meetings_in` answers from the meetings given to
-/// [`FakeFolderRepo::with_meetings`], all of them outside the trash.
+/// Keeps folders, filings and rules in `Vec`s and honours the
+/// [`FolderRepo`], [`MeetingFolderRepo`], [`FolderRuleRepo`](super::FolderRuleRepo)
+/// and [`MeetingFactsReader`](super::MeetingFactsReader) contracts:
+/// orderings, cycle refusal, subtree deletion and one rule per match.
+///
+/// It knows only the meetings given to [`FakeFolderRepo::with_meetings`],
+/// all outside the trash and with no series, tags or attendees until
+/// [`FakeFolderRepo::set_facts`] says otherwise. Series rules carry no
+/// series title.
 #[derive(Debug, Default)]
 pub struct FakeFolderRepo {
     folders: Mutex<Vec<Folder>>,
     filed: Mutex<Vec<(MeetingId, FolderId)>>,
     meetings: Vec<Meeting>,
+    pub(super) rules: Mutex<Vec<NewFolderRule>>,
+    pub(super) facts: Mutex<HashMap<MeetingId, MeetingFacts>>,
 }
 
 impl FakeFolderRepo {
-    /// A repository that knows `meetings`, for `meetings_in`.
+    /// A repository that knows `meetings`.
     pub fn with_meetings(meetings: impl IntoIterator<Item = Meeting>) -> Self {
         Self {
             meetings: meetings.into_iter().collect(),
             ..Self::default()
         }
+    }
+
+    /// Sets what a known meeting's series, tags and attendees are.
+    pub fn set_facts(&self, meeting: &MeetingId, facts: MeetingFacts) {
+        lock(&self.facts).insert(meeting.clone(), facts);
+    }
+
+    /// True when the fake knows the meeting.
+    pub(super) fn knows(&self, meeting: &MeetingId) -> bool {
+        self.meetings.iter().any(|known| known.id == *meeting)
     }
 
     /// `folder` and every folder below it.
@@ -121,6 +139,7 @@ impl FolderRepo for FakeFolderRepo {
         let before = folders.len();
         folders.retain(|folder| !doomed.contains(&folder.id));
         lock(&self.filed).retain(|(_, folder)| !doomed.contains(folder));
+        lock(&self.rules).retain(|rule| !doomed.contains(&rule.folder_id));
         Ok(folders.len() < before)
     }
 }
@@ -168,5 +187,28 @@ impl MeetingFolderRepo for FakeFolderRepo {
         let mut found: Vec<Folder> = folders.iter().filter(holds).cloned().collect();
         by_name(&mut found);
         Ok(found)
+    }
+
+    async fn meeting_counts(&self) -> Result<Vec<(FolderId, u32)>, DbError> {
+        let mut counts: HashMap<FolderId, u32> = HashMap::new();
+        for (meeting, folder) in lock(&self.filed).iter() {
+            if self.knows(meeting) {
+                *counts.entry(*folder).or_default() += 1;
+            }
+        }
+        Ok(counts.into_iter().collect())
+    }
+
+    async fn unfiled(&self) -> Result<Vec<Meeting>, DbError> {
+        let filed = lock(&self.filed);
+        let loose = |meeting: &&Meeting| filed.iter().all(|(m, _)| *m != meeting.id);
+        let mut meetings: Vec<Meeting> = self.meetings.iter().filter(loose).cloned().collect();
+        meetings.sort_by(|a, b| (&b.created_at, &b.id).cmp(&(&a.created_at, &a.id)));
+        Ok(meetings)
+    }
+
+    async fn unfiled_count(&self) -> Result<u32, DbError> {
+        let count = self.unfiled().await?.len();
+        Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 }

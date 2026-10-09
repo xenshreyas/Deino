@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM folder_rules WHERE folder_id = ?1 AND series_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "907dbacac511e18395674007fcbc45891ea99c04251fcacd300a65327acd5739"
+}

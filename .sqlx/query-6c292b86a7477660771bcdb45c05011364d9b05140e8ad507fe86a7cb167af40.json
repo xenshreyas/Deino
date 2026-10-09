@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "-- How many meetings outside the trash each folder holds; folders holding\n-- none are absent. Groups over idx_meeting_folders_folder_id (asserted in\n-- folder_tests.rs).\nSELECT\n    mf.folder_id AS \"folder_id: FolderId\",\n    count(*) AS \"meetings!: i64\"\nFROM meeting_folders AS mf\nJOIN meetings AS m ON m.id = mf.meeting_id\nWHERE m.deleted_at IS NULL\nGROUP BY mf.folder_id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "folder_id: FolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meetings!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "6c292b86a7477660771bcdb45c05011364d9b05140e8ad507fe86a7cb167af40"
+}

@@ -118,6 +118,48 @@ async fn tagging_round_trip(repo: &(impl TagRepo + MeetingTagRepo)) {
     assert!(repo.tags_of(&older.id).await.unwrap().is_empty());
 }
 
+/// Applying reports whether the tag is new; links list every application.
+async fn links_list_every_application_once(repo: &(impl TagRepo + MeetingTagRepo)) {
+    let planning = tag("Planning");
+    repo.create_tag(&planning).await.unwrap();
+    let [older, newer] = meetings();
+
+    let first = repo
+        .apply_tag(&application(&newer, &planning, TagSource::Ai))
+        .await;
+    let again = repo
+        .apply_tag(&application(&newer, &planning, TagSource::User))
+        .await;
+    repo.apply_tag(&application(&older, &planning, TagSource::User))
+        .await
+        .unwrap();
+
+    assert!(first.unwrap());
+    assert!(!again.unwrap());
+    let links = repo.links().await.unwrap();
+    let pairs: Vec<(&str, TagSource)> = links
+        .iter()
+        .map(|link| (link.meeting_id.as_str(), link.applied_by))
+        .collect();
+    assert_eq!(
+        pairs,
+        [
+            (older.id.as_str(), TagSource::User),
+            (newer.id.as_str(), TagSource::Ai)
+        ]
+    );
+}
+
+#[tokio::test]
+async fn sqlite_links_list_every_application_once() {
+    links_list_every_application_once(&sqlite_repo().await).await;
+}
+
+#[tokio::test]
+async fn fake_links_list_every_application_once() {
+    links_list_every_application_once(&FakeTagRepo::with_meetings(meetings())).await;
+}
+
 #[tokio::test]
 async fn sqlite_tags_round_trip() {
     tags_round_trip(&sqlite_repo().await).await;

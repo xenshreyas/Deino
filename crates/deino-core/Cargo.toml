@@ -27,7 +27,8 @@ log.workspace = true
 # Reasoning-envelope cleanup of model output and template title patterns
 # (NOT-04 auto rules); already in the tree through the app.
 regex = "1.12.3"
-# Schemas for structured LLM answers (the template classifier); deino-llm's version.
+# Schemas for structured LLM answers (the template classifier, the
+# auto-tagger); deino-llm's version.
 schemars = "1.2.1"
 serde.workspace = true
 serde_json.workspace = true

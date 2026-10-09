@@ -81,16 +81,24 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
         json!({ "meetingId": "meeting-1", "stage": null }),
     );
 
-    assert_eq!(
-        stages,
-        Ok(json!(["diarize", "legacy_summary"].map(|stage| json!({
+    let pending = |stage: &str| {
+        json!({
             "stage": stage,
             "status": "pending",
             "attempts": 0,
             "retryAt": null,
             "message": null,
             "updatedAt": NOW,
-        }))))
+        })
+    };
+    assert_eq!(
+        stages,
+        Ok(json!([
+            pending("diarize"),
+            pending("legacy_summary"),
+            pending("auto_tag"),
+            pending("auto_folder")
+        ]))
     );
 }
 

@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A folder's (?1) auto-add rules in the order they were added, each series\n-- rule with the title of its series' latest meeting outside the trash.\n-- Served by idx_folder_rules_folder_id, and the title by\n-- idx_meetings_series_id (asserted in rule_repo_tests.rs).\nSELECT\n    r.id AS \"id: FolderRuleId\",\n    r.folder_id AS \"folder_id: FolderId\",\n    r.kind AS \"kind: FolderRuleKind\",\n    r.series_id AS \"series_id: SeriesId\",\n    r.tag_id AS \"tag_id: TagId\",\n    r.domain,\n    r.created_at AS \"created_at: DateTime<Utc>\",\n    (\n        SELECT m.title FROM meetings AS m\n        WHERE m.series_id = r.series_id AND m.deleted_at IS NULL\n        ORDER BY m.created_at DESC, m.id DESC\n        LIMIT 1\n    ) AS \"series_title?: String\"\nFROM folder_rules AS r\nWHERE r.folder_id = ?1\nORDER BY r.created_at, r.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: FolderRuleId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "folder_id: FolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind: FolderRuleKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "tag_id: TagId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_title?: String",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "954b7e4a756b8db1dbf4c6e0d7ff2d54ffafcd031327e4a1fde8b922b8441d01"
+}

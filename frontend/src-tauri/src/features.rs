@@ -21,6 +21,7 @@ pub mod db;
 pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
+pub mod folders;
 pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
@@ -33,6 +34,7 @@ pub mod profile;
 pub mod secrets;
 pub mod settings;
 pub mod system;
+pub mod tags;
 pub mod templates;
 pub mod transcription;
 
@@ -55,6 +57,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (templates::NAME, templates::specta()),
         (transcription::NAME, transcription::specta()),
         (system::NAME, system::specta()),
+        (folders::NAME, folders::specta()),
+        (tags::NAME, tags::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

@@ -7,12 +7,14 @@
 use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
+use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
+use deino_core::tags::AutoTagger;
 use deino_domain::{Clock, StageId};
 
-use crate::stages::{DiarizeStage, LegacySummaryStage, Summarizer};
+use crate::stages::{AutoFolderStage, AutoTagStage, DiarizeStage, LegacySummaryStage, Summarizer};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -35,6 +37,10 @@ pub struct StagePorts {
     pub diarizer: Arc<dyn TrackDiarizer>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
+    /// The auto-tagger (ORG-06).
+    pub auto_tagger: Arc<dyn AutoTagger>,
+    /// The auto-filer (ORG-05).
+    pub auto_filer: Arc<dyn AutoFiler>,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -58,6 +64,8 @@ impl StagePorts {
             speakers: segments,
             diarizer: Arc::new(FakeTrackDiarizer::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
+            auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
+            auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
         }
     }
 }
@@ -69,6 +77,10 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(DiarizeStage::new(ports)),
         // 50 · until NOT-02's enhance_notes replaces it.
         Arc::new(LegacySummaryStage::new(ports)),
+        // 70 · ORG-06.
+        Arc::new(AutoTagStage::new(ports)),
+        // 75 · ORG-05.
+        Arc::new(AutoFolderStage::new(ports)),
     ])
 }
 
@@ -134,20 +146,16 @@ mod tests {
     use super::*;
     use crate::testing::{FakeStage, job};
 
-    fn ports() -> StagePorts {
-        StagePorts::fakes()
-    }
-
     #[test]
     fn registered_stages_are_sorted_and_uniquely_named() {
-        let stages = stages(&ports());
+        let stages = stages(&StagePorts::fakes());
 
         let orders: Vec<u16> = stages.iter().map(|stage| stage.order()).collect();
         assert!(orders.is_sorted(), "{orders:?}");
         assert_eq!(Registry::new(stages.clone()).stages().len(), stages.len());
         assert_eq!(
             Registry::new(stages).ids(),
-            [StageId::new("diarize"), StageId::new("legacy_summary")]
+            ["diarize", "legacy_summary", "auto_tag", "auto_folder"].map(StageId::new)
         );
     }
 

@@ -1,33 +1,51 @@
 //! An in-memory store for the tag ports.
 
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
 use deino_db::DbError;
 use deino_domain::{MeetingId, TagId};
 
-use super::{AppliedTag, MeetingTagRepo, Tag, TagApplication, TagRepo};
+use super::{AppliedTag, MeetingTagLink, MeetingTagRepo, Tag, TagApplication, TagRepo};
 use crate::meetings::Meeting;
 use crate::testing::lock;
 
-/// Keeps tags and applications in `Vec`s and honours the [`TagRepo`] and
-/// [`MeetingTagRepo`] contracts: case-insensitive names, first applier kept,
-/// orderings. `meetings_tagged` answers from the meetings given to
-/// [`FakeTagRepo::with_meetings`], all of them outside the trash.
+/// Keeps tags and applications in `Vec`s and honours the [`TagRepo`],
+/// [`MeetingTagRepo`] and [`MeetingDigestReader`](super::MeetingDigestReader)
+/// contracts: case-insensitive names, first applier kept, orderings.
+///
+/// It knows only the meetings given to [`FakeTagRepo::with_meetings`], all
+/// outside the trash, with no summary or transcript until
+/// [`FakeTagRepo::set_summary`] and [`FakeTagRepo::set_transcript`] add
+/// them. Unlike SQLite's foreign keys, it does not refuse tags on unknown
+/// meetings.
 #[derive(Debug, Default)]
 pub struct FakeTagRepo {
     tags: Mutex<Vec<Tag>>,
     applied: Mutex<Vec<TagApplication>>,
-    meetings: Vec<Meeting>,
+    pub(super) meetings: Vec<Meeting>,
+    pub(super) summaries: Mutex<HashMap<MeetingId, String>>,
+    pub(super) transcripts: Mutex<HashMap<MeetingId, String>>,
 }
 
 impl FakeTagRepo {
-    /// A repository that knows `meetings`, for `meetings_tagged`.
+    /// A repository that knows `meetings`.
     pub fn with_meetings(meetings: impl IntoIterator<Item = Meeting>) -> Self {
         Self {
             meetings: meetings.into_iter().collect(),
             ..Self::default()
         }
+    }
+
+    /// Gives a known meeting a finished summary.
+    pub fn set_summary(&self, meeting: &MeetingId, summary: &str) {
+        lock(&self.summaries).insert(meeting.clone(), summary.to_owned());
+    }
+
+    /// Gives a known meeting a transcript.
+    pub fn set_transcript(&self, meeting: &MeetingId, transcript: &str) {
+        lock(&self.transcripts).insert(meeting.clone(), transcript.to_owned());
     }
 }
 
@@ -73,7 +91,7 @@ impl TagRepo for FakeTagRepo {
 
 #[async_trait]
 impl MeetingTagRepo for FakeTagRepo {
-    async fn apply_tag(&self, application: &TagApplication) -> Result<(), DbError> {
+    async fn apply_tag(&self, application: &TagApplication) -> Result<bool, DbError> {
         let mut applied = lock(&self.applied);
         let exists = applied.iter().any(|stored| {
             stored.meeting_id == application.meeting_id && stored.tag_id == application.tag_id
@@ -81,7 +99,7 @@ impl MeetingTagRepo for FakeTagRepo {
         if !exists {
             applied.push(application.clone());
         }
-        Ok(())
+        Ok(!exists)
     }
 
     async fn remove_tag(&self, meeting: &MeetingId, tag: &TagId) -> Result<bool, DbError> {
@@ -117,5 +135,18 @@ impl MeetingTagRepo for FakeTagRepo {
         let mut meetings: Vec<Meeting> = self.meetings.iter().filter(tagged).cloned().collect();
         meetings.sort_by(|a, b| (&b.created_at, &b.id).cmp(&(&a.created_at, &a.id)));
         Ok(meetings)
+    }
+
+    async fn links(&self) -> Result<Vec<MeetingTagLink>, DbError> {
+        let mut links: Vec<MeetingTagLink> = lock(&self.applied)
+            .iter()
+            .map(|application| MeetingTagLink {
+                meeting_id: application.meeting_id.clone(),
+                tag_id: application.tag_id,
+                applied_by: application.applied_by,
+            })
+            .collect();
+        links.sort_by(|a, b| (&a.meeting_id, a.tag_id).cmp(&(&b.meeting_id, b.tag_id)));
+        Ok(links)
     }
 }

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT count(*) AS \"count!: i64\" FROM meetings AS m\n               WHERE m.deleted_at IS NULL\n                 AND NOT EXISTS (SELECT 1 FROM meeting_folders AS mf WHERE mf.meeting_id = m.id)",
+  "describe": {
+    "columns": [
+      {
+        "name": "count!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e68d333dcdd1d487afd0bc0ed9799fbd89d662bbeb24484cffd028af3e258b75"
+}

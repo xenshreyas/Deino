@@ -28,27 +28,26 @@ mod llm;
 mod network;
 mod notepad;
 mod notes;
+mod organize;
+mod pipeline;
 mod stt;
 
 use std::sync::Arc;
 
 pub(crate) use detection::attach_detection;
 use notes::{NoteDeps, NoteServices};
+pub(crate) use organize::Organize;
+use pipeline::attach_pipeline;
+#[cfg(test)]
+use pipeline::{Pipeline, PipelineAdapters};
 pub(crate) use stt::attach_stt;
 
-use deino_core::diarization::TrackDiarizer;
-use deino_core::meetings::{MeetingLifecycleService, MeetingService, SqliteMeetingRepo};
-use deino_core::people::SqlitePeopleRepo;
-use deino_core::segments::SqliteSegmentRepo;
+use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
-use deino_pipeline::{
-    ClockSleeper, PipelineDeps, PipelineService, PipelineTrigger, ProgressSink, SqliteJobRepo,
-    StagePorts, Summarizer, registry,
-};
 use deino_secrets::{KeychainSecretStore, SecretStore};
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -119,70 +118,6 @@ impl Services {
     }
 }
 
-/// What the pipeline gets from the app: where progress goes, the legacy
-/// summary service behind the `legacy_summary` stage, and the diarization
-/// engine behind `diarize`.
-pub(crate) struct PipelineAdapters {
-    pub(crate) progress: Arc<dyn ProgressSink>,
-    pub(crate) summaries: Arc<dyn Summarizer>,
-    pub(crate) diarizer: Arc<dyn TrackDiarizer>,
-}
-
-/// The meetings lifecycle and the post-meeting pipeline it starts (FND-08).
-pub(crate) struct Pipeline {
-    lifecycle: Arc<MeetingLifecycleService>,
-    pipeline: Arc<PipelineService>,
-}
-
-impl Pipeline {
-    /// Builds the pipeline over `database` with the registered stages, and
-    /// subscribes it to the lifecycle so `processing` meetings enqueue.
-    pub(crate) fn build(
-        database: &Database,
-        clock: &Arc<dyn Clock>,
-        adapters: PipelineAdapters,
-    ) -> Self {
-        let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
-        let lifecycle = Arc::new(MeetingLifecycleService::new(
-            meetings.clone(),
-            Arc::clone(clock),
-        ));
-        let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
-        let ports = StagePorts {
-            segments: segments.clone(),
-            meetings: meetings.clone(),
-            summaries: adapters.summaries,
-            attendees: Arc::new(SqlitePeopleRepo::new(database.clone())),
-            segment_writer: segments.clone(),
-            speakers: segments,
-            diarizer: adapters.diarizer,
-            clock: Arc::clone(clock),
-        };
-        let pipeline = Arc::new(PipelineService::new(PipelineDeps {
-            jobs: Arc::new(SqliteJobRepo::new(database.clone())),
-            stages: registry::stages(&ports),
-            lifecycle: Arc::clone(&lifecycle),
-            meetings,
-            clock: Arc::clone(clock),
-            sleeper: Arc::new(ClockSleeper::new(Arc::clone(clock))),
-            progress: adapters.progress,
-        }));
-        lifecycle.subscribe(Arc::new(PipelineTrigger::new(&pipeline)));
-        Self {
-            lifecycle,
-            pipeline,
-        }
-    }
-
-    /// Starts the runner (reconciling the queue in the background) and
-    /// registers the lifecycle service and the pipeline as Tauri state.
-    pub(crate) fn start_and_manage<R: Runtime>(self, app: &impl Manager<R>) {
-        self.pipeline.start();
-        app.manage(self.lifecycle);
-        app.manage(self.pipeline);
-    }
-}
-
 /// Wires a newly opened database into the app: the legacy `AppState`, every
 /// feature service, the pipeline and the `DbChanged` bridge to the UI.
 ///
@@ -196,6 +131,9 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
+    let organize = Organize::build(&database, &clock, tag_events);
+    organize.manage(app);
     notepad::attach_notepad(app, &database, &clock);
     network::attach_network_log(app, &database);
     #[cfg(debug_assertions)]
@@ -209,6 +147,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         return;
     };
     let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
+    let auto_tagger = organize.auto_tagger(gateway.clone(), Arc::clone(&settings));
     let deps = NoteDeps {
         settings,
         gateway,
@@ -216,7 +155,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     // Templates are seeded before the pipeline starts: its summary stage reads them.
     attach_notes(app, &database, deps).await;
-    attach_pipeline(app, &database, &clock);
+    attach_pipeline(app, &database, &clock, auto_tagger);
 }
 
 /// Wires templates and the profile (`notes.rs`) and prepares them.
@@ -227,32 +166,6 @@ async fn attach_notes(app: &AppHandle, database: &Database, deps: NoteDeps) {
         .map(|paths| paths.legacy_templates());
     notes.prepare(legacy_templates.as_deref()).await;
     notes.manage(app);
-}
-
-/// Builds the pipeline with the app's adapters, starts it and manages it.
-/// Needs the settings ([`attach_settings`] runs first), which name the
-/// summary model the `legacy_summary` stage uses.
-fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
-    let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
-        return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
-    };
-    let diarizer = match diarize::track_diarizer(app) {
-        Ok(diarizer) => diarizer,
-        Err(error) => {
-            return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");
-        }
-    };
-    let adapters = PipelineAdapters {
-        diarizer,
-        progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
-        summaries: Arc::new(features::pipeline::LegacySummarizer::new(
-            app.clone(),
-            database.writer().clone(),
-            Arc::clone(&settings),
-            Arc::clone(clock),
-        )),
-    };
-    Pipeline::build(database, clock, adapters).start_and_manage(app);
 }
 
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
@@ -283,6 +196,7 @@ pub(crate) async fn attach_example(app: &AppHandle) -> Result<(), deino_db::DbEr
 
 #[cfg(test)]
 mod tests {
+    use deino_core::segments::SqliteSegmentRepo;
     use deino_testkit::{FakeClock, at, seed, test_db};
 
     use super::*;
@@ -344,16 +258,18 @@ mod tests {
     async fn stopping_a_recording_runs_the_summary_stage_and_readies_the_meeting() {
         use deino_core::meetings::MeetingLifecycleRepo;
         use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
-        use deino_pipeline::{RecordedProgress, RecordedSummaries};
+        use deino_pipeline::{RecordedAutoTags, RecordedProgress, RecordedSummaries};
 
         let database = test_db().await;
         let fake_clock = Arc::new(FakeClock::new(at("2026-10-08T10:00:00Z")));
         recording_with_transcript(&database, &fake_clock).await;
         let summaries = Arc::new(RecordedSummaries::default());
+        let auto_tags = Arc::new(RecordedAutoTags::default());
         let adapters = PipelineAdapters {
             progress: Arc::new(RecordedProgress::default()),
             summaries: summaries.clone(),
             diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
+            auto_tagger: auto_tags.clone(),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);
@@ -370,6 +286,7 @@ mod tests {
         let requests = summaries.requests();
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].transcript, "[00:02] let's ship it");
+        assert_eq!(auto_tags.meetings(), std::slice::from_ref(&meeting));
         let state = SqliteMeetingRepo::new(database).state(&meeting).await;
         assert_eq!(state.unwrap().unwrap().status, MeetingStatus::Ready);
     }

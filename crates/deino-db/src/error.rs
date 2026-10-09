@@ -39,6 +39,28 @@ impl DbError {
         };
         primary_code(source).is_some_and(|code| code == SQLITE_CORRUPT || code == SQLITE_NOTADB)
     }
+
+    /// True when a query broke a `UNIQUE` or primary-key constraint, for
+    /// example a second folder with a sibling's name. Services turn it into
+    /// a `conflict` the user can fix.
+    pub fn is_unique_violation(&self) -> bool {
+        self.database_error()
+            .is_some_and(|error| error.kind() == sqlx::error::ErrorKind::UniqueViolation)
+    }
+
+    /// True when a query referenced a row that does not exist (a foreign key
+    /// to a deleted folder or tag, for example).
+    pub fn is_foreign_key_violation(&self) -> bool {
+        self.database_error()
+            .is_some_and(|error| error.kind() == sqlx::error::ErrorKind::ForeignKeyViolation)
+    }
+
+    fn database_error(&self) -> Option<&dyn sqlx::error::DatabaseError> {
+        match self {
+            Self::Query(error) => error.as_database_error(),
+            _ => None,
+        }
+    }
 }
 
 /// The primary SQLite result code of a database error (the low byte of an
@@ -51,5 +73,52 @@ fn primary_code(error: &sqlx::Error) -> Option<i32> {
 impl ErrorClass for DbError {
     fn code(&self) -> ErrorCode {
         ErrorCode::Internal
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::test_db;
+
+    const TAG: &str = "INSERT INTO tags (id, name, color, created_at, updated_at)
+        VALUES (?1, 'Sales', 1, '2026-10-09T00:00:00Z', '2026-10-09T00:00:00Z')";
+    const TAG_ID: &str = "0199f000-0000-7000-8000-000000000001";
+
+    #[tokio::test]
+    async fn a_duplicate_name_is_a_unique_violation_and_nothing_else() {
+        let database = test_db().await;
+        sqlx::query(TAG)
+            .bind(TAG_ID)
+            .execute(database.writer())
+            .await
+            .unwrap();
+
+        let duplicate = sqlx::query(TAG)
+            .bind("0199f000-0000-7000-8000-000000000002")
+            .execute(database.writer())
+            .await
+            .map_err(super::DbError::from)
+            .unwrap_err();
+
+        assert!(duplicate.is_unique_violation());
+        assert!(!duplicate.is_foreign_key_violation());
+    }
+
+    #[tokio::test]
+    async fn a_missing_parent_row_is_a_foreign_key_violation() {
+        let database = test_db().await;
+
+        let orphan = sqlx::query(
+            "INSERT INTO meeting_tags (meeting_id, tag_id, applied_by, applied_at)
+             VALUES ('meeting-x', ?1, 'user', '2026-10-09T00:00:00Z')",
+        )
+        .bind(TAG_ID)
+        .execute(database.writer())
+        .await
+        .map_err(super::DbError::from)
+        .unwrap_err();
+
+        assert!(orphan.is_foreign_key_violation());
+        assert!(!orphan.is_unique_violation());
     }
 }

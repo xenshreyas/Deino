@@ -40,6 +40,8 @@ pub enum Table {
     Folders,
     /// Which meetings sit in which folders.
     MeetingFolders,
+    /// Folders' auto-add rules (ORG-05).
+    FolderRules,
     /// Tags.
     Tags,
     /// Which tags are applied to which meetings.
@@ -65,7 +67,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 23] = [
+    pub const ALL: [Self; 24] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -79,6 +81,7 @@ impl Table {
         Self::CalendarEvents,
         Self::Folders,
         Self::MeetingFolders,
+        Self::FolderRules,
         Self::Tags,
         Self::MeetingTags,
         Self::ActionItems,
@@ -110,6 +113,7 @@ impl Table {
             "calendar_events" => Self::CalendarEvents,
             "folders" => Self::Folders,
             "meeting_folders" => Self::MeetingFolders,
+            "folder_rules" => Self::FolderRules,
             "tags" => Self::Tags,
             "meeting_tags" => Self::MeetingTags,
             "action_items" => Self::ActionItems,
