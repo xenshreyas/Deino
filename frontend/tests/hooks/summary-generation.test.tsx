@@ -5,10 +5,8 @@ import { parseSummaryContent } from '../../src/lib/summary-content';
 import type { MeetingSummary, SummaryProcessResponse } from '../../src/types';
 
 // Bun shares module mocks between test files; restore application modules after this suite.
-const originalPreferences = { ...await import('../../src/lib/summary-language-preferences') };
 const originalToast = { ...await import('sonner') };
 afterAll(() => {
-  mock.module('../../src/lib/summary-language-preferences', () => originalPreferences);
   mock.module('sonner', () => originalToast);
 });
 
@@ -28,11 +26,6 @@ const invoke = mock(async (command: string, args?: Record<string, unknown>): Pro
   throw new Error(`Unexpected command: ${command}`);
 });
 mock.module('@tauri-apps/api/core', () => ({ invoke }));
-mock.module('../../src/lib/summary-language-preferences', () => ({
-  readCachedDetectedSummaryLanguage: async () => null,
-  detectAndCacheSummaryLanguage: async () => ({ language: 'en' }),
-  readMeetingSummaryLanguage: async () => ({ language: 'en', storage: 'metadata' }),
-}));
 const { SidebarProvider, useSidebar } = await import('../../src/components/Sidebar/SidebarProvider');
 const { useSummaryGeneration } = await import('../../src/hooks/meeting-details/useSummaryGeneration');
 

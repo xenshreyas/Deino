@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { applyPinnedSummaryLanguageToMeeting } from '@/lib/summary-language-preferences';
-import { toast } from 'sonner';
 
 export interface AudioFileInfo {
   path: string;
@@ -48,7 +46,6 @@ export interface UseImportAudioReturn {
   startImport: (
     sourcePath: string,
     title: string,
-    language?: string | null,
     model?: string | null,
     provider?: string | null
   ) => Promise<void>;
@@ -103,14 +100,6 @@ export function useImportAudio({
 
           setStatus('complete');
           setProgress(null);
-          try {
-            await applyPinnedSummaryLanguageToMeeting(event.payload.meeting_id);
-          } catch (error) {
-            console.warn('Failed to apply pinned summary language to imported meeting:', error);
-            toast.warning('Could not apply default summary language', {
-              description: 'The imported meeting was saved, but the default summary language was not applied.',
-            });
-          }
           onCompleteRef.current?.(event.payload);
         }
       );
@@ -197,7 +186,6 @@ export function useImportAudio({
     async (
       sourcePath: string,
       title: string,
-      language?: string | null,
       model?: string | null,
       provider?: string | null
     ) => {
@@ -210,7 +198,6 @@ export function useImportAudio({
         await invoke('start_import_audio_command', {
           sourcePath,
           title,
-          language: language || null,
           model: model || null,
           provider: provider || null,
         });

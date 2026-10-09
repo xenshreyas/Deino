@@ -256,7 +256,6 @@ pub async fn start_import<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportResult> {
@@ -271,7 +270,6 @@ pub async fn start_import<R: Runtime>(
         app.clone(),
         source_path,
         title,
-        language,
         model,
         provider,
     )
@@ -313,7 +311,6 @@ async fn run_import<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportResult> {
@@ -325,8 +322,8 @@ async fn run_import<R: Runtime>(
     }
 
     info!(
-        "Starting import for '{}' from {} with language {:?}, model {:?}, provider {:?}",
-        title, source_path, language, model, provider
+        "Starting import for '{}' from {} with model {:?}, provider {:?}",
+        title, source_path, model, provider
     );
 
     // Determine which provider to use (default to whisper)
@@ -590,7 +587,7 @@ async fn run_import<R: Runtime>(
         } else {
             let engine = whisper_engine.as_ref().unwrap();
             let (text, conf, _) = engine
-                .transcribe_audio_with_confidence(segment.samples.clone(), language.clone())
+                .transcribe_audio_with_confidence(segment.samples.clone())
                 .await
                 .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))?;
             (text, conf)
@@ -966,7 +963,6 @@ pub async fn start_import_audio_command<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportStarted, String> {
@@ -977,7 +973,7 @@ pub async fn start_import_audio_command<R: Runtime>(
 
     // Spawn import in background
     tauri::async_runtime::spawn(async move {
-        let result = start_import(app, source_path, title, language, model, provider).await;
+        let result = start_import(app, source_path, title, model, provider).await;
 
         if let Err(e) = result {
             error!("Import failed: {}", e);

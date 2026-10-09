@@ -17,7 +17,7 @@
 
 export interface BetaFeatures {
   /**
-   * Import audio files and retranscribe existing meetings with different language settings
+   * Import audio files and retranscribe existing meetings with a different transcription model
    * @since v0.3.0
    */
   importAndRetranscribe: boolean;
@@ -39,7 +39,7 @@ export const BETA_FEATURE_NAMES: Record<keyof BetaFeatures, string> = {
  * Feature descriptions for UI tooltips/help text
  */
 export const BETA_FEATURE_DESCRIPTIONS: Record<keyof BetaFeatures, string> = {
-  importAndRetranscribe: 'Import audio files to transcribe or retranscribe existing meetings with different language settings.',
+  importAndRetranscribe: 'Import audio files to transcribe or retranscribe existing meetings with a different transcription model.',
 };
 
 /**

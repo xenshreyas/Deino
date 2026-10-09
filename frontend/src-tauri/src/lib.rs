@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex as StdMutex;
 // Removed unused import
 
 // Performance optimization: Conditional logging macros for hot paths
@@ -123,10 +122,6 @@ mod onnx_runtime_tests {
         assert!(error.contains("synthetic loader panic"));
     }
 }
-
-// Global language preference storage (default to "auto-translate" for automatic translation to English)
-static LANGUAGE_PREFERENCE: std::sync::LazyLock<StdMutex<String>> =
-    std::sync::LazyLock::new(|| StdMutex::new("auto-translate".to_string()));
 
 #[derive(Debug, Deserialize)]
 struct RecordingArgs {
@@ -430,21 +425,6 @@ async fn start_recording_with_devices_and_meeting<R: Runtime>(
     }
 }
 
-#[tauri::command]
-async fn set_language_preference(language: String) -> Result<(), String> {
-    let mut lang_pref = LANGUAGE_PREFERENCE
-        .lock()
-        .map_err(|e| format!("Failed to set language preference: {}", e))?;
-    log_info!("Setting language preference to: {}", language);
-    *lang_pref = language;
-    Ok(())
-}
-
-// Internal helper function to get language preference (for use within Rust code)
-pub fn get_language_preference_internal() -> Option<String> {
-    LANGUAGE_PREFERENCE.lock().ok().map(|lang| lang.clone())
-}
-
 pub fn run() {
     log::set_max_level(log::LevelFilter::Info);
 
@@ -720,11 +700,6 @@ pub fn run() {
             summary::commands::api_process_transcript,
             summary::commands::api_get_summary,
             summary::commands::api_save_meeting_summary,
-            summary::commands::api_get_meeting_summary_language,
-            summary::commands::api_save_meeting_summary_language,
-            summary::commands::api_get_meeting_detected_summary_language,
-            summary::commands::api_save_meeting_detected_summary_language,
-            summary::commands::api_detect_transcript_summary_language,
             summary::commands::api_cancel_summary,
             // Template commands
             summary::template_commands::api_list_templates,
@@ -749,8 +724,6 @@ pub fn run() {
             audio::recording_preferences::get_current_audio_backend,
             audio::recording_preferences::set_audio_backend,
             audio::recording_preferences::get_audio_backend_info,
-            // Language preference commands
-            set_language_preference,
             // Notification system commands
             notifications::commands::get_notification_settings,
             notifications::commands::set_notification_settings,

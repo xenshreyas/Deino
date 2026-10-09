@@ -55,10 +55,6 @@ interface ConfigContextType {
   selectedDevices: SelectedDevices;
   setSelectedDevices: (devices: SelectedDevices) => void;
 
-  // Language preference
-  selectedLanguage: string;
-  setSelectedLanguage: (lang: string) => void;
-
   // UI preferences
   showConfidenceIndicator: boolean;
   toggleConfidenceIndicator: (checked: boolean) => void;
@@ -137,15 +133,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     systemDevice: null
   });
 
-  // Language preference state
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('primaryLanguage');
-      return saved || 'auto';
-    }
-    return 'auto';
-  });
-
   // UI preferences state
   const [showConfidenceIndicator, setShowConfidenceIndicator] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -210,19 +197,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     };
     loadTranscriptConfig();
   }, []);
-
-  // Sync language preference to Rust on mount (fixes startup desync bug)
-  useEffect(() => {
-    if (selectedLanguage) {
-      invoke('set_language_preference', { language: selectedLanguage })
-        .then(() => {
-          console.log('[ConfigContext] Synced language preference to Rust on startup:', selectedLanguage);
-        })
-        .catch(err => {
-          console.error('[ConfigContext] Failed to sync language preference to Rust on startup:', err);
-        });
-    }
-  }, []); 
 
   // Load model configuration on mount
   useEffect(() => {
@@ -466,18 +440,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Wrapper for setSelectedLanguage that persists to localStorage and syncs to Rust
-  const handleSetSelectedLanguage = useCallback((lang: string) => {
-    setSelectedLanguage(lang);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('primaryLanguage', lang);
-    }
-    // Sync with Rust in-memory state for live recording
-    invoke('set_language_preference', { language: lang }).catch(err =>
-      console.error('Failed to sync language preference to Rust:', err)
-    );
-  }, []);
-
   const value: ConfigContextType = useMemo(() => ({
     modelConfig,
     setModelConfig,
@@ -490,8 +452,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setTranscriptModelConfig,
     selectedDevices,
     setSelectedDevices,
-    selectedLanguage,
-    setSelectedLanguage: handleSetSelectedLanguage,
     showConfidenceIndicator,
     toggleConfidenceIndicator,
     betaFeatures,
@@ -513,8 +473,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     updateProviderApiKey,
     transcriptModelConfig,
     selectedDevices,
-    selectedLanguage,
-    handleSetSelectedLanguage,
     showConfidenceIndicator,
     toggleConfidenceIndicator,
     betaFeatures,
