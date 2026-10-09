@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { Speaker, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 
 interface AudioOutputInfo {
   device_name: string;
@@ -63,17 +63,17 @@ export function BluetoothPlaybackWarning({
 
   return (
     <Alert
-      className="mb-4 border-yellow-500 bg-yellow-50 text-yellow-900"
+      className="mb-4 border-warning bg-warning-soft text-warning-text"
       role="alert"
       aria-live="polite"
     >
-      <Speaker className="h-4 w-4 text-yellow-600" />
+      <Speaker className="h-4 w-4 text-warning" />
       <div className="flex items-start justify-between w-full">
         <div className="flex-1">
-          <AlertTitle className="text-yellow-900 font-semibold">
+          <AlertTitle className="text-warning-text font-semibold">
             Bluetooth Playback Detected
           </AlertTitle>
-          <AlertDescription className="text-yellow-800 mt-1">
+          <AlertDescription className="text-warning-text mt-1">
             You're using <strong>{deviceName}</strong> for playback.
             Recordings may sound distorted or sped up through Bluetooth devices.
             For accurate review, please use <strong>computer speakers</strong> or{' '}
@@ -84,7 +84,7 @@ export function BluetoothPlaybackWarning({
           variant="ghost"
           size="icon"
           onClick={() => setIsDismissed(true)}
-          className="ml-4 h-6 w-6 text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100"
+          className="ml-4 h-6 w-6 text-warning hover:text-warning-text hover:bg-warning-soft"
           aria-label="Dismiss warning"
         >
           <X className="h-4 w-4" />

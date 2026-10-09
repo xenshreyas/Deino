@@ -1,0 +1,54 @@
+/**
+ * The meeting page's slot registry (PARITY_PLAN §4.6, FND-10).
+ *
+ * Feature cards fill the meeting page by editing this file only: replace a
+ * placeholder's `Component`, or add a tab or panel section. The page renders
+ * the tabs in order, the right-panel sections as its tabs, and the player at
+ * the bottom.
+ *
+ * | Slot | Today | Filled by |
+ * |---|---|---|
+ * | Notes tab | legacy summary editor | NOT-01, NOT-02 |
+ * | Transcript tab | legacy transcript | TRN-01 |
+ * | Insights tab | empty state | AI-06 |
+ * | Clips tab | empty state | TRN-04 |
+ * | Chat panel | empty state | AI-02 |
+ * | Participants panel | empty state | CAP-04, ORG-04 |
+ * | Details panel | created and edited dates | ORG-03 and later |
+ * | Player | resting bar | TRN-03 |
+ */
+import type { ComponentType } from 'react';
+
+import { meetingCopy } from './copy';
+import { DetailsPanelSlot } from './slots/details-panel';
+import { NotesSlot, TranscriptSlot } from './slots/legacy-slots';
+import {
+  ChatPanelSlot,
+  ClipsSlot,
+  InsightsSlot,
+  ParticipantsPanelSlot,
+} from './slots/placeholder-slots';
+import { PlayerPlaceholder } from './slots/player-slot';
+import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
+
+/** The tabs, in order. */
+export const MEETING_TABS: readonly MeetingTabSlot[] = [
+  { id: 'notes', label: meetingCopy.notes, shortcut: '⌘1', Component: NotesSlot },
+  { id: 'transcript', label: meetingCopy.transcript, shortcut: '⌘2', Component: TranscriptSlot },
+  { id: 'insights', label: meetingCopy.insights, shortcut: '⌘3', Component: InsightsSlot },
+  { id: 'clips', label: meetingCopy.clips, shortcut: '⌘4', Component: ClipsSlot },
+];
+
+/** The right panel's sections, in order. */
+export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
+  { id: 'chat', label: meetingCopy.chat, Component: ChatPanelSlot },
+  {
+    id: 'participants',
+    label: meetingCopy.participants,
+    Component: ParticipantsPanelSlot,
+  },
+  { id: 'details', label: meetingCopy.details, Component: DetailsPanelSlot },
+];
+
+/** The bottom player. */
+export const MEETING_PLAYER: ComponentType<MeetingSlotProps> = PlayerPlaceholder;

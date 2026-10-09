@@ -7,15 +7,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
+} from '@/ui/dialog';
+import { Button } from '@/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
+} from '@/ui/select';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
@@ -244,17 +244,17 @@ export function RetranscribeDialog({
           <DialogTitle className="flex items-center gap-2">
             {isProcessing ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
                 Retranscribing...
               </>
             ) : error ? (
               <>
-                <AlertCircle className="h-5 w-5 text-red-600" />
+                <AlertCircle className="h-5 w-5 text-danger" />
                 Retranscription Failed
               </>
             ) : (
               <>
-                <RefreshCw className="h-5 w-5 text-blue-600" />
+                <RefreshCw className="h-5 w-5 text-accent" />
                 Retranscribe Meeting
               </>
             )}
@@ -272,7 +272,7 @@ export function RetranscribeDialog({
           {!isProcessing && !error && availableModels.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-muted-foreground" />
+                <Cpu className="h-4 w-4 text-fg-muted" />
                 <span className="text-sm font-medium">Model</span>
               </div>
               <Select value={selectedModelKey} onValueChange={setSelectedModelKey} disabled={loadingModels}>
@@ -287,7 +287,7 @@ export function RetranscribeDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-fg-muted">
                 Choose a transcription model
               </p>
             </div>
@@ -296,26 +296,26 @@ export function RetranscribeDialog({
           {isProcessing && progress && (
             <div className="space-y-2">
               <div className="relative">
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-bg-muted rounded-full h-3">
                   <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
+                    className="bg-fg h-3 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.min(progress.progress_percentage, 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
+                <div className="flex justify-between text-xs text-fg-muted mt-1">
                   <span>{progress.stage}</span>
                   <span>{Math.round(progress.progress_percentage)}%</span>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-fg-muted text-center">
                 {progress.message}
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-danger-soft border border-danger/30 rounded-lg p-3">
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
         </div>
@@ -323,12 +323,12 @@ export function RetranscribeDialog({
         <DialogFooter>
           {!isProcessing && !error && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button variant="secondary" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button
                 onClick={handleStartRetranscription}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-fg hover:bg-fg"
                 disabled={!meetingFolderPath}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -337,14 +337,14 @@ export function RetranscribeDialog({
             </>
           )}
           {isProcessing && (
-            <Button variant="outline" onClick={handleCancel}>
+            <Button variant="secondary" onClick={handleCancel}>
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
           )}
           {error && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button variant="secondary" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
               <Button
@@ -352,7 +352,7 @@ export function RetranscribeDialog({
                   setError(null);
                   setProgress(null);
                 }}
-                variant="outline"
+                variant="secondary"
               >
                 Try Again
               </Button>

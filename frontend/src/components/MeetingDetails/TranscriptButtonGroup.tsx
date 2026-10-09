@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
+import { Button } from '@/ui/button';
+import { ButtonGroup } from '@/ui/button-group';
 import { Copy, FolderOpen, RefreshCw } from 'lucide-react';
 import { RetranscribeDialog } from './RetranscribeDialog';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -35,10 +35,10 @@ export function TranscriptButtonGroup({
   }, [onRefetchTranscripts]);
 
   return (
-    <div className="flex items-center justify-center w-full gap-2">
+    <div className="flex items-center justify-end w-full gap-1">
       <ButtonGroup>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="px-2 @[22rem]:px-3"
           onClick={() => {
@@ -53,28 +53,28 @@ export function TranscriptButtonGroup({
 
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           className="px-2 @[22rem]:px-4"
           onClick={() => {
             onOpenMeetingFolder();
           }}
           title="Open Recording Folder"
         >
-          <FolderOpen className="@[22rem]:mr-2" size={18} />
+          <FolderOpen className="@[22rem]:mr-2" size={16} />
           <span className="hidden @[22rem]:inline">Recording</span>
         </Button>
 
         {betaFeatures.importAndRetranscribe && meetingId && meetingFolderPath && (
           <Button
             size="sm"
-            variant="outline"
-            className="bg-linear-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200 px-2 @[22rem]:px-4"
+            variant="ghost"
+            className="px-2 @[22rem]:px-4"
             onClick={() => {
               setShowRetranscribeDialog(true);
             }}
             title="Retranscribe to enhance your recorded audio"
           >
-            <RefreshCw className="@[22rem]:mr-2" size={18} />
+            <RefreshCw className="@[22rem]:mr-2" size={16} />
             <span className="hidden @[22rem]:inline">Enhance</span>
           </Button>
         )}

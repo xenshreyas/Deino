@@ -1,0 +1,142 @@
+/*
+  BlockNote bridge: the summary editor (frozen until NOT-01 moves to TipTap)
+  reads shadcn's HSL-triplet variables (`hsl(var(--background))`) and its own
+  `--bn-*` variables. Both are derived from tokens.css here, scoped to the
+  editor, so it follows the app theme instead of BlockNote's `theme` prop.
+
+  The triplets are the token hexes converted to HSL; keep them in step with
+  tokens.css (`--bg`, `--fg`, `--surface`, `--surface-raised`, `--bg-muted`,
+  `--fg-muted`, `--border`, `--danger`, `--focus-ring`).
+*/
+
+:root .bn-container[data-color-scheme] {
+  --background: 60 20% 98%;
+  --foreground: 60 5.1% 11.6%;
+  --card: 0 0% 100%;
+  --card-foreground: 60 5.1% 11.6%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 60 5.1% 11.6%;
+  --primary: 60 5.1% 11.6%;
+  --primary-foreground: 60 20% 98%;
+  --secondary: 60 10% 92.2%;
+  --secondary-foreground: 60 5.1% 11.6%;
+  --muted: 60 10% 92.2%;
+  --muted-foreground: 60 3.1% 38.4%;
+  --accent: 60 10% 92.2%;
+  --accent-foreground: 60 5.1% 11.6%;
+  --destructive: 4 63.3% 47.1%;
+  --destructive-foreground: 60 20% 98%;
+  --border: 60 9.1% 89.2%;
+  --input: 60 9.1% 89.2%;
+  --ring: 150 40.1% 30.8%;
+  --radius: 8px;
+
+  --bn-colors-editor-text: var(--fg);
+  --bn-colors-editor-background: transparent;
+  --bn-colors-menu-text: var(--fg);
+  --bn-colors-menu-background: var(--surface-raised);
+  --bn-colors-tooltip-text: var(--fg);
+  --bn-colors-tooltip-background: var(--surface-raised);
+  --bn-colors-hovered-text: var(--fg);
+  --bn-colors-hovered-background: var(--bg-muted);
+  --bn-colors-selected-text: var(--accent-fg);
+  --bn-colors-selected-background: var(--accent);
+  --bn-colors-disabled-text: var(--fg-subtle);
+  --bn-colors-disabled-background: var(--bg-muted);
+  --bn-colors-shadow: var(--border);
+  --bn-colors-border: var(--border);
+  --bn-colors-side-menu: var(--fg-subtle);
+  --bn-font-family: inherit;
+  --bn-border-radius: 6px;
+  --bn-border-radius-large: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .bn-container[data-color-scheme] {
+    --background: 60 4% 9.8%;
+    --foreground: 60 10% 92.2%;
+    --card: 60 3.2% 12.2%;
+    --card-foreground: 60 10% 92.2%;
+    --popover: 60 3.7% 15.9%;
+    --popover-foreground: 60 10% 92.2%;
+    --primary: 60 10% 92.2%;
+    --primary-foreground: 60 4% 9.8%;
+    --secondary: 60 4.2% 13.9%;
+    --secondary-foreground: 60 10% 92.2%;
+    --muted: 60 4.2% 13.9%;
+    --muted-foreground: 60 3.8% 63.7%;
+    --accent: 60 4.2% 13.9%;
+    --accent-foreground: 60 10% 92.2%;
+    --destructive: 5 83.7% 68.6%;
+    --destructive-foreground: 60 4% 9.8%;
+    --border: 60 4.5% 17.3%;
+    --input: 60 4.5% 17.3%;
+    --ring: 145 37.2% 62.5%;
+  }
+}
+
+:root[data-theme='dark'] .bn-container[data-color-scheme] {
+  --background: 60 4% 9.8%;
+  --foreground: 60 10% 92.2%;
+  --card: 60 3.2% 12.2%;
+  --card-foreground: 60 10% 92.2%;
+  --popover: 60 3.7% 15.9%;
+  --popover-foreground: 60 10% 92.2%;
+  --primary: 60 10% 92.2%;
+  --primary-foreground: 60 4% 9.8%;
+  --secondary: 60 4.2% 13.9%;
+  --secondary-foreground: 60 10% 92.2%;
+  --muted: 60 4.2% 13.9%;
+  --muted-foreground: 60 3.8% 63.7%;
+  --accent: 60 4.2% 13.9%;
+  --accent-foreground: 60 10% 92.2%;
+  --destructive: 5 83.7% 68.6%;
+  --destructive-foreground: 60 4% 9.8%;
+  --border: 60 4.5% 17.3%;
+  --input: 60 4.5% 17.3%;
+  --ring: 145 37.2% 62.5%;
+}
+
+/* Full-width editor: the meeting page's 720px column sets the measure. */
+.bn-container,
+.bn-editor,
+.bn-default-styles,
+.bn-block-outer {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* The page scrolls, not the editor. */
+.bn-container,
+.bn-editor,
+.ProseMirror,
+[data-node-type] {
+  overflow: visible !important;
+}
+
+/* Note typography: 16/26 body, small bold section heads (ui.md §2.4). */
+:root .bn-container .bn-editor {
+  padding-inline: 0 !important;
+  background: transparent;
+  color: var(--user-text);
+  font-size: 1rem;
+  line-height: 1.625rem;
+}
+
+/* Headings stay on the four-step scale: h1 16/600, h2 and below 14/600 muted. */
+:root .bn-editor [data-content-type='heading'] {
+  --level: 1rem;
+  --prev-level: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.011em;
+}
+
+:root .bn-editor [data-content-type='heading']:not([data-level='1']) {
+  --level: 0.875rem;
+  --prev-level: 0.875rem;
+  color: var(--fg-muted);
+}
+
+:root .bn-editor .bn-block-outer:has(> .bn-block > [data-content-type='heading']) {
+  padding-top: 0.75rem;
+}

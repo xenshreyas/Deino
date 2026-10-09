@@ -1,0 +1,356 @@
+/*
+  Deino design tokens: docs/references/ui.md §2 is the source of truth.
+
+  Components use the semantic names below through Tailwind utilities
+  (`bg-bg-subtle`, `text-fg-muted`, `border-border`, `shadow-popover`, ...),
+  never raw colours; ESLint rejects palette classes and hex values in
+  `className`.
+
+  Theme selection (features/appearance):
+  - no `data-theme` on <html>: follow the system (`prefers-color-scheme`);
+  - `data-theme="light"` or `data-theme="dark"`: the user's explicit choice.
+  Any element may also carry `data-theme` to render its subtree in one theme
+  (the theme picker's previews and the /design page do this).
+
+  The dark values appear twice, once for "System while the OS is dark" and
+  once for an explicit dark choice, because a media query cannot share a rule
+  with a plain selector. `tokens.test.ts` fails if the two copies drift, and
+  checks every text pair against WCAG AA.
+*/
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #fbfbf9;
+  --bg-subtle: #f5f5f2;
+  --bg-muted: #edede9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+
+  /* Text */
+  --fg: #1f1f1c;
+  --fg-muted: #65655f;
+  --fg-subtle: #8c8c85;
+  --ai-text: #6b6b65;
+  --user-text: #1f1f1c;
+
+  /* Lines */
+  --border: #e6e6e1;
+  --border-strong: #d3d3cc;
+
+  /* Accent: live, mine, focused */
+  --accent: #2f6e4e;
+  --accent-fg: #ffffff;
+  --accent-soft: #e4efe8;
+  --focus-ring: #2f6e4e;
+  --selection: #d4e6da;
+  --highlight: #fff3b0;
+
+  /* Status */
+  --recording: #e5484d;
+  --danger: #c4362c;
+  --danger-soft: #fbe9e7;
+  --warning: #b25a00;
+  --warning-soft: #fbeedc;
+  --warning-text: #8a4500;
+  --success: #2b7a4b;
+
+  /* Scrim */
+  --overlay: rgb(20 20 18 / 0.32);
+
+  /* Component surfaces that differ by more than a token swap (ui.md §3). */
+  --control-bg: #ffffff;
+  --control-border: #e6e6e1;
+  --switch-thumb: #ffffff;
+
+  /* Speakers and tags */
+  --speaker-1: #2f5fb3;
+  --speaker-2: #7048b8;
+  --speaker-3: #1b6f6f;
+  --speaker-4: #a8551a;
+  --speaker-5: #b03a75;
+  --speaker-6: #6b6a1f;
+
+  /* Shadows: floating layers only */
+  --shadow-xs: 0 1px 2px rgb(31 31 28 / 0.06);
+  --shadow-popover:
+    0 0 0 0.5px rgb(31 31 28 / 0.1), 0 4px 12px -2px rgb(31 31 28 / 0.08),
+    0 12px 32px -8px rgb(31 31 28 / 0.12);
+  --shadow-dialog: 0 0 0 0.5px rgb(31 31 28 / 0.1), 0 24px 64px -12px rgb(31 31 28 / 0.24);
+  --shadow-chatbar: 0 0 0 0.5px rgb(31 31 28 / 0.08), 0 6px 20px rgb(31 31 28 / 0.08);
+  --shadow-pill: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 8px 24px -6px rgb(0 0 0 / 0.2);
+
+  /* Motion */
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 160ms;
+  --dur-slow: 200ms;
+  --dur-pill: 240ms;
+
+  /* Layers */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-sidebar: 20;
+  --z-header: 30;
+  --z-chatbar: 40;
+  --z-popover: 50;
+  --z-overlay: 60;
+  --z-dialog: 70;
+  --z-palette: 80;
+  --z-toast: 90;
+  --z-tooltip: 100;
+
+  /* Layout */
+  --titlebar-height: 44px;
+  --sidebar-width: 232px;
+  --right-panel-width: 320px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #1a1a18;
+    --bg-subtle: #151513;
+    --bg-muted: #252522;
+    --surface: #20201e;
+    --surface-raised: #2a2a27;
+
+    --fg: #edede9;
+    --fg-muted: #a6a69f;
+    --fg-subtle: #77776f;
+    --ai-text: #9e9e97;
+    --user-text: #edede9;
+
+    --border: #2e2e2a;
+    --border-strong: #3e3e39;
+
+    --accent: #7cc39a;
+    --accent-fg: #0e1a13;
+    --accent-soft: #20352a;
+    --focus-ring: #7cc39a;
+    --selection: #2b4a38;
+    --highlight: #4d4413;
+
+    --recording: #f2555a;
+    --danger: #f2786c;
+    --danger-soft: #3a1f1c;
+    --warning: #f0a04b;
+    --warning-soft: #3a2a17;
+    --warning-text: #f0a04b;
+    --success: #6bcb8f;
+
+    --overlay: rgb(0 0 0 / 0.6);
+
+    --control-bg: #252522;
+    --control-border: #3e3e39;
+    --switch-thumb: #edede9;
+
+    --speaker-1: #8fb2f0;
+    --speaker-2: #b9a0ee;
+    --speaker-3: #6cc6c2;
+    --speaker-4: #e9a06a;
+    --speaker-5: #e98fbe;
+    --speaker-6: #c4c26a;
+
+    --shadow-xs: 0 0 0 1px rgb(255 255 255 / 0.04);
+    --shadow-popover: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 8px 24px -4px rgb(0 0 0 / 0.5);
+    --shadow-dialog: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 24px 64px -12px rgb(0 0 0 / 0.7);
+    --shadow-chatbar: 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.45);
+    --shadow-pill: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 8px 24px -6px rgb(0 0 0 / 0.6);
+  }
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #1a1a18;
+  --bg-subtle: #151513;
+  --bg-muted: #252522;
+  --surface: #20201e;
+  --surface-raised: #2a2a27;
+
+  --fg: #edede9;
+  --fg-muted: #a6a69f;
+  --fg-subtle: #77776f;
+  --ai-text: #9e9e97;
+  --user-text: #edede9;
+
+  --border: #2e2e2a;
+  --border-strong: #3e3e39;
+
+  --accent: #7cc39a;
+  --accent-fg: #0e1a13;
+  --accent-soft: #20352a;
+  --focus-ring: #7cc39a;
+  --selection: #2b4a38;
+  --highlight: #4d4413;
+
+  --recording: #f2555a;
+  --danger: #f2786c;
+  --danger-soft: #3a1f1c;
+  --warning: #f0a04b;
+  --warning-soft: #3a2a17;
+  --warning-text: #f0a04b;
+  --success: #6bcb8f;
+
+  --overlay: rgb(0 0 0 / 0.6);
+
+  --control-bg: #252522;
+  --control-border: #3e3e39;
+  --switch-thumb: #edede9;
+
+  --speaker-1: #8fb2f0;
+  --speaker-2: #b9a0ee;
+  --speaker-3: #6cc6c2;
+  --speaker-4: #e9a06a;
+  --speaker-5: #e98fbe;
+  --speaker-6: #c4c26a;
+
+  --shadow-xs: 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-popover: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 8px 24px -4px rgb(0 0 0 / 0.5);
+  --shadow-dialog: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 24px 64px -12px rgb(0 0 0 / 0.7);
+  --shadow-chatbar: 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.45);
+  --shadow-pill: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 8px 24px -6px rgb(0 0 0 / 0.6);
+}
+
+/* Reduced motion: every transition becomes a short fade (ui.md §2.7). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: var(--dur-instant);
+    --dur-base: var(--dur-instant);
+    --dur-slow: var(--dur-instant);
+    --dur-pill: var(--dur-instant);
+  }
+}
+
+/*
+  Tailwind v4 utilities over the tokens. `inline` makes each utility read the
+  variable at use time, so a theme switch needs no rebuild.
+*/
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-muted: var(--bg-muted);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-ai-text: var(--ai-text);
+  --color-user-text: var(--user-text);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-focus-ring: var(--focus-ring);
+  --color-selection: var(--selection);
+  --color-highlight: var(--highlight);
+  --color-recording: var(--recording);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
+  --color-success: var(--success);
+  --color-overlay: var(--overlay);
+  --color-control: var(--control-bg);
+  --color-control-border: var(--control-border);
+  --color-switch-thumb: var(--switch-thumb);
+  --color-speaker-1: var(--speaker-1);
+  --color-speaker-2: var(--speaker-2);
+  --color-speaker-3: var(--speaker-3);
+  --color-speaker-4: var(--speaker-4);
+  --color-speaker-5: var(--speaker-5);
+  --color-speaker-6: var(--speaker-6);
+  /* Text on a solid fill of `--fg` (primary buttons). */
+  --color-on-fg: var(--bg);
+
+  /*
+    Same names as the runtime tokens above: those are unlayered, so they win
+    over the copies Tailwind emits in its theme layer, and `inline` makes each
+    utility read the runtime value.
+  */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-dialog: var(--shadow-dialog);
+  --shadow-chatbar: var(--shadow-chatbar);
+  --shadow-pill: var(--shadow-pill);
+}
+
+/* Static scales: identical in both themes. */
+@theme {
+  --font-sans:
+    'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* One house curve for everything entering; exits use ease-in (ui.md §2.7). */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /*
+    The four-step type scale (12/14/16/24). `lg`, `2xl` and `3xl` alias the
+    nearest step so inherited markup lands on the scale too.
+  */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-sm--letter-spacing: -0.005em;
+  --text-base: 1rem;
+  --text-base--line-height: 1.625rem;
+  --text-base--letter-spacing: -0.011em;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.625rem;
+  --text-lg--letter-spacing: -0.011em;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-xl--letter-spacing: -0.019em;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-2xl--letter-spacing: -0.019em;
+  --text-3xl: 1.5rem;
+  --text-3xl--line-height: 2rem;
+  --text-3xl--letter-spacing: -0.019em;
+
+  /* Two weights (400/600); the in-between names collapse onto them. */
+  --font-weight-normal: 400;
+  --font-weight-medium: 600;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 600;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+
+  --animate-pulse-soft: pulse-soft 1.4s var(--ease-in-out) infinite;
+  --animate-level-bar: level-bar 0.9s var(--ease-in-out) infinite alternate;
+  --animate-record-dot: pulse-soft 1.8s var(--ease-in-out) infinite;
+
+  @keyframes level-bar {
+    from {
+      transform: scaleY(0.35);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+}

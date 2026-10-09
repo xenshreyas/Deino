@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { SidebarProvider } from '@/components/Sidebar/SidebarProvider';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/ui/tooltip';
 import { UpdateCheckProvider } from '@/components/UpdateCheckProvider';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { ImportDialogProvider } from '@/contexts/ImportDialogContext';

@@ -12,7 +12,7 @@ interface NoteListProps {
 /** The saved notes, newest first, with an empty state. Presentational. */
 export function NoteList({ notes, latestId }: NoteListProps) {
   if (notes.length === 0) {
-    return <p className="text-sm text-muted-foreground">{copy.empty}</p>;
+    return <p className="text-sm text-fg-muted">{copy.empty}</p>;
   }
   return (
     <ul className="flex flex-col gap-1">
@@ -21,7 +21,7 @@ export function NoteList({ notes, latestId }: NoteListProps) {
           key={note.id}
           className={cn(
             'rounded-md px-3 py-2 text-sm transition-colors duration-150',
-            note.id === latestId && 'bg-accent text-accent-foreground',
+            note.id === latestId && 'bg-accent-soft text-fg',
           )}
         >
           {note.text}

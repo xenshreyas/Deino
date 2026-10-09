@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { Label } from '@/ui/controls';
 import { ModelManager } from './WhisperModelManager';
 import { ParakeetModelManager } from './ParakeetModelManager';
 
@@ -35,7 +35,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
     return (
         <div className="space-y-4 pb-6">
             <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-fg mb-1">
                     Transcript Model
                 </Label>
                 <div className="flex space-x-2 mx-1">
@@ -43,7 +43,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                         value={uiProvider}
                         onValueChange={(value) => setUiProvider(value as TranscriptProvider)}
                     >
-                        <SelectTrigger className='focus:ring-1 focus:ring-blue-500 focus:border-blue-500'>
+                        <SelectTrigger className='focus:ring-1 focus:ring-focus-ring focus:border-accent'>
                             <SelectValue placeholder="Select provider" />
                         </SelectTrigger>
                         <SelectContent>

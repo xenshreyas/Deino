@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { legacyMeetingSearchSchema } from '@/features/meeting-details/search';
+import { legacyMeetingSearchSchema } from '@/features/meeting/search';
 
 /**
  * `/meeting-details?id=`: the Next.js-era meeting URL, kept so old links keep

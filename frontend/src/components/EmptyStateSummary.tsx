@@ -1,13 +1,12 @@
-import { motion } from 'framer-motion';
-import { FileQuestion, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+/**
+ * The Notes tab before a summary exists: the house empty state with one
+ * action (generate), the last error inline, and a hint when no model is set.
+ */
+import { Button } from '@/ui/button';
+import { EmptyState } from '@/ui/empty-state';
+import { ICON_PROPS, Sparkles } from '@/ui/icons';
 
+/** Props of {@link EmptyStateSummary}. */
 interface EmptyStateSummaryProps {
   onGenerate: () => void;
   hasModel: boolean;
@@ -15,6 +14,13 @@ interface EmptyStateSummaryProps {
   error?: string | null;
 }
 
+/** The label of the one action, which changes after a failure. */
+function actionLabel(isGenerating: boolean, error: string | null): string {
+  if (isGenerating) return 'Generating…';
+  return error === null ? 'Generate notes' : 'Retry summary';
+}
+
+/** "No notes yet" with Generate, the error and the model hint. */
 export function EmptyStateSummary({
   onGenerate,
   hasModel,
@@ -22,53 +28,27 @@ export function EmptyStateSummary({
   error = null,
 }: EmptyStateSummaryProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="flex flex-col items-center justify-center h-full p-8 text-center"
-    >
-      <FileQuestion className="w-16 h-16 text-gray-300 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        No Summary Generated Yet
-      </h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-md">
-        Generate an AI-powered summary of your meeting transcript to get key points, action items, and decisions.
-      </p>
-
-      {error && (
-        <p role="alert" className="mb-4 max-w-md rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+    <div className="flex flex-col items-center pb-12">
+      <EmptyState
+        className="pt-[12vh]"
+        icon={Sparkles}
+        title="No notes yet"
+        description="Deino writes the key points, decisions and action items from the transcript."
+        action={
+          <Button variant="secondary" onClick={onGenerate} disabled={!hasModel || isGenerating}>
+            <Sparkles {...ICON_PROPS} />
+            {actionLabel(isGenerating, error)}
+          </Button>
+        }
+      />
+      {error === null ? null : (
+        <p role="alert" className="mt-4 max-w-md rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div>
-              <Button
-                onClick={onGenerate}
-                disabled={!hasModel || isGenerating}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                {isGenerating ? 'Generating...' : error ? 'Retry summary' : 'Generate Summary'}
-              </Button>
-            </div>
-          </TooltipTrigger>
-          {!hasModel && (
-            <TooltipContent>
-              <p>Please select a model in Settings first</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
-
-      {!hasModel && (
-        <p className="text-xs text-amber-600 mt-3">
-          Please select a model in Settings first
-        </p>
+      {hasModel ? null : (
+        <p className="mt-3 text-xs text-warning-text">Choose a summary model in Settings first.</p>
       )}
-    </motion.div>
+    </div>
   );
 }

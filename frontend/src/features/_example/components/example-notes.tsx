@@ -31,7 +31,7 @@ export function ExampleNotes() {
         }}
       />
       {notes.isPending ? (
-        <p className="text-sm text-muted-foreground">{copy.loading}</p>
+        <p className="text-sm text-fg-muted">{copy.loading}</p>
       ) : (
         <NoteList notes={notes.data ?? []} latestId={latestId} />
       )}

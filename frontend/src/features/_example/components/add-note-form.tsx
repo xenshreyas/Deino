@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
 import { ICON_PROPS, Plus } from '@/ui/icons';
 
 import { copy } from '../copy';
@@ -45,7 +45,7 @@ export function AddNoteForm({ saving, error, onAdd }: AddNoteFormProps) {
         </Button>
       </div>
       {error !== undefined && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

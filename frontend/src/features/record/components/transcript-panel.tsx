@@ -1,103 +1,74 @@
-import { VirtualizedTranscriptView } from '@/components/VirtualizedTranscriptView';
-import { PermissionWarning } from '@/components/PermissionWarning';
-import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
-import { Copy } from 'lucide-react';
-import { useTranscripts } from '@/contexts/TranscriptContext';
-import { useRecordingState } from '@/contexts/RecordingStateContext';
-import { usePermissionCheck } from '@/hooks/usePermissionCheck';
-import { useIsLinux } from '@/hooks/usePlatform';
+/**
+ * The record screen's live transcript: a copy button, the permission notice
+ * while idle, and the streaming transcript in a 720px column.
+ */
 import { useMemo } from 'react';
 
-/**
- * TranscriptPanel Component
- *
- * Displays transcript content with a copy control.
- * Uses TranscriptContext and RecordingStateContext internally.
- */
+import { PermissionWarning } from '@/components/PermissionWarning';
+import { VirtualizedTranscriptView } from '@/components/VirtualizedTranscriptView';
+import { useRecordingState } from '@/contexts/RecordingStateContext';
+import { useTranscripts } from '@/contexts/TranscriptContext';
+import { usePermissionCheck } from '@/hooks/usePermissionCheck';
+import type { Transcript, TranscriptSegmentData } from '@/types';
+import { useIsLinux } from '@/hooks/usePlatform';
+import { Button } from '@/ui/button';
+import { Copy, ICON_PROPS } from '@/ui/icons';
 
+/** Props of {@link TranscriptPanel}. */
 interface TranscriptPanelProps {
-  // indicates stop-processing state for transcripts; derived from backend statuses.
+  /** The transcript is being finalised after Stop. */
   isProcessingStop: boolean;
   isStopping: boolean;
 }
 
-export function TranscriptPanel({
-  isProcessingStop,
-  isStopping,
-}: TranscriptPanelProps) {
-  // Contexts
+/** A live transcript line as the transcript view's segment. */
+function toSegment(transcript: Transcript): TranscriptSegmentData {
+  return {
+    id: transcript.id,
+    timestamp: transcript.audio_start_time ?? 0,
+    text: transcript.text,
+    ...(transcript.audio_end_time === undefined ? {} : { endTime: transcript.audio_end_time }),
+    ...(transcript.confidence === undefined ? {} : { confidence: transcript.confidence }),
+  };
+}
+
+/** The live transcript; reads the transcript and recording contexts. */
+export function TranscriptPanel({ isProcessingStop, isStopping }: TranscriptPanelProps) {
   const { transcripts, transcriptContainerRef, copyTranscript } = useTranscripts();
   const { isRecording, isPaused } = useRecordingState();
   const { checkPermissions, isChecking, hasSystemAudio, hasMicrophone } = usePermissionCheck();
   const isLinux = useIsLinux();
 
-  // Convert transcripts to segments for virtualized view
-  const segments = useMemo(() =>
-    transcripts.map(t => ({
-      id: t.id,
-      timestamp: t.audio_start_time ?? 0,
-      endTime: t.audio_end_time,
-      text: t.text,
-      confidence: t.confidence,
-    })),
-    [transcripts]
-  );
+  const segments = useMemo(() => transcripts.map(toSegment), [transcripts]);
 
   return (
-    <div ref={transcriptContainerRef} className="w-full border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
-      {/* Title area - Sticky header */}
-      <div className="sticky top-0 z-10 bg-white p-4 border-gray-200">
-        <div className="flex flex-col space-y-3">
-          <div className="flex  flex-col space-y-2">
-            <div className="flex justify-center  items-center space-x-2">
-              <ButtonGroup>
-                {transcripts?.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={copyTranscript}
-                    title="Copy Transcript"
-                  >
-                    <Copy />
-                    <span className='hidden md:inline'>
-                      Copy
-                    </span>
-                  </Button>
-                )}
-              </ButtonGroup>
-            </div>
-          </div>
+    <div ref={transcriptContainerRef} className="flex w-full flex-col overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-[720px] flex-col px-6 pb-28">
+        <div className="flex h-10 items-center justify-end">
+          {transcripts.length > 0 ? (
+            <Button variant="ghost" size="sm" onClick={copyTranscript}>
+              <Copy {...ICON_PROPS} />
+              Copy
+            </Button>
+          ) : null}
         </div>
-      </div>
-
-      {/* Permission Warning - Not needed on Linux */}
-      {!isRecording && !isChecking && !isLinux && (
-        <div className="flex justify-center px-4 pt-4">
+        {!isRecording && !isChecking && !isLinux ? (
           <PermissionWarning
             hasMicrophone={hasMicrophone}
             hasSystemAudio={hasSystemAudio}
-            onRecheck={checkPermissions}
+            onRecheck={() => void checkPermissions()}
             isRechecking={isChecking}
           />
-        </div>
-      )}
-
-      {/* Transcript content */}
-      <div className="pb-20">
-        <div className="flex justify-center">
-          <div className="w-2/3 max-w-[750px]">
-            <VirtualizedTranscriptView
-              segments={segments}
-              isRecording={isRecording}
-              isPaused={isPaused}
-              isProcessing={isProcessingStop}
-              isStopping={isStopping}
-              enableStreaming={isRecording}
-              showConfidence={true}
-            />
-          </div>
-        </div>
+        ) : null}
+        <VirtualizedTranscriptView
+          segments={segments}
+          isRecording={isRecording}
+          isPaused={isPaused}
+          isProcessing={isProcessingStop}
+          isStopping={isStopping}
+          enableStreaming={isRecording}
+          showConfidence
+        />
       </div>
     </div>
   );

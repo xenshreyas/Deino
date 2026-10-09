@@ -1,0 +1,31 @@
+/**
+ * URL search parameters of the meeting routes, validated with zod.
+ *
+ * Unknown or malformed values fall back to "absent" instead of failing the
+ * route, because the URLs come from the app itself and from old bookmarks.
+ */
+import { z } from 'zod';
+
+/** Where a meeting was opened from. Only a fresh recording changes behaviour. */
+export const meetingSourceSchema = z.literal('recording');
+
+/** Origin of a navigation to a meeting. */
+export type MeetingSource = z.infer<typeof meetingSourceSchema>;
+
+/** The meeting page's tabs, in order (the slots registry renders them). */
+export const meetingTabSchema = z.enum(['notes', 'transcript', 'insights', 'clips']);
+
+/** One of the meeting page's tabs. */
+export type MeetingTabId = z.infer<typeof meetingTabSchema>;
+
+/** `/meetings/$meetingId?source=recording&tab=transcript` */
+export const meetingSearchSchema = z.object({
+  source: meetingSourceSchema.optional().catch(undefined),
+  tab: meetingTabSchema.optional().catch(undefined),
+});
+
+/** The pre-Vite `/meeting-details?id=<id>&source=<source>` URL, kept as a redirect. */
+export const legacyMeetingSearchSchema = z.object({
+  source: meetingSourceSchema.optional().catch(undefined),
+  id: z.string().min(1).optional().catch(undefined),
+});

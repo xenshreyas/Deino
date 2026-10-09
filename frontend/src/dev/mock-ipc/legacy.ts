@@ -30,6 +30,8 @@ const STATIC_RESPONSES: Record<string, unknown> = {
   check_first_launch: false,
   is_recording: false,
   get_recording_state: { is_recording: false, is_paused: false, is_active: false },
+  // The Tauri window API the appearance feature calls; a browser has no window to theme.
+  'plugin:window|set_theme': null,
   get_recording_meeting_name: null,
   get_transcript_history: [],
   get_transcription_status: { chunks_in_queue: 0, is_processing: false, last_activity_ms: 0 },

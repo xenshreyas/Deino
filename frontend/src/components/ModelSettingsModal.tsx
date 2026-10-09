@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { useOllamaDownload } from '@/contexts/OllamaDownloadContext';
 import { BuiltInModelManager } from '@/components/BuiltInModelManager';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/controls';
 import { useConfig } from '@/contexts/ConfigContext';
 import {
   ApiKeyStatus,
@@ -19,11 +19,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from '@/ui/select';
+import { Alert, AlertDescription } from '@/ui/alert';
+import { ScrollArea } from '@/ui/scroll-area';
 import { Lock, Unlock, Eye, EyeOff, RefreshCw, CheckCircle2, XCircle, ChevronDown, ChevronUp, Download, ExternalLink, Check, ChevronsUpDown } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -31,7 +31,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@/ui/command';
 import { cn, isOllamaNotInstalledError } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -756,7 +756,7 @@ export function ModelSettingsModal({
               <Popover open={modelComboboxOpen} onOpenChange={setModelComboboxOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     role="combobox"
                     aria-expanded={modelComboboxOpen}
                     className="flex-1 max-w-[200px] justify-between font-normal"
@@ -775,7 +775,7 @@ export function ModelSettingsModal({
                        (modelConfig.provider === 'openai' && isLoadingOpenAI) ||
                        (modelConfig.provider === 'claude' && isLoadingClaude) ||
                        (modelConfig.provider === 'groq' && isLoadingGroq) ? (
-                        <div className="py-6 text-center text-sm text-muted-foreground">
+                        <div className="py-6 text-center text-sm text-fg-muted">
                           <RefreshCw className="mx-auto h-4 w-4 animate-spin mb-2" />
                           Loading models...
                         </div>
@@ -824,7 +824,7 @@ export function ModelSettingsModal({
                 placeholder="http://localhost:8000/v1"
                 className="mt-1"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-fg-muted mt-1">
                 Base URL of the OpenAI-compatible API
               </p>
             </div>
@@ -838,7 +838,7 @@ export function ModelSettingsModal({
                 placeholder="gpt-4, llama-3-70b, etc."
                 className="mt-1"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-fg-muted mt-1">
                 Model identifier to use for requests
               </p>
             </div>
@@ -864,9 +864,9 @@ export function ModelSettingsModal({
               >
                 <Label className="cursor-pointer">Advanced Options</Label>
                 {isCustomOpenAIAdvancedOpen ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  <ChevronUp className="h-4 w-4 text-fg-muted" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-fg-muted" />
                 )}
               </div>
 
@@ -918,7 +918,7 @@ export function ModelSettingsModal({
             {/* Test Connection Button */}
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={testCustomOpenAIConnection}
               disabled={isTestingConnection || !customOpenAIEndpoint.trim() || !customOpenAIModel.trim()}
@@ -954,7 +954,7 @@ export function ModelSettingsModal({
               {isApiKeyLocked && apiKey?.trim() && (
                 <div
                   onClick={handleInputClick}
-                  className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-md cursor-not-allowed"
+                  className="absolute inset-0 flex items-center justify-center bg-bg-muted/50 rounded-md cursor-not-allowed"
                 />
               )}
               <div className="absolute inset-y-0 right-0 pr-1 flex items-center space-x-1">
@@ -964,7 +964,7 @@ export function ModelSettingsModal({
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsApiKeyLocked(!isApiKeyLocked)}
-                    className={isLockButtonVibrating ? 'animate-vibrate text-red-500' : ''}
+                    className={isLockButtonVibrating ? 'animate-vibrate text-danger' : ''}
                     title={isApiKeyLocked ? 'Unlock to edit' : 'Lock to prevent editing'}
                   >
                     {isApiKeyLocked ? <Lock /> : <Unlock />}
@@ -992,15 +992,15 @@ export function ModelSettingsModal({
             >
               <Label className="cursor-pointer">Custom Endpoint (optional)</Label>
               {isEndpointSectionCollapsed ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-fg-muted" />
               ) : (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                <ChevronUp className="h-4 w-4 text-fg-muted" />
               )}
             </div>
 
             {!isEndpointSectionCollapsed && (
               <>
-                <p className="text-sm text-muted-foreground mt-1 mb-2">
+                <p className="text-sm text-fg-muted mt-1 mb-2">
                   Leave empty or enter a custom endpoint (e.g., http://x.yy.zz:11434)
                 </p>
                 <div className="flex gap-2 mt-1">
@@ -1019,14 +1019,14 @@ export function ModelSettingsModal({
                       placeholder="http://localhost:11434"
                       className={cn(
                         "pr-10",
-                        endpointValidationState === 'invalid' && "border-red-500"
+                        endpointValidationState === 'invalid' && "border-danger"
                       )}
                     />
                     {endpointValidationState === 'valid' && (
-                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-success" />
                     )}
                     {endpointValidationState === 'invalid' && (
-                      <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                      <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-danger" />
                     )}
                   </div>
                   <Button
@@ -1034,7 +1034,7 @@ export function ModelSettingsModal({
                     size={'sm'}
                     onClick={() => fetchOllamaModels()}
                     disabled={isLoadingOllama}
-                    variant="outline"
+                    variant="secondary"
                     className="whitespace-nowrap"
                   >
                     {isLoadingOllama ? (
@@ -1051,8 +1051,8 @@ export function ModelSettingsModal({
                   </Button>
                 </div>
                 {ollamaEndpointChanged && !error && (
-                  <Alert className="mt-3 border-yellow-500 bg-yellow-50">
-                    <AlertDescription className="text-yellow-800">
+                  <Alert className="mt-3 border-warning bg-warning-soft">
+                    <AlertDescription className="text-warning-text">
                       Endpoint changed. Please click "Fetch Models" to load models from the new endpoint before saving.
                     </AlertDescription>
                   </Alert>
@@ -1068,8 +1068,8 @@ export function ModelSettingsModal({
               <h4 className="text-sm font-bold">Available Ollama Models</h4>
               {lastFetchedEndpoint && models.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Using:</span>
-                  <code className="px-2 py-1 bg-muted rounded text-xs">
+                  <span className="text-fg-muted">Using:</span>
+                  <code className="px-2 py-1 bg-bg-muted rounded text-xs">
                     {lastFetchedEndpoint || 'http://localhost:11434'}
                   </code>
                 </div>
@@ -1086,7 +1086,7 @@ export function ModelSettingsModal({
               </div>
             )}
             {isLoadingOllama ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-fg-muted">
                 <RefreshCw className="mx-auto h-8 w-8 animate-spin mb-2" />
                 Loading models...
               </div>
@@ -1095,21 +1095,21 @@ export function ModelSettingsModal({
                 {ollamaNotInstalled ? (
                   /* Show Ollama download link when not installed */
                   <div className="space-y-4">
-                    <Alert className="border-orange-500 bg-orange-50">
-                      <AlertDescription className="text-orange-800">
+                    <Alert className="border-warning bg-warning-soft">
+                      <AlertDescription className="text-warning-text">
                         Ollama is not installed or not running. Please download and install Ollama to use local models.
                       </AlertDescription>
                     </Alert>
                     <Button
-                      variant="default"
+                      variant="primary"
                       size="sm"
                       onClick={() => invoke('open_external_url', { url: 'https://ollama.com/download' })}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-fg hover:bg-fg"
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
                       Download Ollama
                     </Button>
-                    <div className="text-sm text-muted-foreground text-center">
+                    <div className="text-sm text-fg-muted text-center">
                       After installing Ollama, restart this application and click "Fetch Models" to continue.
                     </div>
                   </div>
@@ -1126,7 +1126,7 @@ export function ModelSettingsModal({
                     {!ollamaEndpointChanged && (
                       <div className="space-y-3">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={downloadRecommendedModel}
                           disabled={isDownloading('gemma3:1b')}
@@ -1147,16 +1147,16 @@ export function ModelSettingsModal({
 
                         {/* Show progress for gemma3:1b download */}
                         {isDownloading('gemma3:1b') && getProgress('gemma3:1b') !== undefined && (
-                          <div className="bg-white rounded-md border p-3">
+                          <div className="bg-surface rounded-md border p-3">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-blue-600">Downloading gemma3:1b</span>
-                              <span className="text-sm font-semibold text-blue-600">
+                              <span className="text-sm font-medium text-accent">Downloading gemma3:1b</span>
+                              <span className="text-sm font-semibold text-accent">
                                 {Math.round(getProgress('gemma3:1b')!)}%
                               </span>
                             </div>
-                            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-bg-muted rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-linear-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                                className="h-full bg-accent rounded-full transition-all duration-300"
                                 style={{ width: `${getProgress('gemma3:1b')}%` }}
                               />
                             </div>
@@ -1185,10 +1185,10 @@ export function ModelSettingsModal({
                         <div
                           key={model.id}
                           className={cn(
-                            'bg-card p-2 m-0 rounded-md border transition-colors',
+                            'bg-surface p-2 m-0 rounded-md border transition-colors',
                             modelConfig.model === model.name
-                              ? 'ring-1 ring-blue-500 border-blue-500 background-blue-100'
-                              : 'hover:bg-muted/50',
+                              ? 'ring-1 ring-focus-ring border-accent background-blue-100'
+                              : 'hover:bg-bg-muted/50',
                             !modelIsDownloading && 'cursor-pointer'
                           )}
                           onClick={() => {
@@ -1199,20 +1199,20 @@ export function ModelSettingsModal({
                         >
                           <div>
                             <b className="font-bold">{model.name}&nbsp;</b>
-                            <span className="text-muted-foreground">with a size of </span>
+                            <span className="text-fg-muted">with a size of </span>
                             <span className="font-mono font-bold text-sm">{model.size}</span>
                           </div>
 
                           {/* Progress bar for downloading models */}
                           {modelIsDownloading && progress !== undefined && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="mt-3 pt-3 border-t border-border">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-blue-600">Downloading...</span>
-                                <span className="text-sm font-semibold text-blue-600">{Math.round(progress)}%</span>
+                                <span className="text-sm font-medium text-accent">Downloading...</span>
+                                <span className="text-sm font-semibold text-accent">{Math.round(progress)}%</span>
                               </div>
-                              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="w-full h-2 bg-bg-muted rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-linear-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                                  className="h-full bg-accent rounded-full transition-all duration-300"
                                   style={{ width: `${progress}%` }}
                                 />
                               </div>
@@ -1245,8 +1245,8 @@ export function ModelSettingsModal({
       <div className="mt-6 flex justify-end">
         <Button
           className={cn(
-            'px-4 text-sm font-medium text-white rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
-            isDoneDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+            'px-4 text-sm font-medium text-on-fg rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-focus-ring',
+            isDoneDisabled ? 'bg-fg-subtle cursor-not-allowed' : 'bg-fg hover:bg-fg'
           )}
           onClick={handleSave}
           disabled={isDoneDisabled}

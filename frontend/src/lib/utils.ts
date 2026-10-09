@@ -1,9 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+/** Legacy re-export: new code imports `cn` from `@/ui/cn`. */
+export { cn } from "@/ui/cn"
 
 /**
  * Detects if an error message indicates that Ollama is not installed or not running

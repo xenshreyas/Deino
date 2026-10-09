@@ -1,34 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
-import { useRecordingState } from '@/contexts/RecordingStateContext';
 import { meetingKeys, useMeetings, type Meeting } from '@/features/meetings';
 import type { SummaryProcessResponse } from '@/types';
 
 /** Stable empty list, so consumers do not re-render while meetings load. */
 const NO_MEETINGS: Meeting[] = [];
 
-
-
-interface SidebarItem {
-  id: string;
-  title: string;
-  type: 'folder' | 'file';
-  children?: SidebarItem[];
-}
-
 export interface CurrentMeeting {
   id: string;
   title: string;
-}
-
-// Search result type for transcript search
-interface TranscriptSearchResult {
-  id: string;
-  title: string;
-  matchContext: string;
-  timestamp: string;
 }
 
 interface SummaryPoll {
@@ -40,17 +22,10 @@ interface SummaryPoll {
 interface SidebarContextType {
   currentMeeting: CurrentMeeting | null;
   setCurrentMeeting: (meeting: CurrentMeeting | null) => void;
-  sidebarItems: SidebarItem[];
-  isCollapsed: boolean;
-  toggleCollapse: () => void;
   /** Every meeting, newest first, from the `meetings` plugin (kept fresh by DbChanged). */
   meetings: Meeting[];
   isMeetingActive: boolean;
   setIsMeetingActive: (active: boolean) => void;
-  handleRecordingToggle: () => void;
-  searchTranscripts: (query: string) => Promise<void>;
-  searchResults: TranscriptSearchResult[];
-  isSearching: boolean;
   // Summary polling management
   startSummaryPolling: (
     meetingId: string,
@@ -75,38 +50,17 @@ export const useSidebar = () => {
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [currentMeeting, setCurrentMeeting] = useState<CurrentMeeting | null>({ id: 'intro-call', title: '+ New Call' });
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const { data: meetings = NO_MEETINGS } = useMeetings();
   const queryClient = useQueryClient();
   const [isMeetingActive, setIsMeetingActive] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const summaryPollsRef = React.useRef(new Map<string, SummaryPoll>());
 
-  // Use recording state from RecordingStateContext (single source of truth)
-  const { isRecording } = useRecordingState();
-
   const pathname = useLocation({ select: (location) => location.pathname });
-  const navigate = useNavigate();
 
   const refetchMeetings = React.useCallback(
     () => queryClient.invalidateQueries({ queryKey: meetingKeys.all }),
     [queryClient],
   );
-
-  const sidebarItems = React.useMemo<SidebarItem[]>(() => [
-    {
-      id: 'meetings',
-      title: 'Meeting Notes',
-      type: 'folder' as const,
-      children: meetings.map(meeting => ({ id: meeting.id, title: meeting.title, type: 'file' as const })),
-    },
-  ], [meetings]);
-
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   // Update current meeting when on home page
   useEffect(() => {
@@ -114,45 +68,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       setCurrentMeeting({ id: 'intro-call', title: '+ New Call' });
     }
   }, [pathname]);
-
-  // Function to handle recording toggle from sidebar
-  const handleRecordingToggle = () => {
-    if (!isRecording) {
-      // Check if already on home page
-      if (pathname === '/') {
-        // Already on home - trigger recording directly via custom event
-        console.log('Triggering recording from sidebar (already on home page)');
-        window.dispatchEvent(new CustomEvent('start-recording-from-sidebar'));
-      } else {
-        // Not on home - navigate and use auto-start mechanism
-        console.log('Navigating to home page with auto-start flag');
-        sessionStorage.setItem('autoStartRecording', 'true');
-        void navigate({ to: '/' });
-      }
-    }
-    // The actual recording start/stop is handled in the Home component
-  };
-
-  // Function to search through meeting transcripts
-  const searchTranscripts = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-
-
-      const results = await invoke('api_search_transcripts', { query }) as TranscriptSearchResult[];
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Error searching transcripts:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   // Summary polling management
   const stopSummaryPolling = React.useCallback((meetingId: string, processId?: string) => {
@@ -251,22 +166,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     summaryPollsRef.current.clear();
   }, []);
 
-
-
   return (
     <SidebarContext.Provider value={{
       currentMeeting,
       setCurrentMeeting,
-      sidebarItems,
-      isCollapsed,
-      toggleCollapse,
       meetings,
       isMeetingActive,
       setIsMeetingActive,
-      handleRecordingToggle,
-      searchTranscripts,
-      searchResults,
-      isSearching,
       startSummaryPolling,
       stopSummaryPolling,
       refetchMeetings,

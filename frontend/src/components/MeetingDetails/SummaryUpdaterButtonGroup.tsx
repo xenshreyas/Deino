@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
+import { Button } from '@/ui/button';
+import { ButtonGroup } from '@/ui/button-group';
 import { Copy, Save, Loader2 } from 'lucide-react';
 
 interface SummaryUpdaterButtonGroupProps {
@@ -19,9 +19,9 @@ export function SummaryUpdaterButtonGroup({
     <ButtonGroup>
       {/* Save button */}
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
-        className={`${isDirty ? 'bg-green-200' : ""}`}
+        className={isDirty ? "text-accent" : undefined}
         title={isSaving ? "Saving" : "Save Changes"}
         onClick={() => {
           onSave();
@@ -43,7 +43,7 @@ export function SummaryUpdaterButtonGroup({
 
       {/* Copy button */}
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         title="Copy Summary"
         onClick={() => {

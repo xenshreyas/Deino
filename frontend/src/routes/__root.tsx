@@ -1,8 +1,10 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 
 import { AppShell } from '@/features/shell';
 
-export const Route = createRootRoute({ component: RootLayout });
+import type { RouterContext } from '../router';
+
+export const Route = createRootRouteWithContext<RouterContext>()({ component: RootLayout });
 
 /** Every route renders inside the app shell (providers, sidebar, onboarding gate). */
 function RootLayout() {

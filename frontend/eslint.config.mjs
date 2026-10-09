@@ -54,6 +54,37 @@ const FEATURE_INTERNALS_PATTERN = {
   message: 'Import another feature through its index.ts (or search.ts), not its internal files.',
 };
 
+/**
+ * §3B: colours come from the design tokens (`bg-bg-muted`, `text-fg-muted`,
+ * `border-border`, ...), never from Tailwind's palette or hex values, so both
+ * themes always work. Palette utilities are banned in any string (class
+ * names are assembled in `cn()`, `cva()` and helper constants); hex values
+ * are banned in `className` and the class helpers.
+ */
+function colourRestrictions() {
+  const utility =
+    '(bg|text|border|border-[trblxy]|ring|ring-offset|from|to|via|fill|stroke|divide|outline|placeholder|shadow|accent|caret|decoration)';
+  const palette =
+    '(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]{2,3}';
+  const paletteClass = `(^|[\\s:'"\`])${utility}-(${palette}|white|black)(?![\\w-])`;
+  const message =
+    'Use a design token utility (styles/tokens.css: bg-bg-muted, text-fg-muted, border-border, bg-accent, ...), not a palette colour.';
+  const hexMessage = 'Use a design token, not a hex colour (styles/tokens.css).';
+  const hex = '#[0-9a-fA-F]{3,8}';
+  const classContexts = [
+    "JSXAttribute[name.name='className']",
+    'CallExpression[callee.name=/^(cn|cva|clsx)$/]',
+  ];
+  return [
+    { selector: `Literal[value=/${paletteClass}/]`, message },
+    { selector: `TemplateElement[value.raw=/${paletteClass}/]`, message },
+    ...classContexts.flatMap((context) => [
+      { selector: `${context} Literal[value=/${hex}/]`, message: hexMessage },
+      { selector: `${context} TemplateElement[value.raw=/${hex}/]`, message: hexMessage },
+    ]),
+  ];
+}
+
 /** PARITY_PLAN §3A limits and architecture rules, all errors. */
 const qualityRules = {
   'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
@@ -81,6 +112,7 @@ const qualityRules = {
       selector: "MemberExpression[object.name='React'][property.name=/^use(Layout)?Effect$/]",
       message: 'Derive state, use a query or mutation, an event handler, or useMountEffect.',
     },
+    ...colourRestrictions(),
   ],
 };
 
@@ -172,5 +204,10 @@ export default tseslint.config(
       'max-params': qualityRules['max-params'],
       'max-depth': qualityRules['max-depth'],
     },
+  },
+  {
+    // Classic scripts served as-is before the app loads (public/theme-boot.js).
+    files: ['public/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script' },
   },
 );

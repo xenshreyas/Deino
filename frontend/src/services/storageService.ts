@@ -42,6 +42,14 @@ export class StorageService {
       folderPath,
     });
   }
+
+  /**
+   * Delete a meeting and everything stored with it (legacy `api_delete_meeting`,
+   * until ORG-07 ports it to the `meetings` plugin with a trash).
+   */
+  async deleteMeeting(meetingId: string): Promise<void> {
+    await invoke('api_delete_meeting', { meetingId });
+  }
 }
 
 // Export singleton instance

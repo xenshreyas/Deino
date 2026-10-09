@@ -30,7 +30,25 @@ export interface ModelDownloadCompletePayload {
  * Transcript Service
  * Singleton service for managing transcription operations and transcript history
  */
+/** One meeting whose transcript matches a search (legacy `api_search_transcripts`). */
+export interface TranscriptSearchResult {
+  /** The meeting ID. */
+  id: string;
+  title: string;
+  /** Transcript text around the match. */
+  matchContext: string;
+  timestamp: string;
+}
+
 export class TranscriptService {
+  /**
+   * Meetings whose transcript contains `query`, for the ⌘K palette.
+   * Replaced by ORG-08's full-text search.
+   */
+  async searchTranscripts(query: string): Promise<TranscriptSearchResult[]> {
+    return invoke<TranscriptSearchResult[]>('api_search_transcripts', { query });
+  }
+
   /**
    * Get transcript history from backend (for reload sync)
    * @returns Promise<Transcript[]>

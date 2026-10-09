@@ -1,58 +1,31 @@
+import { ICON_PROPS, LoaderCircle } from '@/ui/icons';
+
+/** Props of {@link StatusOverlays}. */
 interface StatusOverlaysProps {
-  // Status flags
-  isProcessing: boolean; // Processing transcription after recording stops
-  isSaving: boolean; // Saving transcript to database
-
-  // Layout
-  sidebarCollapsed: boolean; // For responsive margin calculation
+  /** Finishing the transcription after the recording stopped. */
+  isProcessing: boolean;
+  /** Saving the transcript to the database. */
+  isSaving: boolean;
 }
 
-// Internal reusable component for individual status overlays
-interface StatusOverlayProps {
-  show: boolean;
-  message: string;
-  sidebarCollapsed: boolean;
-}
-
-function StatusOverlay({ show, message, sidebarCollapsed }: StatusOverlayProps) {
-  if (!show) return null;
-
+/** One floating status pill at the bottom centre of the record screen. */
+function StatusPill({ message }: { message: string }) {
   return (
-    <div className="fixed right-0 bottom-4 left-0 z-10">
+    <div className="pointer-events-none absolute inset-x-0 bottom-6 z-(--z-chatbar) flex justify-center">
       <div
-        className="flex justify-center pl-8 transition-[margin] duration-300"
-        style={{
-          marginLeft: sidebarCollapsed ? '4rem' : '16rem',
-        }}
+        role="status"
+        className="flex h-9 items-center gap-2 rounded-full bg-surface-raised px-4 text-sm text-fg shadow-pill"
       >
-        <div className="flex w-2/3 max-w-[750px] justify-center">
-          <div className="flex items-center space-x-2 rounded-lg bg-white px-4 py-2 shadow-lg">
-            <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900"></div>
-            <span className="text-sm text-gray-700">{message}</span>
-          </div>
-        </div>
+        <LoaderCircle {...ICON_PROPS} className="animate-spin text-fg-muted" />
+        {message}
       </div>
     </div>
   );
 }
 
-// Main exported component - renders multiple status overlays
-export function StatusOverlays({ isProcessing, isSaving, sidebarCollapsed }: StatusOverlaysProps) {
-  return (
-    <>
-      {/* Processing status overlay - shown after recording stops while finalizing transcription */}
-      <StatusOverlay
-        show={isProcessing}
-        message="Finalizing transcription..."
-        sidebarCollapsed={sidebarCollapsed}
-      />
-
-      {/* Saving status overlay - shown while saving transcript to database */}
-      <StatusOverlay
-        show={isSaving}
-        message="Saving transcript..."
-        sidebarCollapsed={sidebarCollapsed}
-      />
-    </>
-  );
+/** The "Finalizing…" and "Saving…" pills shown after Stop. */
+export function StatusOverlays({ isProcessing, isSaving }: StatusOverlaysProps) {
+  if (isSaving) return <StatusPill message="Saving transcript…" />;
+  if (isProcessing) return <StatusPill message="Finalizing transcription…" />;
+  return null;
 }

@@ -4,16 +4,16 @@ import {
   DialogContent,
   DialogTrigger,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { VisuallyHidden } from "@/components/ui/visually-hidden"
-import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
+} from '@/ui/dialog'
+import { VisuallyHidden } from '@/ui/controls'
+import { Button } from '@/ui/button';
+import { ButtonGroup } from '@/ui/button-group';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/menu';
 import { Sparkles, Settings, Loader2, FileText, Check, Square } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -80,22 +80,22 @@ export function SummaryGeneratorButtonGroup({
       {/* Generate Summary or Stop button */}
       {isGenerating ? (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="bg-linear-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 border-red-200 px-3 gap-2"
+          className="gap-2 px-3 text-danger hover:bg-danger-soft hover:text-danger"
           onClick={() => {
             onStopGeneration();
           }}
           title="Stop summary generation"
         >
-          <Square size={18} fill="currentColor" />
+          <Square size={16} fill="currentColor" />
           <span className="hidden @[24rem]:inline">Stop</span>
         </Button>
       ) : (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="bg-linear-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200 px-3 gap-2"
+          className="gap-2 px-3 text-fg"
           onClick={() => {
             void onGenerateSummary(customPrompt);
           }}
@@ -108,12 +108,12 @@ export function SummaryGeneratorButtonGroup({
         >
           {isModelConfigLoading ? (
             <>
-              <Loader2 className="animate-spin" size={18} />
+              <Loader2 className="animate-spin" size={16} />
               <span className="hidden @[24rem]:inline">Processing...</span>
             </>
           ) : (
             <>
-              <Sparkles size={18} />
+              <Sparkles size={16} />
               <span className="hidden @[24rem]:inline">{hasSummary ? 'Regenerate Summary' : 'Generate Summary'}</span>
             </>
           )}
@@ -124,7 +124,7 @@ export function SummaryGeneratorButtonGroup({
       <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
         <DialogTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             title="Summary Settings"
           >
@@ -156,7 +156,7 @@ export function SummaryGeneratorButtonGroup({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               title="Select summary template"
             >
@@ -174,7 +174,7 @@ export function SummaryGeneratorButtonGroup({
               >
                 <span>{template.name}</span>
                 {selectedTemplate === template.id && (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                 )}
               </DropdownMenuItem>
             ))}
