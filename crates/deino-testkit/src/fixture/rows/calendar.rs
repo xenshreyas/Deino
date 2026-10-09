@@ -1,4 +1,5 @@
-//! The calendar event a fixture was recorded from, in the fixture account.
+//! The calendar event a fixture was recorded from, in the fixture account's
+//! "Work" calendar.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -8,14 +9,17 @@ use serde_json::{Value, json};
 use sqlx::SqliteConnection;
 use sqlx::types::Json;
 
-use super::super::ids::{CALENDAR_ACCOUNT_NAME, event_key, fixture_uuid};
+use super::super::ids::{
+    CALENDAR_ACCOUNT_NAME, CALENDAR_COLOR, CALENDAR_KEY, CALENDAR_NAME, event_key, fixture_uuid,
+};
 use super::super::model::{FixtureMeeting, USER_EMAIL};
 use super::super::seeding::SeedTarget;
 use super::super::vocab::{AttendeeRole, Email, Platform};
 use super::meeting::series_id;
 
-/// The fixture calendar account (`EventKit`, "Deino fixtures") and one event
-/// per fixture meeting, upserted by its provider ID like a real sync.
+/// The fixture calendar account (`EventKit`, "Deino fixtures"), its "Work"
+/// calendar and one event per fixture meeting, upserted by its provider ID
+/// like a real sync.
 pub struct CalendarRows;
 
 #[async_trait]
@@ -33,6 +37,19 @@ impl SeedTarget for CalendarRows {
             account,
             provider,
             CALENDAR_ACCOUNT_NAME,
+            meeting.started_at,
+        )
+        .execute(&mut *connection)
+        .await?;
+        let calendar = fixture_uuid(CALENDAR_KEY);
+        sqlx::query!(
+            "INSERT INTO calendars (id, account_id, provider_calendar_id, title, color, created_at, updated_at)
+             VALUES (?1, ?2, 'work', ?3, ?4, ?5, ?5)
+             ON CONFLICT DO NOTHING",
+            calendar,
+            account,
+            CALENDAR_NAME,
+            CALENDAR_COLOR,
             meeting.started_at,
         )
         .execute(&mut *connection)
@@ -77,6 +94,7 @@ impl<'a> EventRow<'a> {
         let event = &self.meeting.calendar_event;
         let organizer: &Email = &event.organizer_email;
         let series = series_id(self.meeting);
+        let calendar = fixture_uuid(CALENDAR_KEY);
         sqlx::query_file!(
             "src/fixture/rows/queries/calendar_event.sql",
             self.id,
@@ -95,6 +113,7 @@ impl<'a> EventRow<'a> {
             self.my_rsvp,
             self.is_external,
             self.synced_at,
+            calendar,
         )
         .execute(connection)
         .await?;
