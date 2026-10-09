@@ -1,3 +1,11 @@
+# Third-Party Notices
+
+Deino is derived from Meetily (https://github.com/Zackriya-Solutions/meetily), v0.4.1,
+which is licensed under the MIT License reproduced below. This notice must be retained
+in all copies or substantial portions of the original Meetily code.
+
+---
+
 MIT License
 
 Copyright (c) 2024 Zackriya Solutions
