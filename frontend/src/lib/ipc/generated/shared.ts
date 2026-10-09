@@ -150,6 +150,14 @@ export type Table =
  */
 "egress_log" | 
 /**
+ * Note templates, built-in and the user's own (NOT-04).
+ */
+"templates" | 
+/**
+ * The ordered sections of each template.
+ */
+"template_sections" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -159,4 +167,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]
