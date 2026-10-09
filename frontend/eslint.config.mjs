@@ -21,6 +21,7 @@ import { LEGACY_FILES } from './legacy-files.mjs';
 
 const SOURCE_FILES = ['src/**/*.{ts,tsx}'];
 const TEST_FILES = ['src/**/*.test.{ts,tsx}', 'src/test-setup.ts'];
+const NODE_TS_FILES = ['*.ts', 'e2e/**/*.ts'];
 
 const ICON_LIBRARIES = ['lucide-react', 'lucide-react/*', '@heroicons/*', '@radix-ui/react-icons'];
 
@@ -156,8 +157,20 @@ export default tseslint.config(
     files: ['src/ui/icons.ts'],
     rules: { 'no-restricted-imports': restrictedImports([FEATURE_INTERNALS_PATTERN]) },
   },
+  // Node-side TypeScript (tool configs, Playwright specs): the TS parser, the
+  // non-type-checked strict rules and the §3A limits.
+  ...tseslint.configs.strict.map((config) => ({ ...config, files: NODE_TS_FILES })),
   {
-    files: ['*.{js,mjs,ts}'],
+    files: ['*.{js,mjs}', ...NODE_TS_FILES],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: NODE_TS_FILES,
+    rules: {
+      'max-lines': qualityRules['max-lines'],
+      'max-lines-per-function': qualityRules['max-lines-per-function'],
+      'max-params': qualityRules['max-params'],
+      'max-depth': qualityRules['max-depth'],
+    },
   },
 );

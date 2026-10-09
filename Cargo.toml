@@ -34,7 +34,9 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
 deino-domain = { path = "crates/deino-domain" }
-deino-testkit = { path = "crates/deino-testkit" }
+# Tests add `features = ["test-support"]` for its fakes; the app's debug-only
+# `dev` plugin uses only its fixture seeder.
+deino-testkit = { path = "crates/deino-testkit", default-features = false }
 
 # PARITY_PLAN §3A limits and safety rules. Every member opts in with
 # `[lints] workspace = true`; inherited modules are exempted in one place

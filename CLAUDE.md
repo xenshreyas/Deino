@@ -53,6 +53,8 @@ cargo deny check licenses            # permissive licences only
 # Frontend (frontend/)
 pnpm install --frozen-lockfile
 pnpm dev                             # Vite dev server on http://localhost:3118
+pnpm dev:mock                        # the UI in a plain browser on fixture data, http://localhost:3119
+pnpm test:e2e                        # Playwright smoke tests over dev:mock (installed Chrome)
 pnpm typecheck                       # baseline + strict flags (scripts/typecheck.mjs)
 pnpm lint                            # ESLint; errors fail, warnings only in legacy files
 pnpm test                            # Vitest (happy-dom, Testing Library)
@@ -89,7 +91,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-domain` | Typed IDs, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-core` | Features as modules: `meetings`, `_example` (debug builds) |
-| `crates/deino-testkit` | Fixtures and re-exported fakes (dev-dependency only) |
+| `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |
 

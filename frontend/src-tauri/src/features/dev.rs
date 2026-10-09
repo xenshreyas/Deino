@@ -1,0 +1,37 @@
+//! `dev` feature (debug builds only): developer tools over IPC, exposed as
+//! the inline plugin `plugin:dev|<command>`.
+//!
+//! Today it has one command, `seed_fixtures`, which writes the repository's
+//! fixture meetings (`fixtures/meetings/*.json`) into the open database
+//! through `deino_testkit::FixtureSeeder`, so a developer can click through
+//! the real app with realistic data (Settings → Developer). The seeder writes
+//! on the app's writer connection, so the UI refreshes through `DbChanged`.
+//!
+//! The module, its manifest entry (`DEV_FEATURES`) and its capability
+//! (`capabilities/dev/dev.json`) exist only when debug assertions are on, so
+//! release builds have no such plugin and no such permission.
+
+mod commands;
+#[cfg(test)]
+mod contract_tests;
+
+use tauri::Runtime;
+use tauri::plugin::{Builder, TauriPlugin};
+
+/// Plugin name; must match this feature's entry in `features::manifest`.
+pub const NAME: &str = "dev";
+
+/// The plugin's commands, for the invoke handler and the TypeScript bindings.
+pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
+    tauri_specta::Builder::new()
+        .plugin_name(NAME)
+        .commands(commands::collect())
+        .error_handling(tauri_specta::ErrorHandlingMode::Result)
+}
+
+/// Builds the `dev` plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new(NAME)
+        .invoke_handler(specta().invoke_handler())
+        .build()
+}

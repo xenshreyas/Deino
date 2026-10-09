@@ -13,8 +13,9 @@ import { useRef } from 'react';
 
 import { useMountEffect } from '@/hooks/useMountEffect';
 
-import { events } from './generated/db';
-import type { Table } from './generated/shared';
+// Imported by alias, not relatively, so `pnpm dev:mock` can swap in its mock.
+import { events } from '@/lib/ipc/generated/db';
+import type { Table } from '@/lib/ipc/generated/shared';
 
 /** A generated tauri-specta event, such as `events.noteAdded`. */
 export interface IpcEvent<T> {

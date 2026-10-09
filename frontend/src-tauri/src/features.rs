@@ -18,6 +18,8 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod db;
+#[cfg(debug_assertions)]
+pub mod dev;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
 pub mod meetings;
@@ -34,6 +36,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));
+    #[cfg(debug_assertions)]
+    builders.push((dev::NAME, dev::specta()));
     builders
 }
 
@@ -42,9 +46,10 @@ mod tests {
     use super::manifest::{DEV_FEATURES, FEATURES};
 
     /// The capability files that grant feature plugins.
-    const CAPABILITIES: [&str; 2] = [
+    const CAPABILITIES: [&str; 3] = [
         include_str!("../capabilities/default.json"),
         include_str!("../capabilities/dev/example.json"),
+        include_str!("../capabilities/dev/dev.json"),
     ];
 
     fn granted_permissions(capability: &str) -> Vec<String> {

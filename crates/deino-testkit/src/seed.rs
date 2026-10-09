@@ -1,4 +1,14 @@
 //! Inserts rows that tests need but no feature service can create yet.
+//!
+//! Each helper panics when its write fails, so a broken seed fails the
+//! calling test at once. Whole fixture meetings are seeded by
+//! [`FixtureSeeder`](crate::FixtureSeeder) instead.
+
+#![allow(
+    clippy::expect_used,
+    clippy::missing_panics_doc,
+    reason = "test helpers: a broken seed must fail the calling test at once"
+)]
 
 use chrono::{DateTime, Utc};
 use deino_db::Database;

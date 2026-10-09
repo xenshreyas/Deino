@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meetings (id, title, created_at, updated_at) VALUES (?1, ?2, ?3, ?3)\n            ON CONFLICT (id) DO UPDATE SET\n                title = excluded.title,\n                created_at = excluded.created_at,\n                updated_at = excluded.updated_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6424ffedab96962bdfc7be015177f5627c608f9a71cfb5303caed885bd880c9f"
+}

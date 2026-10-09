@@ -23,6 +23,8 @@ CI (FND-03).
 | Frontend lint | `cd frontend && pnpm lint` |
 | Frontend format | `cd frontend && pnpm format:check` |
 | Frontend build | `cd frontend && pnpm build` |
+| UI smoke tests | `cd frontend && pnpm test:e2e` (Playwright in the installed Chrome over `pnpm dev:mock`; screenshots in `frontend/test-results/`) |
+| UI by hand | `cd frontend && pnpm dev:mock`, then open http://localhost:3119 |
 
 Two `audio::device_detection` tests read the real audio devices and fail on
 some Macs; FND-03 guards them (PARITY_PLAN §7.2). Every other test must pass.
@@ -59,6 +61,7 @@ Every test's name says the regression it prevents
 | Bindings | Export, manifest drift, ID branding | `frontend/src-tauri/src/bindings.rs` |
 | Hook | Vitest + Testing Library with the generated bindings mocked and typed (`satisfies typeof Generated.commands`) | `frontend/src/features/meetings/queries.test.tsx` |
 | Component | Vitest, render with a `QueryClient`, interact through roles and labels | `frontend/src/features/_example/components/example-notes.test.tsx` |
+| Main flow | Playwright over `pnpm dev:mock`, fixture data, one spec per flow | `frontend/e2e/meeting.spec.ts` |
 
 Conventions:
 
@@ -70,7 +73,14 @@ Conventions:
   included). No mocking frameworks.
 - Time comes from `Clock`; never sleep in a test. Waiting for an event uses a
   channel with a timeout constant.
-- Seed rows that no service can create yet with `deino_testkit::seed`.
+- Seed rows that no service can create yet with `deino_testkit::seed`, and
+  whole realistic meetings with `deino_testkit::seed_fixtures` (the eight
+  meetings in `fixtures/`, see its README). AI features evaluate against each
+  fixture's `groundTruth`.
+- `pnpm dev:mock` swaps every generated binding module for its mock in
+  `frontend/src/dev/mock-ipc/`. A card that adds or changes a command updates
+  that mock in the same PR (typecheck and `mock-ipc.test.ts` fail until it
+  does); never grow the legacy shim (`legacy*.ts`).
 - Frontend tests are colocated `*.test.ts(x)`. Mock the generated module
   (`vi.mock('@/lib/ipc/generated/<feature>')`), never `invoke` strings, so a
   Rust signature change breaks the mock at compile time.
