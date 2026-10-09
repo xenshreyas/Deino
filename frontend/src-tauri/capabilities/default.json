@@ -49,6 +49,8 @@
         "llm:default",
         "settings:default",
         "templates:default",
-        "transcription:default"
+        "transcription:default",
+        "folders:default",
+        "tags:default"
     ]
 }

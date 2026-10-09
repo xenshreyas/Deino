@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.email AS \"email!: Email\" FROM meeting_attendees AS a\n               JOIN people AS p ON p.id = a.person_id\n               WHERE a.meeting_id = ?1 AND p.email IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "email!: Email",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "8687d57120ce797d52632b62e97c9a6cd6120aae1cafc16a3292eba861d20c12"
+}

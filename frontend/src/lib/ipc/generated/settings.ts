@@ -415,6 +415,16 @@ selectedSummaryModel: string | null;
  */
 updatedAt: string | null }
 /**
+ * The organize section of `Settings`.
+ */
+export type OrganizeSettings = { 
+/**
+ * Let the AI apply existing tags to each meeting after processing
+ * (the `auto_tag` pipeline stage). It never creates tags, and it skips
+ * meetings the user tagged by hand. On by default, as in Circleback.
+ */
+autoTag: boolean }
+/**
  * The privacy section of `Settings`. Empty until PRV-01.
  */
 export type PrivacySettings = Record<string, never>
@@ -688,6 +698,10 @@ profile: ProfileSettings;
  * Note templates (NOT-04).
  */
 templates: TemplateSettings; 
+/**
+ * Auto-tagging and auto-filing (ORG-05, ORG-06).
+ */
+organize: OrganizeSettings; 
 /**
  * Appearance and layout.
  */

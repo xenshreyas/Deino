@@ -93,6 +93,35 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
+    // ── ORG-05 folders ──
+    (
+        "folders",
+        &[
+            "tree",
+            "get",
+            "create",
+            "rename",
+            "set_icon",
+            "set_description",
+            "move_to",
+            "delete",
+            "meetings",
+            "unfiled",
+            "folders_of",
+            "add_meeting",
+            "remove_meeting",
+            "rules",
+            "add_rule",
+            "remove_rule",
+        ],
+    ),
+    // ── ORG-06 tags ──
+    (
+        "tags",
+        &[
+            "list", "create", "update", "delete", "tags_of", "links", "apply", "remove",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

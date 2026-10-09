@@ -98,6 +98,10 @@ export type Table =
  */
 "meeting_folders" | 
 /**
+ * Folders' auto-add rules (ORG-05).
+ */
+"folder_rules" | 
+/**
  * Tags.
  */
 "tags" | 

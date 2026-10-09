@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The \"Unfiled\" smart folder: meetings outside the trash that sit in no\n-- folder, newest first. Walks idx_meetings_live_created_at_id backwards and\n-- probes the meeting_folders primary key per meeting (asserted in\n-- folder_tests.rs), so it never sorts.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    m.created_at AS \"created_at: DateTime<Utc>\",\n    m.updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND NOT EXISTS (SELECT 1 FROM meeting_folders AS mf WHERE mf.meeting_id = m.id)\nORDER BY m.created_at DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1608a0641ccb6de22b39ff6fdc84e3a72ed61d1a92c598a99465602e203d2615"
+}

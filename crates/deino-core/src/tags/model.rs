@@ -37,6 +37,19 @@ pub struct TagApplication {
     pub applied_at: DateTime<Utc>,
 }
 
+/// Which tag sits on which meeting: one row of `meeting_tags`, for the
+/// Meetings page's tag dots and filters.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct MeetingTagLink {
+    /// The meeting.
+    pub meeting_id: MeetingId,
+    /// The tag on it.
+    pub tag_id: TagId,
+    /// Who applied it.
+    pub applied_by: TagSource,
+}
+
 /// A tag on a meeting, with who put it there.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]

@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { cn } from './cn';
+import { ChevronRight, ICON_PROPS } from './icons';
 import { floatingMotion, floatingSurface } from './popover';
 
 export const DropdownMenu = MenuPrimitive.Root;
@@ -87,6 +88,49 @@ export const DropdownMenuSeparator = forwardRef<
   />
 ));
 DropdownMenuSeparator.displayName = 'DropdownMenuSeparator';
+
+export const DropdownMenuSub = MenuPrimitive.Sub;
+
+/** An item that opens a submenu; a chevron trails its label. */
+export const DropdownMenuSubTrigger = forwardRef<
+  ElementRef<typeof MenuPrimitive.SubTrigger>,
+  ComponentPropsWithoutRef<typeof MenuPrimitive.SubTrigger>
+>(({ className, children, ...props }, ref) => (
+  <MenuPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      'relative flex h-[30px] cursor-default items-center gap-2 rounded-sm px-2 text-sm text-fg outline-none select-none',
+      'transition-colors duration-(--dur-fast) focus:bg-bg-muted data-[state=open]:bg-bg-muted [&>svg]:text-fg-muted',
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight {...ICON_PROPS} className="ml-auto" />
+  </MenuPrimitive.SubTrigger>
+));
+DropdownMenuSubTrigger.displayName = 'DropdownMenuSubTrigger';
+
+/** The submenu, on the popover surface like its parent. */
+export const DropdownMenuSubContent = forwardRef<
+  ElementRef<typeof MenuPrimitive.SubContent>,
+  ComponentPropsWithoutRef<typeof MenuPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <MenuPrimitive.Portal>
+    <MenuPrimitive.SubContent
+      ref={ref}
+      sideOffset={4}
+      className={cn(
+        floatingSurface,
+        floatingMotion,
+        'max-h-[360px] min-w-[200px] overflow-y-auto',
+        className,
+      )}
+      {...props}
+    />
+  </MenuPrimitive.Portal>
+));
+DropdownMenuSubContent.displayName = 'DropdownMenuSubContent';
 
 /** The trailing shortcut or meta of an item. */
 export function DropdownMenuShortcut({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {

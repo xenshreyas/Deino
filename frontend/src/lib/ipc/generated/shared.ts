@@ -122,6 +122,10 @@ export type Table =
  */
 "meeting_folders" | 
 /**
+ * Folders' auto-add rules (ORG-05).
+ */
+"folder_rules" | 
+/**
  * Tags.
  */
 "tags" | 
@@ -167,4 +171,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]

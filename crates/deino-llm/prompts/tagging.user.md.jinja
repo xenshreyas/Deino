@@ -1,0 +1,26 @@
+<tags>
+{%- for tag in tags %}
+
+## {{ tag.name }}
+{%- if tag.description.is_empty() %}
+(No description.)
+{%- else %}
+{{ tag.description }}
+{%- endif %}
+{%- if !tag.examples.is_empty() %}
+Recent meetings with this tag:
+{%- for example in tag.examples %}
+- {{ example.title }}{% if let Some(summary) = example.summary %}: {{ summary }}{% endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+</tags>
+
+<meeting>
+Title: {{ title }}
+
+{{ content_label }}:
+{{ content }}
+</meeting>
+
+Which of the tags above fit this meeting?

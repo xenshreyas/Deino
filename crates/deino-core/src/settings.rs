@@ -27,6 +27,7 @@ mod model;
 mod network;
 mod notifications;
 mod onboarding;
+mod organize;
 mod patch;
 mod personal;
 mod profile;
@@ -52,6 +53,7 @@ pub use model::{SETTINGS_VERSION, Settings};
 pub use network::NetworkSettings;
 pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, NotificationSettings};
 pub use onboarding::{ModelDownloadState, OnboardingSettings};
+pub use organize::OrganizeSettings;
 pub use patch::SettingsPatch;
 pub use personal::PrivacySettings;
 pub use profile::{

@@ -9,7 +9,9 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { Tag, TagId } from '@/features/tags';
 import type * as Generated from '@/lib/ipc/generated/meetings';
+import type * as TagBindings from '@/lib/ipc/generated/tags';
 import { createQueryClient } from '@/lib/ipc';
 
 import { asMeetingId, type Meeting } from '../types';
@@ -24,6 +26,20 @@ const commands = vi.hoisted(
     }) satisfies typeof Generated.commands,
 );
 vi.mock('@/lib/ipc/generated/meetings', () => ({ commands }));
+const tagCommands = vi.hoisted(
+  () =>
+    ({
+      list: vi.fn<typeof TagBindings.commands.list>(),
+      create: vi.fn<typeof TagBindings.commands.create>(),
+      update: vi.fn<typeof TagBindings.commands.update>(),
+      delete: vi.fn<typeof TagBindings.commands.delete>(),
+      tagsOf: vi.fn<typeof TagBindings.commands.tagsOf>(),
+      links: vi.fn<typeof TagBindings.commands.links>(),
+      apply: vi.fn<typeof TagBindings.commands.apply>(),
+      remove: vi.fn<typeof TagBindings.commands.remove>(),
+    }) satisfies typeof TagBindings.commands,
+);
+vi.mock('@/lib/ipc/generated/tags', () => ({ commands: tagCommands, events: {} }));
 const deleteMeeting = vi.hoisted(() => vi.fn<(id: string) => Promise<void>>());
 vi.mock('@/services/storageService', () => ({ storageService: { deleteMeeting } }));
 
@@ -34,8 +50,20 @@ const standup: Meeting = {
   updatedAt: new Date().toISOString(),
 };
 
+const planning: Meeting = { ...standup, id: asMeetingId('meeting-2'), title: 'Q4 planning' };
+
+const customer: Tag = {
+  id: 'tag-customer' as TagId,
+  name: 'Customer',
+  color: 1,
+  description: '',
+  autoApply: true,
+  createdAt: standup.createdAt,
+  updatedAt: standup.createdAt,
+};
+
 /** The screen at `/meetings` inside a router and a query client. */
-function renderScreen(onStartRecording = vi.fn()) {
+function renderScreen(onStartRecording = vi.fn(), tagFilter: TagId[] = []) {
   const root = createRootRoute();
   const list = createRoute({
     getParentRoute: () => root,
@@ -44,6 +72,8 @@ function renderScreen(onStartRecording = vi.fn()) {
       <MeetingsScreen
         onStartRecording={onStartRecording}
         shortcuts={{ newNote: '⌘N', record: '⌘⇧R' }}
+        tagFilter={tagFilter}
+        onTagFilterChange={vi.fn()}
       />
     ),
   });
@@ -65,6 +95,21 @@ function renderScreen(onStartRecording = vi.fn()) {
 describe('Meetings page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    tagCommands.list.mockResolvedValue({ status: 'ok', data: [customer] });
+    tagCommands.links.mockResolvedValue({ status: 'ok', data: [] });
+  });
+
+  test('a tag filter shows only meetings carrying the tag, with its mark', async () => {
+    commands.list.mockResolvedValue({ status: 'ok', data: [standup, planning] });
+    const link = { meetingId: planning.id, tagId: customer.id, appliedBy: 'user' } as const;
+    tagCommands.links.mockResolvedValue({ status: 'ok', data: [link] });
+    renderScreen(vi.fn(), [customer.id]);
+
+    const row = await screen.findByRole('link', { name: /Q4 planning/ });
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: /Weekly standup/ })).toBeNull();
+    });
+    expect(row.textContent).toContain('Customer');
   });
 
   test('with no meetings it offers to start recording', async () => {

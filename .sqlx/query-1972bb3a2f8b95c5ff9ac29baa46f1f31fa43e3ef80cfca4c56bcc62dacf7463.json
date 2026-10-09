@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every tag on every meeting outside the trash, by meeting then tag: the\n-- Meetings page's tag dots and filters. Walks the meeting_tags primary key\n-- and probes meetings by ID (asserted in tag_tests.rs).\nSELECT\n    mt.meeting_id AS \"meeting_id: MeetingId\",\n    mt.tag_id AS \"tag_id: TagId\",\n    mt.applied_by AS \"applied_by: TagSource\"\nFROM meeting_tags AS mt\nJOIN meetings AS m ON m.id = mt.meeting_id\nWHERE m.deleted_at IS NULL\nORDER BY mt.meeting_id, mt.tag_id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "tag_id: TagId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "applied_by: TagSource",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1972bb3a2f8b95c5ff9ac29baa46f1f31fa43e3ef80cfca4c56bcc62dacf7463"
+}

@@ -45,14 +45,15 @@ pub use color::{InvalidPaletteColor, PaletteColor};
 pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
-    CalendarProvider, Channel, ConferencePlatform, MeetingSource, Rsvp, SectionFormat, TagSource,
+    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, MeetingSource, Rsvp,
+    SectionFormat, TagSource,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, IdError, LlmCallId,
-    MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
+    ActionItemId, CalendarAccountId, CalendarEventId, CompanyId, FolderId, FolderRuleId, IdError,
+    LlmCallId, MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};

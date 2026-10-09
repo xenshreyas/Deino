@@ -16,7 +16,9 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   stages. **Adding a stage is one line there.**
 - The stages (`stages/`): `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService`; `legacy_summary` (order 50) over the
-  `Summarizer` port, until NOT-02 replaces it.
+  `Summarizer` port, until NOT-02 replaces it; `auto_tag` (order 70, ORG-06)
+  over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
+  `deino_core::folders::AutoFiler`.
 - The queue: the `jobs` and `job_runs` tables (migration
   `20261009071429_fnd08_pipeline_jobs.sql` in `deino-db`), behind the
   `JobRepo` port and `SqliteJobRepo`.

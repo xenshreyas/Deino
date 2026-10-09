@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT tag_id AS \"tag_id: TagId\" FROM meeting_tags WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "tag_id: TagId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3a98e14a11c51920872d4ad8864e4273d9da36c9a7f991aa84dc8593ab1df5fc"
+}

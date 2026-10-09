@@ -5,12 +5,24 @@
 //! |---|---|---|
 //! | 30 | [`DiarizeStage`] (`diarize`) | |
 //! | 50 | [`LegacySummaryStage`] (`legacy_summary`) | NOT-02's `enhance_notes` replaces it |
+//! | 70 | [`AutoTagStage`] (`auto_tag`) | |
+//! | 75 | [`AutoFolderStage`] (`auto_folder`) | |
 //!
 //! PARITY_PLAN §4.2 lists the orders the later cards' stages take.
 
+mod auto_folder;
+#[cfg(test)]
+mod auto_folder_tests;
+mod auto_tag;
 mod diarize;
 mod legacy_summary;
 
+pub use auto_folder::AutoFolderStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use auto_folder::RecordedAutoFiling;
+pub use auto_tag::AutoTagStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use auto_tag::RecordedAutoTags;
 pub use diarize::DiarizeStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use legacy_summary::RecordedSummaries;

@@ -13,7 +13,6 @@ export const meetingCopy = {
   panelLabel: 'Meeting side panel',
   editTitle: 'Rename meeting',
   addAttendees: 'Add attendees',
-  addTag: 'Add tag',
   comingSoon: 'Coming soon',
   loadError: 'This meeting could not be opened.',
   backToMeetings: 'Back to Meetings',

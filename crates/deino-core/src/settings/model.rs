@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     AiSettings, AudioSettings, BetaSettings, DetectionSettings, NetworkSettings,
-    NotificationSettings, OnboardingSettings, PrivacySettings, ProfileSettings, RecordingSettings,
-    SettingsError, TemplateSettings, TranscriptionSettings, UiSettings,
+    NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
+    RecordingSettings, SettingsError, TemplateSettings, TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -41,6 +41,8 @@ pub struct Settings {
     pub profile: ProfileSettings,
     /// Note templates (NOT-04).
     pub templates: TemplateSettings,
+    /// Auto-tagging and auto-filing (ORG-05, ORG-06).
+    pub organize: OrganizeSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -63,6 +65,7 @@ impl Default for Settings {
             network: NetworkSettings::default(),
             profile: ProfileSettings::default(),
             templates: TemplateSettings::default(),
+            organize: OrganizeSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
             onboarding: OnboardingSettings::default(),

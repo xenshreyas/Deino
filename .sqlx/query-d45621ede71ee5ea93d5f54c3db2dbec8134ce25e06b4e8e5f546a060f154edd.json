@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every auto-add rule, folder by folder in the order each folder's rules\n-- were added: what the `auto_folder` stage evaluates. Read through\n-- idx_folder_rules_folder_id (asserted in rule_repo_tests.rs).\nSELECT\n    id AS \"id: FolderRuleId\",\n    folder_id AS \"folder_id: FolderId\",\n    kind AS \"kind: FolderRuleKind\",\n    series_id AS \"series_id: SeriesId\",\n    tag_id AS \"tag_id: TagId\",\n    domain,\n    created_at AS \"created_at: DateTime<Utc>\",\n    NULL AS \"series_title?: String\"\nFROM folder_rules\nORDER BY folder_id, created_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: FolderRuleId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "folder_id: FolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind: FolderRuleKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "tag_id: TagId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_title?: String",
+        "ordinal": 7,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "d45621ede71ee5ea93d5f54c3db2dbec8134ce25e06b4e8e5f546a060f154edd"
+}

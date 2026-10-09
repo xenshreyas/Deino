@@ -101,6 +101,19 @@ db_enum! {
 }
 
 db_enum! {
+    /// What a folder's auto-add rule matches (ORG-05). Stored in
+    /// `folder_rules.kind`.
+    FolderRuleKind {
+        /// Meetings of one recurring calendar series.
+        Series = "series",
+        /// Meetings carrying one tag.
+        Tag = "tag",
+        /// Meetings with an attendee from one email domain.
+        AttendeeDomain = "attendee_domain",
+    }
+}
+
+db_enum! {
     /// Where a calendar account's events come from. Stored in
     /// `calendar_accounts.provider`.
     CalendarProvider {
@@ -176,6 +189,7 @@ mod tests {
         assert_names_agree(TagSource::ALL, TagSource::as_str);
         assert_names_agree(SectionFormat::ALL, SectionFormat::as_str);
         assert_names_agree(Audience::ALL, Audience::as_str);
+        assert_names_agree(FolderRuleKind::ALL, FolderRuleKind::as_str);
         assert_names_agree(CalendarProvider::ALL, CalendarProvider::as_str);
         assert_names_agree(ConferencePlatform::ALL, ConferencePlatform::as_str);
     }

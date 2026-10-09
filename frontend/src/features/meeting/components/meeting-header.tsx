@@ -1,9 +1,11 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
+import { MeetingFolders } from '@/features/folders';
 import { type MeetingId, useMeeting } from '@/features/meetings';
 import { PipelineStrip } from '@/features/pipeline';
+import { MeetingTags } from '@/features/tags';
 import { Chip, MetaChip } from '@/ui/chip';
-import { Calendar, Plus, Users } from '@/ui/icons';
+import { Calendar, type Icon, Users } from '@/ui/icons';
 import { Skeleton } from '@/ui/skeleton';
 import { Hint } from '@/ui/tooltip';
 
@@ -19,16 +21,15 @@ export function meetingDateLabel(iso: string, now: Date): string {
   return format(date, 'MMM d, HH:mm');
 }
 
-/** A placeholder chip for data a later card fills (attendees, tags). */
-function SoonChip({ label, icon }: { label: string; icon: typeof Plus }) {
+/** Ghost "Add …" chips rest invisible until the header is hovered or focused (ui.md §3 Meeting header). */
+const REVEAL_ON_HOVER =
+  'opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100';
+
+/** A placeholder chip for data a later card fills (attendees). */
+function SoonChip({ label, icon }: { label: string; icon: Icon }) {
   return (
     <Hint label={meetingCopy.comingSoon}>
-      <Chip
-        variant="ghost"
-        icon={icon}
-        aria-disabled
-        className="opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100"
-      >
+      <Chip variant="ghost" icon={icon} aria-disabled className={REVEAL_ON_HOVER}>
         {label}
       </Chip>
     </Hint>
@@ -36,8 +37,8 @@ function SoonChip({ label, icon }: { label: string; icon: typeof Plus }) {
 }
 
 /**
- * Title, then a row of meta chips: date, attendees and tags (placeholders
- * until ORG-04 and ORG-06 provide them), then the processing status strip.
+ * Title, then a row of meta chips: date, attendees (a placeholder until
+ * ORG-04), folders and tags, then the processing status strip.
  */
 export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
   const meeting = useMeeting(meetingId);
@@ -55,7 +56,8 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <MetaChip icon={Calendar}>{meetingDateLabel(meeting.data.createdAt, new Date())}</MetaChip>
         <SoonChip icon={Users} label={meetingCopy.addAttendees} />
-        <SoonChip icon={Plus} label={meetingCopy.addTag} />
+        <MeetingFolders meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
+        <MeetingTags meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
       </div>
       {/* FND-08: processing status, minimally placed; FND-10 follow-up gives it its home. */}
       <PipelineStrip meetingId={meetingId} />

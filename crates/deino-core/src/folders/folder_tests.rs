@@ -212,6 +212,72 @@ async fn fake_deleting_a_folder_deletes_its_subtree() {
     deleting_a_folder_deletes_its_subtree(&FakeFolderRepo::default()).await;
 }
 
+/// Counts cover each folder's own meetings; the rest are unfiled.
+async fn counts_and_unfiled_partition_the_meetings(repo: &(impl FolderRepo + MeetingFolderRepo)) {
+    let Tree { work, clients, .. } = tree(repo).await;
+    let [older, newer] = meetings();
+    repo.file_meeting(&older.id, &clients.id, at(NOW))
+        .await
+        .unwrap();
+
+    assert_eq!(repo.meeting_counts().await.unwrap(), [(clients.id, 1)]);
+    assert_eq!(repo.unfiled().await.unwrap(), std::slice::from_ref(&newer));
+    assert_eq!(repo.unfiled_count().await.unwrap(), 1);
+
+    repo.file_meeting(&newer.id, &work.id, at(NOW))
+        .await
+        .unwrap();
+    assert!(repo.unfiled().await.unwrap().is_empty());
+    assert_eq!(repo.unfiled_count().await.unwrap(), 0);
+}
+
+/// Moving a folder with subfolders keeps every meeting filed in them.
+async fn moving_nested_folders_keeps_their_meetings(repo: &(impl FolderRepo + MeetingFolderRepo)) {
+    let Tree {
+        clients,
+        acme,
+        home,
+        ..
+    } = tree(repo).await;
+    let [older, newer] = meetings();
+    repo.file_meeting(&older.id, &clients.id, at(NOW))
+        .await
+        .unwrap();
+    repo.file_meeting(&newer.id, &acme.id, at(NOW))
+        .await
+        .unwrap();
+
+    let moved = repo.move_folder(&clients.id, Some(&home.id), at(NOW)).await;
+
+    assert_eq!(moved.unwrap(), FolderMove::Moved);
+    assert_eq!(repo.meetings_in(&clients.id).await.unwrap(), [older]);
+    assert_eq!(repo.meetings_in(&acme.id).await.unwrap(), [newer]);
+    assert_eq!(
+        repo.folder(&acme.id).await.unwrap().unwrap().parent_id,
+        Some(clients.id)
+    );
+}
+
+#[tokio::test]
+async fn sqlite_counts_and_unfiled_partition_the_meetings() {
+    counts_and_unfiled_partition_the_meetings(&sqlite_repo().await).await;
+}
+
+#[tokio::test]
+async fn fake_counts_and_unfiled_partition_the_meetings() {
+    counts_and_unfiled_partition_the_meetings(&FakeFolderRepo::with_meetings(meetings())).await;
+}
+
+#[tokio::test]
+async fn sqlite_moving_nested_folders_keeps_their_meetings() {
+    moving_nested_folders_keeps_their_meetings(&sqlite_repo().await).await;
+}
+
+#[tokio::test]
+async fn fake_moving_nested_folders_keeps_their_meetings() {
+    moving_nested_folders_keeps_their_meetings(&FakeFolderRepo::with_meetings(meetings())).await;
+}
+
 #[tokio::test]
 async fn sqlite_meetings_file_into_folders() {
     meetings_file_into_folders(&sqlite_repo().await).await;

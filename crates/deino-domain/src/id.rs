@@ -197,6 +197,11 @@ uuid_id!(
 );
 
 uuid_id!(
+    /// Identifies a folder's auto-add rule (ORG-05).
+    FolderRuleId
+);
+
+uuid_id!(
     /// Identifies a tag.
     TagId
 );
