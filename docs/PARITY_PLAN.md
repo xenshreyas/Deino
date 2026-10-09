@@ -2022,6 +2022,20 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | **5** | CAP-05 ∥ CAP-12 ∥ TRN-06 ∥ NOT-06 ∥ NOT-07 ∥ NOT-08 ∥ AI-03 ∥ AI-04 ∥ INT-04 ∥ INT-05 ∥ DEV-04 | |
 | **6** | CAP-13 ∥ NOT-09 ∥ ORG-09 ∥ AI-07 ∥ AI-08 ∥ PRV-02 | At this point **Deino matches Granola and Circleback on every local feature.** |
 
+### 7.0 Execution notes (speed-ups, 2026-10-09)
+
+- **Parallelism cap:** keep about 6–7 card agents building at once on the M4 Max. Every shell sources `scripts/dev-env.sh` (sccache + `CARGO_BUILD_JOBS=6`). When one agent finishes, start the next ready card.
+- **Port-first unblocking:** a card whose only dependency is an interface may start early by coding against a port trait, with the adapter wired when the dependency merges.
+  - **FND-09** (LLM gateway) defines a `CredentialSource` port instead of waiting for FND-06's `deino-secrets`.
+  - **FND-12** (net) defines a `ServicePolicy` port for enable and disable.
+  - **INT-00** codes against both ports.
+- **Split cards:**
+  - **FND-05a** · `crates/deino-audio`: AVAssetWriter CMAF track writer, `recording.json` manifest, `truncate_to_playable` recovery and finalize (ported from the spike), plus `MockAudioSource`. No DB writes. It can start now.
+  - **FND-05b** · Rust-owned live persistence: create the meeting row at start and stream segments into `transcript_segments`. Needs FND-07 and FND-05a.
+  - **CAP-06** lives in its own crate `crates/deino-detect` (heavy macOS native code), so it doesn't wait on FND-05.
+  - **EXP-01** pure renderers (Markdown, TXT, JSON, SRT/VTT, DOCX, PDF) work from a DTO and can start before FND-07 merges. Wire them to the repos afterwards.
+- **Benchmarks:** take acceptance timings only when the machine load is below about 20, or label them with the load.
+
 ### 7.1 Progress log
 
 | Card | Status | Merged |
