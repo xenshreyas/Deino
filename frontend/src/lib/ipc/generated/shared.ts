@@ -90,14 +90,6 @@ export type Table =
  */
 "transcript_chunks" | 
 /**
- * LLM provider and model settings.
- */
-"settings" | 
-/**
- * Transcription engine settings.
- */
-"transcript_settings" | 
-/**
  * The user's own notes for a meeting.
  */
 "meeting_notes" | 
@@ -151,4 +143,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","settings","transcript_settings","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","tags","meeting_tags","action_items","example_notes"] as const satisfies readonly Table[]
