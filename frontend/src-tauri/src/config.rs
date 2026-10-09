@@ -1,7 +1,7 @@
-/// Application configuration constants
-///
-/// Centralized definitions for default models and settings.
-/// Used across database initialization, import, and retranscription.
+//! Application configuration constants
+//!
+//! Centralized definitions for default models and settings.
+//! Used across database initialization, import, and retranscription.
 
 /// ISO 639-1 code of the only language Deino transcribes.
 ///

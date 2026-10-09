@@ -1,11 +1,11 @@
-/// Summary module - handles all meeting summary generation functionality
-///
-/// This module contains:
-/// - LLM client for communicating with various AI providers (OpenAI, Claude, Groq, Ollama, OpenRouter, CustomOpenAI)
-/// - Processor for chunking transcripts and generating summaries
-/// - Service layer for orchestrating summary generation
-/// - Templates for structured meeting summary generation
-/// - Tauri commands for frontend integration
+//! Summary module - handles all meeting summary generation functionality
+//!
+//! This module contains:
+//! - LLM client for communicating with various AI providers (OpenAI, Claude, Groq, Ollama, OpenRouter, CustomOpenAI)
+//! - Processor for chunking transcripts and generating summaries
+//! - Service layer for orchestrating summary generation
+//! - Templates for structured meeting summary generation
+//! - Tauri commands for frontend integration
 
 use serde::{Deserialize, Serialize};
 
