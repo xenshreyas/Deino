@@ -15,6 +15,12 @@ extern "system" {
     fn ShowWindow(hwnd: *mut std::ffi::c_void, n_cmd_show: i32) -> i32;
 }
 
+/// Shell command that streams this app's unified log on macOS. The process
+/// name is the Cargo binary name, which Tauri keeps for the bundled app.
+#[cfg(target_os = "macos")]
+const LOG_STREAM_COMMAND: &str =
+    concat!("log stream --process ", env!("CARGO_PKG_NAME"), " --level info --style compact");
+
 #[cfg(target_os = "windows")]
 const SW_HIDE: i32 = 0;
 #[cfg(target_os = "windows")]
@@ -46,12 +52,14 @@ pub fn show_console() -> Result<String, String> {
         // First, get the app name from the bundle
         match Command::new("osascript")
             .arg("-e")
-            .arg(r#"
+            .arg(format!(
+                r#"
                 tell application "Terminal"
                     activate
-                    do script "log stream --process meetily --level info --style compact"
+                    do script "{LOG_STREAM_COMMAND}"
                 end tell
-            "#)
+            "#
+            ))
             .spawn()
         {
             Ok(_) => Ok("Console opened in Terminal".to_string()),
@@ -83,16 +91,18 @@ pub fn hide_console() -> Result<String, String> {
         // On macOS, we'll close the Terminal window that's showing our logs
         match Command::new("osascript")
             .arg("-e")
-            .arg(r#"
+            .arg(format!(
+                r#"
                 tell application "Terminal"
                     set windowList to windows
                     repeat with aWindow in windowList
-                        if contents of selected tab of aWindow contains "log stream --process meetily" then
+                        if contents of selected tab of aWindow contains "{LOG_STREAM_COMMAND}" then
                             close aWindow
                         end if
                     end repeat
                 end tell
-            "#)
+            "#
+            ))
             .spawn()
         {
             Ok(_) => Ok("Console closed".to_string()),
@@ -125,17 +135,19 @@ pub fn toggle_console() -> Result<String, String> {
         // On macOS, check if Terminal is running with our log stream
         let check_result = Command::new("osascript")
             .arg("-e")
-            .arg(r#"
+            .arg(format!(
+                r#"
                 tell application "Terminal"
                     set windowList to windows
                     repeat with aWindow in windowList
-                        if contents of selected tab of aWindow contains "log stream --process meetily" then
+                        if contents of selected tab of aWindow contains "{LOG_STREAM_COMMAND}" then
                             return "found"
                         end if
                     end repeat
                     return "not found"
                 end tell
-            "#)
+            "#
+            ))
             .output();
             
         match check_result {

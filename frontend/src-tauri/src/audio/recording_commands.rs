@@ -108,7 +108,7 @@ static TRANSCRIPT_LISTENER_ID: Mutex<Option<tauri::EventId>> = Mutex::new(None);
 
 const TRANSCRIPTION_RUNTIME_START_ERROR_CODE: &str =
     "TRANSCRIPTION_RUNTIME_INITIALIZATION_FAILED";
-const TRANSCRIPTION_RUNTIME_USER_MESSAGE: &str = "Speech recognition could not initialize. Restart Meetily. If the problem continues, repair or reinstall the app.";
+const TRANSCRIPTION_RUNTIME_USER_MESSAGE: &str = "Speech recognition could not initialize. Restart Deino. If the problem continues, repair or reinstall the app.";
 
 // ============================================================================
 // PUBLIC TYPES
@@ -174,7 +174,7 @@ fn map_recording_start_error<R: Runtime>(
 ///   own guard reports it.
 /// Resolving `None` to the default is the user's actual choice, so it's silent.
 ///
-/// ponytail: sync pre-flight substitution (matches Pro), not catch-and-retry —
+/// Design: sync pre-flight substitution, not catch-and-retry —
 /// stream.rs keeps its hard-fail as the last line of defense. cpal calls
 /// block briefly either way.
 fn resolve_mic_or_default<R: Runtime>(

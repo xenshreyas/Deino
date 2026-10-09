@@ -13,7 +13,7 @@
 //! # Usage
 //!
 //! ```rust
-//! use app_lib::summary::templates;
+//! use deino_lib::summary::templates;
 //!
 //! // Load a specific template
 //! let template = templates::get_template("daily_standup").expect("daily standup template exists");
@@ -30,10 +30,9 @@
 //!
 //! # Custom Templates
 //!
-//! Users can add custom templates to:
-//! - macOS: `~/Library/Application Support/Meetily/templates/`
-//! - Windows: `%APPDATA%\Meetily\templates\`
-//! - Linux: `~/.config/Meetily/templates/`
+//! Users can add custom templates to `<app_data_dir>/templates/`, where the
+//! app data dir comes from Tauri's path resolver and follows the bundle
+//! identifier (on macOS: `~/Library/Application Support/com.xenshreyas.deino/templates/`).
 //!
 //! Custom templates must follow the JSON schema defined in `types::Template`.
 
@@ -44,7 +43,7 @@ mod types;
 // Re-export public API
 pub use loader::{
     get_template, list_template_ids, list_templates, set_bundled_templates_dir,
-    validate_and_parse_template,
+    set_custom_templates_dir, validate_and_parse_template,
 };
 pub use types::{Template, TemplateSection};
 

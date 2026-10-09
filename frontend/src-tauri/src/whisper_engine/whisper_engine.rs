@@ -108,8 +108,9 @@ impl WhisperEngine {
         }
     }
 
+    /// Create a WhisperEngine using the models directory configured at startup.
     pub fn new() -> Result<Self> {
-        Self::new_with_models_dir(None)
+        Self::new_with_models_dir(super::commands::configured_models_dir())
     }
 
     /// Create a new WhisperEngine with optional custom models directory
@@ -146,13 +147,9 @@ impl WhisperEngine {
                     current_dir.join("models")
                 }
             } else {
-                // Production mode fallback (shouldn't reach here, caller should provide path)
-                log::warn!("WhisperEngine: No models directory provided, using fallback path");
-                dirs::data_dir()
-                    .or_else(|| dirs::home_dir())
-                    .ok_or_else(|| anyhow!("Could not find system data directory"))?
-                    .join("Meetily")
-                    .join("models")
+                // Production: the models dir lives in the app-identifier data dir and
+                // is resolved by Tauri at startup (`commands::set_models_directory`).
+                return Err(anyhow!("Whisper models directory is not configured"));
             }
         };
         
@@ -1141,7 +1138,7 @@ impl WhisperEngine {
         }
 
         let client = Client::builder()
-            .user_agent(concat!("Meetily/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!("Deino/", env!("CARGO_PKG_VERSION")))
             .build()
             .map_err(|e| anyhow!("Failed to create download client: {}", e))?;
         let response = tokio::select! {
@@ -1654,7 +1651,7 @@ mod tests {
 
         assert!(error.to_string().contains("too small"));
         assert!(request.to_ascii_lowercase().contains(&format!(
-            "user-agent: meetily/{}",
+            "user-agent: deino/{}",
             env!("CARGO_PKG_VERSION")
         )));
         assert!(!engine.active_downloads.lock().await.contains_key("tiny"));

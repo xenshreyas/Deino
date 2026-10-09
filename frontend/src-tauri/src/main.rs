@@ -12,5 +12,5 @@ fn main() {
 
     // Async logger will be initialized lazily when first needed (after Tauri runtime starts)
     log::info!("Starting application...");
-    app_lib::run();
+    deino_lib::run();
 }

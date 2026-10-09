@@ -1,8 +1,8 @@
 {
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-    "productName": "meetily",
+    "productName": "Deino",
     "version": "0.4.1",
-    "identifier": "com.meetily.ai",
+    "identifier": "com.xenshreyas.deino",
     "build": {
         "frontendDist": "../out",
         "devUrl": "http://localhost:3118",
@@ -12,7 +12,7 @@
     "app": {
         "windows": [
             {
-                "title": "meetily",
+                "title": "Deino",
                 "width": 1100,
                 "height": 700,
                 "resizable": true,

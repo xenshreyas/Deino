@@ -1,17 +1,16 @@
 [package]
-name = "meetily"
+name = "deino"
 version = "0.4.1"
-description = "A Tauri App for meeting minutes"
-authors = ["Sujith S"]
-license = "MIT"
-repository = "https://github.com/Zackriya-Solutions/meeting-minutes"
+description = "Deino: a private, local-first AI meeting notepad for macOS"
+authors = ["Shreyas"]
+publish = false
 edition = "2021"
 rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "app_lib"
+name = "deino_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 

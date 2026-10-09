@@ -288,13 +288,9 @@ impl ParakeetEngine {
                 // Development mode
                 current_dir.join("models").join("parakeet")
             } else {
-                // Production mode
-                dirs::data_dir()
-                    .or_else(|| dirs::home_dir())
-                    .ok_or_else(|| anyhow!("Could not find system data directory"))?
-                    .join("Meetily")
-                    .join("models")
-                    .join("parakeet")
+                // Production: the models dir lives in the app-identifier data dir and
+                // is resolved by Tauri at startup (`commands::set_models_directory`).
+                return Err(anyhow!("Parakeet models directory is not configured"));
             }
         };
 

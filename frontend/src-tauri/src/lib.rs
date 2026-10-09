@@ -32,6 +32,9 @@ macro_rules! perf_trace {
 pub(crate) use perf_debug;
 pub(crate) use perf_trace;
 
+/// User-visible product name, used for notification titles and the tray tooltip.
+pub const APP_NAME: &str = "Deino";
+
 // Re-export async logging macros for external use (removed due to macro conflicts)
 
 // Declare audio module
@@ -592,6 +595,14 @@ pub fn run() {
                 summary::templates::set_bundled_templates_dir(templates_dir);
             } else {
                 log::warn!("Failed to resolve resource directory for templates");
+            }
+
+            // User templates live in the app-identifier data dir
+            match _app.handle().path().app_data_dir() {
+                Ok(app_data_dir) => {
+                    summary::templates::set_custom_templates_dir(app_data_dir.join("templates"));
+                }
+                Err(e) => log::warn!("Failed to resolve app data directory for templates: {}", e),
             }
 
             Ok(())
