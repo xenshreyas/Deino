@@ -89,45 +89,104 @@ uuid_id!(
     ExampleNoteId
 );
 
-/// Identifies a meeting.
-///
-/// Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and the
-/// legacy recording and import paths still create IDs in that format. So a
-/// meeting ID is opaque text; FND-07 decides whether to migrate it.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    specta::Type,
-    sqlx::Type,
-)]
-#[serde(transparent)]
-#[sqlx(transparent)]
-pub struct MeetingId(String);
+/// Declares an opaque text ID newtype, for IDs whose format Deino does not own.
+macro_rules! text_id {
+    ($(#[$meta:meta])* $name:ident) => {
+        $(#[$meta])*
+        #[derive(
+            Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord,
+            Serialize, Deserialize, specta::Type, sqlx::Type,
+        )]
+        #[serde(transparent)]
+        #[sqlx(transparent)]
+        pub struct $name(String);
 
-impl MeetingId {
-    /// Wraps an existing meeting ID.
-    pub fn new(id: impl Into<String>) -> Self {
-        Self(id.into())
-    }
+        impl $name {
+            /// Wraps an existing ID.
+            pub fn new(id: impl Into<String>) -> Self {
+                Self(id.into())
+            }
 
-    /// The ID as stored in the database.
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
+            /// The ID as stored in the database.
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str(&self.0)
+            }
+        }
+    };
 }
 
-impl fmt::Display for MeetingId {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.0)
-    }
-}
+text_id!(
+    /// Identifies a meeting.
+    ///
+    /// Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
+    /// the legacy recording and import paths still create IDs in that format.
+    /// FND-07 keeps the ID opaque text so every existing meeting still opens;
+    /// new meetings may use any unique text, including `meeting-<UUIDv7>`.
+    MeetingId
+);
+
+text_id!(
+    /// Identifies a recurring calendar series, as the calendar provider names it.
+    SeriesId
+);
+
+text_id!(
+    /// Identifies a note template. Built-in templates are named
+    /// (`standard_meeting`); NOT-04 moves templates into the database.
+    TemplateId
+);
+
+uuid_id!(
+    /// Identifies a transcript segment. Segments migrated from the legacy
+    /// `transcripts` table keep their UUIDv4.
+    SegmentId
+);
+
+uuid_id!(
+    /// Identifies a speaker within one meeting's transcript.
+    SpeakerId
+);
+
+uuid_id!(
+    /// Identifies a person.
+    PersonId
+);
+
+uuid_id!(
+    /// Identifies a company.
+    CompanyId
+);
+
+uuid_id!(
+    /// Identifies a connected calendar account.
+    CalendarAccountId
+);
+
+uuid_id!(
+    /// Identifies a calendar event synced from a calendar account.
+    CalendarEventId
+);
+
+uuid_id!(
+    /// Identifies a folder.
+    FolderId
+);
+
+uuid_id!(
+    /// Identifies a tag.
+    TagId
+);
+
+uuid_id!(
+    /// Identifies an action item.
+    ActionItemId
+);
 
 #[cfg(test)]
 mod tests {

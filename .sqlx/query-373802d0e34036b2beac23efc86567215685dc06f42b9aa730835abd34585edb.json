@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The meetings outside the trash carrying a tag (?1), newest first.\n-- Filtered through idx_meeting_tags_tag_id and joined on the meetings\n-- primary key (asserted in tag_tests.rs).\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    m.created_at AS \"created_at: DateTime<Utc>\",\n    m.updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meeting_tags AS mt\nJOIN meetings AS m ON m.id = mt.meeting_id\nWHERE mt.tag_id = ?1 AND m.deleted_at IS NULL\nORDER BY m.created_at DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "373802d0e34036b2beac23efc86567215685dc06f42b9aa730835abd34585edb"
+}

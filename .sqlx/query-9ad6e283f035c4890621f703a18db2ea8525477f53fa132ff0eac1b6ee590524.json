@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments SET is_deleted = ?1 WHERE id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "9ad6e283f035c4890621f703a18db2ea8525477f53fa132ff0eac1b6ee590524"
+}

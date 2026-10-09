@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every calendar account by provider and name, through the UNIQUE\n-- (provider, name) index (asserted in account_repo_tests.rs).\nSELECT\n    id AS \"id: CalendarAccountId\",\n    provider AS \"provider: CalendarProvider\",\n    name,\n    created_at AS \"created_at: DateTime<Utc>\"\nFROM calendar_accounts\nORDER BY provider, name\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarAccountId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider: CalendarProvider",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f30f89c2e0300bd9088c849fcc7ee69a4a952d7fae58e4ad9e4f66e7008fa344"
+}

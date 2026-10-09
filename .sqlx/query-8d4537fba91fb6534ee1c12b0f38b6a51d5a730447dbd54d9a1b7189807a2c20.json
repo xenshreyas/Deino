@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_tags (meeting_id, tag_id, applied_by, applied_at) VALUES (?1, ?2, ?3, ?4)\n             ON CONFLICT (meeting_id, tag_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "8d4537fba91fb6534ee1c12b0f38b6a51d5a730447dbd54d9a1b7189807a2c20"
+}

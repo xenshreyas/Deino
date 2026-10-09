@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendar_accounts (id, provider, name, created_at) VALUES (?1, ?2, ?3, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "bff593dfff7627f1cedb066b043f66851f3601d6bb32c2e056822aa1a89a36e1"
+}

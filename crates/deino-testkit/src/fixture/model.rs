@@ -217,7 +217,7 @@ impl FixtureMeeting {
     }
 }
 
-/// `millis` as a chrono duration; fixture offsets always fit.
+/// `millis` as a chrono duration.
 fn millis_delta(millis: Millis) -> chrono::TimeDelta {
-    chrono::TimeDelta::milliseconds(i64::try_from(millis.0).unwrap_or(i64::MAX))
+    chrono::TimeDelta::milliseconds(i64::from(millis.0))
 }

@@ -96,13 +96,15 @@ impl Fixtures {
         self.meetings.iter().find(|meeting| meeting.kind == kind)
     }
 
-    /// The file of one track of a meeting's audio.
-    pub fn audio_path(&self, audio: &FixtureAudio, channel: Channel) -> PathBuf {
+    /// The file of one track of a meeting's audio; `None` for
+    /// [`Channel::Mixed`], since fixtures keep the tracks apart.
+    pub fn audio_path(&self, audio: &FixtureAudio, channel: Channel) -> Option<PathBuf> {
         let relative = match channel {
             Channel::Mic => &audio.mic,
             Channel::System => &audio.system,
+            Channel::Mixed => return None,
         };
-        self.root.join(relative)
+        Some(self.root.join(relative))
     }
 
     fn check_audio_files(&self) -> Result<(), FixtureError> {
@@ -110,8 +112,7 @@ impl Fixtures {
             let Some(audio) = &meeting.audio else {
                 continue;
             };
-            for channel in [Channel::Mic, Channel::System] {
-                let path = self.audio_path(audio, channel);
+            for path in [&audio.mic, &audio.system].map(|track| self.root.join(track)) {
                 if !path.is_file() {
                     let meeting = meeting.id.clone();
                     return Err(FixtureError::MissingAudio { meeting, path });

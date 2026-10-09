@@ -55,8 +55,10 @@ Every test's name says the regression it prevents
 | Layer | Test | Example |
 |---|---|---|
 | Model, service | Unit tests with fakes (`FakeMeetingRepo`, `FakeClock`), no I/O | `crates/deino-core/src/meetings/service.rs` |
-| Repository | Against `deino_db::test_db()` (in-memory, every migration, foreign keys on); list queries assert their `EXPLAIN QUERY PLAN` | `crates/deino-core/src/meetings/repo.rs` |
+| Repository | Against `deino_db::test_db()` (in-memory, every migration, foreign keys on); list queries assert their `EXPLAIN QUERY PLAN` (`testing::query_plan`) | `crates/deino-core/src/meetings/repo.rs` |
+| Port contract | One `async fn` per behaviour, generic over the port, called once with the SQLite repository and once with the fake, so the fake cannot drift | `crates/deino-core/src/segments/repo_tests.rs` |
 | Schema, pools | Migrations, persistence across reopen, commit signals | `crates/deino-db/src/database_tests.rs` |
+| Migration round trip | Apply the migrations before a version, seed rows in the old format, run the rest, assert (anarlog's technique) | `crates/deino-db/src/migration_tests.rs` |
 | Command | Contract test through the real plugin and ACL on Tauri's mock runtime (`features::ipc_tests`) | `frontend/src-tauri/src/features/meetings/contract_tests.rs` |
 | Bindings | Export, manifest drift, ID branding | `frontend/src-tauri/src/bindings.rs` |
 | Hook | Vitest + Testing Library with the generated bindings mocked and typed (`satisfies typeof Generated.commands`) | `frontend/src/features/meetings/queries.test.tsx` |

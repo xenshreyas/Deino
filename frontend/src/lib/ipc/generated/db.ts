@@ -44,13 +44,19 @@ seq: number }
  */
 export type Table = 
 /**
- * Meeting rows: title and timestamps.
+ * Meeting rows: title, status, timing and links.
  */
 "meetings" | 
 /**
- * Legacy transcript segments, one row per segment.
+ * Transcript segments, one row per utterance. Legacy code still
+ * reaches them through the `transcripts` compatibility view (ADR 0012),
+ * whose writes are reported as this table.
  */
-"transcripts" | 
+"transcript_segments" | 
+/**
+ * The speakers of each meeting's transcript.
+ */
+"speakers" | 
 /**
  * Summary generation state and results, one row per meeting.
  */
@@ -71,6 +77,46 @@ export type Table =
  * The user's own notes for a meeting.
  */
 "meeting_notes" | 
+/**
+ * People the user meets.
+ */
+"people" | 
+/**
+ * Companies people work at.
+ */
+"companies" | 
+/**
+ * Who attended which meeting.
+ */
+"meeting_attendees" | 
+/**
+ * Connected calendar accounts.
+ */
+"calendar_accounts" | 
+/**
+ * Events synced from calendar accounts.
+ */
+"calendar_events" | 
+/**
+ * Folders, nested through `parent_id`.
+ */
+"folders" | 
+/**
+ * Which meetings sit in which folders.
+ */
+"meeting_folders" | 
+/**
+ * Tags.
+ */
+"tags" | 
+/**
+ * Which tags are applied to which meetings.
+ */
+"meeting_tags" | 
+/**
+ * Action items, from meetings or standalone.
+ */
+"action_items" | 
 /**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.

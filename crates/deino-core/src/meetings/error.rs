@@ -1,7 +1,7 @@
 //! What can go wrong in the meetings feature.
 
 use deino_db::DbError;
-use deino_domain::{ErrorClass, ErrorCode, MeetingId};
+use deino_domain::{ErrorClass, ErrorCode, InvalidTransition, MeetingId};
 
 use super::MAX_TITLE_CHARS;
 
@@ -18,6 +18,12 @@ pub enum MeetingError {
     /// The new title is longer than [`MAX_TITLE_CHARS`].
     #[error("a meeting title can be at most {MAX_TITLE_CHARS} characters long")]
     TitleTooLong,
+    /// The meeting's status does not allow the requested change.
+    #[error(transparent)]
+    InvalidTransition(#[from] InvalidTransition),
+    /// Another writer changed the meeting's status first; reload and retry.
+    #[error("meeting {0} changed while it was being updated")]
+    StatusChanged(MeetingId),
     /// The database failed; the source carries the detail.
     #[error("could not load or save meetings")]
     Storage(#[from] DbError),
@@ -28,6 +34,7 @@ impl ErrorClass for MeetingError {
         match self {
             Self::NotFound(_) => ErrorCode::NotFound,
             Self::EmptyTitle | Self::TitleTooLong => ErrorCode::Invalid,
+            Self::InvalidTransition(_) | Self::StatusChanged(_) => ErrorCode::Conflict,
             Self::Storage(_) => ErrorCode::Internal,
         }
     }

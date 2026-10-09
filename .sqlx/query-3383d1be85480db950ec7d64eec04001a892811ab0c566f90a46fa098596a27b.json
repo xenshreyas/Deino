@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The meetings outside the trash in a folder (?1), newest first. Filtered\n-- through idx_meeting_folders_folder_id and joined on the meetings primary\n-- key (asserted in folder_tests.rs); one folder is small enough to sort.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    m.created_at AS \"created_at: DateTime<Utc>\",\n    m.updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meeting_folders AS mf\nJOIN meetings AS m ON m.id = mf.meeting_id\nWHERE mf.folder_id = ?1 AND m.deleted_at IS NULL\nORDER BY m.created_at DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3383d1be85480db950ec7d64eec04001a892811ab0c566f90a46fa098596a27b"
+}

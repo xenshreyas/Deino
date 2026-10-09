@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every meeting outside the trash, newest first. Served by the partial index\n-- idx_meetings_live_created_at_id (asserted in repo.rs tests), so the list\n-- never sorts in a temporary B-tree.\nSELECT\n    id AS \"id!: MeetingId\",\n    title,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meetings\nWHERE deleted_at IS NULL\nORDER BY created_at DESC, id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "755688284bc1ab7d1ee043fdae5d01ccdbdfc8164ad24f837ec95a30d4cd092b"
+}

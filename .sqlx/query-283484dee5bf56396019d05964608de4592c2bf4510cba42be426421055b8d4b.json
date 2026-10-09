@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) items in the order they were created. Served by\n-- idx_action_items_meeting_id (asserted in action_item_tests.rs).\nSELECT\n    id AS \"id: ActionItemId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    title,\n    description,\n    assignee_person_id AS \"assignee_person_id: PersonId\",\n    due_at AS \"due_at: DateTime<Utc>\",\n    status AS \"status: ActionItemStatus\",\n    priority AS \"priority: ActionItemPriority\",\n    source_segment_id AS \"source_segment_id: SegmentId\",\n    completed_at AS \"completed_at: DateTime<Utc>\",\n    created_by AS \"created_by: ActionItemOrigin\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM action_items\nWHERE meeting_id = ?1\nORDER BY created_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ActionItemId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "assignee_person_id: PersonId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: ActionItemStatus",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "priority: ActionItemPriority",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "source_segment_id: SegmentId",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "completed_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_by: ActionItemOrigin",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "283484dee5bf56396019d05964608de4592c2bf4510cba42be426421055b8d4b"
+}

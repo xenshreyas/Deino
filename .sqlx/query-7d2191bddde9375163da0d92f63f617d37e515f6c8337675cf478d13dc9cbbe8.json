@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) speakers by label. Served by the UNIQUE (meeting_id, label)\n-- index (asserted in speaker_repo_tests.rs).\nSELECT\n    id AS \"id: SpeakerId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    label,\n    person_id AS \"person_id: PersonId\",\n    is_me AS \"is_me: bool\",\n    color AS \"color: PaletteColor\"\nFROM speakers\nWHERE meeting_id = ?1\nORDER BY label\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: SpeakerId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "label",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id: PersonId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "color: PaletteColor",
+        "ordinal": 5,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "7d2191bddde9375163da0d92f63f617d37e515f6c8337675cf478d13dc9cbbe8"
+}

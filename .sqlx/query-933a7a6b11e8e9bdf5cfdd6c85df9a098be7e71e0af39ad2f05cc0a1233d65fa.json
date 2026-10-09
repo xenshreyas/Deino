@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM meeting_folders WHERE meeting_id = ?1 AND folder_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "933a7a6b11e8e9bdf5cfdd6c85df9a098be7e71e0af39ad2f05cc0a1233d65fa"
+}

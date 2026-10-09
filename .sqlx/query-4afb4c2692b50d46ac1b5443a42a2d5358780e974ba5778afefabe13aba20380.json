@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meetings SET calendar_event_id = ?1, series_id = ?2, updated_at = ?3 WHERE id = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "4afb4c2692b50d46ac1b5443a42a2d5358780e974ba5778afefabe13aba20380"
+}

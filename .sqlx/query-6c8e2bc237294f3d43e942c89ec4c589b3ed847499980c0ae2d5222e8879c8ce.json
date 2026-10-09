@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM speakers WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6c8e2bc237294f3d43e942c89ec4c589b3ed847499980c0ae2d5222e8879c8ce"
+}

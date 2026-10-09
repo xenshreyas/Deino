@@ -7,8 +7,24 @@ the SQLite adapters behind those ports.
 
 ## Owns
 
-- `meetings`: `MeetingService` (list, get, rename), the `MeetingRepo` port,
-  `SqliteMeetingRepo` and `FakeMeetingRepo`.
+- `meetings`: `MeetingService` (list, get, rename) over `MeetingRepo`;
+  `MeetingLifecycleService` (status transitions by compare-and-set) over
+  `MeetingLifecycleRepo` (create, timing, audio paths, calendar link,
+  template); `MeetingTrashRepo` (trash, restore, delete). One
+  `SqliteMeetingRepo` and one `FakeMeetingRepo` implement all three ports.
+- The core-schema aggregates (FND-07), each with small ports, a SQLite
+  repository and a fake that pass the same contract tests; feature cards add
+  the services and commands:
+  - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
+    batch) and `SpeakerRepo`;
+  - `people`: `PersonRepo` and `AttendeeRepo`;
+  - `companies`: `CompanyRepo`;
+  - `calendar`: `CalendarAccountRepo` and `CalendarEventRepo` (upsert by
+    provider ID);
+  - `folders`: `FolderRepo` (the only writer of `parent_id`, refusing
+    cycles) and `MeetingFolderRepo`;
+  - `tags`: `TagRepo` and `MeetingTagRepo`;
+  - `action_items`: `ActionItemRepo`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 
@@ -21,7 +37,8 @@ Each feature is `<feature>.rs` plus `<feature>/`:
 | `repo.rs` | The storage port and its SQLite adapter (`sqlx::query*!`) |
 | `service.rs` | Rules over ports and `Clock`; no SQL, no Tauri |
 | `fake.rs` | In-memory ports behind `test-support` |
-| `queries/*.sql` | Queries a test inspects with `EXPLAIN QUERY PLAN` |
+| `queries/*.sql` | Queries a test inspects with `EXPLAIN QUERY PLAN` (`testing::query_plan`) |
+| `*_tests.rs` | Contract tests run against both the SQLite repository and the fake |
 
 ## Does Not Own
 

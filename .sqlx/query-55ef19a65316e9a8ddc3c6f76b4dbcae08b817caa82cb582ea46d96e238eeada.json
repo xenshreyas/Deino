@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendar_events SET record_override = ?1, updated_at = ?2 WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "55ef19a65316e9a8ddc3c6f76b4dbcae08b817caa82cb582ea46d96e238eeada"
+}

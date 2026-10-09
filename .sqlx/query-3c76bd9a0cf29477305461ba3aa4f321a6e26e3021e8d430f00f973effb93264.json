@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The meetings outside the trash a person (?1) attended, newest first.\n-- Filtered through idx_meeting_attendees_person_id and joined on the\n-- meetings primary key (asserted in attendee_repo_tests.rs); one person's\n-- meetings are few enough to sort.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    m.created_at AS \"created_at: DateTime<Utc>\",\n    m.updated_at AS \"updated_at: DateTime<Utc>\"\nFROM meeting_attendees AS a\nJOIN meetings AS m ON m.id = a.meeting_id\nWHERE a.person_id = ?1 AND m.deleted_at IS NULL\nORDER BY m.created_at DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c76bd9a0cf29477305461ba3aa4f321a6e26e3021e8d430f00f973effb93264"
+}

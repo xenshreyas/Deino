@@ -15,9 +15,14 @@ debug-only `dev` plugin. Never part of a release build's behaviour.
     and words inside the recording; owners who were invited; ground-truth
     `evidence` quoted from the transcript; audio files that exist.
   - `FixtureSeeder` / `seed_fixtures(&database)`: writes them through one
-    `SeedTarget` per table group, in one transaction on the writer.
-    `LegacyMeetingRows` and `LegacyTranscriptRows` fill `meetings` and the
-    legacy `transcripts`; FND-07 adds targets for its tables.
+    `SeedTarget` per table group, in one transaction on the writer:
+    `CalendarRows`, `MeetingRows`, `PeopleRows` (companies, people,
+    attendees) and `TranscriptRows` (speakers, segments). Every row gets a
+    stable ID from `fixture_uuid(key)` (mirrored by the mock IPC's
+    `fixture-ids.ts`); `deino-core`'s `fixture_tests.rs` reads the rows back
+    through the repositories.
+  - The vocabulary the schema shares (`Millis`, `Email`, `Channel`,
+    `AttendeeRole`, `Rsvp`) is `deino-domain`'s, re-exported by `fixture`.
   - `PcmTrack`: decodes the fixture audio (`mic.m4a`/`system.m4a`) into mono
     PCM frames, for FND-05's `MockAudioSource`.
 - Re-exports with one import path (feature `test-support`): `test_db` (from
@@ -41,4 +46,6 @@ debug-only `dev` plugin. Never part of a release build's behaviour.
   builds never compile a fake in.
 - Fixture loading and seeding return errors instead of panicking (the `dev`
   plugin runs them in a real app); only the `seed` helpers and `at` panic.
-- Seeding touches fixture rows only (`meeting-fixture-*`) and is idempotent.
+- Seeding touches fixture rows only (`meeting-fixture-*`, their events,
+  speakers and segments; people and companies are upserted by email and
+  domain, never deleted) and is idempotent.

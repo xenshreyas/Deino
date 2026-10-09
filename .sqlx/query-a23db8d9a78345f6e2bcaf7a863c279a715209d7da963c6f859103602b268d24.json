@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) AS \"count!: u32\" FROM transcript_segments\n            WHERE meeting_id = ?1 AND is_deleted = 0",
+  "describe": {
+    "columns": [
+      {
+        "name": "count!: u32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a23db8d9a78345f6e2bcaf7a863c279a715209d7da963c6f859103602b268d24"
+}

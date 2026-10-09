@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: CompanyId\", name, domain AS \"domain: CompanyDomain\", logo_path,\n                notes_md, summary_md, created_at AS \"created_at: DateTime<Utc>\",\n                updated_at AS \"updated_at: DateTime<Utc>\"\n            FROM companies WHERE domain = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CompanyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain: CompanyDomain",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "logo_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_md",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_md",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c3b018b0b89c0df58756454519f6c99b89b5a99347115aa17258eac7ddcaae81"
+}

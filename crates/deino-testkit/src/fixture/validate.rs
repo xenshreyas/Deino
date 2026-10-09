@@ -56,6 +56,9 @@ pub enum Problem {
     /// The user speaks on the system channel.
     #[error("the user can only be heard on the microphone")]
     UserOnSystem,
+    /// A speaker is on the `mixed` channel; fixtures keep the tracks apart.
+    #[error("speaker {0} must be heard on the mic or the system track, not mixed")]
+    MixedChannel(String),
     /// A segment names an unknown speaker or the wrong channel.
     #[error("segment {0} has an unknown speaker or the wrong channel")]
     SegmentSpeaker(usize),
@@ -161,6 +164,9 @@ fn check_speakers(meeting: &FixtureMeeting) -> Result<(), Problem> {
     let mut attendees = HashSet::new();
     for (index, speaker) in meeting.speakers.iter().enumerate() {
         let label = || speaker.label.clone();
+        if speaker.channel == Channel::Mixed {
+            return Err(Problem::MixedChannel(label()));
+        }
         let expected = format!("Speaker {}", index + 1);
         if speaker.label != expected || first_heard.get(index) != Some(&expected.as_str()) {
             return Err(Problem::SpeakerOrder(label()));

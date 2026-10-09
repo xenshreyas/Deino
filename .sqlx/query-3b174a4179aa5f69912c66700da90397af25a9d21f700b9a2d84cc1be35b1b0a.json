@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A fixture meeting: ?1 id, ?2 title, ?3 when recording stopped (also its\n-- created_at, as the legacy path saved meetings then), ?4 status, ?5 source,\n-- ?6 started_at, ?7 duration_s, ?8 calendar event, ?9 series. Re-seeding\n-- restores every column and takes the meeting out of the trash.\nINSERT INTO meetings (\n    id, title, created_at, updated_at, status, source, started_at, ended_at, duration_s,\n    calendar_event_id, series_id\n)\nVALUES (?1, ?2, ?3, ?3, ?4, ?5, ?6, ?3, ?7, ?8, ?9)\nON CONFLICT (id) DO UPDATE SET\n    title = excluded.title,\n    created_at = excluded.created_at,\n    updated_at = excluded.updated_at,\n    status = excluded.status,\n    source = excluded.source,\n    started_at = excluded.started_at,\n    ended_at = excluded.ended_at,\n    duration_s = excluded.duration_s,\n    calendar_event_id = excluded.calendar_event_id,\n    series_id = excluded.series_id,\n    deleted_at = NULL\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "3b174a4179aa5f69912c66700da90397af25a9d21f700b9a2d84cc1be35b1b0a"
+}

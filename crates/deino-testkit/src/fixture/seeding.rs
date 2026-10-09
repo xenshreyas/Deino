@@ -6,10 +6,9 @@
 //! restores the fixtures to their original state (a renamed fixture gets its
 //! title back) and leaves the user's own meetings alone.
 //!
-//! Today the targets fill the tables that exist: `meetings` and the legacy
-//! `transcripts`. When FND-07 adds the core schema it adds a target per table
-//! group (attendees and people, speakers and `transcript_segments`, calendar
-//! events, action items) to [`FixtureSeeder::targets`]; nothing else changes.
+//! The targets fill the core schema (FND-07), one group of tables each; see
+//! [`rows`](super::rows). A card that adds a table the fixtures describe adds
+//! a target to [`FixtureSeeder::targets`]; nothing else changes.
 
 use async_trait::async_trait;
 use deino_db::{Database, DbError};
@@ -84,8 +83,10 @@ impl FixtureSeeder {
     /// The table groups a seed fills, in foreign-key order.
     pub fn targets() -> Vec<Box<dyn SeedTarget>> {
         vec![
-            Box::new(super::legacy_rows::LegacyMeetingRows),
-            Box::new(super::legacy_rows::LegacyTranscriptRows),
+            Box::new(super::rows::CalendarRows),
+            Box::new(super::rows::MeetingRows),
+            Box::new(super::rows::PeopleRows),
+            Box::new(super::rows::TranscriptRows),
         ]
     }
 

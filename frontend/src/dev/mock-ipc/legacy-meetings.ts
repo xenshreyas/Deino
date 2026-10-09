@@ -4,21 +4,29 @@
  * moves to the `meetings` mock when ORG-07/TRN-01 port it to the plugin.
  *
  * Responses have the shapes of the Rust legacy commands in `api/api.rs`, and
- * transcript rows match what `deino_testkit::FixtureSeeder` writes.
+ * transcript rows match what the Rust app serves for `deino_testkit::FixtureSeeder`'s
+ * rows through the `transcripts` compatibility view (ADR 0012).
  */
+import { fixtureUuid } from './fixture-ids';
 import type { FixtureMeeting, FixtureSegment } from './fixture-schema';
 import type { MockDatabase } from './mock-database';
 
-/** Seconds, as the legacy `transcripts` columns store them. */
+/** Seconds, as the legacy `transcripts` view returns them. */
 const seconds = (ms: number) => ms / 1000;
 
-/** One legacy transcript row. */
+/** The view's `timestamp`: the offset into the recording as `HH:MM:SS`. */
+function offsetClock(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const parts = [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60];
+  return parts.map((part) => String(part).padStart(2, '0')).join(':');
+}
+
+/** One legacy transcript row, as the compatibility view serves a seeded segment. */
 function transcriptOf(meeting: FixtureMeeting, segment: FixtureSegment, index: number) {
-  const startedAt = new Date(Date.parse(meeting.startedAt) + segment.startMs);
   return {
-    id: `${meeting.id}-segment-${String(index).padStart(4, '0')}`,
+    id: fixtureUuid(`segment/${meeting.id}/${String(index)}`),
     text: segment.text,
-    timestamp: startedAt.toISOString().slice(11, 19),
+    timestamp: offsetClock(segment.startMs),
     audio_start_time: seconds(segment.startMs),
     audio_end_time: seconds(segment.endMs),
     duration: seconds(segment.endMs - segment.startMs),

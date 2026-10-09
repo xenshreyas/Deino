@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every company by name, case-insensitively. Served by idx_companies_name\n-- (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: CompanyId\",\n    name,\n    domain AS \"domain: CompanyDomain\",\n    logo_path,\n    notes_md,\n    summary_md,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM companies\nORDER BY name COLLATE NOCASE, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CompanyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain: CompanyDomain",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "logo_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_md",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_md",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "772aa1d93492cfc1d2cf4074c18bf8ebd7041d780b47199083e69ae0e75d87ff"
+}

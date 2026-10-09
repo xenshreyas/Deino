@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "WITH RECURSIVE lineage (id) AS (\n            SELECT ?1\n            UNION\n            SELECT folders.parent_id FROM folders JOIN lineage ON folders.id = lineage.id\n            WHERE folders.parent_id IS NOT NULL\n        )\n        SELECT EXISTS (SELECT 1 FROM lineage WHERE id = ?2) AS \"within!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "within!: bool",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "19d3c7538bfd892e2935e67493bab592bdcbb30df865648a25700858ed46a6f6"
+}
