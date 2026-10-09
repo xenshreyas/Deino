@@ -4,6 +4,11 @@
 //! A reply can stall: it promises its whole body, sends part of it, and then
 //! holds the connection open without sending more.
 
+#![allow(
+    dead_code,
+    reason = "shared by several test crates (`#[path]`), each using part of it"
+)]
+
 use std::fmt::Write as _;
 use std::sync::{Arc, Mutex, PoisonError};
 
