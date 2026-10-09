@@ -1,18 +1,26 @@
-//! Window and run-loop event handlers: hide-to-tray on close, re-focus on
-//! dock click, and resource cleanup on exit.
+//! Window and run-loop event handlers: hide-to-tray on close, recording
+//! file drops for the notepad, re-focus on dock click, and resource cleanup
+//! on exit.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_pipeline::PipelineService;
-use tauri::{AppHandle, Manager, RunEvent, Window, WindowEvent};
+use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
+use crate::features::notes::DroppedFiles;
 use crate::{state::AppState, summary};
 
 /// Label of the main window defined in `tauri.conf.json`.
 const MAIN_WINDOW_LABEL: &str = "main";
 
-/// Closing the main window hides it to the tray instead of quitting.
+/// Closing the main window hides it to the tray instead of quitting; a
+/// file drop is remembered so the notepad may read exactly those files.
 pub(crate) fn on_window_event(window: &Window, event: &WindowEvent) {
+    if let WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {
+        remember_drop(window, paths);
+        return;
+    }
     let WindowEvent::CloseRequested { api, .. } = event else {
         return;
     };
@@ -23,6 +31,13 @@ pub(crate) fn on_window_event(window: &Window, event: &WindowEvent) {
     match window.hide() {
         Ok(()) => log::info!("Main window hidden to tray on close request"),
         Err(e) => log::error!("Failed to hide main window on close request: {e}"),
+    }
+}
+
+/// Records the dropped paths for `notes|attach_dropped_image`.
+fn remember_drop(window: &Window, paths: &[PathBuf]) {
+    if let Some(dropped) = window.app_handle().try_state::<Arc<DroppedFiles>>() {
+        dropped.remember(paths);
     }
 }
 

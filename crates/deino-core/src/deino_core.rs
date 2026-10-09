@@ -13,7 +13,8 @@
 //! each service through one inline Tauri plugin. [`_example`] is the template
 //! to copy; [`meetings`] is the first real feature built from it, and
 //! [`settings`] holds every user preference; [`summaries`] generates the
-//! legacy template summaries through the LLM gateway (`deino-llm`).
+//! legacy template summaries through the LLM gateway (`deino-llm`);
+//! [`notes`] keeps the user's own notes (TipTap documents via `deino-doc`).
 //!
 //! [`diarization`] holds the `diarize` stage's rules (CAP-03) over an engine
 //! port that `deino-diarize` implements.
@@ -40,6 +41,7 @@ mod fixture_tests;
 pub mod folders;
 pub mod meetings;
 pub mod models;
+pub mod notes;
 pub mod people;
 pub mod profile;
 pub mod segments;

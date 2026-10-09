@@ -11,6 +11,7 @@ use deino_testkit::fixture::{Fixtures, MeetingKind, seed_fixtures};
 
 use crate::calendar::{CalendarEventRepo, SqliteCalendarRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, MeetingTrashRepo, SqliteMeetingRepo};
+use crate::notes::{NotesRepo, SqliteNotesRepo};
 use crate::people::{AttendeeRepo, PersonRepo, SqlitePeopleRepo};
 use crate::segments::{Page, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 
@@ -91,6 +92,22 @@ async fn seeded_people_attend_their_meetings() {
         .windows(2)
         .all(|pair| pair[0].created_at >= pair[1].created_at);
     assert!(newest_first);
+}
+
+#[tokio::test]
+async fn seeded_user_notes_open_as_documents() {
+    let (database, fixtures) = seeded().await;
+    let repo = SqliteNotesRepo::new(database);
+    let one_on_one = fixtures.meeting(MeetingKind::OneOnOne).unwrap();
+    let standup = fixtures.meeting(MeetingKind::Standup).unwrap();
+
+    let notes = repo.get(&one_on_one.id).await.unwrap().unwrap();
+
+    deino_doc::validate(&notes.doc).unwrap();
+    assert!(notes.markdown.starts_with("## maya 1:1 10/7\n"));
+    assert_eq!(notes.updated_at, one_on_one.ended_at());
+    assert_eq!(standup.user_notes, None);
+    assert_eq!(repo.get(&standup.id).await.unwrap(), None);
 }
 
 #[tokio::test]

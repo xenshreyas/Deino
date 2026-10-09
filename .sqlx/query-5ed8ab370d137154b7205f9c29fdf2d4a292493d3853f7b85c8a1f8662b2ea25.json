@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_notes (meeting_id, notes_markdown, notes_json, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "5ed8ab370d137154b7205f9c29fdf2d4a292493d3853f7b85c8a1f8662b2ea25"
+}

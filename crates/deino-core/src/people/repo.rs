@@ -26,6 +26,11 @@ pub trait PersonRepo: Send + Sync {
     /// The company's people not merged into another, by name.
     async fn list_by_company(&self, company: &CompanyId) -> Result<Vec<Person>, DbError>;
 
+    /// Unmerged people whose name, any word of it, or email starts with
+    /// `prefix` (ignoring ASCII case), by name, at most `limit` of them. An
+    /// empty prefix matches everyone.
+    async fn search(&self, prefix: &str, limit: u32) -> Result<Vec<Person>, DbError>;
+
     /// Saves every editable field of `person` and its `updated_at`.
     async fn update(&self, person: &Person) -> Result<bool, DbError>;
 
@@ -102,6 +107,14 @@ impl PersonRepo for SqlitePeopleRepo {
         Ok(people)
     }
 
+    async fn search(&self, prefix: &str, limit: u32) -> Result<Vec<Person>, DbError> {
+        let pattern = escape_like(prefix);
+        let people = sqlx::query_file_as!(Person, "src/people/queries/search.sql", pattern, limit)
+            .fetch_all(self.database.reader())
+            .await?;
+        Ok(people)
+    }
+
     async fn update(&self, person: &Person) -> Result<bool, DbError> {
         let result = sqlx::query!(
             "UPDATE people
@@ -132,4 +145,16 @@ impl PersonRepo for SqlitePeopleRepo {
             .await?;
         Ok(result.rows_affected() > 0)
     }
+}
+
+/// `text` as a LIKE prefix: `\`, `%` and `_` match themselves (`ESCAPE '\'`).
+fn escape_like(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for character in text.chars() {
+        if matches!(character, '\\' | '%' | '_') {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
 }

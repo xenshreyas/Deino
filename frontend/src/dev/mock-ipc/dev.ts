@@ -4,13 +4,14 @@
  */
 import type * as Generated from '@/lib/ipc/generated/dev';
 
-import { mockDatabase } from './database';
+import { mockDatabase, mockNotes } from './database';
 import { latency } from './latency';
 import { ok } from './mock-database';
 
 export const commands = {
   async seedFixtures() {
     await latency();
+    mockNotes.reseed();
     return ok(mockDatabase.reseed());
   },
 } satisfies typeof Generated.commands;

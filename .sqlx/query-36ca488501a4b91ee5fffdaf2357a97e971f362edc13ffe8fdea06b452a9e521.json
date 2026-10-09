@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- One meeting's notes; `meeting_id` is the primary key.\nSELECT\n    meeting_id AS \"meeting_id!: MeetingId\",\n    notes_json,\n    notes_markdown,\n    created_at AS \"created_at!: DateTime<Utc>\",\n    updated_at AS \"updated_at!: DateTime<Utc>\"\nFROM meeting_notes\nWHERE meeting_id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_json",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_markdown",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "36ca488501a4b91ee5fffdaf2357a97e971f362edc13ffe8fdea06b452a9e521"
+}

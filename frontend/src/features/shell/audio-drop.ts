@@ -13,6 +13,9 @@ export type AudioDropOutcome =
   | { kind: 'unsupported' }
   | { kind: 'nothing' };
 
+/** Image files the notepad accepts (`notepad/images.ts`). */
+const NOTE_IMAGE = /\.(png|jpe?g|gif|webp)$/i;
+
 /** Lower-case extension of `path` without the dot, or `undefined`. */
 function extensionOf(path: string): string | undefined {
   const dot = path.lastIndexOf('.');
@@ -29,6 +32,8 @@ export function classifyAudioDrop(
   paths: readonly string[],
   importEnabled: boolean,
 ): AudioDropOutcome {
+  // Images belong to the notepad, which inserts them where they land (NOT-01).
+  if (paths.length > 0 && paths.every((path) => NOTE_IMAGE.test(path))) return { kind: 'nothing' };
   if (!importEnabled) return { kind: 'import-disabled' };
   const audio = paths.find((path) => {
     const extension = extensionOf(path);

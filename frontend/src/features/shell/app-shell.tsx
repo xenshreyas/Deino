@@ -17,6 +17,7 @@ import { ChatPlaceholder } from './components/chat-placeholder';
 import { ImportDialogGate } from './components/import-dialog-gate';
 import { TitleBar } from './components/title-bar';
 import { TrayRecordingToggle } from './components/tray-recording-toggle';
+import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
 import { useImportDialogState } from './hooks/use-import-dialog-state';
 import { useOnboardingGate } from './hooks/use-onboarding-gate';
@@ -31,8 +32,12 @@ interface MainLayoutProps {
 /** Sidebar, title bar and the current route, plus the global overlays. */
 function MainLayout({ onAudioFile, children }: MainLayoutProps) {
   useGlobalShortcuts();
+  const focusMode = useFocusMode();
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
+    <div
+      data-focus-mode={focusMode}
+      className="flex h-screen w-screen overflow-hidden bg-bg text-fg"
+    >
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TitleBar />

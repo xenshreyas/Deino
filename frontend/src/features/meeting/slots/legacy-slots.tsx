@@ -1,19 +1,17 @@
 /**
- * The Notes and Transcript tabs, filled by the inherited session's panels
- * (see `legacy/panels-context.tsx`) until NOT-01 and TRN-01 rebuild them.
- * The Notes tab shows the meeting's template picker (NOT-04) above them.
+ * The legacy summary (the Notes tab's Summary view) and the Transcript tab,
+ * filled by the inherited session's panels (`legacy/panels-context.tsx`)
+ * until NOT-02 and TRN-01 rebuild them.
  */
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-import { MeetingTemplatePicker } from '@/features/templates';
 import { Alert, AlertDescription } from '@/ui/alert';
 import { CircleAlert, ICON_PROPS } from '@/ui/icons';
 import { Skeleton, SkeletonText } from '@/ui/skeleton';
 
 import { meetingCopy } from '../copy';
 import { type LegacyMeetingPanels, useLegacyMeetingPanels } from '../legacy/panels-context';
-import type { MeetingSlotProps } from '../types';
 
 /** The notes' loading shape: a heading and a few bullet lines. */
 function NotesSkeleton() {
@@ -66,21 +64,9 @@ function LegacyPanel({
   return <div className="flex h-full min-h-0 flex-col">{pick(panels)}</div>;
 }
 
-/**
- * Notes: the meeting's template (NOT-04: which one, why, switch it) above
- * the AI summary editor, generate and regenerate.
- */
-export function NotesSlot({ meetingId }: MeetingSlotProps) {
-  const panels = useLegacyMeetingPanels();
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <MeetingTemplatePicker
-        meetingId={meetingId}
-        onRegenerate={panels.status === 'ready' ? panels.regenerateNotes : null}
-      />
-      <LegacyPanel pick={(ready) => ready.notes} skeleton={<NotesSkeleton />} />
-    </div>
-  );
+/** The Notes tab's Summary view: the AI summary editor, generate and regenerate. */
+export function LegacyNotesPanel() {
+  return <LegacyPanel pick={(ready) => ready.notes} skeleton={<NotesSkeleton />} />;
 }
 
 /** Transcript: the paginated transcript with copy and retranscribe. */

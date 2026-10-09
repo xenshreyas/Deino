@@ -1,0 +1,26 @@
+[package]
+name = "deino-doc"
+version = "0.1.0"
+description = "Deino's note document: the typed TipTap JSON model, Markdown in and out, and validation"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_doc.rs"
+
+[dependencies]
+deino-domain.workspace = true
+# CommonMark + GFM parser with an mdast syntax tree (wooorm/markdown-rs, MIT),
+# the parser anarlog's `crates/tiptap` is built on.
+markdown = "=1.0.0"
+serde.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+insta = { version = "=1.43.1", features = ["json"] }
+serde_json.workspace = true
+
+[lints]
+workspace = true

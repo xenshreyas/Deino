@@ -1,0 +1,22 @@
+/** User-visible strings of the notepad. */
+export const notepadCopy = {
+  placeholder: 'Write anything. Deino will fill in the rest.',
+  editorLabel: 'My notes',
+  draftTitle: 'New note',
+  saving: 'Saving…',
+  saved: 'Saved',
+  notSaved: 'Not saved yet, retrying',
+  loadError: 'These notes could not be opened.',
+  retry: 'Try again',
+  mentionsLabel: 'People',
+  noPeople: 'No one by that name yet',
+  imageFailedTitle: 'The image was not added',
+  templateFailedTitle: 'The template was not set',
+  adoptFailedTitle: 'Your notes are in a separate note',
+  adoptFailedBody: 'They could not be moved into the recording. Find them under Meetings.',
+  viewLabel: 'Notes view',
+  summary: 'Summary',
+  myNotes: 'My notes',
+  liveHeading: 'Notes',
+  transcriptHeading: 'Transcript',
+} as const;

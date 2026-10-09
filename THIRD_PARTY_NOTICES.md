@@ -48,6 +48,10 @@ Adapted in Deino:
   test, from `plugins/settings/src/lib.rs`.
 - `docs/TESTING.md`: the "write a test when / do not write a test for"
   guidance, adapted from `.agents/skills/testing/SKILL.md`.
+- `crates/deino-doc/`: the TipTap/ProseMirror JSON ↔ Markdown conversion and
+  the document validation, from `crates/tiptap` (`from_md.rs`, `to_ast.rs`,
+  `validate.rs` and their tests), ported to a typed model and extended with
+  Deino's provenance, citation and mention nodes (NOT-01).
 - `frontend/public/theme-boot.js`: applying the saved theme before the first
   paint, after `apps/desktop/public/theme-boot.js`; the System / Light / Dark
   picker with a diagonally split System preview

@@ -21,6 +21,8 @@ export type LegacyMeetingPanels =
       transcript: ReactNode;
       /** Regenerates the notes with the meeting's template; `null` before there are notes. */
       regenerateNotes: (() => void) | null;
+      /** Whether there is an AI summary; the Notes tab opens on "My notes" without one. */
+      hasSummary: boolean;
     };
 
 const PanelsContext = createContext<LegacyMeetingPanels>({ status: 'loading' });

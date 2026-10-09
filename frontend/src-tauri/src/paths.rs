@@ -44,6 +44,12 @@ impl AppPaths {
         self.data.join("models")
     }
 
+    /// One folder per meeting (`<data>/meetings/<meeting id>`), holding the
+    /// note images (NOT-01). Inside the asset protocol's `$APPDATA` scope.
+    pub(crate) fn meetings(&self) -> PathBuf {
+        self.data.join("meetings")
+    }
+
     /// The pre-NOT-04 custom templates folder (`<data>/templates`), read
     /// once at startup to import its JSON files into the database.
     pub(crate) fn legacy_templates(&self) -> PathBuf {

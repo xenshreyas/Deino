@@ -99,9 +99,10 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
+| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
+| `crates/deino-doc` | The note document (ADR 0022): TipTap JSON as typed Rust, Markdown in (`from_markdown`) and out (`to_markdown`, `Lossless`/`Readable`), `validate`, `normalize`; ported from anarlog `crates/tiptap` |
 | `crates/deino-llm` | The LLM gateway (ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router`, providers (Anthropic, OpenAI-compatible, Ollama, built-in llama-helper), askama/minijinja prompts, `MockProvider`, the `llm_calls` usage log (no content). Every LLM call goes through it. |
 | `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
@@ -123,7 +124,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
@@ -163,8 +164,10 @@ src/
   `navigate({ to: '/meetings/$meetingId', params: { meetingId } })`. Search
   params are validated with zod. Commit `routeTree.gen.ts` with route changes;
   test files inside `routes/` need a `-` prefix.
-- Summary editor: BlockNote (frozen until NOT-01 moves to TipTap). ProseMirror
-  stays single-instance through the `pnpm.overrides` pins.
+- Editor: TipTap 3 (`features/notepad/`, ADR 0022), loaded lazily. Notes are
+  TipTap JSON; Rust reads and writes them with `deino-doc`. A new node or mark
+  touches the model, both Markdown directions, the TipTap extension and the
+  zod schema (`docs/ARCHITECTURE.md` §8).
 
 ## How to add a feature: copy `_example`
 

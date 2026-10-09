@@ -8,7 +8,7 @@
  *
  * | Slot | Today | Filled by |
  * |---|---|---|
- * | Notes tab | legacy summary editor | NOT-01, NOT-02 |
+ * | Notes tab | legacy summary and My notes (NOT-01) | NOT-02 |
  * | Transcript tab | legacy transcript | TRN-01 |
  * | Insights tab | empty state | AI-06 |
  * | Clips tab | empty state | TRN-04 |
@@ -21,7 +21,8 @@ import type { ComponentType } from 'react';
 
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
-import { NotesSlot, TranscriptSlot } from './slots/legacy-slots';
+import { TranscriptSlot } from './slots/legacy-slots';
+import { NotesSlot } from './slots/notes-slot';
 import {
   ChatPanelSlot,
   ClipsSlot,

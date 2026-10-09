@@ -42,6 +42,8 @@
         "network:default",
         "pipeline:default",
         "profile:default",
+        "notes:default",
+        "people:default",
         "secrets:default",
         "llm:default",
         "settings:default",

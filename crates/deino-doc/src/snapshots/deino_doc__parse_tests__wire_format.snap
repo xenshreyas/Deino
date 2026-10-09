@@ -1,0 +1,72 @@
+---
+source: crates/deino-doc/src/parse_tests.rs
+expression: doc
+---
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Plan",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "ship",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " it",
+                  "marks": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "see ",
+          "marks": []
+        },
+        {
+          "type": "mention",
+          "attrs": {
+            "id": "0192f3a0-6c1e-7b2a-9d4e-1f2a3b4c5d6e",
+            "label": "Priya"
+          },
+          "marks": []
+        }
+      ]
+    }
+  ]
+}

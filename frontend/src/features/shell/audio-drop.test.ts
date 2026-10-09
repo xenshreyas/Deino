@@ -20,6 +20,11 @@ describe('classifyAudioDrop', () => {
     });
   });
 
+  test('leaves image drops to the notepad, whatever the import beta says', () => {
+    expect(classifyAudioDrop(['/tmp/board.PNG', '/tmp/b.jpeg'], true)).toEqual({ kind: 'nothing' });
+    expect(classifyAudioDrop(['/tmp/board.png'], false)).toEqual({ kind: 'nothing' });
+  });
+
   test('does nothing for an empty drop', () => {
     expect(classifyAudioDrop([], true)).toEqual({ kind: 'nothing' });
   });

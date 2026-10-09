@@ -19,6 +19,7 @@ test-support = ["deino-db/test-support", "deino-domain/test-support"]
 async-trait.workspace = true
 chrono.workspace = true
 deino-db.workspace = true
+deino-doc.workspace = true
 deino-domain.workspace = true
 serde.workspace = true
 serde_json.workspace = true

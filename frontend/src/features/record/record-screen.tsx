@@ -17,6 +17,7 @@ import { TranscriptRecovery } from '@/components/TranscriptRecovery';
 import { indexedDBService } from '@/services/indexedDBService';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
+import { LiveNotepad, notepadCopy } from '@/features/notepad';
 
 /** The home screen: live transcript, recording controls and recovery. */
 export function RecordScreen() {
@@ -200,11 +201,22 @@ export function RecordScreen() {
         onDelete={deleteRecoverableMeeting}
         onLoadPreview={loadMeetingTranscripts}
       />
-      <div className="flex flex-1 overflow-hidden">
-        <TranscriptPanel
-          isProcessingStop={isProcessingStop}
-          isStopping={isStopping}
-        />
+      <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* NOT-01: the notes are the page; the live transcript sits beside them. */}
+        <section aria-label={notepadCopy.liveHeading} className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col px-6 pb-24">
+            <LiveNotepad />
+          </div>
+        </section>
+        <aside
+          aria-label={notepadCopy.transcriptHeading}
+          className="flex max-h-[40%] min-h-0 shrink-0 border-t border-border lg:max-h-none lg:w-[360px] lg:border-t-0 lg:border-l"
+        >
+          <TranscriptPanel
+            isProcessingStop={isProcessingStop}
+            isStopping={isStopping}
+          />
+        </aside>
 
         {/* Recording controls - only show when permissions are granted or already recording and not showing status messages */}
         {(hasMicrophone || isRecording) &&
