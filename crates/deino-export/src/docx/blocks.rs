@@ -120,7 +120,7 @@ impl Writer {
     }
 
     fn rule(&mut self) {
-        let rule = Run::new().add_text("———").color(MUTED);
+        let rule = styles::text("———").color(MUTED);
         self.paragraph(Paragraph::new().add_run(rule));
     }
 
@@ -128,7 +128,7 @@ impl Writer {
         let mono = RunFonts::new().ascii("Menlo").hi_ansi("Menlo");
         for line in text.lines() {
             self.paragraph(
-                Paragraph::new().add_run(Run::new().add_text(line).fonts(mono.clone()).size(19)),
+                Paragraph::new().add_run(styles::text(line).fonts(mono.clone()).size(19)),
             );
         }
     }
@@ -153,7 +153,7 @@ fn task(done: bool, level: usize) -> Paragraph {
             None,
             None,
         )
-        .add_run(Run::new().add_text(mark))
+        .add_run(styles::text(mark))
 }
 
 /// A nested list or code inside a quote, flattened to its text.
@@ -200,7 +200,7 @@ fn add(paragraph: Paragraph, inline: &Inline, format: Format) -> Paragraph {
 }
 
 fn run(text: &str, format: Format) -> Run {
-    let mut run = Run::new().add_text(text);
+    let mut run = styles::text(text);
     if format.has(Format::BOLD) {
         run = run.bold();
     }

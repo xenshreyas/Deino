@@ -39,11 +39,6 @@ pub(crate) const LIST_INDENT: i32 = 360;
 
 /// `docx` with the page set up, the styles defined and the numberings added.
 pub(crate) fn styled(docx: Docx) -> Docx {
-    let fonts = RunFonts::new()
-        .ascii(FONT)
-        .hi_ansi(FONT)
-        .cs(FONT)
-        .east_asia(FONT);
     let docx = docx
         .page_size(PAGE.0, PAGE.1)
         .page_margin(
@@ -53,17 +48,50 @@ pub(crate) fn styled(docx: Docx) -> Docx {
                 .left(MARGIN)
                 .right(MARGIN),
         )
-        .default_fonts(fonts)
+        .default_fonts(fonts())
         .default_size(BODY_SIZE)
-        .default_line_spacing(LineSpacing::new().after(120).line(276))
-        .add_style(paragraph_style(TITLE, "Title", 44).bold())
-        .add_style(paragraph_style(META, "Meta", 19).color(MUTED));
-    let docx = (1..=6).fold(docx, |docx, level| docx.add_style(heading_style(level)));
-    docx.add_abstract_numbering(numbering(BULLETS, "bullet", |_| "•".to_owned()))
+        .default_line_spacing(LineSpacing::new().after(120).line(276));
+    let styles = [
+        paragraph_style("Normal", "Normal", BODY_SIZE),
+        paragraph_style(TITLE, "Title", 44).bold(),
+        paragraph_style(META, "Meta", 19).color(MUTED),
+    ]
+    .into_iter()
+    .chain((1..=6).map(heading_style));
+    styles
+        .fold(docx, with_style)
+        .add_abstract_numbering(numbering(BULLETS, "bullet", |_| "•".to_owned()))
         .add_abstract_numbering(numbering(ORDERED_ABSTRACT, "decimal", |level| {
             format!("%{}.", level + 1)
         }))
         .add_numbering(docx_rs::Numbering::new(BULLETS, BULLETS))
+}
+
+/// The font on every style as well as the document defaults: Word reads
+/// the defaults, but Quick Look and TextEdit only read styles.
+fn fonts() -> RunFonts {
+    RunFonts::new()
+        .ascii(FONT)
+        .hi_ansi(FONT)
+        .cs(FONT)
+        .east_asia(FONT)
+}
+
+/// `docx` with `style`, replacing the default style of the same ID
+/// (`docx-rs` ships its own "Normal" and "Title").
+fn with_style(mut docx: Docx, style: Style) -> Docx {
+    let existing = docx
+        .styles
+        .styles
+        .iter_mut()
+        .find(|existing| existing.style_id == style.style_id);
+    match existing {
+        Some(existing) => {
+            *existing = style;
+            docx
+        }
+        None => docx.add_style(style),
+    }
 }
 
 fn paragraph_style(id: &str, name: &str, size: usize) -> Style {
@@ -71,6 +99,7 @@ fn paragraph_style(id: &str, name: &str, size: usize) -> Style {
         .name(name)
         .size(size)
         .color(INK)
+        .fonts(fonts())
 }
 
 /// "Heading 1" … "Heading 6": 600-weight, sizes stepping down from 18 pt;
@@ -82,6 +111,7 @@ fn heading_style(level: usize) -> Style {
         .unwrap_or(BODY_SIZE);
     let style = Style::new(format!("Heading{level}"), StyleType::Paragraph)
         .name(format!("Heading {level}"))
+        .fonts(fonts())
         .size(size)
         .bold()
         .outline_lvl(level - 1)
@@ -112,4 +142,15 @@ fn numbering(id: usize, format: &str, text: impl Fn(usize) -> String) -> Abstrac
             ),
         )
     })
+}
+
+/// A run of `text` in the document's font.
+pub(crate) fn text(text: impl Into<String>) -> docx_rs::Run {
+    text_run().add_text(text)
+}
+
+/// An empty run in the document's font: Quick Look and TextEdit ignore the
+/// document defaults on unstyled paragraphs, so every run names the font.
+pub(crate) fn text_run() -> docx_rs::Run {
+    docx_rs::Run::new().fonts(fonts())
 }

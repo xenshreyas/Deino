@@ -170,7 +170,9 @@ fn push_literal(parts: &mut Vec<Part>, literal: &str) {
 
 /// `raw` as one safe path component (see the module docs).
 pub fn sanitize(raw: &str) -> String {
+    // "Interview: Jordan" reads best as "Interview - Jordan".
     let replaced: String = raw
+        .replace(": ", " - ")
         .chars()
         .filter(|char| !DROPPED.contains(char))
         .map(|char| {

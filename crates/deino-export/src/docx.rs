@@ -10,8 +10,8 @@ mod styles;
 use std::io::Cursor;
 
 use docx_rs::{
-    Docx, Paragraph, Run, Shading, ShdType, Table, TableCell, TableCellBorder,
-    TableCellBorderPosition, TableCellBorders, TableRow, WidthType,
+    Docx, Paragraph, Shading, ShdType, Table, TableCell, TableCellBorder, TableCellBorderPosition,
+    TableCellBorders, TableRow, WidthType,
 };
 
 use self::blocks::Writer;
@@ -93,11 +93,11 @@ fn action_items(writer: &mut Writer, export: &MeetingExport) {
             )
             .collect();
         let mut paragraph = Paragraph::new()
-            .add_run(Run::new().add_text(mark))
-            .add_run(Run::new().add_text(&item.title));
+            .add_run(styles::text(mark))
+            .add_run(styles::text(&item.title));
         if !details.is_empty() {
             paragraph = paragraph.add_run(
-                Run::new()
+                styles::text_run()
                     .add_text(format!(" — {}", details.join(", ")))
                     .color(MUTED),
             );
@@ -116,12 +116,11 @@ fn transcript(export: &MeetingExport) -> Table {
     let rows = export.transcript.iter().map(|line| {
         TableRow::new(vec![
             cell(
-                Paragraph::new()
-                    .add_run(Run::new().add_text(clock.format(line.start)).color(MUTED)),
+                Paragraph::new().add_run(styles::text(clock.format(line.start)).color(MUTED)),
                 COLUMNS[0],
             ),
             cell(
-                Paragraph::new().add_run(Run::new().add_text(&line.speaker).bold()),
+                Paragraph::new().add_run(styles::text(&line.speaker).bold()),
                 COLUMNS[1],
             ),
             cell(text_paragraph(&line.text), COLUMNS[2]),
@@ -135,8 +134,7 @@ fn transcript(export: &MeetingExport) -> Table {
 }
 
 fn header_cell(text: &str, width: usize) -> TableCell {
-    let paragraph =
-        Paragraph::new().add_run(Run::new().add_text(text).bold().color(MUTED).size(18));
+    let paragraph = Paragraph::new().add_run(styles::text(text).bold().color(MUTED).size(18));
     cell(paragraph, width).shading(Shading::new().shd_type(ShdType::Clear).fill(SUBTLE_FILL))
 }
 
@@ -153,7 +151,7 @@ fn cell(paragraph: Paragraph, width: usize) -> TableCell {
 }
 
 fn text_paragraph(text: &str) -> Paragraph {
-    Paragraph::new().add_run(Run::new().add_text(text))
+    Paragraph::new().add_run(styles::text(text))
 }
 
 #[cfg(test)]

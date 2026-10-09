@@ -124,9 +124,9 @@
     grid(
       columns: (2.6em, 1fr), column-gutter: 10pt,
       ..s.lines.map(l => (
-        grid.cell(inset: (top: if l.continued { 6.5pt } else { 13pt }),
+        grid.cell(inset: (top: if l.continued { 10pt } else { 16pt }),
           text(size: 8pt, fill: subtle, number-width: "tabular", l.time)),
-        grid.cell(inset: (top: if l.continued { 6.5pt } else { 13pt }),
+        grid.cell(inset: (top: if l.continued { 10pt } else { 16pt }),
           if l.continued { l.text } else {
             [#text(weight: 600, fill: speakers.at(l.colour), l.speaker) \ #l.text]
           }),

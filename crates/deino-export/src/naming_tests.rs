@@ -36,7 +36,7 @@ fn every_placeholder_uses_the_local_start_time() {
 fn slashes_in_titles_never_make_folders() {
     assert_eq!(
         file_name("{title}", "Q3/Q4 review: A\\B"),
-        "Q3-Q4 review- A-B.md"
+        "Q3-Q4 review - A-B.md"
     );
     let folders = NameTemplate::parse("{yyyy}/{title}")
         .unwrap()
