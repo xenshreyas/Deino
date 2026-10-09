@@ -12,10 +12,14 @@ use serde::{Deserialize, Serialize};
 )]
 #[serde(rename_all = "snake_case")]
 pub enum Table {
-    /// Meeting rows: title and timestamps.
+    /// Meeting rows: title, status, timing and links.
     Meetings,
-    /// Legacy transcript segments, one row per segment.
-    Transcripts,
+    /// Transcript segments, one row per utterance. Legacy code still
+    /// reaches them through the `transcripts` compatibility view (ADR 0012),
+    /// whose writes are reported as this table.
+    TranscriptSegments,
+    /// The speakers of each meeting's transcript.
+    Speakers,
     /// Summary generation state and results, one row per meeting.
     SummaryProcesses,
     /// The transcript text sent for summarisation.
@@ -26,6 +30,26 @@ pub enum Table {
     TranscriptSettings,
     /// The user's own notes for a meeting.
     MeetingNotes,
+    /// People the user meets.
+    People,
+    /// Companies people work at.
+    Companies,
+    /// Who attended which meeting.
+    MeetingAttendees,
+    /// Connected calendar accounts.
+    CalendarAccounts,
+    /// Events synced from calendar accounts.
+    CalendarEvents,
+    /// Folders, nested through `parent_id`.
+    Folders,
+    /// Which meetings sit in which folders.
+    MeetingFolders,
+    /// Tags.
+    Tags,
+    /// Which tags are applied to which meetings.
+    MeetingTags,
+    /// Action items, from meetings or standalone.
+    ActionItems,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -33,14 +57,25 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 19] = [
         Self::Meetings,
-        Self::Transcripts,
+        Self::TranscriptSegments,
+        Self::Speakers,
         Self::SummaryProcesses,
         Self::TranscriptChunks,
         Self::Settings,
         Self::TranscriptSettings,
         Self::MeetingNotes,
+        Self::People,
+        Self::Companies,
+        Self::MeetingAttendees,
+        Self::CalendarAccounts,
+        Self::CalendarEvents,
+        Self::Folders,
+        Self::MeetingFolders,
+        Self::Tags,
+        Self::MeetingTags,
+        Self::ActionItems,
         Self::ExampleNotes,
     ];
 
@@ -51,12 +86,23 @@ impl Table {
     pub fn from_name(name: &str) -> Option<Self> {
         Some(match name {
             "meetings" => Self::Meetings,
-            "transcripts" => Self::Transcripts,
+            "transcript_segments" => Self::TranscriptSegments,
+            "speakers" => Self::Speakers,
             "summary_processes" => Self::SummaryProcesses,
             "transcript_chunks" => Self::TranscriptChunks,
             "settings" => Self::Settings,
             "transcript_settings" => Self::TranscriptSettings,
             "meeting_notes" => Self::MeetingNotes,
+            "people" => Self::People,
+            "companies" => Self::Companies,
+            "meeting_attendees" => Self::MeetingAttendees,
+            "calendar_accounts" => Self::CalendarAccounts,
+            "calendar_events" => Self::CalendarEvents,
+            "folders" => Self::Folders,
+            "meeting_folders" => Self::MeetingFolders,
+            "tags" => Self::Tags,
+            "meeting_tags" => Self::MeetingTags,
+            "action_items" => Self::ActionItems,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })
@@ -77,7 +123,10 @@ mod tests {
     }
 
     #[test]
-    fn internal_tables_are_not_tracked() {
+    fn internal_tables_and_views_are_not_tracked() {
         assert_eq!(Table::from_name("_sqlx_migrations"), None);
+        // A view never reaches the update hook; writes through it report the
+        // table underneath (`transcript_segments`).
+        assert_eq!(Table::from_name("transcripts"), None);
     }
 }

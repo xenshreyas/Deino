@@ -50,3 +50,5 @@ pub async fn test_db() -> Database {
 
 #[cfg(test)]
 mod database_tests;
+#[cfg(test)]
+mod migration_tests;
