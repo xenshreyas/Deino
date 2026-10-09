@@ -1,0 +1,63 @@
+---
+source: crates/deino-export/src/text.rs
+expression: "render(&export, &RenderOptions::default())"
+---
+Deino Q3 board update
+Tuesday, September 29, 2026 at 11:01 · 36 min
+
+Attendees
+---------
+Aisha Rahman, Shreyas, Daniel Koh, Ruth Abernathy
+
+Notes
+-----
+Decisions
+
+• The board approved two engineering hires: a senior backend engineer and a mobile engineer.
+• Series A conversations are held until March 2027; no fundraising process or insider extension now.
+• Deino will launch a hosted, customer-facing status page by the end of October 2026.
+• The next board meeting is on 15 December 2026, same time.
+
+Key facts
+
+• What is Deino's gross revenue retention? 94% trailing twelve months.
+• What was Deino's ARR at the end of Q3 2026? $2.4M, up from $1.9M at the end of Q2 (about 26% quarter on quarter).
+• How many paying customers does Deino have? 41, up from 34.
+• What was net revenue retention in Q3 and how did it compare to the prior quarter? 118%, down from 124% last quarter.
+• Why did NRR dip? A seasonal pool and spa customer cut 25 seats in August, a small 8-technician customer churned after being acquired, and Fernhollow's planned 15-seat expansion slipped out of the quarter after the sync bug.
+• What are monthly burn, cash and runway? About $310k per month burn, $5.9M cash, about 19 months of runway (about 17 months with the two hires at flat revenue).
+• What is Deino's burn multiple? About 1.9 in Q3, down from about 2.3 in Q2; Daniel wants it toward 1.5.
+• How concentrated is Deino's revenue? The largest customer is 9% of ARR; the top five are 31%.
+• How many duplicate jobs did Fernhollow get from the Calendar Sync v1.4 bug? About 130 duplicate jobs over two weeks; five other customers had about 40 between them.
+• When does Brightkite's current tool licence end, and what would the deal be worth? Their DispatchPro 6 licence ends 31 January 2027; on the enterprise tier the deal would be roughly $158k ARR.
+• Who is the SOC 2 auditor and when does the observation window start? Kestrel Audit; the Type II observation window starts 1 November 2026 (owned by Priya).
+• When is the next board meeting? 15 December 2026.
+
+My notes
+--------
+• board q3. me + aisha on one laptop in the small room
+• sam out (lisbon offsite)
+• ARR 2.4M (1.9 end Q2), 41 custs (34), GM 78, NRR 118 vs 124 -- danial pushing
+• burn 310k/mo, cash 5.9M, ~19mo runway
+• burn multiple ~1.9 (q2 2.3) -> want 1.5 by Q2 27
+• nrr: seasonal pool co -25 seats, 1 churn (acquired), fernhollow +15 slipped. ex-fernhollow ~121
+• brightkite ~158k ARR @ ent, dispatchpro lic ends 31 jan, ~30%
+• ruth: concentration. top cust 9%, top5 31%. dont let enterprise eat midmarket
+• ruth -> intro VP CS candidate for aisha
+• incident: no recurring-exception tests, no staged rollout, found via customer (owen 18th), maya carried it
+• STATUS PAGE live by end oct -- me. hosted, not built
+• incident one-pager to board by fri 9th -- me
+• v2 maybe ~1wk behind?? dont say slip yet
+• hires APPROVED: sr backend + mobile. runway -> ~17mo flat rev
+• aisha: model to daniel fri (plan + 70% plan)
+• series A: hold till march 27. no extension
+• next board 15 dec
+• ask priya: statuspage vendor? needs to be in soc2 scope?
+
+Action items
+------------
+[x] Send Daniel the updated financial model with both hires, Q4 at plan and at 70% of plan — Aisha Rahman, due Oct 2, 2026
+[ ] Write an incident-review one-pager on the Calendar Sync v1.4 incident for the board — Shreyas, due Oct 9, 2026
+[ ] Get a customer-facing status page live — Shreyas, due Oct 31, 2026
+[ ] Introduce Aisha to a VP Customer Success candidate — Ruth Abernathy
+[ ] Send the calendar invite for the 15 December board meeting, including Sam — Aisha Rahman, due Sep 29, 2026

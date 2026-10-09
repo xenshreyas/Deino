@@ -1,0 +1,91 @@
+---
+source: crates/deino-export/src/markdown_tests.rs
+expression: markdown
+---
+---
+title: "Interview: Jordan Ellis (Senior Backend Engineer)"
+date: 2026-10-02T10:01:38
+duration: "30 min"
+attendees:
+  - "Shreyas"
+  - "Jordan Ellis"
+  - "Priya Nair"
+tags:
+  - "Interview"
+folders:
+  - "Meetings"
+link: "deino://meetings/meeting-fixture-interview"
+deino-id: "meeting-fixture-interview"
+---
+
+# Interview: Jordan Ellis (Senior Backend Engineer)
+
+Friday, October 2, 2026 at 10:01 · 30 min
+
+## Attendees
+
+- Shreyas
+- Jordan Ellis
+- Priya Nair
+
+## Notes
+
+#### Decisions
+
+- The design exercise was scoped to Google and Microsoft 365 only (no iCloud or CalDAV), focusing on the inbound direction.
+- Deino will give Jordan an answer by Wednesday 7 October.
+- Shreyas and Priya will each submit written feedback before debriefing together.
+- No take-home assignment will be added for the Senior Backend Engineer role.
+- References will only be requested from Jordan if the process moves forward.
+
+#### Key facts
+
+- **How many years of experience does Jordan Ellis have?** About eight years of backend work.
+- **What does Jordan work on in his current job?** He is at a payments company on the team that owns webhook ingestion (events from card processors, banks and wallet providers; peak around 9,000 events per second).
+- **What did Jordan build before his current job?** A two-way sync engine for contacts, email and calendar events with Gmail and Outlook at a CRM startup, over about three years.
+- **What is Jordan's salary expectation?** 115,000 to 130,000 euros base, open on the equity/base mix.
+- **What is Jordan's notice period?** Four weeks.
+- **Where is Jordan based and what working arrangement does he want?** Lisbon; he wants to stay there and work remotely with real time zone overlap, not a fully async role.
+- **What scale was Jordan asked to design the calendar-sync service for?** About 4,500 connected calendars today, planning for 50,000, with changes visible in Deino within 30 seconds most of the time.
+- **What queue did Jordan propose for the ingest path?** SQS FIFO with the message group ID set to the calendar ID, giving per-calendar ordering without distributed locks.
+- **How did Jordan propose renewing Microsoft Graph subscriptions?** A subscriptions table with expires\_at and a scheduler that PATCHes the expiration once a subscription is past about half its lifetime (Outlook event subscriptions last just under three days).
+- **How often would Deino engineers be on call?** Weekly rotation with primary and secondary; with the current team, primary about one week in six, using PagerDuty.
+- **How big is Deino's engineering team?** Seven people including Shreyas and the support engineer, out of fourteen in total; the role would work with Maya on Calendar Sync v2.
+
+## My notes
+
+jordan elis - sr backend
+
+- 8y. payments co now, webhook ingest (\~9k ev/s peak). before: crm sync engine (gmail/outlook) \~3y
+- go/kotlin, some rust side projects
+- replay incident -\> split live vs replay lanes, he drove it
+
+design
+
+- webhook = hint, cursor = truth (sync token / delta link)
+- goog channel token const-time cmp, graph clientState + validationToken echo
+- v1: inline fetch + redis lock in handler. priya pushed (graph 3s, ttl lock unsafe) -\> ack 202 + queue partitioned by cal id. adapted fast
+- sqs fifo, group id = cal id
+- token + events same txn
+- upsert key incl recurrence instance + etag compare. literally our v1.4 bug lol
+- 410 -\> bounded full sync (-30d/+6mo)
+- graph sub renew at \~50% life, lifecycle notifs (missed)
+- hourly reconcile sweep w/ jitter
+- per-tenant token bucket, retry-after
+- refresh tokens: kms envelope enc
+- canary cal w/ moved recurring occurrence -\> steal this for v2
+
+logistics
+
+- lisbon, remote, wants EU tz overlap
+- notice 4 wks
+- 115-130k EUR base
+- send on-call/remote doc tonight
+- feedback in ashby eod. reply by wed 10/7
+
+## Action items
+
+- [x] Get back to Jordan with the interview outcome — Shreyas, due Oct 7, 2026
+- [ ] Submit written interview feedback in Ashby — Priya Nair, due Oct 2, 2026
+- [ ] Submit written interview feedback in Ashby — Shreyas, due Oct 2, 2026
+- [ ] Send Jordan the doc on how on-call and remote work at Deino — Shreyas, due Oct 2, 2026

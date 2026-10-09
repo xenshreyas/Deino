@@ -1,0 +1,101 @@
+---
+source: crates/deino-export/src/text.rs
+expression: text
+---
+Eng standup
+Thursday, October 8, 2026 at 08:31 · 7 min
+
+Attendees
+---------
+Shreyas, Maya Chen, Diego Alvarez, Priya Nair, Tom Becker
+
+Notes
+-----
+Decisions
+
+• The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday.
+• The read-only offline job list will ship in next week's release, not in today's release cut.
+• The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut.
+• The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty.
+• The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup.
+
+Key facts
+
+• When did the Fernhollow dedupe fix go out? On Tuesday (6 October 2026); there have been zero new duplicates in the two days since.
+• What is Diego blocked on? A last modified at field on each job in the jobs list endpoint, which Maya owns, so the mobile app knows when its cached offline copy is stale.
+• How often has the flaky CI test been failing? About one in eight runs this week, always on the timeout assertion of the webhook retry integration test.
+• What does Priya think causes the flaky test? The test sleeps for a fixed two seconds before checking the retry fired, and CI runners are slower some days; she wants to confirm before saying for sure.
+• When is the release cut and what is the merge deadline? Thursday 8 October at four o'clock; merge anything that needs to be in by three thirty.
+• How many items are on Kestrel Audit's evidence request list? About sixty; Priya has mapped roughly two thirds to evidence Deino already collects.
+• How many support tickets were closed yesterday? Fourteen, nine of which were Fernhollow cleanup confirmations.
+• What is the new Outlook ticket about? One technician at a smaller plumbing account sees his jobs an hour off in Outlook; he is in a different time zone from his dispatcher.
+
+Action items
+------------
+[x] Add a last modified at field to each job in the jobs list endpoint for Diego's offline cache — Maya Chen, due Oct 9, 2026
+[ ] Quarantine the flaky webhook retry integration test and file a ticket with the logs — Priya Nair, due Oct 8, 2026
+[ ] Drive the release cut at four o'clock today — Priya Nair, due Oct 8, 2026
+[ ] Send the Fernhollow postmortem to Owen with Tom on copy — Shreyas, due Oct 9, 2026
+[ ] Set up a follow-up huddle with Maya on the Outlook one-hour-offset ticket — Tom Becker, due Oct 8, 2026
+[ ] Send each engineer their SOC 2 evidence items from Kestrel Audit's request list — Priya Nair, due Oct 12, 2026
+
+Transcript
+----------
+[00:00] Shreyas: Morning, everyone. Let's keep it quick today, I've got a hard stop at quarter to.
+[00:06] Shreyas: Maya, do you want to kick us off?
+[00:09] Maya Chen: Sure. So yesterday I mostly watched the Fernhollow dashboards after the dedupe fix went out on Tuesday.
+[00:17] Maya Chen: Zero new duplicates in two days, and Owen confirmed the same on his side this morning. So I'm calling the incident closed.
+[00:26] Shreyas: Nice. That's a big one. Thank you.
+[00:29] Maya Chen: Today I'm back on Calendar Sync v2, writing the subscription renewal part of the design doc. No blockers. And, uh, first morning off the pager, which is lovely.
+[00:41] Shreyas: Well earned. Okay, Diego, you're up.
+[00:45] Diego Alvarez: Yeah. Yesterday I got the read-only offline job list caching working on Android. Today I'm starting the iOS side.
+[00:53] Diego Alvarez: I am kind of blocked, though. I need a last modified at field on each job in the jobs list endpoint, so the app knows when its cached copy is stale.
+[01:04] Diego Alvarez: Right now I'm diffing the whole payload, which works, but it's slow and it's going to be terrible on a bad connection out in somebody's basement.
+[01:14] Maya Chen: Oh, that one's on me, sorry. I said I'd add it last week and then the incident ate the week.
+[01:21] Maya Chen: It's a small change. I can have it on the endpoint by end of day tomorrow.
+[01:27] Diego Alvarez: Tomorrow works. I'll stub it on my side until then.
+[01:31] Diego Alvarez: For context, the Android cache keeps the next fourteen days of jobs for the technician, so it's usually under two hundred jobs. It loads in about a second from cold.
+[01:43] Diego Alvarez: On iOS I'm reusing the same cache schema, so hopefully it's two or three days of work, not a week.
+[01:50] Shreyas: Two or three days is fine. Nothing's waiting on it this week.
+[01:55] Shreyas: Does that mean the offline list misses today's cut?
+[01:59] Diego Alvarez: Yeah. Honestly it was never really going to make this one. I'd rather it goes out in next week's release with the real field than hack around it.
+[02:09] Shreyas: Okay, agreed. Offline list goes in next week's release, not this one. Priya?
+[02:16] Priya Nair: Yesterday was mostly SOC 2 prep. Kestrel Audit sent over their evidence request list, it's about sixty items, and I've mapped maybe two thirds of them to things we already collect.
+[02:28] Priya Nair: Kestrel wants the observation window to start cleanly on the first of November, so everything on that list needs an owner by the end of next week.
+[02:38] Priya Nair: I'll send each of you the handful of items that are yours on Monday. Most of it is screenshots of settings, nothing scary.
+[02:48] Shreyas: Is anything on there going to surprise us?
+[02:51] Priya Nair: Access reviews for the production database, probably. We've never done a formal one. I'll draft a process, but that's a next-week problem.
+[03:01] Priya Nair: The other thing is the flaky test. The webhook retry integration test has failed something like one in eight runs this week, always on the timeout assertion.
+[03:12] Priya Nair: I'm quarantining it this morning so it stops blocking merges, and I'll file a ticket with the logs I've got so far.
+[03:20] Shreyas: Is it a real bug or just the test?
+[03:24] Priya Nair: I think it's the test. It sleeps for a fixed two seconds and then checks the retry fired, and the CI runners are just slower some days. But I want to look properly before I say that for sure.
+[03:38] Maya Chen: It does touch the retry queue I'm about to rewrite for v2, so I'm happy to pair on it next week if it turns out to be real.
+[03:47] Priya Nair: Maybe. Let's see what the logs say first.
+[03:51] Priya Nair: And today I'm driving the release cut. Plan's still Thursday afternoon, so four o'clock today. If you've got something that needs to be in, merge it by three thirty.
+[04:03] Shreyas: And the quarantined test won't block the cut?
+[04:06] Priya Nair: No, quarantined tests still run but they don't gate anything. No blockers from me.
+[04:13] Shreyas: Great, thanks. Tom, you're up.
+[04:16] Tom Becker: Hey. So, queue-wise it's a lot calmer. We closed fourteen tickets yesterday, and nine of them were Fernhollow cleanup confirmations.
+[04:25] Tom Becker: Owen replied this morning. He's on the release notes list now, his two dispatch leads too, and he asked when the postmortem is landing.
+[04:35] Tom Becker: He also said his dispatchers have stopped double-checking every recurring job by hand, which, I think, is the real sign it's over.
+[04:45] Shreyas: Still Friday. I'm finishing it tonight and I'll send it to Owen tomorrow, with you on copy.
+[04:51] Tom Becker: Perfect. The other thing, there's a new ticket from one of the smaller plumbing accounts. One technician's jobs are showing an hour off in his Outlook calendar.
+[05:03] Tom Becker: He's in a different time zone from his dispatcher, and I don't know yet if it's us or Microsoft. It's only the one technician so far.
+[05:12] Maya Chen: Hmm, that sounds like the time zone on the series master, we've seen something like that before with recurring events. It might be the, um...
+[05:23] Shreyas: Let's take that one offline. Maya, Tom, can you grab ten minutes straight after this?
+[05:30] Maya Chen: Yep, works for me.
+[05:32] Tom Becker: Sure, I'll send a huddle link right after. That's it from me, no blockers.
+[05:37] Tom Becker: Oh, and Noor and I might have the onboarding survey results by next week, depending on how many come back. She's out today, so I'm just flagging it.
+[05:49] Shreyas: Me, quickly. Yesterday was one on ones and hiring. We've got two more senior backend screens on the calendar for next week.
+[05:58] Shreyas: Today I'm on the Fernhollow postmortem, and I'll review Maya's renewal design once it's ready, no rush on that.
+[06:05] Shreyas: And a reminder for everyone, Maya's off the on-call rotation for the next two weeks. I'm primary for anything sync related and Diego's secondary this weekend.
+[06:17] Diego Alvarez: Yep, I've read the runbook twice. Please nobody break anything on Saturday.
+[06:23] Shreyas: Oh, and someone floated moving standup to async on Fridays. I'm not deciding that today, just think about it.
+[06:31] Diego Alvarez: I'd vote for that, for what it's worth.
+[06:34] Priya Nair: I'm neutral. As long as people actually post.
+[06:38] Shreyas: Noted. Okay, recap. Maya adds the field by end of day tomorrow, Priya quarantines the test and cuts at four, merge by three thirty, and Maya and Tom take the Outlook thing offline.
+[06:52] Shreyas: Thanks, all. Have a good one.
+[06:55] Priya Nair: Thanks, everyone, bye now.
+[06:57] Diego Alvarez: Wait, quick one, did the office coffee machine die again or is it just me?
+[07:04] Tom Becker: It's not dead, someone unplugged it for the vacuum. I'll plug it back in.
+[07:09] Diego Alvarez: Later, see you all.

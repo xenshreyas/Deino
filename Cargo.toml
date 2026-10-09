@@ -35,6 +35,8 @@ tokio = { version = "1.52.3", features = ["full"] }
 # `CancellationToken` and `TaskTracker` (feature `rt`) for owned background work.
 tokio-util = { version = "0.7.18", features = ["rt"] }
 uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
+# Zip archives (EXP-01/02): the version docx-rs already uses, deflate only.
+zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
@@ -43,6 +45,7 @@ deino-detect = { path = "crates/deino-detect" }
 deino-diarize = { path = "crates/deino-diarize" }
 deino-doc = { path = "crates/deino-doc" }
 deino-domain = { path = "crates/deino-domain" }
+deino-export = { path = "crates/deino-export" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }
 deino-net = { path = "crates/deino-net" }
