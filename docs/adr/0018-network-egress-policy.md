@@ -1,4 +1,4 @@
-# 0016. Send every request through deino-net, scoped per service and logged
+# 0018. Send every request through deino-net, scoped per service and logged
 
 - **Status:** Accepted
 - **Date:** 2026-10-09
@@ -77,11 +77,18 @@ was sent. Transcription and audio code sat in the same crate as those clients.
   adds its service to `ServiceId` and the registry. A new `ServiceId` (or
   `Method`) needs a migration that rebuilds `egress_log`, whose `CHECK` lists
   them.
-- Legacy LLM clients in the app crate (`summary/`, `anthropic/`, `openai/`,
-  `groq/`, `ollama/`, `openrouter/`, the custom-endpoint test) still use
-  `reqwest` directly until FND-09's gateway replaces them; the Whisper
-  downloader moves with CAP-01. Until then they bypass the policy and the
-  egress log, and the legacy lint exemption keeps `disallowed_types`.
-- The Parakeet and built-in model downloads go through
-  `approved_download(HfModels)`, so they appear in the egress log and work
-  in offline mode; the transcription engines themselves still hold no client.
+- The LLM gateway (FND-09) gives each provider a `NetTransport` around its
+  own scoped client (`LlmAnthropic`, `LlmOpenAi`, `LlmGroq`, `LlmOpenRouter`,
+  `LlmCustom`, `LlmOllama`); a blocked call reaches the gateway as a
+  connection error whose message says why (offline mode, a switched-off
+  provider).
+- Every model download (Parakeet Unified through `deino-core`'s
+  `ByteSource`, Parakeet TDT, Whisper, the built-in LLM's GGUF) takes
+  `net.approved_download(HfModels)` per call; the engines hold no client, so
+  they appear in the egress log and work in offline mode.
+- Two `reqwest` uses remain outside `deino-net`: the legacy
+  `api_test_custom_openai_connection` command (it tests an endpoint before
+  it is saved, which a scoped client would refuse; Settings → AI's route
+  test replaces it) and `deino-llm`'s eval harness (a dev-dependency, never
+  shipped). The legacy lint exemption keeps `disallowed_types` until the
+  command is deleted.

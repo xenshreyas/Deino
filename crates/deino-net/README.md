@@ -2,7 +2,7 @@
 
 ## Role
 
-The only way Deino talks to the internet (FND-12, [ADR 0016](../../docs/adr/0016-network-egress-policy.md)).
+The only way Deino talks to the internet (FND-12, [ADR 0018](../../docs/adr/0018-network-egress-policy.md)).
 Every outgoing request is confined to one named service, allowed only while
 the user allows that service, stopped by offline mode, and recorded in the
 egress log the user can read in Settings → Privacy → Network.
