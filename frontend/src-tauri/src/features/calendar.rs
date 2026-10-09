@@ -7,17 +7,21 @@
 //!   (`upcoming`, `event`), each thin over `CalendarService`;
 //! - `events.rs`: the typed `CalendarChanged` event, emitted by
 //!   [`TauriCalendarEvents`] whenever the status or a calendar's visibility
-//!   changes. Synced rows reach the UI through `DbChanged`.
+//!   changes. Synced rows reach the UI through `DbChanged`;
+//! - `lookup.rs`: [`SyncedCalendar`], meeting detection's (CAP-06)
+//!   `CalendarLookup` over the synced events.
 //!
-//! The service, the `EventKit` source and the sync scheduler are wired in
-//! `composition/calendar.rs`.
+//! The service, the `EventKit` source, the Google and Microsoft connectors
+//! and the sync scheduler are wired in `composition/calendar.rs`.
 
 mod commands;
 #[cfg(test)]
 mod contract_tests;
 mod events;
+mod lookup;
 
 pub use events::{CalendarChanged, TauriCalendarEvents};
+pub use lookup::SyncedCalendar;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 

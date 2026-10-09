@@ -114,6 +114,10 @@ export type Table =
  */
 "calendar_events" | 
 /**
+ * The calendars inside each calendar account (ORG-01).
+ */
+"calendars" | 
+/**
  * Folders, nested through `parent_id`.
  */
 "folders" | 
@@ -171,4 +175,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]

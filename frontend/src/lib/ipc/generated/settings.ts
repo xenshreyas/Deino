@@ -148,6 +148,39 @@ importAndRetranscribe: boolean }
  */
 export type BundleId = string & { readonly __brand: "BundleId" }
 /**
+ * Identifies one calendar inside a calendar account ("Work", "Family").
+ */
+export type CalendarId = string & { readonly __brand: "CalendarId" }
+/**
+ * The calendar section of `Settings`.
+ */
+export type CalendarSettings = { 
+/**
+ * Read macOS Calendar (every account the Mac knows) through `EventKit`.
+ */
+syncEnabled: boolean; 
+/**
+ * Calendars whose events Deino does not show (Settings → Calendars).
+ */
+hiddenCalendars: CalendarId[]; 
+/**
+ * The Google Calendar connector's app registration.
+ */
+google: ConnectorSettings; 
+/**
+ * The Microsoft Graph connector's app registration.
+ */
+microsoft: ConnectorSettings }
+/**
+ * A direct calendar connector's app registration.
+ */
+export type ConnectorSettings = { 
+/**
+ * The OAuth client ID of the user's own app registration; empty until
+ * they set one up (docs/setup/google-calendar.md, microsoft-graph.md).
+ */
+clientId: string }
+/**
  * An OpenAI-compatible endpoint. Its key is the Keychain secret
  * [`SecretName::CustomOpenAiApiKey`].
  */
@@ -779,6 +812,10 @@ organize: OrganizeSettings;
  * Exports and auto-export (EXP-02).
  */
 export: ExportSettings; 
+/**
+ * Calendar sync and which calendars are shown (ORG-01).
+ */
+calendar: CalendarSettings; 
 /**
  * Appearance and layout.
  */
