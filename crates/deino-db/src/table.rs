@@ -1,0 +1,83 @@
+//! The tables whose changes the UI can subscribe to.
+
+use serde::{Deserialize, Serialize};
+
+/// A table in Deino's database, as named in SQL.
+///
+/// The UI tags each query with the tables it reads, and a `DbChanged` event
+/// invalidates the queries whose tables changed. A card that creates a table
+/// adds its variant here in the same PR.
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, specta::Type,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Table {
+    /// Meeting rows: title and timestamps.
+    Meetings,
+    /// Legacy transcript segments, one row per segment.
+    Transcripts,
+    /// Summary generation state and results, one row per meeting.
+    SummaryProcesses,
+    /// The transcript text sent for summarisation.
+    TranscriptChunks,
+    /// LLM provider and model settings.
+    Settings,
+    /// Transcription engine settings.
+    TranscriptSettings,
+    /// The user's own notes for a meeting.
+    MeetingNotes,
+    /// Notes of the `_example` reference feature, which lives in an in-memory
+    /// database in debug builds only.
+    ExampleNotes,
+}
+
+impl Table {
+    /// Every table, for consumers that must assume everything changed.
+    pub const ALL: [Self; 8] = [
+        Self::Meetings,
+        Self::Transcripts,
+        Self::SummaryProcesses,
+        Self::TranscriptChunks,
+        Self::Settings,
+        Self::TranscriptSettings,
+        Self::MeetingNotes,
+        Self::ExampleNotes,
+    ];
+
+    /// The table with this SQL name, if the UI tracks it.
+    ///
+    /// Runs inside SQLite's update hook for every changed row, so it neither
+    /// allocates nor logs.
+    pub fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "meetings" => Self::Meetings,
+            "transcripts" => Self::Transcripts,
+            "summary_processes" => Self::SummaryProcesses,
+            "transcript_chunks" => Self::TranscriptChunks,
+            "settings" => Self::Settings,
+            "transcript_settings" => Self::TranscriptSettings,
+            "meeting_notes" => Self::MeetingNotes,
+            "example_notes" => Self::ExampleNotes,
+            _ => return None,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_name_matches_the_serialized_name_of_every_table() {
+        for table in Table::ALL {
+            let json = serde_json::to_value(table).unwrap();
+            let name = json.as_str().unwrap();
+            assert_eq!(Table::from_name(name), Some(table), "{name}");
+        }
+    }
+
+    #[test]
+    fn internal_tables_are_not_tracked() {
+        assert_eq!(Table::from_name("_sqlx_migrations"), None);
+    }
+}

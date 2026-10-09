@@ -1,0 +1,19 @@
+[package]
+name = "deino-testkit"
+version = "0.1.0"
+description = "Test fixtures and fakes for Deino's crates (dev-dependency only)"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_testkit.rs"
+
+[dependencies]
+chrono.workspace = true
+deino-db = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+sqlx.workspace = true
+
+[lints]
+workspace = true
