@@ -233,7 +233,7 @@ fn resolve_mic_or_default<R: Runtime>(
 }
 
 /// System-audio analog of `resolve_mic_or_default`: `Some(name)` -> parse it,
-/// falling back to the default output if unparseable; `None` ("Default System
+/// falling back to the default output if unparsable; `None` ("Default System
 /// Audio" in the UI) -> default output. Returns `None` only when no output
 /// device exists — system audio is optional, mic-only recording proceeds.
 ///

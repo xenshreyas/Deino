@@ -134,9 +134,15 @@ pub fn ensure_ffmpeg_binary() {
         return;
     }
 
-    println!("cargo:warning=FFmpeg {FFMPEG_VERSION}: downloading {}", build.archive_url);
+    println!(
+        "cargo:warning=FFmpeg {FFMPEG_VERSION}: downloading {}",
+        build.archive_url
+    );
     install(build, &target, &output).unwrap_or_else(|error| panic!("FFmpeg: {error}"));
-    println!("cargo:warning=FFmpeg {FFMPEG_VERSION}: installed {}", output.display());
+    println!(
+        "cargo:warning=FFmpeg {FFMPEG_VERSION}: installed {}",
+        output.display()
+    );
 }
 
 /// Picks the pinned build for the target OS and CPU architecture.
@@ -155,7 +161,11 @@ fn select_build() -> Result<&'static FfmpegBuild, String> {
 
 /// Path Tauri expects for the sidecar of `target`.
 fn sidecar_path(target: &str) -> PathBuf {
-    let extension = if target.contains("windows") { ".exe" } else { "" };
+    let extension = if target.contains("windows") {
+        ".exe"
+    } else {
+        ""
+    };
     PathBuf::from(env_var("CARGO_MANIFEST_DIR"))
         .join("binaries")
         .join(format!("ffmpeg-{target}{extension}"))
@@ -253,15 +263,18 @@ fn verify_file(path: &Path, pin: &FilePin) -> Result<(), String> {
 
     let actual = sha256_hex(path)?;
     if actual != pin.sha256 {
-        return Err(format!("{name} has SHA-256 {actual}, expected {}", pin.sha256));
+        return Err(format!(
+            "{name} has SHA-256 {actual}, expected {}",
+            pin.sha256
+        ));
     }
     Ok(())
 }
 
 /// Lowercase hex SHA-256 of the file at `path`.
 fn sha256_hex(path: &Path) -> Result<String, String> {
-    let mut file = File::open(path)
-        .map_err(|error| format!("failed to open {}: {error}", path.display()))?;
+    let mut file =
+        File::open(path).map_err(|error| format!("failed to open {}: {error}", path.display()))?;
     let mut hasher = Sha256::new();
     let mut buffer = vec![0_u8; HASH_BUFFER_BYTES];
     loop {

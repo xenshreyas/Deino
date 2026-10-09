@@ -9,6 +9,10 @@
 static INIT_ERROR: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
 /// Returns an error when the bundled ONNX Runtime failed to initialize.
+#[cfg_attr(
+    not(target_os = "windows"),
+    allow(clippy::unnecessary_wraps, reason = "only the Windows build can fail")
+)]
 pub(crate) fn ensure_available() -> anyhow::Result<()> {
     #[cfg(target_os = "windows")]
     if let Some(error) = INIT_ERROR.get() {
@@ -38,7 +42,7 @@ mod windows {
             Err(error) => {
                 return record_failure(format!(
                     "Failed to resolve bundled ONNX Runtime resource: {error}"
-                ))
+                ));
             }
         };
         let result = catch_init(|| {
@@ -48,7 +52,10 @@ mod windows {
                 .map(|_| ())
         });
         match result {
-            Ok(()) => log::info!("Initialized bundled ONNX Runtime from {}", runtime_path.display()),
+            Ok(()) => log::info!(
+                "Initialized bundled ONNX Runtime from {}",
+                runtime_path.display()
+            ),
             Err(error) => record_failure(format!(
                 "Failed to initialize bundled ONNX Runtime from {}: {error}",
                 runtime_path.display()
