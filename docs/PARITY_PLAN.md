@@ -2028,7 +2028,8 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 |---|---|---|
 | FND-01 Rebrand | ✅ merged | 2026-10-08 |
 | FND-02 Cleanup, English-only, inline plugins | ✅ merged | 2026-10-08 |
-| FND-10a Vite migration | 🔄 in progress | |
+| FND-10a Vite migration | ✅ merged | 2026-10-08 |
+| FND-13 Quality baseline and workspace | 🔄 in progress | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | 🔄 running | |
 | Spike: diarization bake-off | 🔄 running | |
@@ -2046,6 +2047,10 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-02 | The `llama-helper` `[profile.release]` is ignored inside the workspace. Move it to the root with a per-package profile override. | FND-13 |
 | FND-02 | Windows MSVC linking after removing the dead `esaxx-rs` patch is unverified. | FND-03 (Windows check job, optional) |
 | FND-01 | `onnxruntime.rs` and `ffmpeg.rs` duplicate the sha256 helper. Moot once FFmpeg is removed (D11). | FND-05 |
+| FND-10a | The record screen's permission card still tells macOS users to install BlackHole. Rewrite it for the process tap (§3C). | FND-11 |
+| FND-10a | The sidebar has no `shrink-0` and squeezes at narrow widths. | FND-10 |
+| FND-10a | `tauri build` codesign fails in worktrees under `~/Documents` (file attributes). Run `xattr -cr` on the bundle in the release script. | FND-03 |
+| FND-10a | Tailwind v4 default palette replaced the v3 hex values (slightly different greys). Superseded by the token restyle. | FND-10 |
 | FND-01 | The model and template directories are global statics set at startup. Move them into the DI composition root. | FND-06 / FND-13 |
 
 **Critical path to "Granola-equivalent daily driver":**
