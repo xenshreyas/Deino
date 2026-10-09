@@ -82,6 +82,7 @@ let settings: Generated.Settings = {
     transcriptSidecar: false,
     obsidian: false,
   },
+  calendar: { syncEnabled: true, hiddenCalendars: [] },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {
