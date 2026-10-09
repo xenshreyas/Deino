@@ -20,10 +20,11 @@ use std::sync::Arc;
 use deino_domain::Clock;
 
 use self::metering::Meter;
+use crate::context::with_context;
 use crate::{
     Completion, CompletionRequest, EventStream, LOCAL_EMBEDDING_MODEL, LlmError, LocalModels,
-    OutputFormat, Prompt, ProviderId, Providers, Route, Router, Target, ToolDefinition, Usage,
-    UsageRecorder,
+    OutputFormat, Prompt, ProviderId, Providers, Route, Router, SystemContext, Target,
+    ToolDefinition, Usage, UsageRecorder,
 };
 
 /// The answer cap when a prompt sets none: room for a long summary.
@@ -50,6 +51,7 @@ pub struct Gateway {
     local: Arc<dyn LocalModels>,
     usage: Arc<dyn UsageRecorder>,
     clock: Arc<dyn Clock>,
+    context: Option<Arc<dyn SystemContext>>,
 }
 
 /// The non-conversation parts of a request: the answer's shape and tools.
@@ -68,7 +70,16 @@ impl Gateway {
             local: parts.local,
             usage: parts.usage,
             clock: parts.clock,
+            context: None,
         }
+    }
+
+    /// Puts `context` in front of every prompt's system prompt (NOT-05: the
+    /// user's profile), so every text route writes for this user.
+    #[must_use]
+    pub fn with_system_context(mut self, context: Arc<dyn SystemContext>) -> Self {
+        self.context = Some(context);
+        self
     }
 
     /// Route resolution, for Settings → AI.
@@ -138,7 +149,11 @@ impl Gateway {
         let target = self.target(route, &prompt).await?;
         log::info!(target: "llm", "{route}: calling {} {}", target.provider, target.model);
         let meter = self.meter(route, &target);
-        let request = request(route, &target, prompt, shape);
+        let context = match &self.context {
+            Some(context) => context.system_context().await,
+            None => None,
+        };
+        let request = request(route, &target, with_context(prompt, context), shape);
         let started = match self.providers.get(target.provider) {
             Ok(provider) => provider.stream(request).await,
             Err(error) => Err(error),

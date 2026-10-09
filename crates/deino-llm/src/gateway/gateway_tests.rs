@@ -169,3 +169,41 @@ async fn stream_yields_events_in_order() {
         Some(&CompletionEvent::Stop(StopReason::EndTurn))
     );
 }
+
+/// A fixed system context, standing in for the user's profile.
+struct AboutMe;
+
+#[async_trait::async_trait]
+impl crate::SystemContext for AboutMe {
+    async fn system_context(&self) -> Option<String> {
+        Some("About the user: CTO".into())
+    }
+}
+
+#[tokio::test]
+async fn the_system_context_leads_every_system_prompt() {
+    let mock = Arc::new(
+        MockProvider::new()
+            .reply(Route::Title, "t")
+            .reply(Route::Chat, "c"),
+    );
+    let gateway = mock_gateway(mock.clone())
+        .gateway
+        .with_system_context(Arc::new(AboutMe));
+
+    gateway
+        .complete(Route::Title, Prompt::new("x").system("Title it."))
+        .await
+        .unwrap();
+    gateway
+        .complete(Route::Chat, Prompt::new("hi"))
+        .await
+        .unwrap();
+
+    let requests = mock.requests();
+    assert_eq!(
+        requests[0].system.as_deref(),
+        Some("About the user: CTO\n\nTitle it.")
+    );
+    assert_eq!(requests[1].system.as_deref(), Some("About the user: CTO"));
+}
