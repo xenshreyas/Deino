@@ -5,7 +5,8 @@
 //! - [`ExportAssembler`] reads a meeting from the repositories into the
 //!   `deino_export::MeetingExport` every renderer takes, with names resolved
 //!   and times in the user's [`LocalZone`]. Notes come through the
-//!   [`NoteRenderer`] port ([`StoredMarkdownNotes`] today).
+//!   [`NoteRenderer`] port ([`DocNoteRenderer`]: the notepad through
+//!   `deino-doc`, the summary as stored).
 //! - [`ExportService`]: preview, save (through the [`SaveDialog`] port: the
 //!   webview never names a path), copy as rich text or Markdown (the
 //!   [`Clipboard`] port) and email (the [`UrlOpener`] port).
@@ -46,7 +47,7 @@ pub use full::{FullExportDeps, FullExportEvents, FullExportService};
 pub use model::{
     CopyKind, ExportPreview, FullExportState, FullExportStatus, PreviewKind, SavedExport,
 };
-pub use notes::{MeetingNotes, NoteRenderer, StoredMarkdownNotes};
+pub use notes::{DocNoteRenderer, MeetingNotes, NoteRenderer};
 pub use platform::{Clipboard, ClipboardContent, FolderDialog, SaveDialog, SaveRequest, UrlOpener};
 pub use service::{ExportService, ExportServiceDeps};
 pub use vault::{FsVault, HEAD_BYTES, Vault};

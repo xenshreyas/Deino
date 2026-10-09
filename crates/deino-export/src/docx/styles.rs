@@ -68,7 +68,7 @@ pub(crate) fn styled(docx: Docx) -> Docx {
 }
 
 /// The font on every style as well as the document defaults: Word reads
-/// the defaults, but Quick Look and TextEdit only read styles.
+/// the defaults, but Quick Look and the macOS text system only read styles.
 fn fonts() -> RunFonts {
     RunFonts::new()
         .ascii(FONT)
@@ -149,7 +149,7 @@ pub(crate) fn text(text: impl Into<String>) -> docx_rs::Run {
     text_run().add_text(text)
 }
 
-/// An empty run in the document's font: Quick Look and TextEdit ignore the
+/// An empty run in the document's font: Quick Look and the macOS text system ignore the
 /// document defaults on unstyled paragraphs, so every run names the font.
 pub(crate) fn text_run() -> docx_rs::Run {
     docx_rs::Run::new().fonts(fonts())
