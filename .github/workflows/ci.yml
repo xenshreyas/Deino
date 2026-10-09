@@ -8,7 +8,8 @@
 #   app        the whole workspace compiles on Linux (macOS-only code cfg'd
 #              out), the TypeScript bindings are fresh, the app's unit tests
 #              pass, .sqlx/ is current
-#   frontend   typecheck, lint, format, Vitest, Vite build
+#   frontend   typecheck, lint, format, Vitest, Vite build, Playwright smoke
+#              tests over dev:mock (screenshots kept as an artifact)
 #   pr-title   Conventional Commits, on pull requests
 # The full macOS gate (clippy and every test, Core Audio included) runs only
 # by hand or, with a self-hosted runner, weekly: docs/setup/self-hosted-runner.md.
@@ -144,6 +145,14 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/pnpm
       - run: scripts/ci-local.sh frontend
+      # The smoke tests' screenshots (pass or fail), for reviewing UI changes.
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-screenshots
+          path: frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   pr-title:
     name: pr title

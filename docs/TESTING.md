@@ -41,7 +41,7 @@ Pushes run on Linux (macOS minutes cost 10x on the private repo):
 |---|---|
 | `rust (portable crates)` | `fmt file-size deps deny clippy-portable test-portable`: clippy and tests for every crate except the app and the sidecar |
 | `rust (app on Linux)` | `check bindings test-app sqlx`: the workspace compiles with macOS code cfg'd out, bindings and `.sqlx/` are fresh, the app's unit tests pass |
-| `frontend` | `frontend` |
+| `frontend` | `frontend`: install, typecheck, lint, format, Vitest, Vite build, Playwright smoke tests (screenshots uploaded as the `e2e-screenshots` artifact) |
 | `pr title` | Conventional Commits, on pull requests |
 
 The macOS-only code (Core Audio, the app's clippy and tests on macOS) is

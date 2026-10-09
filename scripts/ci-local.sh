@@ -25,7 +25,7 @@ source scripts/dev-env.sh
 PORTABLE=(--workspace --exclude deino --exclude llama-helper)
 readonly GENERATED_BINDINGS="frontend/src/lib/ipc/generated"
 
-FRONTEND_STEPS=(pnpm-install typecheck lint format vitest vite-build)
+FRONTEND_STEPS=(pnpm-install typecheck lint format vitest vite-build e2e)
 RUST_STEPS=(fmt file-size deps deny clippy test bindings sqlx)
 # Cheap, compile-free checks first, so a typo fails in seconds, not minutes.
 ALL_STEPS=(fmt file-size deps deny "${FRONTEND_STEPS[@]}" clippy test bindings sqlx)
@@ -54,6 +54,9 @@ step_format() { pnpm --dir frontend format:check; }
 step_vitest() { pnpm --dir frontend test; }
 # `pnpm build` is typecheck + vite build; the typecheck step already ran.
 step_vite_build() { pnpm --dir frontend exec vite build; }
+# Playwright smoke tests in the installed Chrome over `pnpm dev:mock`;
+# screenshots land in frontend/test-results/.
+step_e2e() { pnpm --dir frontend test:e2e; }
 
 step_clippy() {
     stage_sidecar
@@ -177,7 +180,7 @@ require_tools() {
 
 tools_for() {
     case "$1" in
-        pnpm-install | typecheck | lint | format | vitest | vite-build) echo pnpm ;;
+        pnpm-install | typecheck | lint | format | vitest | vite-build | e2e) echo pnpm ;;
         deny) echo cargo cargo-deny ;;
         sqlx) echo cargo sqlx ;;
         clippy | clippy-portable) echo cargo typos ;;
