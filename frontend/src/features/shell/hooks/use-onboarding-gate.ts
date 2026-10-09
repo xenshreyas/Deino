@@ -32,7 +32,7 @@ export function useOnboardingGate(): OnboardingGate {
 
   useMountEffect(() => {
     readOnboardingCompleted()
-      .then((completed) => setShowOnboarding(!completed))
+      .then((completed) => { setShowOnboarding(!completed); })
       .catch((error: unknown) => {
         console.error('[shell] Failed to read onboarding status', error);
         setShowOnboarding(true);

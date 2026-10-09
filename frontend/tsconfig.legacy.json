@@ -1,0 +1,10 @@
+{
+  // The baseline every file must pass, legacy included: tsconfig.json minus the
+  // two flags that inherited code does not meet yet. scripts/typecheck.mjs
+  // holds new code to the full tsconfig.json.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false
+  }
+}

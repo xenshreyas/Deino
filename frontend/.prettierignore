@@ -1,0 +1,13 @@
+# Generated, built or vendored files. Legacy source files are skipped by
+# scripts/format.mjs, which reads legacy-files.mjs.
+coverage/
+dist/
+node_modules/
+pnpm-lock.yaml
+src-tauri/
+src/lib/ipc/generated/
+src/routeTree.gen.ts
+
+# pnpm and the shadcn CLI write these with their own indentation.
+components.json
+package.json

@@ -34,7 +34,11 @@ function handleTrayToggle(onboarding: boolean): void {
  */
 export function TrayRecordingToggle({ onboarding }: TrayRecordingToggleProps) {
   useMountEffect(() =>
-    holdSubscriptions([listen(TRAY_TOGGLE_EVENT, () => handleTrayToggle(onboarding))]),
+    holdSubscriptions([
+      listen(TRAY_TOGGLE_EVENT, () => {
+        handleTrayToggle(onboarding);
+      }),
+    ]),
   );
   return null;
 }

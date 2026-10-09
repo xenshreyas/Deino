@@ -25,7 +25,7 @@ function transformCallback(callback: unknown): number {
 
 /** Removes a callback registered by `transformCallback`. */
 function unregisterCallback(id: number): void {
-  delete (window as unknown as CallbackRegistry)[`_${id}`];
+  Reflect.deleteProperty(window, `_${id}`);
 }
 
 Object.defineProperty(window, '__TAURI_INTERNALS__', {

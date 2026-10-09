@@ -31,7 +31,10 @@ describe('holdSubscriptions', () => {
   test('a failed subscription does not stop the others from being detached', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const unlisten = vi.fn();
-    const unsubscribe = holdSubscriptions([Promise.reject(new Error('no Tauri')), Promise.resolve(unlisten)]);
+    const unsubscribe = holdSubscriptions([
+      Promise.reject(new Error('no Tauri')),
+      Promise.resolve(unlisten),
+    ]);
     await settle();
 
     unsubscribe();
