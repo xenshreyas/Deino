@@ -48,7 +48,10 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     // ── FND-12 network controls ──
-    ("network", &["services", "set_service_enabled", "egress_log"]),
+    (
+        "network",
+        &["services", "set_service_enabled", "egress_log"],
+    ),
     // ── FND-08 pipeline ──
     ("pipeline", &["status", "rerun"]),
 ];
