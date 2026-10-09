@@ -36,22 +36,23 @@ pub(super) enum Container {
     Mp4,
 }
 
-/// Streams any `AudioToolbox`-readable file as 48 kHz mono f32.
-pub(super) struct PcmReader {
+/// Streams any `AudioToolbox`-readable file as mono f32 at a chosen rate.
+pub(crate) struct PcmReader {
     file: ExtAudioFileRef,
 }
 
 impl PcmReader {
-    /// Opens `path` and asks for 48 kHz mono f32 output.
-    pub(super) fn open(path: &Path) -> Result<Self, FinalizeError> {
+    /// Opens `path` and asks for mono f32 output at `sample_rate` (the
+    /// converter resamples when the file's rate differs).
+    pub(crate) fn open(path: &Path, sample_rate: u32) -> Result<Self, FinalizeError> {
         let url = file_url(path)?;
         let mut file = ExtAudioFile::open(&url).map_err(os("ExtAudioFileOpenURL"))?;
-        set_property(&mut file, CLIENT_DATA_FORMAT, &pcm_asbd())?;
+        set_property(&mut file, CLIENT_DATA_FORMAT, &pcm_asbd(sample_rate))?;
         Ok(Self { file })
     }
 
     /// Reads up to `out.len()` frames; returns how many (0 at the end).
-    pub(super) fn read(&mut self, out: &mut [f32]) -> Result<usize, FinalizeError> {
+    pub(crate) fn read(&mut self, out: &mut [f32]) -> Result<usize, FinalizeError> {
         let mut frames = u32::try_from(out.len()).unwrap_or(u32::MAX);
         let mut list = buffer_list(out.as_mut_ptr(), out.len());
         self.file
@@ -77,7 +78,7 @@ impl AacWriter {
         let flags = audio::FileFlags::ERASE_FILE;
         let mut file = ExtAudioFile::create(&url, file_type, &aac_asbd(), std::ptr::null(), flags)
             .map_err(os("ExtAudioFileCreateWithURL"))?;
-        set_property(&mut file, CLIENT_DATA_FORMAT, &pcm_asbd())?;
+        set_property(&mut file, CLIENT_DATA_FORMAT, &pcm_asbd(STORAGE_RATE))?;
         set_bit_rate(&mut file)?;
         Ok(Self { file })
     }
@@ -97,9 +98,9 @@ impl AacWriter {
     }
 }
 
-/// 48 kHz mono f32, the client format on both sides.
-fn pcm_asbd() -> audio::StreamBasicDesc {
-    audio::StreamBasicDesc::common_f32(f64::from(STORAGE_RATE), 1, true)
+/// Mono f32 at `sample_rate`, the client format on both sides.
+fn pcm_asbd(sample_rate: u32) -> audio::StreamBasicDesc {
+    audio::StreamBasicDesc::common_f32(f64::from(sample_rate), 1, true)
 }
 
 /// 48 kHz mono AAC-LC, the file format.
