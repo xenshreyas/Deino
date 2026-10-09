@@ -59,7 +59,11 @@ reconciliation that leaves no zombie `running` rows
   `running` rows a crash left (the attempt counts, so a stage that crashes
   the app eventually fails instead of looping); then open the runner,
   schedule `processing` meetings that have no jobs and wake every meeting
-  with work. Workers wait for this before starting anything.
+  with work. Workers wait for this before starting anything. Repairs are
+  best effort (a row that cannot be repaired is logged, never keeps the
+  runner closed), and an attempt's end time is clamped to its start, so a
+  wall clock set back since the crash cannot fail the repair; the real-app
+  smoke run found exactly that case.
 - **Trigger:** `MeetingLifecycleService` gained observers
   (`MeetingStatusObserver`); `PipelineTrigger` enqueues a meeting when it
   enters `processing`. Enqueueing is a no-op while the meeting already has
