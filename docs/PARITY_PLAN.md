@@ -128,7 +128,7 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
    - **No new `mod.rs` files.** Use the `foo.rs` + `foo/` style.
    - **Legacy Meetily commands** stay in `src/legacy/` under one `generate_handler!` until a card ports them.
 4. **Frontend structure.**
-   - New pages go under `frontend/src/app/<route>/`.
+   - New pages are TanStack Router file routes under `frontend/src/routes/` (thin; they render a feature screen).
    - Feature components go under `frontend/src/features/<feature>/`, which FND-10 creates.
    - Add sidebar entries **only** through the nav registry (`frontend/src/features/shell/nav.ts`, also from FND-10).
    - **Never hand-write `invoke()`.** Call the **generated** tauri-specta bindings in `frontend/src/lib/ipc/generated/` through TanStack Query hooks in `features/<feature>/queries.ts`.
@@ -140,7 +140,7 @@ Full detail is in `docs/research/meetily_audit.md`. Key facts:
    - Rust: write unit tests for pure logic and repository tests against `deino_db::test_db()` (in-memory SQLite, all migrations applied). Run them with `cargo nextest`.
    - Frontend: write **Vitest** tests (Testing Library, happy-dom) colocated as `*.test.ts(x)`, plus Playwright smoke tests over `pnpm dev:mock`.
    - Any LLM-dependent logic must be testable with the gateway's `MockProvider` (FND-09).
-9. **UI verification.** Run `pnpm dev:mock` (FND-04), which runs the Next app in a browser with Tauri IPC mocked from fixture data. Screenshot your UI in the browser pane and attach what you saw to the PR. Real-hardware checks of audio, permissions or AX go in a "Manual QA" checklist in the PR.
+9. **UI verification.** Run `pnpm dev:mock` (FND-04), which runs the Vite app in a browser with Tauri IPC mocked from fixture data. Screenshot your UI in the browser pane and attach what you saw to the PR. Real-hardware checks of audio, permissions or AX go in a "Manual QA" checklist in the PR.
 10. **Dependencies.**
     - Prefer crates and packages that are already in the tree.
     - If you add one, pin its version, say why in the PR, and keep its licence permissive: MIT, Apache-2.0, BSD or ISC. **No GPL or AGPL.**

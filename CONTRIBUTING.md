@@ -11,7 +11,7 @@ Deino is a private repository. Work is organised as task cards in
 4. Use Conventional Commits (`feat(scope): …`, `fix(…)`, `refactor(…)`, `chore(…)`, `docs(…)`).
 5. Before opening a pull request, make sure these pass:
    ```bash
-   cd frontend && pnpm run build && bun test
+   cd frontend && pnpm build && pnpm test && pnpm lint
    cd frontend/src-tauri && cargo build && cargo test
    ```
 6. In the pull request, describe what changed, why, how it was tested (with

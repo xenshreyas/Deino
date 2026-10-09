@@ -98,7 +98,7 @@ export function AudioLevelMeter({
       </div>
 
       {/* Level percentage display */}
-      <div className={`${sizes.text} text-gray-600 font-mono min-w-[3rem] text-right`}>
+      <div className={`${sizes.text} text-gray-600 font-mono min-w-12 text-right`}>
         {rmsPercent}%
       </div>
     </div>

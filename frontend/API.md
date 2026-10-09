@@ -6,7 +6,7 @@ by development flows that predate the Deino fork.
 ## Current Supported Integration
 
 Deino does not use a manually started whisper-server
-HTTP service. The Next.js UI communicates with the Rust/Tauri core through
+HTTP service. The React UI communicates with the Rust/Tauri core through
 Tauri commands and events, and local transcription is handled inside the
 desktop application.
 

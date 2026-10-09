@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { listen } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
 import { useTranscripts } from '@/contexts/TranscriptContext';
@@ -61,7 +61,7 @@ export function useRecordingStop(
     setIsMeetingActive,
   } = useSidebar();
 
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Guard to prevent duplicate/concurrent stop calls (e.g., from UI and tray simultaneously)
   const stopInProgressRef = useRef(false);
@@ -109,7 +109,7 @@ export function useRecordingStop(
         unlistenFn();
       }
     };
-  }, [router]);
+  }, [navigate]);
 
   // Main recording stop handler
   const handleRecordingStop = useCallback(async (isCallApi: boolean) => {
@@ -298,7 +298,7 @@ export function useRecordingStop(
             action: {
               label: 'View Meeting',
               onClick: () => {
-                router.push(`/meeting-details?id=${meetingId}`);
+                void navigate({ to: '/meetings/$meetingId', params: { meetingId } });
               }
             },
             duration: 10000,
@@ -306,7 +306,7 @@ export function useRecordingStop(
 
           // Auto-navigate after a short delay with source parameter
           setTimeout(() => {
-            router.push(`/meeting-details?id=${meetingId}&source=recording`);
+            void navigate({ to: '/meetings/$meetingId', params: { meetingId }, search: { source: 'recording' } });
             clearTranscripts()
 
             // Reset to IDLE after navigation
@@ -351,7 +351,7 @@ export function useRecordingStop(
     setMeetings,
     meetings,
     setIsMeetingActive,
-    router,
+    navigate,
   ]);
 
   // Expose handleRecordingStop function to window for Rust callbacks

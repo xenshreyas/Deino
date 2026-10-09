@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FileText, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -141,7 +139,7 @@ export function MeetingDetailsSplitView({
         <TabsContent
           value="transcript"
           forceMount
-          className="mt-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden md:w-[var(--transcript-pane-width)] md:flex-none md:data-[state=inactive]:flex"
+          className="mt-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden md:w-(--transcript-pane-width) md:flex-none md:data-[state=inactive]:flex"
           {...transcriptPanelProps}
         >
           {transcript}
@@ -155,7 +153,7 @@ export function MeetingDetailsSplitView({
           aria-valuetext={`Transcript panel ${Math.round(ratio * 100)} percent`}
           aria-label="Resize transcript and summary"
           tabIndex={0}
-          className="group relative z-10 hidden w-2 flex-shrink-0 cursor-col-resize items-stretch justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset md:flex"
+          className="group relative z-10 hidden w-2 shrink-0 cursor-col-resize items-stretch justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset md:flex"
           onPointerDown={onPointerDown}
           onKeyDown={onSeparatorKeyDown}
         >

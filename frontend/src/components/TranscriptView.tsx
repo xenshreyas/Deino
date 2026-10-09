@@ -1,5 +1,3 @@
-'use client';
-
 import { Transcript } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import { ConfidenceIndicator } from './ConfidenceIndicator';
@@ -123,7 +121,7 @@ export const TranscriptView: React.FC<TranscriptViewProps> = ({ transcripts, isR
     visibleText: string;
     fullText: string;
   } | null>(null);
-  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const streamingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastStreamedIdRef = useRef<string | null>(null); // Track which transcript we've streamed
 
   // Load preference for showing confidence indicator
@@ -284,7 +282,7 @@ export const TranscriptView: React.FC<TranscriptViewProps> = ({ transcripts, isR
             <div className="flex items-start gap-2">
               <Tooltip>
                 <TooltipTrigger>
-                  <span className="text-xs text-gray-400 mt-1 flex-shrink-0 min-w-[50px]">
+                  <span className="text-xs text-gray-400 mt-1 shrink-0 min-w-[50px]">
                     {transcript.audio_start_time !== undefined
                       ? formatRecordingTime(transcript.audio_start_time)
                       : transcript.timestamp}

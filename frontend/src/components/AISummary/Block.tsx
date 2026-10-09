@@ -1,5 +1,3 @@
-'use client';
-
 import { Block } from '@/types';
 import { useRef, useState, useEffect } from 'react';
 
@@ -221,14 +219,14 @@ export const BlockComponent: React.FC<BlockProps> = ({
   return (
     <div 
       className={`group relative min-h-[24px] flex items-start rounded transition-all duration-150 ease-in-out
-        ${isSelected ? 'bg-blue-50 ring-1 ring-blue-200 shadow-sm' : 'hover:bg-gray-50'}`}
+        ${isSelected ? 'bg-blue-50 ring-1 ring-blue-200 shadow-xs' : 'hover:bg-gray-50'}`}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onMouseUp={onMouseUp}
       onContextMenu={onContextMenu}
     >
       {block.type === 'bullet' && (
-        <div className="flex-shrink-0 mr-2 select-none mt-[2px]">•</div>
+        <div className="shrink-0 mr-2 select-none mt-[2px]">•</div>
       )}
 
       <div className="relative flex-1 py-0.5 px-1">
@@ -244,7 +242,7 @@ export const BlockComponent: React.FC<BlockProps> = ({
           onContextMenu={onContextMenu}
           rows={1}
           className={`
-            w-full resize-none overflow-hidden bg-transparent border-none p-0 focus:outline-none focus:ring-0
+            w-full resize-none overflow-hidden bg-transparent border-none p-0 focus:outline-hidden focus:ring-0
             transition-all duration-150 ease-in-out
             ${block.color === 'gray' ? 'text-gray-500' : ''}
             ${block.type === 'heading1' ? 'text-xl font-bold' : ''}
@@ -269,7 +267,7 @@ export const BlockComponent: React.FC<BlockProps> = ({
                 onClick={() => handleCommandSelect(cmd)}
                 onMouseEnter={() => setSelectedCommandIndex(index)}
               >
-                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-gray-600">
+                <span className="shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-gray-600">
                   {cmd.icon}
                 </span>
                 <div className="flex-1">

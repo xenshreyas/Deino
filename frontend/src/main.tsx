@@ -1,0 +1,24 @@
+/**
+ * UI entry point: loads global styles and fonts, then mounts the router.
+ *
+ * React StrictMode stays off, as it was under Next.js, where
+ * `reactStrictMode: false` was set for BlockNote compatibility. NOT-01
+ * revisits this when TipTap replaces BlockNote.
+ */
+import '@fontsource/source-sans-3/400.css';
+import '@fontsource/source-sans-3/500.css';
+import '@fontsource/source-sans-3/600.css';
+import '@fontsource/source-sans-3/700.css';
+import './styles/globals.css';
+
+import { RouterProvider } from '@tanstack/react-router';
+import { createRoot } from 'react-dom/client';
+
+import { router } from './router';
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('index.html is missing the #root element');
+}
+
+createRoot(rootElement).render(<RouterProvider router={router} />);

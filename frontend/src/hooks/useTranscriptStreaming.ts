@@ -22,7 +22,7 @@ export function useTranscriptStreaming(
 ) {
   const [streamingSegment, setStreamingSegment] = useState<StreamingSegment | null>(null);
   const lastSegmentIdRef = useRef<string | null>(null);
-  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const streamingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!isRecording || !enableStreaming || segments.length === 0) {

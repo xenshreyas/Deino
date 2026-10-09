@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect } from "react";
 import type { PartialBlock, Block } from "@blocknote/core";
 import { useCreateBlockNote } from "@blocknote/react";

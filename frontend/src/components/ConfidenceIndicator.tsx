@@ -1,5 +1,3 @@
-'use client';
-
 interface ConfidenceIndicatorProps {
   confidence: number;
   showIndicator?: boolean;

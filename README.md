@@ -18,8 +18,8 @@ This is an internal, proprietary repository. See [LICENSE](LICENSE) and
 
 ## Stack
 
-- One Tauri 2 app: a Rust core in `frontend/src-tauri/` and a Next.js 14 UI
-  (static export) in `frontend/src/`.
+- One Tauri 2 app: a Rust core in `frontend/src-tauri/` and a React 18 UI built
+  with Vite, TanStack Router and Tailwind v4 in `frontend/src/`.
 - SQLite through sqlx, with migrations in `frontend/src-tauri/migrations/`.
 - Local transcription (Parakeet via ONNX Runtime, Whisper via whisper.cpp).
 - Sidecars: `llama-helper` (built-in local LLM, this workspace) and FFmpeg
@@ -52,8 +52,8 @@ The first Rust build downloads the pinned FFmpeg sidecar into
 ## Checks
 
 ```bash
-cd frontend && pnpm run build && bun test   # UI build and tests
-cd frontend/src-tauri && cargo test         # Rust tests
+cd frontend && pnpm build && pnpm test && pnpm lint   # UI build, tests, lint
+cd frontend/src-tauri && cargo test                  # Rust tests
 ```
 
 More detail: [Building from source](docs/BUILDING.md),

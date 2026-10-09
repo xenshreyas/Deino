@@ -443,7 +443,7 @@ export function DownloadProgressStep() {
         <div className="space-y-2">
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-gray-700 to-gray-900 rounded-full transition-all duration-300"
+              className="h-full bg-linear-to-r from-gray-700 to-gray-900 rounded-full transition-all duration-300"
               style={{ width: `${state.progress}%` }}
             />
           </div>
@@ -525,7 +525,7 @@ export function DownloadProgressStep() {
               className="w-full max-w-lg bg-gray-100 rounded-lg p-4 text-sm text-gray-800"
             >
               <div className="flex items-start gap-3">
-                <Download className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                <Download className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">You can continue while this finishes</p>
                   <p className="text-gray-700 mt-1">

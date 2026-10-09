@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { AlertTriangle, CheckCircle, X } from 'lucide-react';
@@ -75,7 +73,7 @@ export const ComplianceNotification: React.FC<ComplianceNotificationProps> = ({
         {/* Header with close button */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-1">
-            <AlertTriangle className="h-3 w-3 text-amber-500 flex-shrink-0" />
+            <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
             <h3 className="text-xs font-semibold text-gray-900">
               Recording Notice
             </h3>

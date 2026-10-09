@@ -1,7 +1,5 @@
-'use client';
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
 import type { SummaryProcessResponse } from '@/types';
@@ -30,7 +28,7 @@ interface TranscriptSearchResult {
 
 interface SummaryPoll {
   processId: string;
-  timer: NodeJS.Timeout;
+  timer: ReturnType<typeof setInterval>;
   inFlight: boolean;
 }
 
@@ -83,8 +81,8 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   // Use recording state from RecordingStateContext (single source of truth)
   const { isRecording } = useRecordingState();
 
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const navigate = useNavigate();
 
   // Extract fetchMeetings as a reusable function
   const fetchMeetings = React.useCallback(async () => {
@@ -142,7 +140,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         // Not on home - navigate and use auto-start mechanism
         console.log('Navigating to home page with auto-start flag');
         sessionStorage.setItem('autoStartRecording', 'true');
-        router.push('/');
+        void navigate({ to: '/' });
       }
     }
     // The actual recording start/stop is handled in the Home component

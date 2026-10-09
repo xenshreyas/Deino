@@ -98,7 +98,7 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
             });
             break;
 
-          case 'Progress':
+          case 'Progress': {
             downloaded += event.data.chunkLength || 0;
             const percentage = contentLength > 0
               ? Math.round((downloaded / contentLength) * 100)
@@ -110,6 +110,7 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
               percentage,
             });
             break;
+          }
 
           case 'Finished':
             console.log('[UpdateDialog] Download finished');

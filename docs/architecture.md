@@ -1,13 +1,13 @@
 # System Architecture
 
-Deino is a self-contained desktop application built with [Tauri](https://tauri.app/). It combines a Rust-based backend with a Next.js frontend into a single, efficient, and cross-platform application.
+Deino is a self-contained desktop application built with [Tauri](https://tauri.app/). It combines a Rust-based backend with a React frontend (Vite, TanStack Router, Tailwind v4) into a single, efficient, and cross-platform application.
 
 ## High-Level Architecture Diagram
 
 ```mermaid
 graph TD
     subgraph User Interface
-        A[Next.js Frontend]
+        A["React Frontend (Vite)"]
     end
 
     subgraph "Core Logic (Rust)"
@@ -27,7 +27,7 @@ graph TD
 
 ## Component Details
 
-### Frontend (Next.js)
+### Frontend (React + Vite)
 
 *   Provides the user interface for managing meetings, displaying transcriptions, and configuring the application.
 *   Communicates with the Rust core through Tauri's command system.

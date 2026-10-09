@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, useContext, useCallback, ReactNode } from 'react';
 import { useConfig } from './ConfigContext';
 import { toast } from 'sonner';
