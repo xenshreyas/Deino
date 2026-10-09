@@ -144,6 +144,17 @@ temperature: number | null;
  */
 topP: number | null }
 /**
+ * An email address in canonical form: lower case, no surrounding
+ * whitespace, one `@` between a non-empty local part and a dotted domain.
+ * 
+ * [`Email::parse`] normalises user input into this form. Deserializing and
+ * [`TryFrom<String>`] accept only the canonical form and never rewrite a
+ * value, so stored and fixture data are checked rather than silently
+ * changed. Stored as TEXT; `people.email` is UNIQUE, which the lower case
+ * makes case-insensitive.
+ */
+export type Email = string
+/**
  * What kind of failure an [`AppError`] reports. The UI branches on it.
  */
 export type ErrorCode = 
@@ -356,9 +367,39 @@ updatedAt: string | null }
  */
 export type PrivacySettings = Record<string, never>
 /**
- * The profile section of `Settings`. Empty until NOT-05.
+ * The profile section of `Settings`. Every field may be empty.
  */
-export type ProfileSettings = Record<string, never>
+export type ProfileSettings = { 
+/**
+ * The user's name, as attendees know them.
+ */
+name: string; 
+/**
+ * The user's addresses, work first. The first is the "Me" person's
+ * email; every address's domain (except personal mail providers) counts
+ * as internal.
+ */
+emails: Email[]; 
+/**
+ * The user's role, for example "CTO" or "Account executive".
+ */
+role: string; 
+/**
+ * The user's company.
+ */
+company: string; 
+/**
+ * What the user cares about most, so notes emphasise it.
+ */
+focusAreas: string[]; 
+/**
+ * How the user likes notes written ("short bullets, British spelling").
+ */
+writingStyle: string; 
+/**
+ * Background and a glossary of names, products and acronyms.
+ */
+context: string }
 /**
  * An LLM provider. Every call names one, through a route or a pinned target.
  * 
@@ -588,6 +629,10 @@ network: NetworkSettings;
  */
 profile: ProfileSettings; 
 /**
+ * Note templates (NOT-04).
+ */
+templates: TemplateSettings; 
+/**
  * Appearance and layout.
  */
 ui: UiSettings; 
@@ -619,6 +664,26 @@ provider: ProviderId;
  * The provider's model ID.
  */
 model: string }
+/**
+ * Identifies a note template (NOT-04).
+ * 
+ * Built-in templates have readable, stable slugs (`one_on_one`), so a
+ * release can upgrade them in place; the user's own templates get a
+ * UUIDv7 from [`TemplateId::generate`]. Both are opaque text to the
+ * database (`templates.id`).
+ */
+export type TemplateId = string & { readonly __brand: "TemplateId" }
+/**
+ * The templates section of `Settings`.
+ */
+export type TemplateSettings = { 
+/**
+ * The template a meeting gets when the user has not chosen one and no
+ * template's auto rules match. `None` is "Auto": the LLM classifier may
+ * suggest one, and otherwise the General template is used. A default
+ * that names a deleted template falls back the same way.
+ */
+defaultTemplate: TemplateId | null }
 /**
  * The colour theme (PARITY_PLAN §3B: follow the system by default).
  */
