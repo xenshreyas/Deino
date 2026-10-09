@@ -25,6 +25,7 @@
 mod diarize;
 mod llm;
 mod network;
+mod notepad;
 mod notes;
 mod stt;
 
@@ -193,6 +194,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    notepad::attach_notepad(app, &database, &clock);
     network::attach_network_log(app, &database);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, &database);

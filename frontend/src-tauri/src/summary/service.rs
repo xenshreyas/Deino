@@ -148,9 +148,13 @@ async fn generate<R: Runtime>(
     let generator = app
         .try_state::<Arc<SummaryGenerator>>()
         .ok_or("Summaries are not ready yet; try again in a moment")?;
+    // NOT-01: the user's notes are the context; a caller's prompt is the fallback.
+    let notes = crate::features::notes::summary_context(app, &job.meeting_id).await;
     let request = SummaryRequest {
         transcript: job.text.clone(),
-        user_context: Some(job.custom_prompt.clone()).filter(|context| !context.trim().is_empty()),
+        user_context: notes.or_else(|| {
+            Some(job.custom_prompt.clone()).filter(|context| !context.trim().is_empty())
+        }),
         section_instructions: template.section_instructions,
         template_markdown: template.template_markdown,
         target,

@@ -136,6 +136,10 @@ deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.
 deino-net.workspace = true
 deino-pipeline.workspace = true
+# The note document model (NOT-01): Markdown in and out for the summary view.
+deino-doc.workspace = true
+# Decodes pasted note images sent as base64 (already in the tree, MIT/Apache).
+base64 = "0.22.1"
 deino-secrets.workspace = true
 # The fixture seeder behind the debug-only `dev` plugin (features/dev.rs); its
 # fakes stay behind `test-support`, which only the dev-dependency enables.

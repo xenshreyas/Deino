@@ -21,6 +21,21 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ("system", &["app_version"]),
     // ── FND-13 meetings ──
     ("meetings", &["list", "get", "rename"]),
+    // ── NOT-01 notepad and @mention search ──
+    (
+        "notes",
+        &[
+            "get",
+            "save",
+            "create_scheduled",
+            "adopt",
+            "save_image",
+            "attach_dropped_image",
+            "markdown_to_doc",
+            "doc_to_markdown",
+        ],
+    ),
+    ("people", &["search"]),
     // ── FND-06 settings and secrets ──
     ("settings", &["get", "patch"]),
     ("secrets", &["set", "status", "delete"]),

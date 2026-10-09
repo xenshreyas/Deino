@@ -25,6 +25,8 @@ pub mod llm;
 pub mod manifest;
 pub mod meetings;
 pub mod network;
+pub mod notes;
+pub mod people;
 pub mod pipeline;
 pub mod profile;
 pub mod secrets;
@@ -42,6 +44,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (meetings::NAME, meetings::specta()),
         (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),
+        (notes::NAME, notes::specta()),
+        (people::NAME, people::specta()),
         (secrets::NAME, secrets::specta()),
         (llm::NAME, llm::specta()),
         (profile::NAME, profile::specta()),

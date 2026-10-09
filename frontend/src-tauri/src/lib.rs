@@ -80,6 +80,8 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::network::init())
         .plugin(features::pipeline::init())
         .plugin(features::profile::init())
+        .plugin(features::notes::init())
+        .plugin(features::people::init())
         .plugin(features::secrets::init())
         .plugin(features::llm::init())
         .plugin(features::settings::init())
