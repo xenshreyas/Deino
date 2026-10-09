@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="845" height="295" viewBox="0 0 845 295">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B2A27"/>
+      <stop offset="1" stop-color="#191816"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(97 40) scale(0.2621)">
+    <rect x="0" y="0" width="824" height="824" rx="185" fill="url(#tile)"/>
+    <path d="M268 232 H376 A180 180 0 0 1 376 592 H268 Z"
+          fill="none" stroke="#F3EFE7" stroke-width="60" stroke-linejoin="round"/>
+  </g>
+  <text x="357" y="196" font-family="Helvetica Neue" font-weight="500" font-size="150"
+        letter-spacing="-3" fill="#1F1E1C">Deino</text>
+</svg>
