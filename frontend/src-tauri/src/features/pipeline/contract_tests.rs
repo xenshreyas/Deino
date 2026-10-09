@@ -38,6 +38,7 @@ fn pipeline_app() -> App<MockRuntime> {
         segments: Arc::new(SqliteSegmentRepo::new(database.clone())),
         meetings: meetings.clone(),
         summaries: Arc::new(RecordedSummaries::default()),
+        ..StagePorts::fakes()
     };
     let service = Arc::new(PipelineService::new(PipelineDeps {
         jobs: Arc::new(SqliteJobRepo::new(database)),
@@ -82,14 +83,14 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
 
     assert_eq!(
         stages,
-        Ok(json!([{
-            "stage": "legacy_summary",
+        Ok(json!(["diarize", "legacy_summary"].map(|stage| json!({
+            "stage": stage,
             "status": "pending",
             "attempts": 0,
             "retryAt": null,
             "message": null,
             "updatedAt": NOW,
-        }]))
+        }))))
     );
 }
 

@@ -129,6 +129,8 @@ sqlx = { workspace = true, features = ["json"] }
 # The Tauri-free core (crates/) and typed IPC through tauri-specta (ADR 0007).
 deino-core.workspace = true
 deino-db.workspace = true
+# Local speaker diarization behind the `diarize` stage (CAP-03).
+deino-diarize.workspace = true
 deino-domain.workspace = true
 deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.

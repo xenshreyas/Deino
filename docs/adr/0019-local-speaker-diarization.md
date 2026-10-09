@@ -92,8 +92,11 @@ anarlog commits its models as blobs with no download source, embeds them with
   lock.
 - Thresholds were measured on synthetic voices. Re-tune on AMI dev and on
   real meetings before changing them.
-- Follow-ups: wire `DiarizeService` as FND-08's `diarize` stage; build
-  `OnnxTrackDiarizer` in the composition root with the app's `ByteSource`
-  (later `deino-net`'s); attribute WeSpeaker in the About screen; CAP-02 drives
+- The stage: `deino-pipeline`'s `DiarizeStage` (order 30) runs
+  `DiarizeService`; the app builds `OnnxTrackDiarizer` over the STT models'
+  `HttpByteSource` (`composition/diarize.rs`). Missing models are retried and
+  then skipped on the last attempt, so notes never wait for speakers; a meeting
+  without its track file is skipped.
+- Follow-ups: move the downloads to `deino-net`; attribute WeSpeaker in the About screen; CAP-02 drives
   `online::LiveSpeakerTracker`; CAP-04 uses `voiceprint` and the stored
   centroids.

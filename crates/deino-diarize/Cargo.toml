@@ -45,6 +45,7 @@ ort = { version = "=2.0.0-rc.10", features = ["coreml"] }
 
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
+deino-db.workspace = true
 deino-domain = { workspace = true, features = ["test-support"] }
 # Fixture audio, ground truth and the seeded database for the model checks.
 deino-testkit = { workspace = true, features = ["test-support"] }

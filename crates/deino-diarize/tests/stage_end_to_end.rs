@@ -23,6 +23,7 @@ use deino_core::meetings::{MeetingAudio, MeetingLifecycleRepo, SqliteMeetingRepo
 use deino_core::models::{FakeByteSource, FakeServer};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::{Page, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
+use deino_db::Database;
 use deino_diarize::RuntimeConfig;
 use deino_diarize::models::{EMBEDDING_MODEL_ID, ModelStore};
 use deino_diarize::track::OnnxTrackDiarizer;
@@ -52,23 +53,15 @@ fn standup_audio() -> MeetingAudio {
     }
 }
 
-#[tokio::test]
-#[ignore = "needs the ONNX models (DEINO_DIARIZE_MODELS)"]
-async fn the_standup_is_diarized_into_named_rows() {
-    let database = test_db().await;
-    seed_fixtures(&database).await.unwrap();
-    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
-    let meeting = MeetingId::new("meeting-fixture-standup");
-    meetings
-        .set_audio(&meeting, &standup_audio(), at("2026-10-08T10:00:00Z"))
-        .await
-        .unwrap();
+/// The stage's service over `database`, with the ONNX engine on the models
+/// in `DEINO_DIARIZE_MODELS` (no download: the source never answers).
+fn service(database: &Database) -> (DiarizeService, Arc<SqliteSegmentRepo>) {
     let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     let models = std::env::var("DEINO_DIARIZE_MODELS").expect("set DEINO_DIARIZE_MODELS");
     let never = Arc::new(FakeByteSource::new(Vec::new(), FakeServer::Stalls));
     let engine = OnnxTrackDiarizer::new(ModelStore::new(models), never, RuntimeConfig::default());
     let service = DiarizeService::new(DiarizeDeps {
-        meetings,
+        meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
         attendees: Arc::new(SqlitePeopleRepo::new(database.clone())),
         segments: segments.clone(),
         writer: segments.clone(),
@@ -76,6 +69,22 @@ async fn the_standup_is_diarized_into_named_rows() {
         diarizer: Arc::new(engine),
         clock: Arc::new(SystemClock),
     });
+    (service, segments)
+}
+
+#[tokio::test]
+#[ignore = "needs the ONNX models (DEINO_DIARIZE_MODELS)"]
+async fn the_standup_is_diarized_into_named_rows() {
+    let database = test_db().await;
+    seed_fixtures(&database).await.unwrap();
+    let meeting = MeetingId::new("meeting-fixture-standup");
+    let meetings = SqliteMeetingRepo::new(database.clone());
+    let recorded = at("2026-10-08T10:00:00Z");
+    meetings
+        .set_audio(&meeting, &standup_audio(), recorded)
+        .await
+        .unwrap();
+    let (service, segments) = service(&database);
 
     let outcome = service.run(&meeting).await.unwrap();
 
@@ -89,10 +98,8 @@ async fn the_standup_is_diarized_into_named_rows() {
         voiced.len()
     );
     let voice = segments.voice(&voiced[0].id).await.unwrap().unwrap();
-    assert_eq!(
-        (voice.centroid.len(), voice.embedding_model.as_str()),
-        (256, EMBEDDING_MODEL_ID)
-    );
+    assert_eq!(voice.centroid.len(), 256);
+    assert_eq!(voice.embedding_model, EMBEDDING_MODEL_ID);
     let transcript = segments.list(&meeting, Page::ALL).await.unwrap();
     assert!(
         transcript

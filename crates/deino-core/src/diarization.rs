@@ -9,7 +9,7 @@
 //! with their centroids, and attributes every segment by time overlap,
 //! splitting segments where the speaker changes ([`attribute`]).
 //!
-//! The stage is wired by FND-08's pipeline runner at order 30 (after
+//! `deino-pipeline`'s `DiarizeStage` runs it at order 30 (after
 //! `final_transcription`, before CAP-04's `identify_speakers`).
 
 mod assign;

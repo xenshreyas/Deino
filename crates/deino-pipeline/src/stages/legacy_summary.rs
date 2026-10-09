@@ -204,6 +204,7 @@ mod tests {
             segments: segments.clone(),
             meetings: meetings.clone(),
             summaries: summaries.clone(),
+            ..StagePorts::fakes()
         };
         let stage = LegacySummaryStage::new(&ports);
         Harness {
@@ -278,6 +279,7 @@ mod tests {
             segments: Arc::new(FakeSegmentRepo::default()),
             meetings: Arc::new(FakeMeetingRepo::default()),
             summaries: Arc::new(RecordedSummaries::default()),
+            ..StagePorts::fakes()
         };
         let stage = LegacySummaryStage::new(&ports);
 
