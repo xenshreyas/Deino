@@ -41,8 +41,8 @@ pub use clock::{Clock, SystemClock};
 pub use color::{InvalidPaletteColor, PaletteColor};
 pub use email::{Email, InvalidEmail};
 pub use enums::{
-    ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, CalendarProvider,
-    Channel, ConferencePlatform, MeetingSource, Rsvp, TagSource,
+    ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
+    CalendarProvider, Channel, ConferencePlatform, MeetingSource, Rsvp, SectionFormat, TagSource,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]

@@ -54,6 +54,10 @@ pub enum Table {
     JobRuns,
     /// One row per outgoing HTTP request: service, host, size, never content.
     EgressLog,
+    /// Note templates, built-in and the user's own (NOT-04).
+    Templates,
+    /// The ordered sections of each template.
+    TemplateSections,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -61,7 +65,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 21] = [
+    pub const ALL: [Self; 23] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -82,6 +86,8 @@ impl Table {
         Self::Jobs,
         Self::JobRuns,
         Self::EgressLog,
+        Self::Templates,
+        Self::TemplateSections,
         Self::ExampleNotes,
     ];
 
@@ -111,6 +117,8 @@ impl Table {
             "jobs" => Self::Jobs,
             "job_runs" => Self::JobRuns,
             "egress_log" => Self::EgressLog,
+            "templates" => Self::Templates,
+            "template_sections" => Self::TemplateSections,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

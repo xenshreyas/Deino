@@ -137,10 +137,21 @@ text_id!(
 );
 
 text_id!(
-    /// Identifies a note template. Built-in templates are named
-    /// (`standard_meeting`); NOT-04 moves templates into the database.
+    /// Identifies a note template (NOT-04).
+    ///
+    /// Built-in templates have readable, stable slugs (`one_on_one`), so a
+    /// release can upgrade them in place; the user's own templates get a
+    /// UUIDv7 from [`TemplateId::generate`]. Both are opaque text to the
+    /// database (`templates.id`).
     TemplateId
 );
+
+impl TemplateId {
+    /// A new ID for one of the user's own templates, stamped with the clock's time.
+    pub fn generate(clock: &dyn Clock) -> Self {
+        Self(new_v7(clock).hyphenated().to_string())
+    }
+}
 
 text_id!(
     /// Identifies a stage of the post-meeting pipeline (FND-08), for example
@@ -240,6 +251,14 @@ mod tests {
     fn parsing_rejects_non_uuids_with_the_type_name() {
         let error = "meeting-1".parse::<TestId>().unwrap_err();
         assert_eq!(error.kind, "TestId");
+    }
+
+    #[test]
+    fn generated_template_ids_are_v7_uuids_in_text_form() {
+        let id = TemplateId::generate(&clock());
+
+        let uuid = Uuid::parse_str(id.as_str()).unwrap();
+        assert_eq!(uuid.get_version_num(), 7);
     }
 
     #[test]
