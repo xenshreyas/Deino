@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Deino:** this repo is Deino, a private product built from Meetily v0.4.1. Before you start any feature work, read **[docs/PARITY_PLAN.md](docs/PARITY_PLAN.md)** for the roadmap, task cards and engineering rules. Some of the details below are outdated Meetily notes. For example, BlackHole is no longer needed on macOS. Card FND-01 rewrites this file.
+
 ## Project Overview
 
 **Meetily** is a privacy-first AI meeting assistant that captures, transcribes, and summarizes meetings entirely on local infrastructure. The supported application is the Tauri desktop app with a Rust core.
