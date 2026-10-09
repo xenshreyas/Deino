@@ -1,0 +1,52 @@
+[package]
+name = "deino-detect"
+version = "0.1.0"
+description = "Deino's meeting detection: which app holds the microphone, whether it is a meeting, and when to prompt"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_detect.rs"
+
+[features]
+# Fakes of this crate's ports (`FakeSensors`, `RecordedSink`, `FakeRecorder`, ...)
+# for other crates' tests. Never enable outside dev-dependencies.
+test-support = []
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+deino-domain.workspace = true
+log.workspace = true
+serde.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Core Audio process objects and their property listeners, and the
+# Accessibility API for browser URLs. Same git rev and features as the app,
+# so both share one build.
+cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa" }
+# CoreMediaIO, which cidre does not bind: is any camera running? The listener
+# blocks are block2 blocks. Versions match the objc2 set already in the tree.
+block2 = "=0.6.2"
+objc2-core-media-io = { version = "=0.3.2", default-features = false, features = ["std", "block2", "dispatch2", "CMIOHardware", "CMIOHardwareDevice", "CMIOHardwareObject", "CMIOHardwareSystem"] }
+# NSWorkspace (the frontmost app) and NSRunningApplication (which app a
+# process belongs to), plus NSBundle for the outermost `.app`'s name.
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSArray", "NSBundle", "NSEnumerator", "NSString", "NSURL"] }
+# The executable of a process Launch Services does not list (a daemon, a
+# command-line tool). Already in the tree through the app.
+sysinfo = { version = "=0.32.1", default-features = false, features = ["system"] }
+
+[dev-dependencies]
+# The crate's own fakes and the domain's `FakeClock` for the policy tests.
+deino-detect = { path = ".", features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+serde_json.workspace = true
+# Runs the async `ignore_app` in the service tests.
+tokio.workspace = true
+
+[lints]
+workspace = true
