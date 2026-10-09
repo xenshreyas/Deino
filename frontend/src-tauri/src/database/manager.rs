@@ -1,169 +1,94 @@
+//! Owns the SQLite connection pool: opening `deino.sqlite` in the app data dir,
+//! running the bundled migrations, and closing the pool cleanly on exit.
+
 use sqlx::{migrate::MigrateDatabase, Result, Sqlite, SqlitePool, Transaction};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tauri::Manager;
 
 /// File name of Deino's SQLite database inside the app data dir.
 pub const DB_FILE_NAME: &str = "deino.sqlite";
 
-/// File name of a legacy database staged in the app data dir for import.
-///
-/// When [`DB_FILE_NAME`] does not exist yet, [`DatabaseManager::new`] copies
-/// this file to it and runs the migrations on the copy.
-pub const LEGACY_IMPORT_FILE_NAME: &str = "legacy-import.db";
+/// Suffixes of the SQLite side files that can be orphaned by a crash in WAL mode.
+const WAL_SIDE_FILE_SUFFIXES: [&str; 2] = ["-wal", "-shm"];
 
+/// Shared handle to the application's SQLite pool.
 #[derive(Clone)]
 pub struct DatabaseManager {
     pool: SqlitePool,
 }
 
 impl DatabaseManager {
-    pub async fn new(tauri_db_path: &str, backend_db_path: &str) -> Result<Self> {
-        if let Some(parent_dir) = Path::new(tauri_db_path).parent() {
-            if !parent_dir.exists() {
-                fs::create_dir_all(parent_dir).map_err(|e| sqlx::Error::Io(e))?;
-            }
+    /// Opens (creating it if needed) the database at `db_path` and runs all migrations.
+    pub async fn new(db_path: &Path) -> Result<Self> {
+        if let Some(parent_dir) = db_path.parent() {
+            fs::create_dir_all(parent_dir).map_err(sqlx::Error::Io)?;
         }
 
-        if !Path::new(tauri_db_path).exists() {
-            if Path::new(backend_db_path).exists() {
-                log::info!(
-                    "Copying database from {} to {}",
-                    backend_db_path,
-                    tauri_db_path
-                );
-                fs::copy(backend_db_path, tauri_db_path).map_err(|e| sqlx::Error::Io(e))?;
-            } else {
-                log::info!("Creating database at {}", tauri_db_path);
-                Sqlite::create_database(tauri_db_path).await?;
-            }
+        let url = db_path.to_string_lossy();
+        if !db_path.exists() {
+            log::info!("Creating database at {}", url);
+            Sqlite::create_database(&url).await?;
         }
 
-        let pool = SqlitePool::connect(tauri_db_path).await?;
-
+        let pool = SqlitePool::connect(&url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
 
         Ok(DatabaseManager { pool })
     }
 
-    // NOTE: So for the first time users they needs to start the application
-    // after they can just delete the existing .sqlite file and then copy the existing .db file to
-    // the current app dir, So the system detects legacy db and copy it and starts with that data
-    // (Newly created .sqlite with the copied content from .db)
+    /// Opens the database in the app data dir, retrying once after removing
+    /// orphaned WAL side files when SQLite reports corruption.
     pub async fn new_from_app_handle(app_handle: &tauri::AppHandle) -> Result<Self> {
-        // Resolve the app's data directory
-        let app_data_dir = app_handle
-            .path()
-            .app_data_dir()
-            .expect("failed to get app data dir");
-        if !app_data_dir.exists() {
-            fs::create_dir_all(&app_data_dir).map_err(|e| sqlx::Error::Io(e))?;
-        }
+        let db_path = Self::db_path(app_handle);
+        log::info!("Database path: {}", db_path.display());
 
-        // Define database paths
-        let tauri_db_path = app_data_dir
-            .join(DB_FILE_NAME)
-            .to_string_lossy()
-            .to_string();
-        // Legacy backend DB path (for auto-migration if exists)
-        let backend_db_path = app_data_dir
-            .join(LEGACY_IMPORT_FILE_NAME)
-            .to_string_lossy()
-            .to_string();
-
-        // WAL file paths for defensive cleanup
-        let wal_path = app_data_dir.join(format!("{DB_FILE_NAME}-wal"));
-        let shm_path = app_data_dir.join(format!("{DB_FILE_NAME}-shm"));
-
-        log::info!("Tauri DB path: {}", tauri_db_path);
-        log::info!("Legacy backend DB path: {}", backend_db_path);
-
-        // Try to open database with defensive WAL handling
-        match Self::new(&tauri_db_path, &backend_db_path).await {
-            Ok(db_manager) => {
-                log::info!("Database opened successfully");
-                Ok(db_manager)
+        match Self::new(&db_path).await {
+            Ok(db_manager) => Ok(db_manager),
+            Err(e) if Self::is_corruption_error(&e) => {
+                log::warn!("Database appears corrupted, likely an orphaned WAL file: {}", e);
+                Self::remove_wal_side_files(&db_path);
+                Self::new(&db_path).await
             }
             Err(e) => {
-                // Check if error is due to corrupted WAL file
-                let error_msg = e.to_string();
-                if error_msg.contains("malformed") || error_msg.contains("corrupt") {
-                    log::warn!("Database appears corrupted, likely due to orphaned WAL file. Attempting recovery...");
-                    log::warn!("Error details: {}", error_msg);
-
-                    // Delete potentially corrupted WAL/SHM files
-                    if wal_path.exists() {
-                        match fs::remove_file(&wal_path) {
-                            Ok(_) => log::info!("Removed orphaned WAL file: {:?}", wal_path),
-                            Err(e) => log::warn!("Failed to remove WAL file: {}", e),
-                        }
-                    }
-                    if shm_path.exists() {
-                        match fs::remove_file(&shm_path) {
-                            Ok(_) => log::info!("Removed orphaned SHM file: {:?}", shm_path),
-                            Err(e) => log::warn!("Failed to remove SHM file: {}", e),
-                        }
-                    }
-
-                    // Retry connection without WAL files
-                    log::info!("Retrying database connection after WAL cleanup...");
-                    match Self::new(&tauri_db_path, &backend_db_path).await {
-                        Ok(db_manager) => {
-                            log::info!("Database opened successfully after WAL recovery");
-                            Ok(db_manager)
-                        }
-                        Err(retry_err) => {
-                            log::error!("Database connection failed even after WAL cleanup: {}", retry_err);
-                            Err(retry_err)
-                        }
-                    }
-                } else {
-                    // Not a WAL-related error, propagate original error
-                    log::error!("Database connection failed: {}", error_msg);
-                    Err(e)
-                }
+                log::error!("Database connection failed: {}", e);
+                Err(e)
             }
         }
     }
 
-    /// Check if this is the first launch (sqlite database doesn't exist yet)
+    /// Returns true when no database file exists yet (first launch).
     pub async fn is_first_launch(app_handle: &tauri::AppHandle) -> Result<bool> {
-        let app_data_dir = app_handle
-            .path()
-            .app_data_dir()
-            .expect("failed to get app data dir");
-
-        let tauri_db_path = app_data_dir.join(DB_FILE_NAME);
-
-        Ok(!tauri_db_path.exists())
+        Ok(!Self::db_path(app_handle).exists())
     }
 
-    /// Import a legacy database from the specified path and initialize
-    pub async fn import_legacy_database(
-        app_handle: &tauri::AppHandle,
-        legacy_db_path: &str,
-    ) -> Result<Self> {
-        let app_data_dir = app_handle
+    fn db_path(app_handle: &tauri::AppHandle) -> PathBuf {
+        app_handle
             .path()
             .app_data_dir()
-            .expect("failed to get app data dir");
+            .expect("failed to get app data dir")
+            .join(DB_FILE_NAME)
+    }
 
-        if !app_data_dir.exists() {
-            fs::create_dir_all(&app_data_dir).map_err(|e| sqlx::Error::Io(e))?;
+    fn is_corruption_error(error: &sqlx::Error) -> bool {
+        let message = error.to_string();
+        message.contains("malformed") || message.contains("corrupt")
+    }
+
+    /// Deletes the WAL side files next to `db_path`, if present.
+    fn remove_wal_side_files(db_path: &Path) {
+        for suffix in WAL_SIDE_FILE_SUFFIXES {
+            let mut side_file = db_path.as_os_str().to_owned();
+            side_file.push(suffix);
+            let side_file = PathBuf::from(side_file);
+            if !side_file.exists() {
+                continue;
+            }
+            match fs::remove_file(&side_file) {
+                Ok(()) => log::info!("Removed orphaned file: {}", side_file.display()),
+                Err(e) => log::warn!("Failed to remove {}: {}", side_file.display(), e),
+            }
         }
-
-        // Stage the legacy database in the app data directory for migration
-        let target_legacy_path = app_data_dir.join(LEGACY_IMPORT_FILE_NAME);
-        log::info!(
-            "Copying legacy database from {} to {}",
-            legacy_db_path,
-            target_legacy_path.display()
-        );
-
-        fs::copy(legacy_db_path, &target_legacy_path).map_err(|e| sqlx::Error::Io(e))?;
-
-        // Now use the standard initialization which will detect and migrate the legacy db
-        Self::new_from_app_handle(app_handle).await
     }
 
     pub fn pool(&self) -> &SqlitePool {
@@ -213,5 +138,25 @@ impl DatabaseManager {
         log::info!("Database connection pool closed");
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn fresh_database_applies_migrations_without_licensing_table() {
+        let dir = tempfile::tempdir().unwrap();
+        let manager = DatabaseManager::new(&dir.path().join(DB_FILE_NAME)).await.unwrap();
+
+        let tables: Vec<String> =
+            sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type = 'table'")
+                .fetch_all(manager.pool())
+                .await
+                .unwrap();
+
+        assert!(tables.iter().any(|t| t == "meetings"));
+        assert!(!tables.iter().any(|t| t == "licensing"));
     }
 }

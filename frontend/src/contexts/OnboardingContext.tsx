@@ -166,32 +166,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         return;
       }
 
-      // First launch - attempt auto-detection and import
-      await performAutoDetection();
+      console.log('[OnboardingContext] First launch, initializing a fresh database');
+      await invoke('initialize_fresh_database');
+      setDatabaseExists(true);
     } catch (error) {
       console.error('[OnboardingContext] Database initialization failed:', error);
       // Don't throw - database init failure shouldn't block onboarding
     }
-  };
-
-  const performAutoDetection = async () => {
-    // Check default legacy database location
-    try {
-      const legacyPath = await invoke<string | null>('check_default_legacy_database');
-      if (legacyPath) {
-        console.log('[OnboardingContext] Found legacy database, importing');
-        await invoke('import_and_initialize_database', { legacyDbPath: legacyPath });
-        setDatabaseExists(true);
-        return;
-      }
-    } catch (e) {
-      console.log('[OnboardingContext] Legacy check failed, continuing:', e);
-    }
-
-    // No legacy database found - initialize fresh
-    console.log('[OnboardingContext] No legacy database found, initializing fresh');
-    await invoke('initialize_fresh_database');
-    setDatabaseExists(true);
   };
 
   const isCompletingRef = useRef(false);
