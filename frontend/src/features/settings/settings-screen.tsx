@@ -13,7 +13,7 @@ import type { SettingsSectionId } from './search';
 import { SETTINGS_SECTIONS, type SettingsGroup } from './sections';
 
 /** Nav groups, in order. */
-const GROUPS: readonly SettingsGroup[] = ['app', 'capture', 'ai', 'more'];
+const GROUPS: readonly SettingsGroup[] = ['app', 'capture', 'ai', 'privacy', 'more'];
 
 /** The section nav: grouped links, the open one highlighted. */
 function SettingsNav({ active }: { active: SettingsSectionId }) {

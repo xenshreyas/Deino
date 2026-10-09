@@ -3,7 +3,7 @@
 //!
 //! | Port | Adapter |
 //! |---|---|
-//! | `HttpTransport` | [`http::ReqwestTransport`] (until FND-12's `deino-net`) |
+//! | `HttpTransport` | [`http::NetTransport`]: one `deino-net` `ScopedClient` per provider (FND-12) |
 //! | `CredentialSource`, `EndpointSource`, `RouteStore` | `deino_core::settings::LlmAccess` (Keychain + settings) |
 //! | `LocalModels` | [`local::SidecarLocalModels`] (the llama-helper sidecar) |
 //! | `UsageRecorder` | `UsageChannel` → `UsageWriter` → `SqliteLlmCallRepo` (`llm_calls`) |
@@ -20,12 +20,13 @@ use std::sync::Arc;
 use deino_core::settings::LlmAccess;
 use deino_core::summaries::SummaryGenerator;
 use deino_db::Database;
-use deino_domain::Clock;
+use deino_domain::{Clock, ServiceId};
 use deino_llm::{
     AdminParts, AnthropicProvider, BuiltInProvider, Flavor, Gateway, GatewayParts, HttpTransport,
     LlmAdmin, LlmProvider, LocalModels, ModelCatalog, OllamaProvider, OpenAiCompatProvider,
     ProviderId, Providers, Router, SqliteLlmCallRepo, UsageChannel, UsageWriter,
 };
+use deino_net::Net;
 
 /// What the LLM services are built from.
 pub(crate) struct LlmPorts {
@@ -37,6 +38,8 @@ pub(crate) struct LlmPorts {
     pub app_data_dir: PathBuf,
     /// Time for latencies and usage records.
     pub clock: Arc<dyn Clock>,
+    /// The network; each provider gets a client scoped to its own service.
+    pub net: Net,
 }
 
 /// The LLM services the app manages, and the usage writer to run.
@@ -53,14 +56,13 @@ pub(crate) struct LlmServices {
 
 /// Builds the gateway, its providers and the services over it.
 pub(crate) fn build(ports: LlmPorts) -> LlmServices {
-    let http: Arc<dyn HttpTransport> = Arc::new(http::ReqwestTransport::new());
     let local: Arc<dyn LocalModels> = Arc::new(local::SidecarLocalModels::new(ports.app_data_dir));
     let ollama = Arc::new(OllamaProvider::new(
-        http.clone(),
+        transport(&ports.net, ServiceId::LlmOllama),
         ports.access.clone(),
         ports.access.clone(),
     ));
-    let (providers, catalogs) = registry(adapters(&http, &ports.access, &local), &ollama);
+    let (providers, catalogs) = registry(adapters(&ports.net, &ports.access, &local), &ollama);
     let (usage, usage_writer) = UsageChannel::new(Arc::new(SqliteLlmCallRepo::new(ports.database)));
     let gateway = Arc::new(Gateway::new(GatewayParts {
         providers,
@@ -122,14 +124,17 @@ impl Adapter {
 
 /// Every adapter but Ollama's, keyed by provider.
 fn adapters(
-    http: &Arc<dyn HttpTransport>,
+    net: &Net,
     access: &Arc<LlmAccess>,
     local: &Arc<dyn LocalModels>,
 ) -> BTreeMap<ProviderId, Adapter> {
     let mut adapters = BTreeMap::from([
         (
             ProviderId::Anthropic,
-            Adapter::of(AnthropicProvider::new(http.clone(), access.clone())),
+            Adapter::of(AnthropicProvider::new(
+                transport(net, ServiceId::LlmAnthropic),
+                access.clone(),
+            )),
         ),
         (
             ProviderId::BuiltIn,
@@ -142,9 +147,15 @@ fn adapters(
         Flavor::OpenRouter,
         Flavor::Custom,
     ] {
-        let adapter =
-            OpenAiCompatProvider::new(flavor, http.clone(), access.clone(), access.clone());
+        let http = transport(net, http::flavor_service(flavor));
+        let adapter = OpenAiCompatProvider::new(flavor, http, access.clone(), access.clone());
         adapters.insert(flavor.provider(), Adapter::of(adapter));
     }
     adapters
+}
+
+/// A transport scoped to `service`: it reaches only that service's hosts,
+/// and only while the user allows it.
+fn transport(net: &Net, service: ServiceId) -> Arc<dyn HttpTransport> {
+    Arc::new(http::NetTransport::new(net, service))
 }

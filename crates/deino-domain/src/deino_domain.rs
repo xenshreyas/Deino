@@ -14,6 +14,8 @@
 //! - [`email`]: [`Email`], a normalised address (people, attendees, fixtures);
 //! - [`error`]: [`AppError`], the only error that crosses IPC, its
 //!   [`ErrorCode`] and the [`ErrorClass`] trait that module errors implement;
+//! - [`service`]: [`ServiceId`], every outside service Deino may talk to
+//!   (FND-12), so settings, the egress log and `deino-net` name it alike;
 //! - [`clock`]: the [`Clock`] port, so time-dependent logic is testable.
 //!
 //! Feature models and services live in `deino-core`; persistence lives in
@@ -29,6 +31,7 @@ pub mod enums;
 pub mod error;
 pub mod id;
 pub mod job;
+pub mod service;
 pub mod status;
 pub mod units;
 
@@ -49,5 +52,6 @@ pub use id::{
     MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
 };
 pub use job::{JobStatus, RunOutcome};
+pub use service::{ServiceId, ServiceKind};
 pub use status::{InvalidTransition, MeetingEvent, MeetingStatus};
 pub use units::{Millis, Seconds};

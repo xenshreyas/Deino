@@ -29,7 +29,7 @@ use std::sync::Arc;
 
 use tauri::{AppHandle, Manager, Runtime};
 
-pub use http_source::HttpByteSource;
+pub use http_source::NetByteSource;
 pub use live::LiveAudioSink;
 pub use provider::ParakeetUnifiedProvider;
 pub use runtime::{SttParts, SttRuntime, SttSetupError};

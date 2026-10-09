@@ -1,5 +1,6 @@
 use crate::parakeet_engine::model::ParakeetModel;
 use anyhow::{anyhow, Result};
+use deino_net::{NetClient, Request, Response, Status};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -193,10 +194,7 @@ enum ContentRange {
     Unsatisfied { total: u64 },
 }
 
-fn parse_content_range(value: &reqwest::header::HeaderValue) -> Result<ContentRange> {
-    let value = value
-        .to_str()
-        .map_err(|e| anyhow!("Invalid Content-Range header encoding: {}", e))?;
+fn parse_content_range(value: &str) -> Result<ContentRange> {
     let value = value
         .strip_prefix("bytes ")
         .ok_or_else(|| anyhow!("Content-Range must use bytes: {}", value))?;
@@ -259,6 +257,18 @@ impl From<std::io::Error> for ParakeetEngineError {
     fn from(err: std::io::Error) -> Self {
         ParakeetEngineError::IoError(err)
     }
+}
+
+/// Where a model download fetches its files: a `deino-net` client scoped to
+/// the model host (FND-12) and the base URL of the model's files.
+///
+/// The engine never holds a network client itself; only the download
+/// command passes one in, so transcription has no route to the network.
+pub struct ModelSource {
+    /// The client, from `Net::approved_download(ServiceId::HfModels)`.
+    pub http: Arc<dyn NetClient>,
+    /// The URL the artifact file names are appended to.
+    pub base_url: String,
 }
 
 pub struct ParakeetEngine {
@@ -615,19 +625,21 @@ impl ParakeetEngine {
     pub async fn download_model(
         &self,
         model_name: &str,
+        http: Arc<dyn NetClient>,
         progress_callback: Option<Box<dyn Fn(u8) + Send>>,
     ) -> Result<()> {
         let detailed_callback = progress_callback.map(|callback| {
             Box::new(move |progress: DownloadProgress| callback(progress.percent))
                 as Box<dyn Fn(DownloadProgress) + Send>
         });
-        self.download_model_detailed(model_name, detailed_callback).await
+        self.download_model_detailed(model_name, http, detailed_callback).await
     }
 
     /// Download a catalogued Parakeet model with detailed progress.
     pub async fn download_model_detailed(
         &self,
         model_name: &str,
+        http: Arc<dyn NetClient>,
         progress_callback: Option<Box<dyn Fn(DownloadProgress) + Send>>,
     ) -> Result<()> {
         let model_info = self
@@ -640,10 +652,14 @@ impl ParakeetEngine {
         let spec = find_model_spec(model_name)
             .ok_or_else(|| anyhow!("Unsupported Parakeet model: {}", model_name))?;
 
+        let source = ModelSource {
+            http,
+            base_url: spec.source_base_url.to_owned(),
+        };
         self.download_model_detailed_from_source(
             model_name,
             &model_info.path,
-            spec.source_base_url,
+            &source,
             spec.artifacts,
             progress_callback,
         )
@@ -688,43 +704,44 @@ impl ParakeetEngine {
 
     async fn send_download_request(
         &self,
-        client: &reqwest::Client,
+        http: &dyn NetClient,
         file_url: &str,
         range_start: Option<u64>,
         active_download: &ActiveDownload,
-    ) -> Result<reqwest::Response> {
-        let mut request = client.get(file_url);
+    ) -> Result<Response> {
+        // No end-to-end timeout: a stalled body is caught per chunk instead.
+        let mut request = Request::get(file_url)
+            .map_err(|error| anyhow!("Invalid download URL for {}: {}", file_url, error))?
+            .timeout(None);
         if let Some(range_start) = range_start {
-            request = request.header(reqwest::header::RANGE, format!("bytes={range_start}-"));
+            request = request.header("range", format!("bytes={range_start}-"));
         }
 
         tokio::select! {
             biased;
             _ = active_download.cancellation.cancelled() => Err(DownloadCancelled.into()),
-            response = request.send() => response
+            response = http.send(request) => response
                 .map_err(|error| anyhow!("Failed to start download for {}: {}", file_url, error)),
         }
     }
 
-    fn declared_content_length(response: &reqwest::Response) -> Result<Option<u64>> {
+    fn declared_content_length(response: &Response) -> Result<Option<u64>> {
         response
-            .headers()
-            .get(reqwest::header::CONTENT_LENGTH)
+            .header("content-length")
             .map(|value| {
                 value
-                    .to_str()
-                    .map_err(|error| anyhow!("Invalid Content-Length header encoding: {}", error))?
+                    .trim()
                     .parse()
                     .map_err(|error| anyhow!("Invalid Content-Length header: {}", error))
             })
             .transpose()
     }
 
-    fn validate_full_response(response: &reqwest::Response, exact_bytes: u64) -> Result<()> {
-        if response.status() != reqwest::StatusCode::OK {
+    fn validate_full_response(response: &Response, exact_bytes: u64) -> Result<()> {
+        if response.status != Status::OK {
             return Err(anyhow!(
                 "Expected full 200 response, received {}",
-                response.status()
+                response.status
             ));
         }
         if let Some(content_length) = Self::declared_content_length(response)? {
@@ -740,19 +757,18 @@ impl ParakeetEngine {
     }
 
     fn validate_partial_response(
-        response: &reqwest::Response,
+        response: &Response,
         expected_start: u64,
         exact_bytes: u64,
     ) -> Result<()> {
-        if response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
+        if response.status != Status::PARTIAL_CONTENT {
             return Err(anyhow!(
                 "Expected partial 206 response, received {}",
-                response.status()
+                response.status
             ));
         }
         let content_range = response
-            .headers()
-            .get(reqwest::header::CONTENT_RANGE)
+            .header("content-range")
             .ok_or_else(|| anyhow!("Partial response is missing Content-Range"))?;
         let ContentRange::Range { start, end, total } = parse_content_range(content_range)? else {
             return Err(anyhow!("Partial response has an unsatisfied Content-Range"));
@@ -784,16 +800,15 @@ impl ParakeetEngine {
         Ok(())
     }
 
-    fn validate_unsatisfied_response(response: &reqwest::Response, exact_bytes: u64) -> Result<()> {
-        if response.status() != reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+    fn validate_unsatisfied_response(response: &Response, exact_bytes: u64) -> Result<()> {
+        if response.status != Status::RANGE_NOT_SATISFIABLE {
             return Err(anyhow!(
                 "Expected range-not-satisfiable 416 response, received {}",
-                response.status()
+                response.status
             ));
         }
         let content_range = response
-            .headers()
-            .get(reqwest::header::CONTENT_RANGE)
+            .header("content-range")
             .ok_or_else(|| anyhow!("416 response is missing Content-Range"))?;
         match parse_content_range(content_range)? {
             ContentRange::Unsatisfied { total } if total == exact_bytes => Ok(()),
@@ -810,7 +825,7 @@ impl ParakeetEngine {
         &self,
         model_name: &str,
         model_dir: &Path,
-        base_url: &str,
+        source: &ModelSource,
         artifacts: &[ArtifactSpec],
         progress_callback: Option<Box<dyn Fn(DownloadProgress) + Send>>,
     ) -> Result<()> {
@@ -821,7 +836,7 @@ impl ParakeetEngine {
             .download_artifacts(
                 model_name,
                 model_dir,
-                base_url,
+                source,
                 artifacts,
                 &active_download,
                 progress_callback,
@@ -847,7 +862,7 @@ impl ParakeetEngine {
         &self,
         model_name: &str,
         model_dir: &Path,
-        base_url: &str,
+        source: &ModelSource,
         artifacts: &[ArtifactSpec],
         active_download: &ActiveDownload,
         progress_callback: Option<Box<dyn Fn(DownloadProgress) + Send>>,
@@ -859,13 +874,6 @@ impl ParakeetEngine {
             .await
             .map_err(|error| anyhow!("Failed to create model directory: {}", error))?;
 
-        let client = reqwest::Client::builder()
-            .tcp_nodelay(true)
-            .pool_max_idle_per_host(1)
-            .timeout(Duration::from_secs(3600))
-            .connect_timeout(Duration::from_secs(30))
-            .build()
-            .map_err(|error| anyhow!("Failed to create HTTP client: {}", error))?;
         let total_bytes: u64 = artifacts.iter().map(|artifact| artifact.exact_bytes).sum();
         let download_started = Instant::now();
         let mut confirmed_bytes = 0u64;
@@ -906,16 +914,20 @@ impl ParakeetEngine {
                 continue;
             }
 
-            let file_url = format!("{}/{}", base_url.trim_end_matches('/'), artifact.filename);
+            let file_url = format!(
+                "{}/{}",
+                source.base_url.trim_end_matches('/'),
+                artifact.filename
+            );
             let range_start = (local_bytes > 0 && local_bytes < artifact.exact_bytes)
                 .then_some(local_bytes);
             let response = self
-                .send_download_request(&client, &file_url, range_start, active_download)
+                .send_download_request(source.http.as_ref(), &file_url, range_start, active_download)
                 .await?;
 
             let (response, mut artifact_bytes, append) = match range_start {
-                Some(range_start) => match response.status() {
-                    reqwest::StatusCode::PARTIAL_CONTENT => {
+                Some(range_start) => match response.status {
+                    Status::PARTIAL_CONTENT => {
                         Self::validate_partial_response(&response, range_start, artifact.exact_bytes)?;
                         confirmed_bytes = confirmed_bytes
                             .checked_add(range_start)
@@ -930,14 +942,14 @@ impl ParakeetEngine {
                         last_report = Instant::now();
                         (response, range_start, true)
                     }
-                    reqwest::StatusCode::OK => {
+                    Status::OK => {
                         Self::validate_full_response(&response, artifact.exact_bytes)?;
                         (response, 0, false)
                     }
-                    reqwest::StatusCode::RANGE_NOT_SATISFIABLE => {
+                    Status::RANGE_NOT_SATISFIABLE => {
                         Self::validate_unsatisfied_response(&response, artifact.exact_bytes)?;
                         let retry = self
-                            .send_download_request(&client, &file_url, None, active_download)
+                            .send_download_request(source.http.as_ref(), &file_url, None, active_download)
                             .await?;
                         Self::validate_full_response(&retry, artifact.exact_bytes)?;
                         (retry, 0, false)
@@ -950,12 +962,12 @@ impl ParakeetEngine {
                         ));
                     }
                 },
-                None => match response.status() {
-                    reqwest::StatusCode::OK => {
+                None => match response.status {
+                    Status::OK => {
                         Self::validate_full_response(&response, artifact.exact_bytes)?;
                         (response, 0, false)
                     }
-                    reqwest::StatusCode::PARTIAL_CONTENT => {
+                    Status::PARTIAL_CONTENT => {
                         Self::validate_partial_response(&response, 0, artifact.exact_bytes)?;
                         (response, 0, false)
                     }
@@ -989,7 +1001,7 @@ impl ParakeetEngine {
             };
             let mut writer = BufWriter::with_capacity(8 * 1024 * 1024, file);
             use futures_util::StreamExt;
-            let mut stream = response.bytes_stream();
+            let mut stream = response.body;
 
             loop {
                 let next_chunk = tokio::select! {
@@ -1338,6 +1350,15 @@ mod tests {
         (format!("http://{address}"), server)
     }
 
+    /// The test server's files, fetched by the raw client (the scoped one
+    /// would refuse the loopback host).
+    fn test_source(base_url: &str) -> ModelSource {
+        ModelSource {
+            http: Arc::new(crate::composition::root_client().expect("build the HTTP client")),
+            base_url: base_url.to_owned(),
+        }
+    }
+
     async fn test_engine() -> (tempfile::TempDir, Arc<ParakeetEngine>, PathBuf) {
         let temp_dir = tempdir().expect("create temporary models directory");
         let engine = Arc::new(
@@ -1512,7 +1533,7 @@ mod tests {
             .download_model_detailed_from_source(
                 TEST_MODEL_NAME,
                 &model_dir,
-                &base_url,
+                &test_source(&base_url),
                 SMALL_ARTIFACTS,
                 None,
             )
@@ -1540,7 +1561,7 @@ mod tests {
             .download_model_detailed_from_source(
                 TEST_MODEL_NAME,
                 &model_dir,
-                &base_url,
+                &test_source(&base_url),
                 SMALL_ARTIFACTS,
                 None,
             )
@@ -1584,7 +1605,7 @@ mod tests {
                 .download_model_detailed_from_source(
                     TEST_MODEL_NAME,
                     &download_dir,
-                    &base_url,
+                    &test_source(&base_url),
                     ARTIFACTS,
                     Some(Box::new(move |progress| {
                         if progress.downloaded_bytes == 99 {
@@ -1635,7 +1656,7 @@ mod tests {
             .download_model_detailed_from_source(
                 TEST_MODEL_NAME,
                 &model_dir,
-                &base_url,
+                &test_source(&base_url),
                 ARTIFACTS,
                 None,
             )
@@ -1673,7 +1694,7 @@ mod tests {
             .download_model_detailed_from_source(
                 TEST_MODEL_NAME,
                 &model_dir,
-                &base_url,
+                &test_source(&base_url),
                 ARTIFACTS,
                 Some(Box::new(move |progress| {
                     callback_events.push(progress);
@@ -1719,7 +1740,7 @@ mod tests {
             .download_model_detailed_from_source(
                 TEST_MODEL_NAME,
                 &model_dir,
-                &base_url,
+                &test_source(&base_url),
                 ARTIFACTS,
                 Some(Box::new(move |progress| {
                     callback_events.push(progress);
@@ -1825,7 +1846,7 @@ mod tests {
                     .download_model_detailed_from_source(
                         TEST_MODEL_NAME,
                         &model_dir,
-                        &base_url,
+                        &test_source(&base_url),
                         ARTIFACTS,
                         None,
                     )
@@ -1904,7 +1925,7 @@ mod tests {
                 .download_model_detailed_from_source(
                     TEST_MODEL_NAME,
                     &download_dir,
-                    &base_url,
+                    &test_source(&base_url),
                     ARTIFACTS,
                     Some(Box::new(move |progress| {
                         callback_events.push(progress);

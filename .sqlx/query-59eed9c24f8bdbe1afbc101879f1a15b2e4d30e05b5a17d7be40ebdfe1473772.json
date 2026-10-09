@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n    at AS \"at!: DateTime<Utc>\",\n    service AS \"service!: ServiceId\",\n    host,\n    method AS \"method!: Method\",\n    status,\n    outcome AS \"outcome!: EgressOutcome\",\n    bytes_up,\n    bytes_down\nFROM egress_log\nORDER BY id DESC\nLIMIT ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "service!: ServiceId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "host",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "method!: Method",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "outcome!: EgressOutcome",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "bytes_up",
+        "ordinal": 6,
+        "type_info": "Integer"
+      },
+      {
+        "name": "bytes_down",
+        "ordinal": 7,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "59eed9c24f8bdbe1afbc101879f1a15b2e4d30e05b5a17d7be40ebdfe1473772"
+}

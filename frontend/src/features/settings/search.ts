@@ -12,6 +12,7 @@ export const settingsSectionSchema = z.enum([
   'transcription',
   'ai',
   'models',
+  'network',
   'beta',
   'about',
   'developer',

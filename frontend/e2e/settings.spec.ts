@@ -30,3 +30,19 @@ test('settings show a saved key without revealing it, and switches persist', asy
   await openSection(page, 'Recording');
   await expect(page.getByRole('switch').nth(1)).not.toBeChecked();
 });
+
+test('the network page lists every service and what left the Mac', async ({ page }) => {
+  await page.goto('/settings');
+
+  await openSection(page, 'Network');
+  await expect(page.getByRole('switch', { name: 'Offline mode' })).not.toBeChecked();
+  await expect(page.getByRole('switch', { name: 'Allow Anthropic' })).toBeChecked();
+  const slack = page.getByRole('switch', { name: 'Allow Slack' });
+  await expect(slack).not.toBeChecked();
+  await slack.click();
+  await expect(slack).toBeChecked();
+  // The log names hosts and sizes, never a URL.
+  await expect(page.getByRole('cell', { name: 'cas-bridge.xethub.hf.co' })).toBeVisible();
+  await expect(page.getByText('POST · Blocked')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('settings-network.png'), fullPage: true });
+});

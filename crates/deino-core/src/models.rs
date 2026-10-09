@@ -4,7 +4,7 @@
 //! this Mac, recommends the quant that suits its memory (`Q8_0` above 16 GB,
 //! `Q5_K_M` otherwise), and downloads files with resume and SHA-256
 //! verification on every path. Bytes come through the [`ByteSource`] port:
-//! the app's HTTP adapter today, `deino-net` once FND-12 lands. The STT
+//! the app's adapter over `deino-net`'s model-download client (FND-12). The STT
 //! engine (`deino-stt`) never sees this module, only the verified file path,
 //! so transcription has no route to the network (§4.0).
 

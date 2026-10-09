@@ -131,6 +131,8 @@ deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
 deino-llm.workspace = true
+# FND-12: every outbound request goes through deino-net's scoped clients.
+deino-net.workspace = true
 deino-pipeline.workspace = true
 deino-secrets.workspace = true
 # The fixture seeder behind the debug-only `dev` plugin (features/dev.rs); its
@@ -193,6 +195,7 @@ deino-core = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 # Structured-output types in the LLM smoke tests (llm/smoke_tests.rs).
 schemars = "1.2.1"
+deino-net = { workspace = true, features = ["test-support"] }
 deino-pipeline = { workspace = true, features = ["test-support"] }
 deino-secrets = { workspace = true, features = ["test-support"] }
 deino-stt = { workspace = true, features = ["test-support"] }

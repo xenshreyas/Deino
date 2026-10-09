@@ -169,8 +169,9 @@ pub async fn builtin_ai_download_model<R: Runtime>(
         );
     });
 
+    let http = crate::composition::model_downloads(&app)?;
     match manager
-        .download_model_detailed(&model_name, Some(progress_callback))
+        .download_model_detailed(&model_name, http, Some(progress_callback))
         .await
     {
         Ok(_) => {

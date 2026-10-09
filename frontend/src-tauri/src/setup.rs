@@ -20,6 +20,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     let handle = app.handle();
     let paths = AppPaths::resolve(handle)?;
     tauri::async_runtime::block_on(composition::attach_settings(handle, &paths))?;
+    composition::attach_network(handle)?;
     onnx_runtime::init_bundled(handle);
     create_tray(handle);
     spawn_notification_manager(handle.clone());

@@ -1,0 +1,49 @@
+[package]
+name = "deino-net"
+version = "0.1.0"
+description = "Deino's network client: the only HTTP client, scoped per service, with an egress log, offline mode and verified downloads"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_net.rs"
+
+[features]
+# `FakeNetClient` and `FakeServicePolicy` for other crates' tests. Never enable
+# outside dev-dependencies.
+test-support = []
+
+[dependencies]
+async-trait.workspace = true
+bytes = "1.11.1"
+chrono.workspace = true
+deino-db.workspace = true
+deino-domain.workspace = true
+futures-util = "0.3.32"
+log.workspace = true
+# PARITY_PLAN §4.0: the one crate that may depend on an HTTP client. Same
+# release as the legacy app code it replaces, with native TLS
+# (Security.framework on macOS) and streamed bodies.
+reqwest = { version = "0.11.27", default-features = false, features = ["default-tls", "stream"] }
+serde.workspace = true
+serde_json.workspace = true
+# Model file verification (already in the tree).
+sha2 = "0.10.9"
+specta.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+# Cancellation of downloads (already in the tree).
+tokio-util = "0.7.18"
+url = "2.5.8"
+
+[dev-dependencies]
+deino-db = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+# Enables `test-support` for this crate's own unit and integration tests.
+deino-net = { path = ".", features = ["test-support"] }
+tempfile = "3.3.0"
+
+[lints]
+workspace = true

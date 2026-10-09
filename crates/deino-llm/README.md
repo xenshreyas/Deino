@@ -37,8 +37,8 @@ and model, streams the answer, and meters the call into `llm_calls`.
 
 ## Does Not Own
 
-- HTTP clients: the app's transport implements `HttpTransport` (reqwest until
-  FND-12's `deino-net`).
+- HTTP clients: the app implements `HttpTransport` over a `deino-net`
+  `ScopedClient` per provider service (FND-12).
 - Keys, endpoints and route choices: `deino_core::settings::LlmAccess` over
   the Keychain (`deino-secrets`) and the settings file.
 - The llama-helper process, model files and chat templates: the app's

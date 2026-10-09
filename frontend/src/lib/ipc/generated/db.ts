@@ -122,6 +122,10 @@ export type Table =
  */
 "job_runs" | 
 /**
+ * One row per outgoing HTTP request: service, host, size, never content.
+ */
+"egress_log" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

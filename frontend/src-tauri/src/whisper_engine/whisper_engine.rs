@@ -10,7 +10,7 @@ use deino_stt::{BackendChoice, BatchTranscript, EngineSupervisor, LoadSpec, Supe
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
 use crate::config::TRANSCRIPTION_LANGUAGE;
-use reqwest::Client;
+use deino_net::{NetClient, Request};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use crate::config::WHISPER_MODEL_CATALOG;
@@ -787,7 +787,14 @@ impl WhisperEngine {
         result
     }
 
-    pub async fn download_model(&self, model_name: &str, progress_callback: Option<Box<dyn Fn(u8) + Send>>) -> Result<()> {
+    /// Downloads a catalogued model through `http`, a `deino-net` client
+    /// scoped to the model host (FND-12); the engine itself holds no client.
+    pub async fn download_model(
+        &self,
+        model_name: &str,
+        http: Arc<dyn NetClient>,
+        progress_callback: Option<Box<dyn Fn(u8) + Send>>,
+    ) -> Result<()> {
         log::info!("Starting download for model: {}", model_name);
 
         let model_url = match model_name {
@@ -806,13 +813,14 @@ impl WhisperEngine {
             _ => return Err(anyhow!("Unsupported model: {}", model_name)),
         };
 
-        self.download_model_from_url(model_name, model_url, progress_callback).await
+        self.download_model_from_url(model_name, model_url, http, progress_callback).await
     }
 
     async fn download_model_from_url(
         &self,
         model_name: &str,
         model_url: &str,
+        http: Arc<dyn NetClient>,
         progress_callback: Option<Box<dyn Fn(u8) + Send>>,
     ) -> Result<()> {
         let active_download = self.reserve_active_download(model_name).await?;
@@ -822,6 +830,7 @@ impl WhisperEngine {
             .download_model_with_owner(
                 model_name,
                 model_url,
+                http.as_ref(),
                 &file_path,
                 &active_download,
                 progress_callback,
@@ -836,6 +845,7 @@ impl WhisperEngine {
         &self,
         model_name: &str,
         model_url: &str,
+        http: &dyn NetClient,
         file_path: &PathBuf,
         active_download: &ActiveDownload,
         progress_callback: Option<Box<dyn Fn(u8) + Send>>,
@@ -857,19 +867,19 @@ impl WhisperEngine {
             }
         }
 
-        let client = Client::builder()
-            .user_agent(concat!("Deino/", env!("CARGO_PKG_VERSION")))
-            .build()
-            .map_err(|e| anyhow!("Failed to create download client: {}", e))?;
+        // No end-to-end timeout: a model file can take many minutes.
+        let request = Request::get(model_url)
+            .map_err(|e| anyhow!("Invalid download URL: {}", e))?
+            .timeout(None);
         let response = tokio::select! {
             biased;
             _ = active_download.cancellation.cancelled() => return Err(DownloadCancelled.into()),
-            response = client.get(model_url).send() => response
+            response = http.send(request) => response
                 .map_err(|e| anyhow!("Failed to start download: {}", e))?,
         };
 
-        if !response.status().is_success() {
-            return Err(anyhow!("Download failed with status: {}", response.status()));
+        if !response.status.is_success() {
+            return Err(anyhow!("Download failed with status: {}", response.status));
         }
 
         let total_size = response.content_length().unwrap_or(0);
@@ -878,7 +888,7 @@ impl WhisperEngine {
             .map_err(|e| anyhow!("Failed to create file: {}", e))?;
 
         use futures_util::StreamExt;
-        let mut stream = response.bytes_stream();
+        let mut stream = response.body;
         let mut downloaded = 0u64;
         let mut last_progress_report = 0u8;
         let mut last_report_time = std::time::Instant::now();
@@ -991,6 +1001,12 @@ impl WhisperEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The root `deino-net` client: the test servers are on the loopback,
+    /// which the app's model-download scope would refuse.
+    fn test_http() -> Arc<dyn NetClient> {
+        Arc::new(crate::composition::root_client().expect("build the HTTP client"))
+    }
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
     use tokio::sync::oneshot;
@@ -1144,7 +1160,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let engine = WhisperEngine::new_with_models_dir(Some(dir.path().to_path_buf())).unwrap();
 
-        assert!(engine.download_model("not-a-model", None).await.is_err());
+        assert!(engine.download_model("not-a-model", test_http(), None).await.is_err());
         assert!(!engine.active_downloads.lock().await.contains_key("not-a-model"));
     }
 
@@ -1366,7 +1382,7 @@ mod tests {
         engine.discover_models().await.unwrap();
         let (url, request, server) = response_http_server(8, b"ggml\0\0\0\0").await;
 
-        let error = engine.download_model_from_url("tiny", &url, None).await.unwrap_err();
+        let error = engine.download_model_from_url("tiny", &url, test_http(), None).await.unwrap_err();
         let request = String::from_utf8(request.await.unwrap()).unwrap();
         server.await.unwrap();
 
@@ -1399,7 +1415,7 @@ mod tests {
         let download_a_engine = Arc::clone(&engine);
         let download_a = tokio::spawn(async move {
             download_a_engine
-                .download_model_from_url("tiny", &url_a, None)
+                .download_model_from_url("tiny", &url_a, test_http(), None)
                 .await
         });
 
@@ -1432,7 +1448,7 @@ mod tests {
         let download_b_engine = Arc::clone(&engine);
         let download_b = tokio::spawn(async move {
             download_b_engine
-                .download_model_from_url("tiny", &url_b, None)
+                .download_model_from_url("tiny", &url_b, test_http(), None)
                 .await
         });
         timeout(Duration::from_secs(1), headers_b)
@@ -1468,7 +1484,7 @@ mod tests {
         let (url, _request, server) = response_http_server(8, b"ggml").await;
 
         let error = engine
-            .download_model_from_url("tiny", &url, None)
+            .download_model_from_url("tiny", &url, test_http(), None)
             .await
             .unwrap_err();
         server.await.unwrap();
@@ -1512,7 +1528,7 @@ mod tests {
         });
 
         assert!(engine
-            .download_model_from_url("tiny", &format!("http://{address}/model.bin"), None)
+            .download_model_from_url("tiny", &format!("http://{address}/model.bin"), test_http(), None)
             .await
             .is_err());
         server.await.unwrap();

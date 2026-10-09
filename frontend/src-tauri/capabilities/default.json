@@ -39,6 +39,7 @@
         },
         "system:default",
         "meetings:default",
+        "network:default",
         "pipeline:default",
         "secrets:default",
         "llm:default",

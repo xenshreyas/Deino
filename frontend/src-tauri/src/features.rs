@@ -24,6 +24,7 @@ pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
 pub mod meetings;
+pub mod network;
 pub mod pipeline;
 pub mod secrets;
 pub mod settings;
@@ -37,6 +38,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
     let mut builders = vec![
         (db::NAME, db::specta()),
         (meetings::NAME, meetings::specta()),
+        (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),
         (secrets::NAME, secrets::specta()),
         (llm::NAME, llm::specta()),

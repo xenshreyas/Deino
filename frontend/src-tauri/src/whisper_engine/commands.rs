@@ -435,8 +435,9 @@ pub async fn whisper_download_model(
             }
         });
 
+        let http = crate::composition::model_downloads(&app_handle)?;
         let result = engine
-            .download_model(&model_name, Some(progress_callback))
+            .download_model(&model_name, http, Some(progress_callback))
             .await;
 
         match result {

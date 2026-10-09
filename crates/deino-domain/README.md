@@ -18,6 +18,9 @@ crate and across IPC. No I/O, no Tauri.
   `Rsvp`, `ActionItemStatus`, `ActionItemPriority`, `ActionItemOrigin`,
   `TagSource`, `CalendarProvider`, `ConferencePlatform`; and the pipeline's
   `JobStatus` and `RunOutcome` (`job.rs`, FND-08) with its `StageId`.
+- `ServiceId` and `ServiceKind` (`service.rs`): every outside service Deino may
+  talk to (FND-12), stored in `egress_log.service` and keying the settings'
+  `network.services` switches. Its hosts live in `deino-net`'s registry.
 - Values with rules: `Millis` and `Seconds` (`units.rs`), `Email` (`email.rs`,
   canonical lower-case addresses; `parse` normalises user input), and
   `PaletteColor` (`color.rs`, a slot of the shared speaker and tag palette).

@@ -6,18 +6,21 @@
 //! `State<'_, Arc<Service>>` and never builds anything itself (§3A dependency
 //! inversion). Tests build the same services over fakes instead.
 //!
-//! Startup wires two groups, in order:
+//! Startup wires three groups, in order:
 //!
 //! 1. [`attach_settings`]: settings and Keychain secrets, which need no
 //!    database and which everything else reads;
-//! 2. [`attach_database`]: the database-backed [`Services`] and the
+//! 2. [`attach_network`]: the one network client (`deino_net::Net`), whose
+//!    policy reads the settings (FND-12);
+//! 3. [`attach_database`]: the database-backed [`Services`] and the
 //!    post-meeting [`Pipeline`] (started in the background), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
-//!    by [`legacy_settings_import`]).
+//!    by [`legacy_settings_import`]), and the egress log's table.
 //!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod network;
 mod stt;
 
 use std::sync::Arc;
@@ -44,6 +47,11 @@ use crate::features;
 use crate::features::settings::TauriSettingsEvents;
 use crate::paths::AppPaths;
 use crate::state::AppState;
+
+/// The root HTTP client, for tests that talk to a loopback server.
+#[cfg(test)]
+pub(crate) use network::root_client;
+pub(crate) use network::{attach_network, model_downloads};
 
 /// Loads the settings, moves the legacy JSON stores into them, opens the
 /// Keychain, and manages `Arc<SettingsService>` and `Arc<dyn SecretStore>`.
@@ -172,6 +180,7 @@ pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     Services::build(&database, &clock).manage(app);
     attach_llm(app, &database, Arc::clone(&clock));
     attach_pipeline(app, &database, &clock);
+    network::attach_network_log(app, &database);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, &database);
     features::db::forward_changes(app, database.changes());
@@ -200,11 +209,12 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
 /// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
 /// that saves `llm_calls`. Needs [`attach_settings`] to have run.
 fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
-    let (Some(settings), Some(secrets)) = (
+    let (Some(settings), Some(secrets), Some(net)) = (
         app.try_state::<Arc<SettingsService>>(),
         app.try_state::<Arc<dyn SecretStore>>(),
+        app.try_state::<deino_net::Net>(),
     ) else {
-        log::error!(target: "llm", "settings were not wired before the database; AI is unavailable");
+        log::error!(target: "llm", "settings or the network were not wired before the database; AI is unavailable");
         return;
     };
     let access = Arc::new(LlmAccess::new(Arc::clone(&settings), Arc::clone(&secrets)));
@@ -214,6 +224,7 @@ fn attach_llm(app: &AppHandle, database: &Database, clock: Arc<dyn Clock>) {
         database: database.clone(),
         app_data_dir,
         clock,
+        net: net.inner().clone(),
     });
     // Owned for the app's lifetime: it ends when the gateway, and with it the
     // last usage channel, is dropped at exit.
