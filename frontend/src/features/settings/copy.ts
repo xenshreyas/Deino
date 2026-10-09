@@ -7,6 +7,31 @@ export const settingsCopy = {
   keyMissingPlaceholder: 'Enter your API key',
   keyLocked:
     'macOS no longer lets Deino read the saved key, which happens after an app update. Enter the key again to fix it.',
+
+  title: 'Settings',
+  navLabel: 'Settings sections',
+  groups: {
+    app: 'App',
+    capture: 'Capture',
+    ai: 'AI',
+    more: 'More',
+  },
+  sections: {
+    general: { label: 'General', description: 'Notifications, storage and how Deino starts.' },
+    appearance: { label: 'Appearance', description: 'Theme for every Deino window.' },
+    recording: {
+      label: 'Recording',
+      description: 'Where recordings are saved and how audio is captured.',
+    },
+    transcription: {
+      label: 'Transcription',
+      description: 'The local speech-to-text engine and its models.',
+    },
+    models: { label: 'Summary models', description: 'The language model that writes your notes.' },
+    beta: { label: 'Beta', description: 'Features that are still being finished.' },
+    about: { label: 'About', description: 'Version, privacy and updates.' },
+    developer: { label: 'Developer', description: 'Tools for development builds only.' },
+  },
 } as const;
 
 /** The placeholder for an API key field: a typed key replaces a saved one. */

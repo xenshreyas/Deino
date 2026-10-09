@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UpdateDialog } from './UpdateDialog';
 import { updateService, UpdateInfo } from '@/services/updateService';
-import { Button } from './ui/button';
+import { Button } from '@/ui/button';
 
 /** Short statements about where data lives, shown under the version. */
 const PRIVACY_POINTS: readonly string[] = [
@@ -33,23 +33,23 @@ export function About() {
     <div className="p-4 space-y-5">
       <div className="text-center space-y-1">
         <img src="/icon_128x128.png" alt="Deino" width={64} height={64} className="mx-auto mb-2" />
-        <h1 className="text-lg font-semibold text-gray-900">Deino</h1>
-        {currentVersion && <p className="text-sm text-gray-500">Version {currentVersion}</p>}
-        <p className="text-sm text-gray-600">A private, local-first AI meeting notepad.</p>
+        <h1 className="text-lg font-semibold text-fg">Deino</h1>
+        {currentVersion && <p className="text-sm text-fg-muted">Version {currentVersion}</p>}
+        <p className="text-sm text-fg-muted">A private, local-first AI meeting notepad.</p>
       </div>
 
-      <ul className="space-y-1.5 text-sm text-gray-600">
+      <ul className="space-y-1.5 text-sm text-fg-muted">
         {PRIVACY_POINTS.map((point) => (
           <li key={point} className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
+            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-fg-subtle" />
             <span>{point}</span>
           </li>
         ))}
       </ul>
 
-      <div className="pt-3 border-t border-gray-200 text-center">
+      <div className="pt-3 border-t border-border text-center">
         {updatesEnabled === false && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-fg-muted">
             Automatic updates are off in this build. Install new versions manually.
           </p>
         )}
@@ -85,7 +85,7 @@ function UpdateCheck() {
 
   return (
     <>
-      <Button onClick={handleCheck} disabled={isChecking} variant="outline" size="sm" className="text-xs">
+      <Button onClick={handleCheck} disabled={isChecking} variant="secondary" size="sm" className="text-xs">
         {isChecking ? (
           <Loader2 className="h-3 w-3 mr-2 animate-spin" />
         ) : (
@@ -94,7 +94,7 @@ function UpdateCheck() {
         {isChecking ? 'Checking...' : 'Check for Updates'}
       </Button>
       {updateInfo?.available && (
-        <p className="mt-2 text-xs text-blue-600">Update available: v{updateInfo.version}</p>
+        <p className="mt-2 text-xs text-accent">Update available: v{updateInfo.version}</p>
       )}
       <UpdateDialog open={showDialog} onOpenChange={setShowDialog} updateInfo={updateInfo} />
     </>

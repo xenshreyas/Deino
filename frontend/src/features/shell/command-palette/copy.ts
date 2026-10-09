@@ -1,0 +1,20 @@
+/** User-visible strings of the ⌘K palette. */
+export const paletteCopy = {
+  title: 'Command palette',
+  placeholder: 'Search or jump to…',
+  empty: 'No results',
+  goTo: 'Go to',
+  actions: 'Actions',
+  meetings: 'Meetings',
+  transcripts: 'In transcripts',
+  newNote: 'New note',
+  startRecording: 'Start recording',
+  askDeino: 'Ask Deino',
+  importAudio: 'Import audio',
+  toggleSidebar: 'Toggle sidebar',
+  toggleRightPanel: 'Toggle right panel',
+  theme: (name: string) => `Theme: ${name}`,
+  hintOpen: 'Open',
+  hintNavigate: 'Navigate',
+  hintClose: 'Close',
+} as const;

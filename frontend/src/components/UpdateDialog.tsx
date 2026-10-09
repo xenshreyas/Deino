@@ -7,8 +7,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
-import { Button } from './ui/button';
+} from '@/ui/dialog';
+import { Button } from '@/ui/button';
 import { updateService, UpdateInfo, UpdateProgress } from '@/services/updateService';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
@@ -190,17 +190,17 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
           <DialogTitle className="flex items-center gap-2">
             {isDownloading ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
                 Downloading Update
               </>
             ) : error ? (
               <>
-                <AlertCircle className="h-5 w-5 text-red-600" />
+                <AlertCircle className="h-5 w-5 text-danger" />
                 Update Error
               </>
             ) : (
               <>
-                <Download className="h-5 w-5 text-blue-600" />
+                <Download className="h-5 w-5 text-accent" />
                 Update Available
               </>
             )}
@@ -219,24 +219,24 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
             <>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Current Version:</span>
+                  <span className="text-fg-muted">Current Version:</span>
                   <span className="font-medium">{updateInfo.currentVersion}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">New Version:</span>
-                  <span className="font-medium text-blue-600">{updateInfo.version}</span>
+                  <span className="text-fg-muted">New Version:</span>
+                  <span className="font-medium text-accent">{updateInfo.version}</span>
                 </div>
                 {updateInfo.date && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Release Date:</span>
+                    <span className="text-fg-muted">Release Date:</span>
                     <span className="font-medium">{formatDate(updateInfo.date)}</span>
                   </div>
                 )}
               </div>
 
               {updateInfo.body && (
-                <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <div className="bg-bg-subtle rounded-lg p-3 max-h-40 overflow-y-auto">
+                  <p className="text-sm text-fg whitespace-pre-wrap">
                     {updateInfo.body}
                   </p>
                 </div>
@@ -247,13 +247,13 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
           {isDownloading && progress && (
             <div className="space-y-2">
               <div className="relative">
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-bg-muted rounded-full h-3">
                   <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
+                    className="bg-fg h-3 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.min(progress.percentage, 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
+                <div className="flex justify-between text-xs text-fg-muted mt-1">
                   <span>{Math.round(progress.percentage)}% complete</span>
                   {progress.total > 0 && (
                     <span>
@@ -262,15 +262,15 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
                   )}
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-fg-muted text-center">
                 The app will restart automatically after installation
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-danger-soft border border-danger/30 rounded-lg p-3">
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
         </div>
@@ -278,17 +278,17 @@ export function UpdateDialog({ open, onOpenChange, updateInfo }: UpdateDialogPro
         <DialogFooter>
           {!isDownloading && !error && (
             <>
-              <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              <Button variant="secondary" onClick={() => handleOpenChange(false)}>
                 Later
               </Button>
-              <Button onClick={handleDownloadAndInstall} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleDownloadAndInstall} className="bg-fg hover:bg-fg">
                 <Download className="h-4 w-4 mr-2" />
                 Download & Install
               </Button>
             </>
           )}
           {error && (
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button variant="secondary" onClick={() => handleOpenChange(false)}>
               Close
             </Button>
           )}

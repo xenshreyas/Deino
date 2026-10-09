@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Mic, Volume2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { OnboardingContainer } from '../OnboardingContainer';
 import { PermissionRow } from '../shared';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -152,13 +152,13 @@ export function PermissionsStep() {
 
           <button
             onClick={handleSkip}
-            className="text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
+            className="text-sm text-fg-muted hover:text-fg transition-colors"
           >
             I'll do this later
           </button>
 
           {!allPermissionsGranted && (
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center text-fg-muted">
               Recording won't work without permissions. You can grant them later in settings.
             </p>
           )}

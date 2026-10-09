@@ -9,14 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TagsRouteImport } from './routes/tags'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RecipesRouteImport } from './routes/recipes'
+import { Route as PeopleRouteImport } from './routes/people'
 import { Route as MeetingDetailsRouteImport } from './routes/meeting-details'
+import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as FoldersRouteImport } from './routes/folders'
+import { Route as DesignRouteImport } from './routes/design'
+import { Route as CompaniesRouteImport } from './routes/companies'
+import { Route as AutomationsRouteImport } from './routes/automations'
+import { Route as ActionItemsRouteImport } from './routes/action-items'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MeetingsIndexRouteImport } from './routes/meetings/index'
 import { Route as MeetingsMeetingIdRouteImport } from './routes/meetings/$meetingId'
 
+const TagsRoute = TagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleRoute = PeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeetingDetailsRoute = MeetingDetailsRouteImport.update({
@@ -24,9 +49,44 @@ const MeetingDetailsRoute = MeetingDetailsRouteImport.update({
   path: '/meeting-details',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoldersRoute = FoldersRouteImport.update({
+  id: '/folders',
+  path: '/folders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignRoute = DesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompaniesRoute = CompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutomationsRoute = AutomationsRouteImport.update({
+  id: '/automations',
+  path: '/automations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActionItemsRoute = ActionItemsRouteImport.update({
+  id: '/action-items',
+  path: '/action-items',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetingsIndexRoute = MeetingsIndexRouteImport.update({
+  id: '/meetings/',
+  path: '/meetings/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeetingsMeetingIdRoute = MeetingsMeetingIdRouteImport.update({
@@ -37,46 +97,149 @@ const MeetingsMeetingIdRoute = MeetingsMeetingIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/action-items': typeof ActionItemsRoute
+  '/automations': typeof AutomationsRoute
+  '/companies': typeof CompaniesRoute
+  '/design': typeof DesignRoute
+  '/folders': typeof FoldersRoute
+  '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
+  '/people': typeof PeopleRoute
+  '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
+  '/tags': typeof TagsRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings/': typeof MeetingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/action-items': typeof ActionItemsRoute
+  '/automations': typeof AutomationsRoute
+  '/companies': typeof CompaniesRoute
+  '/design': typeof DesignRoute
+  '/folders': typeof FoldersRoute
+  '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
+  '/people': typeof PeopleRoute
+  '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
+  '/tags': typeof TagsRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings': typeof MeetingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/action-items': typeof ActionItemsRoute
+  '/automations': typeof AutomationsRoute
+  '/companies': typeof CompaniesRoute
+  '/design': typeof DesignRoute
+  '/folders': typeof FoldersRoute
+  '/insights': typeof InsightsRoute
   '/meeting-details': typeof MeetingDetailsRoute
+  '/people': typeof PeopleRoute
+  '/recipes': typeof RecipesRoute
   '/settings': typeof SettingsRoute
+  '/tags': typeof TagsRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings/': typeof MeetingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/meeting-details' | '/settings' | '/meetings/$meetingId'
+  fullPaths:
+    | '/'
+    | '/action-items'
+    | '/automations'
+    | '/companies'
+    | '/design'
+    | '/folders'
+    | '/insights'
+    | '/meeting-details'
+    | '/people'
+    | '/recipes'
+    | '/settings'
+    | '/tags'
+    | '/meetings/$meetingId'
+    | '/meetings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/meeting-details' | '/settings' | '/meetings/$meetingId'
+  to:
+    | '/'
+    | '/action-items'
+    | '/automations'
+    | '/companies'
+    | '/design'
+    | '/folders'
+    | '/insights'
+    | '/meeting-details'
+    | '/people'
+    | '/recipes'
+    | '/settings'
+    | '/tags'
+    | '/meetings/$meetingId'
+    | '/meetings'
   id:
-    '__root__' | '/' | '/meeting-details' | '/settings' | '/meetings/$meetingId'
+    | '__root__'
+    | '/'
+    | '/action-items'
+    | '/automations'
+    | '/companies'
+    | '/design'
+    | '/folders'
+    | '/insights'
+    | '/meeting-details'
+    | '/people'
+    | '/recipes'
+    | '/settings'
+    | '/tags'
+    | '/meetings/$meetingId'
+    | '/meetings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActionItemsRoute: typeof ActionItemsRoute
+  AutomationsRoute: typeof AutomationsRoute
+  CompaniesRoute: typeof CompaniesRoute
+  DesignRoute: typeof DesignRoute
+  FoldersRoute: typeof FoldersRoute
+  InsightsRoute: typeof InsightsRoute
   MeetingDetailsRoute: typeof MeetingDetailsRoute
+  PeopleRoute: typeof PeopleRoute
+  RecipesRoute: typeof RecipesRoute
   SettingsRoute: typeof SettingsRoute
+  TagsRoute: typeof TagsRoute
   MeetingsMeetingIdRoute: typeof MeetingsMeetingIdRoute
+  MeetingsIndexRoute: typeof MeetingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tags': {
+      id: '/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof TagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people': {
+      id: '/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof PeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meeting-details': {
@@ -86,11 +249,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetingDetailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/folders': {
+      id: '/folders'
+      path: '/folders'
+      fullPath: '/folders'
+      preLoaderRoute: typeof FoldersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design': {
+      id: '/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof DesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/companies': {
+      id: '/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/automations': {
+      id: '/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/action-items': {
+      id: '/action-items'
+      path: '/action-items'
+      fullPath: '/action-items'
+      preLoaderRoute: typeof ActionItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meetings/': {
+      id: '/meetings/'
+      path: '/meetings'
+      fullPath: '/meetings/'
+      preLoaderRoute: typeof MeetingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meetings/$meetingId': {
@@ -105,9 +317,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActionItemsRoute: ActionItemsRoute,
+  AutomationsRoute: AutomationsRoute,
+  CompaniesRoute: CompaniesRoute,
+  DesignRoute: DesignRoute,
+  FoldersRoute: FoldersRoute,
+  InsightsRoute: InsightsRoute,
   MeetingDetailsRoute: MeetingDetailsRoute,
+  PeopleRoute: PeopleRoute,
+  RecipesRoute: RecipesRoute,
   SettingsRoute: SettingsRoute,
+  TagsRoute: TagsRoute,
   MeetingsMeetingIdRoute: MeetingsMeetingIdRoute,
+  MeetingsIndexRoute: MeetingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

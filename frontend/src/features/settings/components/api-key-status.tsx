@@ -13,11 +13,11 @@ interface ApiKeyStatusProps {
  */
 export function ApiKeyStatus({ status }: ApiKeyStatusProps) {
   if (status === 'stored') {
-    return <p className="mt-1 text-xs text-muted-foreground">{settingsCopy.keyStored}</p>;
+    return <p className="mt-1 text-xs text-fg-muted">{settingsCopy.keyStored}</p>;
   }
   if (status === 'locked') {
     return (
-      <p role="alert" className="mt-1 text-xs text-destructive">
+      <p role="alert" className="mt-1 text-xs text-danger">
         {settingsCopy.keyLocked}
       </p>
     );

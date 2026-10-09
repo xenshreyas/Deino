@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/ui/button';
+import { Alert, AlertDescription } from '@/ui/alert';
 import { cn } from '@/lib/utils';
 import { Download, RefreshCw, BadgeAlert, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -255,7 +255,7 @@ export function BuiltInModelManager({
   // Don't show loading spinner if we have downloads in progress - show the model list instead
   if (isLoading && downloadingModels.size === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="text-center py-8 text-fg-muted">
         <RefreshCw className="mx-auto h-8 w-8 animate-spin mb-2" />
         Loading models...
       </div>
@@ -300,11 +300,11 @@ export function BuiltInModelManager({
               className={cn(
                 'p-4 rounded-lg border transition-colors',
                 modelIsDownloading
-                  ? 'bg-white border-gray-200'
-                  : 'bg-card',
+                  ? 'bg-surface border-border'
+                  : 'bg-surface',
                 selectedModel === model.name
-                  ? 'ring-2 ring-gray-800 border-gray-800'
-                  : 'border-gray-200 hover:border-gray-300',
+                  ? 'ring-2 ring-fg border-fg'
+                  : 'border-border hover:border-border-strong',
                 isAvailable && !modelIsDownloading && 'cursor-pointer'
               )}
               onClick={() => {
@@ -317,28 +317,28 @@ export function BuiltInModelManager({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="min-w-0 wrap-break-word text-base font-bold leading-snug text-gray-900">{model.display_name || model.name}</span>
+                    <span className="min-w-0 wrap-break-word text-base font-bold leading-snug text-fg">{model.display_name || model.name}</span>
                     {isAvailable && (
                       <>
-                        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-green-600">
-                          <span className="h-2 w-2 rounded-full bg-green-600"></span>
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-success">
+                          <span className="h-2 w-2 rounded-full bg-accent"></span>
                           Ready
                         </span>
                         {selectedModel === model.name && (
-                          <span className="shrink-0 rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                          <span className="shrink-0 rounded bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">
                             Selected
                           </span>
                         )}
                       </>
                     )}
                     {isCorrupted && (
-                      <span className="flex shrink-0 items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      <span className="flex shrink-0 items-center gap-1 rounded bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
                         <BadgeAlert className="h-3 w-3" />
                         Corrupted
                       </span>
                     )}
                     {isError && (
-                      <span className="shrink-0 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      <span className="shrink-0 rounded bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
                         Error
                       </span>
                     )}
@@ -348,7 +348,7 @@ export function BuiltInModelManager({
                   {/* Not Downloaded - Show Download button */}
                   {isNotDownloaded && !modelIsDownloading && (
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       className="min-w-[100px]"
                       onClick={(e) => {
@@ -363,7 +363,7 @@ export function BuiltInModelManager({
                   {/* Downloading - Show Cancel button */}
                   {modelIsDownloading && (
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       className="min-w-[100px]"
                       onClick={(e) => {
@@ -377,7 +377,7 @@ export function BuiltInModelManager({
                   {/* Error - Show Retry button */}
                   {isError && !modelIsDownloading && (
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       className="min-w-[100px]"
                       onClick={(e) => {
@@ -393,7 +393,7 @@ export function BuiltInModelManager({
                   {isCorrupted && !modelIsDownloading && (
                     <>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -404,7 +404,7 @@ export function BuiltInModelManager({
                         Retry
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -419,7 +419,7 @@ export function BuiltInModelManager({
                   {/* Available - Show small trash icon (only if not currently selected) */}
                   {isAvailable && !modelIsDownloading && selectedModel !== model.name && (
                     <button
-                      className="p-2 rounded hover:bg-gray-100 transition-colors text-gray-500 hover:text-red-600"
+                      className="p-2 rounded hover:bg-bg-muted transition-colors text-fg-muted hover:text-danger"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteModel(model.name);
@@ -431,12 +431,12 @@ export function BuiltInModelManager({
                   )}
                 </div>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-fg-muted">
                 {model.description && (
                   <p className="mb-1">{model.description}</p>
                 )}
                 {(isError || isCorrupted) && (
-                  <p className="mb-1 text-xs text-red-600">
+                  <p className="mb-1 text-xs text-danger">
                     {isError && typeof model.status === 'object' && 'Error' in model.status
                       ? (model.status as any).Error
                       : isCorrupted
@@ -444,7 +444,7 @@ export function BuiltInModelManager({
                       : 'An error occurred'}
                   </p>
                 )}
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-fg-muted">
                   <span>{formatSummaryModelSizeLabelFromMb(model.size_mb)} • {model.context_size} tokens</span>
                 </div>
                 </div>
@@ -452,19 +452,19 @@ export function BuiltInModelManager({
 
               {/* Download progress bar */}
               {modelIsDownloading && progress !== undefined && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="mt-3 pt-3 border-t border-border">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900">Downloading...</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-medium text-fg">Downloading...</span>
+                    <span className="text-sm font-semibold text-fg">
                       {Math.round(progress)}%
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600 mb-2">
+                  <div className="text-sm text-fg-muted mb-2">
                     {progressInfo?.totalMb > 0 ? (
                       <>
                         {progressInfo.downloadedMb.toFixed(1)} MiB / {progressInfo.totalMb.toFixed(1)} MiB
                         {progressInfo.speedMbps > 0 && (
-                          <span className="ml-2 text-gray-500">
+                          <span className="ml-2 text-fg-muted">
                             ({progressInfo.speedMbps.toFixed(1)} MiB/s)
                           </span>
                         )}
@@ -473,9 +473,9 @@ export function BuiltInModelManager({
                       <span>{formatSummaryModelSizeLabelFromMb(model.size_mb)}</span>
                     )}
                   </div>
-                  <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-full h-2.5 bg-bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-linear-to-r from-gray-800 to-gray-900 rounded-full transition-all duration-300"
+                      className="h-full bg-fg rounded-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>

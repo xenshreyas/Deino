@@ -1,125 +1,79 @@
-import { lazy, Suspense, useState, useLayoutEffect, useRef } from 'react';
-import { ArrowLeft, Settings2, Mic, Database as DatabaseIcon, SparkleIcon, FlaskConical, Wrench } from 'lucide-react';
-import { useRouter } from '@tanstack/react-router';
-import { motion } from 'framer-motion';
-import { TranscriptSettings } from '@/components/TranscriptSettings';
-import { RecordingSettings } from '@/components/RecordingSettings';
-import { PreferenceSettings } from '@/components/PreferenceSettings';
-import { SummaryModelSettings } from '@/components/SummaryModelSettings';
-import { BetaSettings } from '@/components/BetaSettings';
-import { useConfig } from '@/contexts/ConfigContext';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+/**
+ * The settings screen (ui.md §3 Settings layout, §4.6): a 200px section nav
+ * beside a 720px content column. The open page lives in the URL
+ * (`?section=`), so links and the palette can open any page directly.
+ */
+import { Link } from '@tanstack/react-router';
 
-// Tabs configuration (constant)
-const TABS = [
-  { value: 'general', label: 'General', icon: Settings2 },
-  { value: 'recording', label: 'Recordings', icon: Mic },
-  { value: 'Transcriptionmodels', label: 'Transcription', icon: DatabaseIcon },
-  { value: 'summaryModels', label: 'Summary', icon: SparkleIcon },
-  { value: 'beta', label: 'Beta', icon: FlaskConical },
-  // Debug builds only (FND-04): the `dev` plugin does not exist in release builds.
-  ...(import.meta.env.DEV ? [{ value: 'developer', label: 'Developer', icon: Wrench }] : []),
-] as const;
+import { cn } from '@/ui/cn';
+import { ICON_PROPS } from '@/ui/icons';
 
-/** Settings → Developer, loaded lazily so release builds drop it entirely. */
-const DeveloperSettings = import.meta.env.DEV
-  ? lazy(() => import('@/features/developer').then((module) => ({ default: module.DeveloperSettings })))
-  : null;
+import { settingsCopy } from './copy';
+import type { SettingsSectionId } from './search';
+import { SETTINGS_SECTIONS, type SettingsGroup } from './sections';
 
-/** The settings screen: one tab per settings area. */
-export function SettingsScreen() {
-  const router = useRouter();
-  const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
+/** Nav groups, in order. */
+const GROUPS: readonly SettingsGroup[] = ['app', 'capture', 'ai', 'more'];
 
-  // Animation state for tabs
-  const [activeTab, setActiveTab] = useState('general');
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
-
-  // Update underline position when active tab changes
-  useLayoutEffect(() => {
-    const activeIndex = TABS.findIndex(tab => tab.value === activeTab);
-    const activeTabElement = tabRefs.current[activeIndex];
-
-    if (activeTabElement) {
-      const { offsetLeft, offsetWidth } = activeTabElement;
-      setUnderlineStyle({ left: offsetLeft, width: offsetWidth });
-    }
-  }, [activeTab]);
-
+/** The section nav: grouped links, the open one highlighted. */
+function SettingsNav({ active }: { active: SettingsSectionId }) {
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Fixed Header */}
-      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-8 py-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.history.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back</span>
-            </button>
-            <h1 className="text-3xl font-bold">Settings</h1>
-          </div>
+    <nav
+      aria-label={settingsCopy.navLabel}
+      className="flex w-[200px] shrink-0 flex-col gap-px overflow-y-auto px-2 pb-6"
+    >
+      <h1 className="px-2 pt-2 pb-1 text-base font-semibold text-fg">{settingsCopy.title}</h1>
+      {GROUPS.map((group) => (
+        <div key={group} className="flex flex-col gap-px">
+          <h2 className="mt-3 flex h-6 items-center px-2 text-xs font-semibold text-fg-muted">
+            {settingsCopy.groups[group]}
+          </h2>
+          {SETTINGS_SECTIONS.filter((section) => section.group === group).map((section) => {
+            const SectionIcon = section.icon;
+            return (
+              <Link
+                key={section.id}
+                to="/settings"
+                search={{ section: section.id }}
+                aria-current={section.id === active ? 'page' : undefined}
+                className={cn(
+                  'flex h-[30px] items-center gap-2 rounded-sm px-2 text-sm text-fg-muted transition-colors duration-(--dur-fast)',
+                  'hover:bg-bg-muted hover:text-fg aria-[current=page]:bg-bg-muted aria-[current=page]:text-fg',
+                )}
+              >
+                <SectionIcon {...ICON_PROPS} />
+                {settingsCopy.sections[section.id].label}
+              </Link>
+            );
+          })}
         </div>
-      </div>
+      ))}
+    </nav>
+  );
+}
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8 pt-6">
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-transparent relative rounded-none border-b border-gray-200 p-0 h-auto">
-              {TABS.map((tab, index) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    ref={el => { tabRefs.current[index] = el }}
-                    className="flex items-center gap-2 px-6 py-4 bg-transparent rounded-none border-0 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-gray-600 hover:text-gray-900 relative z-10"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {tab.label}
-                  </TabsTrigger>
-                );
-              })}
+/** Props of {@link SettingsScreen}. */
+export interface SettingsScreenProps {
+  section: SettingsSectionId;
+}
 
-              <motion.div
-                className="absolute bottom-0 z-20 h-0.5 bg-blue-600"
-                layoutId="underline"
-                style={{ left: underlineStyle.left, width: underlineStyle.width }}
-                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-              />
-            </TabsList>
-
-            <TabsContent value="general">
-              <PreferenceSettings />
-            </TabsContent>
-            <TabsContent value="recording">
-              <RecordingSettings />
-            </TabsContent>
-            <TabsContent value="Transcriptionmodels">
-              <TranscriptSettings
-                transcriptModelConfig={transcriptModelConfig}
-                setTranscriptModelConfig={setTranscriptModelConfig}
-              />
-            </TabsContent>
-            <TabsContent value="summaryModels">
-              <SummaryModelSettings />
-            </TabsContent>
-            <TabsContent value="beta" className="mt-6">
-              <BetaSettings />
-            </TabsContent>
-            {DeveloperSettings && (
-              <TabsContent value="developer">
-                <Suspense fallback={null}>
-                  <DeveloperSettings />
-                </Suspense>
-              </TabsContent>
-            )}
-          </Tabs>
+/** The settings screen with one page open. */
+export function SettingsScreen({ section }: SettingsScreenProps) {
+  const page =
+    SETTINGS_SECTIONS.find((candidate) => candidate.id === section) ?? SETTINGS_SECTIONS[0];
+  if (page === undefined) return null;
+  const { label, description } = settingsCopy.sections[page.id];
+  const PageComponent = page.Component;
+  return (
+    <div className="flex h-full">
+      <SettingsNav active={page.id} />
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[720px] px-6 pt-2 pb-16">
+          <header className="pb-6">
+            <h2 className="text-xl font-semibold text-fg">{label}</h2>
+            <p className="mt-1 text-sm text-fg-muted">{description}</p>
+          </header>
+          <PageComponent key={page.id} />
         </div>
       </div>
     </div>

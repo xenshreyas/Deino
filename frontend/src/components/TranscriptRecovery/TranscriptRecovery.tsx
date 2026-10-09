@@ -15,10 +15,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from '@/ui/dialog';
+import { Button } from '@/ui/button';
+import { ScrollArea } from '@/ui/scroll-area';
+import { Alert, AlertDescription } from '@/ui/alert';
 import { MeetingMetadata, StoredTranscript } from '@/services/indexedDBService';
 import { cn } from '@/lib/utils';
 
@@ -137,29 +137,29 @@ export function TranscriptRecovery({
                     className={cn(
                       'w-full text-left p-3 rounded-lg border transition-colors',
                       selectedMeetingId === meeting.meetingId
-                        ? 'bg-primary/10 border-primary'
-                        : 'hover:bg-muted border-transparent'
+                        ? 'bg-fg/10 border-fg'
+                        : 'hover:bg-bg-muted border-transparent'
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{meeting.title}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <p className="text-xs text-fg-muted flex items-center gap-1 mt-1">
                           <Clock className="w-3 h-3" />
                           {formatDistanceToNow(new Date(meeting.lastUpdated), { addSuffix: true })}
                         </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <p className="text-xs text-fg-muted flex items-center gap-1 mt-1">
                           <FileText className="w-3 h-3" />
                           {meeting.transcriptCount} transcript{meeting.transcriptCount !== 1 ? 's' : ''}
                         </p>
                       </div>
                       {meeting.folderPath ? (
                         <span title="Audio available">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                         </span>
                       ) : (
                         <span title="No audio">
-                          <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
+                          <AlertCircle className="w-4 h-4 text-warning shrink-0" />
                         </span>
                       )}
                     </div>
@@ -176,9 +176,9 @@ export function TranscriptRecovery({
               {selectedMeeting ? (
                 <>
                   {/* Meeting Info */}
-                  <div className="p-4 border-b bg-muted/50">
+                  <div className="p-4 border-b bg-bg-muted/50">
                     <h4 className="font-semibold">{selectedMeeting.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-fg-muted mt-1">
                       Started {new Date(selectedMeeting.startTime).toLocaleString()}
                     </p>
                     <div className="flex items-center gap-4 mt-2 text-sm">
@@ -187,12 +187,12 @@ export function TranscriptRecovery({
                         {selectedMeeting.transcriptCount} transcripts
                       </span>
                       {selectedMeeting.folderPath ? (
-                        <span className="flex items-center gap-1 text-green-600">
+                        <span className="flex items-center gap-1 text-success">
                           <CheckCircle2 className="w-4 h-4" />
                           Audio available
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-yellow-600">
+                        <span className="flex items-center gap-1 text-warning">
                           <AlertCircle className="w-4 h-4" />
                           No audio
                         </span>
@@ -203,7 +203,7 @@ export function TranscriptRecovery({
                   {/* Transcript Preview */}
                   <ScrollArea className="flex-1 p-4">
                     {isLoadingPreview ? (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="flex items-center justify-center h-full text-fg-muted">
                         Loading preview...
                       </div>
                     ) : previewTranscripts.length > 0 ? (
@@ -237,26 +237,26 @@ export function TranscriptRecovery({
 
                           return (
                             <div key={index} className="text-sm">
-                              <span className="text-muted-foreground">[{getTimestamp()}]</span>{' '}
+                              <span className="text-fg-muted">[{getTimestamp()}]</span>{' '}
                               <span>{transcript.text}</span>
                             </div>
                           );
                         })}
                         {selectedMeeting.transcriptCount > 10 && (
-                          <p className="text-sm text-muted-foreground italic">
+                          <p className="text-sm text-fg-muted italic">
                             ... and {selectedMeeting.transcriptCount - 10} more transcript{selectedMeeting.transcriptCount - 10 !== 1 ? 's' : ''}
                           </p>
                         )}
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="flex items-center justify-center h-full text-fg-muted">
                         No transcripts to preview
                       </div>
                     )}
                   </ScrollArea>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="flex items-center justify-center h-full text-fg-muted">
                   Select a meeting to preview
                 </div>
               )}
@@ -266,14 +266,14 @@ export function TranscriptRecovery({
 
         <DialogFooter className="px-6 pb-6">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={onClose}
             disabled={isRecovering || isDeleting}
           >
             Cancel
           </Button>
           <Button
-            variant="destructive"
+            variant="danger-solid"
             onClick={handleDelete}
             disabled={!selectedMeetingId || isRecovering || isDeleting}
           >

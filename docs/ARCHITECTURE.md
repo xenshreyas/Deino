@@ -10,7 +10,8 @@ SQLite + sqlx (0005), crate layout (0006), typed IPC (0007), TanStack Query +
 `DbChanged` (0008), the error model (0009), cloud LLM for notes with local
 transcription (0010), the code-quality limits (0011), the core schema with
 its legacy `transcripts` view (0012), typed settings with Keychain secrets
-(0013) and the native crash-safe recording format (0014).
+(0013), the native crash-safe recording format (0014) and the design tokens
+and app shell (0015).
 
 ## 1. Processes
 
@@ -100,13 +101,14 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 
 | Path | What it is |
 |---|---|
-| `main.tsx` | Creates the query client and mounts `IpcQueryProvider` around the router. |
-| `routes/` | TanStack Router file routes, thin: each renders one feature screen. |
-| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings`, `settings` (`useSettings`, key status, `SettingsSync`), `_example`, plus `shell`, `record`, `meeting-details` from FND-10a. |
+| `main.tsx` | Applies the saved theme, creates the query client and the router (`router.tsx`, which passes `{ queryClient }` to every route's context for loaders) and mounts them. |
+| `routes/` | TanStack Router file routes, thin: each renders one feature screen. `/design` (dev builds only) shows every token and primitive in both themes. |
+| `styles/` | `tokens.css` (the `ui.md` §2 design tokens for light and dark, mapped to Tailwind utilities with `@theme inline`; ADR 0015), `globals.css` (base layer), `blocknote.css` (the summary editor's bridge to the tokens). |
+| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `record`, `developer`, `design-system` (dev only), `_example`. |
 | `lib/ipc/` | `generated/` (tauri-specta output, never edited), `result.ts` (`unwrap`, `IpcError`), `query-client.ts`, `events.ts` (`DbChanged` bridge, `useIpcEvent`), `ipc-query-provider.tsx`. |
 | `dev/mock-ipc/` | `pnpm dev:mock` only (never in a production bundle): one mock per generated module (`<feature>.ts`, `satisfies typeof Generated.commands`), an in-memory `MockDatabase` over the fixture meetings that emits `DbChanged`, and a small, shrinking legacy `invoke` shim (`legacy*.ts`). |
 | `features/developer/` | Settings → Developer (debug builds only, loaded lazily): seed the fixture meetings through the `dev` plugin. |
-| `ui/` | Shared primitives; `icons.ts` is the only icon import (FND-10 moves shadcn here). |
+| `ui/` | Shared primitives on the tokens (shadcn/Radix restyled: button, icon button, input, select, switch, popover, menu, dialog, tooltip with shortcut, tabs, segmented control, chips, kbd, skeleton, empty state, page header, scroll area, toaster, level bars); `icons.ts` is the only icon import; `cn.ts` merges classes. |
 | `components/`, `contexts/`, `hooks/`, `services/`, `lib/*`, `types/` | Legacy code, listed in `legacy-files.mjs`. |
 
 ## 5. Data flow
@@ -370,7 +372,12 @@ tables are omitted from the diagram's attributes.
 | An LLM route | FND-09: the `Route` enum in `crates/deino-llm`. |
 | An integration | INT-00: a `Destination` implementation. |
 | An MCP tool | DEV-02. |
-| A sidebar entry or meeting tab | FND-10: `features/shell/nav.ts`, `features/meeting/slots.ts`. |
+| A sidebar entry | `features/shell/nav.ts` plus its route file; set `comingSoon` until the screen exists. |
+| A meeting tab, right-panel section or player | `features/meeting/slots.ts` (and the `?tab=` enum in `features/meeting/search.ts` for a tab). |
+| ⌘K palette results | A provider component in `features/shell/command-palette/`, appended to `providers.ts`. |
+| A global shortcut | `features/shell/shortcuts.ts` and its action in `hooks/use-global-shortcuts.ts`. |
+| A settings page | `features/settings/sections.tsx` plus the `?section=` enum in `search.ts` and its copy. |
+| A colour or other design token | `styles/tokens.css` (both themes; `tokens.test.ts` checks parity and contrast), then the `/design` gallery. |
 
 ## 9. Quality gates
 

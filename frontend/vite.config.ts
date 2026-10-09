@@ -87,6 +87,8 @@ export default defineConfig(({ mode }) => ({
     environment: 'happy-dom',
     setupFiles: ['./src/test-setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // Vitest stubs CSS; `styles/tokens.test.ts` reads the token sheet as text.
+    css: { include: [/tokens\.css/] },
     // Legacy code logs a lot; show only console.error/warn output.
     onConsoleLog: (_log, type) => type === 'stderr',
   },

@@ -90,11 +90,24 @@ function summary(database: MockDatabase, args: Args) {
   return { status: 'idle', meetingName: fixture.title, meeting_id: fixture.id, ...empty };
 }
 
+/** `api_search_transcripts`: meetings whose transcript mentions the query (the ⌘K palette). */
+function searchTranscripts(database: MockDatabase, args: Args) {
+  const query = stringArg(args, 'query').toLowerCase();
+  return database.meetings().flatMap((meeting) => {
+    const hit = database
+      .fixture(meeting.id)
+      ?.segments.find((segment) => segment.text.toLowerCase().includes(query));
+    if (hit === undefined) return [];
+    return [{ id: meeting.id, title: meeting.title, matchContext: hit.text, timestamp: '' }];
+  });
+}
+
 /** The legacy meeting-page commands over `database`. */
 export function legacyMeetingResponses(database: MockDatabase) {
   return {
     api_get_meeting_metadata: (args: Args) => metadata(database, args),
     api_get_meeting_transcripts: (args: Args) => transcriptPage(database, args),
     api_get_summary: (args: Args) => summary(database, args),
+    api_search_transcripts: (args: Args) => searchTranscripts(database, args),
   };
 }
