@@ -11,6 +11,8 @@
 //! links ([`MeetingState`]). [`MeetingTrashRepo`] moves meetings into and out
 //! of the trash. One [`SqliteMeetingRepo`] implements all three ports; the
 //! ports stay separate so each caller depends only on what it uses.
+//! Features that react to the lifecycle implement [`MeetingStatusObserver`]
+//! and subscribe to the service (FND-08's pipeline starts on `processing`).
 //!
 //! The legacy recording, import and delete paths in the app crate
 //! (`database/repositories/`) still write meetings directly until FND-05b,
@@ -25,6 +27,7 @@ mod lifecycle_repo;
 mod lifecycle_repo_tests;
 mod lifecycle_service;
 mod model;
+mod observer;
 mod repo;
 mod service;
 mod trash_repo;
@@ -40,6 +43,7 @@ pub use lifecycle::{
 pub use lifecycle_repo::MeetingLifecycleRepo;
 pub use lifecycle_service::MeetingLifecycleService;
 pub use model::{MAX_TITLE_CHARS, Meeting, MeetingTitle};
+pub use observer::MeetingStatusObserver;
 pub use repo::{MeetingRepo, SqliteMeetingRepo};
 pub use service::MeetingService;
 pub use trash_repo::MeetingTrashRepo;
