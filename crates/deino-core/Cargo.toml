@@ -17,6 +17,7 @@ test-support = ["deino-domain/test-support", "deino-secrets/test-support"]
 async-trait.workspace = true
 chrono.workspace = true
 deino-db.workspace = true
+deino-doc.workspace = true
 deino-domain.workspace = true
 deino-llm.workspace = true
 deino-secrets.workspace = true
@@ -38,6 +39,7 @@ thiserror.workspace = true
 # Async file I/O, timeouts and cancellation for model downloads.
 tokio.workspace = true
 tokio-util = "0.7.18"
+uuid.workspace = true
 
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }

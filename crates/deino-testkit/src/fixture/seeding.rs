@@ -87,6 +87,7 @@ impl FixtureSeeder {
             Box::new(super::rows::MeetingRows),
             Box::new(super::rows::PeopleRows),
             Box::new(super::rows::TranscriptRows),
+            Box::new(super::rows::NoteRows),
         ]
     }
 

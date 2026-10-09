@@ -17,7 +17,9 @@ debug-only `dev` plugin. Never part of a release build's behaviour.
   - `FixtureSeeder` / `seed_fixtures(&database)`: writes them through one
     `SeedTarget` per table group, in one transaction on the writer:
     `CalendarRows`, `MeetingRows`, `PeopleRows` (companies, people,
-    attendees) and `TranscriptRows` (speakers, segments). Every row gets a
+    attendees), `TranscriptRows` (speakers, segments) and `NoteRows` (the
+    user's notes, `userNotes` converted to a TipTap document with
+    `deino-doc`). Every row gets a
     stable ID from `fixture_uuid(key)` (mirrored by the mock IPC's
     `fixture-ids.ts`); `deino-core`'s `fixture_tests.rs` reads the rows back
     through the repositories.

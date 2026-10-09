@@ -83,6 +83,23 @@ impl PersonRepo for FakePeopleRepo {
         Ok(self.listed(|person| person.company_id == Some(*company)))
     }
 
+    async fn search(&self, prefix: &str, limit: u32) -> Result<Vec<Person>, DbError> {
+        let prefix = prefix.to_ascii_lowercase();
+        let matches = |text: &str| {
+            let text = text.to_ascii_lowercase();
+            text.starts_with(&prefix) || text.contains(&format!(" {prefix}"))
+        };
+        let mut found = self.listed(|person| {
+            matches(&person.name)
+                || person
+                    .email
+                    .as_ref()
+                    .is_some_and(|email| email.as_str().to_ascii_lowercase().starts_with(&prefix))
+        });
+        found.truncate(usize::try_from(limit).unwrap_or(usize::MAX));
+        Ok(found)
+    }
+
     async fn update(&self, person: &Person) -> Result<bool, DbError> {
         let mut people = lock(&self.people);
         let stored = people.iter_mut().find(|stored| stored.id == person.id);

@@ -91,6 +91,50 @@ async fn people_update_and_delete(repo: &impl PersonRepo) {
     assert!(!repo.delete(&ada.id).await.unwrap());
 }
 
+/// Search matches name and word prefixes and emails, ignores case, hides
+/// merged people, treats wildcards literally and honours the limit.
+async fn people_search_by_prefix(repo: &impl PersonRepo) {
+    let priya = person("Priya Shah", Some("priya@example.com"));
+    let mut merged = person("Priya Old", None);
+    merged.merged_into = Some(priya.id);
+    for someone in [
+        priya,
+        merged,
+        person("Ada Pri", None),
+        person("Maya", Some("prmaya@example.com")),
+        person("100% Sam", None),
+        person("Grace", None),
+    ] {
+        repo.create(&someone).await.unwrap();
+    }
+
+    assert_eq!(
+        names(&repo.search("pri", 10).await.unwrap()),
+        ["Ada Pri", "Priya Shah"]
+    );
+    assert_eq!(
+        names(&repo.search("PR", 10).await.unwrap()),
+        ["Ada Pri", "Maya", "Priya Shah"]
+    );
+    assert_eq!(
+        names(&repo.search("shah", 10).await.unwrap()),
+        ["Priya Shah"]
+    );
+    assert_eq!(names(&repo.search("100%", 10).await.unwrap()), ["100% Sam"]);
+    assert!(repo.search("_", 10).await.unwrap().is_empty());
+    assert_eq!(repo.search("", 2).await.unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn sqlite_people_search_by_prefix() {
+    people_search_by_prefix(&sqlite_repo().await.0).await;
+}
+
+#[tokio::test]
+async fn fake_people_search_by_prefix() {
+    people_search_by_prefix(&FakePeopleRepo::default()).await;
+}
+
 #[tokio::test]
 async fn sqlite_people_list_by_name_without_merged_ones() {
     let (repo, company) = sqlite_repo().await;

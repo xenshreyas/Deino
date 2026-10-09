@@ -37,8 +37,9 @@ the SQLite adapters behind those ports.
   (pure), `FakeTrackDiarizer`. The engine lives in `deino-diarize`.
 - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
     batch) and `SpeakerRepo`;
-  - `people`: `PersonRepo`, `AttendeeRepo` and `MeRepo` (the one person
-    who is the user, moved in one transaction);
+  - `people`: `PersonRepo` (with `search` by name, word or email prefix),
+    `AttendeeRepo` and `MeRepo` (the one person who is the user, moved in one
+    transaction); `PeopleService::search` feeds the notepad's @mentions;
   - `companies`: `CompanyRepo`;
   - `calendar`: `CalendarAccountRepo` and `CalendarEventRepo` (upsert by
     provider ID);
@@ -68,6 +69,13 @@ the SQLite adapters behind those ports.
   `settings.profile`, keeps the "Me" person in step), `render_profile_context`
   and `ProfileContext` (the gateway's `SystemContext`), `InternalDomains`
   (internal vs external by email domain, personal mail providers excluded).
+- `notes` (NOT-01): `NoteService` over `NotesRepo` (`meeting_notes`:
+  the TipTap document as `deino_doc::Doc` plus its Readable Markdown),
+  `MeetingLifecycleRepo` (scheduled meetings for notes written ahead),
+  `NoteImages` (`FsNoteImages`: `<root>/<meeting id>/images/<uuid>.<ext>`,
+  content-sniffed PNG/JPEG/GIF/WebP up to 10 MB) and `NotesEvents`.
+  `adopt` moves the record screen's draft into the meeting a recording
+  saved. Fakes: `FakeNotesRepo`, `MemoryNoteImages`, `RecordedNotesEvents`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 
