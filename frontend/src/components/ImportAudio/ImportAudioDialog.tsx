@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Upload,
-  Globe,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -35,7 +34,6 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { useImportAudio, ImportResult } from '@/hooks/useImportAudio';
 import { useRouter } from 'next/navigation';
 import { useSidebar } from '../Sidebar/SidebarProvider';
-import { LANGUAGES } from '@/constants/languages';
 import { useTranscriptionModels, ModelOption } from '@/hooks/useTranscriptionModels';
 
 
@@ -72,10 +70,9 @@ export function ImportAudioDialog({
 }: ImportAudioDialogProps) {
   const router = useRouter();
   const { refetchMeetings } = useSidebar();
-  const { selectedLanguage, transcriptModelConfig } = useConfig();
+  const { transcriptModelConfig } = useConfig();
 
   const [title, setTitle] = useState('');
-  const [selectedLang, setSelectedLang] = useState(selectedLanguage || 'auto');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [titleModifiedByUser, setTitleModifiedByUser] = useState(false);
 
@@ -137,7 +134,6 @@ export function ImportAudioDialog({
       resetSelection();
       setTitle('');
       setTitleModifiedByUser(false);
-      setSelectedLang(selectedLanguage || 'auto');
       setShowAdvanced(false);
 
       // Validate preselected file if provided
@@ -152,7 +148,7 @@ export function ImportAudioDialog({
       // Fetch available models using centralized hook
       fetchModels();
     }
-  }, [open, preselectedFile, selectedLanguage, transcriptModelConfig, reset, resetSelection, validateFile, fetchModels]);
+  }, [open, preselectedFile, transcriptModelConfig, reset, resetSelection, validateFile, fetchModels]);
 
   // Update title when fileInfo changes
   useEffect(() => {
@@ -169,13 +165,6 @@ export function ImportAudioDialog({
     const name = selectedModelKey.slice(colonIndex + 1);
     return availableModels.find((m) => m.provider === provider && m.name === name);
   }, [selectedModelKey, availableModels]);
-  const isParakeetModel = selectedModel?.provider === 'parakeet';
-
-  useEffect(() => {
-    if (isParakeetModel && selectedLang !== 'auto') {
-      setSelectedLang('auto');
-    }
-  }, [isParakeetModel, selectedLang]);
 
   const handleSelectFile = async () => {
     const info = await selectFile();
@@ -190,7 +179,6 @@ export function ImportAudioDialog({
     await startImport(
       fileInfo.path,
       title || fileInfo.filename,
-      isParakeetModel ? null : selectedLang === 'auto' ? null : selectedLang,
       selectedModel?.name || null,
       selectedModel?.provider || null
     );
@@ -342,38 +330,6 @@ export function ImportAudioDialog({
 
                   {showAdvanced && (
                     <div className="p-3 pt-0 space-y-4 border-t">
-                      {/* Language selector */}
-                      {!isParakeetModel ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Language</span>
-                          </div>
-                          <Select value={selectedLang} onValueChange={setSelectedLang}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select language" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {LANGUAGES.map((lang) => (
-                                <SelectItem key={lang.code} value={lang.code}>
-                                  {lang.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Language</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Language selection isn't supported for Parakeet. It always uses automatic detection.
-                          </p>
-                        </div>
-                      )}
-
                       {/* Model selector */}
                       {availableModels.length > 0 && (
                         <div className="space-y-2">

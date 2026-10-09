@@ -4,7 +4,6 @@
 
 use super::provider::{TranscriptionError, TranscriptionProvider, TranscriptResult};
 use async_trait::async_trait;
-use log::warn;
 use std::sync::Arc;
 
 /// Parakeet transcription provider (wraps ParakeetEngine)
@@ -23,16 +22,7 @@ impl TranscriptionProvider for ParakeetProvider {
     async fn transcribe(
         &self,
         audio: Vec<f32>,
-        language: Option<String>,
     ) -> std::result::Result<TranscriptResult, TranscriptionError> {
-        // Log language preference warning if set (Parakeet doesn't support it yet)
-        if let Some(ref lang) = language {
-            warn!(
-                "Parakeet doesn't support language preference '{}' yet - transcribing in default language",
-                lang
-            );
-        }
-
         match self.engine.transcribe_audio(audio).await {
             Ok(text) => Ok(TranscriptResult {
                 text: text.trim().to_string(),

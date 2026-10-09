@@ -3,6 +3,9 @@ mod ffmpeg;
 #[path = "build/onnxruntime.rs"]
 mod onnxruntime;
 
+// `FEATURES`: the inline feature plugins and their commands (ADR 0002).
+include!("src/features/manifest.rs");
+
 fn main() {
     // GPU Acceleration Detection and Build Guidance
     detect_and_report_gpu_capabilities();
@@ -21,7 +24,22 @@ fn main() {
     ffmpeg::ensure_ffmpeg_binary();
     onnxruntime::ensure_onnxruntime_runtime();
 
-    tauri_build::build()
+    tauri_build::try_build(tauri_attributes()).expect("tauri build failed");
+}
+
+/// Registers every feature in `src/features/manifest.rs` as an inline plugin,
+/// so tauri-build generates its `allow-*`/`deny-*` permissions and a
+/// `<name>:default` set that allows all of its commands.
+fn tauri_attributes() -> tauri_build::Attributes {
+    println!("cargo:rerun-if-changed=src/features/manifest.rs");
+    FEATURES.iter().fold(tauri_build::Attributes::new(), |attributes, &(name, commands)| {
+        attributes.plugin(
+            name,
+            tauri_build::InlinedPlugin::new()
+                .commands(commands)
+                .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
+        )
+    })
 }
 
 /// Detects GPU acceleration capabilities and provides build guidance

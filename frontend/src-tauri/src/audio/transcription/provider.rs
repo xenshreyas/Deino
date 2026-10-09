@@ -15,7 +15,6 @@ pub enum TranscriptionError {
     ModelNotLoaded,
     AudioTooShort { samples: usize, minimum: usize },
     EngineFailed(String),
-    UnsupportedLanguage(String),
 }
 
 impl std::fmt::Display for TranscriptionError {
@@ -28,9 +27,6 @@ impl std::fmt::Display for TranscriptionError {
                 samples, minimum
             ),
             Self::EngineFailed(msg) => write!(f, "Transcription engine failed: {}", msg),
-            Self::UnsupportedLanguage(lang) => {
-                write!(f, "Language '{}' is not supported by this provider", lang)
-            }
         }
     }
 }
@@ -48,18 +44,17 @@ pub struct TranscriptResult {
 /// Trait for transcription providers (Whisper, Parakeet, future providers)
 #[async_trait]
 pub trait TranscriptionProvider: Send + Sync {
-    /// Transcribe audio samples to text
+    /// Transcribe English audio samples to text
+    /// ([`crate::config::TRANSCRIPTION_LANGUAGE`]).
     ///
     /// # Arguments
     /// * `audio` - Audio samples (16kHz mono, f32 format)
-    /// * `language` - Optional language hint (e.g., "en", "es", "fr")
     ///
     /// # Returns
     /// * `TranscriptResult` with text, optional confidence, and partial flag
     async fn transcribe(
         &self,
         audio: Vec<f32>,
-        language: Option<String>,
     ) -> std::result::Result<TranscriptResult, TranscriptionError>;
 
     /// Check if a model is currently loaded

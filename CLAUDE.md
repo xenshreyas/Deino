@@ -31,8 +31,8 @@ no Deino server, and automatic updates are disabled (§8 D6).
   `deino` (library crate `deino_lib`), npm package `deino`.
 - **Platform:** macOS 14.2+ on Apple Silicon is the primary target. Windows and
   Linux must still compile; new OS-specific features may be stubbed elsewhere.
-- **Legacy:** `backend/` is an unused Python/FastAPI service kept only until
-  FND-02 deletes it. Never add code there or depend on it.
+- **English only:** no language pickers, translation or auto-detection.
+  Transcription uses `config::TRANSCRIPTION_LANGUAGE` (`"en"`).
 
 ## Commands
 
@@ -74,9 +74,12 @@ first build downloads a SHA-256-pinned FFmpeg into the same folder
 
 ### Rust core (`frontend/src-tauri/src/`)
 
-- `lib.rs`: Tauri builder, plugin setup and the single `generate_handler![]`.
-  Until FND-02 introduces modular registration, append new commands inside a
-  `// ── <CARD-ID> <feature> ──` banner (§3 rule 3).
+- `lib.rs`: the Tauri builder only (plugins, managed state, feature plugins).
+  Startup steps are in `setup.rs`, window/exit handling in `lifecycle.rs`.
+- `features.rs`, `features/`: new IPC, one inline Tauri plugin per feature (see
+  "Command registration" below). `features/manifest.rs` lists them.
+- `legacy.rs`, `legacy/`: every inherited command, in one `generate_handler!`.
+  Don't add commands there; cards port them into feature plugins.
 - `audio/`: capture, mixing, VAD, recording and import.
   - `devices/`: device discovery and per-platform code (`platform/{macos,windows,linux}.rs`).
   - `capture/microphone.rs`: cpal microphone stream.
@@ -111,7 +114,8 @@ first build downloads a SHA-256-pinned FFmpeg into the same folder
 ### Rust ↔ UI communication
 
 ```typescript
-// UI → Rust: typed command call
+// UI → Rust: feature plugin command (new code), or a legacy app command
+const version = await invoke<string>('plugin:system|app_version');
 const meetings = await invoke<Meeting[]>('api_get_meetings');
 
 // Rust → UI: events
@@ -126,6 +130,33 @@ app.emit("transcript-update", payload)?;
 ```
 
 Commands stay thin (§3A): parse input, call one service function, map errors.
+
+### Command registration: inline plugin
+
+Each feature is one inline Tauri plugin ([ADR 0002](docs/adr/0002-inline-tauri-plugins-per-feature.md)).
+Plugin commands are always checked against the capability ACL, so registering
+a feature takes three one-line edits: `features/manifest.rs` (from which
+`build.rs` generates the ACL permissions), `lib.rs` and
+`capabilities/default.json`. A guard test fails if the capability is missing.
+
+```rust
+// src/features/meetings.rs (+ features/meetings/commands.rs)
+pub const NAME: &str = "meetings";
+pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri::plugin::Builder::new(NAME)
+        .invoke_handler(tauri::generate_handler![commands::list, commands::rename])
+        .build()
+}
+// src/features/manifest.rs   (append-only)
+//     ("meetings", &["list", "rename"]),
+// src/lib.rs                 .plugin(features::meetings::init())
+// capabilities/default.json  "meetings:default"
+// UI                         invoke('plugin:meetings|list')
+```
+
+`features/system.rs` is the smallest working example. FND-13 switches the
+plugin builder to tauri-specta for generated TypeScript bindings. Never add an
+`AppManifest`: it would put every legacy command under the ACL at once.
 
 ## Patterns worth knowing
 

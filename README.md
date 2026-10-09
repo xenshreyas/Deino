@@ -24,7 +24,6 @@ This is an internal, proprietary repository. See [LICENSE](LICENSE) and
 - Local transcription (Parakeet via ONNX Runtime, Whisper via whisper.cpp).
 - Sidecars: `llama-helper` (built-in local LLM, this workspace) and FFmpeg
   (downloaded and SHA-256 verified by the build script).
-- `backend/` is a legacy Python service that the app does not use.
 
 ## Requirements
 

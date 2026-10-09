@@ -91,8 +91,4 @@ export class BuiltInAIAPI {
   static async deleteModel(modelName: string): Promise<void> {
     await invoke('builtin_ai_delete_model', { modelName });
   }
-
-  static async getModelsDirectory(): Promise<string> {
-    return await invoke('builtin_ai_get_models_directory');
-  }
 }

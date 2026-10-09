@@ -4,13 +4,11 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import type { SummaryProcessResponse } from '../../src/types';
 
 const originalCore = { ...await import('@tauri-apps/api/core') };
-const originalPreferences = { ...await import('../../src/lib/summary-language-preferences') };
 const originalToast = { ...await import('sonner') };
 const originalNavigation = { ...await import('next/navigation') };
 const originalConfig = { ...await import('../../src/contexts/ConfigContext') };
 afterAll(() => {
   mock.module('@tauri-apps/api/core', () => originalCore);
-  mock.module('../../src/lib/summary-language-preferences', () => originalPreferences);
   mock.module('sonner', () => originalToast);
   mock.module('next/navigation', () => originalNavigation);
   mock.module('../../src/contexts/ConfigContext', () => originalConfig);
@@ -25,11 +23,6 @@ mock.module('../../src/contexts/RecordingStateContext', () => ({ useRecordingSta
 mock.module('../../src/contexts/ConfigContext', () => ({ useConfig: () => ({ isAutoSummary: false }) }));
 const notify = mock(() => {});
 mock.module('sonner', () => ({ toast: { info: notify, error: notify, success: notify, warning: notify } }));
-mock.module('../../src/lib/summary-language-preferences', () => ({
-  readCachedDetectedSummaryLanguage: async () => null,
-  detectAndCacheSummaryLanguage: async () => ({ language: 'en' }),
-  readMeetingSummaryLanguage: async () => ({ language: 'en', storage: 'metadata' }),
-}));
 const metadata = (id: string) => ({ id, title: id, created_at: '2026-09-01', updated_at: '2026-09-01' });
 let readMetadata: (id: string) => Promise<unknown>;
 let readTranscripts: (id: string) => Promise<unknown>;

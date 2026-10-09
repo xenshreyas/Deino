@@ -256,7 +256,6 @@ pub async fn start_import<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportResult> {
@@ -271,7 +270,6 @@ pub async fn start_import<R: Runtime>(
         app.clone(),
         source_path,
         title,
-        language,
         model,
         provider,
     )
@@ -313,7 +311,6 @@ async fn run_import<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportResult> {
@@ -325,8 +322,8 @@ async fn run_import<R: Runtime>(
     }
 
     info!(
-        "Starting import for '{}' from {} with language {:?}, model {:?}, provider {:?}",
-        title, source_path, language, model, provider
+        "Starting import for '{}' from {} with model {:?}, provider {:?}",
+        title, source_path, model, provider
     );
 
     // Determine which provider to use (default to whisper)
@@ -590,7 +587,7 @@ async fn run_import<R: Runtime>(
         } else {
             let engine = whisper_engine.as_ref().unwrap();
             let (text, conf, _) = engine
-                .transcribe_audio_with_confidence(segment.samples.clone(), language.clone())
+                .transcribe_audio_with_confidence(segment.samples.clone())
                 .await
                 .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))?;
             (text, conf)
@@ -966,7 +963,6 @@ pub async fn start_import_audio_command<R: Runtime>(
     app: AppHandle<R>,
     source_path: String,
     title: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<ImportStarted, String> {
@@ -977,7 +973,7 @@ pub async fn start_import_audio_command<R: Runtime>(
 
     // Spawn import in background
     tauri::async_runtime::spawn(async move {
-        let result = start_import(app, source_path, title, language, model, provider).await;
+        let result = start_import(app, source_path, title, model, provider).await;
 
         if let Err(e) = result {
             error!("Import failed: {}", e);
@@ -1049,43 +1045,49 @@ mod tests {
         IMPORT_CANCELLED.store(false, Ordering::SeqCst);
     }
 
-    #[test]
-    fn test_extract_duration_from_metadata_wav() {
-        // Test with sample WAV file if available
-        let test_path = Path::new("../../backend/whisper.cpp/samples/jfk.wav");
-        if test_path.exists() {
-            let result = extract_duration_from_metadata(test_path);
-            // Should succeed and return a reasonable duration
-            assert!(result.is_ok());
-            let duration = result.unwrap();
-            assert!(duration > 0.0 && duration < 60.0, "Duration {} seems unreasonable", duration);
-        }
+    /// Writes a silent 16 kHz mono 16-bit PCM WAV file of `seconds` length.
+    fn write_silent_wav(path: &Path, seconds: u32) {
+        const SAMPLE_RATE: u32 = 16_000;
+        let data_len = SAMPLE_RATE * seconds * 2;
+        let mut bytes = Vec::with_capacity(44 + data_len as usize);
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&(36 + data_len).to_le_bytes());
+        bytes.extend_from_slice(b"WAVEfmt ");
+        bytes.extend_from_slice(&16u32.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes()); // PCM
+        bytes.extend_from_slice(&1u16.to_le_bytes()); // mono
+        bytes.extend_from_slice(&SAMPLE_RATE.to_le_bytes());
+        bytes.extend_from_slice(&(SAMPLE_RATE * 2).to_le_bytes());
+        bytes.extend_from_slice(&2u16.to_le_bytes());
+        bytes.extend_from_slice(&16u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_len.to_le_bytes());
+        bytes.resize(44 + data_len as usize, 0);
+        std::fs::write(path, bytes).unwrap();
     }
 
     #[test]
-    fn test_extract_duration_from_metadata_mp3() {
-        // Test with sample MP3 file if available
-        let test_path = Path::new("../../backend/whisper.cpp/samples/jfk.mp3");
-        if test_path.exists() {
-            let result = extract_duration_from_metadata(test_path);
-            // MP3 files may not have n_frames metadata, so fallback is expected
-            // We just verify it doesn't panic
-            let _ = result;
-        }
+    fn test_extract_duration_from_metadata_wav() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("silence.wav");
+        write_silent_wav(&path, 2);
+
+        let duration = extract_duration_from_metadata(&path).unwrap();
+
+        assert!((duration - 2.0).abs() < 0.01, "unexpected duration {duration}");
     }
 
     #[test]
     fn test_validate_audio_file_with_metadata() {
-        // Test validation with actual audio file
-        let test_path = Path::new("../../backend/whisper.cpp/samples/jfk.wav");
-        if test_path.exists() {
-            let result = validate_audio_file(test_path);
-            assert!(result.is_ok());
-            let info = result.unwrap();
-            assert_eq!(info.format, "WAV");
-            assert!(info.duration_seconds > 0.0);
-            assert!(info.size_bytes > 0);
-        }
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("silence.wav");
+        write_silent_wav(&path, 1);
+
+        let info = validate_audio_file(&path).unwrap();
+
+        assert_eq!(info.format, "WAV");
+        assert!(info.duration_seconds > 0.0);
+        assert!(info.size_bytes > 0);
     }
 
     #[test]

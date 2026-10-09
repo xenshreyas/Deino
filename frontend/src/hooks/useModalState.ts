@@ -7,7 +7,6 @@ import type { TranscriptionErrorPayload } from '@/services/transcriptService';
 export type ModalType =
   | 'modelSettings'
   | 'deviceSettings'
-  | 'languageSettings'
   | 'modelSelector'
   | 'errorAlert'
   | 'chunkDropWarning';
@@ -15,7 +14,6 @@ export type ModalType =
 interface ModalState {
   modelSettings: boolean;
   deviceSettings: boolean;
-  languageSettings: boolean;
   modelSelector: boolean;
   errorAlert: boolean;
   chunkDropWarning: boolean;
@@ -49,7 +47,6 @@ export function useModalState(transcriptModelConfig?: TranscriptModelProps): Use
   const [modals, setModals] = useState<ModalState>({
     modelSettings: false,
     deviceSettings: false,
-    languageSettings: false,
     modelSelector: false,
     errorAlert: false,
     chunkDropWarning: false,
@@ -87,8 +84,7 @@ export function useModalState(transcriptModelConfig?: TranscriptModelProps): Use
     setModals({
       modelSettings: false,
       deviceSettings: false,
-      languageSettings: false,
-      modelSelector: false,
+        modelSelector: false,
       errorAlert: false,
       chunkDropWarning: false,
     });

@@ -10,48 +10,7 @@ import { ModelConfig } from '@/components/ModelSettingsModal';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { invoke as invokeTauri } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
-
-import {
-  detectAndCacheSummaryLanguage,
-  readMeetingSummaryLanguage,
-  readCachedDetectedSummaryLanguage,
-} from '@/lib/summary-language-preferences';
 import { parseSummaryContent, readSummaryMetadata } from '@/lib/summary-content';
-
-async function resolveSummaryLanguage(
-  meetingId: string,
-  transcriptTexts: string[]
-): Promise<string | null> {
-  try {
-    const perMeeting = await readMeetingSummaryLanguage(meetingId);
-    if (perMeeting.language) return perMeeting.language;
-  } catch (err) {
-    console.warn('Failed to load meeting summary language:', err);
-    toast.warning('Could not load saved summary language', {
-      description: 'Using Auto for this generation.',
-    });
-  }
-
-  try {
-    const cachedDetected = await readCachedDetectedSummaryLanguage(meetingId);
-    if (cachedDetected) return cachedDetected;
-  } catch (err) {
-    console.warn('Failed to load cached detected summary language:', err);
-  }
-
-  try {
-    const detection = await detectAndCacheSummaryLanguage(meetingId, transcriptTexts);
-    if (detection.reason === 'tie') {
-      toast.warning('Bilingual transcript detected', {
-        description: 'Pick a summary language manually if Auto chooses the wrong fallback.',
-      });
-    }
-    return detection.language;
-  } catch (err) {
-    console.warn('Failed to detect transcript summary language:', err);
-    return null;
-  }
-}
 
 type SummaryStatus = 'idle' | 'processing' | 'summarizing' | 'regenerating' | 'completed' | 'error';
 
@@ -68,7 +27,6 @@ interface UseSummaryGenerationProps {
   initialSummary?: SummaryProcessResponse | null;
   meeting: {
     id: string;
-    created_at: string;
   };
   transcripts: Transcript[];
   modelConfig: ModelConfig;
@@ -220,18 +178,12 @@ export function useSummaryGeneration({
       setSummaryStatus('completed');
       activeProcessIdRef.current = null;
       setSummaryError(null);
-      if (metadata.normalizationFallback) {
-        toast.warning('Summary generated with fallback', {
-          description: 'English normalization failed, so the original sanitized summary was kept.',
-        });
-      } else {
-        toast.success('Summary generated successfully!', {
-          description: metadata.reasoningStripped
-            ? 'Your meeting summary is ready. Model reasoning was filtered out of the notes.'
-            : 'Your meeting summary is ready',
-          duration: 4000,
-        });
-      }
+      toast.success('Summary generated successfully!', {
+        description: metadata.reasoningStripped
+          ? 'Your meeting summary is ready. Model reasoning was filtered out of the notes.'
+          : 'Your meeting summary is ready',
+        duration: 4000,
+      });
       if (meetingName && onMeetingUpdated) {
         await onMeetingUpdated();
       }
@@ -270,12 +222,10 @@ export function useSummaryGeneration({
 
   const processSummary = useCallback(async ({
     transcriptText,
-    transcriptTexts,
     customPrompt = '',
     isRegeneration = false,
   }: {
     transcriptText: string;
-    transcriptTexts?: string[];
     customPrompt?: string;
     isRegeneration?: boolean;
   }) => {
@@ -295,14 +245,6 @@ export function useSummaryGeneration({
         duration: 3000,
       });
 
-      const summaryLanguage = await resolveSummaryLanguage(
-        meeting.id,
-        transcriptTexts?.length ? transcriptTexts : [transcriptText],
-      );
-      if (!mountedRef.current || visibleMeetingIdRef.current !== meeting.id || generationId !== generationIdRef.current) {
-        return;
-      }
-
       const result = await invokeTauri<ProcessTranscriptResponse>('api_process_transcript', {
         text: transcriptText,
         model: modelConfig.provider,
@@ -312,7 +254,6 @@ export function useSummaryGeneration({
         overlap: 1000,
         customPrompt,
         templateId: selectedTemplate,
-        summaryLanguage,
       });
       const processId = result.process_id;
       if (!mountedRef.current || visibleMeetingIdRef.current !== meeting.id) return;
@@ -386,7 +327,6 @@ export function useSummaryGeneration({
       transcriptText: allTranscripts
         .map((transcript) => `${formatTime(transcript.audio_start_time, transcript.timestamp)} ${transcript.text}`)
         .join('\n'),
-      transcriptTexts: allTranscripts.map((transcript) => transcript.text),
     };
   }, []);
 

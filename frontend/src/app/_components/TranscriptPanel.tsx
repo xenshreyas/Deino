@@ -2,37 +2,32 @@ import { VirtualizedTranscriptView } from '@/components/VirtualizedTranscriptVie
 import { PermissionWarning } from '@/components/PermissionWarning';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import { Copy, GlobeIcon } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { useTranscripts } from '@/contexts/TranscriptContext';
-import { useConfig } from '@/contexts/ConfigContext';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
-import { ModalType } from '@/hooks/useModalState';
 import { useIsLinux } from '@/hooks/usePlatform';
 import { useMemo } from 'react';
 
 /**
  * TranscriptPanel Component
  *
- * Displays transcript content with controls for copying and language settings.
- * Uses TranscriptContext, ConfigContext, and RecordingStateContext internally.
+ * Displays transcript content with a copy control.
+ * Uses TranscriptContext and RecordingStateContext internally.
  */
 
 interface TranscriptPanelProps {
   // indicates stop-processing state for transcripts; derived from backend statuses.
   isProcessingStop: boolean;
   isStopping: boolean;
-  showModal: (name: ModalType, message?: string) => void;
 }
 
 export function TranscriptPanel({
   isProcessingStop,
   isStopping,
-  showModal
 }: TranscriptPanelProps) {
   // Contexts
   const { transcripts, transcriptContainerRef, copyTranscript } = useTranscripts();
-  const { transcriptModelConfig } = useConfig();
   const { isRecording, isPaused } = useRecordingState();
   const { checkPermissions, isChecking, hasSystemAudio, hasMicrophone } = usePermissionCheck();
   const isLinux = useIsLinux();
@@ -70,19 +65,6 @@ export function TranscriptPanel({
                     </span>
                   </Button>
                 )}
-                {transcriptModelConfig.provider === "localWhisper" &&
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => showModal('languageSettings')}
-                    title="Language"
-                  >
-                    <GlobeIcon />
-                    <span className='hidden md:inline'>
-                      Language
-                    </span>
-                  </Button>
-                }
               </ButtonGroup>
             </div>
           </div>

@@ -23,7 +23,7 @@ describe('transcription model readiness', () => {
   });
 
   test('does not silently treat an unsupported provider as Parakeet', () => {
-    expect(getProviderCommands('deepgram')).toBeNull();
+    expect(getProviderCommands('unsupported-provider')).toBeNull();
   });
 
   test('recognizes only active downloads', () => {

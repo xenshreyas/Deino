@@ -322,7 +322,7 @@ pub async fn start_recording_with_meeting_name<R: Runtime>(
         return Err("Recording already in progress".to_string());
     }
 
-    if let Err(error) = crate::ensure_onnx_runtime_available() {
+    if let Err(error) = crate::onnx_runtime::ensure_available() {
         return Err(map_recording_start_error(
             &app,
             RecordingStartError::TranscriptionRuntime(error),
@@ -512,7 +512,7 @@ pub async fn start_recording_with_devices_and_meeting<R: Runtime>(
         return Err("Recording already in progress".to_string());
     }
 
-    if let Err(error) = crate::ensure_onnx_runtime_available() {
+    if let Err(error) = crate::onnx_runtime::ensure_available() {
         return Err(map_recording_start_error(
             &app,
             RecordingStartError::TranscriptionRuntime(error),

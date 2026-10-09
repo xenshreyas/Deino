@@ -17,10 +17,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sparkles, Settings, Loader2, FileText, Check, Square } from 'lucide-react';
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SummaryGeneratorButtonGroupProps {
-  languageSlot?: ReactNode;
   modelConfig: ModelConfig;
   setModelConfig: (config: ModelConfig | ((prev: ModelConfig) => ModelConfig)) => void;
   onSaveModelConfig: (config?: ModelConfig) => Promise<void>;
@@ -52,7 +51,6 @@ export function SummaryGeneratorButtonGroup({
   hasSummary = false,
   isModelConfigLoading = false,
   onOpenModelSettings,
-  languageSlot
 }: SummaryGeneratorButtonGroupProps) {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
@@ -123,8 +121,6 @@ export function SummaryGeneratorButtonGroup({
           )}
         </Button>
       )}
-
-      {languageSlot}
 
       {/* Settings button */}
       <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>

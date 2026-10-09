@@ -56,7 +56,7 @@ fn toggle_recording_handler<R: Runtime>(app: &AppHandle<R>) {
     focus_main_window(app);
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
-        if crate::is_recording().await {
+        if crate::audio::recording_commands::is_recording().await {
             // Immediately show stopping state
             set_tray_state(&app_clone, RecordingState::Stopping);
 

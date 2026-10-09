@@ -48,7 +48,7 @@ export interface RecordingPreferences {
 export class ConfigService {
   /**
    * Get saved transcript model configuration
-   * @returns Promise with { provider, model, apiKey }
+   * @returns Promise with { provider, model }
    */
   async getTranscriptConfig(): Promise<TranscriptModelProps> {
     return invoke<TranscriptModelProps>('api_get_transcript_config');

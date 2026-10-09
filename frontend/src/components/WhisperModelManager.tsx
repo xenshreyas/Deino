@@ -323,7 +323,6 @@ export function ModelManager({
       await invoke('api_save_transcript_config', {
         provider: 'localWhisper',
         model: modelName,
-        apiKey: null
       });
     } catch (error) {
       console.error('Failed to save model selection:', error);

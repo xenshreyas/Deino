@@ -107,24 +107,11 @@ impl Setting {
     }
 }
 
+/// Selected local transcription engine. The legacy cloud-STT key columns of
+/// `transcript_settings` are no longer read.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TranscriptSetting {
     pub id: String,
     pub provider: String,
     pub model: String,
-    #[sqlx(rename = "whisperApiKey")]
-    #[serde(rename = "whisperApiKey")]
-    pub whisper_api_key: Option<String>,
-    #[sqlx(rename = "deepgramApiKey")]
-    #[serde(rename = "deepgramApiKey")]
-    pub deepgram_api_key: Option<String>,
-    #[sqlx(rename = "elevenLabsApiKey")]
-    #[serde(rename = "elevenLabsApiKey")]
-    pub eleven_labs_api_key: Option<String>,
-    #[sqlx(rename = "groqApiKey")]
-    #[serde(rename = "groqApiKey")]
-    pub groq_api_key: Option<String>,
-    #[sqlx(rename = "openaiApiKey")]
-    #[serde(rename = "openaiApiKey")]
-    pub openai_api_key: Option<String>,
 }

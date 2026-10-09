@@ -67,7 +67,6 @@ pub struct RetranscriptionResult {
     pub meeting_id: String,
     pub segments_count: usize,
     pub duration_seconds: f64,
-    pub language: Option<String>,
 }
 
 /// Error during retranscription
@@ -92,7 +91,6 @@ pub async fn start_retranscription<R: Runtime>(
     app: AppHandle<R>,
     meeting_id: String,
     meeting_folder_path: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<RetranscriptionResult> {
@@ -103,7 +101,7 @@ pub async fn start_retranscription<R: Runtime>(
     RETRANSCRIPTION_CANCELLED.store(false, Ordering::SeqCst);
 
     let use_parakeet = provider.as_deref() == Some("parakeet");
-    let result = run_retranscription(app.clone(), meeting_id.clone(), meeting_folder_path, language, model, provider).await;
+    let result = run_retranscription(app.clone(), meeting_id.clone(), meeting_folder_path, model, provider).await;
 
     // Unload the engine after the batch job (success, failure, or cancellation)
     super::common::unload_engine_after_batch(use_parakeet).await;
@@ -118,8 +116,7 @@ pub async fn start_retranscription<R: Runtime>(
                 serde_json::json!({
                     "meeting_id": res.meeting_id,
                     "segments_count": res.segments_count,
-                    "duration_seconds": res.duration_seconds,
-                    "language": res.language
+                    "duration_seconds": res.duration_seconds
                 }),
             );
         }
@@ -174,7 +171,6 @@ async fn run_retranscription<R: Runtime>(
     app: AppHandle<R>,
     meeting_id: String,
     meeting_folder_path: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<RetranscriptionResult> {
@@ -185,8 +181,8 @@ async fn run_retranscription<R: Runtime>(
     let use_parakeet = provider.as_deref() == Some("parakeet");
 
     info!(
-        "Starting retranscription for meeting {} with language {:?}, model {:?}, provider {:?}",
-        meeting_id, language, model, provider
+        "Starting retranscription for meeting {} with model {:?}, provider {:?}",
+        meeting_id, model, provider
     );
 
     // Emit progress: decoding
@@ -379,7 +375,7 @@ async fn run_retranscription<R: Runtime>(
         } else {
             let engine = whisper_engine.as_ref().unwrap();
             let (text, conf, _) = engine
-                .transcribe_audio_with_confidence(segment.samples.clone(), language.clone())
+                .transcribe_audio_with_confidence(segment.samples.clone())
                 .await
                 .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))?;
             (text, conf)
@@ -495,7 +491,6 @@ async fn run_retranscription<R: Runtime>(
         meeting_id,
         segments_count: segments.len(),
         duration_seconds,
-        language,
     })
 }
 
@@ -610,7 +605,7 @@ async fn get_configured_whisper_model<R: Runtime>(app: &AppHandle<R>) -> Result<
                 Ok(model)
             } else {
                 error!("Retranscription requires Whisper provider, but configured provider is: {}", provider);
-                Err(anyhow!("Retranscription requires Whisper. Current provider '{}' does not support retranscription with language selection.", provider))
+                Err(anyhow!("Retranscription requires Whisper. Current provider '{}' is not Whisper.", provider))
             }
         },
         None => {
@@ -741,7 +736,6 @@ fn write_retranscription_metadata(
             obj.insert("retranscribed_at".to_string(), serde_json::json!(now));
             obj.insert("status".to_string(), serde_json::json!("completed"));
             obj.insert("transcript_file".to_string(), serde_json::json!("transcripts.json"));
-            obj.remove("detected_summary_language");
         }
         value
     } else {
@@ -782,7 +776,6 @@ pub async fn start_retranscription_command<R: Runtime>(
     app: AppHandle<R>,
     meeting_id: String,
     meeting_folder_path: String,
-    language: Option<String>,
     model: Option<String>,
     provider: Option<String>,
 ) -> Result<RetranscriptionStarted, String> {
@@ -801,7 +794,6 @@ pub async fn start_retranscription_command<R: Runtime>(
             app,
             meeting_id_clone,
             meeting_folder_path,
-            language,
             model,
             provider,
         )
@@ -1026,8 +1018,6 @@ mod tests {
                 "meeting_id": "existing-meeting",
                 "duration_seconds": 2523.2,
                 "audio_file": "recording.m4a",
-                "summary_language": "fr",
-                "detected_summary_language": "en",
                 "custom_field": "preserve me"
             }))
             .unwrap(),
@@ -1047,8 +1037,6 @@ mod tests {
         assert_eq!(metadata["duration_seconds"], 5046.4);
         assert_eq!(metadata["meeting_id"], "existing-meeting");
         assert_eq!(metadata["audio_file"], "recording.m4a");
-        assert_eq!(metadata["summary_language"], "fr");
         assert_eq!(metadata["custom_field"], "preserve me");
-        assert!(metadata.get("detected_summary_language").is_none());
     }
 }

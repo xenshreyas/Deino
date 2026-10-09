@@ -1,7 +1,16 @@
-/// Application configuration constants
+//! Application configuration constants
+//!
+//! Centralized definitions for default models and settings.
+//! Used across database initialization, import, and retranscription.
+
+/// ISO 639-1 code of the only language Deino transcribes.
 ///
-/// Centralized definitions for default models and settings.
-/// Used across database initialization, import, and retranscription.
+/// Deino is English-only (PARITY_PLAN §1): there is no language picker,
+/// auto-detection or translation. Whisper is pinned to this language with
+/// translation off. Parakeet's ONNX models take no language hint, so the
+/// constant does not apply to them (CAP-01 replaces them with an English-only
+/// engine).
+pub const TRANSCRIPTION_LANGUAGE: &str = "en";
 
 /// Default Whisper model for transcription when no preference is configured.
 /// This is the recommended balance of accuracy and speed.

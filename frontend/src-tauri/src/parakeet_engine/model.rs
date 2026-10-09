@@ -91,7 +91,7 @@ impl ParakeetModel {
         intra_threads: Option<usize>,
         try_quantized: bool,
     ) -> Result<Session, ParakeetError> {
-        crate::ensure_onnx_runtime_available()
+        crate::onnx_runtime::ensure_available()
             .map_err(|error| ParakeetError::RuntimeUnavailable(error.to_string()))?;
 
         let providers = vec![CPUExecutionProvider::default().build()];
