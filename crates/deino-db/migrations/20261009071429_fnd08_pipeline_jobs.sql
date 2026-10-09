@@ -1,6 +1,6 @@
 -- FND-08: the post-meeting pipeline's durable queue (PARITY_PLAN §4.2,
 -- ADR 0018). Conventions as in the FND-07 core schema: STRICT, NOT NULL by
--- default, enums CHECKed against their `deino_domain` enum, timestamps as
+-- default, every enum column CHECK-ed against its `deino_domain` enum, timestamps as
 -- RFC 3339 UTC text, an index on every foreign key and lookup.
 --
 -- One `jobs` row per (meeting, stage) holds that stage's state in the
