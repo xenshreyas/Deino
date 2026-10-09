@@ -48,7 +48,10 @@ use crate::features::settings::TauriSettingsEvents;
 use crate::paths::AppPaths;
 use crate::state::AppState;
 
-pub(crate) use network::{attach_network, model_downloads, root_client};
+pub(crate) use network::{attach_network, model_downloads};
+/// The root HTTP client, for tests that talk to a loopback server.
+#[cfg(test)]
+pub(crate) use network::root_client;
 
 /// Loads the settings, moves the legacy JSON stores into them, opens the
 /// Keychain, and manages `Arc<SettingsService>` and `Arc<dyn SecretStore>`.
