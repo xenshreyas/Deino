@@ -99,8 +99,9 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
+| `crates/deino-core` | Features as modules: `meetings`, `settings`, `models` (STT model catalog and verified downloads), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
+| `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |
@@ -127,8 +128,10 @@ Does Not Own, Invariants); read it before editing the crate.
 - `database/`: legacy repositories; `DatabaseManager` wraps `deino_db::Database`
   and hands legacy code the writer pool.
 - `audio/` (capture via cpal and the Core Audio process tap `capture/core_audio.rs`,
-  mixing in `pipeline.rs`, VAD, recording, import), `parakeet_engine/`,
-  `whisper_engine/`, `summary/`, `notifications/`, `tray.rs`, `onboarding.rs`,
+  mixing in `pipeline.rs`, VAD, recording, import), `stt.rs` + `stt/`
+  (Parakeet Unified, the default engine: live lane, batch provider, worker
+  entry, `--transcribe-file` benchmark), `parakeet_engine/` and
+  `whisper_engine/` (the "Advanced" engines), `summary/`, `notifications/`, `tray.rs`, `onboarding.rs`,
   `updater/` (`AUTO_UPDATE_ENABLED = false`).
 
 ### Frontend (`frontend/src/`)

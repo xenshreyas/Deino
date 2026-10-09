@@ -34,6 +34,11 @@ Every test must pass on every machine. A test never reads real hardware:
 inject the platform's answer instead (`InputDeviceKind::classify` takes the
 native detection result as an argument, so its tests pass `None`).
 
+Real-model transcription is measured, not unit-tested: `cargo run -p deino-stt
+--release --example stt_bench -- <model.gguf> <16k-mono.wav> --realtime`, or
+`deino --transcribe-file <wav> --model <gguf> --realtime --json` with the app
+binary. Both print RTF and first-text latency and never print text.
+
 ## Where CI runs what
 
 Pushes run on Linux (macOS minutes cost 10x on the private repo):
@@ -81,6 +86,9 @@ Every test's name says the regression it prevents
 | Migration round trip | Apply the migrations before a version, seed rows in the old format, run the rest, assert (anarlog's technique) | `crates/deino-db/src/migration_tests.rs` |
 | Command | Contract test through the real plugin and ACL on Tauri's mock runtime (`features::ipc_tests`) | `frontend/src-tauri/src/features/meetings/contract_tests.rs` |
 | Bindings | Export, manifest drift, ID branding | `frontend/src-tauri/src/bindings.rs` |
+| Worker process | Real processes from the fake worker binary (`deino-stt-fake-worker`, scripted engine, `DEINO_STT_FAULT=crash@feed#2` and friends): crashes, hangs, GPU→CPU fallback, kill-to-cancel, cleanup | `crates/deino-stt/tests/supervisor.rs` |
+| Live session | `LiveSession` over `FakeTranscriber`: segments on the timeline, live text, batch fallback after a lost stream, rotation | `crates/deino-stt/tests/session.rs` |
+| Downloader | The core download over `FakeByteSource`, and the HTTP adapter against a local socket server (`#[ignore]`d: the real Hugging Face download) | `crates/deino-core/src/models/download_tests.rs`, `frontend/src-tauri/src/stt/http_source_tests.rs` |
 | Hook | Vitest + Testing Library with the generated bindings mocked and typed (`satisfies typeof Generated.commands`) | `frontend/src/features/meetings/queries.test.tsx` |
 | Component | Vitest, render with a `QueryClient`, interact through roles and labels | `frontend/src/features/_example/components/example-notes.test.tsx` |
 | Main flow | Playwright over `pnpm dev:mock`, fixture data, one spec per flow | `frontend/e2e/meeting.spec.ts` |
