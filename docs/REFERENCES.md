@@ -41,6 +41,7 @@ Deino benchmarks itself against the best open-source projects in each area (see 
 | `audio-cap-zed.md` | Reference-only patterns: sample-count timeline, gap tracker, epoch anchoring, fragmented M4A, recovery, health bus, Mach clock, device listeners, WebRTC AEC. |
 | `spike-native-recording.md` | **Measured spike:** FFmpeg-free crash-safe recording (AVAssetWriter CMAF segments, under 1 s loss on `kill -9`), import decoding matrix (symphonia + libopus + AVAssetReader fallback), and clip cutting. Its code is in `~/Documents/GitHub/deino-spikes/native-recording/`. |
 | `spike-stt-streaming.md` | **Measured spike:** Parakeet Unified EN via transcribe-cpp 0.3.1. Working API snippets, the latency window (0.85 s), timestamps, two-lane memory, quantization, the batch truncation bug, and why whisper-rs must go. Its code is in `~/Documents/GitHub/deino-spikes/stt-streaming/`. |
+| `spike-diarization.md` | **Measured spike:** anarlog's diarizer vs sherpa-onnx, embedding models (WeSpeaker r34 wins; CAM++ unusable), CoreML speed, voiceprint thresholds, linking pitfalls, licences and sha256 pins. Code in `~/Documents/GitHub/deino-spikes/diarization/`. |
 | `ui.md` | The design token spec (exact light and dark hex values with WCAG ratios), component specs, screen wireframes and reuse list. **§6 is the FND-10 checklist.** |
 
 ## Card → reading list
@@ -60,7 +61,7 @@ Deino benchmarks itself against the best open-source projects in each area (see 
 | FND-13 | `architecture.md` §2, §3, §8, §10, §11 and (b) FND-13, (c) |
 | CAP-01 | **`spike-stt-streaming.md` (decided parameters)**; `audio-stt.md` §0–2 and the CAP-01 card notes; `audio-handy.md` |
 | CAP-02 | `audio-stt.md` §5; `audio-capture.md` §4; `audio-anarlog.md` §3–4; `audio-muesli-openwhispr.md` (echo/bleed); `audio-cap-zed.md` §9 |
-| CAP-03 / CAP-04 | `audio-stt.md` §3–4; `audio-anarlog.md` §6; `audio-diarization.md`; `audio-muesli-openwhispr.md` (live ID, EMA) |
+| CAP-03 / CAP-04 | **`spike-diarization.md` (decided)**; `audio-stt.md` §3–4; `audio-anarlog.md` §6; `audio-diarization.md`; `audio-muesli-openwhispr.md` (live ID, EMA) |
 | CAP-06 | `audio-capture.md` §6 and §10; `audio-muesli-openwhispr.md` (Muesli detection); `audio-anarlog.md` §7 |
 | CAP-07 | `audio-capture.md` §7; `audio-muesli-openwhispr.md` (OpenWhispr auto-end, Muesli auto-stop) |
 | CAP-08 | `audio-stt.md` (CAP-08 recommendations) |

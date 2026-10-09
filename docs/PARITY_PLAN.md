@@ -1015,6 +1015,11 @@ Card format:
 - **Owns:** `diarization/` (new), pipeline stage `diarize`, the `speakers` writes
 - **Parity:** C §6 (Participant N, hybrid-room separation); G §2.6 (Speaker A/B)
 - **Build:**
+  - **Decided by spike (`docs/references/spike-diarization.md`):** anarlog engine + **WeSpeaker ResNet34-LM** embeddings (CC-BY-4.0, attribute it) loaded via the **`ort` CoreML execution provider**, segmentation on CPU, and **always pass calendar speaker bounds**.
+    - Step 2 s, or 3 s for meetings over 30 min. Threshold 0.7045 (anarlog's AMI-tuned value), `min_cluster_seconds` 3 for clips under 2 min, else 12.
+    - Batch the per-window embeddings.
+    - Measured: 8–12 % DER with known counts; RTF 0.023 on 57 min.
+    - Vendor `knf-rs`. Pin the model sha256s from the report.
   - **Primary choice: port Anarlog's `crates/pyannote-local` plus `crates/embedding` plus `crates/voiceprint` (MIT).**
     - It uses the same `ort` that Deino already depends on, returns the per-speaker centroid embeddings CAP-04 needs, and ships a DER eval binary.
     - Attribute the embedding model (probably WeSpeaker, CC-BY-4.0) in `THIRD_PARTY_NOTICES.md`.
@@ -1046,7 +1051,7 @@ Card format:
   - **Merge two speakers.**
   - **On rename-all**, save a voiceprint (the speaker centroid) for that person, keeping up to 5 per person.
   - **Stage `identify_speakers`:**
-    - Match speaker centroids to voiceprints by cosine similarity. Thresholds are tunable: auto-assign at 0.75 or above, suggest from 0.6.
+    - Match against voiceprints (max over up to 5 exemplars per person). **Auto-assign at ≥ 0.72 (≥ 0.77 for non-attendees) + margin ≥ 0.08 + mutual best; suggest 0.55–0.72** (spike-measured, WeSpeaker r34). Thresholds live in typed settings and get calibrated on real meetings. Add phantom-cluster pruning and known-voiceprint merging.
     - **Prefer people who are calendar attendees.**
     - The mic speaker is always Me.
   - Settings → People → Voice profiles: list and delete.
@@ -2059,7 +2064,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-06 Typed settings store and Keychain secrets | ☑️ done on branch `feat/FND-06-settings-secrets` | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
-| Spike: diarization bake-off | 🔄 running | |
+| Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
 
 ### 7.2 Follow-ups raised by merged cards (assign to the named card)
 
