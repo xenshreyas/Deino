@@ -2049,7 +2049,6 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
   - **CAP-06** lives in its own crate `crates/deino-detect` (heavy macOS native code), so it doesn't wait on FND-05.
   - **EXP-01** pure renderers (Markdown, TXT, JSON, SRT/VTT, DOCX, PDF) work from a DTO and can start before FND-07 merges. Wire them to the repos afterwards.
 - **Benchmarks:** take acceptance timings only when the machine load is below about 20, or label them with the load.
-- **Check for ignored sources before committing:** run `git status --ignored`. A `**/models` rule once silently dropped CAP-01's `deino-core/src/models/` (restored from the agent's history; the rule now ignores downloaded model files only).
 - **Never kill processes by pattern.** `pkill -f target/debug/deino` also kills other agents' dev apps. Record the PID you started (`$!`) and kill only that PID.
 
 ### 7.1 Progress log
@@ -2070,6 +2069,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-09 LLM gateway | ✅ merged (ADR 0017) | 2026-10-09 |
 | FND-08 Post-meeting pipeline (job runner) | ☑️ done on branch `feat/FND-08-pipeline` (ADR 0018) | |
 | FND-12 Network client and data-egress controls | ☑️ done on branch `feat/FND-12-net` (ADR 0019) | |
+| CAP-03 Local speaker diarization | ☑️ done on branch `feat/CAP-03-diarization` (ADR 0019; stage `diarize` registered) | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2179,6 +2179,14 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-12 | The egress log keeps the newest 10,000 rows; add it to retention settings and a "Clear log" action. | PRV-01 |
 | FND-12 | The Network page's `SettingsSection`/`SettingsCard` (`features/network/components/settings-section.tsx`) are the ui.md settings section and card; promote them to `ui/` when the inherited settings pages are rebuilt on them. | FND-10 follow-up (settings panels) |
 | FND-12 | Acceptance "a full meeting with no services connected makes zero outbound connections" was checked on a fresh smoke build (`com.xenshreyas.deino.smoke-fnd12`) from launch to idle only: `lsof -i` and `nettop` showed no sockets. Repeat it for record → notes with the local model → export once FND-05b lands. | FND-05b |
+| CAP-03 | Register the `diarize` stage (order 30) over `deino_core::diarization::DiarizeService::run`; map `DiarizationError::AudioMissing`/`NotFound` to a skipped, non-retryable outcome and `TrackError::ModelsUnavailable` to retryable. Build `DiarizeDeps` in `composition.rs` with `deino_diarize::track::OnnxTrackDiarizer::new(ModelStore::new(<models>/diarization), <the app's ByteSource>, RuntimeConfig { accelerator_cache: Some(<cache>/coreml), .. })`. | FND-08 |
+| CAP-03 | The diarization models download through the same temporary `ByteSource` as the STT models (`stt/http_source.rs`); move both to `deino-net`'s `hf_models` service. | FND-12 |
+| CAP-03 | Show model download state and progress for the diarization models (32 MB) in the model manager, and download them in onboarding's AI step. | FND-11 / model manager UI |
+| CAP-03 | Attribute WeSpeaker ResNet34-LM (CC-BY-4.0, text in `THIRD_PARTY_NOTICES.md`) on the About screen. | FND-10 / the About screen's next card |
+| CAP-03 | Drive `deino_diarize::online::LiveSpeakerTracker` from the system lane: embed finalized utterances ≥ 1.5 s off the lane thread with `Diarizer::embedder()` (or an `EmbeddingExtractor`), label live speakers, and let the post-meeting pass replace them (map live renames by word overlap). | CAP-02 |
+| CAP-03 | Use the stored centroids (`SpeakerRepo::voice`), `deino_diarize::voiceprint` (`pick_unique`, `complete_by_elimination`, `select_speaker_spans`) and `KnownSpeaker`s in `DiarizeRequest` (add them to `TrackRequest`) for `identify_speakers`; link "Me" to the `people.is_me` row. | CAP-04 |
+| CAP-03 | Re-tune the 0.7045 threshold and re-time on real meetings: run `diarize-bench file` on AMI dev / VoxConverse RTTMs (not downloaded here) and on an idle M1; every DER so far uses synthetic voices (`docs/perf/diarization.md`). | CAP-04 / a tuning pass |
+| CAP-03 | Decoding a 60-minute track holds about 230 MB of 16 kHz samples while it runs; add a file-backed `AudioSource` (`ExtAudioFileSeek`) if memory matters. | Later cleanup |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02

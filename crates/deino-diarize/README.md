@@ -2,7 +2,7 @@
 
 ## Role
 
-Local speaker diarization (CAP-03, ADR 0018): who spoke when on one recorded
+Local speaker diarization (CAP-03, ADR 0019): who spoke when on one recorded
 track, with a 256-d centroid per speaker. A port of anarlog's
 `pyannote-local`, `embedding`, `onnx` and `voiceprint` crates (MIT):
 pyannote segmentation-3.0 on the CPU, WeSpeaker ResNet34-LM embeddings on

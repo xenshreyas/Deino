@@ -3,7 +3,7 @@
 //!
 //! anarlog ships its models as committed blobs with no download source, so
 //! Deino fetches them on demand from their publishers, pinned by revision,
-//! byte size and SHA-256 (`docs/adr/0018-local-speaker-diarization.md`),
+//! byte size and SHA-256 (`docs/adr/0019-local-speaker-diarization.md`),
 //! through the same verified downloader and `ByteSource` port as the
 //! transcription models (`deino_core::models`):
 //!
