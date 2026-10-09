@@ -43,9 +43,16 @@ the SQLite adapters behind those ports.
   - `companies`: `CompanyRepo`;
   - `calendar`: `CalendarAccountRepo` and `CalendarEventRepo` (upsert by
     provider ID);
-  - `folders`: `FolderRepo` (the only writer of `parent_id`, refusing
-    cycles) and `MeetingFolderRepo`;
-  - `tags`: `TagRepo` and `MeetingTagRepo`;
+  - `folders` (ORG-05, ADR 0024): `FolderRepo` (the only writer of
+    `parent_id`, refusing cycles), `MeetingFolderRepo`, `FolderRuleRepo`
+    (`folder_rules`) and `MeetingFactsReader`; `FolderService` (the tree),
+    `FilingService` (filings, Unfiled, the series offer, rules), the typed
+    `FolderRule` with the pure `folders_matching`, and `AutoFileService`
+    (the `auto_folder` stage's rules);
+  - `tags` (ORG-06): `TagRepo`, `MeetingTagRepo` and `MeetingDigestReader`;
+    `TagService` (CRUD, apply/remove, `MeetingTagged` through `TagEvents`)
+    and `AutoTagService` (the `auto_tag` stage's rules: existing tags only,
+    on route `tagging`, skipped when the user tagged the meeting);
   - `action_items`: `ActionItemRepo`.
 - `models` (CAP-01): the bundled model catalog (`catalog.json`: Parakeet
   Unified EN 0.6B, six quants pinned to a revision, size and SHA-256),

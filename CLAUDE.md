@@ -125,7 +125,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `folders`, `tags`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

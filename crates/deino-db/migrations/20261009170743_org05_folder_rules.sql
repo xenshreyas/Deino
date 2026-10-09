@@ -1,4 +1,4 @@
--- ORG-05: folder auto-add rules as rows (ADR 0020).
+-- ORG-05: folder auto-add rules as rows (ADR 0024).
 --
 -- FND-07 left `folders.auto_rules_json` as an untyped, never-written
 -- placeholder. Rules are queried by what they match (a series, a tag, an

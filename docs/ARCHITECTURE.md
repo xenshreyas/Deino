@@ -16,7 +16,8 @@ processes (0016), the LLM gateway with task routes (0017), and the
 post-meeting pipeline's stage model (0018), the network egress policy
 (0019), local speaker diarization (0020), note templates in the database
 with a versioned built-in catalogue (0021), the note document model:
-TipTap JSON with `deino-doc` (0022), and meeting detection (0023).
+TipTap JSON with `deino-doc` (0022), meeting detection (0023), and folder
+auto-add rules as rows with AI tagging from the user's own tags (0024).
 
 ## 1. Processes
 
@@ -114,7 +115,7 @@ flowchart BT
 | `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), the closed sets the schema stores (`MeetingStatus` with its transitions, `Channel`, `AttendeeRole`, `Rsvp`, ...), `Millis`/`Seconds`, `Email`, `PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `DataMigration` (Rust steps between two schema migrations), `ChangeNotifier`, `Table`, `test_db()`. |
 | `deino-secrets` | `crates/deino-secrets` | `SecretStore` (set, status, delete, and `get` for Rust only), `KeychainSecretStore` over `keyring`, `InMemorySecretStore` (feature `test-support`). |
-| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). `templates` (NOT-04, ADR 0021): the template model, the 30-template versioned `CATALOG` and `BuiltinSync`, the library (`TemplateService`), per-meeting selection and previews (`MeetingTemplateService` over the pure `RuleEngine` and the `TemplateClassifier` port, with `GatewayTemplateClassifier` on route `tagging`), JSON import/export and the one-time legacy-folder import. `profile` (NOT-05): `ProfileService` (saves Settings → Profile, keeps the `people.is_me` person in step through `MeRepo`), `render_profile_context` and `ProfileContext` (the gateway's system context), and `InternalDomains` (internal vs external by email domain). `notes` (NOT-01): `NoteService` saves a meeting's TipTap document whole into `meeting_notes` (with its Readable Markdown), stores pasted and dropped images in the meeting's folder (`FsNoteImages`, content-checked, generated names), creates `scheduled` meetings for notes written ahead, and `adopt`s the record screen's draft into the meeting a recording saved; `people::PeopleService::search` feeds @mentions; the legacy summary's user context is the meeting's notes. Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). |
+| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). `templates` (NOT-04, ADR 0021): the template model, the 30-template versioned `CATALOG` and `BuiltinSync`, the library (`TemplateService`), per-meeting selection and previews (`MeetingTemplateService` over the pure `RuleEngine` and the `TemplateClassifier` port, with `GatewayTemplateClassifier` on route `tagging`), JSON import/export and the one-time legacy-folder import. `profile` (NOT-05): `ProfileService` (saves Settings → Profile, keeps the `people.is_me` person in step through `MeRepo`), `render_profile_context` and `ProfileContext` (the gateway's system context), and `InternalDomains` (internal vs external by email domain). `notes` (NOT-01): `NoteService` saves a meeting's TipTap document whole into `meeting_notes` (with its Readable Markdown), stores pasted and dropped images in the meeting's folder (`FsNoteImages`, content-checked, generated names), creates `scheduled` meetings for notes written ahead, and `adopt`s the record screen's draft into the meeting a recording saved; `people::PeopleService::search` feeds @mentions; the legacy summary's user context is the meeting's notes. Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `folders` (ORG-05, ADR 0024): `FolderService` (create, rename, icon, description, cycle-safe moves, deletion that keeps every meeting, the tree with counts), `FilingService` (a meeting in many folders, the "Unfiled" smart folder, the series offer, each folder's rules), the typed `FolderRule` (series, tag, attendee domain) with the pure `folders_matching`, and `AutoFileService` behind the `auto_folder` stage. `tags` (ORG-06): `TagService` (CRUD with palette colours and descriptions, apply/remove with a `TagSource`, the `MeetingTagged` event) and `AutoTagService` behind the `auto_tag` stage (existing tags only, on route `tagging`, skipped when the user tagged the meeting or Settings → organize turns it off; `NoModelAutoTagger` when no gateway could be wired). `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). |
 | `deino-doc` | `crates/deino-doc` | The note document (NOT-01, ADR 0022), ported from anarlog's `crates/tiptap`: TipTap/ProseMirror JSON as typed Rust (`Doc`, `Block`, `Inline`, `Mark`), with the NOT-02/NOT-03 extensions (`origin` provenance mark, `citation` nodes, person `mention`s), `from_markdown` (CommonMark + GFM via markdown-rs), `to_markdown` (`Lossless`, which round-trips, and `Readable`, for people and LLMs), `validate` (the schema rules) and `normalize`. Pure: no I/O, no Tauri. |
 | `deino-stt` | `crates/deino-stt` | Speech-to-text (CAP-01): the worker process and its protocol, `EngineSupervisor` (deadlines, GPU→CPU fallback, kill-to-cancel), `LiveSession` (continuous feeds, segments, batch fallback, rotation), `EnginePool` (a worker per lane), `StreamPerf`, the benchmark. Depends on no HTTP client. |
 | `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, the `SystemContext` port that puts the user's profile in front of every system prompt, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
@@ -124,7 +125,7 @@ flowchart BT
 | `deino-testkit` | `crates/deino-testkit` | The fixture meetings in `fixtures/` as typed, validated values; `FixtureSeeder` (also behind the debug-only `dev` plugin); fixture audio decoding; re-exported fakes for tests (feature `test-support`). |
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. Not wired into the app yet (FND-05b). |
 | `deino-detect` | `crates/deino-detect` | Meeting detection (CAP-06, ADR 0023): the `Sensor` ports and their macOS adapters (Core Audio process objects with per-object listeners, the default input, CoreMediaIO cameras through a small safe FFI layer, `NSWorkspace`, Accessibility browser URLs), attribution to the outermost `.app`, the bundle tables and meeting-URL normaliser, Muesli's resolver, the Clock-driven `DetectionPolicy`, `DetectionService` (answers, auto-start countdown, the `DetectionEvent` stream) and the `Detector` thread. No `tauri`, no `deino-net`. |
-| `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `diarize` at 30, `legacy_summary` at 50), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
+| `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `diarize` at 30, `legacy_summary` at 50, `auto_tag` at 70, `auto_folder` at 75), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar: `generate` (legacy), `stream`, `grammar` (a JSON schema turned into a GBNF grammar) and `embed` requests over JSON lines. |
 
@@ -141,7 +142,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri event adapters) and `app.manage`s them. `attach_settings` runs first at startup, then `attach_network` (the one `deino_net::Net` and its policy over the settings, `composition/network.rs`); `attach_database` once `deino.sqlite` is open, which also starts persisting the egress log. |
 | `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, the pre-NOT-04 templates folder to import). |
 | `llm.rs`, `llm/` | The gateway's wiring: builds `Gateway`, `LlmAdmin` and `SummaryGenerator` over the app's adapters: `NetTransport` (`llm/http.rs`: one `deino-net` scoped client per provider) and `SidecarLocalModels` (`llm/local.rs`, the built-in models over llama-helper). |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `templates`, `profile`, `detection`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `templates`, `profile`, `detection`, `folders`, `tags`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -155,6 +156,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. Their downloads, and the built-in model's, take a `deino-net` client per call (`composition::model_downloads`); no engine holds one. |
 | `summary/` | The legacy summary commands and `summary_processes` lifecycle (`service.rs`, generation through `deino_core::summaries`, templates from the database through `features/templates/summary_bridge.rs`), and the built-in model manager and sidecar process (`summary_engine/`). |
 | `features/templates*`, `features/profile*` | The `templates` plugin (library, import/export, preview, a meeting's template and its reason) and the `profile` plugin (save the profile, read the AI context); `composition/notes.rs` builds both services and, at startup, syncs the built-in catalogue, imports the legacy templates folder and makes sure the "Me" person exists. |
+| `features/folders*`, `features/tags*`, `composition/organize.rs` | The `folders` plugin (the tree, folder edits, filing, rules) and the `tags` plugin (CRUD, a meeting's tags, apply/remove; event `MeetingTagged`). `Organize` builds both services and the auto-tagger over the gateway; `composition/pipeline.rs` wires the pipeline's `StagePorts`, including the auto-filer. |
 | `notifications/`, `tray.rs`, `onboarding.rs`, `updater/` | OS integration. Notification switches and onboarding progress are sections of the typed settings. |
 
 ## 4. Frontend (`frontend/src`)
@@ -164,7 +166,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `main.tsx` | Applies the saved theme, creates the query client and the router (`router.tsx`, which passes `{ queryClient }` to every route's context for loaders) and mounts them. |
 | `routes/` | TanStack Router file routes, thin: each renders one feature screen. `/design` (dev builds only) shows every token and primitive in both themes. |
 | `styles/` | `tokens.css` (the `ui.md` §2 design tokens for light and dark, mapped to Tailwind utilities with `@theme inline`; ADR 0015), `globals.css` (base layer, focus mode), `notes.css` (the note typography shared by the notepad and the summary: headings, lists, checklists, person chips, citations, AI vs user text). |
-| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `pipeline` (the processing-status strip in the meeting header: stage statuses, retry, `PipelineProgress` refresh), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `network` (Settings → Privacy → Network: offline mode, services, the egress log), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `templates` (Settings → Templates: library, editor with reorderable sections, auto rules and a prompt preview; the Notes tab's template picker with its reason and regenerate prompt; the notepad's `/template` TipTap suggestion), `profile` (Settings → Profile and the "What the AI sees" preview), `notepad` (NOT-01: the TipTap 3 editor, lazily loaded; "My notes" on the meeting page, the record screen's live notepad and its draft adoption, `NotepadWindow`, the summary document, autosave, @mentions, images, the `/template` command), `record` (the live notepad beside the live transcript), `developer`, `design-system` (dev only), `_example`. |
+| `features/<feature>/` | `api.ts` (generated commands, `unwrap`ped), `queries.ts` (keys and hooks with `meta.tables`), `hooks/`, `components/`, `copy.ts`, `types.ts`, `index.ts` (the only import path for other code; `search.ts` for URL params). Today: `meetings` (data and the Meetings page), `meeting` (the meeting page and its slots), `pipeline` (the processing-status strip in the meeting header: stage statuses, retry, `PipelineProgress` refresh), `shell` (sidebar, title bar, ⌘K palette, ⌘J chat bar, shortcuts, layout store), `appearance` (theme), `settings` (`useSettings`, key status, `SettingsSync`, which also applies the saved theme; the sectioned screen), `network` (Settings → Privacy → Network: offline mode, services, the egress log), `llm` (Settings → AI: providers with masked keys, the per-route model table with a streamed Test, and the model lists the inherited pickers use), `templates` (Settings → Templates: library, editor with reorderable sections, auto rules and a prompt preview; the Notes tab's template picker with its reason and regenerate prompt; the notepad's `/template` TipTap suggestion), `profile` (Settings → Profile and the "What the AI sees" preview), `notepad` (NOT-01: the TipTap 3 editor, lazily loaded; "My notes" on the meeting page, the record screen's live notepad and its draft adoption, `NotepadWindow`, the summary document, autosave, @mentions, images, the `/template` command), `record` (the live notepad beside the live transcript), `folders` (ORG-05: the sidebar tree under Folders with drag and drop and keyboard moves, the folder page with its description and auto-add rules, Unfiled, "Add to folder" menus, the series toast), `tags` (ORG-06: the Tags page, the meeting header's tag chips and "Add tag" combobox, the Meetings page tag filter, the auto-tag switch), `developer`, `design-system` (dev only), `_example`. |
 | `lib/ipc/` | `generated/` (tauri-specta output, never edited), `result.ts` (`unwrap`, `IpcError`), `query-client.ts`, `events.ts` (`DbChanged` bridge, `useIpcEvent`), `ipc-query-provider.tsx`. |
 | `dev/mock-ipc/` | `pnpm dev:mock` only (never in a production bundle): one mock per generated module (`<feature>.ts`, `satisfies typeof Generated.commands`), an in-memory `MockDatabase` over the fixture meetings that emits `DbChanged`, and a small, shrinking legacy `invoke` shim (`legacy*.ts`). |
 | `features/developer/` | Settings → Developer (debug builds only, loaded lazily): seed the fixture meetings through the `dev` plugin. |
@@ -282,6 +284,29 @@ default is "Auto", the LLM classifier on `tagging`; else General. The answer
 carries a `ChoiceReason` the picker shows. The `legacy_summary` stage uses
 `auto_choice` for meetings without a chosen template, and the legacy summary
 reads the template's instructions and skeleton from the database.
+
+### Folders and tags (ORG-05, ORG-06, ADR 0024)
+
+A folder is a node in one tree (`folders.parent_id`; `FolderRepo::move_folder`
+refuses cycles); a meeting can sit in many folders (`meeting_folders`), and
+"Unfiled" is the smart folder of meetings in none. Deleting a folder deletes
+its subfolders and rules and keeps every meeting. Auto-add rules are rows in
+`folder_rules`, one per rule, typed in Rust as `FolderRule`:
+
+- `series`: future meetings of a recurring calendar series. Adding a meeting
+  from a series to a folder by hand offers "Auto-add future meetings in this
+  series?" (the response's `seriesOffer`); removing it again drops the rule.
+- `tag`: meetings carrying a tag (the rule goes with the tag).
+- `attendee_domain`: meetings with an attendee at an email domain.
+
+After a meeting is processed, `auto_tag` (order 70) asks the `tagging` route
+which of the user's existing tags fit, from each tag's description and up to
+three recent tagged examples, and applies them as `ai`; it skips when the
+user tagged the meeting by hand, when Settings → organize turns it off, or
+when there is nothing to read. `auto_folder` (order 75) then evaluates every
+rule against the meeting's series, tags (including those just applied) and
+attendee domains, and files it into each matching folder. Neither stage ever
+removes a filing or a tag.
 
 ### Settings and secrets (FND-06)
 
@@ -417,6 +442,8 @@ erDiagram
   calendar_events |o--o{ meetings : "recorded as"
   folders |o--o{ folders : "parent_id"
   folders ||--o{ meeting_folders : holds
+  folders ||--o{ folder_rules : "auto-adds by"
+  tags |o--o{ folder_rules : "matched by"
   meetings ||--o{ meeting_folders : "filed in"
   tags ||--o{ meeting_tags : labels
   meetings ||--o{ meeting_tags : "tagged"
@@ -502,6 +529,16 @@ erDiagram
     TEXT id PK
     TEXT parent_id FK "no cycles: FolderRepo::move_folder"
     TEXT name "unique among siblings"
+    TEXT icon
+    TEXT description
+  }
+  folder_rules {
+    TEXT id PK
+    TEXT folder_id FK "CASCADE"
+    TEXT kind "series|tag|attendee_domain"
+    TEXT series_id "kind = series"
+    TEXT tag_id FK "kind = tag, CASCADE"
+    TEXT domain "kind = attendee_domain, lower case"
   }
   tags {
     TEXT id PK
@@ -604,7 +641,7 @@ tables are omitted from the diagram's attributes.
   `plugin:notes:notes-saved` (`NotesSaved`, every autosave, for other windows),
   `plugin:settings:settings-changed` (`SettingsChanged`, the whole settings
   document), `plugin:llm:ollama-pull` (Ollama download progress), `plugin:pipeline:pipeline-progress` (`PipelineProgress { meetingId, stage,
-  status }`, every stage status change), `plugin:detection:meeting-detected` / `meeting-ended` / `prompt-closed` (the prompt window) and `recording-requested` (the main window's shell starts recording), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
+  status }`, every stage status change), `plugin:detection:meeting-detected` / `meeting-ended` / `prompt-closed` (the prompt window) and `recording-requested` (the main window's shell starts recording), `plugin:tags:meeting-tagged` (`MeetingTagged { meetingId, tagId, appliedBy }`, a tag newly applied by the user, the AI or an automation), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
   `recording-stopped`, …).
 - **Legacy commands** (`invoke('api_…')`): about 150 app commands, not
   ACL-checked, in `legacy.rs`. Never add to them.
@@ -628,7 +665,7 @@ tables are omitted from the diagram's attributes.
 | A transcription lane | `deino_stt::Lane` + `EngineSlot::Live(lane)` (one worker each); start a `LiveSession` per lane from `stt/runtime.rs` (CAP-02 adds the microphone and system lanes). |
 | A transcription engine family | A `deino_stt::engine::Engine` implementation served by `worker::run` (transcribe-cpp covers Parakeet and Whisper GGUF/`.bin`). |
 | A meeting app, browser or denied app | `crates/deino-detect/src/classify/tables.rs` (bundle ID, platform, weak or strong); a meeting URL shape in `url.rs`; both are table-tested. |
-| A pipeline stage | A `PipelineStage` in `crates/deino-pipeline/src/stages/<stage>.rs` (idempotent; user-safe messages), one line in `registry::stages` (plus a `StagePorts` field and its adapter in `composition.rs` if it needs a new port), and its label in `frontend/src/features/pipeline/copy.ts`. |
+| A pipeline stage | A `PipelineStage` in `crates/deino-pipeline/src/stages/<stage>.rs` (idempotent; user-safe messages), one line in `registry::stages` (plus a `StagePorts` field and its adapter in `composition/pipeline.rs` if it needs a new port), and its label in `frontend/src/features/pipeline/copy.ts`. |
 | A diarization model or parameter | `crates/deino-diarize/src/models.rs` (pinned URL, size, SHA-256; a new embedding model needs a new `EMBEDDING_MODEL_ID`) or `policy.rs`; re-run `diarize-bench` (`docs/perf/diarization.md`). |
 | A built-in note template | A `BuiltinTemplate` in `crates/deino-core/src/templates/builtin/*.rs` and its line in `CATALOG`; bump `version` whenever an existing one changes, so `BuiltinSync` upgrades installs (user copies are never touched). `builtin_tests.rs` validates every entry. |
 | An LLM route | A `Route` variant (name, tier) in `crates/deino-llm/src/route.rs`, a migration widening the `llm_calls.route` CHECK, its label in `frontend/src/features/llm/copy.ts`; then call `Gateway` with it. |
