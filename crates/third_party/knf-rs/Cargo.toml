@@ -1,0 +1,24 @@
+[package]
+name = "knf-rs"
+version = "0.3.2"
+description = "Kaldi filterbank features for the speaker-embedding model (vendored knf-rs, pyannote-rs@e23bd29)"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+# knf-rs is MIT (LICENSE-knf-rs); the bundled kaldi-native-fbank 1.20.1 C++
+# sources are Apache-2.0 (LICENSE-kaldi-native-fbank).
+license = "MIT AND Apache-2.0"
+links = "knfc"
+
+[lib]
+path = "src/knf_rs.rs"
+
+[dependencies]
+thiserror.workspace = true
+
+[build-dependencies]
+# Compiles the C++ sources directly: no CMake, no bindgen (upstream used both).
+cc = "1.2.62"
+
+[lints]
+workspace = true

@@ -1,7 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/*",
+    "crates/deino-*",
+    # Vendored third-party crates, each with its licence files.
+    "crates/third_party/*",
     "frontend/src-tauri",
     "llama-helper",
 ]
@@ -36,6 +38,7 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
+deino-diarize = { path = "crates/deino-diarize" }
 deino-domain = { path = "crates/deino-domain" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }

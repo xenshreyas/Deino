@@ -11,7 +11,7 @@ path = "src/deino_pipeline.rs"
 
 [features]
 # Fakes for other crates' tests (`FakeSleeper`, `RecordedProgress`).
-test-support = ["deino-domain/test-support"]
+test-support = ["deino-core/test-support", "deino-domain/test-support"]
 
 [dependencies]
 async-trait.workspace = true

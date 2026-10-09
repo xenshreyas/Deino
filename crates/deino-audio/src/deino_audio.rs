@@ -29,6 +29,7 @@
 //! | [`fmp4`] | Fragmented MP4 box scanning and `truncate_to_playable` |
 //! | [`recovery`] | Launch recovery of unclosed recordings |
 //! | [`finalize`] | Flat per-track files and the −6 dB mix |
+//! | [`decode`] | A finished track back as mono PCM at any rate (post-meeting stages) |
 //! | [`health`] | `HealthEvent`s on a bounded channel; the `DiskSpace` port |
 //! | [`recorder`] | `Recorder`: one recording, start to stop |
 //!
@@ -42,6 +43,7 @@
 //! writer logic) builds and is tested on every platform.
 
 pub mod clock;
+pub mod decode;
 pub mod durability;
 pub mod encoder;
 pub mod finalize;
@@ -64,6 +66,7 @@ mod fmp4_fixture;
 #[cfg(any(test, feature = "test-support"))]
 pub use clock::FakeHostClock;
 pub use clock::{HostClock, SystemHostClock};
+pub use decode::{DecodeError, read_mono};
 #[cfg(target_os = "macos")]
 pub use encoder::CmafEncoderFactory;
 #[cfg(any(test, feature = "test-support"))]

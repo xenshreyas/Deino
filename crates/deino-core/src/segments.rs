@@ -5,6 +5,13 @@
 //! in time order; [`SpeakerRepo`] keeps each meeting's voices and who they
 //! belong to. [`SqliteSegmentRepo`] implements all three.
 //!
+//! Diarization (CAP-03) writes through two of them:
+//! [`SpeakerRepo::replace_speakers`] stores the new speakers with their
+//! [`SpeakerVoice`] (centroid, model, speech time), then
+//! [`SegmentWriter::reattribute`] points segments at them, splitting a
+//! segment where the speaker changes. Each is one transaction; running the
+//! stage again replaces both.
+//!
 //! `transcript_segments` replaced the legacy `transcripts` table in FND-07.
 //! Legacy code still reaches it through the `transcripts` compatibility view
 //! (ADR 0012) until FND-05b, CAP-08, CAP-11 and TRN-01 port it here.
@@ -21,9 +28,15 @@ mod repo_tests;
 mod speaker_repo;
 #[cfg(test)]
 mod speaker_repo_tests;
+mod voices;
+#[cfg(test)]
+mod voices_tests;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::FakeSegmentRepo;
-pub use model::{NewSegment, Page, Segment, Speaker, WordTiming};
+pub use model::{
+    NewSegment, NewSpeaker, Page, Reattribution, Segment, SegmentPiece, Speaker, SpeakerVoice,
+    WordTiming,
+};
 pub use repo::{SegmentReader, SegmentWriter, SqliteSegmentRepo};
 pub use speaker_repo::SpeakerRepo;

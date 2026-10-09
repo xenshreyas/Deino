@@ -1,0 +1,57 @@
+[package]
+name = "deino-diarize"
+version = "0.1.0"
+description = "Deino's local speaker diarization: pyannote segmentation, WeSpeaker embeddings, clustering, voiceprint matching and the model store"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_diarize.rs"
+
+[[bin]]
+name = "diarize-bench"
+path = "src/bin/diarize_bench.rs"
+required-features = ["bench"]
+
+[features]
+# The DER/RTF harness (`cargo run -p deino-diarize --release --features bench
+# --bin diarize-bench`); reads WAV and RTTM files.
+bench = ["dep:deino-testkit", "dep:hound", "dep:serde_json"]
+
+[dependencies]
+async-trait.workspace = true
+deino-audio = { path = "../deino-audio" }
+deino-core.workspace = true
+deino-domain.workspace = true
+# Filterbank features for the embedding model (vendored, MIT + Apache-2.0).
+knf-rs = { path = "../third_party/knf-rs" }
+log.workspace = true
+# The ONNX Runtime binding the app already uses for Parakeet (same pin).
+ort = "=2.0.0-rc.10"
+thiserror.workspace = true
+tokio = { workspace = true }
+# The cancel token of deino-core's verified downloader.
+tokio-util = "0.7.18"
+
+deino-testkit = { workspace = true, optional = true }
+hound = { version = "=3.5.1", optional = true }
+serde_json = { workspace = true, optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# The speaker-embedding model runs through Core ML (CPU + Neural Engine):
+# bit-identical output at about a tenth of the CPU (spike-diarization.md).
+ort = { version = "=2.0.0-rc.10", features = ["coreml"] }
+
+[dev-dependencies]
+deino-core = { workspace = true, features = ["test-support"] }
+deino-db.workspace = true
+deino-domain = { workspace = true, features = ["test-support"] }
+# Fixture audio, ground truth and the seeded database for the model checks.
+deino-testkit = { workspace = true, features = ["test-support"] }
+# SHA-256 pins of the store tests' fake model files.
+sha2 = "0.10.9"
+tempfile = "3.3.0"
+
+[lints]
+workspace = true

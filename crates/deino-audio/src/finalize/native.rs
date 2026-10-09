@@ -11,7 +11,7 @@ use crate::durability::{full_fsync, rename_durably};
 use crate::manifest::{
     ManifestStore, RecordingManifest, RecordingStatus, SegmentManifest, SegmentState,
 };
-use crate::units::{Frames, Track};
+use crate::units::{Frames, STORAGE_RATE, Track};
 
 /// Frames decoded, mixed or written per step (about 170 ms).
 const BLOCK_FRAMES: usize = 8_192;
@@ -80,7 +80,7 @@ fn splice(
     let mut block = vec![0.0; BLOCK_FRAMES];
     for segment in segments {
         position += write_silence(&mut writer, segment.first_frame - position)?;
-        let mut reader = PcmReader::open(&dir.join(segment.relative_path(track)))?;
+        let mut reader = PcmReader::open(&dir.join(segment.relative_path(track)), STORAGE_RATE)?;
         loop {
             let read = reader.read(&mut block)?;
             let Some(samples) = block.get(..read).filter(|samples| !samples.is_empty()) else {
@@ -110,8 +110,8 @@ fn write_silence(writer: &mut AacWriter, frames: Frames) -> Result<Frames, Final
 fn mix(microphone: &Path, system: &Path, output: &Path) -> Result<Frames, FinalizeError> {
     let temp = temp_path(output);
     remove_if_present(&temp)?;
-    let mut mic_reader = PcmReader::open(microphone)?;
-    let mut system_reader = PcmReader::open(system)?;
+    let mut mic_reader = PcmReader::open(microphone, STORAGE_RATE)?;
+    let mut system_reader = PcmReader::open(system, STORAGE_RATE)?;
     let mut writer = AacWriter::create(&temp, Container::Mp4)?;
     let (mut mic_block, mut system_block) = (vec![0.0; BLOCK_FRAMES], vec![0.0; BLOCK_FRAMES]);
     let mut mixed = Vec::with_capacity(BLOCK_FRAMES);

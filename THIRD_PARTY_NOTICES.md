@@ -63,6 +63,15 @@ Adapted in Deino:
 - `crates/deino-llm/tests/llm_eval/`: the libtest-mimic eval harness
   (contract, smoke and live trials) and its `Expectation` enum, after
   `crates/template-eval/src/eval/{expectations.rs,harness.rs}`.
+- `crates/deino-diarize/` (CAP-03): the speaker diarizer, ported from
+  `crates/pyannote-local` (`pipeline.rs`, `segmentation.rs`,
+  `clustering.rs`, `metrics.rs`), `crates/embedding/src/onnx/mod.rs` and
+  `crates/onnx/src/lib.rs`; the voiceprint matching primitives and
+  enrolment spans from `crates/voiceprint/src/{lib,matching}.rs`.
+- `crates/deino-core/src/diarization/plan.rs` and `assign.rs`: channel
+  planning (the in-person shared-microphone rule) from
+  `crates/listener2-core/src/batch/diarize.rs`, and word-to-speaker
+  assignment from `pyannote-local::assign_words`.
 
 MIT License
 
@@ -305,3 +314,55 @@ bundled with the app; they are fetched on first use.
 
 Licensed by NVIDIA Corporation under the NVIDIA Open Model License.
 https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/
+
+---
+
+## OpenWhispr
+
+Source: https://github.com/OpenWhispr/openwhispr, MIT License.
+
+Adapted in Deino: `crates/deino-diarize/src/prune.rs` (phantom-speaker pruning
+and collapse detection, from `src/helpers/diarizationPolicy.js`) and
+`crates/deino-diarize/src/online.rs` (the threshold-plus-margin live speaker
+rules, from `src/helpers/liveSpeakerIdentifier.js`).
+
+Copyright (c) 2024 OpenWhispr Team. Licensed under the MIT License (the
+same terms as the Anarlog notice above).
+
+---
+
+## knf-rs and kaldi-native-fbank
+
+`crates/third_party/knf-rs/` vendors knf-rs 0.3.2
+(https://github.com/thewh1teagle/pyannote-rs, revision `e23bd29`, MIT License,
+`LICENSE-knf-rs`), which wraps kaldi-native-fbank 1.20.1
+(https://github.com/csukuangfj/kaldi-native-fbank, Apache License 2.0,
+`LICENSE-kaldi-native-fbank`). Deino's changes: the C++ is compiled with `cc`
+instead of CMake and bindgen, and the Rust wrapper returns typed values and
+errors; the C++ sources are unchanged.
+
+---
+
+## pyannote segmentation-3.0 (model weights)
+
+Downloaded on demand (not bundled) from
+https://huggingface.co/onnx-community/pyannote-segmentation-3.0 (revision
+`733a93b`, file `onnx/model.onnx`, SHA-256 `057ee564…ea25`). Original model:
+https://huggingface.co/pyannote/segmentation-3.0, MIT License,
+Copyright (c) 2023 CNRS (Hervé Bredin and contributors).
+
+---
+
+## WeSpeaker ResNet34-LM (model weights)
+
+Downloaded on demand (not bundled) from
+https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM (revision
+`f0c48c2`, file `voxceleb_resnet34_LM.onnx`, SHA-256 `7bb2f06e…c068`).
+
+"wespeaker-voxceleb-resnet34-LM" by the WeSpeaker authors (Hongji Wang,
+Chengdong Liang, Shuai Wang, Zhengyang Chen, Binbin Zhang, Xu Xiang, Yanlei
+Deng and Yanmin Qian), trained on VoxCeleb, is licensed under the Creative
+Commons Attribution 4.0 International License (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/). Deino uses it unmodified to
+compute speaker embeddings. Paper: "WeSpeaker: A Research and Production
+oriented Speaker Embedding Learning Toolkit", ICASSP 2023.

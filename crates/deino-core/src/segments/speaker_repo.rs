@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use deino_db::DbError;
 use deino_domain::{MeetingId, PaletteColor, PersonId, SpeakerId};
 
-use super::{Speaker, SqliteSegmentRepo};
+use super::{NewSpeaker, Speaker, SpeakerVoice, SqliteSegmentRepo, voices};
 
 /// Stores the speakers of each meeting's transcript.
 #[async_trait]
@@ -27,6 +27,19 @@ pub trait SpeakerRepo: Send + Sync {
 
     /// Removes the speaker; its segments keep their text and lose the speaker.
     async fn remove_speaker(&self, id: &SpeakerId) -> Result<bool, DbError>;
+
+    /// Replaces every speaker of `meeting` except the user's own (`is_me`)
+    /// with `speakers`, in one transaction: a new diarization result.
+    /// Segments of a removed speaker keep their text and lose the speaker.
+    async fn replace_speakers(
+        &self,
+        meeting: &MeetingId,
+        speakers: &[NewSpeaker],
+    ) -> Result<(), DbError>;
+
+    /// The voice diarization stored for the speaker; `None` for an unknown
+    /// speaker or one without a voice.
+    async fn voice(&self, id: &SpeakerId) -> Result<Option<SpeakerVoice>, DbError>;
 }
 
 #[async_trait]
@@ -81,5 +94,17 @@ impl SpeakerRepo for SqliteSegmentRepo {
             .execute(self.database.writer())
             .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    async fn replace_speakers(
+        &self,
+        meeting: &MeetingId,
+        speakers: &[NewSpeaker],
+    ) -> Result<(), DbError> {
+        voices::replace(&self.database, meeting, speakers).await
+    }
+
+    async fn voice(&self, id: &SpeakerId) -> Result<Option<SpeakerVoice>, DbError> {
+        voices::voice(&self.database, id).await
     }
 }

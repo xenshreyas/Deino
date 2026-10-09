@@ -12,6 +12,8 @@ extend-exclude = [
     "frontend/src/routeTree.gen.ts",
     "frontend/src/lib/ipc/generated/",
     ".sqlx/",
+    # Vendored third-party C++ sources, kept verbatim.
+    "crates/third_party/*/kaldi-native-fbank/",
 ]
 
 [default.extend-words]

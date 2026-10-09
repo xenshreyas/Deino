@@ -3,12 +3,15 @@
 //!
 //! | Order | Stage | Until |
 //! |---|---|---|
+//! | 30 | [`DiarizeStage`] (`diarize`) | |
 //! | 50 | [`LegacySummaryStage`] (`legacy_summary`) | NOT-02's `enhance_notes` replaces it |
 //!
 //! PARITY_PLAN §4.2 lists the orders the later cards' stages take.
 
+mod diarize;
 mod legacy_summary;
 
+pub use diarize::DiarizeStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use legacy_summary::RecordedSummaries;
 pub use legacy_summary::{LegacySummaryStage, Summarizer, SummaryInput};

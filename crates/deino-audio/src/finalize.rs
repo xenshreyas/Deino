@@ -15,7 +15,7 @@
 #[cfg(target_os = "macos")]
 mod export;
 #[cfg(target_os = "macos")]
-mod ext_audio;
+pub(crate) mod ext_audio;
 mod mix;
 #[cfg(target_os = "macos")]
 mod native;

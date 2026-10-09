@@ -22,6 +22,7 @@ export const statusLabels: Record<JobStatus, string> = {
 
 /** Readable names of the stages; unknown stages show their ID. */
 const stageLabels: Partial<Record<string, string>> = {
+  diarize: 'Speakers',
   legacy_summary: 'Summary',
 };
 

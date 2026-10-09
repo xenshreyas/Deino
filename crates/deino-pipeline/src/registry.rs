@@ -6,11 +6,13 @@
 
 use std::sync::Arc;
 
+use deino_core::diarization::TrackDiarizer;
 use deino_core::meetings::MeetingLifecycleRepo;
-use deino_core::segments::SegmentReader;
-use deino_domain::StageId;
+use deino_core::people::AttendeeRepo;
+use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
+use deino_domain::{Clock, StageId};
 
-use crate::stages::{LegacySummaryStage, Summarizer};
+use crate::stages::{DiarizeStage, LegacySummaryStage, Summarizer};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -23,11 +25,48 @@ pub struct StagePorts {
     pub meetings: Arc<dyn MeetingLifecycleRepo>,
     /// The legacy summariser (until NOT-02).
     pub summaries: Arc<dyn Summarizer>,
+    /// Who was invited (diarization's speaker counts).
+    pub attendees: Arc<dyn AttendeeRepo>,
+    /// Segment attributions.
+    pub segment_writer: Arc<dyn SegmentWriter>,
+    /// The meetings' speakers.
+    pub speakers: Arc<dyn SpeakerRepo>,
+    /// The diarization engine (`deino-diarize` in the app).
+    pub diarizer: Arc<dyn TrackDiarizer>,
+    /// IDs for rows stages create.
+    pub clock: Arc<dyn Clock>,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl StagePorts {
+    /// Ports over in-memory fakes, for tests that replace the ones they use
+    /// (`StagePorts { segments, ..StagePorts::fakes() }`).
+    pub fn fakes() -> Self {
+        use deino_core::diarization::FakeTrackDiarizer;
+        use deino_core::meetings::FakeMeetingRepo;
+        use deino_core::people::FakePeopleRepo;
+        use deino_core::segments::FakeSegmentRepo;
+        use deino_domain::FakeClock;
+
+        let segments = Arc::new(FakeSegmentRepo::default());
+        Self {
+            segments: segments.clone(),
+            meetings: Arc::new(FakeMeetingRepo::default()),
+            summaries: Arc::new(crate::stages::RecordedSummaries::default()),
+            attendees: Arc::new(FakePeopleRepo::default()),
+            segment_writer: segments.clone(),
+            speakers: segments,
+            diarizer: Arc::new(FakeTrackDiarizer::default()),
+            clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
+        }
+    }
 }
 
 /// Every stage of the post-meeting pipeline, sorted by order.
 pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
     sorted(vec![
+        // 30 · CAP-03: speakers from the recording.
+        Arc::new(DiarizeStage::new(ports)),
         // 50 · until NOT-02's enhance_notes replaces it.
         Arc::new(LegacySummaryStage::new(ports)),
     ])
@@ -92,19 +131,11 @@ impl Registry {
 
 #[cfg(test)]
 mod tests {
-    use deino_core::meetings::FakeMeetingRepo;
-    use deino_core::segments::FakeSegmentRepo;
-
     use super::*;
-    use crate::stages::RecordedSummaries;
     use crate::testing::{FakeStage, job};
 
     fn ports() -> StagePorts {
-        StagePorts {
-            segments: Arc::new(FakeSegmentRepo::default()),
-            meetings: Arc::new(FakeMeetingRepo::default()),
-            summaries: Arc::new(RecordedSummaries::default()),
-        }
+        StagePorts::fakes()
     }
 
     #[test]
@@ -116,7 +147,7 @@ mod tests {
         assert_eq!(Registry::new(stages.clone()).stages().len(), stages.len());
         assert_eq!(
             Registry::new(stages).ids(),
-            [StageId::new("legacy_summary")]
+            [StageId::new("diarize"), StageId::new("legacy_summary")]
         );
     }
 

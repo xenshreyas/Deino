@@ -20,6 +20,7 @@
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod diarize;
 mod network;
 mod stt;
 
@@ -27,7 +28,9 @@ use std::sync::Arc;
 
 pub(crate) use stt::attach_stt;
 
+use deino_core::diarization::TrackDiarizer;
 use deino_core::meetings::{MeetingLifecycleService, MeetingService, SqliteMeetingRepo};
+use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, LlmAccess, SettingsError,
@@ -109,11 +112,13 @@ impl Services {
     }
 }
 
-/// What the pipeline gets from the app: where progress goes, and the legacy
-/// summary service behind the `legacy_summary` stage.
+/// What the pipeline gets from the app: where progress goes, the legacy
+/// summary service behind the `legacy_summary` stage, and the diarization
+/// engine behind `diarize`.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) summaries: Arc<dyn Summarizer>,
+    pub(crate) diarizer: Arc<dyn TrackDiarizer>,
 }
 
 /// The meetings lifecycle and the post-meeting pipeline it starts (FND-08).
@@ -135,10 +140,16 @@ impl Pipeline {
             meetings.clone(),
             Arc::clone(clock),
         ));
+        let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
         let ports = StagePorts {
-            segments: Arc::new(SqliteSegmentRepo::new(database.clone())),
+            segments: segments.clone(),
             meetings: meetings.clone(),
             summaries: adapters.summaries,
+            attendees: Arc::new(SqlitePeopleRepo::new(database.clone())),
+            segment_writer: segments.clone(),
+            speakers: segments,
+            diarizer: adapters.diarizer,
+            clock: Arc::clone(clock),
         };
         let pipeline = Arc::new(PipelineService::new(PipelineDeps {
             jobs: Arc::new(SqliteJobRepo::new(database.clone())),
@@ -193,7 +204,14 @@ fn attach_pipeline(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>)
     let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
         return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
     };
+    let diarizer = match diarize::track_diarizer(app) {
+        Ok(diarizer) => diarizer,
+        Err(error) => {
+            return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");
+        }
+    };
     let adapters = PipelineAdapters {
+        diarizer,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         summaries: Arc::new(features::pipeline::LegacySummarizer::new(
             app.clone(),
@@ -335,6 +353,7 @@ mod tests {
         let adapters = PipelineAdapters {
             progress: Arc::new(RecordedProgress::default()),
             summaries: summaries.clone(),
+            diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);

@@ -24,7 +24,8 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
   persister (F_FULLFSYNC and the manifest every 5 s) and `Recorder`.
 - `recording.json` (`RecordingManifest`, versioned, atomically written).
 - `fmp4::truncate_to_playable`, `recovery::recover_recording`,
-  `finalize::finalize_recording`.
+  `finalize::finalize_recording`, and `decode::read_mono` (a finished
+  track as mono PCM at any rate, priming trimmed; diarization reads 16 kHz).
 - `HealthEvent` (`Stalled`, `Resumed`, `FramesDropped`, `DiskLow`,
   `StorageFailed`) on a bounded channel.
 

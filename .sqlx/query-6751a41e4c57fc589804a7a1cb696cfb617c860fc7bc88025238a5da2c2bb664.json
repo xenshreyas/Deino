@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO transcript_segments (id, meeting_id, channel, speaker_id, start_ms, end_ms, text, words_json)\n         SELECT ?1, meeting_id, channel, ?2, ?3, ?4, ?5, ?6 FROM transcript_segments WHERE id = ?7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "6751a41e4c57fc589804a7a1cb696cfb617c860fc7bc88025238a5da2c2bb664"
+}
