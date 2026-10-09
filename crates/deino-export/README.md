@@ -2,7 +2,7 @@
 
 ## Role
 
-Deino's meeting exports as pure renderers (EXP-01, EXP-02, ADR 0022): a
+Deino's meeting exports as pure renderers (EXP-01, EXP-02, ADR 0025): a
 typed `MeetingExport` and `RenderOptions` in, a file's bytes out.
 
 ## Owns

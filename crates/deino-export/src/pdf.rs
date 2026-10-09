@@ -1,4 +1,4 @@
-//! A PDF typeset with Typst (ADR 0022): the template in `template.typ`, the
+//! A PDF typeset with Typst (ADR 0025): the template in `template.typ`, the
 //! meeting as JSON data, Inter bundled in the binary.
 //!
 //! Typst runs in-process and is deterministic: the same meeting gives the

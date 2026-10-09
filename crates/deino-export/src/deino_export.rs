@@ -1,4 +1,4 @@
-//! Meeting exports as pure renderers (EXP-01, EXP-02, ADR 0022).
+//! Meeting exports as pure renderers (EXP-01, EXP-02, ADR 0025).
 //!
 //! Everything here is a function of a [`MeetingExport`] (the typed snapshot
 //! of one meeting that `deino-core`'s export service assembles from the

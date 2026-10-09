@@ -103,6 +103,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
 | `crates/deino-doc` | The note document (ADR 0022): TipTap JSON as typed Rust, Markdown in (`from_markdown`) and out (`to_markdown`, `Lossless`/`Readable`), `validate`, `normalize`; ported from anarlog `crates/tiptap` |
+| `crates/deino-export` | Meeting exports as pure renderers (ADR 0025): `MeetingExport` → Markdown (frontmatter, Obsidian links), TXT, JSON, SRT/VTT, rich HTML, DOCX (`docx-rs`), PDF (Typst + bundled Inter), CSV, `mailto`, file-name templates; `deino-core::export` assembles, auto-exports (stage `auto_export`) and zips the account |
 | `crates/deino-llm` | The LLM gateway (ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router`, providers (Anthropic, OpenAI-compatible, Ollama, built-in llama-helper), askama/minijinja prompts, `MockProvider`, the `llm_calls` usage log (no content). Every LLM call goes through it. |
 | `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
@@ -125,7 +126,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `folders`, `tags`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

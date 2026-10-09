@@ -1,4 +1,4 @@
-// Deino's meeting PDF (EXP-01, ADR 0022).
+// Deino's meeting PDF (EXP-01, ADR 0025).
 //
 // The meeting arrives as data.json (pdf/model.rs). Every string from it is
 // placed as text, never evaluated as markup. Colours are the light-theme

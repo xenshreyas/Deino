@@ -1,5 +1,5 @@
 //! `auto_export` (order 99): the meeting written into the user's notes
-//! folder once everything else has run (EXP-02, ADR 0022).
+//! folder once everything else has run (EXP-02, ADR 0025).
 //!
 //! The rules are `deino_core::export::AutoExportService`: it skips while
 //! auto-export is off, writes by the settings' templates and only ever

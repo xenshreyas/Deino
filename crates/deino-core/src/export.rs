@@ -1,4 +1,4 @@
-//! Exports (EXP-01, EXP-02, ADR 0022): meetings out of Deino as files, on
+//! Exports (EXP-01, EXP-02, ADR 0025): meetings out of Deino as files, on
 //! the clipboard, as email drafts, into a notes vault after every meeting,
 //! and as one archive of the whole account.
 //!

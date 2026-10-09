@@ -20,7 +20,7 @@ serde.workspace = true
 serde_json.workspace = true
 specta.workspace = true
 thiserror.workspace = true
-# PDF (ADR 0022): typeset with the typst compiler and its PDF backend
+# PDF (ADR 0025): typeset with the typst compiler and its PDF backend
 # (Apache-2.0); fonts are the bundled Inter files, never system fonts.
 typst = "=0.15.1"
 typst-layout = "=0.15.1"

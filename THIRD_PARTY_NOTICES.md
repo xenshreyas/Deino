@@ -311,6 +311,13 @@ The full licence ships with the package (`@fontsource-variable/inter/LICENSE`)
 and is available with a FAQ at https://openfontlicense.org. The font is used
 unmodified and is not sold on its own.
 
+The PDF export (EXP-01) embeds four static instances of the same font in
+the app binary: `crates/deino-export/fonts/Inter-{Regular,SemiBold,Italic,SemiBoldItalic}.ttf`,
+instantiated at weights 400 and 600 from the latin and latin-ext subsets of
+`@fontsource-variable/inter` 5.3 with fontTools, with the family name
+"Inter" kept (the OFL has no Reserved Font Name for Inter). The licence is
+next to them in `crates/deino-export/fonts/OFL.txt`.
+
 ---
 
 ## transcribe.cpp
