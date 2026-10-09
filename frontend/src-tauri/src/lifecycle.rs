@@ -1,6 +1,9 @@
 //! Window and run-loop event handlers: hide-to-tray on close, re-focus on
 //! dock click, and resource cleanup on exit.
 
+use std::sync::Arc;
+
+use deino_pipeline::PipelineService;
 use tauri::{AppHandle, Manager, RunEvent, Window, WindowEvent};
 
 use crate::{state::AppState, summary};
@@ -41,8 +44,13 @@ pub(crate) fn on_run_event(app: &AppHandle, event: RunEvent) {
     }
 }
 
-/// Checkpoints the database WAL and stops the llama-helper sidecar.
+/// Stops the pipeline (its interrupted stages resume at the next start),
+/// checkpoints the database WAL and stops the llama-helper sidecar.
 async fn cleanup(app: &AppHandle) {
+    // First, so no stage writes after the database is closed.
+    if let Some(pipeline) = app.try_state::<Arc<PipelineService>>() {
+        pipeline.shutdown().await;
+    }
     match app.try_state::<AppState>() {
         Some(state) => state.db_manager.cleanup().await,
         None => log::warn!("AppState not available for database cleanup (likely first launch)"),

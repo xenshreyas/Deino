@@ -23,13 +23,18 @@ use std::sync::Arc;
 
 pub(crate) use stt::attach_stt;
 
-use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
+use deino_core::meetings::{MeetingLifecycleService, MeetingService, SqliteMeetingRepo};
+use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, LlmAccess, SettingsError,
     SettingsService,
 };
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
+use deino_pipeline::{
+    ClockSleeper, PipelineDeps, PipelineService, PipelineTrigger, ProgressSink, SqliteJobRepo,
+    StagePorts, SummaryGenerator, registry,
+};
 use deino_secrets::{KeychainSecretStore, SecretStore};
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -95,8 +100,64 @@ impl Services {
     }
 }
 
+/// What the pipeline gets from the app: where progress goes, and the legacy
+/// summary service behind the `legacy_summary` stage.
+pub(crate) struct PipelineAdapters {
+    pub(crate) progress: Arc<dyn ProgressSink>,
+    pub(crate) summaries: Arc<dyn SummaryGenerator>,
+}
+
+/// The meetings lifecycle and the post-meeting pipeline it starts (FND-08).
+pub(crate) struct Pipeline {
+    lifecycle: Arc<MeetingLifecycleService>,
+    pipeline: Arc<PipelineService>,
+}
+
+impl Pipeline {
+    /// Builds the pipeline over `database` with the registered stages, and
+    /// subscribes it to the lifecycle so `processing` meetings enqueue.
+    pub(crate) fn build(
+        database: &Database,
+        clock: &Arc<dyn Clock>,
+        adapters: PipelineAdapters,
+    ) -> Self {
+        let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
+        let lifecycle = Arc::new(MeetingLifecycleService::new(
+            meetings.clone(),
+            Arc::clone(clock),
+        ));
+        let ports = StagePorts {
+            segments: Arc::new(SqliteSegmentRepo::new(database.clone())),
+            meetings: meetings.clone(),
+            summaries: adapters.summaries,
+        };
+        let pipeline = Arc::new(PipelineService::new(PipelineDeps {
+            jobs: Arc::new(SqliteJobRepo::new(database.clone())),
+            stages: registry::stages(&ports),
+            lifecycle: Arc::clone(&lifecycle),
+            meetings,
+            clock: Arc::clone(clock),
+            sleeper: Arc::new(ClockSleeper::new(Arc::clone(clock))),
+            progress: adapters.progress,
+        }));
+        lifecycle.subscribe(Arc::new(PipelineTrigger::new(&pipeline)));
+        Self {
+            lifecycle,
+            pipeline,
+        }
+    }
+
+    /// Starts the runner (reconciling the queue in the background) and
+    /// registers the lifecycle service and the pipeline as Tauri state.
+    pub(crate) fn start_and_manage<R: Runtime>(self, app: &impl Manager<R>) {
+        self.pipeline.start();
+        app.manage(self.lifecycle);
+        app.manage(self.pipeline);
+    }
+}
+
 /// Wires a newly opened database into the app: the legacy `AppState`, every
-/// feature service and the `DbChanged` bridge to the UI.
+/// feature service, the pipeline and the `DbChanged` bridge to the UI.
 ///
 /// Runs once, at startup or from the first-launch `initialize_fresh_database`
 /// command. Feature commands called before that fail with Tauri's "state not
@@ -108,6 +169,15 @@ pub(crate) fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         db_manager: manager,
     });
     Services::build(&database, &clock).manage(app);
+    let adapters = PipelineAdapters {
+        progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
+        summaries: Arc::new(features::pipeline::LegacySummaryGenerator::new(
+            app.clone(),
+            database.writer().clone(),
+            Arc::clone(&clock),
+        )),
+    };
+    Pipeline::build(&database, &clock, adapters).start_and_manage(app);
     attach_llm(app, &database, clock);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, &database);
@@ -192,5 +262,73 @@ mod tests {
 
         let meetings = services.meetings.list().await.unwrap();
         assert_eq!(meetings.len(), 1);
+    }
+
+    /// Records `meeting-1` with one transcript segment, still recording.
+    async fn recording_with_transcript(database: &Database, clock: &FakeClock) {
+        use deino_core::meetings::{MeetingLifecycleRepo, MeetingTitle, NewMeeting};
+        use deino_core::segments::{NewSegment, SegmentWriter};
+        use deino_domain::{Channel, MeetingId, MeetingSource, MeetingStatus, Millis, SegmentId};
+
+        let meeting = NewMeeting {
+            id: MeetingId::new("meeting-1"),
+            title: MeetingTitle::parse("Standup").unwrap(),
+            status: MeetingStatus::Recording,
+            source: MeetingSource::Live,
+            created_at: at("2026-10-08T09:00:00Z"),
+            started_at: None,
+            folder_path: None,
+        };
+        SqliteMeetingRepo::new(database.clone())
+            .create(&meeting)
+            .await
+            .unwrap();
+        let segment = NewSegment {
+            id: SegmentId::generate(clock),
+            meeting_id: meeting.id,
+            channel: Channel::Mixed,
+            speaker_id: None,
+            start: Millis(2_000),
+            end: Millis(3_000),
+            text: "let's ship it".into(),
+            words: Vec::new(),
+        };
+        SqliteSegmentRepo::new(database.clone())
+            .append(&[segment])
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn stopping_a_recording_runs_the_summary_stage_and_readies_the_meeting() {
+        use deino_core::meetings::MeetingLifecycleRepo;
+        use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
+        use deino_pipeline::{RecordedProgress, RecordedSummaries};
+
+        let database = test_db().await;
+        let fake_clock = Arc::new(FakeClock::new(at("2026-10-08T10:00:00Z")));
+        recording_with_transcript(&database, &fake_clock).await;
+        let summaries = Arc::new(RecordedSummaries::default());
+        let adapters = PipelineAdapters {
+            progress: Arc::new(RecordedProgress::default()),
+            summaries: summaries.clone(),
+        };
+        let clock: Arc<dyn Clock> = fake_clock;
+        let wired = Pipeline::build(&database, &clock, adapters);
+        wired.pipeline.reconcile().await.unwrap();
+        let meeting = MeetingId::new("meeting-1");
+
+        wired
+            .lifecycle
+            .transition(&meeting, MeetingEvent::StopRecording)
+            .await
+            .unwrap();
+        wired.pipeline.until_idle().await;
+
+        let requests = summaries.requests();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].transcript, "[00:02] let's ship it");
+        let state = SqliteMeetingRepo::new(database).state(&meeting).await;
+        assert_eq!(state.unwrap().unwrap().status, MeetingStatus::Ready);
     }
 }
