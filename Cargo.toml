@@ -16,3 +16,9 @@ anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.32.0", features = ["full"] }
+
+# Cargo only honours [patch] in the workspace root manifest; in a member's
+# Cargo.toml it is ignored with a warning.
+[patch.crates-io]
+# Unreleased cpal fixes used for microphone capture.
+cpal = { git = "https://github.com/RustAudio/cpal", rev = "51c3b43" }

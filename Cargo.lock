@@ -1091,8 +1091,7 @@ dependencies = [
 [[package]]
 name = "cpal"
 version = "0.15.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "873dab07c8f743075e57f524c583985fbaf745602acbe916a01539364369a779"
+source = "git+https://github.com/RustAudio/cpal?rev=51c3b43#51c3b43c54591203fe3edc9a31ff7595650f7103"
 dependencies = [
  "alsa",
  "core-foundation-sys",
@@ -1497,7 +1496,6 @@ dependencies = [
  "dirs 5.0.1",
  "ebur128",
  "env_logger",
- "esaxx-rs",
  "ffmpeg-sidecar",
  "futures",
  "futures-channel",
@@ -1933,15 +1931,6 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "esaxx-rs"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d817e038c30374a4bcb22f94d0a8a0e216958d4c3dcde369b1439fec4bdda6e6"
-dependencies = [
- "cc",
 ]
 
 [[package]]
