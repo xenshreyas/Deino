@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people SET is_me = 0, updated_at = ?2 WHERE is_me = 1 AND id <> ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7b8eef779a9c6804a653deda4d05e906b10bd3d9a0febe946f08329cdf14fb02"
+}

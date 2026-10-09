@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM template_sections WHERE template_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6c199cb980da6dd9a88db525d3cb9939f129f67919c5f0ff96f6c7560ddc9ad7"
+}

@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT meetings.id AS \"id!: MeetingId\", meetings.title,\n                   meetings.template_id AS \"template_id: TemplateId\",\n                   meetings.started_at AS \"started_at: DateTime<Utc>\",\n                   coalesce(calendar_events.description, '') AS \"description!: String\"\n               FROM meetings\n               LEFT JOIN calendar_events ON calendar_events.id = meetings.calendar_event_id\n               WHERE meetings.id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "started_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description!: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "6bd96f892204043101bed34085d7037b2380c0aaf0c5ca1ca89589a027a17adc"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO template_sections (template_id, position, title, instructions, format)\n             VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "1148f7f38b545c74aec65498f2da1e85953fbe4964c81f24f853314d3111a01b"
+}

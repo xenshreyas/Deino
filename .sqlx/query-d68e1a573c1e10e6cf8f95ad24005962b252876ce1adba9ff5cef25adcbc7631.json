@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO templates (id, name, description, meeting_context, auto_rules_json, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "d68e1a573c1e10e6cf8f95ad24005962b252876ce1adba9ff5cef25adcbc7631"
+}

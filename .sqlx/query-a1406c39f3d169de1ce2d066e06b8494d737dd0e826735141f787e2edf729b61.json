@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's attendees' addresses (?1); NULL for people without one.\nSELECT people.email AS \"email: Email\"\nFROM meeting_attendees\nJOIN people ON people.id = meeting_attendees.person_id\nWHERE meeting_attendees.meeting_id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "email: Email",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "a1406c39f3d169de1ce2d066e06b8494d737dd0e826735141f787e2edf729b61"
+}
