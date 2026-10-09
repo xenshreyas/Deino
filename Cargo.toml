@@ -1,21 +1,91 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/*",
     "frontend/src-tauri",
-    "llama-helper"
+    "llama-helper",
 ]
 
-# Shared workspace settings
 [workspace.package]
-edition = "2021"
-rust-version = "1.77"
+edition = "2024"
+# Kept equal to `rust-toolchain.toml`, so clippy suggests every stable API we can use.
+rust-version = "1.96"
+publish = false
 
-# Shared dependencies that can be inherited by workspace members
+# Versions shared by more than one crate. Members inherit them with
+# `dep = { workspace = true }` and add features locally. Pin the specta set
+# together: tauri-specta, specta and specta-typescript only work as a matched
+# release (the set Handy and anarlog ship with).
 [workspace.dependencies]
 anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+async-trait = "0.1.89"
+chrono = { version = "0.4.44", features = ["serde"] }
+log = "0.4.29"
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.32.0", features = ["full"] }
+specta = { version = "=2.0.0-rc.22", features = ["derive", "chrono", "uuid"] }
+specta-typescript = "=0.0.9"
+sqlx = { version = "0.8.6", default-features = false, features = ["chrono", "macros", "migrate", "runtime-tokio", "sqlite", "uuid"] }
+tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
+thiserror = "2.0.16"
+tokio = { version = "1.52.3", features = ["full"] }
+uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
+
+deino-core = { path = "crates/deino-core" }
+deino-db = { path = "crates/deino-db" }
+deino-domain = { path = "crates/deino-domain" }
+deino-testkit = { path = "crates/deino-testkit" }
+
+# PARITY_PLAN §3A limits and safety rules. Every member opts in with
+# `[lints] workspace = true`; inherited modules are exempted in one place
+# (`frontend/src-tauri/src/legacy_lints.rs`). Thresholds live in `clippy.toml`.
+[workspace.lints.rust]
+missing_docs = "warn"
+unsafe_code = "deny"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Pedantic lints that fight the codebase's conventions rather than catch bugs.
+missing_errors_doc = "allow"         # every error type documents its variants instead
+module_name_repetitions = "allow"    # `meetings::MeetingRepo` reads better than `meetings::Repo`
+must_use_candidate = "allow"         # too noisy for getters; `unused_must_use` covers real cases
+# §3A hard limits; thresholds in clippy.toml.
+cognitive_complexity = "deny"
+excessive_nesting = "deny"
+too_many_arguments = "deny"
+too_many_lines = "deny"
+# No panicking APIs and no debugging leftovers outside tests.
+dbg_macro = "deny"
+expect_used = "deny"
+indexing_slicing = "warn"
+panic = "deny"
+print_stderr = "deny"
+print_stdout = "deny"
+todo = "deny"
+unimplemented = "deny"
+unwrap_used = "deny"
+# Never drop a `Result` or future silently; every suppression explains itself.
+allow_attributes_without_reason = "deny"
+let_underscore_future = "deny"
+let_underscore_must_use = "deny"
+# Architecture rules from clippy.toml (`disallowed-*`).
+disallowed_methods = "deny"
+disallowed_types = "deny"
+
+# Dependencies build optimised while workspace code stays fast to compile, so
+# debug builds of the audio and STT paths run at a usable speed.
+[profile.dev.package."*"]
+opt-level = 1
+debug = false
+
+# The local LLM sidecar is loaded on demand, so it is optimised for size.
+# Cargo honours `[profile]` only in the workspace root; the member's own
+# `[profile.release]` was silently ignored. `lto` cannot be set per package,
+# so the sidecar shares the workspace's release LTO setting (off).
+[profile.release.package.llama-helper]
+codegen-units = 1
+opt-level = "s"
 
 # Cargo only honours [patch] in the workspace root manifest; in a member's
 # Cargo.toml it is ignored with a warning.

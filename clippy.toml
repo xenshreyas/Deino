@@ -1,0 +1,41 @@
+# Clippy thresholds and architecture rules (PARITY_PLAN §3A). The lint levels
+# are in the root Cargo.toml `[workspace.lints]`; run everything through
+# `scripts/clippy.sh`.
+
+# §3A hard limits.
+too-many-lines-threshold = 40
+cognitive-complexity-threshold = 15
+too-many-arguments-threshold = 4
+# Clippy counts every block, including the `impl` and the function body, so 5
+# here is §3A's "nesting depth 3 inside a function body" for a method.
+# Calibrated against the code in crates/; see docs/REVIEW.md.
+excessive-nesting-threshold = 5
+
+# Words that are not code, so `doc_markdown` does not ask for backticks.
+# ".." keeps clippy's defaults (macOS, SQLite, TypeScript, ...).
+doc-valid-idents = ["..", "FFmpeg", "PARITY_PLAN", "SQLite", "TanStack", "UUIDv4", "UUIDv7", "WKWebView"]
+
+# Tests may panic loudly; production code may not.
+allow-dbg-in-tests = true
+allow-expect-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-panic-in-tests = true
+allow-print-in-tests = true
+allow-unwrap-in-tests = true
+
+# Architecture rules. `allow-invalid` keeps a rule quiet in crates that do not
+# depend on the banned crate at all (which is exactly what we want there).
+disallowed-types = [
+    { path = "reqwest::Client", reason = "FND-12: every outbound request goes through deino-net, which owns the only HTTP client", allow-invalid = true },
+    { path = "reqwest::ClientBuilder", reason = "FND-12: every outbound request goes through deino-net, which owns the only HTTP client", allow-invalid = true },
+    { path = "reqwest::blocking::Client", reason = "FND-12: every outbound request goes through deino-net, which owns the only HTTP client", allow-invalid = true },
+]
+disallowed-methods = [
+    { path = "tokio::spawn", reason = "§3.7: background work is a pipeline stage or a tracked task, never fire-and-forget", allow-invalid = true },
+    { path = "tokio::task::spawn", reason = "§3.7: background work is a pipeline stage or a tracked task, never fire-and-forget", allow-invalid = true },
+    { path = "std::time::SystemTime::now", reason = "core logic reads time from the injected deino_domain::Clock so tests control it" },
+    { path = "std::time::Instant::now", reason = "core logic reads time from the injected deino_domain::Clock so tests control it" },
+    { path = "chrono::Utc::now", reason = "core logic reads time from the injected deino_domain::Clock so tests control it", allow-invalid = true },
+    { path = "chrono::Local::now", reason = "core logic reads time from the injected deino_domain::Clock so tests control it", allow-invalid = true },
+    { path = "std::thread::sleep", reason = "blocks a thread; wait on a timer or a signal instead, and never sleep in tests" },
+]

@@ -1,9 +1,33 @@
+//! `llama-helper`: Deino's built-in local LLM, a sidecar process that runs
+//! llama.cpp and answers JSON requests on stdin with JSON lines on stdout.
+
+// Inherited code that predates PARITY_PLAN §3A. FND-09 (LLM gateway) owns
+// its rewrite; until then the strict workspace lints are relaxed here, and
+// only here, in the same way `frontend/src-tauri/src/legacy_lints.rs` does.
+#![allow(
+    unused_doc_comments,
+    clippy::pedantic,
+    clippy::disallowed_methods,
+    clippy::enum_variant_names,
+    clippy::excessive_nesting,
+    clippy::let_underscore_must_use,
+    clippy::print_stderr,
+    clippy::print_stdout,
+    clippy::single_component_path_imports,
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    clippy::uninlined_format_args,
+    clippy::unwrap_used,
+    clippy::useless_conversion,
+    reason = "inherited sidecar code; see legacy_lints.rs for the policy"
+)]
+
 use std::io::{self, BufRead, Write};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::pin::pin;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
@@ -628,12 +652,7 @@ fn main() -> Result<()> {
                         }
 
                         // Generate response with sampling parameters
-                        match state.generate(
-                            prompt,
-                            max_tokens,
-                            sampling,
-                            stop_tokens,
-                        ) {
+                        match state.generate(prompt, max_tokens, sampling, stop_tokens) {
                             Ok(text) => {
                                 send_response(&Response::Response { text, error: None })?;
                             }
@@ -679,7 +698,8 @@ mod tests {
 
     #[test]
     fn generate_request_defaults_penalties_when_omitted() {
-        let json = r#"{"type":"generate","prompt":"summarize","temperature":0.5,"top_k":20,"top_p":0.8}"#;
+        let json =
+            r#"{"type":"generate","prompt":"summarize","temperature":0.5,"top_k":20,"top_p":0.8}"#;
         let request: Request = serde_json::from_str(json).unwrap();
         let Request::Generate {
             temperature,
@@ -690,7 +710,8 @@ mod tests {
             repeat_penalty,
             penalty_last_n,
             ..
-        } = request else {
+        } = request
+        else {
             panic!("expected generate request");
         };
 
@@ -724,7 +745,8 @@ mod tests {
             repeat_penalty,
             penalty_last_n,
             ..
-        } = request else {
+        } = request
+        else {
             panic!("expected generate request");
         };
 

@@ -1,0 +1,38 @@
+# typos-cli spell check, run by scripts/clippy.sh.
+# Add a word here only when it is correct: a name, an acronym or a domain term.
+
+[files]
+extend-exclude = [
+    # Third-party research and quoted reference material, kept verbatim.
+    "docs/research/",
+    "docs/references/",
+    # Generated or vendored files.
+    "*.lock",
+    "frontend/pnpm-lock.yaml",
+    "frontend/src/routeTree.gen.ts",
+    "frontend/src/lib/ipc/generated/",
+    ".sqlx/",
+]
+
+[default.extend-words]
+# Card prefix in PARITY_PLAN ("FND-13").
+FND = "FND"
+fnd = "fnd"
+# Core Audio Format (Apple's .caf container).
+CAF = "CAF"
+caf = "caf"
+# Intel High Definition Audio and the Conexant codec vendor, in device names.
+HDA = "HDA"
+hda = "hda"
+Conexant = "Conexant"
+conexant = "conexant"
+# LokalBot, a product named in the research.
+Lokal = "Lokal"
+
+[default.extend-identifiers]
+# Inherited identifiers, renamed when their files are ported.
+IInpuItemProps = "IInpuItemProps"
+IInpuSwitchProps = "IInpuSwitchProps"
+setisAutoSummary = "setisAutoSummary"
+# A deliberately mangled string in an LLM client test.
+ReAsOnInG_EfFoRt = "ReAsOnInG_EfFoRt"

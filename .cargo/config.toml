@@ -1,0 +1,11 @@
+# Environment for every cargo invocation in this workspace (builds, tests,
+# clippy, rust-analyzer). These values never override a variable that is
+# already set in the shell, so `scripts/sqlx-prepare.sh` can switch offline
+# mode off while it regenerates the query data.
+[env]
+# Deino targets macOS 14.2+ (Core Audio process taps). Keeps the C and C++
+# dependencies (whisper.cpp, llama.cpp, ONNX Runtime) from linking newer symbols.
+MACOSX_DEPLOYMENT_TARGET = "14.2"
+# The `sqlx::query*!` macros read the committed `.sqlx/` query data instead of
+# a live database. Regenerate it with `scripts/sqlx-prepare.sh`.
+SQLX_OFFLINE = "true"
