@@ -781,10 +781,17 @@ Card format:
   - **Rust creates the meeting row** (`status='recording'`) at start and returns `meeting_id` to the UI.
   - Each finalized transcript chunk is written to `transcript_segments` **as it arrives** (the FND-07 table; coordinate by landing FND-07 first or in the same PR).
   - On stop, Rust sets `status='processing'` and enqueues the pipeline (FND-08). The frontend no longer saves transcripts.
-  - **Audio files:** keep writing the mixed `audio.mp4` and **also** write `mic.m4a` and `system.m4a` as separate tracks (needed for CAP-02 and CAP-03 and for playback). Keep checkpoint recovery for all three.
+  - **Audio files (decided by spike, `docs/references/spike-native-recording.md`):** write `mic` and `system` as separate tracks with **AVAssetWriter in CMAF segment-output mode**.
+    - Format: AAC-LC, 64 kbps, 48 kHz, mono.
+    - Segments are 1 s; a delegate appends each segment's bytes to Deino's own `audio/<track>.NNN.m4a.part`.
+    - F_FULLFSYNC every 5 s, plus an atomic `recording.json` manifest holding the durable frame counts.
+    - Recovery uses the box scanner `truncate_to_playable`.
+    - At finalize, passthrough-export to flat `mic.m4a` and `system.m4a`, and build the mixed `audio.mp4` from the two tracks.
+    - **No FFmpeg** (D11). Port the spike code from `~/Documents/GitHub/deino-spikes/native-recording/src/{encoder/cmaf.rs,encoder/asset_writer.rs,recover.rs}`.
+    - **Pitfall:** symphonia 0.5.5 ignores AAC priming (44 ms). Decode Deino's own files with AVFoundation/ExtAudioFile.
   - **Recovery:** on startup, any meeting stuck in `recording` is recovered from checkpoints and moved to `processing`. Remove IndexedDB transcript recovery once this works.
 - **Accept:**
-  - [ ] Killing the app mid-meeting with `kill -9` loses at most about 5 s of transcript and audio, and the meeting appears after relaunch.
+  - [ ] Killing the app mid-meeting with `kill -9` loses at most about 1 s of audio (the spike measured 0.03–0.84 s) and about 5 s of transcript, and the meeting appears after relaunch.
   - [ ] The three audio files exist and are time-aligned within 50 ms.
   - [ ] No transcript writes come from the frontend.
 
@@ -1146,6 +1153,7 @@ Card format:
 - **Parity:** C §3.9; CM §5 (Scriberr watcher)
 - **Build:**
   - Promote import out of beta.
+  - **Decoding (spike-proven):** use symphonia with features `alac`, `aiff` and `caf`, plus `symphonia-adapter-libopus` 0.2 for Opus. On any probe or codec error, fall back to AVFoundation `AVAssetReader` (48 kHz mono f32). No FFmpeg. See `docs/references/spike-native-recording.md` §4.
   - Accept video files (mov, mp4, mkv, webm), keeping the video for playback.
   - Optionally link the import to a calendar event (ORG-03 picker).
   - Imports go through the full pipeline.
@@ -1232,7 +1240,7 @@ Card format:
 - **Parity:** C §7.4, C §7.5
 - **Build:**
   - **Moments:** select transcript text → "Copy link" gives `deino://meeting/<id>?t=<ms>` (DEV-05 handles the link).
-  - **Clips:** select a range → name it → the clip is saved and exported to `clips/<name>.m4a` (or mp4) through ffmpeg.
+  - **Clips:** select a range → name it → the clip is saved and exported to `clips/<name>.m4a` (or mp4) with `AVAssetExportSession` (Passthrough preset + `timeRange`; spike measured a sample-exact cut in 11 ms; code at `deino-spikes/native-recording/src/clip.rs`).
   - Clips tab on the meeting page, with play, rename, reveal in Finder and delete.
   - A global clips list in the ⌘K palette.
 - **Accept:**

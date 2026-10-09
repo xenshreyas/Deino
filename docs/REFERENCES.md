@@ -39,6 +39,7 @@ Deino benchmarks itself against the best open-source projects in each area (see 
 | `audio-muesli-openwhispr.md` | The detection resolver (Muesli), auto-end controller and mic holdback (OpenWhispr), the live speaker ID and EMA voiceprints. |
 | `audio-diarization.md` | The sherpa-onnx Rust API, pipeline facts and scaling limits. |
 | `audio-cap-zed.md` | Reference-only patterns: sample-count timeline, gap tracker, epoch anchoring, fragmented M4A, recovery, health bus, Mach clock, device listeners, WebRTC AEC. |
+| `spike-native-recording.md` | **Measured spike:** FFmpeg-free crash-safe recording (AVAssetWriter CMAF segments, under 1 s loss on `kill -9`), import decoding matrix (symphonia + libopus + AVAssetReader fallback), and clip cutting. Its code is in `~/Documents/GitHub/deino-spikes/native-recording/`. |
 | `ui.md` | The design token spec (exact light and dark hex values with WCAG ratios), component specs, screen wireframes and reuse list. **§6 is the FND-10 checklist.** |
 
 ## Card → reading list
@@ -48,7 +49,7 @@ Deino benchmarks itself against the best open-source projects in each area (see 
 | FND-02 | `architecture.md` §1 and (b) FND-02 |
 | FND-03 | `architecture.md` §8 and (b) FND-03, (c) |
 | FND-04 | `architecture.md` §9 and (b) FND-04; `audio-anarlog.md` §9 (audio-mock) |
-| FND-05 | `audio-capture.md` §2, §4, §5, §9, §10 FND-05; `audio-anarlog.md` §8; `audio-cap-zed.md` §1–4 |
+| FND-05 | **`spike-native-recording.md` (decided design)**; `audio-capture.md` §2, §4, §5, §9, §10 FND-05; `audio-anarlog.md` §8; `audio-cap-zed.md` §1–4 |
 | FND-06 | `architecture.md` (b) FND-06 |
 | FND-07 | `architecture.md` §5 and (b) FND-07 |
 | FND-08 | `architecture.md` (b) FND-08 (spacedrive job contract) |
