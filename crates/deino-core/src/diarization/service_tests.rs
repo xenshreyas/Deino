@@ -269,6 +269,13 @@ async fn a_solo_memo_only_labels_me() {
     assert_eq!(speakers[0].label, ME_LABEL);
 }
 
+#[test]
+fn new_labels_skip_the_users_label() {
+    assert_eq!(speaker_labels(2, &[]), ["Speaker 1", "Speaker 2"]);
+    let taken = ["Speaker 1".to_owned()];
+    assert_eq!(speaker_labels(2, &taken), ["Speaker 2", "Speaker 3"]);
+}
+
 #[tokio::test]
 async fn engine_failures_and_unknown_meetings_are_typed() {
     let h = harness(&call(), 3, None).await;

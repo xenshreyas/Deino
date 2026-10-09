@@ -46,8 +46,8 @@ ort = { version = "=2.0.0-rc.10", features = ["coreml"] }
 [dev-dependencies]
 deino-core = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }
-# Fixture audio and ground truth for the model checks and the benchmark.
-deino-testkit.workspace = true
+# Fixture audio, ground truth and the seeded database for the model checks.
+deino-testkit = { workspace = true, features = ["test-support"] }
 # SHA-256 pins of the store tests' fake model files.
 sha2 = "0.10.9"
 tempfile = "3.3.0"

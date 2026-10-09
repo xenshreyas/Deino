@@ -30,4 +30,4 @@ pub use model::{
 };
 pub use plan::{ChannelPlan, PlannedTrack, REMOTE_SILENCE_MAX, plan_channels, speech};
 pub use port::{EngineError, TrackDiarizer, TrackError};
-pub use service::{DiarizeDeps, DiarizeService, ME_LABEL};
+pub use service::{DiarizeDeps, DiarizeService, ME_LABEL, speaker_labels};

@@ -110,7 +110,13 @@ impl DiarizeService {
             speakers: track.speakers,
         };
         let diarization = self.deps.diarizer.diarize(request).await?;
-        let speakers = self.new_speakers(meeting, &diarization);
+        let kept = self.deps.speakers.speakers(meeting).await?;
+        let taken: Vec<String> = kept
+            .into_iter()
+            .filter(|s| s.is_me)
+            .map(|s| s.label)
+            .collect();
+        let speakers = self.new_speakers(meeting, &diarization, &taken);
         self.deps
             .speakers
             .replace_speakers(meeting, &speakers)
@@ -120,17 +126,25 @@ impl DiarizeService {
     }
 
     /// "Speaker 1..N" in order of first appearance, with their voices.
-    fn new_speakers(&self, meeting: &MeetingId, diarization: &TrackDiarization) -> Vec<NewSpeaker> {
+    /// Labels skip any the user's kept speaker already has.
+    fn new_speakers(
+        &self,
+        meeting: &MeetingId,
+        diarization: &TrackDiarization,
+        taken: &[String],
+    ) -> Vec<NewSpeaker> {
         let model = self.deps.diarizer.embedding_model();
+        let labels = speaker_labels(diarization.voices.len(), taken);
         diarization
             .voices
             .iter()
+            .zip(labels)
             .enumerate()
-            .map(|(index, voice)| NewSpeaker {
+            .map(|(index, (voice, label))| NewSpeaker {
                 speaker: Speaker {
                     id: SpeakerId::generate(self.deps.clock.as_ref()),
                     meeting_id: meeting.clone(),
-                    label: format!("Speaker {}", index + 1),
+                    label,
                     person_id: None,
                     is_me: false,
                     color: PaletteColor::cycle(index + 1),
@@ -206,6 +220,16 @@ impl Voices {
             words: attributed.words,
         }
     }
+}
+
+/// `count` labels "Speaker 1", "Speaker 2", ..., skipping `taken` ones
+/// (labels are unique within a meeting).
+pub fn speaker_labels(count: usize, taken: &[String]) -> Vec<String> {
+    (1..)
+        .map(|number| format!("Speaker {number}"))
+        .filter(|label| !taken.contains(label))
+        .take(count)
+        .collect()
 }
 
 /// The finalized file holding `channel`.
