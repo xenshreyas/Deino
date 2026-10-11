@@ -1,0 +1,63 @@
+---
+source: crates/deino-export/src/markdown_tests.rs
+expression: markdown
+---
+---
+title: "Eng standup"
+date: 2026-10-08T08:31:04
+duration: "7 min"
+attendees:
+  - "Shreyas"
+  - "Maya Chen"
+  - "Diego Alvarez"
+  - "Priya Nair"
+  - "Tom Becker"
+tags:
+  - "Standup"
+folders:
+  - "Meetings"
+link: "deino://meetings/meeting-fixture-standup"
+deino-id: "meeting-fixture-standup"
+---
+
+# Eng standup
+
+Thursday, October 8, 2026 at 08:31 · 7 min
+
+## Attendees
+
+- Shreyas
+- Maya Chen
+- Diego Alvarez
+- Priya Nair
+- Tom Becker
+
+## Notes
+
+#### Decisions
+
+- The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday.
+- The read-only offline job list will ship in next week's release, not in today's release cut.
+- The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut.
+- The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty.
+- The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup.
+
+#### Key facts
+
+- **When did the Fernhollow dedupe fix go out?** On Tuesday (6 October 2026); there have been zero new duplicates in the two days since.
+- **What is Diego blocked on?** A last modified at field on each job in the jobs list endpoint, which Maya owns, so the mobile app knows when its cached offline copy is stale.
+- **How often has the flaky CI test been failing?** About one in eight runs this week, always on the timeout assertion of the webhook retry integration test.
+- **What does Priya think causes the flaky test?** The test sleeps for a fixed two seconds before checking the retry fired, and CI runners are slower some days; she wants to confirm before saying for sure.
+- **When is the release cut and what is the merge deadline?** Thursday 8 October at four o'clock; merge anything that needs to be in by three thirty.
+- **How many items are on Kestrel Audit's evidence request list?** About sixty; Priya has mapped roughly two thirds to evidence Deino already collects.
+- **How many support tickets were closed yesterday?** Fourteen, nine of which were Fernhollow cleanup confirmations.
+- **What is the new Outlook ticket about?** One technician at a smaller plumbing account sees his jobs an hour off in Outlook; he is in a different time zone from his dispatcher.
+
+## Action items
+
+- [x] Add a last modified at field to each job in the jobs list endpoint for Diego's offline cache — Maya Chen, due Oct 9, 2026
+- [ ] Quarantine the flaky webhook retry integration test and file a ticket with the logs — Priya Nair, due Oct 8, 2026
+- [ ] Drive the release cut at four o'clock today — Priya Nair, due Oct 8, 2026
+- [ ] Send the Fernhollow postmortem to Owen with Tom on copy — Shreyas, due Oct 9, 2026
+- [ ] Set up a follow-up huddle with Maya on the Outlook one-hour-offset ticket — Tom Becker, due Oct 8, 2026
+- [ ] Send each engineer their SOC 2 evidence items from Kestrel Audit's request list — Priya Nair, due Oct 12, 2026

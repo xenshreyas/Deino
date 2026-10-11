@@ -40,6 +40,7 @@
         "system:default",
         "detection:default",
         "meetings:default",
+        "export:default",
         "network:default",
         "pipeline:default",
         "profile:default",

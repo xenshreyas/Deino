@@ -1,0 +1,122 @@
+---
+source: crates/deino-export/src/markdown_tests.rs
+expression: markdown
+---
+---
+title: "Q4 planning"
+date: 2026-09-28T10:01:38
+duration: "1 h 22 min"
+attendees:
+  - "Aisha Rahman"
+  - "Shreyas"
+  - "Maya Chen"
+  - "Diego Alvarez"
+  - "Priya Nair"
+  - "Tom Becker"
+  - "Noor Haddad"
+  - "Lena Okafor"
+tags:
+  - "Planning"
+folders:
+  - "Meetings"
+link: "deino://meetings/meeting-fixture-planning"
+deino-id: "meeting-fixture-planning"
+---
+
+# Q4 planning
+
+Monday, September 28, 2026 at 10:01 · 1 h 22 min
+
+## Attendees
+
+- Aisha Rahman
+- Shreyas
+- Maya Chen
+- Diego Alvarez
+- Priya Nair
+- Tom Becker
+- Noor Haddad
+- Lena Okafor
+
+## Notes
+
+#### Decisions
+
+- Calendar Sync v1 is bug-fix only for Q4; all new sync work goes into Calendar Sync v2.
+- The Q4 priorities are, in order: Calendar Sync v2, SOC 2 Type II (observation window starting 1 November), offline mode for the technician mobile app, and the new-customer onboarding revamp.
+- Route optimisation is cut from Q4, with no work on it at all, not even a spike.
+- The Salesforce integration is cut from Q4 and will be revisited in the January planning; in the meantime Lena can offer a Zapier recipe as a stopgap to the two enterprise prospects.
+- Offline mode for Q4 is reduced to a read-only offline job list; full offline editing is pushed to Q1.
+- Deino will use a hosted status page rather than building one; Priya sets it up out of the SOC 2 budget.
+- There will be a production change freeze from 18 December to 4 January, with only emergency fixes deployed.
+- Aisha will propose two engineering hires to the board on 29 September: a senior backend engineer and a mobile engineer.
+
+#### Key facts
+
+- **What was Deino's ARR at the end of Q3 2026?** $2.4 million, up from $1.9 million at the end of Q2 (the $2.6M figure was the missed stretch target)
+- **How many paying customers did Deino have at the end of Q3?** 41
+- **How much engineering capacity is available in Q4?** About 30 engineer-weeks, after on-call, support, holidays, interviewing and a 4-week buffer
+- **How many engineer-weeks did all seven candidate bets add up to?** 56 engineer-weeks, against 30 available
+- **How big is Calendar Sync v2 estimated to be?** About 11 engineer-weeks (10 to 12)
+- **Why did Lena argue for the Salesforce integration?** Two enterprise deals in the pipeline (a Midwest HVAC group and a facilities management company, about 230 technicians, roughly $165k ARR) explicitly require it
+- **What is the top technician complaint about the mobile app?** The app not working without signal, 38% of technician feedback
+- **Why did Priya say SOC 2 had to be a Q4 priority?** Type II is a gate for large deals like Brightkite and needs an observation window that cannot be sped up, so every month of delay pushes big deals back
+- **Which customer was hit hardest by the Calendar Sync v1.4 bug and how badly?** Fernhollow, with about 130 duplicate jobs over roughly two weeks
+- **How much smaller is the read-only offline job list than full offline mode?** About 4 engineer-weeks versus about 10 for full offline
+- **How long does it currently take a new customer to go live?** 19 days median from contract signed to first job dispatched
+- **What do the two proposed engineering hires cost?** About $420k a year fully loaded, roughly $35k a month of burn, taking runway from about 19 to a bit over 17 months
+
+## My notes
+
+- q3: 41 cust, arr 2.4m (from 1.9), nrr 118, gm 78%, burn \~310k, 19mo runway
+- 6/41 on enterprise tier
+- retro: v1.4 dupes -\> fernhollow \~130 dup jobs. no fixtures for moved occurrences, no staged rollout, maya on call 2wks (bus factor!!)
+- maya postmortem thu
+- mobile 3.2 slipped \~3wks, 2x app store rejections. assume 1wk review going fwd
+- v1 = bugfix only in q4
+- capacity: \~70 gross -\> 13 oncall, 8 support, 10 hols, 5 interviews, 4 buffer =\> **30 eng-wks**
+- sizing: sync v2 11 / soc2 6 / offline 10 (ro: 4) / onboarding 6 / route opt 12 / sfdc 8 / status pg 3 (hosted 0.5)
+- total asks 56 vs 30
+- lena: sfdc for 2 ent deals (\~165k arr), diego: offline = 38% of tech feedback, priya: soc2 is a gate
+- zapier recipe as sfdc stopgap?? tom builds
+- pagerduty thing - take offline w/ priya + diego
+- DECISIONS: v2, soc2 (window 1 nov), offline RO, onboarding. cut route opt + sfdc (revisit jan)
+- hosted status page, priya
+- maya: design doc fri 2/10, graph spike 9/10, beta 13 nov, GA 4 dec
+- me on google side of v2, priya msft wk in nov
+- priya: kestrel letter fri, policies 23 oct, status pg 16 oct, type 1 report to lena
+- deigo: scope doc wed, testflight 20 nov, app store submit 1 dec, take-home 9 oct
+- noor: 5 interviews by 16 oct, first slice 11 dec. tom: tickets fri, zapier 9 oct
+- risk: graph subs expire \<3d, renewals silently fail
+- freeze 18 dec - 4 jan
+- hiring: sr backend + mobile, \~420k/yr loaded. jordan ellis fri
+- todo: plan doc tonight, JDs fri
+- maybe split sync oncall from general rotation? talk to maya 1:1
+
+## Action items
+
+- [x] Publish the Calendar Sync v1.4 incident postmortem — Maya Chen, due Oct 1, 2026
+- [ ] Review the duplicate-job cleanup script (dry run) before it runs — Priya Nair
+- [ ] Write the Calendar Sync v2 technical design doc — Maya Chen, due Oct 2, 2026
+- [ ] Put Calendar Sync v2 into beta — Maya Chen, due Nov 13, 2026
+- [ ] Ship Calendar Sync v2 to general availability — Maya Chen, due Dec 4, 2026
+- [ ] Do a spike on Microsoft Graph webhook subscription renewals — Maya Chen, due Oct 9, 2026
+- [ ] Sign the Kestrel Audit engagement letter for SOC 2 Type II — Priya Nair, due Oct 2, 2026
+- [ ] Get the remaining SOC 2 policies signed off — Priya Nair, due Oct 23, 2026
+- [ ] Set up the hosted customer status page — Priya Nair, due Oct 16, 2026
+- [ ] Add Zapier to the SOC 2 vendor inventory — Priya Nair
+- [ ] Send Lena the SOC 2 Type I report and a letter confirming the Type II window, for Brightkite — Priya Nair, due Sep 29, 2026
+- [ ] Write the scope doc for the read-only offline job list — Diego Alvarez, due Sep 30, 2026
+- [ ] Get the read-only offline job list into TestFlight — Diego Alvarez, due Nov 20, 2026
+- [ ] Submit the read-only offline build for App Store review — Diego Alvarez, due Dec 1, 2026
+- [ ] Prepare the take-home exercise for the mobile engineer role — Diego Alvarez, due Oct 9, 2026
+- [ ] Book five onboarding interviews with recently onboarded customers — Noor Haddad, due Oct 16, 2026
+- [ ] Ship the first slice of the onboarding revamp (new CSV importer and calendar connection step) — Noor Haddad, due Dec 11, 2026
+- [ ] Pull the top onboarding support tickets from the last two quarters for Noor — Tom Becker, due Oct 2, 2026
+- [ ] Build the Zapier recipe for Salesforce with a setup guide — Tom Becker, due Oct 9, 2026
+- [ ] Email both enterprise prospects about the Salesforce timeline and the Zapier option — Lena Okafor, due Sep 30, 2026
+- [ ] Put the Salesforce integration on the January planning agenda — Aisha Rahman
+- [ ] Write up the Q4 plan (priorities, cuts, owners, dates) and send it to everyone — Shreyas, due Sep 28, 2026
+- [ ] Draft job descriptions for the senior backend and mobile engineer roles — Shreyas, due Oct 2, 2026
+- [ ] Add the two-role hiring proposal to the board deck — Aisha Rahman, due Sep 28, 2026
+- [ ] Send a recurring Monday invite for the weekly Q4 priorities check-in — Aisha Rahman

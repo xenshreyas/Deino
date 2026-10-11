@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, BetaSettings, DetectionSettings, NetworkSettings,
+    AiSettings, AudioSettings, BetaSettings, DetectionSettings, ExportSettings, NetworkSettings,
     NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
     RecordingSettings, SettingsError, TemplateSettings, TranscriptionSettings, UiSettings,
 };
@@ -43,6 +43,8 @@ pub struct Settings {
     pub templates: TemplateSettings,
     /// Auto-tagging and auto-filing (ORG-05, ORG-06).
     pub organize: OrganizeSettings,
+    /// Exports and auto-export (EXP-02).
+    pub export: ExportSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -66,6 +68,7 @@ impl Default for Settings {
             profile: ProfileSettings::default(),
             templates: TemplateSettings::default(),
             organize: OrganizeSettings::default(),
+            export: ExportSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
             onboarding: OnboardingSettings::default(),
@@ -80,6 +83,7 @@ impl Settings {
         self.notifications.validate()?;
         self.profile.validate()?;
         self.detection.validate()?;
+        self.export.validate()?;
         self.ui.validate()
     }
 

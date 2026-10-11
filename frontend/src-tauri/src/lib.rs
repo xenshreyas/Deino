@@ -77,6 +77,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     let builder = builder
         .plugin(features::db::init())
         .plugin(features::detection::init())
+        .plugin(features::export::init())
         .plugin(features::meetings::init())
         .plugin(features::network::init())
         .plugin(features::pipeline::init())

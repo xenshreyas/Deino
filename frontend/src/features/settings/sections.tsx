@@ -14,6 +14,7 @@ import { SummaryModelSettings } from '@/components/SummaryModelSettings';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
+import { ExportSettingsPage } from '@/features/export';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ProfilePage } from '@/features/profile';
@@ -21,6 +22,7 @@ import { TemplatesPage } from '@/features/templates';
 import {
   AudioLines,
   Cpu,
+  Download,
   FlaskConical,
   type Icon,
   Info,
@@ -118,6 +120,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },
   { id: 'profile', group: 'ai', icon: UserRound, Component: ProfilePage },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
+  { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },
   ...DEBUG_SECTIONS,

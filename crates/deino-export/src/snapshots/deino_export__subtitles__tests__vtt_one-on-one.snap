@@ -1,0 +1,431 @@
+---
+source: crates/deino-export/src/subtitles.rs
+expression: vtt(&export)
+---
+WEBVTT
+
+00:00:01.507 --> 00:00:05.102
+<v Shreyas>Hey Maya. How are you doing? Like, honestly.
+
+00:00:05.594 --> 00:00:11.774
+<v Maya Chen>Honestly? Pretty wiped. I slept eleven hours on Monday night and still woke up tired.
+
+00:00:12.547 --> 00:00:18.302
+<v Shreyas>Yeah, I'm not surprised. You carried most of that Fernhollow incident on your own.
+
+00:00:19.187 --> 00:00:27.607
+<v Maya Chen>It was a lot of three a.m. pages. And every time I thought it was fixed, another batch of duplicates would show up.
+
+00:00:28.349 --> 00:00:34.574
+<v Shreyas>So I want to start there, before we get into Sync v2 or anything else. Workload first.
+
+00:00:35.382 --> 00:00:37.297
+<v Maya Chen>Okay. Yeah, that's fair.
+
+00:00:37.869 --> 00:00:46.399
+<v Shreyas>My proposal is you come off the on-call rotation for the next two weeks. Starting today, and you're back on the twenty-first.
+
+00:00:46.984 --> 00:00:53.929
+<v Maya Chen>Wait, really? Who picks up my shifts, though? Priya's already got SOC 2 and the release cuts.
+
+00:00:54.587 --> 00:01:03.587
+<v Shreyas>I'll take two of them myself, and Diego said he's happy to take the weekend. I asked him yesterday before I said anything to you.
+
+00:01:04.377 --> 00:01:11.857
+<v Maya Chen>Diego on the backend pager feels a little scary. No offense to Diego, he's great, it's just not his code.
+
+00:01:12.614 --> 00:01:23.409
+<v Shreyas>Fair. He'd be secondary, with me as primary for anything sync related. And the runbook you wrote last week is genuinely good, so I think he'll be fine.
+
+00:01:24.167 --> 00:01:30.427
+<v Maya Chen>Okay. Okay, then yes. Thank you. I think I need it more than I want to admit.
+
+00:01:31.042 --> 00:01:40.842
+<v Shreyas>Then it's decided. You're off the rotation for two weeks. I'll update the schedule in PagerDuty this afternoon and post it in the eng channel.
+
+00:01:41.232 --> 00:01:48.112
+<v Maya Chen>Can I still look at the alerts if something sync related goes sideways? I'll feel weird not looking.
+
+00:01:48.604 --> 00:01:57.169
+<v Shreyas>Look, sure. Get paged, no. If something is actually on fire I'll call you, but that's my call to make, not yours.
+
+00:01:58.066 --> 00:01:59.771
+<v Maya Chen>Yeah, that's fair enough.
+
+00:02:00.472 --> 00:02:05.797
+<v Shreyas>And take Friday off. Seriously. You worked basically all of last weekend.
+
+00:02:06.319 --> 00:02:15.749
+<v Maya Chen>I was going to say no, but, um, actually, yes. I'll take Friday off. My sister's been asking me to come up for like a month.
+
+00:02:16.402 --> 00:02:23.962
+<v Shreyas>Perfect, go. Anything else on workload? Like, is there stuff on your plate right now that shouldn't be?
+
+00:02:24.564 --> 00:02:36.079
+<v Maya Chen>The interview loop, a bit. I've done four phone screens in the last two weeks on top of everything else, and each one is like an hour and a half with the write-up.
+
+00:02:36.479 --> 00:02:44.949
+<v Shreyas>Let's pause you on screens until the end of the month. I'll tell the recruiter today to take you off the screening rotation.
+
+00:02:45.475 --> 00:02:54.870
+<v Maya Chen>I'd still like to do the final rounds for the senior backend role, though. That person's going to be working with me on sync every day.
+
+00:02:55.355 --> 00:02:58.565
+<v Shreyas>Makes total sense. Finals only, no screens.
+
+00:02:59.256 --> 00:03:01.141
+<v Maya Chen>Great, thank you, really.
+
+00:03:01.514 --> 00:03:11.349
+<v Shreyas>Okay. How are you feeling about the incident itself? Not the hours, the, like, the bug. I know it's been a weird couple of weeks.
+
+00:03:11.889 --> 00:03:22.789
+<v Maya Chen>Mixed. I shipped the change that caused it, so there's a part of me that's just embarrassed. A hundred and thirty duplicate jobs at one customer is a lot.
+
+00:03:23.134 --> 00:03:34.679
+<v Maya Chen>But I also think the fix is solid. Deduping on the iCalUID plus the recurrence ID is what we should have done from day one, and the cleanup script worked first time.
+
+00:03:35.271 --> 00:03:46.911
+<v Shreyas>For what it's worth, I don't see it as your bug. Two people reviewed that PR, including me, and none of us had a test with a moved occurrence of a recurring event.
+
+00:03:47.209 --> 00:03:53.159
+<v Shreyas>That's a process gap. It'll be in the postmortem as a process gap, not as a person.
+
+00:03:53.972 --> 00:03:59.762
+<v Maya Chen>Thanks. That helps, actually. Is the postmortem still going to Owen on Friday?
+
+00:04:00.148 --> 00:04:07.668
+<v Shreyas>Yeah, I'm writing it. I'll send you the draft tomorrow so you can check I haven't mangled the technical bits.
+
+00:04:08.306 --> 00:04:12.406
+<v Maya Chen>Sure, but I'm off Friday, so I'll read it tomorrow evening.
+
+00:04:13.097 --> 00:04:17.942
+<v Shreyas>Tomorrow evening is fine. Don't rewrite it, just flag anything wrong.
+
+00:04:18.128 --> 00:04:25.813
+<v Shreyas>Before we move on, is there anything I could have done better during the incident? I want the honest version.
+
+00:04:26.344 --> 00:04:39.099
+<v Maya Chen>Honestly, yes. The worst part wasn't the pages, it was everyone pinging me directly. Tom, Lena, Aisha, you. Sometimes four people asking the same question within ten minutes.
+
+00:04:39.306 --> 00:04:46.171
+<v Maya Chen>I'd be in the middle of reading logs and I'd have to stop and write the same status update four times.
+
+00:04:46.714 --> 00:04:51.959
+<v Shreyas>Yeah. That's on me. I should have set up a single channel on day one.
+
+00:04:52.189 --> 00:05:03.299
+<v Shreyas>So going forward, for any customer-impacting incident, Tom owns customer updates, I own internal updates, and whoever is fixing it only talks in the incident channel.
+
+00:05:04.115 --> 00:05:14.725
+<v Maya Chen>That would've saved me hours. Literally hours. And maybe a fixed cadence, like hourly, so people know when the next update is coming and stop asking.
+
+00:05:15.267 --> 00:05:25.357
+<v Shreyas>Yes, hourly updates while it's active. Good idea. I'll write all of that into the incident runbook before you're back on call on the twenty-first.
+
+00:05:25.508 --> 00:05:30.693
+<v Shreyas>Okay. Calendar Sync v2. Where are we, and are the dates still real?
+
+00:05:31.468 --> 00:05:38.718
+<v Maya Chen>The dates are still real, I think. Beta on the thirteenth of November, GA on the fourth of December.
+
+00:05:39.088 --> 00:05:51.118
+<v Maya Chen>The Google side is in decent shape. Push notifications are working in my branch, and with the dedupe work from the incident we basically got the event identity piece for free.
+
+00:05:51.506 --> 00:05:53.821
+<v Shreyas>The iCalUID plus recurrence ID key.
+
+00:05:54.374 --> 00:06:03.059
+<v Maya Chen>Exactly. That's now the canonical key for every event we ingest, from both providers. So that part of the design is done.
+
+00:06:03.333 --> 00:06:11.413
+<v Maya Chen>Google push channels expire too, but they last about a week and the renewal is boring. I'm not worried about Google.
+
+00:06:11.858 --> 00:06:17.728
+<v Shreyas>How are you thinking about the cutover from polling? I really don't want a big bang.
+
+00:06:18.169 --> 00:06:27.089
+<v Maya Chen>No, definitely not. For beta customers we keep the five-minute polling running alongside push, and we compare what each one sees.
+
+00:06:27.253 --> 00:06:39.208
+<v Maya Chen>If push and polling disagree, we log it and trust polling. Once the disagreement rate is basically zero for a week, we turn polling down to once an hour as a safety net.
+
+00:06:39.611 --> 00:06:44.416
+<v Shreyas>Love that. It also gives us an actual number to look at before GA.
+
+00:06:45.221 --> 00:06:50.826
+<v Maya Chen>Right. I want to show a chart of that disagreement rate at the GA go or no-go.
+
+00:06:51.022 --> 00:07:02.427
+<v Maya Chen>Oh, and a nice side effect. With polling every five minutes we're using about forty percent of our daily Google API quota. With push it should drop to under ten.
+
+00:07:03.250 --> 00:07:09.980
+<v Shreyas>That's a good number for the board deck, honestly. Write that one down somewhere I can find it.
+
+00:07:10.517 --> 00:07:22.152
+<v Maya Chen>And the recurring-event test harness I proposed, I'd like to build that into v2 from the start. Moved occurrences, cancelled occurrences, time zone changes on the series.
+
+00:07:22.811 --> 00:07:28.836
+<v Shreyas>Yes. Make it part of the v2 scope. That's exactly what would have caught this bug.
+
+00:07:29.002 --> 00:07:30.637
+<v Shreyas>And what about Microsoft?
+
+00:07:31.467 --> 00:07:42.432
+<v Maya Chen>Microsoft is where the risk is. Graph webhook subscriptions for calendar events expire after roughly three days. The max is actually a little under three days.
+
+00:07:42.669 --> 00:07:53.589
+<v Maya Chen>So every subscription, for every technician, has to be renewed before it lapses. And if we miss one, we just silently stop getting changes for that person.
+
+00:07:53.972 --> 00:07:56.177
+<v Shreyas>Silently is the scary word there.
+
+00:07:56.773 --> 00:08:08.698
+<v Maya Chen>Yeah. Fernhollow alone is sixty technicians, and if the Brightkite deal closes that's another two hundred and twenty. Across all customers that's thousands of renewals a week.
+
+00:08:09.378 --> 00:08:11.058
+<v Shreyas>Okay. What's the plan?
+
+00:08:11.557 --> 00:08:20.077
+<v Maya Chen>Three layers. First, a renewal job that runs every six hours and renews anything that expires in the next twenty-four hours.
+
+00:08:20.391 --> 00:08:32.241
+<v Maya Chen>Second, a handler for Microsoft's lifecycle notifications. They tell you when a subscription is about to be removed or needs reauthorizing, and we should just react to those.
+
+00:08:32.421 --> 00:08:42.391
+<v Maya Chen>And third, a reconciliation sweep once a day that does a delta query per calendar. So even if a subscription dies, we catch up within a day.
+
+00:08:42.881 --> 00:08:51.886
+<v Shreyas>A day feels long for a dispatcher, though. If a tech's afternoon changes and we don't see it until tomorrow, that's a missed job.
+
+00:08:52.590 --> 00:09:02.970
+<v Maya Chen>Hmm. Yeah, that's fair. I could run the sweep every hour for anyone whose subscription looks unhealthy, and keep the daily one for everybody else.
+
+00:09:03.572 --> 00:09:11.052
+<v Shreyas>I like that. And can we alert if more than, say, one percent of subscriptions are expired at any point?
+
+00:09:11.484 --> 00:09:17.479
+<v Maya Chen>Sure, that's easy. I'll put the hourly sweep and the one percent alert in the design.
+
+00:09:18.265 --> 00:09:20.480
+<v Shreyas>Is any of this written down yet?
+
+00:09:21.072 --> 00:09:28.137
+<v Maya Chen>About half. I'll finish the renewal section of the design doc by Monday and send it to you and Priya.
+
+00:09:28.970 --> 00:09:35.585
+<v Shreyas>Monday the twelfth, great. Priya should look at the webhook endpoint side anyway, for SOC 2.
+
+00:09:35.952 --> 00:09:44.307
+<v Maya Chen>Yeah, she'll want to know how we validate the client state on incoming notifications. I already have a paragraph on that.
+
+00:09:44.654 --> 00:09:54.459
+<v Maya Chen>One idea I had, um, was shipping the beta Google-only and adding Microsoft at GA. It would take a lot of pressure off the next five weeks.
+
+00:09:55.309 --> 00:10:04.869
+<v Shreyas>Hmm. I don't love it, because I think about a third of the beta customers are on Microsoft 365. But I don't want to decide it today.
+
+00:10:05.175 --> 00:10:10.750
+<v Shreyas>Let's look at it again in two weeks, once we know how the renewal work is going.
+
+00:10:11.200 --> 00:10:12.520
+<v Maya Chen>Okay, fine by me.
+
+00:10:13.166 --> 00:10:25.871
+<v Shreyas>Separate question. Long term, should there be a second person who really knows sync? Because right now it's basically you, and that's part of why the last three weeks were so rough.
+
+00:10:26.350 --> 00:10:35.375
+<v Maya Chen>Yes, definitely. Diego's said he'd like to do more backend. Maybe after offline mode ships he could rotate onto sync for a bit?
+
+00:10:36.156 --> 00:10:45.176
+<v Shreyas>Maybe. Let's see how offline mode goes first. I don't want to promise him something and then pull him back to mobile in January.
+
+00:10:45.816 --> 00:10:48.581
+<v Maya Chen>Fair. I'll not mention it to him yet.
+
+00:10:48.994 --> 00:10:54.864
+<v Shreyas>Did you ever look at any of the unified calendar API vendors? Just as a comparison.
+
+00:10:55.602 --> 00:11:07.722
+<v Maya Chen>Briefly. They charge per connected account, so at our size it'd be a few thousand dollars a month, and we'd be depending on someone else for the exact thing that just bit us.
+
+00:11:08.462 --> 00:11:11.112
+<v Shreyas>Yeah. Probably not worth it, then.
+
+00:11:11.610 --> 00:11:16.940
+<v Maya Chen>Probably not. Which, sort of, brings me to the thing I wanted to raise.
+
+00:11:17.139 --> 00:11:26.054
+<v Maya Chen>I think we should bring in a contractor for the Microsoft side. Six to eight weeks, someone who's done Graph subscriptions before.
+
+00:11:26.651 --> 00:11:28.166
+<v Shreyas>Okay. Tell me why.
+
+00:11:28.875 --> 00:11:42.230
+<v Maya Chen>Because right now it's me and half of Diego, and Diego's mostly on offline mode. If I get sick, or something else blows up like last month, the beta date slips. A contractor de-risks that.
+
+00:11:42.601 --> 00:11:49.956
+<v Shreyas>I get it, and I think the worry is right. I just don't think a contractor fixes it. A few reasons.
+
+00:11:50.333 --> 00:11:59.208
+<v Shreyas>One, ramp-up. By the time someone understands our sync model and the job matching, it's mid-November and the beta is already out.
+
+00:11:59.618 --> 00:12:14.373
+<v Shreyas>Two, the SOC 2 observation window starts on the first of November. Any contractor with production access is in scope, so Priya would be doing access reviews and background checks for them right in the middle of it.
+
+00:12:15.137 --> 00:12:21.267
+<v Maya Chen>They wouldn't need production access, though. They could build against the sandbox tenant.
+
+00:12:21.822 --> 00:12:30.617
+<v Shreyas>For building, maybe. But for debugging renewals in the real world you need prod. That's where all the weird stuff shows up.
+
+00:12:31.363 --> 00:12:37.048
+<v Maya Chen>Hmm. That's, yeah, that's true. Last week was nothing but prod-only weirdness.
+
+00:12:37.752 --> 00:12:50.687
+<v Shreyas>And three, money. A good contractor who knows Graph is fifteen to twenty thousand a month. That's a big chunk of a senior hire, and the board already approved the senior backend role.
+
+00:12:51.542 --> 00:13:02.022
+<v Maya Chen>But the senior hire won't be in seat until January at the earliest. The next eight weeks are the risky part, and a hire doesn't help with that at all.
+
+00:13:02.576 --> 00:13:10.096
+<v Shreyas>That's fair, and I'm not dismissing it. What if we handle the next eight weeks with scope instead of people?
+
+00:13:10.382 --> 00:13:22.282
+<v Shreyas>If renewal looks shaky at the two-week check, Microsoft slips to GA. That's the release valve. And in the meantime all the hiring energy goes into the senior backend role.
+
+00:13:22.914 --> 00:13:26.604
+<v Maya Chen>So the Google-only beta is the fallback, not the plan.
+
+00:13:27.334 --> 00:13:30.094
+<v Shreyas>Exactly. Not the plan, the fallback.
+
+00:13:30.557 --> 00:13:38.842
+<v Maya Chen>Can I push back one more time, though? Even a part-time contractor, like two days a week, just on the renewal job?
+
+00:13:39.559 --> 00:13:52.794
+<v Shreyas>I hear you. But the renewal job is exactly the piece that needs prod and needs to be owned long term. I'd rather that's you now and the new hire later, not someone who leaves in December.
+
+00:13:53.289 --> 00:13:59.114
+<v Maya Chen>Yeah. Okay, that's actually the argument that lands for me. Ownership. Fine.
+
+00:13:59.276 --> 00:14:09.161
+<v Maya Chen>Okay. I still think a contractor would've been nice, but I can live with that. No contractor, and we put everything into the senior hire.
+
+00:14:09.596 --> 00:14:20.386
+<v Shreyas>Thank you. I'll talk to Aisha tomorrow about making the senior backend role the priority over the mobile one, and getting the recruiter to push harder on it.
+
+00:14:21.016 --> 00:14:25.031
+<v Maya Chen>And I want to be in the finals. I'm serious about that.
+
+00:14:25.623 --> 00:14:28.203
+<v Shreyas>You will be. That's already decided.
+
+00:14:28.710 --> 00:14:36.640
+<v Maya Chen>Can I ask how the board meeting went, by the way? People have been speculating in Slack, which is never great.
+
+00:14:37.203 --> 00:14:48.498
+<v Shreyas>It went well, honestly. They approved both hires, the senior backend one and the mobile one, and we're not raising now. Series A conversations start in March.
+
+00:14:48.726 --> 00:14:59.566
+<v Shreyas>Runway's about nineteen months, so nobody is panicking. The Fernhollow thing came up, but more as a question about how we handle incidents than anything else.
+
+00:15:00.357 --> 00:15:05.697
+<v Maya Chen>Okay, good. That's reassuring. I was half expecting a speech about burn.
+
+00:15:06.371 --> 00:15:11.191
+<v Shreyas>There's always a bit of a speech about burn. But no, it was fine.
+
+00:15:11.452 --> 00:15:15.587
+<v Shreyas>Okay, last thing, and it's the fun one. Staff engineer.
+
+00:15:16.254 --> 00:15:18.829
+<v Maya Chen>Oh. Okay. Hi, that's exciting.
+
+00:15:19.320 --> 00:15:33.235
+<v Shreyas>I think you're already operating at staff level. Sync v2 is a cross-team project, you led the incident, you wrote the runbook, and you've been mentoring Diego on the backend without anyone asking you to.
+
+00:15:33.604 --> 00:15:41.919
+<v Shreyas>Diego actually told me last week that the API pairing sessions with you were the most useful thing he's done since he joined.
+
+00:15:42.690 --> 00:15:48.670
+<v Maya Chen>Oh, that's sweet. He's picking up Rust really fast, actually. Faster than I did.
+
+00:15:49.022 --> 00:15:55.497
+<v Maya Chen>That's really nice to hear. Honestly I've been wondering if the incident would count against me.
+
+00:15:56.217 --> 00:16:10.227
+<v Shreyas>The opposite. The bug shipped, sure, but the way you handled it is exactly the staff-level part. Clear updates, a real fix plus the cleanup, and you already proposed the recurring-event test harness.
+
+00:16:10.747 --> 00:16:16.127
+<v Maya Chen>So what does the process look like? We don't really have a process, do we?
+
+00:16:16.729 --> 00:16:28.599
+<v Shreyas>Not much of one at fourteen people. I write a promo doc, Aisha reviews it, and it becomes effective at the start of a quarter. So realistically the first of January.
+
+00:16:28.983 --> 00:16:36.288
+<v Shreyas>I'll have a draft of the promo doc to you by next Friday. Then you can tell me where I've undersold you.
+
+00:16:37.156 --> 00:16:39.916
+<v Maya Chen>Next Friday, so the sixteenth. Okay.
+
+00:16:40.305 --> 00:16:47.885
+<v Shreyas>It would help if you sent me a list of the things you're proudest of from this year. Bullet points are fine.
+
+00:16:48.577 --> 00:16:54.757
+<v Maya Chen>I can send that by Monday. I actually keep a brag doc, so it's mostly copy and paste.
+
+00:16:55.545 --> 00:16:56.740
+<v Shreyas>Of course you do.
+
+00:16:57.598 --> 00:17:08.443
+<v Maya Chen>Can I ask what staff actually looks like day to day here? Like, will I still be writing code? Because I don't want to become a full-time meetings person.
+
+00:17:08.883 --> 00:17:21.373
+<v Shreyas>Yes, you'd still be coding most of the time. At our size staff means you own the hardest technical area end to end and you make the people around you better. Not more meetings.
+
+00:17:21.950 --> 00:17:24.300
+<v Maya Chen>Okay. Good. That I can do.
+
+00:17:24.492 --> 00:17:28.787
+<v Maya Chen>Is there anything you think I'm missing? For staff, I mean.
+
+00:17:29.172 --> 00:17:39.982
+<v Shreyas>Honestly, writing for people outside engineering. Like, the postmortem I'm doing this week, I'd love for you to write the next one of those for a customer.
+
+00:17:40.556 --> 00:17:46.826
+<v Maya Chen>Yeah, that's fair. I tend to write for engineers and then wonder why sales has questions.
+
+00:17:47.231 --> 00:17:55.026
+<v Shreyas>And maybe present Sync v2 at the all-hands in November. Not committing you to it, just something to think about.
+
+00:17:55.506 --> 00:17:59.896
+<v Maya Chen>I'll think about it. Public speaking is not my favourite thing.
+
+00:18:00.631 --> 00:18:06.551
+<v Shreyas>No pressure. Okay, we're about at time. Let me recap so I don't forget anything.
+
+00:18:06.708 --> 00:18:18.653
+<v Shreyas>You're off on-call for two weeks starting today, back on the twenty-first. Friday off. No screens, finals only. No contractor, we push the senior backend hire instead.
+
+00:18:18.976 --> 00:18:28.096
+<v Shreyas>You send the renewal design and your brag list by Monday. I do the promo doc draft by next Friday, and I talk to Aisha tomorrow.
+
+00:18:28.872 --> 00:18:30.902
+<v Maya Chen>And you update PagerDuty today.
+
+00:18:31.483 --> 00:18:34.813
+<v Shreyas>And I update PagerDuty today. Go rest, Maya.
+
+00:18:35.221 --> 00:18:38.066
+<v Shreyas>Where does your sister live, by the way?
+
+00:18:38.554 --> 00:18:46.884
+<v Maya Chen>Just outside Portland. She's got a new puppy, so the plan is basically to sit on the floor with a dog for three days.
+
+00:18:47.479 --> 00:18:50.574
+<v Shreyas>That sounds like exactly the right prescription.
+
+00:18:51.284 --> 00:18:55.374
+<v Maya Chen>Thanks, Shreyas. Really. See you Thursday at standup.

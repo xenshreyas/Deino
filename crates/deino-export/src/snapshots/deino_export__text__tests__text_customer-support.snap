@@ -1,0 +1,48 @@
+---
+source: crates/deino-export/src/text.rs
+expression: "render(&export, &RenderOptions::default())"
+---
+Fernhollow: duplicate jobs follow-up
+Monday, October 5, 2026 at 09:02 · 16 min
+
+Attendees
+---------
+Tom Becker, Shreyas, Owen Price
+
+Notes
+-----
+Decisions
+
+• Fernhollow receives a service credit of one month of fees for all sixty technicians ($2,700 at $45 per technician), applied to the November invoice, covering the three double dispatches.
+• Owen and his two dispatch leads are added to Deino's release-notes email list.
+• Deino will send Fernhollow a notice forty-eight hours before any release that touches calendar sync; the office manager is left off that list.
+• Shreyas will deliver a written postmortem to Fernhollow by Friday 9 October.
+• Fernhollow will not join the Calendar Sync v2 beta and will wait for general availability.
+• Any support ticket about duplicate or missing jobs is now high priority by default.
+
+Key facts
+
+• How many duplicate jobs were removed from Fernhollow's account? One hundred and thirty-two, created between 15 September and the previous Friday; the cleanup ran on Saturday morning.
+• How many jobs were dispatched twice, and which ones? Three: the furnace service on Alder Road (22 Sept), the water heater on Pine Street (29 Sept) and the boiler check at the Brookside apartments (1 Oct).
+• What did the double dispatches cost Fernhollow? About four hundred dollars per wasted call-out, roughly twelve hundred dollars for the three.
+• What caused the duplicate jobs? The v1.4 release (15 September) changed event matching and stopped looking at which occurrence of a recurring series an event is, so a single moved occurrence was treated as a new event and a second job was created.
+• Why was Fernhollow hit harder than other customers? Fernhollow books most maintenance as recurring events and its dispatchers move individual visits much more often than most customers.
+• How big is the service credit and how was it calculated? $2,700: one month of fees for sixty technicians at $45 per technician, applied to the November invoice.
+• When does the permanent fix go out? Tuesday 6 October 2026; a temporary guard has been in place since Friday night.
+• How much advance notice will Fernhollow get for sync changes? Forty-eight hours before any release that touches calendar sync, on top of the general release-notes email.
+• What additional monitoring is Deino adding? An alert if the number of jobs sync creates for any one customer suddenly spikes, so Deino notices within hours.
+• Why can't Fernhollow stay on the old version of sync? Deino runs one version for everyone, so pinning a customer to an old version is not possible; the 48-hour notice is the chance to raise concerns.
+• Did any duplicate jobs reach Fernhollow's invoicing? Two duplicates marked complete by a technician ended up as draft invoices in the QuickBooks export on 28 September; they are flagged in column F and Owen will have them voided.
+
+Action items
+------------
+[x] Send Owen the duplicate-cleanup spreadsheet with the three double dispatches highlighted — Tom Becker, due Oct 5, 2026
+[ ] Email Owen once the dedupe fix is deployed — Tom Becker, due Oct 6, 2026
+[ ] Write and send the Fernhollow postmortem (timeline, root cause, changes made and planned) — Shreyas, due Oct 9, 2026
+[ ] Confirm the $2,700 service credit in writing in the postmortem — Shreyas, due Oct 9, 2026
+[ ] Make sure finance applies the $2,700 credit to Fernhollow's November invoice — Tom Becker, due Oct 9, 2026
+[ ] Add Owen to the release-notes email list — Tom Becker, due Oct 5, 2026
+[ ] Send Tom the email addresses of the two dispatch leads — Owen Price, due Oct 5, 2026
+[ ] Set up a forty-eight hour pre-release notice email to Fernhollow for sync changes — Tom Becker
+[ ] Have dispatchers spot-check this week's schedule for leftover duplicates and report to Tom — Owen Price, due Oct 7, 2026
+[ ] Have Fernhollow's billing person void the two draft invoices created from duplicate jobs — Owen Price, due Oct 9, 2026

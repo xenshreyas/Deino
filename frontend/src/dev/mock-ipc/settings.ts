@@ -65,6 +65,23 @@ let settings: Generated.Settings = {
   },
   templates: { defaultTemplate: null },
   organize: { autoTag: true },
+  export: {
+    autoExport: false,
+    folder: null,
+    fileName: '{date} {title}.md',
+    subfolder: '{yyyy}/{mm}',
+    sections: {
+      notes: true,
+      myNotes: true,
+      actionItems: true,
+      insights: true,
+      transcript: false,
+      attendees: true,
+    },
+    overwrite: true,
+    transcriptSidecar: false,
+    obsidian: false,
+  },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

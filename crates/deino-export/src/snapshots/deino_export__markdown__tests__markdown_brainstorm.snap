@@ -1,0 +1,87 @@
+---
+source: crates/deino-export/src/markdown_tests.rs
+expression: markdown
+---
+---
+title: "Onboarding revamp brainstorm"
+date: 2026-10-01T11:02:05
+duration: "29 min"
+attendees:
+  - "Noor Haddad"
+  - "Shreyas"
+  - "Tom Becker"
+  - "Priya Nair"
+tags:
+  - "Brainstorm"
+folders:
+  - "Meetings"
+link: "deino://meetings/meeting-fixture-brainstorm"
+deino-id: "meeting-fixture-brainstorm"
+---
+
+# Onboarding revamp brainstorm
+
+Thursday, October 1, 2026 at 11:02 · 29 min
+
+## Attendees
+
+- Noor Haddad
+- Shreyas
+- Tom Becker
+- Priya Nair
+
+## Notes
+
+#### Decisions
+
+- The top three onboarding ideas from the dot vote are CSV import, a guided setup checklist (with an internal stuck-customer view for Tom), and admin-consent bulk calendar connect.
+- The in-app chat widget is rejected because of the support load it would put on Tom.
+- CSV import v1 covers technicians only; job import waits until Priya's threat model is done.
+- CSV import will parse server-side with a 5,000-row / 5 MB cap, accept CSV only (no Excel), import allow-listed columns only, delete raw uploads after 24 hours, and escape formula-leading characters on export.
+- Admin-consent calendar connect is designed now but built only after the Calendar Sync v2 beta (13 November), without pulling in Maya before then.
+- Templates per trade and the sample-data sandbox are parked for later, not built this quarter.
+- Interim target of 10 days to first dispatch for customers onboarded in October and November; 7 days is the target once admin-consent connect ships.
+- The under-seven-days target is measured in calendar days.
+
+#### Key facts
+
+- **What is the interim time-to-first-dispatch target before admin consent ships?** Ten days for customers onboarded in October and November; seven days once admin-consent calendar connect ships.
+- **How long does it currently take a new customer to reach their first dispatch, and what is the target?** About 19 days today (Tom's figure from memory); the goal is under 7 days.
+- **How is first dispatch defined?** The first job a dispatcher assigns to a real technician that the technician actually opens on the mobile app; test jobs and kickoff-call jobs don't count.
+- **How long did Fernhollow spend waiting on technicians to connect their calendars?** Eleven days.
+- **Why was the in-app chat widget rejected?** Support load: Tom is the only support engineer, ticket volume is up about 40% since the sync bug, and a chat widget with nobody behind it is worse than none.
+- **What were the dot-vote results?** CSV import 4 dots, setup checklist 3, admin-consent calendar connect 3, templates per trade 1, sandbox 1, white-glove week 0.
+- **What size limits were agreed for the CSV import?** 5,000 rows and 5 MB per file, CSV only (no Excel files).
+- **What three security concerns did Priya raise about CSV import?** PII (personal phone numbers, home addresses, end-customer addresses and gate codes), unbounded file size, and formula injection when data is exported and opened in Excel.
+- **Why won't admin-consent calendar connect be built until after 13 November?** It sits next to Calendar Sync v2, and Shreyas doesn't want to put it on Maya until after the v2 beta on 13 November.
+- **When is the follow-up review?** Tuesday 13 October 2026, with the same four people, not in the Blue room.
+
+## My notes
+
+- onboarding brainstorm, blue rm (wifi dead again)
+- TTFD \~19d (tom, from memory, july review) -\> goal \<7d, calendar days
+- def: first real job assigned by dispatcher + opened on mobile. not test jobs
+- where time goes: data in / cal connect (fernhollow 11d!!) / learning the board
+- ideas: csv import, sandbox, setup checklist, admin consent cal, white glove wk (tom), videos, chat widget, trade templates (hvac/plumb/elec)
+- chat widget = NO. support load, tom cant absorb another channel
+- dots: csv 4, checklist 3, admin consent 3, templates 1, sandbox 1
+- priya: csv = pii (home addr, gate codes), size, formula inj (=HYPERLINK on export)
+  - server side parse, 5k rows / 5mb, csv only no xlsx
+  - allowlist cols, raw file deleted 24h
+  - techs only v1, jobs later
+- admin consent: MS app access policy -\> sec group. google DWD not group scoped
+- admin consent AFTER v2 beta 13 nov, dont load maya
+- nour checklist mockups + internal funnel view thu 8
+- tom ttfd last 10 custs mon
+- priya threat model fri
+- me: book review 13th, NOT blue room
+- clean up tom's inbox spreadsheets before soc2 window?
+- ask lena if brightkite would want white glove
+
+## Action items
+
+- [x] Draft mockups of the setup checklist and the internal stuck-customer view — Noor Haddad, due Oct 8, 2026
+- [ ] Pull time-to-first-dispatch numbers for the last ten onboarded customers — Tom Becker, due Oct 5, 2026
+- [ ] Write threat-model notes for the CSV import in the onboarding doc — Priya Nair, due Oct 9, 2026
+- [ ] Book the follow-up review for 13 October and send the invite — Shreyas, due Oct 1, 2026
+- [ ] Photograph the whiteboard and add it to the onboarding doc — Tom Becker, due Oct 1, 2026

@@ -83,6 +83,17 @@ the SQLite adapters behind those ports.
   content-sniffed PNG/JPEG/GIF/WebP up to 10 MB) and `NotesEvents`.
   `adopt` moves the record screen's draft into the meeting a recording
   saved. Fakes: `FakeNotesRepo`, `MemoryNoteImages`, `RecordedNotesEvents`.
+- `export` (EXP-01, EXP-02, ADR 0025): `ExportAssembler` (a meeting into
+  `deino_export::MeetingExport` over the repositories, the `NoteRenderer`
+  port with `DocNoteRenderer`, and the `LocalZone` port), `ExportService`
+  (preview, save, copy, email), `AutoExportService` (the `auto_export`
+  stage's `AutoExporter`: vault notes by the settings' templates,
+  overwriting only its own files, Obsidian people pages, transcript
+  sidecars), `FullExportService` (the account export as a tracked task
+  writing a zip with CSV tables), the OS ports (`SaveDialog`,
+  `FolderDialog`, `Clipboard`, `UrlOpener`) and `Vault` (`FsVault`, atomic
+  writes). Fakes: `FakeVault`, `ScriptedDialog`, `RecordedClipboard`,
+  `RecordedOpener`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

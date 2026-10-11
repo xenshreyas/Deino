@@ -8,7 +8,7 @@ import { Switch } from '@/ui/controls';
 import { networkCopy, switchLabel } from '../copy';
 import { useServices, useSetServiceEnabled } from '../queries';
 import type { ServiceKind, ServiceStatus, ServiceSwitchInput } from '../types';
-import { SettingsCard, SettingsSection } from './settings-section';
+import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 
 /** Kinds in page order. */
 const KIND_ORDER: readonly ServiceKind[] = ['llm', 'models', 'integration', 'web'];

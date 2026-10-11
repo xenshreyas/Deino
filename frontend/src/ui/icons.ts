@@ -6,6 +6,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 export {
+  Archive,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
@@ -27,6 +28,7 @@ export {
   DatabaseZap,
   Download,
   Ellipsis,
+  FileDown,
   FileText,
   Flag,
   FlaskConical,
@@ -47,6 +49,7 @@ export {
   ListChecks,
   LoaderCircle,
   Lock,
+  Mail,
   Megaphone,
   MessageCircle,
   Mic,
@@ -69,6 +72,7 @@ export {
   ScrollText,
   Search,
   Settings,
+  Share,
   ShieldCheck,
   Sparkles,
   Square,

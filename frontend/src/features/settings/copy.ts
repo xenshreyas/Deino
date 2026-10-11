@@ -15,6 +15,7 @@ export const settingsCopy = {
     capture: 'Capture',
     ai: 'AI',
     privacy: 'Privacy',
+    data: 'Data',
     more: 'More',
   },
   sections: {
@@ -48,6 +49,10 @@ export const settingsCopy = {
     network: {
       label: 'Network',
       description: 'What may leave this Mac, and a log of everything that did.',
+    },
+    export: {
+      label: 'Export',
+      description: 'Notes into a folder after every meeting, and every meeting at once.',
     },
     beta: { label: 'Beta', description: 'Features that are still being finished.' },
     about: { label: 'About', description: 'Version, privacy and updates.' },

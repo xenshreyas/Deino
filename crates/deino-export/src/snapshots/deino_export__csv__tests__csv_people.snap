@@ -1,0 +1,19 @@
+---
+source: crates/deino-export/src/csv.rs
+expression: people(&exports)
+---
+name,email,meetings,last_met
+Aisha Rahman,aisha@deino.dev,2,2026-09-29
+Daniel Koh,daniel@quarrystone.vc,1,2026-09-29
+Diego Alvarez,diego@deino.dev,2,2026-10-08
+Hannah Pike,hannah.pike@brightkite-logistics.com,1,2026-09-30
+Jordan Ellis,jordan@jordanellis.dev,1,2026-10-02
+Lena Okafor,lena@deino.dev,2,2026-09-30
+Marcus Webb,marcus.webb@brightkite-logistics.com,1,2026-09-30
+Maya Chen,maya@deino.dev,3,2026-10-08
+Noor Haddad,noor@deino.dev,2,2026-10-01
+Owen Price,owen@fernhollow.co,1,2026-10-05
+Priya Nair,priya@deino.dev,4,2026-10-08
+Ruth Abernathy,ruth@abernathy-advisory.com,1,2026-09-29
+Shreyas,shreyas@deino.dev,8,2026-10-08
+Tom Becker,tom@deino.dev,4,2026-10-08

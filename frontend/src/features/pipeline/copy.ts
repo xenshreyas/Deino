@@ -26,6 +26,7 @@ const stageLabels: Partial<Record<string, string>> = {
   legacy_summary: 'Summary',
   auto_tag: 'Tags',
   auto_folder: 'Folders',
+  auto_export: 'Export',
 };
 
 /** The readable name of `stage`. */

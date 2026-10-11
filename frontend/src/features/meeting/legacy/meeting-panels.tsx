@@ -10,10 +10,11 @@ import { LegacyMeetingPanelsProvider } from './panels-context';
 import { useMeetingData } from '@/hooks/meeting-details/useMeetingData';
 import { useSummaryGeneration } from '@/hooks/meeting-details/useSummaryGeneration';
 import { useLegacyTemplateChoice } from '@/features/templates';
-import { useCopyOperations } from '@/hooks/meeting-details/useCopyOperations';
 import { useMeetingOperations } from '@/hooks/meeting-details/useMeetingOperations';
 import { useConfig } from '@/contexts/ConfigContext';
 import { hasVisibleSummaryContent } from '@/lib/summary-content';
+import { useShareActions } from '@/features/export';
+import { asMeetingId } from '@/features/meetings';
 
 export default function PageContent({
   meeting,
@@ -110,13 +111,8 @@ export default function PageContent({
     onOpenModelSettings: handleOpenModelSettings,
   });
 
-  const copyOperations = useCopyOperations({
-    meeting,
-    transcripts: meetingData.transcripts,
-    meetingTitle: meetingData.meetingTitle,
-    aiSummary: meetingData.aiSummary,
-    summaryDocumentRef: meetingData.summaryDocumentRef,
-  });
+  // EXP-01: copies go through the export plugin (the stored notes and transcript).
+  const share = useShareActions(asMeetingId(meeting.id));
 
   const meetingOperations = useMeetingOperations({
     meeting,
@@ -161,7 +157,7 @@ export default function PageContent({
         transcript: (
             <TranscriptPanel
               transcripts={meetingData.transcripts}
-              onCopyTranscript={copyOperations.handleCopyTranscript}
+              onCopyTranscript={() => share.copy('transcript')}
               onOpenMeetingFolder={meetingOperations.handleOpenMeetingFolder}
               isRecording={isRecording}
               disableAutoScroll={true}
@@ -185,7 +181,7 @@ export default function PageContent({
               isSaving={meetingData.isSaving}
               isSummaryDirty={meetingData.isSummaryDirty}
               onSaveAll={meetingData.saveAllChanges}
-              onCopySummary={copyOperations.handleCopySummary}
+              onCopySummary={async () => { share.copy('markdown'); }}
               aiSummary={meetingData.aiSummary}
               summaryStatus={summaryGeneration.summaryStatus}
               transcripts={meetingData.transcripts}

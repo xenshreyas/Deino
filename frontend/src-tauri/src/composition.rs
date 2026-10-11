@@ -24,6 +24,7 @@
 
 mod detection;
 mod diarize;
+mod export;
 mod llm;
 mod network;
 mod notepad;
@@ -35,11 +36,12 @@ mod stt;
 use std::sync::Arc;
 
 pub(crate) use detection::attach_detection;
+use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use organize::Organize;
-use pipeline::attach_pipeline;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
+use pipeline::{StageAdapters, attach_pipeline};
 pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
@@ -148,6 +150,9 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
     let auto_tagger = organize.auto_tagger(gateway.clone(), Arc::clone(&settings));
+    let exports = ExportServices::build(app, &database, Arc::clone(&settings), clock.clone());
+    let auto_export = exports.auto_exporter();
+    exports.manage(app);
     let deps = NoteDeps {
         settings,
         gateway,
@@ -155,7 +160,11 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     // Templates are seeded before the pipeline starts: its summary stage reads them.
     attach_notes(app, &database, deps).await;
-    attach_pipeline(app, &database, &clock, auto_tagger);
+    let stage_adapters = StageAdapters {
+        auto_tagger,
+        auto_export,
+    };
+    attach_pipeline(app, &database, &clock, stage_adapters);
 }
 
 /// Wires templates and the profile (`notes.rs`) and prepares them.
@@ -270,6 +279,7 @@ mod tests {
             summaries: summaries.clone(),
             diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
             auto_tagger: auto_tags.clone(),
+            auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);

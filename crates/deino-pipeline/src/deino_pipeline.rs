@@ -59,7 +59,9 @@ pub use service::{PipelineDeps, PipelineService};
 pub use sleeper::FakeSleeper;
 pub use sleeper::{ClockSleeper, Sleeper};
 pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
-pub use stages::{AutoFolderStage, AutoTagStage, LegacySummaryStage, Summarizer, SummaryInput};
+pub use stages::{
+    AutoExportStage, AutoFolderStage, AutoTagStage, LegacySummaryStage, Summarizer, SummaryInput,
+};
 #[cfg(any(test, feature = "test-support"))]
-pub use stages::{RecordedAutoFiling, RecordedAutoTags, RecordedSummaries};
+pub use stages::{RecordedAutoFiling, RecordedAutoTags, RecordedSummaries, ScriptedAutoExporter};
 pub use trigger::PipelineTrigger;

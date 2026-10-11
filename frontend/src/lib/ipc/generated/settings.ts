@@ -235,6 +235,73 @@ export type ErrorCode =
  */
 "internal"
 /**
+ * Which [`Section`]s an export includes.
+ */
+export type ExportSections = { 
+/**
+ * The AI notes.
+ */
+notes: boolean; 
+/**
+ * What the user typed.
+ */
+myNotes: boolean; 
+/**
+ * The action items.
+ */
+actionItems: boolean; 
+/**
+ * Insights (AI-06).
+ */
+insights: boolean; 
+/**
+ * The transcript.
+ */
+transcript: boolean; 
+/**
+ * The attendee list.
+ */
+attendees: boolean }
+/**
+ * The export section of `Settings`.
+ */
+export type ExportSettings = { 
+/**
+ * Export every meeting when its pipeline finishes.
+ */
+autoExport: boolean; 
+/**
+ * The folder notes go into; chosen through the folder dialog only.
+ */
+folder: string | null; 
+/**
+ * The note's file name, with `{date}`, `{time}`, `{title}`, `{yyyy}`,
+ * `{mm}` and `{dd}`.
+ */
+fileName: string; 
+/**
+ * The folders inside `folder`, `/`-separated; empty for none.
+ */
+subfolder: string; 
+/**
+ * What each note includes.
+ */
+sections: ExportSections; 
+/**
+ * Rewrite a meeting's note when the meeting is processed again; when
+ * off, a note that exists is left as the user may have edited it.
+ */
+overwrite: boolean; 
+/**
+ * Write the transcript to its own note beside the meeting's.
+ */
+transcriptSidecar: boolean; 
+/**
+ * Obsidian mode: people as `[[wiki links]]` with their own pages, tags
+ * as `#tags`.
+ */
+obsidian: boolean }
+/**
  * An app the user chose to always ignore.
  */
 export type IgnoredApp = { 
@@ -702,6 +769,10 @@ templates: TemplateSettings;
  * Auto-tagging and auto-filing (ORG-05, ORG-06).
  */
 organize: OrganizeSettings; 
+/**
+ * Exports and auto-export (EXP-02).
+ */
+export: ExportSettings; 
 /**
  * Appearance and layout.
  */

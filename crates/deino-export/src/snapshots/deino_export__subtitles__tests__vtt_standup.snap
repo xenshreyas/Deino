@@ -1,0 +1,179 @@
+---
+source: crates/deino-export/src/subtitles.rs
+expression: vtt(&export)
+---
+WEBVTT
+
+00:00:00.696 --> 00:00:06.531
+<v Shreyas>Morning, everyone. Let's keep it quick today, I've got a hard stop at quarter to.
+
+00:00:06.842 --> 00:00:09.302
+<v Shreyas>Maya, do you want to kick us off?
+
+00:00:09.764 --> 00:00:16.799
+<v Maya Chen>Sure. So yesterday I mostly watched the Fernhollow dashboards after the dedupe fix went out on Tuesday.
+
+00:00:17.033 --> 00:00:25.508
+<v Maya Chen>Zero new duplicates in two days, and Owen confirmed the same on his side this morning. So I'm calling the incident closed.
+
+00:00:26.201 --> 00:00:29.001
+<v Shreyas>Nice. That's a big one. Thank you.
+
+00:00:29.630 --> 00:00:41.225
+<v Maya Chen>Today I'm back on Calendar Sync v2, writing the subscription renewal part of the design doc. No blockers. And, uh, first morning off the pager, which is lovely.
+
+00:00:41.595 --> 00:00:44.425
+<v Shreyas>Well earned. Okay, Diego, you're up.
+
+00:00:45.056 --> 00:00:52.926
+<v Diego Alvarez>Yeah. Yesterday I got the read-only offline job list caching working on Android. Today I'm starting the iOS side.
+
+00:00:53.246 --> 00:01:03.916
+<v Diego Alvarez>I am kind of blocked, though. I need a last modified at field on each job in the jobs list endpoint, so the app knows when its cached copy is stale.
+
+00:01:04.070 --> 00:01:13.765
+<v Diego Alvarez>Right now I'm diffing the whole payload, which works, but it's slow and it's going to be terrible on a bad connection out in somebody's basement.
+
+00:01:14.351 --> 00:01:21.116
+<v Maya Chen>Oh, that one's on me, sorry. I said I'd add it last week and then the incident ate the week.
+
+00:01:21.469 --> 00:01:26.789
+<v Maya Chen>It's a small change. I can have it on the endpoint by end of day tomorrow.
+
+00:01:27.440 --> 00:01:31.105
+<v Diego Alvarez>Tomorrow works. I'll stub it on my side until then.
+
+00:01:31.485 --> 00:01:42.970
+<v Diego Alvarez>For context, the Android cache keeps the next fourteen days of jobs for the technician, so it's usually under two hundred jobs. It loads in about a second from cold.
+
+00:01:43.383 --> 00:01:50.213
+<v Diego Alvarez>On iOS I'm reusing the same cache schema, so hopefully it's two or three days of work, not a week.
+
+00:01:50.742 --> 00:01:55.087
+<v Shreyas>Two or three days is fine. Nothing's waiting on it this week.
+
+00:01:55.362 --> 00:01:58.697
+<v Shreyas>Does that mean the offline list misses today's cut?
+
+00:01:59.236 --> 00:02:09.451
+<v Diego Alvarez>Yeah. Honestly it was never really going to make this one. I'd rather it goes out in next week's release with the real field than hack around it.
+
+00:02:09.824 --> 00:02:15.574
+<v Shreyas>Okay, agreed. Offline list goes in next week's release, not this one. Priya?
+
+00:02:16.156 --> 00:02:28.476
+<v Priya Nair>Yesterday was mostly SOC 2 prep. Kestrel Audit sent over their evidence request list, it's about sixty items, and I've mapped maybe two thirds of them to things we already collect.
+
+00:02:28.684 --> 00:02:38.594
+<v Priya Nair>Kestrel wants the observation window to start cleanly on the first of November, so everything on that list needs an owner by the end of next week.
+
+00:02:38.956 --> 00:02:47.496
+<v Priya Nair>I'll send each of you the handful of items that are yours on Monday. Most of it is screenshots of settings, nothing scary.
+
+00:02:48.019 --> 00:02:50.849
+<v Shreyas>Is anything on there going to surprise us?
+
+00:02:51.472 --> 00:03:01.052
+<v Priya Nair>Access reviews for the production database, probably. We've never done a formal one. I'll draft a process, but that's a next-week problem.
+
+00:03:01.458 --> 00:03:12.238
+<v Priya Nair>The other thing is the flaky test. The webhook retry integration test has failed something like one in eight runs this week, always on the timeout assertion.
+
+00:03:12.585 --> 00:03:20.300
+<v Priya Nair>I'm quarantining it this morning so it stops blocking merges, and I'll file a ticket with the logs I've got so far.
+
+00:03:20.744 --> 00:03:23.199
+<v Shreyas>Is it a real bug or just the test?
+
+00:03:24.063 --> 00:03:37.703
+<v Priya Nair>I think it's the test. It sleeps for a fixed two seconds and then checks the retry fired, and the CI runners are just slower some days. But I want to look properly before I say that for sure.
+
+00:03:38.586 --> 00:03:47.186
+<v Maya Chen>It does touch the retry queue I'm about to rewrite for v2, so I'm happy to pair on it next week if it turns out to be real.
+
+00:03:47.855 --> 00:03:50.840
+<v Priya Nair>Maybe. Let's see what the logs say first.
+
+00:03:51.259 --> 00:04:02.779
+<v Priya Nair>And today I'm driving the release cut. Plan's still Thursday afternoon, so four o'clock today. If you've got something that needs to be in, merge it by three thirty.
+
+00:04:03.220 --> 00:04:06.160
+<v Shreyas>And the quarantined test won't block the cut?
+
+00:04:06.727 --> 00:04:12.482
+<v Priya Nair>No, quarantined tests still run but they don't gate anything. No blockers from me.
+
+00:04:13.183 --> 00:04:15.618
+<v Shreyas>Great, thanks. Tom, you're up.
+
+00:04:16.347 --> 00:04:25.577
+<v Tom Becker>Hey. So, queue-wise it's a lot calmer. We closed fourteen tickets yesterday, and nine of them were Fernhollow cleanup confirmations.
+
+00:04:25.862 --> 00:04:35.307
+<v Tom Becker>Owen replied this morning. He's on the release notes list now, his two dispatch leads too, and he asked when the postmortem is landing.
+
+00:04:35.593 --> 00:04:44.438
+<v Tom Becker>He also said his dispatchers have stopped double-checking every recurring job by hand, which, I think, is the real sign it's over.
+
+00:04:45.024 --> 00:04:51.414
+<v Shreyas>Still Friday. I'm finishing it tonight and I'll send it to Owen tomorrow, with you on copy.
+
+00:04:51.934 --> 00:05:03.034
+<v Tom Becker>Perfect. The other thing, there's a new ticket from one of the smaller plumbing accounts. One technician's jobs are showing an hour off in his Outlook calendar.
+
+00:05:03.308 --> 00:05:12.483
+<v Tom Becker>He's in a different time zone from his dispatcher, and I don't know yet if it's us or Microsoft. It's only the one technician so far.
+
+00:05:12.845 --> 00:05:22.700
+<v Maya Chen>Hmm, that sounds like the time zone on the series master, we've seen something like that before with recurring events. It might be the, um...
+
+00:05:23.534 --> 00:05:29.644
+<v Shreyas>Let's take that one offline. Maya, Tom, can you grab ten minutes straight after this?
+
+00:05:30.258 --> 00:05:31.633
+<v Maya Chen>Yep, works for me.
+
+00:05:32.189 --> 00:05:37.574
+<v Tom Becker>Sure, I'll send a huddle link right after. That's it from me, no blockers.
+
+00:05:37.879 --> 00:05:48.369
+<v Tom Becker>Oh, and Noor and I might have the onboarding survey results by next week, depending on how many come back. She's out today, so I'm just flagging it.
+
+00:05:49.230 --> 00:05:58.025
+<v Shreyas>Me, quickly. Yesterday was one on ones and hiring. We've got two more senior backend screens on the calendar for next week.
+
+00:05:58.197 --> 00:06:05.567
+<v Shreyas>Today I'm on the Fernhollow postmortem, and I'll review Maya's renewal design once it's ready, no rush on that.
+
+00:06:05.961 --> 00:06:16.511
+<v Shreyas>And a reminder for everyone, Maya's off the on-call rotation for the next two weeks. I'm primary for anything sync related and Diego's secondary this weekend.
+
+00:06:17.158 --> 00:06:22.398
+<v Diego Alvarez>Yep, I've read the runbook twice. Please nobody break anything on Saturday.
+
+00:06:23.265 --> 00:06:30.955
+<v Shreyas>Oh, and someone floated moving standup to async on Fridays. I'm not deciding that today, just think about it.
+
+00:06:31.841 --> 00:06:34.521
+<v Diego Alvarez>I'd vote for that, for what it's worth.
+
+00:06:34.896 --> 00:06:38.101
+<v Priya Nair>I'm neutral. As long as people actually post.
+
+00:06:38.962 --> 00:06:52.037
+<v Shreyas>Noted. Okay, recap. Maya adds the field by end of day tomorrow, Priya quarantines the test and cuts at four, merge by three thirty, and Maya and Tom take the Outlook thing offline.
+
+00:06:52.452 --> 00:06:54.827
+<v Shreyas>Thanks, all. Have a good one.
+
+00:06:55.573 --> 00:06:57.513
+<v Priya Nair>Thanks, everyone, bye now.
+
+00:06:57.934 --> 00:07:03.229
+<v Diego Alvarez>Wait, quick one, did the office coffee machine die again or is it just me?
+
+00:07:04.085 --> 00:07:09.290
+<v Tom Becker>It's not dead, someone unplugged it for the vacuum. I'll plug it back in.
+
+00:07:09.890 --> 00:07:11.320
+<v Diego Alvarez>Later, see you all.

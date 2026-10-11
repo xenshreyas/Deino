@@ -11,18 +11,33 @@ use serde_json::{Map, Value};
 
 use super::{Settings, SettingsError};
 
-/// A merge patch for [`Settings`]: a JSON object that does not touch `version`.
+/// Settings the UI may clear but never set, as (section, field, path):
+/// paths Deino writes to come only from dialogs Rust opens (EXP-02).
+const DIALOG_ONLY: &[(&str, &str, &str)] = &[("export", "folder", "export.folder")];
+
+/// A merge patch for [`Settings`]: a JSON object that does not touch
+/// `version` and sets no [`DIALOG_ONLY`] setting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SettingsPatch(Map<String, Value>);
 
 impl SettingsPatch {
-    /// Accepts `value` as a patch if it is an object that leaves `version` alone.
+    /// Accepts `value` as a patch if it is an object that leaves `version`
+    /// alone and only clears dialog-only settings.
     pub fn parse(value: Value) -> Result<Self, SettingsError> {
         let Value::Object(fields) = value else {
             return Err(SettingsError::NotAnObject);
         };
         if fields.contains_key("version") {
             return Err(SettingsError::VersionIsReadOnly);
+        }
+        for (section, field, path) in DIALOG_ONLY {
+            let set = fields
+                .get(*section)
+                .and_then(|section| section.get(*field))
+                .is_some_and(|value| !value.is_null());
+            if set {
+                return Err(SettingsError::ChosenInDialog(path));
+            }
         }
         Ok(Self(fields))
     }
@@ -141,6 +156,18 @@ mod tests {
             SettingsPatch::parse(json!({ "version": 9 })),
             Err(SettingsError::VersionIsReadOnly)
         ));
+    }
+
+    #[test]
+    fn the_export_folder_comes_only_from_the_dialog() {
+        let set = SettingsPatch::parse(json!({ "export": { "folder": "/etc" } }));
+        let cleared = apply(json!({ "export": { "folder": null, "autoExport": false } }));
+
+        assert!(matches!(
+            set,
+            Err(SettingsError::ChosenInDialog("export.folder"))
+        ));
+        assert_eq!(cleared.unwrap().export.folder, None);
     }
 
     #[test]

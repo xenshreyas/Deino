@@ -1,0 +1,38 @@
+[package]
+name = "deino-export"
+version = "0.1.0"
+description = "Deino's meeting exports: pure renderers (Markdown, TXT, JSON, SRT, VTT, HTML, DOCX, PDF, CSV) over a typed MeetingExport"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_export.rs"
+
+[dependencies]
+chrono.workspace = true
+deino-domain.workspace = true
+# DOCX (EXP-01): headings, lists, checkboxes and the transcript table (MIT).
+docx-rs = { version = "=0.4.22", default-features = false }
+# Notes are stored as Markdown; parsed once into typed blocks (MIT).
+pulldown-cmark = { version = "=0.13.4", default-features = false }
+serde.workspace = true
+serde_json.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+# PDF (ADR 0025): typeset with the typst compiler and its PDF backend
+# (Apache-2.0); fonts are the bundled Inter files, never system fonts.
+typst = "=0.15.1"
+typst-layout = "=0.15.1"
+typst-pdf = "=0.15.1"
+# docx-rs stores its parts uncompressed; the package is re-deflated.
+zip.workspace = true
+
+[dev-dependencies]
+deino-testkit.workspace = true
+insta = "1.43"
+# Smoke tests read back what the binary renderers wrote.
+pdf-extract = "=0.12.1"
+
+[lints]
+workspace = true

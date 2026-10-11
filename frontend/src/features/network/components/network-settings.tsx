@@ -11,7 +11,7 @@ import { Switch } from '@/ui/controls';
 import { networkCopy } from '../copy';
 import { EgressLogSection } from './egress-log';
 import { ServicesSection } from './service-list';
-import { SettingsCard } from './settings-section';
+import { SettingsCard } from '@/ui/settings-section';
 
 /** Props of {@link NetworkSettings}. */
 export interface NetworkSettingsProps {
