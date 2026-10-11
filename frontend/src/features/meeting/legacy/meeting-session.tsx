@@ -20,33 +20,26 @@ interface LegacyMeetingSessionProps {
   meetingId: string;
   /** How the user got here; kept for the route contract. */
   source?: MeetingSource | undefined;
-  /** A moment to open the transcript at, in ms (a search hit). */
-  focusMs?: number | undefined;
-  /** The meeting page; its Transcript slot reads the published panel. */
+  /** The meeting page; its Transcript tab reads the published tools. */
   children: ReactNode;
 }
 
 /**
- * One meeting's inherited transcript session: loads its transcript pages and
- * publishes the transcript panel to the meeting page's Transcript slot
- * (`panels-context.tsx`). The notes moved to typed queries (NOT-01, NOT-02);
- * TRN-01 replaces what is left.
+ * One meeting's inherited session: loads its untyped metadata (through the
+ * legacy transcript pages) and publishes the Transcript tab's inherited
+ * tools, the recording folder and re-transcription (`panels-context.tsx`).
+ * The notes (NOT-01, NOT-02) and the transcript (TRN-01) read typed queries;
+ * CAP-08/CAP-11 port what is left.
  */
-export function LegacyMeetingSession({ meetingId, focusMs, children }: LegacyMeetingSessionProps) {
+export function LegacyMeetingSession({ meetingId, children }: LegacyMeetingSessionProps) {
   const { setCurrentMeeting, refetchMeetings } = useSidebar();
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const {
     metadata,
-    segments,
     transcripts,
     isLoading: isLoadingTranscripts,
-    isLoadingMore,
-    hasMore,
-    totalCount,
-    loadedCount,
-    loadMore,
     refetch,
     error: transcriptError,
   } = usePaginatedTranscripts({ meetingId: meetingId || '' });
@@ -114,13 +107,6 @@ export function LegacyMeetingSession({ meetingId, focusMs, children }: LegacyMee
         await refetchMeetings();
       }}
       onRefetchTranscripts={refetch}
-      focusMs={focusMs}
-      segments={segments}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      totalCount={totalCount}
-      loadedCount={loadedCount}
-      onLoadMore={loadMore}
     >
       {children}
     </PageContent>

@@ -1,11 +1,13 @@
 /**
  * The bridge between the inherited meeting session and the meeting page's
- * Transcript slot.
+ * Transcript tab.
  *
- * The legacy session (`meeting-session.tsx`, `meeting-panels.tsx`) still
- * loads the transcript pages and publishes the finished panel here. The
- * Notes tab left the bridge with NOT-02; when TRN-01 rebuilds the
- * transcript on typed queries, the bridge goes away.
+ * The notes (NOT-01, NOT-02) and the transcript itself (TRN-01) read typed
+ * queries now. What the legacy session still owns are the Transcript tab's
+ * inherited tools, "open the recording folder" and "re-transcribe", which
+ * need its untyped meeting metadata; it publishes them here and the
+ * transcript view shows them beside its search. When CAP-08/CAP-11 port
+ * re-transcription, the bridge goes away.
  */
 import { createContext, type ReactNode, useContext } from 'react';
 
@@ -15,7 +17,8 @@ export type LegacyMeetingPanels =
   | { status: 'error'; message: string }
   | {
       status: 'ready';
-      transcript: ReactNode;
+      /** The Transcript tab's inherited tools: the recording folder and re-transcription. */
+      transcriptTools: ReactNode;
     };
 
 const PanelsContext = createContext<LegacyMeetingPanels>({ status: 'loading' });
@@ -31,7 +34,7 @@ export function LegacyMeetingPanelsProvider({
   return <PanelsContext.Provider value={value}>{children}</PanelsContext.Provider>;
 }
 
-/** The legacy panel, for the Transcript slot. */
+/** The legacy panels, for the Transcript tab's tools. */
 export function useLegacyMeetingPanels(): LegacyMeetingPanels {
   return useContext(PanelsContext);
 }

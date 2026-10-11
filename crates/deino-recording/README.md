@@ -15,8 +15,8 @@ spoken. The UI only watches.
 - `RecordingService` (`service.rs`): one recording at a time; `start`
   (meeting row `recording`/`live`, its folder, the Me and Them speakers),
   `pause`, `resume`, `stop` (both tracks end together, lanes flush, timing
-  set, `StopRecording` → `processing`, which starts the pipeline), `state`,
-  `transcript`.
+  set, `StopRecording` → `processing`, which starts the pipeline), `state`.
+  The saved transcript is read through `deino_core::transcript` (TRN-01).
 - `Session` (`session.rs`, `session/`): a recording's parts, started and
   stopped in order (router → engines → recorder → capture → meeting row →
   live pipeline).

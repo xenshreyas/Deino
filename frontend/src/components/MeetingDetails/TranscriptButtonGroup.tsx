@@ -1,14 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
-import { Copy, FolderOpen, RefreshCw } from 'lucide-react';
+import { FolderOpen, RefreshCw } from 'lucide-react';
 import { RetranscribeDialog } from './RetranscribeDialog';
 import { useConfig } from '@/contexts/ConfigContext';
 
 
+/** The Transcript tab's inherited tools; "Copy transcript" lives in the transcript view (TRN-01). */
 interface TranscriptButtonGroupProps {
-  transcriptCount: number;
-  onCopyTranscript: () => void;
   onOpenMeetingFolder: () => Promise<void>;
   meetingId?: string;
   meetingFolderPath?: string | null;
@@ -17,8 +16,6 @@ interface TranscriptButtonGroupProps {
 
 
 export function TranscriptButtonGroup({
-  transcriptCount,
-  onCopyTranscript,
   onOpenMeetingFolder,
   meetingId,
   meetingFolderPath,
@@ -35,22 +32,8 @@ export function TranscriptButtonGroup({
   }, [onRefetchTranscripts]);
 
   return (
-    <div className="flex items-center justify-end w-full gap-1">
+    <div className="flex shrink-0 items-center">
       <ButtonGroup>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-2 @[22rem]:px-3"
-          onClick={() => {
-            onCopyTranscript();
-          }}
-          disabled={transcriptCount === 0}
-          title={transcriptCount === 0 ? 'No transcript available' : 'Copy Transcript'}
-        >
-          <Copy />
-          <span className="hidden @[22rem]:inline">Copy</span>
-        </Button>
-
         <Button
           size="sm"
           variant="ghost"

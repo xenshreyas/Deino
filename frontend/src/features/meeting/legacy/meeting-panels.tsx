@@ -1,63 +1,32 @@
 import type { ReactNode } from 'react';
-import { TranscriptPanel } from '@/components/MeetingDetails/TranscriptPanel';
+import { TranscriptButtonGroup } from '@/components/MeetingDetails/TranscriptButtonGroup';
 import { LegacyMeetingPanelsProvider } from './panels-context';
 import { useMeetingOperations } from '@/hooks/meeting-details/useMeetingOperations';
-import { useShareActions } from '@/features/export';
-import { asMeetingId } from '@/features/meetings';
 
-/** The inherited transcript panel, published to the meeting page's Transcript slot. */
+/** The Transcript tab's inherited tools, published to the meeting page (TRN-01 shows them). */
 export default function PageContent({
   meeting,
   onRefetchTranscripts,
-  segments,
-  hasMore,
-  isLoadingMore,
-  totalCount,
-  loadedCount,
-  onLoadMore,
-  focusMs,
   children,
 }: {
-  /** A moment to open the transcript at, in ms (a search hit). */
-  focusMs?: number | undefined;
-  /** The meeting page whose Transcript slot shows this panel. */
+  /** The meeting page whose Transcript tab shows these tools. */
   children: ReactNode;
   meeting: any;
   onMeetingUpdated?: () => Promise<void>;
   onRefetchTranscripts?: () => Promise<void>;
-  segments?: any[];
-  hasMore?: boolean;
-  isLoadingMore?: boolean;
-  totalCount?: number;
-  loadedCount?: number;
-  onLoadMore?: () => void;
 }) {
-  // EXP-01: copies go through the export plugin (the stored transcript).
-  const share = useShareActions(asMeetingId(meeting.id));
   const meetingOperations = useMeetingOperations({ meeting });
 
   return (
     <LegacyMeetingPanelsProvider
       value={{
         status: 'ready',
-        transcript: (
-          <TranscriptPanel
-            transcripts={meeting.transcripts}
-            onCopyTranscript={() => share.copy('transcript')}
+        transcriptTools: (
+          <TranscriptButtonGroup
             onOpenMeetingFolder={meetingOperations.handleOpenMeetingFolder}
-            isRecording={false}
-            disableAutoScroll={true}
-            usePagination={true}
-            segments={segments}
-            hasMore={hasMore}
-            isLoadingMore={isLoadingMore}
-            totalCount={totalCount}
-            loadedCount={loadedCount}
-            onLoadMore={onLoadMore}
             meetingId={meeting.id}
             meetingFolderPath={meeting.folder_path}
             onRefetchTranscripts={onRefetchTranscripts}
-            focusMs={focusMs}
           />
         ),
       }}

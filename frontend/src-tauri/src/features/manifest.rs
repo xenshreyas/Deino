@@ -173,10 +173,7 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     // ── FND-05b / CAP-02 live recorder (features/recording.rs) ──
-    (
-        "recording",
-        &["start", "stop", "pause", "resume", "state", "transcript"],
-    ),
+    ("recording", &["start", "stop", "pause", "resume", "state"]),
     // ── ORG-01 calendar sync (features/calendar.rs) ──
     (
         "calendar",
@@ -226,6 +223,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "deliveries",
         ],
     ),
+    // ── TRN-01 transcript view (features/transcript.rs) ──
+    ("transcript", &["get"]),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

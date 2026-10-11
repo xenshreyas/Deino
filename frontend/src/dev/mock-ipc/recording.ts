@@ -8,7 +8,7 @@
 import type * as Generated from '@/lib/ipc/generated/recording';
 
 import { failure, ok } from './command-result';
-import { mockDatabase } from './database';
+import { mockDatabase, mockTranscripts } from './database';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
 
@@ -42,7 +42,6 @@ export const events = {
 let snapshot: Generated.RecordingSnapshot = IDLE;
 let timer: number | undefined;
 let heard = 0;
-const transcripts = new Map<Generated.MeetingId, Generated.Segment[]>();
 
 function publish(next: Generated.RecordingSnapshot): Generated.RecordingSnapshot {
   snapshot = next;
@@ -86,8 +85,9 @@ function hear(meetingId: Generated.MeetingId): void {
   if (done) save(update);
 }
 
+/** Saves a finished line (with no speaker: the view names it by channel). */
 function save(update: Generated.SegmentUpdate): void {
-  const segment: Generated.Segment = {
+  mockTranscripts.save({
     id: update.segmentId,
     meetingId: update.meetingId,
     channel: update.channel,
@@ -98,8 +98,7 @@ function save(update: Generated.SegmentUpdate): void {
     words: [],
     isDeleted: false,
     editedAt: null,
-  };
-  transcripts.set(update.meetingId, [...(transcripts.get(update.meetingId) ?? []), segment]);
+  });
   mockDatabase.touch(['transcript_segments']);
 }
 
@@ -156,9 +155,5 @@ export const commands = {
   async state() {
     await latency();
     return ok(snapshot);
-  },
-  async transcript(meetingId) {
-    await latency();
-    return ok(transcripts.get(meetingId) ?? []);
   },
 } satisfies typeof Generated.commands;

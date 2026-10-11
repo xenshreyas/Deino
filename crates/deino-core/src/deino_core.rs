@@ -30,6 +30,9 @@
 //! NOT-04 and NOT-05 added [`templates`] (the note templates, built-ins
 //! seeded from a versioned catalogue, auto selection) and [`profile`] (the
 //! user's profile as AI context, the "Me" person, internal vs external).
+//!
+//! TRN-01 added [`transcript`]: a meeting's transcript with its speakers'
+//! display names, as the transcript view reads it.
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -56,4 +59,5 @@ pub mod tags;
 pub mod templates;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;
+pub mod transcript;
 pub mod voiceprints;

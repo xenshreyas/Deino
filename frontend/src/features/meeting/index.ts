@@ -5,4 +5,4 @@
  */
 export { MeetingScreen, type MeetingScreenProps } from './components/meeting-screen';
 export { MEETING_PANELS, MEETING_PLAYER, MEETING_TABS } from './slots';
-export type { MeetingPanelId, MeetingSlotProps, MeetingTabId } from './types';
+export type { MeetingMoment, MeetingPanelId, MeetingSlotProps, MeetingTabId } from './types';

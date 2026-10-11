@@ -44,6 +44,21 @@ interface Said {
   length: number;
 }
 
+/** A voice of a generated meeting (`seedMeeting`). */
+export interface SeedVoice {
+  speakerId: SpeakerId;
+  name: string;
+  isMe: boolean;
+  color: number;
+}
+
+/** Who said one segment of a generated meeting, and for how long. */
+export interface SeedSaid {
+  segmentId: Generated.SegmentId;
+  speakerId: SpeakerId;
+  length: number;
+}
+
 const notFound = (what: string): AppError => ({
   code: 'not_found',
   message: `${what} was not found`,
@@ -139,6 +154,39 @@ export class MockSpeakers {
     row.suggestion = null;
     this.onChange(['speaker_suggestions']);
     return ok(null);
+  }
+
+  /** Who said `segmentId` now (renames move segments), for the transcript mock. */
+  speakerOf(segmentId: Generated.SegmentId): SpeakerId | undefined {
+    return this.said.get(segmentId)?.speakerId;
+  }
+
+  /**
+   * Adds a generated meeting's voices, each named after a new person, and
+   * who said which segment (TRN-01's long meeting).
+   */
+  seedMeeting(meetingId: MeetingId, voices: readonly SeedVoice[], said: readonly SeedSaid[]) {
+    voices.forEach((voice, index) => {
+      const person: MockPerson = {
+        id: crypto.randomUUID() as PersonId,
+        name: voice.name,
+        email: null,
+        isMe: voice.isMe,
+      };
+      if (!voice.isMe) this.people.push(person);
+      this.rows.push({
+        speakerId: voice.speakerId,
+        meetingId,
+        label: `Speaker ${String(index + 1)}`,
+        color: voice.color,
+        isMe: voice.isMe,
+        personId: voice.isMe ? null : person.id,
+        suggestion: null,
+      });
+    });
+    for (const { segmentId, speakerId, length } of said) {
+      this.said.set(segmentId, { meetingId, speakerId, length });
+    }
   }
 
   /** Leaves a speaker unnamed, optionally with a suggestion, for the demo. */

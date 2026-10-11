@@ -18,17 +18,21 @@ export const meetingTabSchema = z.enum(['notes', 'transcript', 'insights', 'clip
 /** One of the meeting page's tabs. */
 export type MeetingTabId = z.infer<typeof meetingTabSchema>;
 
+/** A moment of the recording, in milliseconds from its start (TRN-01 deep links). */
+export const momentSchema = z.coerce.number().int().nonnegative();
+
 /**
  * `/meetings/$meetingId?source=recording&tab=transcript&t=221900`: `t` is a
- * moment in the recording, in milliseconds (a search hit or an action item's
- * evidence): the transcript opens scrolled to it, with that line highlighted.
- * `segment=<id>` is the transcript segment a citation points at (NOT-03),
- * for the Transcript tab to bring into view.
+ * moment in the recording, in milliseconds (an action item's evidence, an
+ * ORG-08 search result); `segment=<id>` is the transcript segment a citation
+ * points at (NOT-03 "Show in transcript"). With either and no `tab`, the page
+ * opens on the Transcript tab, which scrolls to and marks the line (TRN-01);
+ * the player (TRN-03) will seek to `t`.
  */
 export const meetingSearchSchema = z.object({
   source: meetingSourceSchema.optional().catch(undefined),
   tab: meetingTabSchema.optional().catch(undefined),
-  t: z.number().int().nonnegative().optional().catch(undefined),
+  t: momentSchema.optional().catch(undefined),
   segment: z.string().uuid().optional().catch(undefined),
 });
 

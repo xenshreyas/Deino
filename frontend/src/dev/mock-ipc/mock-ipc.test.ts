@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { asMeetingId } from '@/features/meetings';
 import type { Table } from '@/lib/ipc/generated/shared';
+import type * as Generated from '@/lib/ipc/generated/transcript';
 
 import { fixtureUuid } from './fixture-ids';
 import { loadFixtureMeetings } from './fixtures';
 import { legacyMeetingResponses } from './legacy-meetings';
+import { longTranscript, PHRASE } from './long-meeting';
 import { MockDatabase } from './mock-database';
+import { MockTranscripts } from './mock-transcripts';
 
 /** Every generated binding module and every mock module, by feature name. */
 const generated = import.meta.glob<Record<string, unknown>>('../../lib/ipc/generated/*.ts', {
@@ -89,6 +92,59 @@ describe('MockDatabase', () => {
 
     expect(report.meetings).toBe(8);
     expect(db.meeting(ONE_ON_ONE)).toMatchObject({ data: { title: 'Shreyas / Maya 1:1' } });
+  });
+});
+
+describe('MockTranscripts', () => {
+  it('serves fixture transcripts with the seeder segment and speaker IDs', () => {
+    const transcripts = new MockTranscripts(loadFixtureMeetings());
+
+    const { segments } = transcripts.get(ONE_ON_ONE);
+
+    expect(segments[0]?.id).toBe(fixtureUuid('segment/meeting-fixture-one-on-one/0'));
+    expect(segments[0]?.speakerId).toBe(
+      fixtureUuid('speaker/meeting-fixture-one-on-one/Speaker 1'),
+    );
+  });
+
+  it('puts each segment on the speaker the speakers mock says said it, after renames', () => {
+    const transcripts = new MockTranscripts(loadFixtureMeetings());
+    const moved = 'speaker-moved' as Generated.SpeakerId;
+    const first = fixtureUuid('segment/meeting-fixture-one-on-one/0');
+
+    const { segments } = transcripts.get(ONE_ON_ONE, (id) => (id === first ? moved : undefined));
+
+    expect(segments[0]?.speakerId).toBe(moved);
+    expect(segments[1]?.speakerId).not.toBe(moved);
+  });
+
+  it('keeps the lines the mock recorder saves', () => {
+    const transcripts = new MockTranscripts([]);
+    const live = asMeetingId('meeting-live');
+
+    transcripts.save({
+      id: 'segment-1' as Generated.SegmentId,
+      meetingId: live,
+      channel: 'mic',
+      speakerId: null,
+      start: 0,
+      end: 900,
+      text: 'Hello',
+      words: [],
+      isDeleted: false,
+      editedAt: null,
+    });
+
+    expect(transcripts.get(live).segments.map(({ text }) => text)).toEqual(['Hello']);
+  });
+
+  it('generates the long meeting deterministically, with a known number of hits', () => {
+    const first = longTranscript(1_000);
+
+    expect(first).toEqual(longTranscript(1_000));
+    expect(first.segments).toHaveLength(1_000);
+    expect(first.segments.filter(({ text }) => text.includes(PHRASE))).toHaveLength(4);
+    expect(first.segments.at(-1)?.start).toBeLessThan(2 * 60 * 60 * 1000);
   });
 });
 

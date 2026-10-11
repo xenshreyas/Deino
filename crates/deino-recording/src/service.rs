@@ -24,7 +24,6 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use chrono::{DateTime, Utc};
 use deino_core::meetings::MeetingTitle;
-use deino_core::segments::{Page, Segment};
 use deino_domain::{MeetingId, SpeakerId};
 use tokio::runtime::Handle;
 
@@ -129,12 +128,6 @@ impl RecordingService {
             preferences,
             runtime: Handle::current(),
         }
-    }
-
-    /// The saved transcript of `meeting`, oldest first: what the record
-    /// screen shows before live updates arrive (and after a reload).
-    pub async fn transcript(&self, meeting: &MeetingId) -> Result<Vec<Segment>, RecordingError> {
-        Ok(self.deps.transcript.list(meeting, Page::ALL).await?)
     }
 
     /// Pauses capture; the recording's timeline skips the pause.

@@ -90,6 +90,11 @@ export class MockDatabase {
     return ok({ ...meeting });
   }
 
+  /** Adds a ready-made meeting row (the generated long meeting), without a change signal. */
+  insert(meeting: Meeting): void {
+    this.rows.set(meeting.id, { meeting: { ...meeting } });
+  }
+
   /** Reports a write to `tables`, as a commit would. */
   touch(tables: Table[]): void {
     this.onChange(tables);

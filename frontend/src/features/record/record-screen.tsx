@@ -9,12 +9,8 @@
 import { ComingUp } from '@/features/calendar';
 import type { MeetingId } from '@/features/meetings';
 import { Notepad, notepadCopy } from '@/features/notepad';
-import {
-  LiveTranscript,
-  RecordingControls,
-  recordingCopy,
-  useRecordingState,
-} from '@/features/recording';
+import { RecordingControls, recordingCopy, useRecordingState } from '@/features/recording';
+import { TranscriptPanel } from '@/features/transcript';
 import { EmptyState } from '@/ui/empty-state';
 import { Mic } from '@/ui/icons';
 
@@ -32,9 +28,9 @@ function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
       </section>
       <aside
         aria-label={notepadCopy.transcriptHeading}
-        className="flex max-h-[40%] min-h-0 shrink-0 flex-col border-t border-border pb-20 lg:max-h-none lg:w-[360px] lg:border-t-0 lg:border-l"
+        className="flex h-[40%] min-h-0 shrink-0 flex-col border-t border-border px-4 pb-20 lg:h-auto lg:w-[380px] lg:border-t-0 lg:border-l"
       >
-        <LiveTranscript meetingId={meetingId} />
+        <TranscriptPanel meetingId={meetingId} live />
       </aside>
     </>
   );
@@ -63,11 +59,7 @@ export function RecordScreen() {
   return (
     <div className="relative flex h-full flex-col bg-bg">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {meetingId === null ? (
-          <IdleHome />
-        ) : (
-          <LiveMeeting key={meetingId} meetingId={meetingId} />
-        )}
+        {meetingId === null ? <IdleHome /> : <LiveMeeting key={meetingId} meetingId={meetingId} />}
       </div>
       <div className="absolute inset-x-0 bottom-6 z-(--z-chatbar) flex justify-center px-6">
         <RecordingControls />

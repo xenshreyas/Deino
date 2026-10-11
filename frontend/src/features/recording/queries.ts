@@ -3,27 +3,21 @@
  *
  * The state query is fed by `recording-state` events (`RecordingSync`
  * writes each snapshot into the cache), so it never refetches on its own.
- * A meeting's saved transcript names `transcript_segments`, so the
- * recorder's batched saves refresh it through `DbChanged`.
+ * The transcript itself is read by `features/transcript`.
  */
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type { MeetingId } from '@/features/meetings';
 import { IpcError } from '@/lib/ipc';
-import type { Table } from '@/lib/ipc/generated/shared';
 
 import { recordingApi } from './api';
 import { recordingCopy } from './copy';
 import type { RecordingSnapshot } from './types';
 
-const TRANSCRIPT_TABLES = ['transcript_segments'] as const satisfies readonly Table[];
-
 /** Query keys; every key starts with `recordingKeys.all`. */
 export const recordingKeys = {
   all: ['recording'] as const,
   state: () => [...recordingKeys.all, 'state'] as const,
-  transcript: (meetingId: MeetingId) => [...recordingKeys.all, 'transcript', meetingId] as const,
 };
 
 /** Nothing is being recorded (also what shows before the first answer). */
@@ -43,14 +37,6 @@ export const recordingStateQuery = () =>
     queryKey: recordingKeys.state(),
     queryFn: recordingApi.state,
     staleTime: Infinity,
-  });
-
-/** A meeting's saved transcript, oldest first. */
-export const recordingTranscriptQuery = (meetingId: MeetingId) =>
-  queryOptions({
-    queryKey: recordingKeys.transcript(meetingId),
-    queryFn: () => recordingApi.transcript(meetingId),
-    meta: { tables: TRANSCRIPT_TABLES },
   });
 
 /** The recorder's state now; idle until Rust answers. */

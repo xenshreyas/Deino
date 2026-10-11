@@ -14,10 +14,10 @@
 //!
 //! `transcript_segments` replaced the legacy `transcripts` table in FND-07.
 //! Legacy code still reaches it through the `transcripts` compatibility view
-//! (ADR 0012) until FND-05b, CAP-08, CAP-11 and TRN-01 port it here.
+//! (ADR 0012) until CAP-08, CAP-11 and NOT-02 port its last callers here.
 //!
-//! There is no service yet: the recorder (FND-05b) and the transcript view
-//! (TRN-01) add the rules that use these ports.
+//! The recorder (`deino-recording`) writes through these ports, and the
+//! transcript view reads through them with `crate::transcript` (TRN-01).
 
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
