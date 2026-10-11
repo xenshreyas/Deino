@@ -85,6 +85,31 @@ impl AttendeeDirectory {
         if self.people.find_by_email(email).await?.is_some() {
             return Ok(false);
         }
+        self.add(email, name).await?;
+        Ok(true)
+    }
+
+    /// The person with `email` (whoever they were merged into), or, with
+    /// `create`, a new person (and their company) for them; `None` when
+    /// nobody has the address and `create` is false. Event linking (ORG-03)
+    /// turns invitees into attendees with it.
+    pub(super) async fn person_for(
+        &self,
+        email: &Email,
+        name: Option<String>,
+        create: bool,
+    ) -> Result<Option<PersonId>, DbError> {
+        if let Some(person) = self.people.find_by_email(email).await? {
+            return Ok(Some(person.merged_into.unwrap_or(person.id)));
+        }
+        if !create {
+            return Ok(None);
+        }
+        Ok(Some(self.add(email, name).await?))
+    }
+
+    /// Adds a person for `email`, named `name` or after the address.
+    async fn add(&self, email: &Email, name: Option<String>) -> Result<PersonId, DbError> {
         let now = self.clock.now();
         let person = Person {
             id: PersonId::generate(self.clock.as_ref()),
@@ -102,7 +127,7 @@ impl AttendeeDirectory {
             updated_at: now,
         };
         self.people.create(&person).await?;
-        Ok(true)
+        Ok(person.id)
     }
 
     /// The company at `email`'s domain, added if new; `None` for a personal
@@ -139,7 +164,7 @@ fn meets_people(event: &SyncedEvent) -> bool {
 }
 
 /// An attendee who did not decline, as an address and a display name.
-fn invitee(attendee: &EventAttendee) -> Option<(Email, Option<String>)> {
+pub(super) fn invitee(attendee: &EventAttendee) -> Option<(Email, Option<String>)> {
     if attendee.rsvp == Some(Rsvp::Declined) {
         return None;
     }

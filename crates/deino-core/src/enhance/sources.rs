@@ -92,6 +92,7 @@ impl MaterialSources {
             id: meeting.clone(),
             title: found.title,
             date,
+            calendar_event_id: event.as_ref().map(|event| event.id),
             calendar_title: event.as_ref().map(|event| event.title.clone()),
             description: event.map(|event| event.description).unwrap_or_default(),
             attendees,

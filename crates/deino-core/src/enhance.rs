@@ -57,7 +57,7 @@ pub use assemble::{
     Body, Checks, Draft, DraftBlock, DraftDetail, DraftKind, DraftSection, LEFTOVER_HEADING,
     assemble,
 };
-pub use basis::EnhanceBasis;
+pub use basis::{EnhanceBasis, EventBasis};
 pub use citations::{MAX_CITATIONS, SegmentIndex};
 pub use convert::to_doc;
 pub use error::EnhanceError;

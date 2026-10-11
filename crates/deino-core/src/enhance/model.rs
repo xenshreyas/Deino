@@ -98,6 +98,8 @@ pub struct EnhancedNotesView {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum RegenerateReason {
+    /// The meeting was linked to another calendar event, or unlinked (ORG-03).
+    EventChanged,
     /// Someone was added to or removed from the meeting.
     AttendeesChanged,
     /// Transcript lines were edited or deleted.

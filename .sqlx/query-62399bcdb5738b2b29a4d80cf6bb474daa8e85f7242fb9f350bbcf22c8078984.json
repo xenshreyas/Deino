@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- What meeting ?1 is related by: its title, series, when it took place and\n-- its attendees (space-separated IDs, in no particular order).\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title AS \"title!\",\n    m.series_id AS \"series_id: SeriesId\",\n    COALESCE(m.started_at, m.created_at) AS \"happened_at!: DateTime<Utc>\",\n    (SELECT group_concat(a.person_id, ' ') FROM meeting_attendees a WHERE a.meeting_id = m.id)\n        AS \"attendees: String\"\nFROM meetings m\nWHERE m.id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "happened_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "attendees: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "62399bcdb5738b2b29a4d80cf6bb474daa8e85f7242fb9f350bbcf22c8078984"
+}
