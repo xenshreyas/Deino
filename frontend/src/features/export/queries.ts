@@ -19,7 +19,7 @@ import type { CopyKind, ExportFormat, ExportSections, FullExportStatus, MeetingI
 const EXPORT_TABLES = [
   'meetings',
   'meeting_notes',
-  'summary_processes',
+  'enhanced_notes',
   'transcript_segments',
   'speakers',
   'meeting_attendees',

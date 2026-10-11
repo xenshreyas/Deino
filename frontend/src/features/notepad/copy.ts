@@ -12,7 +12,6 @@ export const notepadCopy = {
   imageFailedTitle: 'The image was not added',
   templateFailedTitle: 'The template was not set',
   viewLabel: 'Notes view',
-  summary: 'Summary',
   myNotes: 'My notes',
   liveHeading: 'Notes',
   transcriptHeading: 'Transcript',

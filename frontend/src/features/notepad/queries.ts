@@ -17,13 +17,12 @@ const NOTES_TABLES = ['meeting_notes'] as const satisfies readonly Table[];
 export const notesKeys = {
   all: ['notes'] as const,
   meeting: (id: MeetingId) => [...notesKeys.all, 'meeting', id] as const,
-  markdown: (markdown: string) => [...notesKeys.all, 'markdown', markdown] as const,
 };
 
 /**
  * One meeting's notes. The editor reads them once when it mounts and owns
  * the document after that, so a refetch never moves the caret; it is kept
- * fresh for other readers (the summary's context, a second window).
+ * fresh for other readers (a second window).
  */
 export const meetingNotesQuery = (id: MeetingId) =>
   queryOptions({
@@ -35,13 +34,4 @@ export const meetingNotesQuery = (id: MeetingId) =>
 /** One meeting's notes. */
 export function useMeetingNotes(id: MeetingId) {
   return useQuery(meetingNotesQuery(id));
-}
-
-/** A Markdown text as a document, converted by Rust (`deino-doc`). */
-export function useMarkdownDoc(markdown: string) {
-  return useQuery({
-    queryKey: notesKeys.markdown(markdown),
-    queryFn: () => notesApi.markdownToDoc(markdown),
-    staleTime: Infinity,
-  });
 }

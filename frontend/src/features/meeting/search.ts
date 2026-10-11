@@ -22,11 +22,14 @@ export type MeetingTabId = z.infer<typeof meetingTabSchema>;
  * `/meetings/$meetingId?source=recording&tab=transcript&t=221900`: `t` is a
  * moment in the recording, in milliseconds (an action item's evidence); the
  * transcript and player cards (TRN-01, TRN-03) scroll and seek to it.
+ * `segment=<id>` is the transcript segment a citation points at (NOT-03),
+ * for the Transcript tab to bring into view.
  */
 export const meetingSearchSchema = z.object({
   source: meetingSourceSchema.optional().catch(undefined),
   tab: meetingTabSchema.optional().catch(undefined),
   t: z.number().int().nonnegative().optional().catch(undefined),
+  segment: z.string().uuid().optional().catch(undefined),
 });
 
 /** The pre-Vite `/meeting-details?id=<id>&source=<source>` URL, kept as a redirect. */

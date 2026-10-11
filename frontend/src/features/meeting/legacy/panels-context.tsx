@@ -1,13 +1,11 @@
 /**
  * The bridge between the inherited meeting session and the meeting page's
- * slots.
+ * Transcript slot.
  *
  * The legacy session (`meeting-session.tsx`, `meeting-panels.tsx`) still
- * loads the transcript and summary and owns their shared state (the custom
- * prompt, summary generation, polling). It publishes the two finished
- * panels here; the Notes and Transcript slots render them. When NOT-01 and
- * TRN-01 rebuild those tabs on typed queries, their slots stop reading this
- * context and the bridge goes away.
+ * loads the transcript pages and publishes the finished panel here. The
+ * Notes tab left the bridge with NOT-02; when TRN-01 rebuilds the
+ * transcript on typed queries, the bridge goes away.
  */
 import { createContext, type ReactNode, useContext } from 'react';
 
@@ -17,12 +15,7 @@ export type LegacyMeetingPanels =
   | { status: 'error'; message: string }
   | {
       status: 'ready';
-      notes: ReactNode;
       transcript: ReactNode;
-      /** Regenerates the notes with the meeting's template; `null` before there are notes. */
-      regenerateNotes: (() => void) | null;
-      /** Whether there is an AI summary; the Notes tab opens on "My notes" without one. */
-      hasSummary: boolean;
     };
 
 const PanelsContext = createContext<LegacyMeetingPanels>({ status: 'loading' });
@@ -38,7 +31,7 @@ export function LegacyMeetingPanelsProvider({
   return <PanelsContext.Provider value={value}>{children}</PanelsContext.Provider>;
 }
 
-/** The legacy panels, for the Notes and Transcript slots. */
+/** The legacy panel, for the Transcript slot. */
 export function useLegacyMeetingPanels(): LegacyMeetingPanels {
   return useContext(PanelsContext);
 }

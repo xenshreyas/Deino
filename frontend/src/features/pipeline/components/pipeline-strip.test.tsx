@@ -30,11 +30,11 @@ vi.mock('@/lib/ipc/generated/pipeline', () => ({
 }));
 
 const MEETING = 'meeting-1' as MeetingId;
-const SUMMARY = 'legacy_summary' as StageId;
+const NOTES = 'enhance_notes' as StageId;
 
 function stage(status: JobStatus, message: string | null = null): StageStatus {
   return {
-    stage: SUMMARY,
+    stage: NOTES,
     status,
     attempts: 1,
     retryAt: null,
@@ -53,7 +53,7 @@ function renderStrip() {
 
 function announce(meetingId: string, status: JobStatus) {
   act(() => {
-    const payload = { meetingId: meetingId as MeetingId, stage: SUMMARY, status };
+    const payload = { meetingId: meetingId as MeetingId, stage: NOTES, status };
     bindings.progress.handler?.({ event: 'plugin:pipeline:pipeline-progress', id: 1, payload });
   });
 }
@@ -82,10 +82,10 @@ describe('PipelineStrip', () => {
     expect(
       await screen.findByText('Choose a summary model in Settings, then retry.'),
     ).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: copy.retryStage('Summary') }));
+    fireEvent.click(screen.getByRole('button', { name: copy.retryStage('Notes') }));
 
     expect(await screen.findByText('Retrying soon')).toBeDefined();
-    expect(bindings.commands.rerun).toHaveBeenCalledWith(MEETING, SUMMARY);
+    expect(bindings.commands.rerun).toHaveBeenCalledWith(MEETING, NOTES);
     expect(screen.queryByRole('button')).toBeNull();
   });
 
@@ -113,7 +113,7 @@ describe('PipelineStrip', () => {
     });
     renderStrip();
 
-    fireEvent.click(await screen.findByRole('button', { name: copy.retryStage('Summary') }));
+    fireEvent.click(await screen.findByRole('button', { name: copy.retryStage('Notes') }));
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'meeting meeting-1 cannot be processed while it is recording',

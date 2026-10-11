@@ -6,7 +6,7 @@ test('notes typed in a meeting are saved and come back after a reload', async ({
   const standup = fixtureMeeting('meeting-fixture-standup');
 
   await page.goto(`/meetings/${standup.id}`);
-  // The standup has no summary, so the Notes tab opens on "My notes".
+  // The standup has no enhanced notes, so the Notes tab opens on "My notes".
   await expect(page.getByRole('radio', { name: 'My notes' })).toHaveAttribute('data-state', 'on');
   const editor = page.getByRole('textbox', { name: 'My notes' });
   await expect(editor).toBeVisible();

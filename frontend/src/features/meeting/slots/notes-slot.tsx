@@ -1,33 +1,38 @@
 /**
  * The Notes tab: the meeting's template (NOT-04), its action items (AI-05),
- * then the AI summary and
- * "My notes" behind a segmented pill (ui.md §3 Tabs, "Notes sub-switch");
- * ⌘E switches between them. NOT-01
- * fills "My notes" with the notepad; NOT-02 replaces the summary with the
- * enhanced notes. A meeting without a summary opens on "My notes".
+ * then the enhanced notes (NOT-02) and "My notes" (NOT-01) behind a
+ * segmented pill (ui.md §3 Tabs, "Notes sub-switch"); ⌘E switches between
+ * them. The tab opens on Enhanced when the meeting has enhanced notes or
+ * they are being written, else on My notes. Switching the template
+ * regenerates the notes (Granola §3.3).
  */
 import { useState } from 'react';
 
 import { MeetingActionItems } from '@/features/action-items';
+import {
+  EnhancedNotes,
+  notesCopy,
+  useEnhanceAction,
+  useEnhancedNotes,
+  useIsEnhancing,
+} from '@/features/notes';
 import { Notepad, notepadCopy } from '@/features/notepad';
 import { MeetingTemplatePicker } from '@/features/templates';
 import { useMountEffect } from '@/hooks/useMountEffect';
 import { SegmentedControl } from '@/ui/segmented-control';
 
-import { useLegacyMeetingPanels } from '../legacy/panels-context';
 import type { MeetingSlotProps } from '../types';
-import { LegacyNotesPanel } from './legacy-slots';
 
 /** The Notes tab's two views. */
-type NotesView = 'summary' | 'mine';
+type NotesView = 'enhanced' | 'mine';
 
 const VIEWS = [
-  { value: 'summary', label: notepadCopy.summary },
+  { value: 'enhanced', label: notesCopy.enhanced },
   { value: 'mine', label: notepadCopy.myNotes },
 ] as const;
 
 function other(view: NotesView): NotesView {
-  return view === 'mine' ? 'summary' : 'mine';
+  return view === 'mine' ? 'enhanced' : 'mine';
 }
 
 /** ⌘E toggles the view while the meeting page is open. */
@@ -57,14 +62,16 @@ function ViewSwitch({ view, onChange }: { view: NotesView; onChange: (view: Note
   );
 }
 
-/** Notes: the summary or the user's own notes. */
+/** Notes: the enhanced notes or the user's own. */
 export function NotesSlot({ meetingId }: MeetingSlotProps) {
-  const panels = useLegacyMeetingPanels();
+  const enhanced = useEnhancedNotes(meetingId);
+  const busy = useIsEnhancing(meetingId);
+  const regenerate = useEnhanceAction(meetingId);
   const [chosen, setChosen] = useState<NotesView | null>(null);
   // ⌘E presses since the last click; an odd count shows the other view.
   const [flips, setFlips] = useState(0);
-  const fallback: NotesView = panels.status === 'ready' && panels.hasSummary ? 'summary' : 'mine';
-  const base = chosen ?? fallback;
+  const hasNotes = enhanced.data !== null && enhanced.data !== undefined;
+  const base = chosen ?? (hasNotes || busy ? 'enhanced' : 'mine');
   const view = flips % 2 === 0 ? base : other(base);
   useToggleShortcut(() => {
     setFlips((count) => count + 1);
@@ -78,16 +85,13 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
     <div className="flex h-full min-h-0 flex-col">
       <MeetingTemplatePicker
         meetingId={meetingId}
-        onRegenerate={panels.status === 'ready' ? panels.regenerateNotes : null}
+        onRegenerate={hasNotes ? regenerate.run : null}
       />
       <MeetingActionItems meetingId={meetingId} />
       {view === 'mine' ? (
         <Notepad meetingId={meetingId} toolbar={toggle} />
       ) : (
-        <>
-          <div className="flex h-9 shrink-0 items-center justify-end">{toggle}</div>
-          <LegacyNotesPanel />
-        </>
+        <EnhancedNotes meetingId={meetingId} toolbar={toggle} />
       )}
     </div>
   );

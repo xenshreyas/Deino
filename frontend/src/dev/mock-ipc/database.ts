@@ -6,6 +6,7 @@
 import { events } from './db';
 import { loadFixtureMeetings } from './fixtures';
 import { MockDatabase } from './mock-database';
+import { MockEnhanced } from './mock-enhanced';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
 
@@ -23,6 +24,9 @@ export const mockDatabase = new MockDatabase(fixtureMeetings, (tables) => {
 
 /** The mock `meeting_notes` table (persisted per tab). */
 export const mockNotes = new MockNotes(fixtureMeetings);
+
+/** The mock `enhanced_notes` table (persisted per tab). */
+export const mockEnhanced = new MockEnhanced(fixtures);
 
 /** The fixtures' people, as the Rust seeder writes them. */
 export const mockPeople = fixturePeople(fixtureMeetings);
