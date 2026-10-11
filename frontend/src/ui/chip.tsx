@@ -18,6 +18,13 @@ export interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const CHIP_BASE =
   'inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs whitespace-nowrap text-fg-muted transition-colors duration-(--dur-fast) ease-out';
 
+/** An outline chip's classes, for a chip that is a link rather than a button. */
+export const chipLinkClassName = cn(
+  CHIP_BASE,
+  'border border-border hover:bg-bg-muted hover:text-fg',
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
+);
+
 /** A chip; it is a button so it can open a picker. */
 export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
   (

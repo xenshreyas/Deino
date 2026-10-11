@@ -3,7 +3,8 @@
 //! Builds `deino_recording::RecordingService` over the app's adapters: the
 //! SQLite repositories, the lifecycle service that starts the pipeline, the
 //! STT lanes, the Mac's devices (or `DEINO_MOCK_AUDIO` mocks in debug
-//! builds), the `AVAssetWriter` track encoder and the Tauri event adapter.
+//! builds), the `AVAssetWriter` track encoder and the Tauri event adapter;
+//! each start links the nearest calendar event (ORG-03's `LinkOnStart`).
 //! Then it recovers meetings a crash left in `recording`, in the background.
 
 use std::sync::Arc;
@@ -26,6 +27,7 @@ use deino_recording::{
 };
 use tauri::{AppHandle, Manager};
 
+use crate::features::calendar::LinkOnStart;
 use crate::features::recording::TauriRecordingEvents;
 use crate::paths::AppPaths;
 use crate::stt::{SttLanes, SttRuntime};
@@ -62,7 +64,10 @@ pub(crate) fn attach_recording(app: &AppHandle, database: &Database) {
     };
     let deps = recording_deps(app, database, managed, &paths);
     spawn_recovery(deps.clone());
-    app.manage(Arc::new(RecordingService::new(deps)));
+    let link_on_start = Arc::new(LinkOnStart::new(app.clone()));
+    app.manage(Arc::new(
+        RecordingService::new(deps).observing_starts(link_on_start),
+    ));
 }
 
 /// The recorder's ports over the app's adapters.

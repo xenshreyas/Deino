@@ -2,7 +2,7 @@
  * TanStack Query hooks for the enhanced notes.
  *
  * A version's view carries its regenerate reasons, which change with the
- * attendees, the transcript and the user's notes, so it names those tables
+ * calendar link, the attendees, the transcript and the user's notes, so it names those tables
  * too; `DbChanged` keeps everything fresh. Writing notes is one mutation
  * per meeting (`mutationKey`), so the header's Enhance button and the Notes
  * tab both see it running.
@@ -28,6 +28,7 @@ const ENHANCE_STAGE = 'enhance_notes';
 /** What a version's view reads (its regenerate reasons included). */
 const VIEW_TABLES = [
   'enhanced_notes',
+  'meetings',
   'meeting_notes',
   'meeting_attendees',
   'transcript_segments',

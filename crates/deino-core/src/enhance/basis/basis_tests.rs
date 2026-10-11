@@ -86,3 +86,41 @@ fn the_basis_round_trips_through_its_stored_json() {
     assert_eq!(serde_json::from_str::<EnhanceBasis>(&json).unwrap(), basis);
     assert!(json.contains("segmentsDigest"));
 }
+
+fn event(n: u128) -> deino_domain::CalendarEventId {
+    uuid::Uuid::from_u128(n).to_string().parse().unwrap()
+}
+
+#[test]
+fn linking_another_event_or_unlinking_is_a_reason() {
+    let mut linked = written();
+    linked.meeting.calendar_event_id = Some(event(1));
+    let basis = EnhanceBasis::of(&linked);
+
+    let mut relinked = linked.clone();
+    relinked.meeting.calendar_event_id = Some(event(2));
+    let mut unlinked = linked.clone();
+    unlinked.meeting.calendar_event_id = None;
+
+    assert_eq!(basis.reasons(&linked), []);
+    assert_eq!(basis.reasons(&relinked), [RegenerateReason::EventChanged]);
+    assert_eq!(basis.reasons(&unlinked), [RegenerateReason::EventChanged]);
+    assert_eq!(
+        EnhanceBasis::of(&written()).reasons(&linked),
+        [RegenerateReason::EventChanged],
+        "linking a meeting written without an event"
+    );
+}
+
+#[test]
+fn a_basis_stored_before_event_links_never_asks_about_the_event() {
+    let mut linked = written();
+    linked.meeting.calendar_event_id = Some(event(1));
+    let mut json = serde_json::to_value(EnhanceBasis::of(&written())).unwrap();
+    json.as_object_mut().unwrap().remove("event");
+
+    let stored: EnhanceBasis = serde_json::from_value(json).unwrap();
+
+    assert_eq!(stored.event, EventBasis::Unknown);
+    assert_eq!(stored.reasons(&linked), []);
+}

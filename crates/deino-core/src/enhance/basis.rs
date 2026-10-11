@@ -3,13 +3,14 @@
 //!
 //! Granola offers to regenerate when attendees change, transcript lines are
 //! deleted, the user's notes are edited or more transcript is captured
-//! (`docs/research/granola.md` §3.3). Each version stores the basis of its
+//! (`docs/research/granola.md` §3.3); Deino also offers it when the meeting
+//! is linked to another calendar event (ORG-03). Each version stores the basis of its
 //! inputs (`enhanced_notes.basis_json`); comparing it with the current
 //! inputs says which of those happened, without keeping a copy of the
 //! inputs themselves.
 
 use chrono::{DateTime, Utc};
-use deino_domain::{Millis, PersonId};
+use deino_domain::{CalendarEventId, Millis, PersonId};
 use serde::{Deserialize, Serialize};
 
 use super::RegenerateReason;
@@ -35,6 +36,36 @@ pub struct EnhanceBasis {
     pub transcript_edited_at: Option<DateTime<Utc>>,
     /// When the user's notes were last saved, if ever.
     pub notes_updated_at: Option<DateTime<Utc>>,
+    /// The calendar event the meeting was linked to. Versions written
+    /// before ORG-03 have no such field and read as [`EventBasis::Unknown`].
+    #[serde(default)]
+    pub event: EventBasis,
+}
+
+/// The calendar event a version was written with.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "kind", content = "id")]
+pub enum EventBasis {
+    /// Not recorded (a version written before ORG-03): never a reason to
+    /// regenerate.
+    #[default]
+    Unknown,
+    /// No event was linked.
+    Unlinked,
+    /// Linked to this event.
+    Linked(CalendarEventId),
+}
+
+impl EventBasis {
+    /// The basis of a meeting linked to `event`, if any.
+    fn of(event: Option<CalendarEventId>) -> Self {
+        event.map_or(Self::Unlinked, Self::Linked)
+    }
+
+    /// True when the link is known to differ from `now`.
+    fn changed_to(self, now: Self) -> bool {
+        self != Self::Unknown && self != now
+    }
 }
 
 impl EnhanceBasis {
@@ -48,6 +79,7 @@ impl EnhanceBasis {
             transcript_end: lines.iter().map(|line| line.end).max().unwrap_or_default(),
             transcript_edited_at: material.transcript_edited_at,
             notes_updated_at: material.notes.as_ref().map(|notes| notes.updated_at),
+            event: EventBasis::of(material.meeting.calendar_event_id),
         }
     }
 
@@ -56,6 +88,9 @@ impl EnhanceBasis {
     pub fn reasons(&self, current: &Material) -> Vec<RegenerateReason> {
         let now = Self::of(current);
         let mut reasons = Vec::new();
+        if self.event.changed_to(now.event) {
+            reasons.push(RegenerateReason::EventChanged);
+        }
         if now.attendees != self.attendees {
             reasons.push(RegenerateReason::AttendeesChanged);
         }

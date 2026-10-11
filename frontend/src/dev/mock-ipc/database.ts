@@ -1,8 +1,10 @@
 /**
  * The one in-memory database every mock module shares, loaded with the
- * fixture meetings, their notes and their people. Its writes become
- * `DbChanged` events, like SQLite commits.
+ * fixture meetings, their notes, their people, their calendar events and
+ * the meetings' links to them. Its writes become `DbChanged` events, like
+ * SQLite commits.
  */
+import { fixtureCalendarEvents } from './calendar-fixtures';
 import { events } from './db';
 import { loadFixtureMeetings } from './fixtures';
 import {
@@ -13,6 +15,7 @@ import {
 } from './long-meeting';
 import { MockDatabase } from './mock-database';
 import { MockEnhanced } from './mock-enhanced';
+import { MockEventLinks } from './mock-event-links';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
 import { MockTranscripts } from './mock-transcripts';
@@ -55,3 +58,9 @@ if (longMeeting !== null) {
   });
   mockTranscripts.put(LONG_MEETING_ID, longMeeting);
 }
+
+/** The fixture meetings' calendar events, plus copies in the coming days. */
+export const mockCalendarEvents = fixtureCalendarEvents(fixtureMeetings, new Date());
+
+/** The meetings' links to calendar events (ORG-03). */
+export const mockEventLinks = new MockEventLinks(fixtureMeetings, mockCalendarEvents, mockDatabase);

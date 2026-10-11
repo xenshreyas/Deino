@@ -21,6 +21,9 @@
 //! - **Service.** [`CalendarService`] (the `calendar` plugin's commands) and
 //!   [`SyncScheduler`] (every two minutes, on change, on wake).
 //!
+//! - **Linking** ([`linking`], ORG-03): which event a meeting belongs to,
+//!   the meeting header's event picker, and related meetings.
+//!
 //! A meeting points at its event through `meetings.calendar_event_id`
 //! ([`MeetingLifecycleRepo::link`](crate::meetings::MeetingLifecycleRepo::link));
 //! events do not point back (ADR 0012). ORG-02 and ORG-03 read these tables.
@@ -44,6 +47,7 @@ mod fake_source;
 #[cfg(any(test, feature = "test-support"))]
 mod fake_sync;
 mod filter;
+pub mod linking;
 mod mapping;
 mod model;
 mod names;

@@ -38,6 +38,7 @@ pub(super) fn material(notes: Option<&str>, lines: Vec<TranscriptLine>) -> Mater
             id: MeetingId::new(MEETING),
             title: "Maya 1:1".into(),
             date: at("2026-10-07T15:00:00Z"),
+            calendar_event_id: None,
             calendar_title: Some("Maya / Shreyas weekly".into()),
             description: "Weekly one-on-one.".into(),
             attendees: vec![

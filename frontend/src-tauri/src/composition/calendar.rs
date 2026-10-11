@@ -1,7 +1,8 @@
 //! Wiring for calendar sync (ORG-01): macOS Calendar through `EventKit`, the
 //! Google Calendar and Microsoft Graph connectors over `deino-net` scoped
 //! clients, the SQLite calendar, people and company repositories, the sync
-//! scheduler, and the `CalendarChanged` event adapter.
+//! scheduler, and the `CalendarChanged` event adapter. Then event linking and
+//! related meetings (ORG-03) over the same calendar.
 
 use std::sync::Arc;
 
@@ -9,11 +10,15 @@ use deino_connect::calendar::{
     CalendarApi, ConnectorParts, ConnectorSource, Credentials, GoogleCalendar, MicrosoftCalendar,
     SettingsCredentials,
 };
+use deino_core::calendar::linking::{
+    EventAttendance, EventLinkDeps, EventLinkService, RelatedService, SqliteRelatedRepo,
+};
 use deino_core::calendar::{
     AttendeeDirectory, CalendarDeps, CalendarService, CalendarSource, CalendarStore,
     SqliteCalendarRepo, SyncScheduler,
 };
 use deino_core::companies::SqliteCompanyRepo;
+use deino_core::meetings::SqliteMeetingRepo;
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::settings::SettingsService;
 use deino_db::Database;
@@ -108,19 +113,60 @@ pub(crate) fn attach_calendar(app: &AppHandle, database: &Database, clock: &Arc<
         source: source.clone(),
         connectors,
         store: CalendarStore::over(&repo),
-        directory: AttendeeDirectory::new(
-            Arc::new(SqlitePeopleRepo::new(database.clone())),
-            Arc::new(SqliteCompanyRepo::new(database.clone())),
-            Arc::clone(clock),
-        ),
+        directory: directory(database, clock),
         settings,
         events: Arc::new(TauriCalendarEvents::new(app.clone())),
         clock: Arc::clone(clock),
     }));
+    attach_linking(app, database, &service, clock);
     let (scheduler, triggers, cancel) = SyncScheduler::new(Arc::clone(&service));
     source.watch(triggers);
     // Owned for the app's lifetime; `CalendarSchedule::stop` ends it at exit.
     tauri::async_runtime::spawn(scheduler.run());
     app.manage(service);
     app.manage(CalendarSchedule(cancel));
+}
+
+/// People and companies from calendar invitees.
+fn directory(database: &Database, clock: &Arc<dyn Clock>) -> AttendeeDirectory {
+    AttendeeDirectory::new(
+        Arc::new(SqlitePeopleRepo::new(database.clone())),
+        Arc::new(SqliteCompanyRepo::new(database.clone())),
+        Arc::clone(clock),
+    )
+}
+
+/// Manages `Arc<EventLinkService>` (the meeting header's picker, and
+/// auto-link when recording starts) and `Arc<RelatedService>`, over the
+/// calendar's visible events. Needs the settings (the profile's addresses).
+fn attach_linking(
+    app: &AppHandle,
+    database: &Database,
+    calendar: &Arc<CalendarService>,
+    clock: &Arc<dyn Clock>,
+) {
+    let Some(settings) = app
+        .try_state::<Arc<SettingsService>>()
+        .map(|s| Arc::clone(&s))
+    else {
+        return log::error!(target: "calendar", "settings are not loaded; event linking is off");
+    };
+    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
+    let people = Arc::new(SqlitePeopleRepo::new(database.clone()));
+    let attendance = EventAttendance::new(
+        directory(database, clock),
+        people.clone(),
+        people.clone(),
+        settings,
+    );
+    app.manage(Arc::new(EventLinkService::new(EventLinkDeps {
+        meetings: meetings.clone(),
+        lifecycle: meetings,
+        events: Arc::new(SqliteCalendarRepo::new(database.clone())),
+        agenda: calendar.clone(),
+        attendance,
+        clock: Arc::clone(clock),
+    })));
+    let related = SqliteRelatedRepo::new(database.clone());
+    app.manage(Arc::new(RelatedService::new(Arc::new(related), people)));
 }

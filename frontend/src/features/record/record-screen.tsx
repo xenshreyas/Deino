@@ -7,6 +7,7 @@
  * idle it shows what is coming up on the calendar (ORG-01).
  */
 import { ComingUp } from '@/features/calendar';
+import { MeetingEventChip } from '@/features/event-links';
 import type { MeetingId } from '@/features/meetings';
 import { Notepad, notepadCopy } from '@/features/notepad';
 import { RecordingControls, recordingCopy, useRecordingState } from '@/features/recording';
@@ -14,7 +15,10 @@ import { TranscriptPanel } from '@/features/transcript';
 import { EmptyState } from '@/ui/empty-state';
 import { Mic } from '@/ui/icons';
 
-/** The notes and transcript of the meeting being recorded. */
+/**
+ * The notes and transcript of the meeting being recorded; the event chip
+ * above the notes changes the linked calendar event mid-recording (ORG-03).
+ */
 function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
   return (
     <>
@@ -23,7 +27,7 @@ function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto"
       >
         <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-6 pb-24">
-          <Notepad meetingId={meetingId} />
+          <Notepad meetingId={meetingId} toolbar={<MeetingEventChip meetingId={meetingId} />} />
         </div>
       </section>
       <aside

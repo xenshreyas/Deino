@@ -27,7 +27,9 @@ countdown.
 - `DetectionService` (the prompt's answers, the auto-start countdown, the
   `DetectionEvent` stream) and the `Detector` thread.
 - The ports the app implements (`outputs.rs`, `calendar.rs`) and their fakes
-  (`fake.rs`, feature `test-support`).
+  (`fake.rs`, feature `test-support`). Which event a call belongs to is
+  `deino-core`'s rule (`calendar::linking::nearest_event`, ORG-03), applied
+  by the app's `CalendarLookup`.
 
 ## Does Not Own
 

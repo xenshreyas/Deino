@@ -8,7 +8,7 @@
 import type * as Generated from '@/lib/ipc/generated/recording';
 
 import { failure, ok } from './command-result';
-import { mockDatabase, mockTranscripts } from './database';
+import { mockDatabase, mockEventLinks, mockTranscripts } from './database';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
 
@@ -110,7 +110,9 @@ async function start(title: string | null) {
   const created = mockDatabase.addScheduled(title ?? 'Untitled meeting', new Date());
   if (created.status === 'error') return created;
   const meetingId = created.data.id;
-  const base = { ...IDLE, meetingId, title: created.data.title };
+  // Rust links the nearest calendar event once the meeting exists (ORG-03).
+  const linkedTitle = mockEventLinks.autoLink(meetingId, new Date(), title !== null);
+  const base = { ...IDLE, meetingId, title: linkedTitle ?? created.data.title };
   publish({ ...base, phase: 'starting' });
   publish({ ...base, phase: 'recording', startedAt: new Date().toISOString(), echo: 'cancel' });
   heard = 0;

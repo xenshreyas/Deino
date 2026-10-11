@@ -4,7 +4,7 @@
  */
 import type * as Generated from '@/lib/ipc/generated/dev';
 
-import { mockDatabase, mockEnhanced, mockNotes } from './database';
+import { mockDatabase, mockEnhanced, mockEventLinks, mockNotes } from './database';
 import { latency } from './latency';
 import { ok } from './mock-database';
 
@@ -13,6 +13,7 @@ export const commands = {
     await latency();
     mockNotes.reseed();
     mockEnhanced.reseed();
+    mockEventLinks.reseed();
     return ok(mockDatabase.reseed());
   },
 } satisfies typeof Generated.commands;

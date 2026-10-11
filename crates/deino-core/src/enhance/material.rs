@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::DbError;
 use deino_doc::Doc;
-use deino_domain::{MeetingId, PersonId, SeriesId};
+use deino_domain::{CalendarEventId, MeetingId, PersonId, SeriesId};
 
 use super::transcript::TranscriptLine;
 
@@ -68,6 +68,8 @@ pub struct MeetingInfo {
     pub title: String,
     /// When it started, or was created.
     pub date: DateTime<Utc>,
+    /// The linked calendar event (ORG-03), if any.
+    pub calendar_event_id: Option<CalendarEventId>,
     /// The linked calendar event's title, if any.
     pub calendar_title: Option<String>,
     /// The calendar event's description; empty without one.

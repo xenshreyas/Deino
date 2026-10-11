@@ -6,7 +6,7 @@
  */
 import type * as Generated from '@/lib/ipc/generated/enhance';
 
-import { mockDatabase, mockEnhanced, mockNotes } from './database';
+import { mockDatabase, mockEnhanced, mockEventLinks, mockNotes } from './database';
 import { fixtureUuid } from './fixture-ids';
 import type { FixtureMeeting } from './fixture-schema';
 import { latency } from './latency';
@@ -39,7 +39,8 @@ function cited(fixture: FixtureMeeting, ids: readonly string[]): Generated.Cited
 }
 
 function view(meetingId: Generated.MeetingId, version: number | null) {
-  return mockEnhanced.view(meetingId, version, mockNotes.get(meetingId).updatedAt);
+  const notesSavedAt = mockNotes.get(meetingId).updatedAt;
+  return mockEnhanced.view(meetingId, version, notesSavedAt, mockEventLinks.change(meetingId));
 }
 
 export const commands = {

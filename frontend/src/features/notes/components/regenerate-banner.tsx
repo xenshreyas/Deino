@@ -1,7 +1,7 @@
 /**
  * The regenerate prompt (Granola §3.3): a quiet line above the notes when
- * something they were written from changed since (attendees, the
- * transcript, the user's notes, more audio), saying what, with Regenerate
+ * something they were written from changed since (the calendar event,
+ * attendees, the transcript, the user's notes, more audio), saying what, with Regenerate
  * and Not now.
  */
 import { Button } from '@/ui/button';

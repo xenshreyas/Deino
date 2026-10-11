@@ -1,5 +1,6 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
+import { MeetingCalendarChips } from '@/features/event-links';
 import { MeetingFolders } from '@/features/folders';
 import { type MeetingId, useMeeting } from '@/features/meetings';
 import { PipelineStrip } from '@/features/pipeline';
@@ -37,7 +38,8 @@ function SoonChip({ label, icon }: { label: string; icon: Icon }) {
 }
 
 /**
- * Title, then a row of meta chips: date, attendees (a placeholder until
+ * Title, then a row of meta chips: date, the calendar event and the
+ * previous meeting of its series (ORG-03), attendees (a placeholder until
  * ORG-04), folders and tags, then the processing status strip.
  */
 export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
@@ -55,6 +57,7 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
       <MeetingTitle meeting={meeting.data} />
       <div className="flex flex-wrap items-center gap-1.5">
         <MetaChip icon={Calendar}>{meetingDateLabel(meeting.data.createdAt, new Date())}</MetaChip>
+        <MeetingCalendarChips meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
         <SoonChip icon={Users} label={meetingCopy.addAttendees} />
         <MeetingFolders meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
         <MeetingTags meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />

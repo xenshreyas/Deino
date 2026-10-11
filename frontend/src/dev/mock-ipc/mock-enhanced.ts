@@ -14,6 +14,7 @@ import type {
 
 import type { FixtureMeeting } from './fixture-schema';
 import { mockEnhancedDoc } from './mock-enhanced-doc';
+import type { LinkChange } from './mock-event-links';
 
 /** The `sessionStorage` key of the saved state. */
 const STORAGE_KEY = 'deino.mock.enhanced';
@@ -64,11 +65,16 @@ export class MockEnhanced {
     this.state = restore() ?? this.seeded();
   }
 
-  /** A version (the newest for `null`) as the view shows it; `undefined` when missing. */
+  /**
+   * A version (the newest for `null`) as the view shows it; `undefined` when
+   * missing. Its reasons come from the notes' last save and the calendar
+   * link's last change, in the Rust basis's order.
+   */
   view(
     meetingId: MeetingId,
     version: number | null,
     notesSavedAt: string | null,
+    link: LinkChange | null = null,
   ): EnhancedNotesView | null | undefined {
     const versions = this.state[meetingId] ?? [];
     const newest = versions.at(-1);
@@ -76,10 +82,7 @@ export class MockEnhanced {
     const shown = version === null ? newest : versions.find((v) => v.info.version === version);
     if (shown === undefined) return undefined;
     const isLatest = shown === newest;
-    const reasons: RegenerateReason[] =
-      isLatest && notesSavedAt !== null && notesSavedAt > shown.info.createdAt
-        ? ['notesEdited']
-        : [];
+    const reasons = isLatest ? regenerateReasons(shown.info.createdAt, notesSavedAt, link) : [];
     return { meetingId, version: { ...shown.info }, isLatest, doc: shown.doc, reasons };
   }
 
@@ -165,6 +168,21 @@ export class MockEnhanced {
       // A full or blocked storage only costs persistence across reloads.
     }
   }
+}
+
+/** What changed since a version was written at `writtenAt`. */
+function regenerateReasons(
+  writtenAt: string,
+  notesSavedAt: string | null,
+  link: LinkChange | null,
+): RegenerateReason[] {
+  const reasons: RegenerateReason[] = [];
+  if (link !== null && link.at > writtenAt) {
+    reasons.push('eventChanged');
+    if (link.attendeesChanged) reasons.push('attendeesChanged');
+  }
+  if (notesSavedAt !== null && notesSavedAt > writtenAt) reasons.push('notesEdited');
+  return reasons;
 }
 
 function emptyDoc(): NoteDoc {

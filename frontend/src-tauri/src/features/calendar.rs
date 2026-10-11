@@ -4,12 +4,17 @@
 //! - `commands.rs`: sync status and switch (`status`, `enable`, `disable`,
 //!   `refresh`, `open_access_settings`), Settings → Calendars
 //!   (`list_calendars`, `set_calendar_visible`) and what the UI lists
-//!   (`upcoming`, `event`), each thin over `CalendarService`;
+//!   (`upcoming`, `event`), each thin over `CalendarService`, plus event
+//!   linking over `EventLinkService` and `RelatedService`;
 //! - `events.rs`: the typed `CalendarChanged` event, emitted by
 //!   [`TauriCalendarEvents`] whenever the status or a calendar's visibility
 //!   changes. Synced rows reach the UI through `DbChanged`;
 //! - `lookup.rs`: [`SyncedCalendar`], meeting detection's (CAP-06)
-//!   `CalendarLookup` over the synced events.
+//!   `CalendarLookup` over the synced events;
+//! - `start_link.rs`: [`LinkOnStart`], the recorder's start observer that
+//!   links a new recording to the nearest event (ORG-03). The picker's
+//!   commands (`meeting_event`, `event_suggestions`, `link_event`,
+//!   `unlink_event`) and `related_meetings` are in `commands.rs`.
 //!
 //! The service, the `EventKit` source, the Google and Microsoft connectors
 //! and the sync scheduler are wired in `composition/calendar.rs`.
@@ -18,10 +23,14 @@ mod commands;
 #[cfg(test)]
 mod contract_tests;
 mod events;
+#[cfg(test)]
+mod linking_contract_tests;
 mod lookup;
+mod start_link;
 
 pub use events::{CalendarChanged, TauriCalendarEvents};
 pub use lookup::SyncedCalendar;
+pub use start_link::LinkOnStart;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 

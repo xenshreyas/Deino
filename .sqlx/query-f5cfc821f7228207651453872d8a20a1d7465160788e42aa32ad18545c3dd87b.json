@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings outside the trash, other than ?1, in series ?2 or titled exactly\n-- ?3, newest first, at most ?4. Each side of the union searches its index\n-- (idx_meetings_series_id, idx_meetings_title); an OR would scan one.\nWITH matches (id) AS (\n    SELECT id FROM meetings WHERE series_id = ?2\n    UNION\n    SELECT id FROM meetings WHERE title = ?3 AND deleted_at IS NULL\n)\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title AS \"title!\",\n    m.series_id AS \"series_id: SeriesId\",\n    COALESCE(m.started_at, m.created_at) AS \"happened_at!: DateTime<Utc>\",\n    (SELECT group_concat(a.person_id, ' ') FROM meeting_attendees a WHERE a.meeting_id = m.id)\n        AS \"attendees: String\"\nFROM matches\nJOIN meetings m ON m.id = matches.id\nWHERE m.deleted_at IS NULL\n  AND m.id <> ?1\nORDER BY COALESCE(m.started_at, m.created_at) DESC, m.id\nLIMIT ?4\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "happened_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "attendees: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "f5cfc821f7228207651453872d8a20a1d7465160788e42aa32ad18545c3dd87b"
+}

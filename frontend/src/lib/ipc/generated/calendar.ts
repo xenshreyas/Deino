@@ -130,6 +130,66 @@ async disconnect(provider: CalendarProvider) : Promise<Result<CalendarStatus, Ap
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * The event `meetingId` is linked to; null when it has none (or the event
+ * left the calendar). Fails with `not_found` for an unknown meeting.
+ */
+async meetingEvent(meetingId: MeetingId) : Promise<Result<CalendarEvent | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|meeting_event", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The events the meeting header's picker suggests: the day before the
+ * meeting to an hour after, closest first; never all-day or declined.
+ */
+async eventSuggestions(meetingId: MeetingId) : Promise<Result<CalendarEvent[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|event_suggestions", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Links the meeting to an event, also mid-recording: takes its title and
+ * makes its invitees the attendees, replacing the previous event's.
+ */
+async linkEvent(meetingId: MeetingId, eventId: CalendarEventId) : Promise<Result<EventLinkChange, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|link_event", { meetingId, eventId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Unlinks the meeting from its event and takes the event's invitees off
+ * it; the title stays.
+ */
+async unlinkEvent(meetingId: MeetingId) : Promise<Result<EventLinkChange, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|unlink_event", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The meetings related to this one (same series, or the same title and
+ * people), with "Previous in series".
+ */
+async relatedMeetings(meetingId: MeetingId) : Promise<Result<RelatedMeetings, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|related_meetings", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -497,6 +557,85 @@ rsvp: Rsvp | null;
  * True for the organiser.
  */
 isOrganizer: boolean }
+/**
+ * What a link, re-link or unlink changed.
+ */
+export type EventLinkChange = { 
+/**
+ * The meeting.
+ */
+meetingId: MeetingId; 
+/**
+ * The event the meeting is linked to now; `None` after an unlink.
+ */
+event: CalendarEvent | null; 
+/**
+ * The meeting's new title, when linking renamed it after the event.
+ */
+title: string | null; 
+/**
+ * People the event added to the meeting's attendees.
+ */
+attendeesAdded: number; 
+/**
+ * The previous event's invitees taken off the meeting.
+ */
+attendeesRemoved: number }
+/**
+ * Identifies a meeting.
+ * 
+ * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
+ * the legacy recording and import paths still create IDs in that format.
+ * FND-07 keeps the ID opaque text so every existing meeting still opens;
+ * new meetings may use any unique text, including `meeting-<UUIDv7>`.
+ */
+export type MeetingId = string & { readonly __brand: "MeetingId" }
+/**
+ * Why two meetings are related.
+ */
+export type RelatedBy = 
+/**
+ * Both were recorded for the same recurring calendar series.
+ */
+"series" | 
+/**
+ * Both have exactly the same title and the same people.
+ */
+"titleAndPeople"
+/**
+ * A meeting related to the one open.
+ */
+export type RelatedMeeting = { 
+/**
+ * The related meeting.
+ */
+id: MeetingId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * When it took place: when recording started, or when it was created.
+ */
+happenedAt: string; 
+/**
+ * Why it is related.
+ */
+by: RelatedBy }
+/**
+ * The meetings related to one meeting.
+ */
+export type RelatedMeetings = { 
+/**
+ * The latest related meeting that took place before this one
+ * ("Previous in series").
+ */
+previous: RelatedMeeting | null; 
+/**
+ * The other related meetings, newest first, at most
+ * [`RELATED_LIMIT`](super::RELATED_LIMIT).
+ */
+others: RelatedMeeting[] }
 /**
  * A response to a calendar invitation. Stored in `meeting_attendees.rsvp`
  * and `calendar_events.my_rsvp`.

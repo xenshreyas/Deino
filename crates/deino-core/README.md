@@ -71,7 +71,10 @@ the SQLite adapters behind those ports.
     transaction, per-provider pruning, `record_override` never written);
     `AttendeeDirectory` (people and companies from attendees);
     `CalendarService` and `SyncScheduler`. No network client: web
-    providers live in `deino-connect`;
+    providers live in `deino-connect`. `calendar::linking` (ORG-03, ADR
+    0034): the nearest-event rule detection shares, `EventLinkService`
+    (auto-link, link, re-link, unlink), `EventAttendance` (invitees into
+    attendees) and `RelatedService` (series, or title and people);
   - `folders` (ORG-05, ADR 0024): `FolderRepo` (the only writer of
     `parent_id`, refusing cycles), `MeetingFolderRepo`, `FolderRuleRepo`
     (`folder_rules`) and `MeetingFactsReader`; `FolderService` (the tree),
