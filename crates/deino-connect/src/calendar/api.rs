@@ -9,7 +9,7 @@ use deino_net::{NetClient, NetError, Request};
 use deino_secrets::SecretName;
 use serde::de::DeserializeOwned;
 
-use crate::oauth::OAuthProvider;
+use deino_integrations::OAuthSpec;
 
 /// A provider's calendar API, read with an access token.
 #[async_trait]
@@ -17,8 +17,8 @@ pub trait CalendarApi: Send + Sync {
     /// The provider, as `calendar_accounts.provider` stores it.
     fn provider(&self) -> CalendarProvider;
 
-    /// Its OAuth authorization server.
-    fn oauth(&self) -> &'static OAuthProvider;
+    /// Its OAuth authorization server and rules.
+    fn oauth(&self) -> OAuthSpec;
 
     /// The `deino-net` service its requests belong to.
     fn service(&self) -> ServiceId;

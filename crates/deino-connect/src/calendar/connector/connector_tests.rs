@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 use chrono::{DateTime, TimeDelta, Utc};
 use deino_domain::{FakeClock, ServiceId};
+use deino_integrations::{FakeBrowser, OAuthSpec};
 use deino_net::{FakeNetClient, FakeReply, FakeServicePolicy, ServicePolicy, Status};
 use deino_secrets::{InMemorySecretStore, SecretName};
 
 use super::*;
 use crate::calendar::MicrosoftCalendar;
-use crate::fake::FakeBrowser;
-use crate::oauth::{MICROSOFT, OAuthClient, OAuthProvider};
+use crate::calendar::credentials::NotConfigured;
 
 /// Credentials that are always set up (or never, with `None`).
 struct FixedCredentials(Option<&'static str>);
@@ -21,10 +21,13 @@ impl Credentials for FixedCredentials {
     async fn client(
         &self,
         _provider: CalendarProvider,
-        oauth: &'static OAuthProvider,
-    ) -> Result<OAuthClient, OAuthError> {
-        let id = self.0.ok_or(OAuthError::NotConfigured(oauth.name))?;
-        Ok(OAuthClient::new(&MICROSOFT, id.into(), None))
+        _spec: &OAuthSpec,
+    ) -> Result<OAuthClient, NotConfigured> {
+        let id = self.0.ok_or(NotConfigured("Microsoft"))?;
+        Ok(OAuthClient {
+            client_id: id.into(),
+            client_secret: None,
+        })
     }
 }
 
@@ -57,7 +60,7 @@ fn harness(client_id: Option<&'static str>) -> Harness {
         credentials: Arc::new(FixedCredentials(client_id)),
         secrets: secrets.clone(),
         switch: policy.clone(),
-        browser: Arc::new(FakeBrowser::new()),
+        browser: Arc::new(FakeBrowser::default()),
         clock: clock.clone(),
     });
     Harness {

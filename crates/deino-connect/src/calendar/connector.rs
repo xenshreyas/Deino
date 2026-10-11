@@ -1,27 +1,40 @@
 //! [`ConnectorSource`]: a provider's calendar API behind the core's
 //! `CalendarSource`, signed in with OAuth.
 //!
-//! Connecting switches the provider's network service on (FND-12: an
-//! integration sends nothing until the user connects it), signs in through
-//! the browser and keeps the refresh token in the Keychain; the access
-//! token lives in memory only. Every read refreshes an expired access token
-//! first, and retries once after a 401. Disconnecting forgets the token and
-//! switches the service off again.
+//! The OAuth protocol is the integrations framework's (`deino_integrations::oauth`,
+//! ADR 0029): PKCE over a loopback redirect, the token endpoint and the
+//! browser port. Connecting switches the provider's network service on
+//! (FND-12: an integration sends nothing until the user connects it), signs
+//! in through the browser and keeps the refresh token in the Keychain; the
+//! access token lives in memory only. Every read refreshes an expired access
+//! token first (one refresh at a time: the cache lock is held across it, so
+//! a rotated refresh token is never reused), and retries once after a 401.
+//! Disconnecting forgets the token and switches the service off again.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use chrono::{DateTime, TimeDelta, Utc};
 use deino_core::calendar::{
     CalendarAccess, CalendarSource, SourceError, SourceSnapshot, SyncWindow,
 };
 use deino_domain::{CalendarProvider, Clock};
+use deino_integrations::oauth::AuthorizationFlow;
+use deino_integrations::{Browser, IssuedTokens, OAuthClient, OAuthError, TokenEndpoint};
 use deino_net::{NetClient, NetError, ServiceSwitch, Status};
 use deino_secrets::{SecretStore, SecretValue};
 use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 
 use super::api::CalendarApi;
 use super::credentials::Credentials;
-use crate::oauth::{BrowserOpener, Grant, OAuthError, SignIn, TokenSet, sign_in};
+
+/// An access token is refreshed this long before it expires, so a request
+/// never leaves with one that dies in flight.
+const EXPIRY_MARGIN: TimeDelta = TimeDelta::seconds(60);
+
+/// How long an access token lives when the provider does not say.
+const DEFAULT_LIFETIME: TimeDelta = TimeDelta::hours(1);
 
 /// What a connector is built from.
 pub struct ConnectorParts {
@@ -36,15 +49,21 @@ pub struct ConnectorParts {
     /// Switches the provider's network service on and off.
     pub switch: Arc<dyn ServiceSwitch>,
     /// Shows the sign-in page.
-    pub browser: Arc<dyn BrowserOpener>,
+    pub browser: Arc<dyn Browser>,
     /// Stamps token expiry.
     pub clock: Arc<dyn Clock>,
+}
+
+/// An access token in memory, and when it stops working.
+struct Access {
+    token: SecretValue,
+    expires_at: DateTime<Utc>,
 }
 
 /// A calendar provider reached directly over its API.
 pub struct ConnectorSource {
     parts: ConnectorParts,
-    access: Mutex<Option<TokenSet>>,
+    access: Mutex<Option<Access>>,
 }
 
 impl ConnectorSource {
@@ -57,50 +76,69 @@ impl ConnectorSource {
     }
 
     /// The saved refresh token, if the account is connected.
-    async fn refresh_token(&self) -> Result<Option<String>, SourceError> {
+    async fn refresh_token(&self) -> Result<Option<SecretValue>, SourceError> {
         let secret = self.parts.api.refresh_token_secret();
-        let value = self.parts.secrets.get(secret).await.map_err(failed)?;
-        Ok(value.map(|value| value.expose().to_owned()))
+        self.parts.secrets.get(secret).await.map_err(failed)
     }
 
-    /// Keeps a (new) refresh token.
-    async fn save_refresh_token(&self, token: &str) -> Result<(), SourceError> {
-        let value = SecretValue::parse(token).map_err(failed)?;
+    /// Keeps a (new) refresh token, before the access token beside it is used.
+    async fn save_refresh_token(&self, token: SecretValue) -> Result<(), SourceError> {
         let secret = self.parts.api.refresh_token_secret();
-        self.parts.secrets.set(secret, value).await.map_err(failed)
+        self.parts.secrets.set(secret, token).await.map_err(failed)
     }
 
-    /// A current access token: the cached one, or a refreshed one.
+    /// A current access token: the cached one, or a refreshed one. The lock
+    /// is held across the refresh, so refreshes never overlap.
     async fn access_token(&self) -> Result<String, SourceError> {
         let mut cached = self.access.lock().await;
         let now = self.parts.clock.now();
-        if let Some(tokens) = cached.as_ref().filter(|tokens| !tokens.is_stale(now)) {
-            return Ok(tokens.access_token.clone());
+        if let Some(access) = cached
+            .as_ref()
+            .filter(|access| now + EXPIRY_MARGIN < access.expires_at)
+        {
+            return Ok(access.token.expose().to_owned());
         }
         let refresh = self
             .refresh_token()
             .await?
             .ok_or(SourceError::AccessDenied)?;
         let client = self.client().await?;
-        let tokens = client
-            .exchange(self.parts.http.as_ref(), Grant::Refresh(&refresh), now)
-            .await
-            .map_err(source_error)?;
-        if let Some(rotated) = tokens.refresh_token.as_deref() {
-            self.save_refresh_token(rotated).await?;
-        }
-        let access = tokens.access_token.clone();
-        *cached = Some(tokens);
-        Ok(access)
+        let spec = self.parts.api.oauth();
+        let endpoint = TokenEndpoint {
+            client: self.parts.http.as_ref(),
+            url: &spec.token_url,
+            auth: spec.client_auth,
+            app: &client,
+        };
+        let tokens = endpoint.refresh(&refresh).await.map_err(source_error)?;
+        let access = self.keep(tokens).await?;
+        let token = access.token.expose().to_owned();
+        *cached = Some(access);
+        Ok(token)
     }
 
-    async fn client(&self) -> Result<crate::oauth::OAuthClient, SourceError> {
+    /// Saves a rotated refresh token and returns the access token to cache.
+    async fn keep(&self, tokens: IssuedTokens) -> Result<Access, SourceError> {
+        if let Some(rotated) = tokens.refresh_token {
+            self.save_refresh_token(rotated).await?;
+        }
+        let lifetime = tokens
+            .expires_in
+            .and_then(|lifetime| TimeDelta::from_std(lifetime).ok())
+            .unwrap_or(DEFAULT_LIFETIME);
+        Ok(Access {
+            token: tokens.access_token,
+            expires_at: self.parts.clock.now() + lifetime,
+        })
+    }
+
+    async fn client(&self) -> Result<OAuthClient, SourceError> {
         let api = &self.parts.api;
         self.parts
             .credentials
-            .client(api.provider(), api.oauth())
+            .client(api.provider(), &api.oauth())
             .await
-            .map_err(source_error)
+            .map_err(failed)
     }
 
     /// One read of the API with a current token.
@@ -124,6 +162,25 @@ impl ConnectorSource {
             .await
             .map_err(failed)
     }
+
+    /// Signs in in the browser and returns the tokens.
+    async fn sign_in(&self, client: &OAuthClient) -> Result<IssuedTokens, SourceError> {
+        let spec = self.parts.api.oauth();
+        let flow = AuthorizationFlow {
+            spec: &spec,
+            app: client,
+            client: self.parts.http.as_ref(),
+            browser: self.parts.browser.as_ref(),
+            port: None,
+        };
+        // The calendar page has no cancel button: the flow ends with the
+        // browser's answer or its 5-minute limit.
+        let tokens = flow
+            .run(&CancellationToken::new())
+            .await
+            .map_err(source_error)?;
+        tokens.ok_or(SourceError::AccessDenied)
+    }
 }
 
 #[async_trait]
@@ -142,19 +199,13 @@ impl CalendarSource for ConnectorSource {
     async fn request_access(&self) -> Result<CalendarAccess, SourceError> {
         let client = self.client().await?;
         self.set_service(true).await?;
-        let flow = SignIn {
-            client: &client,
-            http: self.parts.http.as_ref(),
-            browser: self.parts.browser.as_ref(),
-            clock: self.parts.clock.as_ref(),
-        };
-        let tokens = sign_in(flow).await.map_err(source_error)?;
-        let refresh = tokens
-            .refresh_token
-            .clone()
-            .ok_or_else(|| source_error(OAuthError::InvalidResponse(client.provider().name)))?;
-        self.save_refresh_token(&refresh).await?;
-        *self.access.lock().await = Some(tokens);
+        let tokens = self.sign_in(&client).await?;
+        if tokens.refresh_token.is_none() {
+            log::warn!(target: "oauth", "{} sent no refresh token", self.parts.api.provider());
+            return Err(SourceError::AccessDenied);
+        }
+        let access = self.keep(tokens).await?;
+        *self.access.lock().await = Some(access);
         Ok(CalendarAccess::Granted)
     }
 
@@ -180,10 +231,13 @@ impl CalendarSource for ConnectorSource {
     }
 }
 
-/// An OAuth failure as a source error: a refused sign-in is lost access.
+/// An OAuth failure as a source error: a refused sign-in or refresh is lost
+/// access.
 fn source_error(error: OAuthError) -> SourceError {
     match error {
-        OAuthError::Revoked(_) | OAuthError::Denied { .. } => SourceError::AccessDenied,
+        OAuthError::InvalidGrant | OAuthError::AccessDenied | OAuthError::Provider(_) => {
+            SourceError::AccessDenied
+        }
         other => failed(other),
     }
 }
