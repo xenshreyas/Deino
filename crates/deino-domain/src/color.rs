@@ -33,6 +33,12 @@ impl PaletteColor {
     /// How many colours the palette has.
     pub const SLOTS: u8 = 6;
 
+    /// The first slot (the live recorder's "Me" speaker).
+    pub const FIRST: Self = Self(1);
+
+    /// The second slot (the live recorder's "Them" speaker).
+    pub const SECOND: Self = Self(2);
+
     /// The palette slot `slot` (1-based).
     pub fn new(slot: u8) -> Result<Self, InvalidPaletteColor> {
         if (1..=Self::SLOTS).contains(&slot) {

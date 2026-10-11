@@ -174,6 +174,26 @@ impl SegmentWriter for FakeSegmentRepo {
         }
         Ok(())
     }
+
+    async fn save_live(
+        &self,
+        segments: &[NewSegment],
+        removed: &[SegmentId],
+    ) -> Result<(), DbError> {
+        let mut stored_segments = lock(&self.segments);
+        for segment in segments {
+            match stored_segments.iter_mut().find(|s| s.id == segment.id) {
+                Some(draft) => {
+                    (draft.start, draft.end) = (segment.start, segment.end);
+                    draft.text.clone_from(&segment.text);
+                    draft.words.clone_from(&segment.words);
+                }
+                None => stored_segments.push(stored(segment)),
+            }
+        }
+        stored_segments.retain(|segment| !removed.contains(&segment.id));
+        Ok(())
+    }
 }
 
 #[async_trait]
