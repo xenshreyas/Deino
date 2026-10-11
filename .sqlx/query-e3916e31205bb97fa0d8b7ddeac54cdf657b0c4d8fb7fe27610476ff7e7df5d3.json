@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM action_items\n             WHERE meeting_id = ?1 AND created_by = 'ai' AND status = 'open'\n                 AND updated_at = created_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e3916e31205bb97fa0d8b7ddeac54cdf657b0c4d8fb7fe27610476ff7e7df5d3"
+}

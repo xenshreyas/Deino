@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO action_item_views (id, name, filter_json, position, created_at, updated_at)\n             VALUES (?1, ?2, ?3,\n                 (SELECT coalesce(max(position) + 1, 0) FROM action_item_views), ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "ec01724de4a9632ce54103c3bcfe81542f7b8db87268647f56f9e6df9a0725ce"
+}
