@@ -2,11 +2,10 @@
 //!
 //! `start` takes the epoch, writes the initial `recording.json`, creates one
 //! ring, `.part` sink and writer thread per track, and starts the persister.
-//! It returns the rings' real-time ends ([`RtSink`]) for the capture sources
-//! and the health channel. `stop` pads both tracks to the stop time, finishes
-//! the encoders, renames the files and writes the closed manifest.
-//!
-//! Wiring this into the live recording pipeline and the database is FND-05b.
+//! It returns the rings' real-time ends ([`RtSink`]) for the capture side,
+//! the placed-audio rings ([`TimelineSource`]) for live transcription and the
+//! health channel. `stop` pads both tracks to the stop time, finishes the
+//! encoders, renames the files and writes the closed manifest.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -16,14 +15,14 @@ use deino_domain::{Clock, ErrorClass, ErrorCode};
 
 use crate::clock::HostClock;
 use crate::encoder::{EncoderFactory, SegmentOutput};
-use crate::health::{DiskSpace, HealthEvent, health_channel};
+use crate::health::{DiskSpace, HealthEvent, HealthSender, health_channel};
 use crate::manifest::{AUDIO_DIR, ManifestError, ManifestStore, RecordingManifest};
 use crate::persister::{
     PersistError, PersistedTrack, Persister, PersisterParts, PersisterThread, SYNC_INTERVAL,
 };
-use crate::ring::{RtSink, track_ring};
+use crate::ring::{RtSink, TimelineSource, timeline_ring, track_ring};
 use crate::sink::PartFileSink;
-use crate::units::{Frames, Track};
+use crate::units::{Frames, HostTime, Track};
 use crate::writer::{TrackWriter, TrackWriterParts, WriterContext, WriterError, WriterReport};
 
 /// Why a recording could not start or stop cleanly.
@@ -72,6 +71,20 @@ pub struct RecordingInputs {
     pub system: RtSink,
     /// Stalls, drops and disk warnings.
     pub health: Receiver<HealthEvent>,
+    /// Reports more health events on the same channel (capture problems).
+    pub reporter: HealthSender,
+    /// Each track's audio as it was placed on the timeline, for live
+    /// transcription. Undrained rings drop blocks; recording is unaffected.
+    pub placed: PlacedAudio,
+}
+
+/// Both tracks' placed audio: 48 kHz blocks stamped with timeline positions.
+#[derive(Debug)]
+pub struct PlacedAudio {
+    /// The microphone track.
+    pub microphone: TimelineSource,
+    /// The system track.
+    pub system: TimelineSource,
 }
 
 /// What a stopped recording produced.
@@ -106,28 +119,33 @@ impl Recorder {
             health: health.clone(),
             epoch: manifest.epoch,
         };
-        let (microphone, mic_writer, mic_track) = start_track(dir, Track::Microphone, &context)?;
-        let (system, system_writer, system_track) = start_track(dir, Track::System, &context)?;
+        let mic = start_track(dir, Track::Microphone, &context)?;
+        let system = start_track(dir, Track::System, &context)?;
         let persister = PersisterThread::spawn(
             Persister::new(PersisterParts {
                 dir: dir.to_owned(),
                 manifest,
-                tracks: vec![mic_track, system_track],
+                tracks: vec![mic.persisted, system.persisted],
                 disk: Arc::clone(&deps.disk),
-                health,
+                health: health.clone(),
             }),
             SYNC_INTERVAL,
         )?;
         let recorder = Self {
             dir: dir.to_owned(),
-            writers: vec![mic_writer, system_writer],
+            writers: vec![mic.writer, system.writer],
             persister,
             host_clock: Arc::clone(&deps.host_clock),
         };
         let inputs = RecordingInputs {
-            microphone,
-            system,
+            microphone: mic.input,
+            system: system.input,
             health: events,
+            reporter: health,
+            placed: PlacedAudio {
+                microphone: mic.placed,
+                system: system.placed,
+            },
         };
         Ok((recorder, inputs))
     }
@@ -149,6 +167,12 @@ impl Recorder {
     /// Stop the capture sources first.
     pub fn stop(self) -> Result<RecordingSummary, RecordError> {
         let stop_at = self.host_clock.now();
+        self.stop_at(stop_at)
+    }
+
+    /// Stops both tracks at `stop_at` on the timeline's host clock (the
+    /// current time less any paused time) and closes the recording.
+    pub fn stop_at(self, stop_at: HostTime) -> Result<RecordingSummary, RecordError> {
         let mut tracks = Vec::with_capacity(self.writers.len());
         let mut first_error = None;
         for writer in self.writers {
@@ -166,13 +190,22 @@ impl Recorder {
     }
 }
 
-/// Creates one track's ring, `.part` sink and writer thread.
+/// One started track: its rings' outer ends, writer and persisted files.
+struct StartedTrack {
+    input: RtSink,
+    placed: TimelineSource,
+    writer: TrackWriter,
+    persisted: PersistedTrack,
+}
+
+/// Creates one track's rings, `.part` sink and writer thread.
 fn start_track(
     dir: &Path,
     track: Track,
     context: &WriterContext,
-) -> Result<(RtSink, TrackWriter, PersistedTrack), RecordError> {
-    let (rt_sink, source) = track_ring();
+) -> Result<StartedTrack, RecordError> {
+    let (input, source) = track_ring();
+    let (placed_sink, placed) = timeline_ring();
     let manifest_path =
         crate::manifest::SegmentManifest::open(1, Frames::ZERO).relative_path(track);
     let sink = Arc::new(PartFileSink::create(&dir.join(manifest_path))?);
@@ -189,11 +222,17 @@ fn start_track(
         TrackWriterParts {
             track,
             source,
+            placed: placed_sink,
             output,
         },
         context,
     )?;
-    Ok((rt_sink, writer, persisted))
+    Ok(StartedTrack {
+        input,
+        placed,
+        writer,
+        persisted,
+    })
 }
 
 #[cfg(test)]

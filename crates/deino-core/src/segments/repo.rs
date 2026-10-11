@@ -61,6 +61,16 @@ pub trait SegmentWriter: Send + Sync {
     /// segments on its meeting and channel. `edited_at` and `is_deleted`
     /// are left alone. A change to a missing segment is a no-op.
     async fn reattribute(&self, changes: &[Reattribution]) -> Result<(), DbError>;
+
+    /// Saves the live transcript's changes in one transaction (FND-05b):
+    /// inserts each of `segments`, or, when its ID is already stored (an
+    /// open segment saved as a draft), replaces its timing, text and words;
+    /// then deletes `removed` (drafts discarded as echo).
+    async fn save_live(
+        &self,
+        segments: &[NewSegment],
+        removed: &[SegmentId],
+    ) -> Result<(), DbError>;
 }
 
 /// [`SegmentReader`], [`SegmentWriter`] and [`SpeakerRepo`](super::SpeakerRepo)
@@ -176,6 +186,48 @@ impl SegmentWriter for SqliteSegmentRepo {
     async fn reattribute(&self, changes: &[Reattribution]) -> Result<(), DbError> {
         voices::reattribute(&self.database, changes).await
     }
+
+    async fn save_live(
+        &self,
+        segments: &[NewSegment],
+        removed: &[SegmentId],
+    ) -> Result<(), DbError> {
+        let mut transaction = self.database.writer().begin().await?;
+        for segment in segments {
+            upsert(&mut transaction, segment).await?;
+        }
+        for id in removed {
+            sqlx::query!("DELETE FROM transcript_segments WHERE id = ?1", id)
+                .execute(&mut *transaction)
+                .await?;
+        }
+        transaction.commit().await?;
+        Ok(())
+    }
+}
+
+/// Inserts one segment, or updates the live fields of the stored draft with
+/// its ID, inside the caller's transaction.
+async fn upsert(connection: &mut SqliteConnection, segment: &NewSegment) -> Result<(), DbError> {
+    let words = Json(&segment.words);
+    sqlx::query!(
+        "INSERT INTO transcript_segments (id, meeting_id, channel, speaker_id, start_ms, end_ms, text, words_json)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+         ON CONFLICT (id) DO UPDATE SET
+             start_ms = excluded.start_ms, end_ms = excluded.end_ms,
+             text = excluded.text, words_json = excluded.words_json",
+        segment.id,
+        segment.meeting_id,
+        segment.channel,
+        segment.speaker_id,
+        segment.start,
+        segment.end,
+        segment.text,
+        words,
+    )
+    .execute(connection)
+    .await?;
+    Ok(())
 }
 
 /// Inserts one segment inside the caller's transaction. The statement is

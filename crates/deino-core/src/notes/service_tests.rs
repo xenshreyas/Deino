@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use chrono::TimeDelta;
 use deino_doc::{Block, Doc, ImageAttrs, Inline, Mark};
-use deino_domain::{FakeClock, MeetingId, MeetingSource, MeetingStatus, TemplateId};
+use deino_domain::{FakeClock, MeetingId, MeetingSource, MeetingStatus};
 use deino_testkit::at;
 
 use super::*;
@@ -23,9 +23,7 @@ struct Harness {
 }
 
 async fn harness() -> Harness {
-    let notes = Arc::new(FakeNotesRepo::with_drafts([MeetingId::new(
-        "meeting-draft",
-    )]));
+    let notes = Arc::new(FakeNotesRepo::default());
     let meetings = Arc::new(FakeMeetingRepo::default());
     for (id, status) in [
         ("meeting-a", MeetingStatus::Ready),
@@ -227,70 +225,4 @@ async fn scheduled_meetings_hold_notes_before_a_recording() {
     let state = h.meetings.state(&meeting.id).await.unwrap().unwrap();
     assert_eq!(state.status, MeetingStatus::Scheduled);
     assert!(h.service.create_scheduled(" ").await.is_err());
-}
-
-#[tokio::test]
-async fn adopting_moves_notes_and_images_and_deletes_the_draft() {
-    let h = harness().await;
-    h.service
-        .save(&id("meeting-a"), doc("agenda"))
-        .await
-        .unwrap();
-    let picture = h
-        .service
-        .save_image(&id("meeting-draft"), PNG)
-        .await
-        .unwrap();
-    let mut live = doc("typed live");
-    live.content.extend(image(&picture.src).content);
-    h.service.save(&id("meeting-draft"), live).await.unwrap();
-
-    h.service
-        .adopt(&id("meeting-draft"), &id("meeting-a"))
-        .await
-        .unwrap();
-
-    let adopted = h.service.get(&id("meeting-a")).await.unwrap();
-    assert_eq!(adopted.doc.content.len(), 3);
-    assert_eq!(adopted.doc.content[0], doc("agenda").content[0]);
-    assert_eq!(h.images.names(&id("meeting-a")).len(), 1);
-    assert!(h.notes.drafts().is_empty());
-}
-
-#[tokio::test]
-async fn adopting_carries_a_template_chosen_on_the_draft() {
-    let h = harness().await;
-    let standup = TemplateId::new("standup");
-    h.meetings
-        .set_template(&id("meeting-draft"), Some(&standup), at(NOW))
-        .await
-        .unwrap();
-
-    h.service
-        .adopt(&id("meeting-draft"), &id("meeting-a"))
-        .await
-        .unwrap();
-
-    let adopted = h.meetings.state(&id("meeting-a")).await.unwrap().unwrap();
-    assert_eq!(adopted.template_id, Some(standup));
-}
-
-#[tokio::test]
-async fn only_scheduled_drafts_can_be_adopted() {
-    let h = harness().await;
-
-    let recorded = h
-        .service
-        .adopt(&id("meeting-a"), &id("meeting-draft"))
-        .await
-        .unwrap_err();
-    let itself = h
-        .service
-        .adopt(&id("meeting-draft"), &id("meeting-draft"))
-        .await
-        .unwrap_err();
-
-    assert!(matches!(recorded, NotesError::NotADraft(_)));
-    assert!(matches!(itself, NotesError::NotADraft(_)));
-    assert_eq!(h.notes.drafts(), [id("meeting-draft")]);
 }

@@ -16,11 +16,16 @@ test-support = []
 
 [dependencies]
 chrono.workspace = true
+# The microphone: cross-platform input streams (same version as the app). Apache-2.0.
+cpal = "=0.15.3"
 deino-domain.workspace = true
 log.workspace = true
 # Wait-free single-producer single-consumer ring between a real-time audio
 # callback and the writer thread (§3C). MIT/Apache-2.0.
 rtrb = "=0.4.0"
+# One allocation-free sample-rate conversion per consumer (§3C; same version
+# as the app). MIT.
+rubato = "=0.15.0"
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -37,9 +42,11 @@ cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["a
 # (passthrough export) and -[AVAssetWriter finishWritingWithCompletionHandler:].
 block2 = "=0.6.2"
 objc2 = "=0.6.4"
+# NSWorkspace sleep/wake notifications. MIT.
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWorkspace"] }
 objc2-av-foundation = { version = "=0.3.2", default-features = false, features = ["std", "AVAsset", "AVAssetExportSession", "AVMediaFormat", "block2", "objc2-core-media"] }
 objc2-core-media = { version = "=0.3.2", default-features = false, features = ["std", "CMTime", "CMTimeRange"] }
-objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSError", "NSString", "NSURL"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "block2", "NSError", "NSNotification", "NSOperation", "NSString", "NSURL"] }
 
 [dev-dependencies]
 # The crate's own fakes for its integration tests in tests/.

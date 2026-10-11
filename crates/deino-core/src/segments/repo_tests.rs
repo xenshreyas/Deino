@@ -144,6 +144,38 @@ async fn fake_replace_swaps_only_that_meetings_transcript() {
     replace_swaps_only_that_meetings_transcript(&FakeSegmentRepo::default()).await;
 }
 
+/// A live save inserts new rows, completes stored drafts and deletes discards.
+async fn live_saves_complete_drafts_and_delete_discards(
+    repo: &(impl SegmentReader + SegmentWriter),
+) {
+    let meeting = MeetingId::new(MEETING);
+    let mut draft = segment(0, "so the plan");
+    let echo = segment(2_000, "echo");
+    repo.save_live(&[draft.clone(), echo.clone()], &[])
+        .await
+        .unwrap();
+
+    draft.text = "so the plan is final".into();
+    draft.end = Millis(2_400);
+    repo.save_live(&[draft.clone(), segment(3_000, "next")], &[echo.id])
+        .await
+        .unwrap();
+
+    let all = repo.list(&meeting, Page::ALL).await.unwrap();
+    assert_eq!(texts(&all), ["so the plan is final", "next"]);
+    assert_eq!((all[0].id, all[0].end), (draft.id, Millis(2_400)));
+}
+
+#[tokio::test]
+async fn sqlite_live_saves_complete_drafts_and_delete_discards() {
+    live_saves_complete_drafts_and_delete_discards(&sqlite_repo().await).await;
+}
+
+#[tokio::test]
+async fn fake_live_saves_complete_drafts_and_delete_discards() {
+    live_saves_complete_drafts_and_delete_discards(&FakeSegmentRepo::default()).await;
+}
+
 #[tokio::test]
 async fn a_failing_row_rolls_back_its_whole_batch() {
     let repo = sqlite_repo().await;

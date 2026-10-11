@@ -1,19 +1,17 @@
-//! `transcription` feature: the Parakeet Unified model manager and live
-//! transcript events, exposed as the inline plugin
-//! `plugin:transcription|<command>`.
+//! `transcription` feature: the Parakeet Unified model manager, exposed as
+//! the inline plugin `plugin:transcription|<command>`.
 //!
 //! Commands list, download, cancel and delete model files through
-//! `deino_core::models::ModelService`. Events carry download progress, model
-//! state changes and the live lane's growing text (`LiveTranscript`), which
-//! the record screen shows under the transcript. Engine selection itself is
-//! still the legacy transcript config (`provider = "parakeetUnified"`).
+//! `deino_core::models::ModelService`. Events carry download progress and
+//! model state changes. The engine itself is `Settings::transcription`; the
+//! live transcript's events belong to the `recording` plugin.
 
 mod commands;
 #[cfg(test)]
 mod contract_tests;
 mod events;
 
-pub use events::{LiveLane, LiveTranscript, ModelChanged, ModelDownloadProgress, TauriModelEvents};
+pub use events::{ModelChanged, ModelDownloadProgress, TauriModelEvents};
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
@@ -27,7 +25,6 @@ pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
         .plugin_name(NAME)
         .commands(commands::collect())
         .events(tauri_specta::collect_events![
-            LiveTranscript,
             ModelChanged,
             ModelDownloadProgress
         ])

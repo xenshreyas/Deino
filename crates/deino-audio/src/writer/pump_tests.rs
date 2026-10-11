@@ -12,7 +12,7 @@ use super::*;
 use crate::clock::FakeHostClock;
 use crate::encoder::{EncoderFactory, FakeEncoderFactory, SegmentOutput};
 use crate::health::health_channel;
-use crate::ring::{RtSink, track_ring};
+use crate::ring::{RtSink, TimelineSource, timeline_ring, track_ring};
 use crate::sink::MemorySink;
 
 /// 10 ms of 48 kHz audio.
@@ -24,6 +24,7 @@ struct Rig {
     clock: Arc<FakeHostClock>,
     encoders: FakeEncoderFactory,
     events: Receiver<HealthEvent>,
+    placed: TimelineSource,
 }
 
 fn rig(track: Track) -> Rig {
@@ -34,10 +35,12 @@ fn rig(track: Track) -> Rig {
         ledger: Arc::default(),
     };
     let (sink, source) = track_ring();
+    let (placed_sink, placed) = timeline_ring();
     let (health, events) = health_channel();
     let pump = TrackPump::new(PumpParts {
         track,
         source,
+        placed: placed_sink,
         epoch: clock.now(),
         encoder: encoders.open(track, output).unwrap(),
         clock: clock.clone(),
@@ -50,6 +53,7 @@ fn rig(track: Track) -> Rig {
         clock,
         encoders,
         events,
+        placed,
     }
 }
 
@@ -85,6 +89,23 @@ fn a_late_starting_track_begins_with_silence_from_the_epoch() {
     assert_eq!(samples.len(), 14_400 + 480);
     assert!(samples[..14_400].iter().all(|s| *s == 0.0));
     assert!(samples[14_400..].iter().all(|s| *s == 0.5));
+}
+
+#[test]
+fn placed_audio_reaches_the_timeline_ring_at_its_timeline_position() {
+    let mut rig = rig(Track::System);
+    rig.clock.advance(Duration::from_millis(300));
+    capture(&mut rig, 0.5);
+    capture(&mut rig, 0.25);
+
+    rig.pump.poll().unwrap();
+
+    let mut block = Vec::new();
+    let first = rig.placed.pop_block(&mut block).unwrap();
+    assert_eq!((first.at, first.len), (Frames(14_400), 480));
+    assert!(block.iter().all(|s| *s == 0.5));
+    let second = rig.placed.pop_block(&mut block).unwrap();
+    assert_eq!(second.at, Frames(14_880));
 }
 
 #[test]

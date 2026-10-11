@@ -4,6 +4,7 @@
 //! [`StagePorts`] if it needs a port no stage has asked for yet. The runner
 //! never names a stage: it runs whatever this list holds, in order.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
@@ -16,7 +17,8 @@ use deino_core::tags::AutoTagger;
 use deino_domain::{Clock, StageId};
 
 use crate::stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, LegacySummaryStage, Summarizer,
+    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, FinalizeAudioStage,
+    LegacySummaryStage, Summarizer,
 };
 use crate::{Job, PipelineStage};
 
@@ -46,6 +48,8 @@ pub struct StagePorts {
     pub auto_tagger: Arc<dyn AutoTagger>,
     /// The auto-filer (ORG-05).
     pub auto_filer: Arc<dyn AutoFiler>,
+    /// The folder holding every live recording's folder (`finalize_audio`).
+    pub recordings: PathBuf,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -72,6 +76,7 @@ impl StagePorts {
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
+            recordings: PathBuf::from("no-recordings"),
         }
     }
 }
@@ -79,6 +84,8 @@ impl StagePorts {
 /// Every stage of the post-meeting pipeline, sorted by order.
 pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
     sorted(vec![
+        // 10 · FND-05b: the recording's mic, system and mixed files.
+        Arc::new(FinalizeAudioStage::new(ports)),
         // 30 · CAP-03: speakers from the recording.
         Arc::new(DiarizeStage::new(ports)),
         // 50 · until NOT-02's enhance_notes replaces it.
@@ -164,6 +171,7 @@ mod tests {
         assert_eq!(
             Registry::new(stages).ids(),
             [
+                "finalize_audio",
                 "diarize",
                 "legacy_summary",
                 "auto_tag",

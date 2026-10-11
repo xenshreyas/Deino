@@ -28,9 +28,6 @@ vi.mock('@tauri-apps/api/core', async (importOriginal) => ({
 vi.mock('sonner', () => ({
   toast: { info: notify, error: notify, success: notify, warning: notify },
 }));
-vi.mock('@/contexts/RecordingStateContext', () => ({
-  useRecordingState: () => ({ isRecording: false }),
-}));
 vi.mock('@/contexts/ConfigContext', () => ({ useConfig: () => ({ isAutoSummary: false }) }));
 vi.mock('@tanstack/react-router', () => ({
   useLocation: (options: { select: (location: { pathname: string }) => string }) =>

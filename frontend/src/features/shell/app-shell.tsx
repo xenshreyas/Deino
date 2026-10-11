@@ -1,8 +1,8 @@
 /**
  * The app shell around every route (PARITY_PLAN §4.6): providers, the
  * first-run onboarding gate, the sidebar and title bar, the ⌘K palette, the
- * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the tray and
- * meeting-detection recording listeners.
+ * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the
+ * meeting-detection listener that opens the record screen.
  */
 import type { ReactNode } from 'react';
 
@@ -17,7 +17,6 @@ import { AudioDropTarget } from './components/audio-drop-target';
 import { ChatPlaceholder } from './components/chat-placeholder';
 import { ImportDialogGate } from './components/import-dialog-gate';
 import { TitleBar } from './components/title-bar';
-import { TrayRecordingToggle } from './components/tray-recording-toggle';
 import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
 import { useImportDialogState } from './hooks/use-import-dialog-state';
@@ -61,11 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <>
       <AppProviders onOpenImportDialog={importDialog.openWith}>
         <DownloadProgressToastProvider />
-        <TrayRecordingToggle key={String(showOnboarding)} onboarding={showOnboarding} />
-        <DetectionRecordingStart
-          key={`detection-${String(showOnboarding)}`}
-          onboarding={showOnboarding}
-        />
+        <DetectionRecordingStart />
         {showOnboarding ? (
           <OnboardingFlow onComplete={completeOnboarding} />
         ) : (

@@ -41,17 +41,6 @@ async createScheduled(title: string) : Promise<Result<Meeting, AppError>> {
 }
 },
 /**
- * Moves a scheduled draft's notes and images into `into` and deletes it.
- */
-async adopt(draft: MeetingId, into: MeetingId) : Promise<Result<SavedNotes, AppError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("plugin:notes|adopt", { draft, into }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
  * Stores a pasted image, sent as base64, and returns its source.
  */
 async saveImage(meetingId: MeetingId, base64: string) : Promise<Result<NoteImage, AppError>> {

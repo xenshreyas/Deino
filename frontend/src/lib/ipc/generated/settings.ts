@@ -109,7 +109,13 @@ preferredMicDevice: string | null;
 /**
  * The system-audio source, by its display name; the default when `None`.
  */
-preferredSystemDevice: string | null }
+preferredSystemDevice: string | null; 
+/**
+ * "I use headphones": the microphone never hears the call, so echo
+ * cancellation and the bleed holdback are skipped whatever the output
+ * route looks like (CAP-02).
+ */
+usesHeadphones: boolean }
 /**
  * "Auto-start after N-second countdown" (off by default).
  */

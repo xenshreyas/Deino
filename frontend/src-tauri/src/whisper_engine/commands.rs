@@ -288,38 +288,11 @@ pub async fn whisper_validate_model_ready_with_config<R: tauri::Runtime>(
         }
 
         // No model loaded - try to load user's configured model from transcript config
-        let model_to_load = match crate::api::api::current_transcript_config(&app)
-        .await
-        {
-            Ok(Some(config)) => {
-                log::info!(
-                    "Got transcript config from API - provider: {}, model: {}",
-                    config.provider,
-                    config.model
-                );
-                if config.provider == "localWhisper" && !config.model.is_empty() {
-                    log::info!("Using user's configured model: {}", config.model);
-                    Some(config.model)
-                } else {
-                    log::info!(
-                        "API config uses non-local provider ({}) or empty model, will auto-select",
-                        config.provider
-                    );
-                    None
-                }
-            }
-            Ok(None) => {
-                log::info!("No transcript config found in API, will auto-select model");
-                None
-            }
-            Err(e) => {
-                log::warn!(
-                    "Failed to get transcript config from API: {}, will auto-select model",
-                    e
-                );
-                None
-            }
-        };
+        let model_to_load = crate::stt::settings::model_for(
+            &app,
+            deino_core::settings::TranscriptionEngine::Whisper,
+        )
+        .await;
 
         // Check available models
         let models = engine

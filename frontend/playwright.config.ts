@@ -9,8 +9,8 @@
  */
 import { defineConfig, devices } from '@playwright/test';
 
-/** `pnpm dev:mock`'s port (`MOCK_PORT` in vite.config.ts). */
-const MOCK_URL = 'http://localhost:3119';
+/** `pnpm dev:mock`'s port (`MOCK_PORT` in vite.config.ts; overridable the same way). */
+const MOCK_URL = `http://localhost:${process.env.MOCK_PORT ?? '3119'}`;
 
 export default defineConfig({
   testDir: './e2e',

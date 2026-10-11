@@ -38,6 +38,7 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 # Zip archives (EXP-01/02): the version docx-rs already uses, deflate only.
 zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
+deino-audio = { path = "crates/deino-audio" }
 deino-core = { path = "crates/deino-core" }
 deino-db = { path = "crates/deino-db" }
 # Tests add `features = ["test-support"]` for the fakes of its ports.
@@ -50,6 +51,7 @@ deino-export = { path = "crates/deino-export" }
 deino-llm = { path = "crates/deino-llm" }
 deino-net = { path = "crates/deino-net" }
 deino-pipeline = { path = "crates/deino-pipeline" }
+deino-recording = { path = "crates/deino-recording" }
 deino-secrets = { path = "crates/deino-secrets" }
 deino-stt = { path = "crates/deino-stt" }
 # Tests add `features = ["test-support"]` for its fakes; the app's debug-only

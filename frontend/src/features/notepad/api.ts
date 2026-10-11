@@ -17,12 +17,6 @@ export const notesApi = {
   /** Saves the whole document (the autosave). */
   save: (meetingId: MeetingId, doc: NoteDoc): Promise<SavedNotes> =>
     unwrap(notes.save(meetingId, doc)),
-  /** Creates a `scheduled` meeting to write notes in before recording. */
-  createScheduled: async (title: string): Promise<MeetingId> =>
-    (await unwrap(notes.createScheduled(title))).id,
-  /** Moves a scheduled draft's notes into the meeting a recording saved. */
-  adopt: (draft: MeetingId, into: MeetingId): Promise<SavedNotes> =>
-    unwrap(notes.adopt(draft, into)),
   /** Stores a pasted image (base64, without a `data:` prefix). */
   saveImage: (meetingId: MeetingId, base64: string): Promise<NoteImage> =>
     unwrap(notes.saveImage(meetingId, base64)),

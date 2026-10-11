@@ -1,7 +1,7 @@
 /**
- * Where a notepad writes. A meeting page writes into its meeting; the
- * record screen writes into a draft it creates on the first edit
- * (`live-notes.ts`). The editor only sees this interface.
+ * Where a notepad writes. Today every notepad writes into an existing
+ * meeting (the record screen's is the meeting being recorded). The editor
+ * only sees this interface.
  */
 import type { MeetingId } from '@/features/meetings';
 
@@ -15,7 +15,7 @@ export interface OpenTarget {
 
 /** A notepad's destination. */
 export interface NoteTarget {
-  /** The meeting to write into; a draft is created on first use. */
+  /** The meeting to write into. */
   resolve: () => Promise<OpenTarget>;
   /** The folder images resolve against, once known. */
   folder: () => string | null;

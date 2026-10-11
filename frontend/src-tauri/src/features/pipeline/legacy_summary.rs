@@ -187,6 +187,10 @@ struct Process {
 
 #[async_trait]
 impl<R: Runtime> Summarizer for LegacySummarizer<R> {
+    async fn is_automatic(&self) -> bool {
+        self.settings.get().await.ai.auto_summary
+    }
+
     async fn generate(
         &self,
         request: SummaryInput,

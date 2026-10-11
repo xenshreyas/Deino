@@ -119,7 +119,6 @@ symphonia = { version = "0.5.4", features = ["aac", "isomp4", "mp3", "flac", "og
 rand = "0.8.5"
 rayon = "1.10"
 rubato = "0.15.0"
-ringbuf = "0.4.8"
 tempfile = "3.3.0"
 
 ffmpeg-sidecar = { git = "https://github.com/nathanbabcock/ffmpeg-sidecar", branch = "main" }
@@ -127,8 +126,12 @@ ffmpeg-sidecar = { git = "https://github.com/nathanbabcock/ffmpeg-sidecar", bran
 sqlx = { workspace = true, features = ["json"] }
 
 # The Tauri-free core (crates/) and typed IPC through tauri-specta (ADR 0007).
+# Live recording (FND-05b, CAP-02): capture, the crash-safe tracks, and the
+# two-lane Me/Them pipeline that saves the transcript as it is spoken.
+deino-audio.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
+deino-recording.workspace = true
 # Local speaker diarization behind the `diarize` stage (CAP-03).
 deino-diarize.workspace = true
 deino-domain.workspace = true
@@ -180,7 +183,6 @@ reqwest = { version = "0.11", features = ["multipart", "json"] }
 core-graphics = "0.23"
 cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
 dasp = "0.11.0"
-futures-channel = "0.3.31"
 # The meeting prompt as a non-activating NSPanel, so it never steals focus
 # from the call (CAP-06; Handy's overlay pattern). MIT/Apache-2.0, pinned.
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", rev = "da9c9a8d4eb7f0524a2508988df1a7d9585b4904" }
@@ -193,21 +195,12 @@ tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", rev = "da9c9a
 #   --features openblas (OpenBLAS optimization, requires BLAS_INCLUDE_DIRS)
 [target.'cfg(target_os = "windows")'.dependencies]
 ort = { version = "2.0.0-rc.10", features = ["load-dynamic"] }
-futures-channel = "0.3.31"
-
-# Linux-specific dependencies
-# Default: CPU-only build (no BLAS)
-# Users can enable features manually:
-#   --features cuda     (NVIDIA GPUs)
-#   --features vulkan   (AMD/Intel GPUs)
-#   --features hipblas  (AMD ROCm)
-#   --features openblas (OpenBLAS optimization, requires BLAS_INCLUDE_DIRS)
-[target.'cfg(target_os = "linux")'.dependencies]
-futures-channel = "0.3.31"
 
 [dev-dependencies]
+deino-audio = { workspace = true, features = ["test-support"] }
 deino-core = { workspace = true, features = ["test-support"] }
 deino-detect = { workspace = true, features = ["test-support"] }
+deino-recording = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 # Structured-output types in the LLM smoke tests (llm/smoke_tests.rs).
 schemars = "1.2.1"

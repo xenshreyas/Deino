@@ -90,11 +90,6 @@ export class MockDatabase {
     return ok({ ...meeting });
   }
 
-  /** Deletes a meeting (an adopted draft). */
-  remove(id: MeetingId): void {
-    if (this.rows.delete(id)) this.onChange(['meetings', 'meeting_notes']);
-  }
-
   /** Reports a write to `tables`, as a commit would. */
   touch(tables: Table[]): void {
     this.onChange(tables);

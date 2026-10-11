@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { DeviceSelection, SelectedDevices } from '@/components/DeviceSelection';
 import { toast } from 'sonner';
-import { useRecordingState } from '@/contexts/RecordingStateContext';
+import { useRecordingState } from '@/features/recording';
 import { type SettingsPatch, usePatchSettings, useSettings } from '@/features/settings';
 
 /**
@@ -15,7 +15,7 @@ import { type SettingsPatch, usePatchSettings, useSettings } from '@/features/se
 export function RecordingSettings() {
   const { data: settings } = useSettings();
   const { mutateAsync: patch, isPending: saving } = usePatchSettings();
-  const { isRecording } = useRecordingState();
+  const isRecording = useRecordingState().phase !== 'idle';
   const { data: recordingsFolder } = useQuery({
     queryKey: ['recordings-folder'],
     queryFn: () => invoke<string>('get_default_recordings_folder_path'),
@@ -128,6 +128,22 @@ export function RecordingSettings() {
         <Switch
           checked={showRecordingNotice}
           onCheckedChange={(enabled) => save({ recording: { showRecordingNotice: enabled } }, 'Preference saved')}
+        />
+      </div>
+
+      {/* Headphones: the microphone never hears the call (CAP-02) */}
+      <div className="flex items-center justify-between p-4 border rounded-lg">
+        <div className="flex-1">
+          <div className="font-medium">I use headphones</div>
+          <div className="text-sm text-fg-muted">
+            Your microphone never hears the other side of the call, so Deino skips echo removal. Leave
+            this off if you sometimes use speakers; Deino detects headphones on its own.
+          </div>
+        </div>
+        <Switch
+          checked={settings.audio.usesHeadphones}
+          onCheckedChange={(enabled) => save({ audio: { usesHeadphones: enabled } }, 'Preference saved')}
+          disabled={saving}
         />
       </div>
 

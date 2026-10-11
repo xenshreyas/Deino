@@ -2,6 +2,7 @@
 //! app's repositories and adapters, the meetings lifecycle that starts it,
 //! and its startup.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
@@ -22,16 +23,20 @@ use tauri::{AppHandle, Manager, Runtime};
 
 use super::diarize;
 use crate::features;
+use crate::paths::AppPaths;
 
 /// What the pipeline gets from the app: where progress goes, the legacy
 /// summary service behind `legacy_summary`, the diarization engine behind
-/// `diarize`, and the services behind `auto_tag` and `auto_export`.
+/// `diarize`, the services behind `auto_tag` and `auto_export`, and the live
+/// recordings' folder that `finalize_audio` reads.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) summaries: Arc<dyn Summarizer>,
     pub(crate) diarizer: Arc<dyn TrackDiarizer>,
     /// Over the LLM gateway (`Organize::auto_tagger`).
     pub(crate) auto_tagger: Arc<dyn AutoTagger>,
+    /// Every live recording's folder lives here (`AppPaths::recordings`).
+    pub(crate) recordings: PathBuf,
     /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
     pub(crate) auto_export: Arc<dyn AutoExporter>,
 }
@@ -68,6 +73,7 @@ fn stage_ports(
         auto_tagger: adapters.auto_tagger,
         auto_export: adapters.auto_export,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
+        recordings: adapters.recordings,
     }
 }
 
@@ -129,6 +135,12 @@ pub(super) fn attach_pipeline(
     let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
         return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
     };
+    let recordings = match AppPaths::resolve(app) {
+        Ok(paths) => paths.recordings(),
+        Err(error) => {
+            return log::error!(target: "pipeline", "app folders unavailable: {error}; the pipeline is off");
+        }
+    };
     let diarizer = match diarize::track_diarizer(app) {
         Ok(diarizer) => diarizer,
         Err(error) => {
@@ -146,6 +158,7 @@ pub(super) fn attach_pipeline(
         )),
         auto_tagger: stages.auto_tagger,
         auto_export: stages.auto_export,
+        recordings,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
 }

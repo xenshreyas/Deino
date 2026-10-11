@@ -21,6 +21,8 @@ use crate::{PipelineStage, StageCtx, StageError, StageOutcome, StagePorts};
 const ID: &str = "legacy_summary";
 /// Where it runs: the slot of notes generation (PARITY_PLAN §4.2).
 const ORDER: u16 = 50;
+/// Shown when automatic summaries are turned off.
+const TURNED_OFF: &str = "Automatic summaries are turned off in Settings.";
 /// Shown when there is nothing to summarise.
 const NO_TRANSCRIPT: &str = "The meeting has no transcript to summarise.";
 /// Seconds in a minute, for the `[MM:SS]` transcript timestamps.
@@ -41,6 +43,12 @@ pub struct SummaryInput {
 /// Generates and stores a meeting's summary.
 #[async_trait]
 pub trait Summarizer: Send + Sync {
+    /// Whether summaries run after every meeting (`Settings::ai.auto_summary`).
+    /// When off, the stage is skipped and the user generates one by hand.
+    async fn is_automatic(&self) -> bool {
+        true
+    }
+
     /// Summarises `request`, stopping early when `cancel` fires.
     async fn generate(
         &self,
@@ -100,6 +108,9 @@ impl PipelineStage for LegacySummaryStage {
     }
 
     async fn run(&self, ctx: &StageCtx, meeting: MeetingId) -> Result<StageOutcome, StageError> {
+        if !self.summaries.is_automatic().await {
+            return Ok(StageOutcome::Skipped(TURNED_OFF));
+        }
         match self.request(meeting).await? {
             Some(request) => self.summaries.generate(request, ctx.cancel.clone()).await,
             None => Ok(StageOutcome::Skipped(NO_TRANSCRIPT)),
@@ -137,9 +148,18 @@ mod recorded {
     #[derive(Debug, Default)]
     pub struct RecordedSummaries {
         requests: Mutex<Vec<SummaryInput>>,
+        turned_off: bool,
     }
 
     impl RecordedSummaries {
+        /// A summariser whose user turned automatic summaries off.
+        pub fn turned_off() -> Self {
+            Self {
+                turned_off: true,
+                ..Self::default()
+            }
+        }
+
         /// Every request so far, oldest first.
         pub fn requests(&self) -> Vec<SummaryInput> {
             self.requests
@@ -151,6 +171,10 @@ mod recorded {
 
     #[async_trait]
     impl Summarizer for RecordedSummaries {
+        async fn is_automatic(&self) -> bool {
+            !self.turned_off
+        }
+
         async fn generate(
             &self,
             request: SummaryInput,
@@ -271,6 +295,23 @@ mod tests {
                 template: Some(template),
             }]
         );
+    }
+
+    #[tokio::test]
+    async fn turned_off_automatic_summaries_skip_the_stage() {
+        let mut harness = harness().await;
+        let summaries = Arc::new(RecordedSummaries::turned_off());
+        harness.stage.summaries = summaries.clone();
+        harness
+            .segments
+            .append(&[segment(0, "hello")])
+            .await
+            .unwrap();
+
+        let outcome = harness.stage.run(&ctx(), MeetingId::new("meeting-a")).await;
+
+        assert_eq!(outcome, Ok(StageOutcome::Skipped(TURNED_OFF)));
+        assert!(summaries.requests().is_empty());
     }
 
     #[test]

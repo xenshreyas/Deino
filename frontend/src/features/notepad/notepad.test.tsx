@@ -8,10 +8,8 @@ import type * as Generated from '@/lib/ipc/generated/notes';
 import { createQueryClient } from '@/lib/ipc';
 
 import { AUTOSAVE_DELAY_MS } from './autosave';
-import { LiveNotepad } from './components/live-notepad';
 import { Notepad } from './components/notepad';
 import { SummaryDocument } from './components/summary-document';
-import { adoptLiveNotes, useLiveNotes } from './live-notes';
 
 // Typed against the generated bindings: a Rust signature change breaks this mock.
 const commands = vi.hoisted(
@@ -20,7 +18,6 @@ const commands = vi.hoisted(
       get: vi.fn<typeof Generated.commands.get>(),
       save: vi.fn<typeof Generated.commands.save>(),
       createScheduled: vi.fn<typeof Generated.commands.createScheduled>(),
-      adopt: vi.fn<typeof Generated.commands.adopt>(),
       saveImage: vi.fn<typeof Generated.commands.saveImage>(),
       attachDroppedImage: vi.fn<typeof Generated.commands.attachDroppedImage>(),
       markdownToDoc: vi.fn<typeof Generated.commands.markdownToDoc>(),
@@ -30,7 +27,6 @@ const commands = vi.hoisted(
 vi.mock('@/lib/ipc/generated/notes', () => ({ commands }));
 
 const MEETING = asMeetingId('meeting-1');
-const DRAFT = asMeetingId('meeting-draft');
 const SAVED_AT = '2026-10-08T09:00:00Z';
 
 function renderWithClient(ui: React.ReactElement) {
@@ -65,7 +61,6 @@ describe('the notepad', () => {
     commands.save.mockImplementation((meetingId) =>
       Promise.resolve({ status: 'ok', data: { meetingId, updatedAt: SAVED_AT } }),
     );
-    useLiveNotes.setState({ draft: null, creating: null, flush: null, generation: 0 });
   });
 
   afterEach(() => {
@@ -117,28 +112,5 @@ describe('the notepad', () => {
 
     expect(await screen.findByRole('heading', { name: 'Decisions' })).toBeTruthy();
     expect(commands.markdownToDoc).toHaveBeenCalledWith('## Decisions');
-  });
-
-  it('moves live notes into the meeting a recording saved', async () => {
-    commands.adopt.mockResolvedValue({
-      status: 'ok',
-      data: { meetingId: MEETING, updatedAt: SAVED_AT },
-    });
-    const flush = vi.fn(() => Promise.resolve());
-    useLiveNotes.setState({ draft: { meetingId: DRAFT, folder: '/d' }, flush });
-
-    await adoptLiveNotes(MEETING);
-
-    expect(flush).toHaveBeenCalledOnce();
-    expect(commands.adopt).toHaveBeenCalledWith(DRAFT, MEETING);
-    expect(useLiveNotes.getState()).toMatchObject({ draft: null, generation: 1 });
-  });
-
-  it('does nothing on stop when nothing was written live', async () => {
-    renderWithClient(<LiveNotepad />);
-    await adoptLiveNotes(MEETING);
-    expect(commands.createScheduled).not.toHaveBeenCalled();
-    expect(commands.adopt).not.toHaveBeenCalled();
-    expect(AUTOSAVE_DELAY_MS).toBe(1000);
   });
 });

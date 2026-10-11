@@ -1,7 +1,8 @@
 /**
  * "My notes" for a meeting: loads the notes once, then the editor owns the
- * document and autosaves it. Used on the meeting page and in the
- * stand-alone {@link NotepadWindow}.
+ * document and autosaves it. Used on the meeting page, on the record
+ * screen (the meeting being recorded, which Rust creates when recording
+ * starts) and in the stand-alone {@link NotepadWindow}.
  */
 import type { ReactNode } from 'react';
 import { useState } from 'react';

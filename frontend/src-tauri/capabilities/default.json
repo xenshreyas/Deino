@@ -46,6 +46,7 @@
         "profile:default",
         "notes:default",
         "people:default",
+        "recording:default",
         "secrets:default",
         "llm:default",
         "settings:default",

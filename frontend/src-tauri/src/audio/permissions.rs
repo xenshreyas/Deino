@@ -95,30 +95,23 @@ pub async fn request_screen_recording_permission_command() -> Result<(), String>
 pub fn trigger_system_audio_permission() -> Result<bool> {
     info!("🔐 Triggering Audio Capture permission request...");
 
-    // Try to create a Core Audio capture - this triggers the permission dialog
-    // if NSAudioCaptureUsageDescription is present in Info.plist
-    // NOTE: We only create the tap, don't start streaming - similar to mic permission approach
-    match crate::audio::capture::CoreAudioCapture::new() {
-        Ok(_capture) => {
-            info!("✅ Core Audio tap created successfully");
-            // Sleep briefly to allow permission dialog to appear (if shown)
-            // Similar to microphone permission handling in discovery.rs
-            std::thread::sleep(std::time::Duration::from_millis(500));
-            info!("✅ Audio Capture permission appears to be granted");
-            // Note: On macOS, even with permission denied, tap creation may succeed
-            // but audio will be silence. For onboarding, we just check tap creation.
+    // Start the same tap the recorder uses: macOS asks for Audio Capture the
+    // first time a process records from an aggregate device holding a tap
+    // (muesli's probe), and only when NSAudioCaptureUsageDescription is set.
+    use deino_audio::AudioSource;
+    let mut tap = deino_audio::capture::macos::SystemTap::new();
+    match tap.start() {
+        Ok(_stream) => {
+            let (_keep, timer) = std::sync::mpsc::channel::<()>();
+            // Give the permission prompt a moment while the tap runs.
+            let _ = timer.recv_timeout(std::time::Duration::from_millis(500));
+            tap.stop();
+            info!("✅ Audio Capture tap started; permission appears to be granted");
+            // A denied permission can still start the tap and deliver silence.
             Ok(true)
         }
         Err(e) => {
-            let error_msg = e.to_string().to_lowercase();
-            if error_msg.contains("permission") || error_msg.contains("denied") {
-                info!("🔐 Audio Capture permission denied");
-                info!("👉 Please grant Audio Capture permission in System Settings");
-                return Ok(false);
-            }
-            warn!("⚠️ Failed to create Core Audio tap: {}", e);
-            // If tap creation fails for other reasons, still return false
-            // as we can't verify permission status
+            error!("❌ Could not start the system audio tap: {}", e);
             Ok(false)
         }
     }

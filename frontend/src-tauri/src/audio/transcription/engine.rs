@@ -3,6 +3,7 @@
 // TranscriptionEngine enum and model initialization/validation logic.
 
 use super::provider::TranscriptionProvider;
+use deino_core::settings::TranscriptionEngine as TranscriptionEngineKind;
 use log::{info, warn};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, Runtime};
@@ -37,6 +38,24 @@ impl TranscriptionEngine {
         }
     }
 
+    /// Transcribes one utterance of 16 kHz mono audio to text (the live
+    /// recorder's utterance lanes, `stt::lanes`).
+    pub async fn transcribe_text(&self, audio: Vec<f32>) -> Result<String, String> {
+        match self {
+            Self::Whisper(engine) => engine
+                .transcribe_audio_with_confidence(audio)
+                .await
+                .map(|(text, _, _)| text)
+                .map_err(|e| e.to_string()),
+            Self::Parakeet(engine) => engine.transcribe_audio(audio).await.map_err(|e| e.to_string()),
+            Self::Provider(provider) => provider
+                .transcribe(audio)
+                .await
+                .map(|result| result.text)
+                .map_err(|e| e.to_string()),
+        }
+    }
+
     /// Get the provider name for logging
     pub fn provider_name(&self) -> &str {
         match self {
@@ -51,71 +70,18 @@ impl TranscriptionEngine {
 // MODEL VALIDATION AND INITIALIZATION
 // ============================================================================
 
-/// The engine for installs that never chose one: Parakeet Unified EN 0.6B at
-/// the quant this Mac's memory suits (an empty model means "recommended").
-pub fn default_transcript_config() -> crate::api::api::TranscriptConfig {
-    crate::api::api::TranscriptConfig {
-        provider: crate::stt::PROVIDER.to_string(),
-        model: String::new(),
-    }
-}
-
-/// Reads the configured engine, falling back to the default.
-async fn configured<R: Runtime>(app: &AppHandle<R>) -> crate::api::api::TranscriptConfig {
-    match crate::api::api::current_transcript_config(app).await {
-        Ok(Some(config)) => config,
-        Ok(None) => default_transcript_config(),
-        Err(e) => {
-            warn!("⚠️ Failed to get transcript config: {}, defaulting to Parakeet Unified", e);
-            default_transcript_config()
-        }
-    }
-}
-
-/// Starts the streaming live lane when the configured engine is Parakeet
-/// Unified (CAP-01). `None` for the chunked engines (Whisper, Parakeet TDT),
-/// which keep transcribing VAD segments.
-pub async fn live_sink_for_config<R: Runtime>(
-    app: &AppHandle<R>,
-) -> Result<Option<Arc<dyn crate::stt::LiveAudioSink>>, String> {
-    let config = configured(app).await;
-    if config.provider != crate::stt::PROVIDER {
-        return Ok(None);
-    }
-    info!("🦜 Starting the Parakeet Unified live lane");
-    crate::stt::start_live(app, &config.model).await.map(Some)
-}
-
 /// Validate that transcription models (Whisper or Parakeet) are ready before starting recording
 pub async fn validate_transcription_model_ready<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
-    // Check transcript configuration to determine which engine to validate
-    let config = match crate::api::api::current_transcript_config(&app)
-    .await
-    {
-        Ok(Some(config)) => {
-            info!(
-                "📝 Found transcript config - provider: {}, model: {}",
-                config.provider, config.model
-            );
-            config
-        }
-        Ok(None) => {
-            info!("📝 No transcript config found, defaulting to Parakeet Unified");
-            default_transcript_config()
-        }
-        Err(e) => {
-            warn!("⚠️ Failed to get transcript config: {}, defaulting to Parakeet Unified", e);
-            default_transcript_config()
-        }
-    };
+    let settings = crate::stt::settings::transcription(app).await;
+    info!("📝 Validating the {:?} engine", settings.engine);
 
-    // Validate based on provider
-    match config.provider.as_str() {
-        crate::stt::PROVIDER => {
+    // Validate based on the engine
+    match settings.engine {
+        TranscriptionEngineKind::ParakeetUnified => {
             info!("🔍 Validating Parakeet Unified model...");
-            crate::stt::validate(app, &config.model).await
+            crate::stt::validate(app, &settings.model).await
         }
-        "localWhisper" => {
+        TranscriptionEngineKind::Whisper => {
             info!("🔍 Validating Whisper model...");
             // Ensure whisper engine is initialized first
             if let Err(init_error) = crate::whisper_engine::commands::whisper_init().await {
@@ -138,7 +104,7 @@ pub async fn validate_transcription_model_ready<R: Runtime>(app: &AppHandle<R>) 
                 }
             }
         }
-        "parakeet" => {
+        TranscriptionEngineKind::Parakeet => {
             info!("🔍 Validating Parakeet model...");
             // Ensure parakeet engine is initialized first
             if let Err(init_error) = crate::parakeet_engine::commands::parakeet_init().await {
@@ -162,13 +128,6 @@ pub async fn validate_transcription_model_ready<R: Runtime>(app: &AppHandle<R>) 
                 }
             }
         }
-        other => {
-            warn!("❌ Unsupported transcription provider for local recording: {}", other);
-            Err(format!(
-                "Provider '{}' is not supported for local transcription. Please select 'localWhisper' or 'parakeet'.",
-                other
-            ))
-        }
     }
 }
 
@@ -176,35 +135,16 @@ pub async fn validate_transcription_model_ready<R: Runtime>(app: &AppHandle<R>) 
 pub async fn get_or_init_transcription_engine<R: Runtime>(
     app: &AppHandle<R>,
 ) -> Result<TranscriptionEngine, String> {
-    // Get provider configuration from API
-    let config = match crate::api::api::current_transcript_config(&app)
-    .await
-    {
-        Ok(Some(config)) => {
-            info!(
-                "📝 Transcript config - provider: {}, model: {}",
-                config.provider, config.model
-            );
-            config
-        }
-        Ok(None) => {
-            info!("📝 No transcript config found, defaulting to Parakeet Unified");
-            default_transcript_config()
-        }
-        Err(e) => {
-            warn!("⚠️ Failed to get transcript config: {}, defaulting to Parakeet Unified", e);
-            default_transcript_config()
-        }
-    };
+    let settings = crate::stt::settings::transcription(app).await;
 
-    // Initialize the appropriate engine based on provider
-    match config.provider.as_str() {
-        crate::stt::PROVIDER => {
+    // Initialize the appropriate engine
+    match settings.engine {
+        TranscriptionEngineKind::ParakeetUnified => {
             info!("🦜 Using Parakeet Unified for chunked transcription");
-            let provider = crate::stt::batch_provider(app, &config.model).await?;
+            let provider = crate::stt::batch_provider(app, &settings.model).await?;
             Ok(TranscriptionEngine::Provider(provider))
         }
-        "parakeet" => {
+        TranscriptionEngineKind::Parakeet => {
             info!("🦜 Initializing Parakeet transcription engine");
 
             // Get Parakeet engine
@@ -232,7 +172,7 @@ pub async fn get_or_init_transcription_engine<R: Runtime>(
                 }
             }
         }
-        "localWhisper" | _ => {
+        TranscriptionEngineKind::Whisper => {
             info!("🎤 Initializing Whisper transcription engine");
             let whisper_engine = get_or_init_whisper(app).await?;
             Ok(TranscriptionEngine::Whisper(whisper_engine))
@@ -262,29 +202,8 @@ pub async fn get_or_init_whisper<R: Runtime>(
                 .unwrap_or_else(|| "unknown".to_string());
 
             // NEW: Check if loaded model matches saved config
-            let configured_model = match crate::api::api::current_transcript_config(&app)
-            .await
-            {
-                Ok(Some(config)) => {
-                    info!(
-                        "📝 Saved transcript config - provider: {}, model: {}",
-                        config.provider, config.model
-                    );
-                    if config.provider == "localWhisper" && !config.model.is_empty() {
-                        Some(config.model)
-                    } else {
-                        None
-                    }
-                }
-                Ok(None) => {
-                    info!("📝 No transcript config found in database");
-                    None
-                }
-                Err(e) => {
-                    warn!("⚠️ Failed to get transcript config: {}", e);
-                    None
-                }
-            };
+            let configured_model =
+                crate::stt::settings::model_for(app, TranscriptionEngineKind::Whisper).await;
 
             // If loaded model matches config, reuse it
             if let Some(ref expected_model) = configured_model {
@@ -337,38 +256,18 @@ pub async fn get_or_init_whisper<R: Runtime>(
     };
 
     // Get model configuration from API
-    let model_to_load =
-        match crate::api::api::current_transcript_config(&app)
-            .await
-        {
-            Ok(Some(config)) => {
-                info!(
-                    "Got transcript config from API - provider: {}, model: {}",
-                    config.provider, config.model
-                );
-                if config.provider == "localWhisper" {
-                    info!("Using model from API config: {}", config.model);
-                    config.model
-                } else {
-                    // Non-Whisper provider (e.g., parakeet) - this function shouldn't be called
-                    return Err(format!(
-                        "Cannot initialize Whisper engine: Config uses '{}' provider. This is a bug in the transcription task initialization.",
-                        config.provider
-                    ));
-                }
-            }
-            Ok(None) => {
-                info!("No transcript config found in API, falling back to 'small'");
-                "small".to_string()
-            }
-            Err(e) => {
-                warn!(
-                    "Failed to get transcript config from API: {}, falling back to 'small'",
-                    e
-                );
-                "small".to_string()
-            }
-        };
+    let settings = crate::stt::settings::transcription(app).await;
+    if settings.engine != TranscriptionEngineKind::Whisper {
+        return Err(format!(
+            "Cannot initialize Whisper engine: the configured engine is {:?}.",
+            settings.engine
+        ));
+    }
+    let model_to_load = if settings.model.is_empty() {
+        "small".to_string()
+    } else {
+        settings.model
+    };
 
     info!("Selected model to load: {}", model_to_load);
 

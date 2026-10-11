@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { RefreshCw, Mic, Speaker } from 'lucide-react';
 import { AudioLevelMeter, CompactAudioLevelMeter } from './AudioLevelMeter';
-import { AudioBackendSelector } from './AudioBackendSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { Label } from '@/ui/controls';
 
@@ -374,11 +373,6 @@ export function DeviceSelection({ selectedDevices, onDeviceChange, disabled = fa
           )}
 
           {/* Backend Selection - available on all platforms */}
-          {!disabled && (
-            <div className="pt-3 border-t border-border">
-              <AudioBackendSelector disabled={disabled} />
-            </div>
-          )}
         </div>
       </div>
 

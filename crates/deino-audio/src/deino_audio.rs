@@ -20,7 +20,8 @@
 //! | [`clock`] | The `HostClock` port (monotonic, Core Audio's host time domain) |
 //! | [`timeline`] | `TrackTimeline`: gaps become silence, tracks anchor to the epoch |
 //! | [`ring`] | The real-time boundary: `RtSink` / `RtSource` over `rtrb` |
-//! | [`source`] | The `AudioSource` port and `MockAudioSource` (`DEINO_MOCK_AUDIO`) |
+//! | [`source`] | The `AudioSource` and `SourceFactory` ports, `MockAudioSource` (`DEINO_MOCK_AUDIO`) |
+//! | [`capture`] | The cpal microphone, the process tap, conditioners and the capture supervisor |
 //! | [`encoder`] | The `TrackEncoder` port and the `AVAssetWriter` CMAF encoder |
 //! | [`sink`] | The `TrackSink` port, `.part` files and the segment ledger |
 //! | [`writer`] | The writer thread: ring → timeline → backlog → encoder |
@@ -42,6 +43,7 @@
 //! finalize are macOS-only; everything else (timeline, manifest, recovery,
 //! writer logic) builds and is tested on every platform.
 
+pub mod capture;
 pub mod clock;
 pub mod decode;
 pub mod durability;
@@ -77,12 +79,17 @@ pub use finalize::{FinalizeError, FinalizedAudio, finalize_recording};
 pub use health::FakeDiskSpace;
 pub use health::{DiskSpace, HealthEvent, SystemDiskSpace};
 pub use manifest::{RecordingManifest, RecordingStatus};
-pub use recorder::{RecordError, Recorder, RecorderDeps, RecordingInputs, RecordingSummary};
-pub use recovery::{Recovery, RecoveryError, find_unclosed, recover_recording};
-pub use ring::RtSink;
+pub use recorder::{
+    PlacedAudio, RecordError, Recorder, RecorderDeps, RecordingInputs, RecordingSummary,
+};
+pub use recovery::{Recovery, RecoveryError, find_unclosed, recording_dir, recover_recording};
+pub use ring::{RtSink, TimelineSource};
 #[cfg(any(test, feature = "test-support"))]
 pub use sink::MemorySink;
 pub use sink::TrackSink;
-pub use source::{AudioSource, MockAudio, MockAudioSource, TestSignal};
+pub use source::{
+    AudioSource, MockAudio, MockAudioSource, MockSources, SourceError, SourceFactory, SourceStream,
+    TestSignal,
+};
 pub use timeline::{Placement, TrackTimeline};
-pub use units::{Bytes, Frames, HostTime, Millis, STORAGE_RATE, Track};
+pub use units::{Bytes, Frames, HostTime, Millis, STORAGE_RATE, SampleRate, Track};

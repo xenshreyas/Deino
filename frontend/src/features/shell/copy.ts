@@ -1,7 +1,5 @@
 /** User-visible strings of the app shell. */
 export const shellCopy = {
-  finishSetupTitle: 'Please complete setup first',
-  finishSetupDescription: 'You need to finish onboarding before you can start recording.',
   importDisabledTitle: 'Beta feature disabled',
   importDisabledDescription:
     'Enable "Import Audio & Retranscribe" in Settings > Beta to use this feature.',
@@ -18,6 +16,8 @@ export const shellCopy = {
   openLiveMeeting: 'Open the live meeting',
   paused: 'Paused',
   saving: 'Saving…',
+  starting: 'Starting…',
+  stopRecording: 'Stop recording',
   untitledRecording: 'New recording',
 
   comingSoonTitle: (feature: string) => `${feature} is on its way`,

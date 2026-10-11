@@ -27,8 +27,9 @@ pub struct PromptClosed {
     pub id: DetectionId,
 }
 
-/// Start recording the detected meeting ("Take notes", or the auto-start
-/// countdown ran out). The main window's shell starts it.
+/// Recording is starting for the detected meeting ("Take notes", or the
+/// auto-start countdown ran out); Rust starts it. The main window opens the
+/// record screen when the user asked for the notes.
 #[derive(Clone, Debug, Serialize, specta::Type, Event)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordingRequested {

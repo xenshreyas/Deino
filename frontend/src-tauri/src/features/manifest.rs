@@ -28,7 +28,6 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "get",
             "save",
             "create_scheduled",
-            "adopt",
             "save_image",
             "attach_dropped_image",
             "markdown_to_doc",
@@ -135,6 +134,11 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "cancel_full_export",
             "full_export_status",
         ],
+    ),
+    // ── FND-05b / CAP-02 live recorder (features/recording.rs) ──
+    (
+        "recording",
+        &["start", "stop", "pause", "resume", "state", "transcript"],
     ),
 ];
 

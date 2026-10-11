@@ -105,7 +105,7 @@ pub async fn start_retranscription<R: Runtime>(
     let result = run_retranscription(app.clone(), meeting_id.clone(), meeting_folder_path, model, provider).await;
 
     // Unload the engine after the batch job (success, failure, or cancellation)
-    super::common::unload_engine_after_batch(use_parakeet).await;
+    super::common::unload_engine_after_batch(&app, use_parakeet).await;
 
     // Guard will automatically clear flag on drop
     // No need for manual: RETRANSCRIPTION_IN_PROGRESS.store(false, Ordering::SeqCst);
@@ -605,27 +605,16 @@ async fn get_configured_whisper_model<R: Runtime>(app: &AppHandle<R>) -> Result<
     debug!("Reading the transcription settings...");
 
     // The transcription settings (FND-06): provider and model
-    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
-        .await
-        .map_err(|e| anyhow!(e))?
-        .map(|config| (config.provider, config.model));
-
-    match result {
-        Some((provider, model)) => {
-            info!("Found transcript config: provider={}, model={}", provider, model);
-
-            // Check if provider is Whisper-based
-            if provider == "localWhisper" || provider == "whisper" {
-                Ok(model)
-            } else {
-                error!("Retranscription requires Whisper provider, but configured provider is: {}", provider);
-                Err(anyhow!("Retranscription requires Whisper. Current provider '{}' is not Whisper.", provider))
-            }
-        },
-        None => {
-            // Default to configured Whisper model if no config exists
-            warn!("No transcript config found, using default model '{}'", DEFAULT_WHISPER_MODEL);
+    let settings = crate::stt::settings::transcription(app).await;
+    info!("Found transcription settings: engine={:?}", settings.engine);
+    match settings.engine {
+        deino_core::settings::TranscriptionEngine::Whisper if settings.model.is_empty() => {
             Ok(DEFAULT_WHISPER_MODEL.to_string())
+        }
+        deino_core::settings::TranscriptionEngine::Whisper => Ok(settings.model),
+        other => {
+            error!("Retranscription requires Whisper, but the configured engine is {:?}", other);
+            Err(anyhow!("Retranscription requires Whisper. The current engine is {:?}.", other))
         }
     }
 }
@@ -700,29 +689,12 @@ async fn get_configured_parakeet_model<R: Runtime>(app: &AppHandle<R>) -> Result
         })?;
 
     // The transcription settings (FND-06)
-    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
+    Ok(crate::stt::settings::model_for(app, deino_core::settings::TranscriptionEngine::Parakeet)
         .await
-        .map_err(|e| anyhow!(e))?
-        .map(|config| (config.provider, config.model));
-
-    match result {
-        Some((provider, model)) => {
-            info!("Found transcript config: provider={}, model={}", provider, model);
-
-            if provider == "parakeet" {
-                Ok(model)
-            } else {
-                // Default to configured Parakeet model
-                warn!("Configured provider is not Parakeet, using default model");
-                Ok(DEFAULT_PARAKEET_MODEL.to_string())
-            }
-        },
-        None => {
-            // Default to configured Parakeet model if no config exists
-            warn!("No transcript config found, using default Parakeet model");
-            Ok(DEFAULT_PARAKEET_MODEL.to_string())
-        }
-    }
+        .unwrap_or_else(|| {
+            warn!("Parakeet is not the configured engine; using the default Parakeet model");
+            DEFAULT_PARAKEET_MODEL.to_string()
+        }))
 }
 
 /// Write or update metadata.json for retranscription (preserves existing fields, adds retranscribed_at)

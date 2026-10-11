@@ -24,7 +24,7 @@ let settings: Generated.Settings = {
     autoSummary: false,
     routes: {},
   },
-  audio: { preferredMicDevice: null, preferredSystemDevice: null },
+  audio: { preferredMicDevice: null, preferredSystemDevice: null, usesHeadphones: false },
   recording: { autoSave: true, showRecordingNotice: true },
   transcription: { engine: 'parakeet_unified', model: '' },
   notifications: {

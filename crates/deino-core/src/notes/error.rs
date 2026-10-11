@@ -30,9 +30,6 @@ pub enum NotesError {
     /// The image is larger than [`MAX_IMAGE_BYTES`].
     #[error("images can be at most {} MB", MAX_IMAGE_BYTES / 1024 / 1024)]
     ImageTooLarge,
-    /// Notes can only be moved out of a scheduled meeting the notepad made.
-    #[error("meeting {0} is not a scheduled draft")]
-    NotADraft(MeetingId),
     /// Creating the scheduled meeting failed (for example, a blank title).
     #[error(transparent)]
     Meeting(#[from] MeetingError),
@@ -53,7 +50,6 @@ impl ErrorClass for NotesError {
             | Self::ForeignImage
             | Self::UnsupportedImage
             | Self::ImageTooLarge => ErrorCode::Invalid,
-            Self::NotADraft(_) => ErrorCode::Conflict,
             Self::Meeting(error) => error.code(),
             Self::Files(_) | Self::Storage(_) => ErrorCode::Internal,
         }

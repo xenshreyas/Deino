@@ -1,0 +1,49 @@
+[package]
+name = "deino-recording"
+version = "0.1.0"
+description = "Deino's live recording pipeline: two-lane Me/Them transcription, echo cancellation and Rust-owned persistence"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_recording.rs"
+
+[features]
+# Fakes of this crate's ports (`RecordedEvents`, `FakeLaneEngines`) for other
+# crates' tests. Never enable outside dev-dependencies.
+test-support = ["deino-stt/test-support", "deino-audio/test-support"]
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+deino-audio.workspace = true
+deino-core.workspace = true
+deino-db.workspace = true
+deino-domain.workspace = true
+deino-stt.workspace = true
+# Live voice activity per lane: pure Rust, 16 ms frames at 16 kHz, no ONNX
+# runtime (anarlog's live VAD). MIT OR Apache-2.0.
+earshot = "=1.2.2"
+log.workspace = true
+serde.workspace = true
+# WebRTC's AEC3 echo canceller, ported to pure Rust (no C++ build, no
+# meson). BSD-3-Clause, the WebRTC licence; see ADR 0026.
+sonora = "=0.2.0"
+specta.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+deino-audio = { workspace = true, features = ["test-support"] }
+# The crate's own fakes for its integration tests in tests/.
+deino-recording = { path = ".", features = ["test-support"] }
+deino-core = { workspace = true, features = ["test-support"] }
+deino-db = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+deino-stt = { workspace = true, features = ["test-support"] }
+deino-testkit = { workspace = true, features = ["test-support"] }
+tempfile = "3.3.0"
+
+[lints]
+workspace = true

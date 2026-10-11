@@ -89,7 +89,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
                         │ sidecars                  │ local files
               llama-helper (llama.cpp)      <app_data_dir>/deino.sqlite
               ffmpeg                        <app_data_dir>/models/…
-                                            ~/Movies/Deino/<meeting>/audio.mp4
+                                            <app_data_dir>/recordings/<meeting>/{mic,system}.m4a
 ```
 
 ### Rust workspace
@@ -100,7 +100,8 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
 | `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
-| `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014) |
+| `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014); `capture`: the cpal microphone and the Core Audio process tap, conditioners (native → 48 kHz), the supervisor (device and power listeners, stall watchdog, route probe) (ADR 0026) |
+| `crates/deino-recording` | The live recorder (FND-05b, CAP-02, ADR 0026): `RecordingService` (start, stop, pause, resume; creates the meeting, moves it to `processing`), two lanes (Me = microphone, Them = system) each with VAD and a `deino-stt` engine, WebRTC AEC3 (`sonora`) plus the text holdback against echo, the transcript router that saves segments as they are spoken, launch recovery |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
 | `crates/deino-doc` | The note document (ADR 0022): TipTap JSON as typed Rust, Markdown in (`from_markdown`) and out (`to_markdown`, `Lossless`/`Readable`), `validate`, `normalize`; ported from anarlog `crates/tiptap` |
 | `crates/deino-export` | Meeting exports as pure renderers (ADR 0025): `MeetingExport` → Markdown (frontmatter, Obsidian links), TXT, JSON, SRT/VTT, rich HTML, DOCX (`docx-rs`), PDF (Typst + bundled Inter), CSV, `mailto`, file-name templates; `deino-core::export` assembles, auto-exports (stage `auto_export`) and zips the account |
@@ -126,7 +127,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
@@ -135,10 +136,10 @@ Does Not Own, Invariants); read it before editing the crate.
   the lints they are exempt from. `legacy.rs`: every inherited command.
 - `database/`: legacy repositories; `DatabaseManager` wraps `deino_db::Database`
   and hands legacy code the writer pool.
-- `audio/` (capture via cpal and the Core Audio process tap `capture/core_audio.rs`,
-  mixing in `pipeline.rs`, VAD, recording, import), `stt.rs` + `stt/`
-  (Parakeet Unified, the default engine: live lane, batch provider, worker
-  entry, `--transcribe-file` benchmark), `parakeet_engine/` and
+- `audio/` (legacy: device listing and level meters, permissions, import
+  and re-transcription; live recording is `deino-recording`), `stt.rs` + `stt/`
+  (Parakeet Unified, the default engine: the recorder's lanes over the
+  engine pool, batch provider, worker entry, `--transcribe-file` benchmark), `parakeet_engine/` and
   `whisper_engine/` (the "Advanced" engines), `summary/`, `notifications/`, `tray.rs`, `onboarding.rs`,
   `updater/` (`AUTO_UPDATE_ENABLED = false`).
 

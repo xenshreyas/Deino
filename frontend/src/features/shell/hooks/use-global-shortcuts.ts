@@ -24,7 +24,7 @@ function runShortcut(id: ShortcutId, router: Router): void {
     },
     newNote: goHome,
     record: () => {
-      requestRecordingStart(router.state.location.pathname, goHome);
+      void requestRecordingStart(goHome);
     },
     settings: () => void router.navigate({ to: '/settings' }),
     toggleSidebar: layout.toggleSidebar,

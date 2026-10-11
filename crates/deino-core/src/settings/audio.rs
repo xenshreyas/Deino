@@ -11,6 +11,10 @@ pub struct AudioSettings {
     pub preferred_mic_device: Option<String>,
     /// The system-audio source, by its display name; the default when `None`.
     pub preferred_system_device: Option<String>,
+    /// "I use headphones": the microphone never hears the call, so echo
+    /// cancellation and the bleed holdback are skipped whatever the output
+    /// route looks like (CAP-02).
+    pub uses_headphones: bool,
 }
 
 /// The recording section of `Settings`.

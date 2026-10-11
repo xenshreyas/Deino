@@ -15,12 +15,13 @@ pub(crate) async fn acquire_engine_lifecycle_lock() -> OwnedMutexGuard<()> {
 }
 
 /// Unload the transcription engine after a batch job (import or retranscription).
-/// Skips unloading if a live recording is currently in progress, since recording
-/// uses the same global engine instances.
-pub(crate) async fn unload_engine_after_batch(use_parakeet: bool) {
+/// Skips unloading if a live recording is currently in progress, since the
+/// recorder's utterance lanes (the "Advanced" engines) use the same global
+/// engine instances.
+pub(crate) async fn unload_engine_after_batch<R: tauri::Runtime>(app: &tauri::AppHandle<R>, use_parakeet: bool) {
     let _engine_lifecycle_guard = acquire_engine_lifecycle_lock().await;
 
-    if crate::audio::recording_commands::is_recording().await {
+    if is_recording(app) {
         log::info!("Skipping model unload after batch: recording in progress");
         return;
     }
@@ -44,6 +45,13 @@ pub(crate) async fn unload_engine_after_batch(use_parakeet: bool) {
             e.unload_model().await;
         }
     }
+}
+
+/// Whether the live recorder is recording (or starting, paused, stopping).
+pub(crate) fn is_recording<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    use tauri::Manager;
+    app.try_state::<Arc<deino_recording::RecordingService>>()
+        .is_some_and(|recorder| recorder.state().phase != deino_recording::RecordingPhase::Idle)
 }
 
 /// Create transcript segments from transcription results.

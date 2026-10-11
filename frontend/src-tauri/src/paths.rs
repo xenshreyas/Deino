@@ -50,6 +50,13 @@ impl AppPaths {
         self.data.join("meetings")
     }
 
+    /// Live recordings, one folder per meeting (`<data>/recordings/<id>`):
+    /// the crash-safe track segments, `recording.json`, and the finalized
+    /// `mic.m4a`, `system.m4a` and `audio.mp4`.
+    pub(crate) fn recordings(&self) -> PathBuf {
+        self.data.join("recordings")
+    }
+
     /// The pre-NOT-04 custom templates folder (`<data>/templates`), read
     /// once at startup to import its JSON files into the database.
     pub(crate) fn legacy_templates(&self) -> PathBuf {
