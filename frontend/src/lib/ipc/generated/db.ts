@@ -150,6 +150,18 @@ export type Table =
  */
 "speaker_suggestions" | 
 /**
+ * Connected integration accounts, without their tokens (INT-00).
+ */
+"integration_connections" | 
+/**
+ * The scopes each integration connection was granted.
+ */
+"integration_connection_scopes" | 
+/**
+ * The delivery log: what Deino sent to which integration (INT-00).
+ */
+"integration_deliveries" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

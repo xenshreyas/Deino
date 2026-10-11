@@ -19,7 +19,8 @@ code: ErrorCode;
 message: string }
 
 /**
- * What kind of failure an [`AppError`] reports. The UI branches on it.
+ * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+ * in the `last_error_code` and `error_code` columns of the integration tables.
  */
 export type ErrorCode = 
 /**
@@ -174,6 +175,18 @@ export type Table =
  */
 "speaker_suggestions" | 
 /**
+ * Connected integration accounts, without their tokens (INT-00).
+ */
+"integration_connections" | 
+/**
+ * The scopes each integration connection was granted.
+ */
+"integration_connection_scopes" | 
+/**
+ * The delivery log: what Deino sent to which integration (INT-00).
+ */
+"integration_deliveries" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -183,4 +196,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","integration_connections","integration_connection_scopes","integration_deliveries","example_notes"] as const satisfies readonly Table[]
