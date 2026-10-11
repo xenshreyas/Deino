@@ -98,6 +98,7 @@ function save(update: Generated.SegmentUpdate): void {
     words: [],
     isDeleted: false,
     editedAt: null,
+    originalText: null,
   });
   mockDatabase.touch(['transcript_segments']);
 }

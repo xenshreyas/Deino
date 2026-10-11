@@ -133,6 +133,7 @@ describe('MockTranscripts', () => {
       words: [],
       isDeleted: false,
       editedAt: null,
+      originalText: null,
     });
 
     expect(transcripts.get(live).segments.map(({ text }) => text)).toEqual(['Hello']);

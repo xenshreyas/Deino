@@ -2,14 +2,22 @@
  * The virtual list of bubbles: only the rows near the viewport are in the
  * DOM, each measured as it renders, so 5,000 lines scroll like 50. The
  * scroll area is one tab stop; ↑ and ↓ (and Home and End) move between
- * lines, and a focused line answers its actions' keys (⌘C copies it).
+ * lines, and a focused line answers its actions' keys (⌘C copies it, ↵
+ * edits it, ⌘⌫ deletes it). With a recording in the player the line being
+ * played is lit and followed (TRN-03).
  */
+import { useQueryClient } from '@tanstack/react-query';
 import { type KeyboardEvent, useCallback, useState } from 'react';
+
+import { usePlaybackValue, usePlayerReady } from '@/features/player';
 
 import { actionForKey, type TranscriptAction } from '../actions';
 import { transcriptCopy } from '../copy';
+import { usePlaybackFollow } from '../hooks/use-playback-follow';
 import type { TranscriptListController } from '../hooks/use-transcript-list';
+import { rowPlayingAt } from '../model/playback';
 import type { SearchHit, SearchResult } from '../model/search-index';
+import { toolbarSlots } from '../model/toolbar';
 import type { MeetingId, TranscriptRow } from '../types';
 import type { MomentMark } from './moment-focus';
 import { TranscriptBubble } from './transcript-bubble';
@@ -48,20 +56,18 @@ function focusRow(container: HTMLElement | null, row: number, attempts = FOCUS_A
 }
 
 /** Keyboard moves and action keys, with the focused row. */
-function useRowKeys({ rows, list, actions, meetingId }: TranscriptListProps) {
+function useRowKeys({ rows, list, actions, meetingId }: TranscriptListProps, playable: boolean) {
   const [focused, setFocused] = useState(-1);
+  const client = useQueryClient();
   const { virtualizer, scrollRef } = list;
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>, index: number) => {
       const row = rows[index];
       const action = actionForKey(actions, event);
-      if (
-        row !== undefined &&
-        action !== undefined &&
-        window.getSelection()?.isCollapsed !== false
-      ) {
+      const context = row && { meetingId, line: row.line, speaker: row.speaker, client, playable };
+      if (context && action?.state(context) === 'enabled' && window.getSelection()?.isCollapsed !== false) {
         event.preventDefault();
-        void action.run({ meetingId, line: row.line, speaker: row.speaker });
+        void action.run(context);
         return;
       }
       const target = targetRow(event.key, index, rows.length);
@@ -70,15 +76,19 @@ function useRowKeys({ rows, list, actions, meetingId }: TranscriptListProps) {
       virtualizer.scrollToIndex(target, { align: 'auto' });
       focusRow(scrollRef.current, target);
     },
-    [rows, virtualizer, scrollRef, actions, meetingId],
+    [rows, virtualizer, scrollRef, actions, meetingId, client, playable],
   );
-  return { focused, onFocusRow: setFocused, onKeyDown };
+  return { focused, onFocusRow: setFocused, onKeyDown, client };
 }
 
 /** The rows near the viewport, each placed at its measured offset. */
 function VirtualRows(props: TranscriptListProps) {
-  const { rows, list, result, current } = props;
-  const keys = useRowKeys(props);
+  const { rows, list, result, current, meetingId } = props;
+  const playable = usePlayerReady(meetingId);
+  const keys = useRowKeys(props, playable);
+  const playing = usePlaybackValue(meetingId, (ms) => rowPlayingAt(rows, ms)) ?? -1;
+  usePlaybackFollow(meetingId, rows, list);
+  const slots = toolbarSlots(list.width);
   return list.virtualizer.getVirtualItems().map((item) => {
     const row = rows[item.index];
     if (row === undefined) return null;
@@ -91,7 +101,7 @@ function VirtualRows(props: TranscriptListProps) {
         style={{ transform: `translateY(${String(item.start)}px)` }}
       >
         <TranscriptBubble
-          meetingId={props.meetingId}
+          meetingId={meetingId}
           row={row}
           index={item.index}
           hits={result.byRow.get(item.index)}
@@ -99,6 +109,10 @@ function VirtualRows(props: TranscriptListProps) {
           marked={props.mark?.lineId === row.line.id}
           flashing={props.mark?.lineId === row.line.id && props.mark.flashing}
           focused={keys.focused === item.index}
+          playing={playing === item.index}
+          playable={playable}
+          slots={slots}
+          client={keys.client}
           actions={props.actions}
           onFocusRow={keys.onFocusRow}
           onKeyDown={keys.onKeyDown}

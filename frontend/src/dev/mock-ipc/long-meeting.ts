@@ -115,6 +115,7 @@ function lineAt(index: number, count: number, random: () => number): Generated.S
     words: [],
     isDeleted: false,
     editedAt: null,
+    originalText: null,
   };
 }
 

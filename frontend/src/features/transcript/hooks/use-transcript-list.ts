@@ -34,6 +34,8 @@ export interface TranscriptListController {
   virtualizer: Virtualizer<HTMLDivElement, Element>;
   /** Live and pinned to the newest line. */
   following: boolean;
+  /** The list's width in px (0 before it is measured), for the toolbars' room. */
+  width: number;
   onScroll: () => void;
   /** Scrolls `row` to the middle of the view (search hits, moments). */
   reveal: (row: number) => void;
@@ -46,8 +48,15 @@ function pinToEnd(element: HTMLElement | null): void {
   if (element !== null) element.scrollTop = element.scrollHeight;
 }
 
-/** Keeps the scroll at the end while `following` holds, as the content grows. */
-function useFollowObserver(scrollRef: RefObject<HTMLDivElement>, following: () => boolean) {
+/**
+ * Watches the list's sizer: keeps the scroll at the end while `following`
+ * holds, as the content grows, and reports the list's width as it changes.
+ */
+function useSizerObserver(
+  scrollRef: RefObject<HTMLDivElement>,
+  following: () => boolean,
+  onWidth: (width: number) => void,
+) {
   const observer = useRef<ResizeObserver | null>(null);
   return useCallback(
     (node: HTMLDivElement | null) => {
@@ -55,11 +64,12 @@ function useFollowObserver(scrollRef: RefObject<HTMLDivElement>, following: () =
       observer.current = null;
       if (node === null || typeof ResizeObserver === 'undefined') return;
       observer.current = new ResizeObserver(() => {
+        onWidth(node.clientWidth);
         if (following()) pinToEnd(scrollRef.current);
       });
       observer.current.observe(node);
     },
-    [scrollRef, following],
+    [scrollRef, following, onWidth],
   );
 }
 
@@ -107,11 +117,13 @@ export function useTranscriptList(
   const scrollRef = useRef<HTMLDivElement>(null);
   const { following, followingRef, isFollowing, follow } = useFollowing(live);
   const virtualizer = useRowVirtualizer(rows, live, scrollRef);
+  const [width, setWidth] = useState(0);
   return {
     scrollRef,
-    sizerRef: useFollowObserver(scrollRef, isFollowing),
+    sizerRef: useSizerObserver(scrollRef, isFollowing, setWidth),
     virtualizer,
     following,
+    width,
     onScroll: () => {
       const element = scrollRef.current;
       if (!live || element === null) return;

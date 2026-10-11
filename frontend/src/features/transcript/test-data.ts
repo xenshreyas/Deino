@@ -40,6 +40,7 @@ export function segment(id: string, start: number, text: string, speakerId: stri
     words: [],
     isDeleted: false,
     editedAt: null,
+    originalText: null,
   };
   return saved;
 }

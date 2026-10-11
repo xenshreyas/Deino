@@ -1,3 +1,8 @@
+/** "1 match", "3 matches". */
+function plural(count: number, one: string, many: string): string {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? one : many}`;
+}
+
 /** Every user-facing string of the transcript view. */
 export const transcriptCopy = {
   label: 'Transcript',
@@ -34,4 +39,38 @@ export const transcriptCopy = {
   comment: 'Comment',
   deleteLine: 'Delete',
   speaking: 'Still speaking',
+  moreActions: 'More actions',
+  editLine: 'Edit',
+  edited: 'Edited',
+  emptyLine: 'A line cannot be empty. Delete it instead.',
+  editFailed: 'Your edit could not be saved',
+  deleted: 'Line deleted',
+  undo: 'Undo',
+  deleteFailed: 'The line could not be deleted',
+  restoreFailed: 'The line could not be restored',
+  replace: 'Replace',
+  replaceToggle: 'Find and replace',
+  replaceShortcut: '⌥⌘F',
+  replaceLabel: 'Replace with',
+  replacePlaceholder: 'Replace with',
+  matchCase: 'Match case',
+  scopeMeeting: 'This meeting',
+  scopeAll: 'All meetings',
+  replaceAll: 'Replace all',
+  replaceFindFirst: 'Type what to find in the search field',
+  previewLoading: 'Counting matches',
+  previewNone: 'Nothing to replace',
+  previewFailed: 'The matches could not be counted',
+  previewSummary: (matches: number, lines: number) =>
+    `${plural(matches, 'match', 'matches')} in ${plural(lines, 'line', 'lines')}`,
+  previewMeetings: (meetings: number) => `across ${plural(meetings, 'meeting', 'meetings')}`,
+  previewMore: (meetings: number) => `and ${plural(meetings, 'more meeting', 'more meetings')}`,
+  replaceConfirm: (matches: number) => `Replace ${plural(matches, 'match', 'matches')}`,
+  cancel: 'Cancel',
+  replaced: (matches: number) => `Replaced ${plural(matches, 'match', 'matches')}`,
+  replaceFailed: 'The replacement could not be saved',
+  changedLead: 'Transcript changed',
+  changedQuestion: 'Regenerate notes?',
+  regenerate: 'Regenerate',
+  notNow: 'Not now',
 } as const;

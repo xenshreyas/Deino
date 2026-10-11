@@ -2,15 +2,21 @@
  * Types of the transcript view: the generated ones, and the lines, speakers
  * and rows it draws.
  */
-import type { Channel, SegmentId, SpeakerId } from '@/lib/ipc/generated/transcript';
+import type { Channel, SegmentId, SpeakerId, WordTiming } from '@/lib/ipc/generated/transcript';
 
 export type {
   Channel,
   MeetingId,
+  MeetingMatches,
+  ReplaceOutcome,
+  ReplacePreview,
+  ReplaceRequest,
+  ReplaceScope,
   Segment,
   SegmentId,
   SpeakerId,
   Transcript,
+  WordTiming,
 } from '@/lib/ipc/generated/transcript';
 export type { SegmentUpdate } from '@/lib/ipc/generated/recording';
 export type { Participant } from '@/features/speakers';
@@ -27,6 +33,10 @@ export interface TranscriptLine {
   /** Milliseconds from the start of the recording; `start` while still open. */
   end: number;
   text: string;
+  /** When each word was said, if the engine said; empty for live lines. */
+  words: readonly WordTiming[];
+  /** When the user last edited the text (TRN-02), if ever. */
+  editedAt: string | null;
   /** Still being spoken: the text may grow. */
   open: boolean;
 }
