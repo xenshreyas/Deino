@@ -6,7 +6,12 @@
  */
 import { expect, type Page, test } from '@playwright/test';
 
-import { LONG_MEETING_ID, LONG_MEETING_KEY, PHRASE } from '../src/dev/mock-ipc/long-meeting';
+import {
+  LONG_MEETING_ID,
+  LONG_MEETING_KEY,
+  PHRASE,
+  PHRASE_EVERY,
+} from '../src/dev/mock-ipc/long-meeting-contract';
 import { fixtureMeeting } from './fixtures';
 
 const SEGMENTS = 5_000;
@@ -16,12 +21,32 @@ const MAX_DOM_ROWS = 60;
 /** Turns on the generated long meeting for this page (before the app loads). */
 async function withLongMeeting(page: Page): Promise<void> {
   await page.addInitScript(
-    ([key, count]) => {
-      sessionStorage.setItem(key, count);
-    },
-    [LONG_MEETING_KEY, String(SEGMENTS)],
+    `sessionStorage.setItem(${JSON.stringify(LONG_MEETING_KEY)}, '${String(SEGMENTS)}');`,
   );
 }
+
+/**
+ * In-page script: milliseconds from typing `phrase` into the search field to
+ * the end of the task that handled it (React renders the counter in it).
+ * Written as source text, because these specs compile without DOM types.
+ */
+function searchTiming(phrase: string): string {
+  return `(async () => {
+    const input = document.querySelector('input[type="search"]');
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    const started = performance.now();
+    setValue.call(input, ${JSON.stringify(phrase)});
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return performance.now() - started;
+  })()`;
+}
+
+/** In-page condition: the live transcript has room to scroll back. */
+const CAN_SCROLL_BACK = `(() => {
+  const region = document.querySelector('[role="region"][aria-label="Transcript"]');
+  return region !== null && region.scrollHeight - region.clientHeight > 120;
+})()`;
 
 const transcript = (page: Page) => page.getByRole('region', { name: 'Transcript' });
 const searchBox = (page: Page) => page.getByRole('searchbox', { name: 'Search transcript' });
@@ -69,17 +94,8 @@ test('a two-hour meeting with 5,000 lines keeps the DOM small and searches fast'
   await page.keyboard.press('Home');
   await expect(page.locator('[data-bubble="0"]')).toBeFocused();
 
-  const searchMs = await page.evaluate(async (phrase) => {
-    const input = document.querySelector<HTMLInputElement>('input[type="search"]');
-    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-    if (!input || !setValue) return Number.POSITIVE_INFINITY;
-    const started = performance.now();
-    setValue.call(input, phrase);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    return performance.now() - started;
-  }, PHRASE);
-  await expect(counter(page)).toHaveText(`1 of ${String(SEGMENTS / 250)}`);
+  const searchMs: unknown = await page.evaluate(searchTiming(PHRASE));
+  await expect(counter(page)).toHaveText(`1 of ${String(SEGMENTS / PHRASE_EVERY)}`);
   expect(searchMs).toBeLessThan(100);
 
   await searchBox(page).press('Shift+Enter');
@@ -115,14 +131,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByRole('main').getByRole('button', { name: 'Start recording' }).click();
       const live = transcript(page);
       await expect(live.getByRole('listitem').first()).toBeVisible();
-      await page.waitForFunction(
-        () => {
-          const region = document.querySelector('[role="region"][aria-label="Transcript"]');
-          return region !== null && region.scrollHeight - region.clientHeight > 120;
-        },
-        undefined,
-        { timeout: 40_000 },
-      );
+      await page.waitForFunction(CAN_SCROLL_BACK, undefined, { timeout: 40_000 });
       await page.screenshot({ path: test.info().outputPath(`transcript-live-${scheme}.png`) });
 
       await live.hover();

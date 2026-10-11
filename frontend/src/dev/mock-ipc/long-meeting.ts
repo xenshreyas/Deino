@@ -13,16 +13,22 @@
  */
 import type * as Generated from '@/lib/ipc/generated/transcript';
 
-/** The session storage key that asks for the meeting. */
-export const LONG_MEETING_KEY = 'deino.mock.longMeeting';
+import {
+  LONG_MEETING_ID as LONG_MEETING_KEYED_ID,
+  LONG_MEETING_KEY,
+  PHRASE,
+  PHRASE_EVERY,
+} from './long-meeting-contract';
 
-/** The generated meeting's ID and title. */
-export const LONG_MEETING_ID = 'meeting-generated-long' as Generated.MeetingId;
-export const LONG_MEETING_TITLE = 'Two-hour planning marathon';
+export {
+  LONG_MEETING_KEY,
+  LONG_MEETING_TITLE,
+  PHRASE,
+  PHRASE_EVERY,
+} from './long-meeting-contract';
 
-/** Every this many lines mentions the search phrase. */
-export const PHRASE_EVERY = 250;
-export const PHRASE = 'quarterly roadmap';
+/** The generated meeting's ID. */
+export const LONG_MEETING_ID = LONG_MEETING_KEYED_ID as Generated.MeetingId;
 
 /** How long the meeting runs: two hours. */
 const DURATION_MS = 2 * 60 * 60 * 1000;

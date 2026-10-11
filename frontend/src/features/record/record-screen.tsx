@@ -59,11 +59,7 @@ export function RecordScreen() {
   return (
     <div className="relative flex h-full flex-col bg-bg">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {meetingId === null ? (
-          <IdleHome />
-        ) : (
-          <LiveMeeting key={meetingId} meetingId={meetingId} />
-        )}
+        {meetingId === null ? <IdleHome /> : <LiveMeeting key={meetingId} meetingId={meetingId} />}
       </div>
       <div className="absolute inset-x-0 bottom-6 z-(--z-chatbar) flex justify-center px-6">
         <RecordingControls />
