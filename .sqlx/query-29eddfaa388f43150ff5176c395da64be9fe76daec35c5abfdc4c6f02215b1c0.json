@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO integration_connection_scopes (connection_id, scope) VALUES (?1, ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "29eddfaa388f43150ff5176c395da64be9fe76daec35c5abfdc4c6f02215b1c0"
+}

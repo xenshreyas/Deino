@@ -6,7 +6,9 @@
 //! so it never sees the app's real keys.
 
 use crate::{
-    InMemorySecretStore, KeychainSecretStore, SecretName, SecretStatus, SecretStore, SecretValue,
+    CredentialKey, CredentialStore, InMemoryCredentialStore, InMemorySecretStore,
+    KeychainSecretStore, MAX_SECRET_CHARS, SecretError, SecretName, SecretStatus, SecretStore,
+    SecretValue,
 };
 
 /// Checks every rule of the `SecretStore` contract except access denial,
@@ -46,6 +48,55 @@ async fn the_in_memory_store_honours_the_contract() {
 async fn the_keychain_store_honours_the_contract() {
     let store = KeychainSecretStore::new("com.xenshreyas.deino.contract-tests");
     honours_the_contract(&store).await;
+}
+
+/// The `CredentialStore` contract: the same rules, over run-time keys and
+/// values longer than an API key.
+async fn credentials_honour_the_contract(store: &dyn CredentialStore) {
+    let key = CredentialKey::parse("integration.sandbox.contract-test").unwrap();
+    store.remove(&key).await.unwrap();
+    assert!(store.read(&key).await.unwrap().is_none());
+
+    let long = "t".repeat(MAX_SECRET_CHARS * 2);
+    store.put(&key, credential("first")).await.unwrap();
+    store.put(&key, credential(&long)).await.unwrap();
+    assert_eq!(store.read(&key).await.unwrap().unwrap().expose(), long);
+
+    store.remove(&key).await.unwrap();
+    store.remove(&key).await.unwrap();
+    assert!(store.read(&key).await.unwrap().is_none());
+}
+
+fn credential(text: &str) -> SecretValue {
+    SecretValue::parse_credential(text).unwrap()
+}
+
+#[tokio::test]
+async fn the_in_memory_credential_store_honours_the_contract() {
+    credentials_honour_the_contract(&InMemoryCredentialStore::default()).await;
+}
+
+#[tokio::test]
+#[ignore = "reads and writes the login keychain; run by hand on a Mac"]
+async fn the_keychain_credential_store_honours_the_contract() {
+    let store = KeychainSecretStore::new("com.xenshreyas.deino.contract-tests");
+    credentials_honour_the_contract(&store).await;
+}
+
+#[tokio::test]
+async fn a_denied_credential_fails_until_it_is_saved_again() {
+    let store = InMemoryCredentialStore::default();
+    let key = CredentialKey::parse("integration.slack.a").unwrap();
+    store.put(&key, credential("xoxp-1")).await.unwrap();
+
+    store.deny(&key);
+
+    assert!(matches!(
+        store.read(&key).await,
+        Err(SecretError::CredentialDenied)
+    ));
+    store.put(&key, credential("xoxp-2")).await.unwrap();
+    assert_eq!(store.read(&key).await.unwrap().unwrap().expose(), "xoxp-2");
 }
 
 #[tokio::test]

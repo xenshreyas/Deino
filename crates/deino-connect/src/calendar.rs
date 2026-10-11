@@ -14,9 +14,11 @@ mod connector;
 mod credentials;
 mod google;
 mod microsoft;
+mod oauth;
 
 pub use api::CalendarApi;
 pub use connector::{ConnectorParts, ConnectorSource};
-pub use credentials::{Credentials, SettingsCredentials};
+pub use credentials::{Credentials, NotConfigured, SettingsCredentials};
 pub use google::GoogleCalendar;
 pub use microsoft::MicrosoftCalendar;
+pub use oauth::{google, microsoft};

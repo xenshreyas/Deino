@@ -7,20 +7,33 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use deino_core::settings::SettingsService;
 use deino_domain::CalendarProvider;
+use deino_integrations::{OAuthClient, OAuthSpec};
 use deino_secrets::{SecretName, SecretStore};
 
-use crate::oauth::{OAuthClient, OAuthError, OAuthProvider};
+/// The user has not registered an app with the provider yet.
+#[derive(Debug, thiserror::Error)]
+#[error("set up {0} first: paste its client ID in Settings → Calendar")]
+pub struct NotConfigured(pub &'static str);
 
 /// Builds a provider's OAuth client from the user's registration.
 #[async_trait]
 pub trait Credentials: Send + Sync {
-    /// The client for `provider` (served by `oauth`); `NotConfigured` until
+    /// The client for `provider`, whose OAuth rules are `spec`; fails until
     /// the user has set it up.
     async fn client(
         &self,
         provider: CalendarProvider,
-        oauth: &'static OAuthProvider,
-    ) -> Result<OAuthClient, OAuthError>;
+        spec: &OAuthSpec,
+    ) -> Result<OAuthClient, NotConfigured>;
+}
+
+/// The provider's name in messages.
+pub(crate) const fn provider_name(provider: CalendarProvider) -> &'static str {
+    match provider {
+        CalendarProvider::Google => "Google",
+        CalendarProvider::Microsoft => "Microsoft",
+        CalendarProvider::Apple => "macOS Calendar",
+    }
 }
 
 /// [`Credentials`] over the settings and the Keychain.
@@ -38,21 +51,23 @@ impl SettingsCredentials {
     /// Google's client secret, when the provider needs one.
     async fn client_secret(
         &self,
-        oauth: &'static OAuthProvider,
-    ) -> Result<Option<String>, OAuthError> {
-        if !oauth.sends_client_secret {
+        provider: CalendarProvider,
+        spec: &OAuthSpec,
+    ) -> Result<Option<deino_secrets::SecretValue>, NotConfigured> {
+        if !spec.client_auth.needs_secret() {
             return Ok(None);
         }
+        let name = provider_name(provider);
         let secret = self
             .secrets
             .get(SecretName::GoogleOAuthClientSecret)
             .await
             .map_err(|error| {
-                log::warn!(target: "oauth", "could not read the {} client secret: {error}", oauth.name);
-                OAuthError::NotConfigured(oauth.name)
+                log::warn!(target: "oauth", "could not read the {name} client secret: {error}");
+                NotConfigured(name)
             })?
-            .ok_or(OAuthError::NotConfigured(oauth.name))?;
-        Ok(Some(secret.expose().to_owned()))
+            .ok_or(NotConfigured(name))?;
+        Ok(Some(secret))
     }
 }
 
@@ -61,19 +76,20 @@ impl Credentials for SettingsCredentials {
     async fn client(
         &self,
         provider: CalendarProvider,
-        oauth: &'static OAuthProvider,
-    ) -> Result<OAuthClient, OAuthError> {
+        spec: &OAuthSpec,
+    ) -> Result<OAuthClient, NotConfigured> {
         let calendar = self.settings.get().await.calendar;
+        let name = provider_name(provider);
         let connector = match provider {
             CalendarProvider::Google => &calendar.google,
             CalendarProvider::Microsoft => &calendar.microsoft,
-            CalendarProvider::Apple => return Err(OAuthError::NotConfigured(oauth.name)),
+            CalendarProvider::Apple => return Err(NotConfigured(name)),
         };
-        let client_id = connector
-            .client_id()
-            .ok_or(OAuthError::NotConfigured(oauth.name))?
-            .to_owned();
-        let secret = self.client_secret(oauth).await?;
-        Ok(OAuthClient::new(oauth, client_id, secret))
+        let client_id = connector.client_id().ok_or(NotConfigured(name))?.to_owned();
+        let client_secret = self.client_secret(provider, spec).await?;
+        Ok(OAuthClient {
+            client_id,
+            client_secret,
+        })
     }
 }

@@ -13,7 +13,7 @@ use deino_secrets::SecretName;
 use url::Url;
 
 use super::api::{CalendarApi, get_json};
-use crate::oauth::{GOOGLE, OAuthProvider};
+use deino_integrations::OAuthSpec;
 use wire::{CalendarEntry, CalendarListPage, EventsPage};
 
 /// The API's root.
@@ -32,8 +32,8 @@ impl CalendarApi for GoogleCalendar {
         CalendarProvider::Google
     }
 
-    fn oauth(&self) -> &'static OAuthProvider {
-        &GOOGLE
+    fn oauth(&self) -> OAuthSpec {
+        super::oauth::google()
     }
 
     fn service(&self) -> ServiceId {

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT scope FROM integration_connection_scopes WHERE connection_id = ?1 ORDER BY scope",
+  "describe": {
+    "columns": [
+      {
+        "name": "scope",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a7b7c9fa7a1b7e9a938b2fee7453aae16901bfd2137b610745e722a88b0bc74f"
+}

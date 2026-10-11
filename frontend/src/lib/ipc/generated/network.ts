@@ -119,7 +119,8 @@ export type EgressOutcome =
  */
 "blocked"
 /**
- * What kind of failure an [`AppError`] reports. The UI branches on it.
+ * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+ * in the `last_error_code` and `error_code` columns of the integration tables.
  */
 export type ErrorCode = 
 /**
@@ -268,6 +269,30 @@ export type ServiceId =
  * Salesforce (INT-04).
  */
 "salesforce" | 
+/**
+ * Jira Cloud (INT-03).
+ */
+"jira" | 
+/**
+ * monday.com (INT-03).
+ */
+"monday" | 
+/**
+ * ClickUp (INT-03).
+ */
+"clickup" | 
+/**
+ * Trello (INT-03).
+ */
+"trello" | 
+/**
+ * Affinity (INT-04).
+ */
+"affinity" | 
+/**
+ * Zoho CRM (INT-04).
+ */
+"zoho_crm" | 
 /**
  * Web search for chat with a user-provided key (D4).
  */

@@ -31,6 +31,7 @@ mod detection;
 mod diarize;
 mod enhance;
 mod export;
+mod integrations;
 mod llm;
 mod network;
 mod notepad;
@@ -197,10 +198,12 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
 }
 
 /// Wires the services that run on their own once the pipeline is up: the
-/// live recorder and calendar sync (its scheduler starts here).
+/// live recorder, calendar sync (its scheduler starts here) and the
+/// integrations service.
 fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     recording::attach_recording(app, database);
     calendar::attach_calendar(app, database, clock);
+    integrations::attach_integrations(app, database, clock);
 }
 
 /// Builds and manages the services behind the pipeline's AI and export

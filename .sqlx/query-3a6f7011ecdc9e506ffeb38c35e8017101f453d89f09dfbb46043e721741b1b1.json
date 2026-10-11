@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE integration_deliveries\n             SET status = 'sending', attempts = attempts + 1, updated_at = ?3\n             WHERE id = ?1\n               AND (status IN ('pending', 'failed') OR (status = 'sending' AND updated_at < ?2))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "3a6f7011ecdc9e506ffeb38c35e8017101f453d89f09dfbb46043e721741b1b1"
+}

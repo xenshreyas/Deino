@@ -95,6 +95,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::system::init())
         .plugin(features::templates::init())
         .plugin(features::folders::init())
+        .plugin(features::integrations::init())
         .plugin(features::tags::init())
         .plugin(features::speakers::init());
     #[cfg(debug_assertions)]

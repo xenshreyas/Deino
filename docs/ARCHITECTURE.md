@@ -60,7 +60,13 @@ flowchart LR
   `deino-eventkit` worker thread that owns the `EKEventStore`, every 2
   minutes, on store changes and on wake; the optional Google and Microsoft
   connectors (`deino-connect`) sign in through the default browser and a
-  one-shot loopback listener on `127.0.0.1`.
+  one-shot loopback listener, with `deino-integrations`' OAuth.
+- Integrations (INT-00, ADR 0031) talk from this Mac straight to the
+  provider's API with the user's own sign-in: OAuth with PKCE over a
+  loopback redirect (or a pasted token), one Keychain item per
+  connection, and every request through a `deino-net` client scoped to
+  the provider. D12 deprioritised the providers themselves; debug builds
+  connect the sandbox.
 - There is no Deino server and no telemetry. Network calls go only to the
   services the user allows, through `deino-net` (FND-12, ADR 0019): each
   caller holds a client scoped to one service's hosts, every request is
@@ -105,7 +111,13 @@ flowchart BT
   detect --> domain
   app --> detect
   eventkit["deino-eventkit<br/>macOS Calendar via EventKit (no network)"]
-  connect["deino-connect<br/>OAuth PKCE, Google and Graph calendars"]
+  connect["deino-connect<br/>Google and Graph calendars"]
+  integrations["deino-integrations<br/>providers, OAuth PKCE, connections, deliveries"]
+  integrations --> net
+  integrations --> db
+  integrations --> secrets
+  connect --> integrations
+  app --> integrations
   eventkit --> core
   connect --> core
   connect --> net
@@ -154,7 +166,8 @@ flowchart BT
 | `deino-recording` | `crates/deino-recording` | The live recorder (FND-05b, CAP-02, ADR 0026): `RecordingService` (start creates the meeting and its Me/Them speakers; stop closes both tracks, sets the timing and moves the meeting to `processing`), the live pipeline thread (placed audio → 16 kHz pairs → `SonoraAec` (WebRTC AEC3) on speakers → per-lane earshot VAD), the Me and Them lanes (`deino-stt` live sessions, or utterance lanes for the "Advanced" engines), the transcript router (OpenWhispr's text holdback, drafts saved about once a second, batched final saves, `SegmentUpdate` events), `recover_interrupted` at launch, `MockCapture` for `DEINO_MOCK_AUDIO`. No `tauri`, no `deino-net`. |
 | `deino-detect` | `crates/deino-detect` | Meeting detection (CAP-06, ADR 0023): the `Sensor` ports and their macOS adapters (Core Audio process objects with per-object listeners, the default input, CoreMediaIO cameras through a small safe FFI layer, `NSWorkspace`, Accessibility browser URLs), attribution to the outermost `.app`, the bundle tables and meeting-URL normaliser, Muesli's resolver, the Clock-driven `DetectionPolicy`, `DetectionService` (answers, auto-start countdown, the `DetectionEvent` stream) and the `Detector` thread. No `tauri`, no `deino-net`. |
 | `deino-eventkit` | `crates/deino-eventkit` | macOS Calendar (ORG-01, ADR 0027) through `objc2-event-kit`: `EventKitSource` (the core's `CalendarSource` for `apple`: access, the macOS 14 full-access prompt, a snapshot of every account, calendar and event in the window), the worker thread that owns the `EKEventStore`, the store-changed and wake observers that nudge the scheduler, and pure conversions of EventKit codes. No `tauri`, no network. |
-| `deino-connect` | `crates/deino-connect` | Connections to online accounts (ORG-01, ADR 0027): `oauth` (RFC 8252 loopback redirect, PKCE S256, `OAuthClient`, `sign_in`, the `BrowserOpener` port; INT-00 reuses it) and `calendar` (`ConnectorSource` over `GoogleCalendar` and `MicrosoftCalendar`, refresh tokens in the Keychain, requests through `deino-net` scoped clients). Keeps `deino-core` free of a network client. |
+| `deino-integrations` | `crates/deino-integrations` | The integrations framework (INT-00, ADR 0031): `Integration` (descriptor, `identify`, an overridable failure `classify`) and the capability traits (`PostMessage`, `CreatePage`, `CreateTask`, `LogActivity`, `ReadContext`; `Action` is a write typed by its capability), `registry` (the one list; `SandboxIntegration` in debug builds) and `catalog` (the planned providers), `oauth` (PKCE, `LoopbackListener` with per-provider redirect rules, the token endpoint with `ClientAuth`, `AuthorizationFlow`, revocation, a device-code helper), `CredentialVault` (one Keychain item per connection over `deino-secrets`' `CredentialStore`), the connection and delivery repositories, and `IntegrationService` (connect, token paste, check, disconnect, single-flight refresh, idempotent `deliver` with a GCRA limiter and retries, `targets`, `read_context`). The one OAuth layer: `deino-connect` signs in through it. Below `deino-core`. |
+| `deino-connect` | `crates/deino-connect` | Calendar connections to online accounts (ORG-01, ADR 0027): `calendar` (`ConnectorSource` over `GoogleCalendar` and `MicrosoftCalendar`, their `OAuthSpec`s in `calendar/oauth.rs`, sign-in and refresh through `deino_integrations::oauth`, refresh tokens in the Keychain, requests through `deino-net` scoped clients). Keeps `deino-core` free of a network client. |
 | `deino-export` | `crates/deino-export` | Meeting exports as pure renderers (EXP-01/02, ADR 0025): `MeetingExport` (the DTO `deino-core::export` assembles) and `render(format, export, options)` for Markdown (YAML frontmatter Obsidian reads as properties, Obsidian `[[links]]`/`#tags`, transcript sidecars and people pages, `owner()` to recognise Deino's own files), TXT, JSON (`deino.meeting` v1), SRT, WebVTT, the rich-text HTML fragment, DOCX (`docx-rs`, re-deflated) and PDF (Typst with `pdf/template.typ` and bundled Inter); `doc` (notes Markdown as typed blocks), `naming` (`{date} {title}.md`, `{yyyy}/{mm}` templates, safe names), `csv`, `mailto`. No I/O, no clock, no system fonts. |
 | `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `finalize_audio` at 10 (FND-05b: repair, then `finalize_recording`, then `set_audio` with the mic, system and mixed paths `diarize` reads), `diarize` at 30, `identify_speakers` at 35, `enhance_notes` at 50 (NOT-02; skipped when "Generate notes automatically" is off), `extract_action_items` at 60, `auto_title` at 65, `auto_tag` at 70, `auto_folder` at 75, `auto_export` at 99), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
@@ -184,8 +197,9 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `features/recording*`, `composition/recording.rs` | The `recording` plugin (FND-05b, CAP-02): `start`, `stop`, `pause`, `resume`, `state`, `transcript`; events `RecordingState`, `LiveSegment`, `Health` (`TauriRecordingEvents` also refreshes the tray and shows the start/stop notifications). `attach_recording` builds `RecordingService` over the SQLite repos, the pipeline's lifecycle service, `SttLanes`, `DeviceCapture` (or `MockCapture` for `DEINO_MOCK_AUDIO`), `CmafEncoderFactory` and the typed settings, then recovers interrupted recordings in the background. `tray.rs` starts, pauses and stops it directly. |
 | `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity), `SttLanes` (the recorder's `LaneEngines`: a streaming lane per Me/Them worker for Parakeet Unified, utterance lanes over the legacy engines otherwise; engine from `Settings::transcription`), the batch `TranscriptionProvider`, `NetByteSource` (the model `ByteSource` over `deino-net`'s model-download client), the worker entry and the `--transcribe-file` benchmark. |
 | `features/detection*`, `composition/detection.rs` | The `detection` plugin (CAP-06): `current`, `take_notes`, `dismiss`, `ignore_app`, `settings`; events `MeetingDetected`, `MeetingEnded`, `PromptClosed`, `RecordingRequested`. `prompt.rs` builds the prompt window (a `tauri-nspanel` panel on macOS, `capabilities/detection-prompt.json`), `adapters.rs` implements the event, window and settings ports; `recorder.rs` starts the live recorder (titled after the linked event or the app) and reports whether it is busy. `attach_detection` starts the detector at launch. |
-| `features/calendar*`, `composition/calendar.rs`, `composition/browser.rs` | The `calendar` plugin (ORG-01): `status`, `enable`, `disable`, `refresh`, `open_access_settings`, `list_calendars`, `set_calendar_visible`, `upcoming`, `event`, `connect`, `disconnect`; event `CalendarChanged`. `lookup.rs` is `SyncedCalendar`, detection's `CalendarLookup`. `attach_calendar` builds `CalendarService` over EventKit and the connectors (`ConnectorKit`: `deino-net`, the Keychain, the network switches) and starts `SyncScheduler`; `SystemBrowser` opens sign-in pages with `NSWorkspace`. `Info.plist` carries the Calendars usage descriptions and the entitlements the calendars entitlement. |
+| `features/calendar*`, `composition/calendar.rs`, `composition/browser.rs` | The `calendar` plugin (ORG-01): `status`, `enable`, `disable`, `refresh`, `open_access_settings`, `list_calendars`, `set_calendar_visible`, `upcoming`, `event`, `connect`, `disconnect`; event `CalendarChanged`. `lookup.rs` is `SyncedCalendar`, detection's `CalendarLookup`. `attach_calendar` builds `CalendarService` over EventKit and the connectors (`ConnectorKit`: `deino-net`, the Keychain, the network switches) and starts `SyncScheduler`; `SystemBrowser` (`deino_integrations::Browser`, shared with integrations) opens sign-in pages with `NSWorkspace`. `Info.plist` carries the Calendars usage descriptions and the entitlements the calendars entitlement. |
 | `features/speakers*`, `composition/speakers.rs` | The `speakers` plugin (CAP-04): `participants`, `candidates`, `rename`, `merge`, `confirm_suggestion`, `dismiss_suggestion`, `voice_profiles`, `delete_voiceprint`, `forget_voice`; no events (`DbChanged` covers `speakers`, `speaker_suggestions`, `voiceprints`). `Speakers` builds `SpeakerService` and `VoiceprintService`; `speakers::identifier` builds the `identify_speakers` stage's `IdentifyService` with the settings as its policy. |
+| `features/integrations*`, `composition/integrations.rs` | The `integrations` plugin (INT-00): `providers`, `connect`, `cancel_connect`, `connect_token`, `check`, `disconnect`, `set_app`, `remove_app`, `targets`, `deliver`, `deliveries`; no events (rows reach the UI through `DbChanged`). `attach_integrations` builds `IntegrationService` over the SQLite repositories, the Keychain vault, `Settings::integrations` (`SettingsOAuthApps`), `NetEgress` (scoped clients, offline mode, the service switches) and `SystemBrowser`; the sandbox only in debug builds. |
 | `features/transcription*` | The `transcription` plugin: model list, download, cancel, delete; events `ModelChanged`, `ModelDownloadProgress`. |
 | `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. Their downloads, and the built-in model's, take a `deino-net` client per call (`composition::model_downloads`); no engine holds one. |
 | `summary/` | The built-in model manager and sidecar process (`summary_engine/`); the legacy summary commands went with NOT-02. |
@@ -556,6 +570,23 @@ SyncScheduler: every 2 min + EKEventStoreChanged + wake (1 s settle) + refresh/e
     events_near cache (CAP-06's SyncedCalendar) + CalendarChanged { status }
 ```
 
+### An integration (INT-00, ADR 0031)
+
+```text
+connect: OAuth  → user's app (Settings::integrations) → LoopbackListener (127.0.0.1 / [::1])
+                 → browser (PKCE S256, state) → redirect → TokenEndpoint (scoped client)
+         token  → pasted token (+ username) → TokenScheme
+         → Integration::identify → CredentialVault (one Keychain item) → integration_connections
+         → ServiceSwitch on (the last disconnect switches it off)
+deliver(request, idempotency key):
+  begin (one row per key; a succeeded key returns its first result) → claim (compare-and-set)
+  → offline? fail now, logged → RateLimiter (GCRA per connection)
+  → session: refresh first if expiring (one at a time per connection; the new pair in one write)
+  → capability call through ProviderApi (scoped client, Authorization, base URL, key)
+  → non-2xx → Integration::classify → 401: refresh once · 429/5xx/transport: back off (≤3 tries)
+  → succeed / fail on the row; record_success / last error on the connection → DbChanged
+```
+
 ### Reads and writes in a feature
 
 `commands.rs` → `Service` (rules, `Clock`) → `Repo` port → `SqliteXRepo`
@@ -604,6 +635,9 @@ erDiagram
   templates |o--o{ enhanced_notes : "written with"
   meetings ||--o{ jobs : "processed by"
   jobs ||--o{ job_runs : "attempts"
+  integration_connections ||--o{ integration_connection_scopes : granted
+  integration_connections |o--o{ integration_deliveries : "sent with"
+  meetings |o--o{ integration_deliveries : "shared from"
   meetings {
     TEXT id PK "meeting-<uuid> (opaque text)"
     TEXT title
@@ -823,6 +857,16 @@ tables are omitted from the diagram's attributes.
   (`VoiceprintRepo::enrol`, the only writer). `speaker_suggestions` holds
   the `identify_speakers` stage's "Is this …?" prompts, replaced per meeting
   by the stage.
+- **Integrations** (INT-00, ADR 0031, migration `20261011182536`):
+  `integration_connections` (provider, the provider's account ID and
+  label, auth method, status, per-account API base URL, token expiry,
+  last use and last user-safe error; `UNIQUE (provider, account_id)`, so
+  reconnecting keeps the row) with one `integration_connection_scopes` row
+  per granted scope; `integration_deliveries` (one row per idempotency key,
+  status, attempts, what the provider created, the last error; a
+  disconnected account or deleted meeting leaves the row with NULL).
+  Tokens are never in the database. The same migration rebuilds
+  `egress_log` for six new services.
 - **Settings are not tables:** FND-06 dropped the single-row `settings` and
   `transcript_settings` tables (migration `20261009061225`); settings live in
   `settings.json` and API keys in the Keychain (ADR 0013).
@@ -873,9 +917,9 @@ tables are omitted from the diagram's attributes.
 | A built-in prompt | A `prompts/<name>.<role>.md.jinja` template and its struct and snapshot test in `crates/deino-llm/src/prompts.rs`. |
 | An LLM eval | A case in `crates/deino-llm/tests/llm_eval/cases.rs` (or a scored module like `action_items.rs` with `scoring.rs`, or `notes.rs`, a whole engine over the seeded fixtures scored on its output); run with `DEINO_EVAL=1 pnpm eval <route>`. |
 | A block kind in the enhanced notes | `BlockKind` in `crates/deino-core/src/enhance/wire.rs`, its draft in `assemble.rs` and its node in `convert.rs` (a snapshot test), the prompt's description of it in `crates/deino-llm/prompts/notes_enhance.system.md.jinja`. |
-| A calendar provider | A `CalendarSource` adapter returning a `SourceSnapshot` (a web API: a `CalendarApi` in `crates/deino-connect/src/calendar/`, its `OAuthProvider`, `ServiceId` and `SecretName`), passed to `CalendarDeps::connectors` in `composition/calendar.rs`; the rules, storage and UI do not change. |
+| A calendar provider | A `CalendarSource` adapter returning a `SourceSnapshot` (a web API: a `CalendarApi` in `crates/deino-connect/src/calendar/`, its `OAuthSpec` in `calendar/oauth.rs`, `ServiceId` and `SecretName`), passed to `CalendarDeps::connectors` in `composition/calendar.rs`; the rules, storage and UI do not change. |
 | A video-call service | A `MeetingService` row in `crates/deino-core/src/calendar/conference/services.rs` (host, path, platform); `conference_tests.rs` is the table test. |
-| An integration | INT-00: a `Destination` implementation (OAuth sign-in: `deino_connect::oauth`). |
+| An integration | A module in `crates/deino-integrations/src/` implementing `Integration` (its `ProviderDescriptor`: `OAuthSpec` and/or `TokenSpec`, `RateLimit`; `identify`; `classify` if it signals limits its own way) and the capability traits it offers; one line in `registry::integrations`; its `IntegrationProvider` already exists (it leaves the planned list by itself); its `ServiceId` hosts in `deino-net`; a recorded-fixture test with `ScriptedIntegration`'s pattern; `docs/setup/<provider>.md`. |
 | An MCP tool | DEV-02. |
 | A sidebar entry | `features/shell/nav.ts` plus its route file; set `comingSoon` until the screen exists. |
 | A meeting tab, right-panel section or player | `features/meeting/slots.ts` (and the `?tab=` enum in `features/meeting/search.ts` for a tab). |

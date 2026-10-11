@@ -54,6 +54,20 @@ db_enum! {
         Attio = "attio",
         /// Salesforce (INT-04).
         Salesforce = "salesforce",
+        /// Jira Cloud (INT-03).
+        Jira = "jira",
+        /// monday.com (INT-03).
+        Monday = "monday",
+        /// ClickUp (INT-03).
+        #[serde(rename = "clickup")]
+        #[sqlx(rename = "clickup")]
+        ClickUp = "clickup",
+        /// Trello (INT-03).
+        Trello = "trello",
+        /// Affinity (INT-04).
+        Affinity = "affinity",
+        /// Zoho CRM (INT-04).
+        ZohoCrm = "zoho_crm",
         /// Web search for chat with a user-provided key (D4).
         WebSearch = "web_search",
         /// Outbound webhooks to URLs the user enters (DEV-01).

@@ -56,6 +56,7 @@
         "enhance:default",
         "transcription:default",
         "folders:default",
+        "integrations:default",
         "tags:default",
         "speakers:default"
     ]

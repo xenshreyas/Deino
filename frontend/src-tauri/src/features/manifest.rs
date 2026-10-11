@@ -195,6 +195,23 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "forget_voice",
         ],
     ),
+    // ── INT-00 integrations (features/integrations.rs) ──
+    (
+        "integrations",
+        &[
+            "providers",
+            "connect",
+            "cancel_connect",
+            "connect_token",
+            "check",
+            "disconnect",
+            "set_app",
+            "remove_app",
+            "targets",
+            "deliver",
+            "deliveries",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

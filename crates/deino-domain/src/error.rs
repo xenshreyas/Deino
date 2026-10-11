@@ -10,9 +10,13 @@
 
 use serde::{Deserialize, Serialize};
 
-/// What kind of failure an [`AppError`] reports. The UI branches on it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, specta::Type)]
+/// What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+/// in the `last_error_code` and `error_code` columns of the integration tables.
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, specta::Type, sqlx::Type,
+)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
 pub enum ErrorCode {
     /// The requested entity does not exist.
     NotFound,

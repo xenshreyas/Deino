@@ -66,6 +66,12 @@ pub enum Table {
     Voiceprints,
     /// "Is this Alex?" suggestions for unnamed speakers (CAP-04).
     SpeakerSuggestions,
+    /// Connected integration accounts, without their tokens (INT-00).
+    IntegrationConnections,
+    /// The scopes each integration connection was granted.
+    IntegrationConnectionScopes,
+    /// The delivery log: what Deino sent to which integration (INT-00).
+    IntegrationDeliveries,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -73,7 +79,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 27] = [
+    pub const ALL: [Self; 30] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -100,6 +106,9 @@ impl Table {
         Self::TemplateSections,
         Self::Voiceprints,
         Self::SpeakerSuggestions,
+        Self::IntegrationConnections,
+        Self::IntegrationConnectionScopes,
+        Self::IntegrationDeliveries,
         Self::ExampleNotes,
     ];
 
@@ -135,6 +144,9 @@ impl Table {
             "template_sections" => Self::TemplateSections,
             "voiceprints" => Self::Voiceprints,
             "speaker_suggestions" => Self::SpeakerSuggestions,
+            "integration_connections" => Self::IntegrationConnections,
+            "integration_connection_scopes" => Self::IntegrationConnectionScopes,
+            "integration_deliveries" => Self::IntegrationDeliveries,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

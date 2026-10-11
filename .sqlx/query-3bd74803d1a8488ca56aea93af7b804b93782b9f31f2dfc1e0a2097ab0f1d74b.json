@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT connection_id AS \"connection_id: ConnectionId\", scope\n               FROM integration_connection_scopes ORDER BY connection_id, scope",
+  "describe": {
+    "columns": [
+      {
+        "name": "connection_id: ConnectionId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "scope",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "3bd74803d1a8488ca56aea93af7b804b93782b9f31f2dfc1e0a2097ab0f1d74b"
+}

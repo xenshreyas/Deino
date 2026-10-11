@@ -14,7 +14,7 @@ use serde::de::DeserializeOwned;
 use url::Url;
 
 use super::api::{CalendarApi, get_json};
-use crate::oauth::{MICROSOFT, OAuthProvider};
+use deino_integrations::OAuthSpec;
 use wire::{Calendar, Me, Page};
 
 /// The API's root.
@@ -36,8 +36,8 @@ impl CalendarApi for MicrosoftCalendar {
         CalendarProvider::Microsoft
     }
 
-    fn oauth(&self) -> &'static OAuthProvider {
-        &MICROSOFT
+    fn oauth(&self) -> OAuthSpec {
+        super::oauth::microsoft()
     }
 
     fn service(&self) -> ServiceId {

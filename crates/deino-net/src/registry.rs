@@ -63,6 +63,12 @@ const fn integration(service: ServiceId) -> ServiceSpec {
         ServiceId::HubSpot => hosts::HUBSPOT,
         ServiceId::Attio => hosts::ATTIO,
         ServiceId::Salesforce => hosts::SALESFORCE,
+        ServiceId::Jira => hosts::JIRA,
+        ServiceId::Monday => hosts::MONDAY,
+        ServiceId::ClickUp => hosts::CLICKUP,
+        ServiceId::Trello => hosts::TRELLO,
+        ServiceId::Affinity => hosts::AFFINITY,
+        ServiceId::ZohoCrm => hosts::ZOHO,
         ServiceId::WebSearch => hosts::WEB_SEARCH,
         _ => &[],
     };
@@ -118,13 +124,42 @@ mod hosts {
         &[exact("slack.com"), HostPattern::SubdomainsOf("slack.com")];
     pub(super) const NOTION: &[HostPattern] = &[exact("api.notion.com")];
     pub(super) const LINEAR: &[HostPattern] = &[exact("api.linear.app")];
-    pub(super) const TODOIST: &[HostPattern] = &[exact("api.todoist.com")];
+    /// Todoist's API, and `todoist.com` for its OAuth token exchange.
+    pub(super) const TODOIST: &[HostPattern] = &[exact("api.todoist.com"), exact("todoist.com")];
     pub(super) const ASANA: &[HostPattern] = &[exact("app.asana.com")];
     pub(super) const HUBSPOT: &[HostPattern] = &[exact("api.hubapi.com")];
-    pub(super) const ATTIO: &[HostPattern] = &[exact("api.attio.com")];
+    /// Attio's API, and `app.attio.com` for its OAuth token exchange.
+    pub(super) const ATTIO: &[HostPattern] = &[exact("api.attio.com"), exact("app.attio.com")];
     pub(super) const SALESFORCE: &[HostPattern] = &[
         exact("login.salesforce.com"),
         HostPattern::SubdomainsOf("salesforce.com"),
+    ];
+    /// Atlassian's API gateway (`/ex/jira/<cloud id>`), its OAuth server,
+    /// and each site's own `<site>.atlassian.net` (API tokens).
+    pub(super) const JIRA: &[HostPattern] = &[
+        exact("api.atlassian.com"),
+        exact("auth.atlassian.com"),
+        HostPattern::SubdomainsOf("atlassian.net"),
+    ];
+    pub(super) const MONDAY: &[HostPattern] = &[exact("api.monday.com"), exact("auth.monday.com")];
+    pub(super) const CLICKUP: &[HostPattern] = &[exact("api.clickup.com")];
+    pub(super) const TRELLO: &[HostPattern] = &[exact("api.trello.com")];
+    pub(super) const AFFINITY: &[HostPattern] = &[exact("api.affinity.co")];
+    /// Zoho's accounts and API servers in every data centre: the token
+    /// response names the account's own (`api_domain`).
+    pub(super) const ZOHO: &[HostPattern] = &[
+        HostPattern::SubdomainsOf("zoho.com"),
+        HostPattern::SubdomainsOf("zoho.eu"),
+        HostPattern::SubdomainsOf("zoho.in"),
+        HostPattern::SubdomainsOf("zoho.com.au"),
+        HostPattern::SubdomainsOf("zoho.jp"),
+        HostPattern::SubdomainsOf("zohocloud.ca"),
+        HostPattern::SubdomainsOf("zohoapis.com"),
+        HostPattern::SubdomainsOf("zohoapis.eu"),
+        HostPattern::SubdomainsOf("zohoapis.in"),
+        HostPattern::SubdomainsOf("zohoapis.com.au"),
+        HostPattern::SubdomainsOf("zohoapis.jp"),
+        HostPattern::SubdomainsOf("zohoapis.ca"),
     ];
     pub(super) const WEB_SEARCH: &[HostPattern] =
         &[exact("api.search.brave.com"), exact("api.tavily.com")];

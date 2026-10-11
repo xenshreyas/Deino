@@ -49,6 +49,13 @@ impl FakeReply {
         Self::status(status).header("location", location)
     }
 
+    /// Replaces the body (an error answer with a JSON error, say).
+    #[must_use]
+    pub fn body(mut self, body: impl Into<Bytes>) -> Self {
+        self.body = body.into();
+        self
+    }
+
     /// Adds a response header.
     #[must_use]
     pub fn header(mut self, name: &str, value: &str) -> Self {

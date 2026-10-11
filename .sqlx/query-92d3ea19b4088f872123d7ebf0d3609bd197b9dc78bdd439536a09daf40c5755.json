@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Adds a connection, or refreshes the one for the same account: reconnecting\n-- keeps its ID (so its credential key and delivery log stay), takes the new\n-- label, method and expiry, and clears any error. Returns the row's ID.\nINSERT INTO integration_connections (\n    id, provider, account_id, account_label, auth_method, status, api_base_url,\n    token_expires_at, connected_at, updated_at\n)\nVALUES (?1, ?2, ?3, ?4, ?5, 'connected', ?6, ?7, ?8, ?8)\nON CONFLICT (provider, account_id) DO UPDATE SET\n    account_label = excluded.account_label,\n    auth_method = excluded.auth_method,\n    status = 'connected',\n    api_base_url = excluded.api_base_url,\n    token_expires_at = excluded.token_expires_at,\n    updated_at = excluded.updated_at,\n    last_error_code = NULL,\n    last_error_message = NULL,\n    last_error_at = NULL\nRETURNING id AS \"id: ConnectionId\"\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ConnectionId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "92d3ea19b4088f872123d7ebf0d3609bd197b9dc78bdd439536a09daf40c5755"
+}

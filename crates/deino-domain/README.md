@@ -21,6 +21,10 @@ crate and across IPC. No I/O, no Tauri.
   (template sections), `Audience` (internal or external, NOT-04/NOT-05);
   and the pipeline's
   `JobStatus` and `RunOutcome` (`job.rs`, FND-08) with its `StageId`.
+- `IntegrationProvider`, `AuthMethod`, `ConnectionStatus`, `Capability`,
+  `DeliveryStatus` (`integration.rs`, INT-00): the integrations framework's
+  closed sets, matching the CHECK lists of `integration_connections` and
+  `integration_deliveries`; `ConnectionId`, `DeliveryId` in `id.rs`.
 - `ServiceId` and `ServiceKind` (`service.rs`): every outside service Deino may
   talk to (FND-12), stored in `egress_log.service` and keying the settings'
   `network.services` switches. Its hosts live in `deino-net`'s registry.

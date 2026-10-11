@@ -131,6 +131,8 @@ sqlx = { workspace = true, features = ["json"] }
 deino-audio.workspace = true
 # OAuth and the Google and Microsoft calendar connectors (ORG-01).
 deino-connect.workspace = true
+# INT-00: the integrations framework (providers, OAuth, connections, deliveries).
+deino-integrations.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
 deino-recording.workspace = true
@@ -207,6 +209,7 @@ ort = { version = "2.0.0-rc.10", features = ["load-dynamic"] }
 deino-audio = { workspace = true, features = ["test-support"] }
 deino-core = { workspace = true, features = ["test-support"] }
 deino-detect = { workspace = true, features = ["test-support"] }
+deino-integrations = { workspace = true, features = ["test-support"] }
 deino-recording = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 # Structured-output types in the LLM smoke tests (llm/smoke_tests.rs).

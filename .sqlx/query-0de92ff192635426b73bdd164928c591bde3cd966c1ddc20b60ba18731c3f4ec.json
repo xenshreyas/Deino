@@ -1,0 +1,98 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every connection, by provider, oldest first (idx_integration_connections_list).\nSELECT\n    id AS \"id: ConnectionId\",\n    provider AS \"provider: IntegrationProvider\",\n    account_id,\n    account_label,\n    auth_method AS \"auth_method: AuthMethod\",\n    status AS \"status: ConnectionStatus\",\n    api_base_url,\n    token_expires_at AS \"token_expires_at: DateTime<Utc>\",\n    connected_at AS \"connected_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\",\n    last_used_at AS \"last_used_at: DateTime<Utc>\",\n    last_error_code AS \"last_error_code: ErrorCode\",\n    last_error_message,\n    last_error_at AS \"last_error_at: DateTime<Utc>\"\nFROM integration_connections\nORDER BY provider, connected_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ConnectionId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider: IntegrationProvider",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "account_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "account_label",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "auth_method: AuthMethod",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: ConnectionStatus",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "api_base_url",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "token_expires_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "connected_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_used_at: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_error_code: ErrorCode",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_error_message",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_error_at: DateTime<Utc>",
+        "ordinal": 13,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "0de92ff192635426b73bdd164928c591bde3cd966c1ddc20b60ba18731c3f4ec"
+}
