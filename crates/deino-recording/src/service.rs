@@ -8,8 +8,9 @@
 //!
 //! - **Start:** the session is prepared (engines, writers, capture), then
 //!   the meeting row is created (`recording`, `source = live`, its folder,
-//!   the Me and Them speakers), then transcription starts. The meeting ID
-//!   is returned to the UI.
+//!   the Me and Them speakers), then transcription starts. The
+//!   [`StartObserver`] hears of it (the app links the nearest calendar
+//!   event, ORG-03), and the meeting ID is returned to the UI.
 //! - **Stop:** capture stops, both tracks close at the same end, the lanes
 //!   flush their last segments into `transcript_segments`, the meeting gets
 //!   its timing, and it moves to `processing`, which enqueues the
@@ -31,6 +32,7 @@ use crate::deps::{Preferences, RecordingDeps};
 use crate::error::RecordingError;
 use crate::events::{RecordingPhase, RecordingSnapshot};
 use crate::lane::PerLane;
+use crate::observer::{NoStartObserver, StartObserver};
 use crate::session::{self, Plan, Session};
 
 /// What the service holds between calls.
@@ -46,6 +48,7 @@ pub struct RecordingService {
     deps: RecordingDeps,
     slot: Mutex<Slot>,
     state: Mutex<RecordingSnapshot>,
+    on_start: Arc<dyn StartObserver>,
 }
 
 impl RecordingService {
@@ -55,7 +58,15 @@ impl RecordingService {
             deps,
             slot: Mutex::new(Slot::Idle),
             state: Mutex::new(RecordingSnapshot::idle()),
+            on_start: Arc::new(NoStartObserver),
         }
+    }
+
+    /// The same service, telling `observer` about every recording that starts.
+    #[must_use]
+    pub fn observing_starts(mut self, observer: Arc<dyn StartObserver>) -> Self {
+        self.on_start = observer;
+        self
     }
 
     /// The recorder's state now.
@@ -67,12 +78,16 @@ impl RecordingService {
     /// missing or blank); returns its ID.
     pub async fn start(&self, title: Option<String>) -> Result<MeetingId, RecordingError> {
         self.claim()?;
+        let titled = title
+            .as_deref()
+            .is_some_and(|title| !title.trim().is_empty());
         let result = self.begin(title).await;
         match result {
             Ok((session, state)) => {
                 let meeting = session.meeting().clone();
                 *lock(&self.slot) = Slot::Active(Box::new(session));
                 self.publish(state);
+                self.announce_start(&meeting, titled).await;
                 Ok(meeting)
             }
             Err(error) => {
@@ -112,6 +127,19 @@ impl RecordingService {
             ..state(RecordingPhase::Recording, &meeting, &title)
         };
         Ok((session, recording))
+    }
+
+    /// Tells the observer, and shows the title it gave the meeting while
+    /// that meeting is still the one recording.
+    async fn announce_start(&self, meeting: &MeetingId, titled: bool) {
+        let Some(title) = self.on_start.started(meeting, titled).await else {
+            return;
+        };
+        self.update(|state| {
+            if state.meeting_id.as_ref() == Some(meeting) {
+                state.title = Some(title);
+            }
+        });
     }
 
     /// A new meeting's ID, speakers and folder.

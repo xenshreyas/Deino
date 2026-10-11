@@ -40,6 +40,10 @@ spoken. The UI only watches.
 - Launch recovery (`recovery.rs`): meetings left in `recording`.
 - The events port (`events.rs`): `RecordingSnapshot`, `SegmentUpdate`,
   `HealthNotice`.
+- The start observer port (`observer.rs`): `StartObserver`, told of each
+  start once the meeting exists (the app links its calendar event, ORG-03),
+  set with `RecordingService::observing_starts`; its title replaces the
+  snapshot's.
 - Capture backends (`backend.rs`): `DeviceCapture` and `MockCapture`
   (`DEINO_MOCK_AUDIO`).
 

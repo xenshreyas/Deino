@@ -29,6 +29,7 @@
 //! | [`bleed`] | The text holdback (OpenWhispr's, ported) |
 //! | [`vad`] | Per-lane voice activity (earshot + hangover) |
 //! | [`events`] | `RecordingSnapshot`, `SegmentUpdate`, `HealthNotice` and the `RecordingEvents` port |
+//! | [`observer`] | The `StartObserver` port: who hears that a recording started (ORG-03 auto-links its event) |
 //! | [`lane`] | `Lane`: Me (microphone) and Them (system audio) |
 //! | [`backend`] | `DeviceCapture` (the Mac's devices) and `MockCapture` (`DEINO_MOCK_AUDIO`) |
 //!
@@ -44,6 +45,7 @@ mod error;
 pub mod events;
 pub mod lane;
 pub mod live;
+pub mod observer;
 pub mod recovery;
 pub mod service;
 mod session;
@@ -61,5 +63,6 @@ pub use events::{
     SegmentUpdateKind,
 };
 pub use lane::Lane;
+pub use observer::{NoStartObserver, StartObserver};
 pub use recovery::{RecoveryReport, recover_interrupted};
 pub use service::RecordingService;
