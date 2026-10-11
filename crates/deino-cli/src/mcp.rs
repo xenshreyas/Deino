@@ -1,4 +1,4 @@
-//! `deino mcp`: the library as an MCP server over stdio (DEV-02, ADR 0033),
+//! `deino mcp`: the library as an MCP server over stdio (DEV-02, ADR 0035),
 //! for Claude Code (`claude mcp add deino -- deino mcp`), Claude Desktop
 //! and any other MCP client.
 //!

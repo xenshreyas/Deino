@@ -1,4 +1,4 @@
-//! The `deino` command (DEV-02, DEV-04, ADR 0033): the user's meetings,
+//! The `deino` command (DEV-02, DEV-04, ADR 0035): the user's meetings,
 //! notes, transcripts and action items, read straight from the Deino
 //! database, in the terminal and over MCP for Claude.
 //!

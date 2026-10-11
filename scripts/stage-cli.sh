@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the `deino` CLI (crate deino-cli) and stages it as the app's `cli`
 # sidecar, frontend/src-tauri/binaries/cli-<target triple>, which Tauri
-# bundles as Deino.app/Contents/MacOS/cli (DEV-02/04, ADR 0033).
+# bundles as Deino.app/Contents/MacOS/cli (DEV-02/04, ADR 0035).
 #
 #   scripts/stage-cli.sh                       # debug build, for `pnpm tauri:dev`
 #   scripts/stage-cli.sh --release             # release build, host target

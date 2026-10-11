@@ -24,6 +24,11 @@ commit-time change signals (ADR 0005).
   `deino-pipeline`), and `templates` / `template_sections` with the
   `meetings.template_id` reference (NOT-04, ADR 0021; SQL in
   `deino-core::templates`).
+- `Database::open_read_only` (`read_only.rs`, DEV-02/04, ADR 0035): the
+  existing file opened `mode=ro`, `query_only`, in WAL mode with the same
+  busy timeout, for the `deino` CLI; never creates, migrates or writes it, and
+  refuses a schema whose applied migrations differ from the binary's
+  (`SchemaCheck`: newer or older).
 - `test_db()` (feature `test-support`): an in-memory database with every
   migration applied.
 

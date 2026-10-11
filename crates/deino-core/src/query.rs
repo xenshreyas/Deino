@@ -1,4 +1,4 @@
-//! The read side of the library (DEV-02/04, ADR 0033): what the `deino`
+//! The read side of the library (DEV-02/04, ADR 0035): what the `deino`
 //! CLI and its MCP server answer from, over the same repositories and
 //! services the app uses, so a meeting reads the same everywhere.
 //!

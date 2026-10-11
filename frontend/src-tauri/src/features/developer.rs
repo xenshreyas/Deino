@@ -5,7 +5,7 @@
 //! The `deino` CLI ships inside the app as the `cli` sidecar
 //! (`Contents/MacOS/cli`); these commands report where it is and link it
 //! onto the `PATH`. Its MCP server reads the database on its own, read-only
-//! (ADR 0033), so nothing here talks to it.
+//! (ADR 0035), so nothing here talks to it.
 
 mod commands;
 #[cfg(test)]

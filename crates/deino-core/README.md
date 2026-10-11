@@ -157,7 +157,7 @@ the SQLite adapters behind those ports.
   meeting's whole `Transcript` (segments in spoken order, each with its
   `speaker_id`) over `SegmentReader`; the view names speakers from
   `speakers` (CAP-04). No SQL of its own; TRN-02 adds the segment edits here.
-- `query` (DEV-02/04, ADR 0033): the read side the `deino` CLI and its MCP
+- `query` (DEV-02/04, ADR 0035): the read side the `deino` CLI and its MCP
   server answer from. `Library` bundles `MeetingQueries` (list by date, tag,
   folder, person and company; read one with its notes, the newest enhanced
   notes and their cited moments, action items and files),

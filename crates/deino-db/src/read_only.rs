@@ -1,5 +1,5 @@
 //! Opening the app's database from another process, to read it only
-//! (DEV-02/04, ADR 0033): the `deino` CLI and MCP server read the database
+//! (DEV-02/04, ADR 0035): the `deino` CLI and MCP server read the database
 //! directly, whether or not the app is running.
 //!
 //! [`Database::open_read_only`] never creates, migrates or writes the file:

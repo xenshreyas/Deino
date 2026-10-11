@@ -72,9 +72,10 @@ RUST_LOG=deino_lib::audio=debug pnpm run tauri:dev   # verbose audio logs
 ```
 
 Build prerequisites: the `llama-helper` sidecar must be staged as
-`frontend/src-tauri/binaries/llama-helper-<target-triple>` (see the root README),
+`frontend/src-tauri/binaries/llama-helper-<target-triple>` (see the root README)
+and the `deino` CLI as `binaries/cli-<target-triple>` (`scripts/stage-cli.sh`),
 and the first build downloads a SHA-256-pinned FFmpeg into the same folder.
-`scripts/ci-local.sh` stages a self-describing placeholder when the sidecar is
+`scripts/ci-local.sh` stages self-describing placeholders when the sidecars are
 missing (enough to build and test, not to run the local LLM). CI: Linux on
 every push, macOS by hand (`docs/setup/self-hosted-runner.md`).
 Optional local hooks: `lefthook install` (`lefthook.yml`).
@@ -114,6 +115,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-connect` | Online calendar accounts (ADR 0027): the Google Calendar and Microsoft Graph calendar sources over `deino-net`, signed in through `deino_integrations::oauth`, refresh tokens in the Keychain |
 | `crates/deino-diarize` | Local speaker diarization (ADR 0020): anarlog's pyannote port, WeSpeaker on Core ML, `policy`, `prune`, pinned `models` via the `ByteSource` downloader, `OnnxTrackDiarizer` (known voiceprints merge clusters), `online`, DER bench; the stage's rules are `deino-core::diarization`, voice matching is `deino-core::voiceprints` |
 | `crates/third_party/knf-rs` | Vendored Kaldi filterbank (knf-rs MIT + kaldi-native-fbank Apache-2.0), built with `cc` |
+| `crates/deino-cli` | The `deino` command (ADR 0035): CLI (`--json`) and `deino mcp` (stdio MCP for Claude), read-only over `Database::open_read_only` and `deino-core::query`; bundled as the `cli` sidecar (`scripts/stage-cli.sh`), installed from Settings → Developer; setup in `docs/setup/claude-code.md` |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
 | `llama-helper` | Local LLM sidecar |
@@ -130,7 +132,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `enhance`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `search`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `enhance`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `search`, `developer`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

@@ -1,4 +1,4 @@
-//! Settings → Developer's command-line setup (DEV-02/04, ADR 0033): where
+//! Settings → Developer's command-line setup (DEV-02/04, ADR 0035): where
 //! the `deino` CLI bundled in the app is, installing it on the `PATH` as a
 //! symlink, and the snippets that connect Claude Code and Claude Desktop to
 //! its MCP server.
