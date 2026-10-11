@@ -24,6 +24,7 @@ import { ProfilePage } from '@/features/profile';
 import { IndexSettings } from '@/features/search';
 import { PeopleSettings } from '@/features/speakers';
 import { TemplatesPage } from '@/features/templates';
+import { VocabularySettings } from '@/features/vocabulary';
 import {
   AudioLines,
   Calendar,
@@ -40,12 +41,14 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  SpellCheck,
   UserRound,
   Users,
   Video,
   Wrench,
 } from '@/ui/icons';
 
+import { CaptureModeSettings } from './components/capture-mode-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
 import { settingsCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
@@ -78,14 +81,18 @@ function AppearanceSection() {
   );
 }
 
-/** Transcription: the inherited engine picker over the config context. */
+/** Transcription: live or after the meeting (CAP-08), then the inherited
+ * engine picker over the config context. */
 function TranscriptionSection() {
   const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
   return (
-    <TranscriptSettings
-      transcriptModelConfig={transcriptModelConfig}
-      setTranscriptModelConfig={setTranscriptModelConfig}
-    />
+    <div className="flex flex-col gap-8">
+      <CaptureModeSettings />
+      <TranscriptSettings
+        transcriptModelConfig={transcriptModelConfig}
+        setTranscriptModelConfig={setTranscriptModelConfig}
+      />
+    </div>
   );
 }
 
@@ -108,6 +115,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
+  { id: 'vocabulary', group: 'capture', icon: SpellCheck, Component: VocabularySettings },
   { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },

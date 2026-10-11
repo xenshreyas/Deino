@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 
 import { MeetingLinksPanel } from '@/features/event-links';
 import { useMeeting } from '@/features/meetings';
+import { MeetingCorrections } from '@/features/vocabulary';
 import { Skeleton } from '@/ui/skeleton';
 
 import { meetingCopy } from '../copy';
@@ -24,8 +25,9 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Details panel: when the meeting was saved and last edited, then its
- * calendar event and related meetings (ORG-03).
+ * Details panel: when the meeting was saved and last edited, its calendar
+ * event and related meetings (ORG-03), and what the vocabulary corrected in
+ * its transcript (TRN-05).
  */
 export function DetailsPanelSlot({ meetingId }: MeetingSlotProps) {
   const meeting = useMeeting(meetingId);
@@ -44,6 +46,7 @@ export function DetailsPanelSlot({ meetingId }: MeetingSlotProps) {
         <Fact label={meetingCopy.updated} value={longDate(meeting.data.updatedAt)} />
       </dl>
       <MeetingLinksPanel meetingId={meetingId} />
+      <MeetingCorrections meetingId={meetingId} />
     </div>
   );
 }
