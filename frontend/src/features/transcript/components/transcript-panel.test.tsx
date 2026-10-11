@@ -168,7 +168,7 @@ describe('TranscriptPanel', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(4);
   });
 
-  it('marks a linked moment, then reports it shown', async () => {
+  it('marks a linked moment, reports it shown, and keeps it the linked location', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const onMomentShown = vi.fn();
     renderPanel({ moment: { kind: 'time', at: 3_500 }, onMomentShown });
@@ -179,6 +179,8 @@ describe('TranscriptPanel', () => {
       vi.advanceTimersByTime(2_000);
     });
     expect(onMomentShown).toHaveBeenCalledOnce();
+    // The highlight fades; the line stays the linked location.
+    expect(moment.closest('[role="listitem"]')?.getAttribute('aria-current')).toBe('location');
     vi.useRealTimers();
   });
 

@@ -11,6 +11,7 @@ import { transcriptCopy } from '../copy';
 import type { TranscriptListController } from '../hooks/use-transcript-list';
 import type { SearchHit, SearchResult } from '../model/search-index';
 import type { MeetingId, TranscriptRow } from '../types';
+import type { MomentMark } from './moment-focus';
 import { TranscriptBubble } from './transcript-bubble';
 
 /** Props of {@link TranscriptList}. */
@@ -20,8 +21,8 @@ export interface TranscriptListProps {
   list: TranscriptListController;
   result: SearchResult;
   current: SearchHit | undefined;
-  /** The line a deep link is marking, if any. */
-  flashing: string | null;
+  /** The line a deep link marked, if any. */
+  mark: MomentMark | null;
   actions: readonly TranscriptAction[];
 }
 
@@ -95,7 +96,8 @@ function VirtualRows(props: TranscriptListProps) {
           index={item.index}
           hits={result.byRow.get(item.index)}
           current={current?.row === item.index ? current.ordinal : undefined}
-          flashing={props.flashing === row.line.id}
+          marked={props.mark?.lineId === row.line.id}
+          flashing={props.mark?.lineId === row.line.id && props.mark.flashing}
           focused={keys.focused === item.index}
           actions={props.actions}
           onFocusRow={keys.onFocusRow}

@@ -26,7 +26,9 @@ export interface TranscriptBubbleProps {
   hits: readonly SearchHit[] | undefined;
   /** The current hit's ordinal, when it is in this row. */
   current: number | undefined;
-  /** Briefly marked: the moment a link pointed at. */
+  /** The line a link pointed at (`aria-current="location"`). */
+  marked: boolean;
+  /** Its highlight is still showing. */
   flashing: boolean;
   /** Holds the list's keyboard focus. */
   focused: boolean;
@@ -53,7 +55,7 @@ function BubbleBody(props: TranscriptBubbleProps) {
       data-bubble={index}
       tabIndex={-1}
       aria-busy={line.open || undefined}
-      aria-current={props.flashing ? 'location' : undefined}
+      aria-current={props.marked ? 'location' : undefined}
       onFocus={() => {
         props.onFocusRow(index);
       }}

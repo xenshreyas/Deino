@@ -11,7 +11,7 @@ import { useTranscriptList } from '../hooks/use-transcript-list';
 import { useTranscriptSearch } from '../hooks/use-transcript-search';
 import type { MeetingId, SpeakerView, TranscriptMoment, TranscriptRow } from '../types';
 import { JumpToNow } from './jump-to-now';
-import { MomentFocus, momentKey } from './moment-focus';
+import { MomentFocus, type MomentMark, momentKey } from './moment-focus';
 import { SearchBar } from './search-bar';
 import { TranscriptList } from './transcript-list';
 
@@ -37,7 +37,7 @@ export function TranscriptView(props: TranscriptViewProps) {
   const { rows, speakers, live, moment } = props;
   const list = useTranscriptList(rows, live);
   const search = useTranscriptSearch(rows, speakers, list.reveal);
-  const [flashing, setFlashing] = useState<string | null>(null);
+  const [mark, setMark] = useState<MomentMark | null>(null);
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <SearchBar search={search} speakers={speakers} tools={props.tools} />
@@ -47,7 +47,7 @@ export function TranscriptView(props: TranscriptViewProps) {
         list={list}
         result={search.result}
         current={search.current}
-        flashing={flashing}
+        mark={mark}
         actions={props.actions ?? TRANSCRIPT_ACTIONS}
       />
       {live ? <JumpToNow visible={!list.following} onJump={list.jumpToNow} /> : null}
@@ -57,7 +57,7 @@ export function TranscriptView(props: TranscriptViewProps) {
           moment={moment}
           rows={rows}
           reveal={list.reveal}
-          onFlash={setFlashing}
+          onMark={setMark}
           onDone={props.onMomentShown}
         />
       )}

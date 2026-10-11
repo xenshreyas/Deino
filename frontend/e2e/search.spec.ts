@@ -26,7 +26,7 @@ test('⌘K finds a phrase from a transcript and opens the meeting at that moment
   await expect(page).toHaveURL(
     `/meetings/${oneOnOne.id}?tab=transcript&t=${String(moment.startMs)}`,
   );
-  const focused = page.locator('[aria-current="true"]');
+  const focused = page.locator('[aria-current="location"]');
   await expect(focused).toBeVisible();
   await expect(focused).toContainText('webhook subscriptions for calendar events expire');
   await page.screenshot({ path: test.info().outputPath('search-moment.png') });
