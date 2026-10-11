@@ -40,7 +40,7 @@ impl TranscriptService {
     /// left out. A meeting without a transcript (or an unknown one) has no
     /// segments. The whole meeting is read at once: a two-hour meeting is a
     /// few thousand rows, which the view virtualises and searches in memory
-    /// (ADR 0030).
+    /// (ADR 0031).
     pub async fn transcript(&self, meeting: &MeetingId) -> Result<Transcript, TranscriptError> {
         let segments = self.segments.list(meeting, Page::ALL).await?;
         Ok(Transcript { segments })

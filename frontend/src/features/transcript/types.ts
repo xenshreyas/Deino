@@ -54,6 +54,14 @@ export interface TranscriptRow {
   turnStart: boolean;
 }
 
+/**
+ * A moment a link asks the view to show: a time of the recording (`?t=`),
+ * or one line (`?segment=`, a citation).
+ */
+export type TranscriptMoment =
+  | { kind: 'time'; /** Milliseconds from the start of the recording. */ at: number }
+  | { kind: 'line'; segmentId: string };
+
 /** A character range of a line's text. */
 export interface TextRange {
   start: number;

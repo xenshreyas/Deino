@@ -25,4 +25,10 @@ export { TranscriptPanel, type TranscriptPanelProps } from './components/transcr
 export { TranscriptView, type TranscriptViewProps } from './components/transcript-view';
 export { transcriptCopy } from './copy';
 export { transcriptKeys, transcriptQuery } from './queries';
-export type { SpeakerView, Transcript, TranscriptLine, TranscriptRow } from './types';
+export type {
+  SpeakerView,
+  Transcript,
+  TranscriptLine,
+  TranscriptMoment,
+  TranscriptRow,
+} from './types';

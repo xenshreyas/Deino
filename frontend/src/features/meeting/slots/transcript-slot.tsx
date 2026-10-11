@@ -1,6 +1,7 @@
 /**
  * The Transcript tab (TRN-01): the meeting's transcript view, live while
- * this meeting is being recorded, opened at a linked moment (`?t=`). Its
+ * this meeting is being recorded, opened at a linked moment (`?t=`) or
+ * line (`?segment=`). Its
  * tools are "Copy transcript" and, while the inherited session still owns
  * them, the recording folder and re-transcription buttons.
  */
@@ -45,8 +46,8 @@ export function TranscriptSlot({ meetingId, moment }: MeetingSlotProps) {
     <TranscriptPanel
       meetingId={meetingId}
       live={live}
-      focusAt={moment?.at}
-      onFocusDone={moment?.onShown}
+      moment={moment?.target}
+      onMomentShown={moment?.onShown}
       tools={<TranscriptTools meetingId={meetingId} />}
     />
   );

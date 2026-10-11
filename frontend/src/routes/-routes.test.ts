@@ -66,6 +66,12 @@ describe('route URLs', () => {
     expect(search).toEqual({ tab: 'transcript', t: 754_000 });
   });
 
+  test('a citation link carries the cited segment for the transcript (NOT-03)', async () => {
+    const segment = '0192f3a0-6c1e-7b2a-9d4e-1f2a3b4c5d6e';
+    const { search } = await resolve(`/meetings/meeting-123?tab=transcript&segment=${segment}`);
+    expect(search).toEqual({ tab: 'transcript', segment });
+  });
+
   test('a malformed moment is dropped rather than failing the meeting route', async () => {
     for (const bad of ['-5', '1.5', 'soon']) {
       const { search } = await resolve(`/meetings/meeting-123?t=${bad}`);

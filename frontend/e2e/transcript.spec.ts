@@ -12,6 +12,7 @@ import {
   PHRASE,
   PHRASE_EVERY,
 } from '../src/dev/mock-ipc/long-meeting-contract';
+import { fixtureUuid } from '../src/dev/mock-ipc/fixture-ids';
 import { fixtureMeeting } from './fixtures';
 
 const SEGMENTS = 5_000;
@@ -112,6 +113,21 @@ test('a two-hour meeting with 5,000 lines keeps the DOM small and searches fast'
   await expect(transcript(page).locator('mark[aria-current="true"]')).toBeInViewport();
   expect(await items.count()).toBeLessThanOrEqual(MAX_DOM_ROWS);
   await page.screenshot({ path: test.info().outputPath('transcript-long.png') });
+});
+
+test('a citation link (?segment=) opens the transcript on the cited line', async ({ page }) => {
+  const oneOnOne = fixtureMeeting('meeting-fixture-one-on-one');
+  const index = 40;
+  const cited = oneOnOne.segments[index];
+  if (!cited) throw new Error('the one-on-one fixture is too short');
+  const segment = fixtureUuid(`segment/${oneOnOne.id}/${String(index)}`);
+
+  await page.goto(`/meetings/${oneOnOne.id}?tab=transcript&segment=${segment}`);
+
+  const marked = transcript(page).locator('[aria-current="location"]');
+  await expect(marked).toHaveText(cited.text);
+  await expect(marked).toBeInViewport();
+  await expect(page).not.toHaveURL(/[?&]segment=/);
 });
 
 test('a ?t= link opens the transcript at that moment and marks it', async ({ page }) => {

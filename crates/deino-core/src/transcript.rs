@@ -8,7 +8,7 @@
 //!
 //! Live lines that are still being spoken never come from here: the
 //! recorder sends them as `LiveSegment` events and the UI overlays them on
-//! this read (ADR 0026, ADR 0030). TRN-02 adds the segment edits here.
+//! this read (ADR 0026, ADR 0031). TRN-02 adds the segment edits here.
 
 mod model;
 mod service;

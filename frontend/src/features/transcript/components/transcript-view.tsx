@@ -9,9 +9,9 @@ import { type ReactNode, useState } from 'react';
 import { TRANSCRIPT_ACTIONS, type TranscriptAction } from '../actions';
 import { useTranscriptList } from '../hooks/use-transcript-list';
 import { useTranscriptSearch } from '../hooks/use-transcript-search';
-import type { MeetingId, SpeakerView, TranscriptRow } from '../types';
+import type { MeetingId, SpeakerView, TranscriptMoment, TranscriptRow } from '../types';
 import { JumpToNow } from './jump-to-now';
-import { MomentFocus } from './moment-focus';
+import { MomentFocus, momentKey } from './moment-focus';
 import { SearchBar } from './search-bar';
 import { TranscriptList } from './transcript-list';
 
@@ -22,9 +22,10 @@ export interface TranscriptViewProps {
   speakers: readonly SpeakerView[];
   /** Being recorded: follow the newest line, offer "Jump to now". */
   live: boolean;
-  /** A moment to show on mount, in milliseconds (`?t=`). */
-  focusAt?: number | undefined;
-  onFocusDone?: (() => void) | undefined;
+  /** A moment to show (`?t=`, `?segment=`); a new one scrolls there again. */
+  moment?: TranscriptMoment | undefined;
+  /** Called once the moment has been shown. */
+  onMomentShown?: (() => void) | undefined;
   /** The bubble actions; the registry by default. */
   actions?: readonly TranscriptAction[];
   /** Tools beside the search field. */
@@ -33,7 +34,7 @@ export interface TranscriptViewProps {
 
 /** The view. */
 export function TranscriptView(props: TranscriptViewProps) {
-  const { rows, speakers, live, focusAt } = props;
+  const { rows, speakers, live, moment } = props;
   const list = useTranscriptList(rows, live);
   const search = useTranscriptSearch(rows, speakers, list.reveal);
   const [flashing, setFlashing] = useState<string | null>(null);
@@ -50,14 +51,14 @@ export function TranscriptView(props: TranscriptViewProps) {
         actions={props.actions ?? TRANSCRIPT_ACTIONS}
       />
       {live ? <JumpToNow visible={!list.following} onJump={list.jumpToNow} /> : null}
-      {focusAt === undefined ? null : (
+      {moment === undefined ? null : (
         <MomentFocus
-          key={focusAt}
-          at={focusAt}
+          key={momentKey(moment)}
+          moment={moment}
           rows={rows}
           reveal={list.reveal}
           onFlash={setFlashing}
-          onDone={props.onFocusDone}
+          onDone={props.onMomentShown}
         />
       )}
     </div>

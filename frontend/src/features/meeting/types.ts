@@ -2,6 +2,7 @@
 import type { ComponentType } from 'react';
 
 import type { MeetingId } from '@/features/meetings';
+import type { TranscriptMoment } from '@/features/transcript';
 
 import type { MeetingTabId } from './search';
 
@@ -10,10 +11,10 @@ export type { MeetingTabId } from './search';
 /** The right panel's sections. */
 export type MeetingPanelId = 'chat' | 'participants' | 'details';
 
-/** A moment of the recording a link asked to show (`?t=`). */
+/** A moment a link asked to show (`?t=` or `?segment=`). */
 export interface MeetingMoment {
-  /** Milliseconds from the start of the recording. */
-  at: number;
+  /** A time of the recording, or one line. */
+  target: TranscriptMoment;
   /** Called once it has been shown, to drop it from the URL. */
   onShown: () => void;
 }

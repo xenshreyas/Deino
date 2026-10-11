@@ -21,6 +21,7 @@ import { useTabShortcuts } from '../hooks/use-tab-shortcuts';
 import { LegacyMeetingSession } from '../legacy/meeting-session';
 import type { MeetingSource, MeetingTabId } from '../search';
 import type { MeetingMoment } from '../types';
+import type { TranscriptMoment } from '@/features/transcript';
 import { MEETING_PLAYER, MEETING_TABS } from '../slots';
 import { MeetingHeader } from './meeting-header';
 import { MeetingSidePanel } from './meeting-side-panel';
@@ -31,8 +32,8 @@ export interface MeetingScreenProps {
   source?: MeetingSource | undefined;
   tab: MeetingTabId;
   onTabChange: (tab: MeetingTabId) => void;
-  /** A moment of the recording to show (`?t=`, milliseconds). */
-  moment?: number | undefined;
+  /** A moment to show on the Transcript tab (`?t=` or `?segment=`). */
+  moment?: TranscriptMoment | undefined;
   /** Called once the moment has been shown. */
   onMomentShown?: (() => void) | undefined;
 }
@@ -109,7 +110,9 @@ export function MeetingScreen({
 }: MeetingScreenProps) {
   const id = asMeetingId(meetingId);
   const shown =
-    moment === undefined ? undefined : { at: moment, onShown: onMomentShown ?? (() => undefined) };
+    moment === undefined
+      ? undefined
+      : { target: moment, onShown: onMomentShown ?? (() => undefined) };
   const rightPanelOpen = useShellLayout((state) => state.rightPanelOpen);
   useTabShortcuts(onTabChange);
   const Player = MEETING_PLAYER;

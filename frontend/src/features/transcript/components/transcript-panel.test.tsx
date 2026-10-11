@@ -170,16 +170,30 @@ describe('TranscriptPanel', () => {
 
   it('marks a linked moment, then reports it shown', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const onFocusDone = vi.fn();
-    renderPanel({ focusAt: 3_500, onFocusDone });
+    const onMomentShown = vi.fn();
+    renderPanel({ moment: { kind: 'time', at: 3_500 }, onMomentShown });
 
     const moment = await screen.findByText('Then the budget is approved.');
     expect(moment.closest('[role="listitem"]')?.getAttribute('aria-current')).toBe('location');
     act(() => {
       vi.advanceTimersByTime(2_000);
     });
-    expect(onFocusDone).toHaveBeenCalledOnce();
+    expect(onMomentShown).toHaveBeenCalledOnce();
     vi.useRealTimers();
+  });
+
+  it('marks a cited line (NOT-03 "Show in transcript"), and lets go of a missing one', async () => {
+    const onMomentShown = vi.fn();
+    const { unmount } = renderPanel({ moment: { kind: 'line', segmentId: 'c' }, onMomentShown });
+
+    const cited = await screen.findByText('Great, ship it Monday.');
+    expect(cited.closest('[role="listitem"]')?.getAttribute('aria-current')).toBe('location');
+    unmount();
+
+    renderPanel({ moment: { kind: 'line', segmentId: 'gone' }, onMomentShown });
+    await screen.findByText('Great, ship it Monday.');
+    expect(onMomentShown).toHaveBeenCalledOnce();
+    expect(document.querySelector('[aria-current="location"]')).toBeNull();
   });
 
   it('copies a line from its toolbar', async () => {
