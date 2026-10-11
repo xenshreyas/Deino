@@ -157,6 +157,37 @@ impl HostTime {
     }
 }
 
+/// A device's sample rate, in frames per second.
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+)]
+#[serde(transparent)]
+pub struct SampleRate(pub u32);
+
+impl SampleRate {
+    /// The rate every stored track uses ([`STORAGE_RATE`]).
+    pub const STORAGE: Self = Self(STORAGE_RATE);
+
+    /// The duration of `frames` frames at this rate (zero for a zero rate).
+    pub fn duration_of(self, frames: usize) -> Duration {
+        let frames = u128::try_from(frames).unwrap_or(u128::MAX);
+        let nanos = frames.saturating_mul(NANOS_PER_SECOND) / u128::from(self.0.max(1));
+        Duration::from_nanos(u64::try_from(nanos).unwrap_or(u64::MAX))
+    }
+
+    /// The frames in `duration` at this rate, rounded down.
+    pub fn frames_in(self, duration: Duration) -> usize {
+        let frames = duration.as_nanos() * u128::from(self.0) / NANOS_PER_SECOND;
+        usize::try_from(frames).unwrap_or(usize::MAX)
+    }
+}
+
+impl fmt::Display for SampleRate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} Hz", self.0)
+    }
+}
+
 /// A size in bytes (file sizes, free disk space, memory budgets).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Bytes(pub u64);
@@ -183,6 +214,15 @@ mod tests {
         assert_eq!(second, Frames(48_000));
         assert_eq!(second.as_millis(), Millis(1_000));
         assert_eq!(second.as_duration(), Duration::from_secs(1));
+    }
+
+    #[test]
+    fn sample_rates_convert_between_frames_and_durations() {
+        let rate = SampleRate(44_100);
+        assert_eq!(rate.frames_in(Duration::from_millis(10)), 441);
+        assert_eq!(rate.duration_of(441), Duration::from_millis(10));
+        assert_eq!(SampleRate(0).duration_of(10), Duration::from_secs(10));
+        assert_eq!(SampleRate::STORAGE.to_string(), "48000 Hz");
     }
 
     #[test]

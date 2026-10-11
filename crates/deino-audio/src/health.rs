@@ -51,6 +51,33 @@ pub enum HealthEvent {
         /// The failing track.
         track: Track,
     },
+    /// A track's device failed or stalled; the supervisor is restarting it.
+    Recovering {
+        /// The track.
+        track: Track,
+        /// The attempt within this episode, from 1.
+        attempt: u8,
+    },
+    /// A recovering track delivers audio again.
+    Recovered {
+        /// The track.
+        track: Track,
+    },
+    /// Every attempt failed; the track records silence until a later retry.
+    DeviceLost {
+        /// The track.
+        track: Track,
+    },
+    /// The microphone is a Bluetooth headset in call (hands-free) mode, so
+    /// its quality is reduced.
+    BluetoothCallMode,
+    /// System audio cannot be captured (no permission, or no process tap on
+    /// this macOS); the recording continues with the microphone only.
+    SystemAudioUnavailable,
+    /// The Mac went to sleep; capture is suspended.
+    Asleep,
+    /// The Mac woke up; capture restarted.
+    Awake,
 }
 
 /// The sending half of the health channel. Cloning shares the channel.

@@ -91,6 +91,12 @@ pub enum Recovery {
     },
 }
 
+/// The folder a meeting's recording lives in: `<root>/<meeting id>`. The
+/// recorder, launch recovery and the `finalize_audio` stage all find it here.
+pub fn recording_dir(root: &Path, meeting: &deino_domain::MeetingId) -> PathBuf {
+    root.join(meeting.as_str())
+}
+
 /// Repairs the recording in `dir` if it was never closed.
 pub fn recover_recording(dir: &Path) -> Result<Recovery, RecoveryError> {
     let store = ManifestStore::new(dir);

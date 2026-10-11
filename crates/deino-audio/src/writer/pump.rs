@@ -14,7 +14,7 @@ use super::stall::StallWatch;
 use crate::clock::HostClock;
 use crate::encoder::{EncodeError, TrackEncoder};
 use crate::health::{HealthEvent, HealthSender};
-use crate::ring::{BlockStamp, RtSource};
+use crate::ring::{BlockStamp, RtSource, TimelineSink};
 use crate::timeline::{Placement, TrackTimeline};
 use crate::units::{Frames, HostTime, Track};
 
@@ -27,6 +27,9 @@ pub(crate) struct PumpParts {
     pub track: Track,
     /// The writer's end of the track's ring.
     pub source: RtSource,
+    /// Where placed audio goes for live transcription (never blocks; a full
+    /// ring drops the block, and the reader fills the hole with silence).
+    pub placed: TimelineSink,
     /// The recording epoch the timeline is anchored to.
     pub epoch: HostTime,
     /// The track's encoder.
@@ -168,6 +171,8 @@ impl TrackPump {
             Placement::Overlap(overlap) => overlap,
         };
         let kept = self.block.get(skip.as_len()..).unwrap_or_default();
+        let position = self.timeline.written() - Frames::of_len(kept.len());
+        self.parts.placed.push(kept, position);
         let lost = self.backlog.push_samples(kept);
         self.report_drop(lost);
     }

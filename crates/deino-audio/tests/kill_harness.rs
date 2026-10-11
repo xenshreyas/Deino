@@ -25,10 +25,11 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::Duration;
 
 use decode::{decode_with_av_audio_file, seconds};
+use deino_audio::capture::{Capture, CaptureInputs, CaptureParts, FixedRoute, NoSystemWatch};
 use deino_audio::recovery::Recovery;
 use deino_audio::{
-    AudioSource, CmafEncoderFactory, Frames, HostClock, MockAudioSource, Recorder, RecorderDeps,
-    SystemDiskSpace, SystemHostClock, Track, recover_recording,
+    CmafEncoderFactory, Frames, HostClock, MockSources, Recorder, RecorderDeps, SystemDiskSpace,
+    SystemHostClock, TestSignal, Track, recover_recording,
 };
 use deino_domain::SystemClock;
 
@@ -70,14 +71,26 @@ fn real_deps(clock: &Arc<dyn HostClock>) -> RecorderDeps {
     }
 }
 
-/// Starts recording the mock meeting into `dir`.
-fn start_meeting(dir: &Path) -> (Recorder, [MockAudioSource; 2]) {
+/// Starts recording the mock meeting into `dir`, through the same capture
+/// path (conditioners and supervisor) the app uses.
+fn start_meeting(dir: &Path) -> (Recorder, Capture) {
     let clock: Arc<dyn HostClock> = Arc::new(SystemHostClock::new());
     let (recorder, inputs) = Recorder::start(dir, &real_deps(&clock)).unwrap();
-    let [mut microphone, mut system] = MockAudioSource::meeting(&clock);
-    microphone.start(inputs.microphone).unwrap();
-    system.start(inputs.system).unwrap();
-    (recorder, [microphone, system])
+    let voices = (TestSignal::microphone(), TestSignal::system());
+    let parts = CaptureParts {
+        factory: Arc::new(MockSources::new(Arc::clone(&clock), voices.0, voices.1)),
+        watch: Arc::new(NoSystemWatch),
+        route: Arc::new(FixedRoute(None)),
+        routes: channel().0,
+        host_clock: clock,
+        wall_clock: Arc::new(SystemClock),
+        health: inputs.reporter,
+    };
+    let rings = CaptureInputs {
+        microphone: inputs.microphone,
+        system: inputs.system,
+    };
+    (recorder, Capture::start(rings, &parts).unwrap())
 }
 
 #[test]
@@ -87,7 +100,7 @@ fn kill_child_records_until_killed() {
         return;
     };
     let dir = Path::new(&dir);
-    let (recorder, _sources) = start_meeting(dir);
+    let (recorder, _capture) = start_meeting(dir);
     let ticker = Ticker::new();
     loop {
         let line = format!(
@@ -193,9 +206,9 @@ fn cpu_per_track_is_about_two_percent() {
     let dir = tempfile::tempdir().unwrap();
     let wall = SystemHostClock::new();
     let (cpu_before, started) = (cpu_time(), wall.now());
-    let (recorder, mut sources) = start_meeting(dir.path());
+    let (recorder, capture) = start_meeting(dir.path());
     Ticker::new().wait(Duration::from_secs(20));
-    sources.iter_mut().for_each(AudioSource::stop);
+    capture.stop();
     recorder.stop().unwrap();
     let cpu = cpu_time().saturating_sub(cpu_before).as_secs_f64();
     let elapsed = wall.now().since(started).as_secs_f64();

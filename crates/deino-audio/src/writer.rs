@@ -1,9 +1,11 @@
 //! The writer thread: one per track, the only code that touches the encoder.
 //!
 //! ```text
-//!  RT callback ── RtSink ──▶ rtrb ring ──▶ writer thread (polls every 10 ms)
+//!  conditioner ── RtSink ──▶ rtrb ring ──▶ writer thread (polls every 10 ms)
 //!                                          TrackTimeline → Backlog → TrackEncoder
-//!                                                                    └─▶ TrackSink
+//!                                               │                    └─▶ TrackSink
+//!                                               └─▶ TimelineSink (placed audio for
+//!                                                   live transcription, never blocks)
 //! ```
 //!
 //! The thread opens the encoder itself (native encoders are not `Send`),
@@ -29,7 +31,7 @@ use self::pump::{PumpParts, TrackPump};
 use crate::clock::HostClock;
 use crate::encoder::{EncodeError, EncoderFactory, SegmentOutput};
 use crate::health::HealthSender;
-use crate::ring::RtSource;
+use crate::ring::{RtSource, TimelineSink};
 use crate::units::{Frames, HostTime, Track};
 
 /// How often the writer drains the ring (Handy's consumer cadence).
@@ -73,6 +75,8 @@ pub struct TrackWriterParts {
     pub track: Track,
     /// The writer's end of the track's ring.
     pub source: RtSource,
+    /// Where placed audio goes for live transcription.
+    pub placed: TimelineSink,
     /// Where the encoder's segments go.
     pub output: SegmentOutput,
 }
@@ -169,6 +173,7 @@ fn run(
     let mut pump = TrackPump::new(PumpParts {
         track: parts.track,
         source: parts.source,
+        placed: parts.placed,
         epoch: context.epoch,
         encoder,
         clock: context.clock,
