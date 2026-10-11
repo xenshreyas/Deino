@@ -9,9 +9,7 @@ use std::sync::Arc;
 use deino_db::{Database, DbError};
 use deino_domain::{Channel, MeetingId, PersonId, SpeakerId};
 
-use super::material::{
-    AttendeeInfo, Material, MeetingInfo, NoVocabulary, PreviousNotes, UserNotes, Vocabulary,
-};
+use super::material::{AttendeeInfo, Material, MeetingInfo, PreviousNotes, UserNotes, Vocabulary};
 use super::transcript::TranscriptLine;
 use super::{EnhancedNotesReader, SqliteEnhancedNotesRepo};
 use crate::calendar::{CalendarEvent, CalendarEventRepo, SqliteCalendarRepo};
@@ -19,6 +17,7 @@ use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, MeetingState, SqliteMee
 use crate::notes::{NotesRepo, SqliteNotesRepo};
 use crate::people::{AttendeeRepo, MeRepo, Person, PersonRepo, SqlitePeopleRepo};
 use crate::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
+use crate::vocabulary::{PromptVocabulary, SqliteVocabRepo};
 
 /// What a microphone segment's speaker is called when the user has no name.
 const ME: &str = "Me";
@@ -55,8 +54,8 @@ pub struct MaterialSources {
 }
 
 impl MaterialSources {
-    /// Every source over Deino's SQLite database, without a vocabulary
-    /// (TRN-05 adds one).
+    /// Every source over Deino's SQLite database, the user's vocabulary
+    /// (TRN-05) included.
     pub fn sqlite(database: &Database) -> Self {
         let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
         let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
@@ -72,7 +71,9 @@ impl MaterialSources {
             calendar: Arc::new(SqliteCalendarRepo::new(database.clone())),
             notes: Arc::new(SqliteNotesRepo::new(database.clone())),
             history: Arc::new(SqliteEnhancedNotesRepo::new(database.clone())),
-            vocabulary: Arc::new(NoVocabulary),
+            vocabulary: Arc::new(PromptVocabulary::new(Arc::new(SqliteVocabRepo::new(
+                database.clone(),
+            )))),
         }
     }
 

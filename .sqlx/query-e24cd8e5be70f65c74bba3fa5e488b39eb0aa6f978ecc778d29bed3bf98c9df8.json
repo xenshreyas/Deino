@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM vocab_variants WHERE term_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e24cd8e5be70f65c74bba3fa5e488b39eb0aa6f978ecc778d29bed3bf98c9df8"
+}

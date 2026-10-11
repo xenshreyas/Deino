@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO vocab_terms (id, kind, text, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "ea491cdea72e155da1a2b9722068752ef791ffdaf271a0b2d361cde43563215e"
+}

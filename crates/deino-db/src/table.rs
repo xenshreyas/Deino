@@ -77,6 +77,12 @@ pub enum Table {
     SearchDocuments,
     /// Embedded chunks of meetings for semantic search (AI-01).
     Embeddings,
+    /// The user's vocabulary terms and replacement rules (TRN-05).
+    VocabTerms,
+    /// What each vocabulary term sounds like when misheard (TRN-05).
+    VocabVariants,
+    /// The originals of segments the vocabulary corrected (TRN-05).
+    VocabCorrections,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -84,7 +90,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 32] = [
+    pub const ALL: [Self; 35] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -116,6 +122,9 @@ impl Table {
         Self::IntegrationDeliveries,
         Self::SearchDocuments,
         Self::Embeddings,
+        Self::VocabTerms,
+        Self::VocabVariants,
+        Self::VocabCorrections,
         Self::ExampleNotes,
     ];
 
@@ -156,6 +165,9 @@ impl Table {
             "integration_deliveries" => Self::IntegrationDeliveries,
             "search_documents" => Self::SearchDocuments,
             "embeddings" => Self::Embeddings,
+            "vocab_terms" => Self::VocabTerms,
+            "vocab_variants" => Self::VocabVariants,
+            "vocab_corrections" => Self::VocabCorrections,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

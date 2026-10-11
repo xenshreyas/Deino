@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO vocab_corrections (segment_id, original_text, original_words_json, corrected_text, corrected_at)\n         VALUES (?1, ?2, ?3, ?4, ?5)\n         ON CONFLICT (segment_id) DO UPDATE SET\n             corrected_text = excluded.corrected_text, corrected_at = excluded.corrected_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "c1b3785c0e9d97acf9c257bc517f2a969011f195379e7c704b1365f794bfc25e"
+}

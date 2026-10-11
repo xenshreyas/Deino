@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments SET text = ?1, words_json = ?2 WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "3f6e141c5e8fd1ea67b5dece76952cf85d2f81398307ba18b6e7f179ce0be93c"
+}

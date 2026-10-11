@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vocab_terms SET kind = ?1, text = ?2, updated_at = ?3 WHERE id = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "22793bab70039763635a0b7729acedb5b0e8886b650c75a719de0c0b0fa29809"
+}

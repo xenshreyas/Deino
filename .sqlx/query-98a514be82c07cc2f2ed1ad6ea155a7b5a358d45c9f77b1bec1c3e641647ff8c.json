@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM vocab_corrections WHERE segment_id = ?1 AND undone_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "98a514be82c07cc2f2ed1ad6ea155a7b5a358d45c9f77b1bec1c3e641647ff8c"
+}

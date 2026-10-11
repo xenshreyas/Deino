@@ -22,7 +22,8 @@ pub trait Vocabulary: Send + Sync {
     async fn terms(&self, meeting: &MeetingId) -> Result<Vec<String>, DbError>;
 }
 
-/// No vocabulary yet: TRN-05 replaces it with the user's terms.
+/// No vocabulary: tests, and anywhere the user's terms do not apply
+/// (`vocabulary::PromptVocabulary` is the user's).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct NoVocabulary;
 

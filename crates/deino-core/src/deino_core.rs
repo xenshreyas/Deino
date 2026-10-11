@@ -30,6 +30,11 @@
 //! DEV-02/04 added [`query`], the read side the `deino` CLI and its MCP
 //! server answer from.
 //!
+//! TRN-05 added [`vocabulary`]: the user's terms and replacement rules, and
+//! the corrections they and the known names make to transcripts. CAP-08
+//! added [`final_transcription`]: transcribing after the meeting when live
+//! transcription is off, and the optional high-accuracy re-pass.
+//!
 //! NOT-04 and NOT-05 added [`templates`] (the note templates, built-ins
 //! seeded from a versioned catalogue, auto selection) and [`profile`] (the
 //! user's profile as AI context, the "Me" person, internal vs external).
@@ -51,6 +56,7 @@ pub mod enhance;
 pub mod entities;
 pub mod export;
 mod f32_blob;
+pub mod final_transcription;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;
@@ -69,4 +75,5 @@ pub mod templates;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;
 pub mod transcript;
+pub mod vocabulary;
 pub mod voiceprints;

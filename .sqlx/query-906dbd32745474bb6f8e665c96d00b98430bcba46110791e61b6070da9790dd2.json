@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments SET text = ?1, words_json = ?2\n         WHERE id = ?3 AND text = ?4\n           AND NOT EXISTS (SELECT 1 FROM vocab_corrections\n                           WHERE segment_id = ?3 AND undone_at IS NOT NULL)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "906dbd32745474bb6f8e665c96d00b98430bcba46110791e61b6070da9790dd2"
+}

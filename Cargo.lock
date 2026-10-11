@@ -2029,6 +2029,7 @@ dependencies = [
  "insta",
  "json-patch",
  "log",
+ "proptest",
  "regex",
  "schemars 1.2.1",
  "serde",
@@ -2036,6 +2037,7 @@ dependencies = [
  "sha2",
  "specta",
  "sqlx",
+ "strsim 0.11.1",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
@@ -2286,6 +2288,7 @@ dependencies = [
  "deino-stt",
  "deino-testkit",
  "earshot",
+ "libc",
  "log",
  "serde",
  "sonora",
@@ -2293,6 +2296,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

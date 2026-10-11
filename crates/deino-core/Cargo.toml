@@ -49,6 +49,8 @@ serde_json.workspace = true
 sha2 = "0.10.9"
 specta.workspace = true
 sqlx = { workspace = true, features = ["json"] }
+# Jaro-Winkler for misheard names (TRN-05); already in the tree through clap.
+strsim = "0.11.1"
 thiserror.workspace = true
 # Async file I/O, timeouts and cancellation for model downloads; the
 # `TaskTracker` that owns the semantic index's background work (`rt`).
@@ -72,6 +74,7 @@ deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 # Snapshot tests of rendered prompts (profile context, template prompts).
 insta = { version = "=1.43.1", features = ["json"] }
+proptest = { version = "1.6", default-features = false, features = ["std"] }
 tempfile = "3.3.0"
 tokio = { workspace = true, features = ["test-util"] }
 
