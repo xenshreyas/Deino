@@ -11,7 +11,7 @@
 //!
 //! OAuth itself (PKCE, the loopback redirect, the token endpoint, the
 //! browser port) is the integrations framework's: `deino_integrations::oauth`
-//! (INT-00, ADR 0029), the one OAuth layer in Deino. Every request goes
+//! (INT-00, ADR 0031), the one OAuth layer in Deino. Every request goes
 //! through a `deino-net` scoped client, so a disabled service or offline
 //! mode sends nothing and each request lands in the egress log.
 

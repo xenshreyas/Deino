@@ -1,5 +1,5 @@
 //! The calendar providers' OAuth settings, in the integrations framework's
-//! terms (`deino_integrations::OAuthSpec`, ADR 0029): one OAuth layer for
+//! terms (`deino_integrations::OAuthSpec`, ADR 0031): one OAuth layer for
 //! every connection Deino makes.
 
 use deino_integrations::{ClientAuth, LoopbackHost, OAuthSpec, PortRule, RedirectSpec, Scope};

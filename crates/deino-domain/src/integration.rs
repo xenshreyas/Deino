@@ -1,4 +1,4 @@
-//! The closed sets of the integrations framework (INT-00, ADR 0029).
+//! The closed sets of the integrations framework (INT-00, ADR 0031).
 //!
 //! Each enum's names match the `CHECK` list of the column named in its docs
 //! (`integration_connections`, `integration_deliveries`). A provider card

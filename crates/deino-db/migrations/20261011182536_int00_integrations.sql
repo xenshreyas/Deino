@@ -1,4 +1,4 @@
--- INT-00: the integrations framework (ADR 0029).
+-- INT-00: the integrations framework (ADR 0031).
 --
 -- Tokens never live here: each connection's credential is one Keychain item
 -- (`deino-secrets` `CredentialKey`, `integration.<provider>.<connection id>`).

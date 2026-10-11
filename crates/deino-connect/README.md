@@ -22,7 +22,7 @@ that `deino-core` never depends on a network client.
 
 - OAuth itself: PKCE, the loopback listener, the token endpoint, the
   `Browser` port and its fake. These belong to `deino_integrations::oauth`
-  (INT-00, [ADR 0029](../../docs/adr/0029-integrations-framework.md)), the
+  (INT-00, [ADR 0031](../../docs/adr/0031-integrations-framework.md)), the
   one OAuth layer in Deino.
 - Calendar rules (join links, external, filters, series), storage and
   scheduling: `deino_core::calendar`.

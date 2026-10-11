@@ -2,7 +2,7 @@
 //! `CalendarSource`, signed in with OAuth.
 //!
 //! The OAuth protocol is the integrations framework's (`deino_integrations::oauth`,
-//! ADR 0029): PKCE over a loopback redirect, the token endpoint and the
+//! ADR 0031): PKCE over a loopback redirect, the token endpoint and the
 //! browser port. Connecting switches the provider's network service on
 //! (FND-12: an integration sends nothing until the user connects it), signs
 //! in through the browser and keeps the refresh token in the Keychain; the

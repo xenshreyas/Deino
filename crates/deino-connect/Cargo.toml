@@ -14,7 +14,7 @@ async-trait.workspace = true
 chrono.workspace = true
 deino-core.workspace = true
 deino-domain.workspace = true
-# The one OAuth layer (INT-00, ADR 0029): PKCE, the loopback redirect, the
+# The one OAuth layer (INT-00, ADR 0031): PKCE, the loopback redirect, the
 # token endpoint and the browser port.
 deino-integrations.workspace = true
 deino-net.workspace = true

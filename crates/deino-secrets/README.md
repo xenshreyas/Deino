@@ -17,7 +17,7 @@ Deino stores a secret.
   `locked`), with its contract in `contract_tests.rs`.
 - `KeychainSecretStore`: the macOS Keychain (native stores on Windows and
   Linux) through `keyring`, service = the app's bundle identifier.
-- `CredentialKey` and `CredentialStore` (INT-00, ADR 0029): credentials whose
+- `CredentialKey` and `CredentialStore` (INT-00, ADR 0031): credentials whose
   keychain account is decided at run time (`integration.<provider>.<id>`),
   up to `MAX_CREDENTIAL_CHARS`; `KeychainSecretStore` implements both ports,
   `InMemoryCredentialStore` (feature `test-support`) is the fake. Denied

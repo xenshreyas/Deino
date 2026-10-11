@@ -1,4 +1,4 @@
-//! `integrations` feature: Settings → Integrations (INT-00, ADR 0029),
+//! `integrations` feature: Settings → Integrations (INT-00, ADR 0031),
 //! exposed as the inline plugin `plugin:integrations|<command>`.
 //!
 //! The commands are thin over `deino_integrations::IntegrationService`:

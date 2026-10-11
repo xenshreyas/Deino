@@ -1,4 +1,4 @@
-//! Deino's integrations framework (INT-00, ADR 0029).
+//! Deino's integrations framework (INT-00, ADR 0031).
 //!
 //! Integrations are the one place data leaves the Mac for a service other
 //! than the chosen LLM: always directly from this Mac to the provider's API,

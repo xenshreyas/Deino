@@ -1,6 +1,6 @@
 //! How a provider connects: OAuth with PKCE over a loopback redirect, or a
 //! pasted token. The per-provider constraints behind these types are in
-//! `docs/research/integrations-oauth.md` (ADR 0029).
+//! `docs/research/integrations-oauth.md` (ADR 0031).
 
 use deino_domain::AuthMethod;
 

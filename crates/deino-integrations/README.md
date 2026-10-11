@@ -2,7 +2,7 @@
 
 ## Role
 
-The integrations framework (INT-00, [ADR 0029](../../docs/adr/0029-integrations-framework.md)).
+The integrations framework (INT-00, [ADR 0031](../../docs/adr/0031-integrations-framework.md)).
 Integrations are the one place data leaves the Mac for a service other than
 the chosen LLM. They always go directly from this Mac to the provider's API,
 with the user's own sign-in, and never through a Deino server.

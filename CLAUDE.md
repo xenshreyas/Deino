@@ -110,7 +110,8 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
 | `crates/deino-detect` | Meeting detection (ADR 0023): Core Audio process-object, default-input and CoreMediaIO camera listeners, outermost-`.app` attribution, Accessibility browser URLs, the bundle tables, Muesli's resolver, the `Clock`-driven `DetectionPolicy`, `DetectionService` and the `Detector` thread; no network |
 | `crates/deino-eventkit` | macOS Calendar through EventKit (ADR 0027): `EventKitSource` (the core's `CalendarSource`), the worker thread that owns the `EKEventStore`, store-changed and wake observers; no network |
-| `crates/deino-connect` | Online accounts (ADR 0027): `oauth` (loopback PKCE sign-in, reused by INT-00) and the Google Calendar and Microsoft Graph calendar sources over `deino-net`, refresh tokens in the Keychain |
+| `crates/deino-integrations` | The integrations framework (INT-00, ADR 0031): `Integration` + capability traits (`PostMessage`, `CreatePage`, `CreateTask`, `LogActivity`, `ReadContext`), `registry` (one line per provider; the sandbox in debug builds), `oauth` (the one OAuth layer: PKCE over a loopback redirect, per-provider redirect and client-auth rules, refresh, revocation, device code), `CredentialVault` (one Keychain item per connection), `integration_connections`/`integration_deliveries`, `IntegrationService` (connect, token paste, check, disconnect, idempotent `deliver` with rate limits and retries) |
+| `crates/deino-connect` | Online calendar accounts (ADR 0027): the Google Calendar and Microsoft Graph calendar sources over `deino-net`, signed in through `deino_integrations::oauth`, refresh tokens in the Keychain |
 | `crates/deino-diarize` | Local speaker diarization (ADR 0020): anarlog's pyannote port, WeSpeaker on Core ML, `policy`, `prune`, pinned `models` via the `ByteSource` downloader, `OnnxTrackDiarizer` (known voiceprints merge clusters), `online`, DER bench; the stage's rules are `deino-core::diarization`, voice matching is `deino-core::voiceprints` |
 | `crates/third_party/knf-rs` | Vendored Kaldi filterbank (knf-rs MIT + kaldi-native-fbank Apache-2.0), built with `cc` |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
@@ -129,7 +130,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `enhance`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `folders`, `tags`, `export`, `speakers`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `enhance`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
@@ -308,7 +309,12 @@ and untyped events still exist until cards port them; never add new ones
   patches (`usePatchSettings`); Rust uses `SettingsService::update`. A new
   setting is a field with a default in its section. **API keys live only in
   the Keychain** (`deino-secrets`); the UI can save, check and forget a key,
-  never read it (ADR 0013).
+  never read it (ADR 0013). Integration tokens are per connection: a
+  `CredentialKey` through `CredentialVault` (ADR 0031).
+- **Integrations:** a provider is one module implementing
+  `deino_integrations::Integration` plus one line in `registry.rs`; writes go
+  through `IntegrationService::deliver` with an idempotency key. OAuth anywhere
+  (calendars too) uses `deino_integrations::oauth`.
 
 ## Platform notes
 

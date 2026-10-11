@@ -2,7 +2,7 @@
 //!
 //! [`SecretName`](crate::SecretName) is a closed set, one item per app-wide
 //! key. An integration has one credential per connected account (INT-00,
-//! ADR 0029), so its items are named by a validated [`CredentialKey`]
+//! ADR 0031), so its items are named by a validated [`CredentialKey`]
 //! (`integration.slack.<connection id>`) and kept through the
 //! [`CredentialStore`] port. Nothing here is ever reachable from the UI.
 
