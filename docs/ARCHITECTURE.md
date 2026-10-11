@@ -52,6 +52,11 @@ flowchart LR
   the app process: Core Audio and CoreMediaIO listeners only wake it, it
   re-reads who captures audio, and its prompt is a second webview in a
   non-activating panel that never takes focus from the call.
+- Calendar sync (ORG-01, ADR 0027) reads macOS Calendar on one
+  `deino-eventkit` worker thread that owns the `EKEventStore`, every 2
+  minutes, on store changes and on wake; the optional Google and Microsoft
+  connectors (`deino-connect`) sign in through the default browser and a
+  one-shot loopback listener on `127.0.0.1`.
 - There is no Deino server and no telemetry. Network calls go only to the
   services the user allows, through `deino-net` (FND-12, ADR 0019): each
   caller holds a client scoped to one service's hosts, every request is
@@ -95,6 +100,14 @@ flowchart BT
   detect["deino-detect<br/>process/camera/AX signals,<br/>resolver, policy (no network)"]
   detect --> domain
   app --> detect
+  eventkit["deino-eventkit<br/>macOS Calendar via EventKit (no network)"]
+  connect["deino-connect<br/>OAuth PKCE, Google and Graph calendars"]
+  eventkit --> core
+  connect --> core
+  connect --> net
+  connect --> secrets
+  app --> eventkit
+  app --> connect
   knf["knf-rs (vendored)<br/>Kaldi filterbank"]
   diarize --> core
   diarize --> audio
@@ -125,7 +138,7 @@ flowchart BT
 | `deino-domain` | `crates/deino-domain` | The shared vocabulary: typed IDs (`MeetingId`, UUIDv7 IDs), the closed sets the schema stores (`MeetingStatus` with its transitions, `Channel`, `AttendeeRole`, `Rsvp`, ...), `Millis`/`Seconds`, `Email`, `PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port. |
 | `deino-db` | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` over `migrations/`, `DataMigration` (Rust steps between two schema migrations), `ChangeNotifier`, `Table`, `test_db()`. |
 | `deino-secrets` | `crates/deino-secrets` | `SecretStore` (set, status, delete, and `get` for Rust only), `KeychainSecretStore` over `keyring`, `InMemorySecretStore` (feature `test-support`). |
-| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). `templates` (NOT-04, ADR 0021): the template model, the 30-template versioned `CATALOG` and `BuiltinSync`, the library (`TemplateService`), per-meeting selection and previews (`MeetingTemplateService` over the pure `RuleEngine` and the `TemplateClassifier` port, with `GatewayTemplateClassifier` on route `tagging`), JSON import/export and the one-time legacy-folder import. `profile` (NOT-05): `ProfileService` (saves Settings → Profile, keeps the `people.is_me` person in step through `MeRepo`), `render_profile_context` and `ProfileContext` (the gateway's system context), and `InternalDomains` (internal vs external by email domain). `notes` (NOT-01): `NoteService` saves a meeting's TipTap document whole into `meeting_notes` (with its Readable Markdown), stores pasted and dropped images in the meeting's folder (`FsNoteImages`, content-checked, generated names), creates `scheduled` meetings for notes written ahead, (the record screen writes into the meeting being recorded, which the recorder creates at start); `people::PeopleService::search` feeds @mentions; the legacy summary's user context is the meeting's notes. Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `folders` (ORG-05, ADR 0024): `FolderService` (create, rename, icon, description, cycle-safe moves, deletion that keeps every meeting, the tree with counts), `FilingService` (a meeting in many folders, the "Unfiled" smart folder, the series offer, each folder's rules), the typed `FolderRule` (series, tag, attendee domain) with the pure `folders_matching`, and `AutoFileService` behind the `auto_folder` stage. `tags` (ORG-06): `TagService` (CRUD with palette colours and descriptions, apply/remove with a `TagSource`, the `MeetingTagged` event) and `AutoTagService` behind the `auto_tag` stage (existing tags only, on route `tagging`, skipped when the user tagged the meeting or Settings → organize turns it off; `NoModelAutoTagger` when no gateway could be wired). `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). `export` (EXP-01/02, ADR 0025) assembles a meeting into `deino_export::MeetingExport` and runs previews, saves, copies, email drafts, the `auto_export` stage's `AutoExportService` and the account export, over OS ports the app implements. |
+| `deino-core` | `crates/deino-core` | Features as Tauri-free modules: `models` (the STT model catalog, verified resumable downloads over a `ByteSource` port), `meetings` (list, rename, lifecycle, trash), `settings` (typed `Settings`, `SettingsService`, the atomic `settings.json` store, the legacy-store importers), one module per core-schema aggregate (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`: ports, SQLite repositories, fakes), and `_example` (debug builds). `templates` (NOT-04, ADR 0021): the template model, the 30-template versioned `CATALOG` and `BuiltinSync`, the library (`TemplateService`), per-meeting selection and previews (`MeetingTemplateService` over the pure `RuleEngine` and the `TemplateClassifier` port, with `GatewayTemplateClassifier` on route `tagging`), JSON import/export and the one-time legacy-folder import. `profile` (NOT-05): `ProfileService` (saves Settings → Profile, keeps the `people.is_me` person in step through `MeRepo`), `render_profile_context` and `ProfileContext` (the gateway's system context), and `InternalDomains` (internal vs external by email domain). `notes` (NOT-01): `NoteService` saves a meeting's TipTap document whole into `meeting_notes` (with its Readable Markdown), stores pasted and dropped images in the meeting's folder (`FsNoteImages`, content-checked, generated names), creates `scheduled` meetings for notes written ahead, (the record screen writes into the meeting being recorded, which the recorder creates at start); `people::PeopleService::search` feeds @mentions; the legacy summary's user context is the meeting's notes. Also `summaries` (`SummaryGenerator` over the gateway) and `settings::LlmAccess` (credentials, endpoints and route choices for the gateway). `folders` (ORG-05, ADR 0024): `FolderService` (create, rename, icon, description, cycle-safe moves, deletion that keeps every meeting, the tree with counts), `FilingService` (a meeting in many folders, the "Unfiled" smart folder, the series offer, each folder's rules), the typed `FolderRule` (series, tag, attendee domain) with the pure `folders_matching`, and `AutoFileService` behind the `auto_folder` stage. `tags` (ORG-06): `TagService` (CRUD with palette colours and descriptions, apply/remove with a `TagSource`, the `MeetingTagged` event) and `AutoTagService` behind the `auto_tag` stage (existing tags only, on route `tagging`, skipped when the user tagged the meeting or Settings → organize turns it off; `NoModelAutoTagger` when no gateway could be wired). `calendar` (ORG-01, ADR 0027): the `CalendarSource` port, the conference-link parser, the filters (declined, out of office, Focus, working location, duplicates), the mapping into `SyncBatch` (internal vs external through `InternalDomains`, the user's RSVP), `CalendarSyncRepo::apply` (one transaction, change-only upserts, per-provider pruning), `AttendeeDirectory` (people and companies from attendees), `CalendarService` (status, switch, connectors, calendars and their visibility, `upcoming`, `events_near`) and `SyncScheduler`. `diarization` holds the `diarize` stage's rules (CAP-03): `DiarizeService` over the `TrackDiarizer` port, `plan_channels` (Me on the microphone, the system track diarized, the in-person shared-microphone rule) and `attribute` (segments to speakers by overlap, split at speaker changes). `export` (EXP-01/02, ADR 0025) assembles a meeting into `deino_export::MeetingExport` and runs previews, saves, copies, email drafts, the `auto_export` stage's `AutoExportService` and the account export, over OS ports the app implements. |
 | `deino-doc` | `crates/deino-doc` | The note document (NOT-01, ADR 0022), ported from anarlog's `crates/tiptap`: TipTap/ProseMirror JSON as typed Rust (`Doc`, `Block`, `Inline`, `Mark`), with the NOT-02/NOT-03 extensions (`origin` provenance mark, `citation` nodes, person `mention`s), `from_markdown` (CommonMark + GFM via markdown-rs), `to_markdown` (`Lossless`, which round-trips, and `Readable`, for people and LLMs), `validate` (the schema rules) and `normalize`. Pure: no I/O, no Tauri. |
 | `deino-stt` | `crates/deino-stt` | Speech-to-text (CAP-01): the worker process and its protocol, `EngineSupervisor` (deadlines, GPU→CPU fallback, kill-to-cancel), `LiveSession` (continuous feeds, segments, batch fallback, rotation), `EnginePool` (a worker per lane), `StreamPerf`, the benchmark. Depends on no HTTP client. |
 | `deino-llm` | `crates/deino-llm` | The LLM gateway (FND-09, ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router` (user choices over the §4.3 defaults), provider adapters (Anthropic, OpenAI-compatible, Ollama, built-in), the shared SSE parser, `LlmError`, usage metering into `llm_calls`, the `SystemContext` port that puts the user's profile in front of every system prompt, askama prompts and minijinja user templates, `LlmAdmin` (Settings → AI), `MockProvider` (feature `test-support`) and the eval harness (`tests/llm_eval`). Reaches the world only through ports the app wires. |
@@ -136,6 +149,8 @@ flowchart BT
 | `deino-audio` | `crates/deino-audio` | Crash-safe two-track recording (FND-05a, ADR 0014): the `AudioSource` port and `MockAudioSource`, the real-time ring, `TrackTimeline` (the sample index is time), the writer thread and `AVAssetWriter` CMAF encoder, the persister and `recording.json`, `recover_recording`, `finalize_recording`, health events. `capture` (CAP-02, ADR 0026): the cpal microphone (own thread, start timeout, device ranking, Bluetooth call-mode handling) and the Core Audio process tap (own PID excluded, stable aggregate UID), RT-safe callbacks into SPSC rings with Mach host stamps, a conditioner per track (native → 48 kHz, pause ledger), and the supervisor thread (device and power listeners, 1 s debounce, stall watchdog with backoff, sleep tick-gap check, speakers/headphones route probe). |
 | `deino-recording` | `crates/deino-recording` | The live recorder (FND-05b, CAP-02, ADR 0026): `RecordingService` (start creates the meeting and its Me/Them speakers; stop closes both tracks, sets the timing and moves the meeting to `processing`), the live pipeline thread (placed audio → 16 kHz pairs → `SonoraAec` (WebRTC AEC3) on speakers → per-lane earshot VAD), the Me and Them lanes (`deino-stt` live sessions, or utterance lanes for the "Advanced" engines), the transcript router (OpenWhispr's text holdback, drafts saved about once a second, batched final saves, `SegmentUpdate` events), `recover_interrupted` at launch, `MockCapture` for `DEINO_MOCK_AUDIO`. No `tauri`, no `deino-net`. |
 | `deino-detect` | `crates/deino-detect` | Meeting detection (CAP-06, ADR 0023): the `Sensor` ports and their macOS adapters (Core Audio process objects with per-object listeners, the default input, CoreMediaIO cameras through a small safe FFI layer, `NSWorkspace`, Accessibility browser URLs), attribution to the outermost `.app`, the bundle tables and meeting-URL normaliser, Muesli's resolver, the Clock-driven `DetectionPolicy`, `DetectionService` (answers, auto-start countdown, the `DetectionEvent` stream) and the `Detector` thread. No `tauri`, no `deino-net`. |
+| `deino-eventkit` | `crates/deino-eventkit` | macOS Calendar (ORG-01, ADR 0027) through `objc2-event-kit`: `EventKitSource` (the core's `CalendarSource` for `apple`: access, the macOS 14 full-access prompt, a snapshot of every account, calendar and event in the window), the worker thread that owns the `EKEventStore`, the store-changed and wake observers that nudge the scheduler, and pure conversions of EventKit codes. No `tauri`, no network. |
+| `deino-connect` | `crates/deino-connect` | Connections to online accounts (ORG-01, ADR 0027): `oauth` (RFC 8252 loopback redirect, PKCE S256, `OAuthClient`, `sign_in`, the `BrowserOpener` port; INT-00 reuses it) and `calendar` (`ConnectorSource` over `GoogleCalendar` and `MicrosoftCalendar`, refresh tokens in the Keychain, requests through `deino-net` scoped clients). Keeps `deino-core` free of a network client. |
 | `deino-export` | `crates/deino-export` | Meeting exports as pure renderers (EXP-01/02, ADR 0025): `MeetingExport` (the DTO `deino-core::export` assembles) and `render(format, export, options)` for Markdown (YAML frontmatter Obsidian reads as properties, Obsidian `[[links]]`/`#tags`, transcript sidecars and people pages, `owner()` to recognise Deino's own files), TXT, JSON (`deino.meeting` v1), SRT, WebVTT, the rich-text HTML fragment, DOCX (`docx-rs`, re-deflated) and PDF (Typst with `pdf/template.typ` and bundled Inter); `doc` (notes Markdown as typed blocks), `naming` (`{date} {title}.md`, `{yyyy}/{mm}` templates, safe names), `csv`, `mailto`. No I/O, no clock, no system fonts. |
 | `deino-pipeline` | `crates/deino-pipeline` | The post-meeting pipeline (FND-08, ADR 0018): the `PipelineStage` contract, `registry.rs` (the one list of stages: `finalize_audio` at 10 (FND-05b: repair, then `finalize_recording`, then `set_audio` with the mic, system and mixed paths `diarize` reads), `diarize` at 30, `legacy_summary` at 50, `auto_tag` at 70, `auto_folder` at 75, `auto_export` at 99), the durable `jobs`/`job_runs` queue (`SqliteJobRepo`), the runner (one worker per meeting, 2 stages at once, clock-driven retries, cancellation, `TaskTracker`), startup reconciliation, `PipelineService` and `PipelineTrigger` (enqueues meetings entering `processing`). |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
@@ -154,7 +169,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `composition.rs` | **The composition root.** Builds services from adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri event adapters) and `app.manage`s them. `attach_settings` runs first at startup, then `attach_network` (the one `deino_net::Net` and its policy over the settings, `composition/network.rs`); `attach_database` once `deino.sqlite` is open, which also starts persisting the egress log. |
 | `paths.rs` | `AppPaths`: every app folder, resolved once from Tauri's resolver and injected (settings file, legacy stores, models, live recordings, the pre-NOT-04 templates folder to import). |
 | `llm.rs`, `llm/` | The gateway's wiring: builds `Gateway`, `LlmAdmin` and `SummaryGenerator` over the app's adapters: `NetTransport` (`llm/http.rs`: one `deino-net` scoped client per provider) and `SidecarLocalModels` (`llm/local.rs`, the built-in models over llama-helper). |
-| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `templates`, `profile`, `detection`, `folders`, `tags`, `export`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
+| `features.rs`, `features/` | New IPC: one inline Tauri plugin per feature (`system`, `meetings`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `templates`, `profile`, `detection`, `calendar`, `folders`, `tags`, `export`, `db`, and `example` and `dev` in debug builds), each with one `tauri_specta::Builder`. `features/manifest.rs` lists plugins and commands for the ACL; debug-only plugins are in `DEV_FEATURES` and granted by `capabilities/dev/`. |
 | `error.rs` | The command boundary: `into_ipc()` logs the error chain and returns `AppError`. |
 | `bindings.rs` | Test-only: exports the TypeScript bindings and checks them against the manifest. |
 | `legacy_lints.rs` | The one place inherited modules are exempted from the strict lints. |
@@ -165,6 +180,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `features/recording*`, `composition/recording.rs` | The `recording` plugin (FND-05b, CAP-02): `start`, `stop`, `pause`, `resume`, `state`, `transcript`; events `RecordingState`, `LiveSegment`, `Health` (`TauriRecordingEvents` also refreshes the tray and shows the start/stop notifications). `attach_recording` builds `RecordingService` over the SQLite repos, the pipeline's lifecycle service, `SttLanes`, `DeviceCapture` (or `MockCapture` for `DEINO_MOCK_AUDIO`), `CmafEncoderFactory` and the typed settings, then recovers interrupted recordings in the background. `tray.rs` starts, pauses and stops it directly. |
 | `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity), `SttLanes` (the recorder's `LaneEngines`: a streaming lane per Me/Them worker for Parakeet Unified, utterance lanes over the legacy engines otherwise; engine from `Settings::transcription`), the batch `TranscriptionProvider`, `NetByteSource` (the model `ByteSource` over `deino-net`'s model-download client), the worker entry and the `--transcribe-file` benchmark. |
 | `features/detection*`, `composition/detection.rs` | The `detection` plugin (CAP-06): `current`, `take_notes`, `dismiss`, `ignore_app`, `settings`; events `MeetingDetected`, `MeetingEnded`, `PromptClosed`, `RecordingRequested`. `prompt.rs` builds the prompt window (a `tauri-nspanel` panel on macOS, `capabilities/detection-prompt.json`), `adapters.rs` implements the event, window and settings ports; `recorder.rs` starts the live recorder (titled after the linked event or the app) and reports whether it is busy. `attach_detection` starts the detector at launch. |
+| `features/calendar*`, `composition/calendar.rs`, `composition/browser.rs` | The `calendar` plugin (ORG-01): `status`, `enable`, `disable`, `refresh`, `open_access_settings`, `list_calendars`, `set_calendar_visible`, `upcoming`, `event`, `connect`, `disconnect`; event `CalendarChanged`. `lookup.rs` is `SyncedCalendar`, detection's `CalendarLookup`. `attach_calendar` builds `CalendarService` over EventKit and the connectors (`ConnectorKit`: `deino-net`, the Keychain, the network switches) and starts `SyncScheduler`; `SystemBrowser` opens sign-in pages with `NSWorkspace`. `Info.plist` carries the Calendars usage descriptions and the entitlements the calendars entitlement. |
 | `features/transcription*` | The `transcription` plugin: model list, download, cancel, delete; events `ModelChanged`, `ModelDownloadProgress`. |
 | `parakeet_engine/`, `whisper_engine/` | The "Advanced" engines: Parakeet TDT (ONNX) and Whisper (`.bin` models, now run through `deino-stt` workers), with their legacy model management. Their downloads, and the built-in model's, take a `deino-net` client per call (`composition::model_downloads`); no engine holds one. |
 | `summary/` | The legacy summary commands and `summary_processes` lifecycle (`service.rs`, generation through `deino_core::summaries`, templates from the database through `features/templates/summary_bridge.rs`), and the built-in model manager and sidecar process (`summary_engine/`). |
@@ -420,7 +436,7 @@ Core Audio / CMIO listener ─wake─▶ Detector thread (also: next deadline, 5
   SignalReader: process objects → attribute (outermost .app, call daemons) → MicClients (full duplex)
                 + default input running + camera running + frontmost app
                 + browser rooms (AX kAXDocumentAttribute → url::normalize, only while capturing)
-                + CalendarLookup (NoCalendar until ORG-01)
+                + CalendarLookup (SyncedCalendar: CalendarService::events_near, in memory)
   resolve: room in a capturing browser → focused room → meeting app (weak = full duplex)
            → frontmost meeting app with camera → browser audio (15 s) → other app (15 s)
   DetectionPolicy: dwell 2.5 s / 15 s → Prompt; 30 s → Close; gone 2 s → End;
@@ -451,6 +467,22 @@ No command takes a path: dialogs open in Rust, and `export.folder` can only
 be set through `plugin:export|choose_folder` (a settings patch that sets it
 is refused).
 
+### Calendar sync (ORG-01, ADR 0027)
+
+```text
+SyncScheduler: every 2 min + EKEventStoreChanged + wake (1 s settle) + refresh/enable/connect
+  CalendarService::sync_now, for each active source (macOS Calendar when the switch is on,
+  Google / Microsoft when connected), one at a time:
+    CalendarSource::fetch(30 days back, 14 ahead) → SourceSnapshot (plain accounts, calendars, events)
+      EventKitSource: worker thread → EKEventStore (no network)
+      ConnectorSource: Keychain refresh token → OAuth → ScopedClient (Google Calendar / Graph)
+    mapping: filters, conference link, external (InternalDomains), my RSVP, series → SyncBatch
+    CalendarSyncRepo::apply: one transaction; upsert only what changed; prune this provider only
+      → DbChanged (calendar_accounts, calendars, calendar_events) only when something changed
+    AttendeeDirectory: people and companies from attendees (best effort)
+    events_near cache (CAP-06's SyncedCalendar) + CalendarChanged { status }
+```
+
 ### Reads and writes in a feature
 
 `commands.rs` → `Service` (rules, `Clock`) → `Repo` port → `SqliteXRepo`
@@ -474,6 +506,8 @@ erDiagram
   people ||--o{ meeting_attendees : attends
   companies |o--o{ people : employs
   people |o--o{ people : "merged_into"
+  calendar_accounts ||--o{ calendars : has
+  calendars |o--o{ calendar_events : holds
   calendar_accounts ||--o{ calendar_events : syncs
   calendar_events |o--o{ meetings : "recorded as"
   folders |o--o{ folders : "parent_id"
@@ -552,12 +586,21 @@ erDiagram
     TEXT role "organizer|invitee|speaker_only"
     TEXT rsvp
   }
+  calendars {
+    TEXT id PK
+    TEXT account_id FK "CASCADE"
+    TEXT provider_calendar_id "unique per account"
+    TEXT title
+    TEXT color "#RRGGBB"
+  }
   calendar_events {
     TEXT id PK
     TEXT account_id FK
+    TEXT calendar_id FK "CASCADE; NULL before ORG-01"
     TEXT provider_event_id "unique per account"
     TEXT series_id
     TEXT start_at
+    INTEGER is_all_day
     TEXT attendees_json "Vec<EventAttendee>"
     INTEGER record_override
   }
@@ -661,6 +704,12 @@ tables are omitted from the diagram's attributes.
   besides the fixture seeder. Note images are files in
   `<app data>/meetings/<meeting id>/images/`, referenced from the document
   as `images/<uuid>.<ext>`.
+- **Calendars** (ORG-01, migration `20261011090000`): `calendars` per
+  account (`UNIQUE (account_id, provider_calendar_id)`), and
+  `calendar_events.calendar_id` / `is_all_day`. Sync upserts write only when
+  a field changed, so an unchanged sync raises no `DbChanged`;
+  `record_override` is the user's and no sync writes it. Which calendars
+  are hidden is a setting (`calendar.hiddenCalendars`), not a column.
 - **Settings are not tables:** FND-06 dropped the single-row `settings` and
   `transcript_settings` tables (migration `20261009061225`); settings live in
   `settings.json` and API keys in the Keychain (ADR 0013).
@@ -677,7 +726,7 @@ tables are omitted from the diagram's attributes.
   `plugin:notes:notes-saved` (`NotesSaved`, every autosave, for other windows),
   `plugin:settings:settings-changed` (`SettingsChanged`, the whole settings
   document), `plugin:llm:ollama-pull` (Ollama download progress), `plugin:pipeline:pipeline-progress` (`PipelineProgress { meetingId, stage,
-  status }`, every stage status change), `plugin:detection:meeting-detected` / `meeting-ended` / `prompt-closed` (the prompt window) and `recording-requested` (the main window's shell starts recording), `plugin:tags:meeting-tagged` (`MeetingTagged { meetingId, tagId, appliedBy }`, a tag newly applied by the user, the AI or an automation), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
+  status }`, every stage status change), `plugin:detection:meeting-detected` / `meeting-ended` / `prompt-closed` (the prompt window) and `recording-requested` (the main window's shell starts recording), `plugin:calendar:calendar-changed` (`CalendarChanged { status }`: the sync switch, macOS access, connectors and the last sync), `plugin:tags:meeting-tagged` (`MeetingTagged { meetingId, tagId, appliedBy }`, a tag newly applied by the user, the AI or an automation), `plugin:example:note-added` (debug). Legacy code still emits untyped events (`transcript-update`,
   `recording-stopped`, …).
 - **Legacy commands** (`invoke('api_…')`): about 150 app commands, not
   ACL-checked, in `legacy.rs`. Never add to them.
@@ -709,7 +758,9 @@ tables are omitted from the diagram's attributes.
 | An LLM provider | An adapter in `crates/deino-llm/src/providers/` implementing `LlmProvider` (and `ModelCatalog`), a `ProviderId` variant (and the `llm_calls.provider` CHECK), and one registration in `frontend/src-tauri/src/llm.rs`. |
 | A built-in prompt | A `prompts/<name>.<role>.md.jinja` template and its struct and snapshot test in `crates/deino-llm/src/prompts.rs`. |
 | An LLM eval | A case in `crates/deino-llm/tests/llm_eval/cases.rs`; run with `DEINO_EVAL=1 pnpm eval <route>`. |
-| An integration | INT-00: a `Destination` implementation. |
+| A calendar provider | A `CalendarSource` adapter returning a `SourceSnapshot` (a web API: a `CalendarApi` in `crates/deino-connect/src/calendar/`, its `OAuthProvider`, `ServiceId` and `SecretName`), passed to `CalendarDeps::connectors` in `composition/calendar.rs`; the rules, storage and UI do not change. |
+| A video-call service | A `MeetingService` row in `crates/deino-core/src/calendar/conference/services.rs` (host, path, platform); `conference_tests.rs` is the table test. |
+| An integration | INT-00: a `Destination` implementation (OAuth sign-in: `deino_connect::oauth`). |
 | An MCP tool | DEV-02. |
 | A sidebar entry | `features/shell/nav.ts` plus its route file; set `comingSoon` until the screen exists. |
 | A meeting tab, right-panel section or player | `features/meeting/slots.ts` (and the `?tab=` enum in `features/meeting/search.ts` for a tab). |

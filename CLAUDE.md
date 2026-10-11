@@ -109,6 +109,8 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
 | `crates/deino-detect` | Meeting detection (ADR 0023): Core Audio process-object, default-input and CoreMediaIO camera listeners, outermost-`.app` attribution, Accessibility browser URLs, the bundle tables, Muesli's resolver, the `Clock`-driven `DetectionPolicy`, `DetectionService` and the `Detector` thread; no network |
+| `crates/deino-eventkit` | macOS Calendar through EventKit (ADR 0027): `EventKitSource` (the core's `CalendarSource`), the worker thread that owns the `EKEventStore`, store-changed and wake observers; no network |
+| `crates/deino-connect` | Online accounts (ADR 0027): `oauth` (loopback PKCE sign-in, reused by INT-00) and the Google Calendar and Microsoft Graph calendar sources over `deino-net`, refresh tokens in the Keychain |
 | `crates/deino-diarize` | Local speaker diarization (ADR 0020): anarlog's pyannote port, WeSpeaker on Core ML, `policy`, `prune`, pinned `models` via the `ByteSource` downloader, `OnnxTrackDiarizer`, `voiceprint`, `online`, DER bench; the stage's rules are `deino-core::diarization` |
 | `crates/third_party/knf-rs` | Vendored Kaldi filterbank (knf-rs MIT + kaldi-native-fbank Apache-2.0), built with `cc` |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
@@ -127,7 +129,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
