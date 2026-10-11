@@ -65,7 +65,8 @@ fn shared_bindings() -> String {
         .register::<Table>();
     let declarations = typescript().export(&types).expect("shared types export");
     let error_codes = serde_json::to_string(&ErrorCode::ALL).expect("codes serialize");
-    let tables = serde_json::to_string(&Table::ALL).expect("tables serialize");
+    // A slice: serde implements arrays only up to 32 elements.
+    let tables = serde_json::to_string(Table::ALL.as_slice()).expect("tables serialize");
     format!(
         "{declarations}\
          /** Every `ErrorCode`, for validating errors that arrive over IPC. */\n\

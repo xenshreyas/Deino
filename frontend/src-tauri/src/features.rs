@@ -48,6 +48,7 @@ pub mod tags;
 pub mod templates;
 pub mod transcript;
 pub mod transcription;
+pub mod vocabulary;
 
 /// Every feature's bindings builder, keyed by the file it is exported to
 /// under `frontend/src/lib/ipc/generated/`.
@@ -81,6 +82,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (tags::NAME, tags::specta()),
         (speakers::NAME, speakers::specta()),
         (transcript::NAME, transcript::specta()),
+        (vocabulary::NAME, vocabulary::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

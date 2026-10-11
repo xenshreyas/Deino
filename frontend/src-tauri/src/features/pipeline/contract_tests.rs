@@ -93,8 +93,10 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
         stages,
         Ok(json!([
             pending("finalize_audio"),
+            pending("final_transcription"),
             pending("diarize"),
             pending("identify_speakers"),
+            pending("vocab_fixups"),
             pending("enhance_notes"),
             pending("extract_action_items"),
             pending("auto_title"),

@@ -14,6 +14,7 @@ use deino_audio::{
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
+use deino_core::vocabulary::NoLiveVocabulary;
 use deino_recording::testing::ScriptedEngines;
 use deino_recording::{MockCapture, Preferences, RecordingDeps, RecordingService};
 use deino_testkit::{FakeClock, at, test_db};
@@ -56,6 +57,7 @@ fn recording_app(recordings: &tempfile::TempDir) -> App<MockRuntime> {
             disk: Arc::new(FakeDiskSpace::new(Bytes::gib(100))),
         },
         events: Arc::new(TauriRecordingEvents::new(app.handle().clone())),
+        vocabulary: Arc::new(NoLiveVocabulary),
         recordings: PathBuf::from(recordings.path()),
     };
     app.manage(Arc::new(RecordingService::new(deps)));

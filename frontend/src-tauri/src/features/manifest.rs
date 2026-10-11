@@ -159,6 +159,11 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "start_backfill",
         ],
     ),
+    // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──
+    (
+        "vocabulary",
+        &["list", "create", "update", "delete", "corrections", "undo"],
+    ),
     // ── ORG-05 folders ──
     (
         "folders",

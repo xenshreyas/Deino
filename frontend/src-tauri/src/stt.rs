@@ -3,13 +3,16 @@
 //!
 //! [`SttRuntime`] (Tauri state) owns the engine pool (one worker process per
 //! live lane plus one for batch work) and the model service. [`SttLanes`]
-//! opens a recording's Me and Them lanes on the engine chosen in Settings.
+//! opens a recording's Me and Them lanes on the engine chosen in Settings;
+//! [`SttBatchEngines`] opens the batch engine the `final_transcription`
+//! stage transcribes finished tracks with (CAP-08).
 //! Legacy code reaches the runtime through [`batch_provider`] (import and
 //! retranscription) and [`validate`].
 //!
 //! The executable doubles as the worker process ([`worker_entry`]) and as a
 //! headless benchmark ([`cli`]), both dispatched from `main` before Tauri.
 
+mod batch;
 pub mod cli;
 mod http_source;
 pub mod lanes;
@@ -25,6 +28,7 @@ use std::sync::Arc;
 
 use tauri::{AppHandle, Manager, Runtime};
 
+pub use batch::SttBatchEngines;
 pub use http_source::NetByteSource;
 pub use lanes::SttLanes;
 pub use provider::ParakeetUnifiedProvider;

@@ -44,6 +44,8 @@ mod recording;
 mod search;
 mod speakers;
 mod stt;
+mod transcript;
+mod vocabulary;
 
 use std::sync::Arc;
 
@@ -60,6 +62,7 @@ use pipeline::{Pipeline, PipelineAdapters};
 use pipeline::{StageAdapters, StageServices, attach_pipeline};
 pub(crate) use speakers::Speakers;
 pub(crate) use stt::attach_stt;
+pub(crate) use vocabulary::Vocabulary;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::search::SearchIndexing;
@@ -192,15 +195,17 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 }
 
 /// Wires the services that need only the database: [`Services`], folders and
-/// tags, speakers (CAP-04), the notepad, the egress log, the fixture seeder
-/// (debug builds) and the `DbChanged` bridge. Returns folders and tags,
-/// whose auto-tagger the pipeline needs once the gateway is up.
+/// tags, speakers (CAP-04), the vocabulary (TRN-05), the notepad, the egress
+/// log, the fixture seeder (debug builds) and the `DbChanged` bridge. Returns
+/// folders and tags, whose auto-tagger the pipeline needs once the gateway
+/// is up.
 fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
     Services::build(database, clock).manage(app);
     let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
     let organize = Organize::build(database, clock, tag_events);
     organize.manage(app);
     Speakers::build(database, clock).manage(app);
+    Vocabulary::build(database, clock).manage(app);
     notepad::attach_notepad(app, database, clock);
     network::attach_network_log(app, database);
     #[cfg(debug_assertions)]
@@ -381,6 +386,11 @@ mod tests {
                     search: Arc::new(deino_pipeline::RecordedIndexing::default()),
                     entities: Arc::new(deino_pipeline::RecordedEntityUpdates::default()),
                 },
+            },
+            transcript: pipeline::TranscriptStages {
+                transcriber: Arc::new(deino_core::final_transcription::ScriptedTracks::default()),
+                repass: Arc::new(deino_pipeline::FixedRepass(false)),
+                vocab_fixer: Arc::new(deino_pipeline::RecordedFixer::default()),
             },
             recordings: std::path::PathBuf::from("no-recordings"),
         };

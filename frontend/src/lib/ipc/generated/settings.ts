@@ -1090,7 +1090,19 @@ engine: TranscriptionEngine;
  * `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`; empty means the
  * engine's recommended model.
  */
-model: string }
+model: string; 
+/**
+ * "Live transcription" (CAP-08): on, the transcript appears while the
+ * meeting is recorded; off, only audio is recorded (no engine runs) and
+ * the transcript is written after the meeting.
+ */
+liveTranscription: boolean; 
+/**
+ * "High-accuracy re-pass after meeting" (CAP-08): transcribe the whole
+ * recording again with full context and replace the live transcript,
+ * keeping its speakers.
+ */
+highAccuracyRepass: boolean }
 /**
  * The UI section of `Settings`.
  */
