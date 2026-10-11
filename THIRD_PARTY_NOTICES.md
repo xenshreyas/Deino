@@ -57,6 +57,13 @@ Adapted in Deino:
   picker with a diagonally split System preview
   (`frontend/src/features/appearance/components/theme-picker.tsx`) follows
   `apps/desktop/src/settings/appearance/theme.tsx`.
+- `crates/deino-recording/` and `crates/deino-audio/src/capture/` (CAP-02):
+  skipping echo handling when the output is headphones-only
+  (`echo.rs`, after `crates/audio`'s `headphone_only_output`), the 1 s
+  device-event debounce (`capture/supervisor.rs`), the stable aggregate-device
+  UID for the process tap (`capture/macos/tap.rs`), and earshot with a
+  hangover as the live per-lane VAD (`vad.rs`), after `crates/audio` and
+  `crates/vad/src/earshot.rs`.
 - `crates/deino-llm/src/prompts.rs` and `crates/deino-llm/prompts/`: built-in
   prompts as askama `.md.jinja` templates with inline insta snapshots (the
   `prompt_snapshot!` macro), after `crates/template-app` and
@@ -192,6 +199,10 @@ Adapted in Deino:
   candidate stability rule (`policy.rs`, from
   `MeetingPromptStateMachine.swift`), and the CoreMediaIO camera observer
   (`macos/cmio.rs`, `macos/camera.rs`, from `CameraActivityMonitor.swift`).
+- `crates/deino-audio/src/capture/` (CAP-02): the system-audio watchdog's
+  recovery episodes (2 s / 5 s backoff, at most 4 attempts, 15 s cooldown,
+  two healthy ticks to clear; `watchdog.rs`), reimplemented from
+  `MeetingSystemAudioWatchdog.swift`.
 
 MIT License
 
@@ -354,6 +365,12 @@ rules, from `src/helpers/liveSpeakerIdentifier.js`). `crates/deino-detect/`
 `resources/macos-mic-listener.swift`: listeners on the process list and on
 each process object, a reconcile that skips objects that vanished mid-read,
 and ignoring `com.apple.CoreSpeech` (`macos/processes.rs`, `reader.rs`).
+`crates/deino-recording/` (CAP-02) ports the meeting-mode bleed holdback from
+`meetingMicHoldback.js`, with its text-match test (`bleed.rs`,
+`bleed/overlap.rs`); the
+capture supervisor's sleep detection by a wall-clock tick gap
+(`crates/deino-audio/src/capture/supervisor/actor.rs`) follows its
+recording watchdog.
 
 Copyright (c) 2024 OpenWhispr Team. Licensed under the MIT License (the
 same terms as the Anarlog notice above).
