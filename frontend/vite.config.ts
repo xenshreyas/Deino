@@ -18,8 +18,11 @@ import { type Alias, defineConfig, searchForWorkspaceRoot } from 'vite';
 
 /** Fixed dev-server port; `src-tauri/tauri.conf.json` `build.devUrl` points here. */
 const DEV_PORT = 3118;
-/** `pnpm dev:mock` port, apart from `tauri dev`'s so both can run at once. */
-const MOCK_PORT = 3119;
+/**
+ * `pnpm dev:mock` port, apart from `tauri dev`'s so both can run at once.
+ * `MOCK_PORT` overrides it, so parallel worktrees can each run their own.
+ */
+const MOCK_PORT = Number(process.env.MOCK_PORT ?? '3119');
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
 const generatedDir = `${src}/lib/ipc/generated`;

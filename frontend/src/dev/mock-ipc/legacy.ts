@@ -28,15 +28,9 @@ const STATIC_RESPONSES: Record<string, unknown> = {
     model_status: { parakeet: 'downloaded', summary: 'downloaded' },
   },
   check_first_launch: false,
-  is_recording: false,
-  get_recording_state: { is_recording: false, is_paused: false, is_active: false },
   // The Tauri window API the appearance feature calls; a browser has no window to theme.
   'plugin:window|set_theme': null,
-  get_recording_meeting_name: null,
-  get_transcript_history: [],
-  get_transcription_status: { chunks_in_queue: 0, is_processing: false, last_activity_ms: 0 },
   updates_enabled: false,
-  has_audio_checkpoints: false,
   get_audio_devices: [
     { name: 'MacBook Pro Microphone', device_type: 'Input' },
     { name: 'MacBook Pro Speakers', device_type: 'Output' },

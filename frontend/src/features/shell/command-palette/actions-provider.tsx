@@ -85,7 +85,7 @@ function useActionRunners(): Record<ActionId, () => void> {
   return {
     'new-note': goHome,
     record: () => {
-      requestRecordingStart(router.state.location.pathname, goHome);
+      void requestRecordingStart(goHome);
     },
     chat: () => {
       layout.setChatOpen(true);

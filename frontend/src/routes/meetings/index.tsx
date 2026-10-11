@@ -28,7 +28,7 @@ function MeetingsRoute() {
         void navigate({ search: { tags: next.length === 0 ? undefined : next }, replace: true })
       }
       onStartRecording={() => {
-        requestRecordingStart('/meetings', () => void navigate({ to: '/' }));
+        void requestRecordingStart(() => void navigate({ to: '/' }));
       }}
     />
   );

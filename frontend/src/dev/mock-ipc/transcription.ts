@@ -38,7 +38,6 @@ const files: Generated.ModelFileView[] = SIZES.map(([quant, sizeBytes]) => ({
 }));
 
 export const events = {
-  liveTranscript: mockEvent<Generated.LiveTranscript>('plugin:transcription:live-transcript'),
   modelChanged: mockEvent<Generated.ModelChanged>('plugin:transcription:model-changed'),
   modelDownloadProgress: mockEvent<Generated.ModelDownloadProgress>(
     'plugin:transcription:model-download-progress',

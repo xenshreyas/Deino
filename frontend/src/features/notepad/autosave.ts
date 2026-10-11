@@ -4,7 +4,7 @@
  * Every edit restarts a ~1 s timer; when typing pauses, the latest value is
  * saved. Saves never overlap (a slow disk cannot reorder them), a failed
  * save is retried with the newest value, and `flush` saves at once (on
- * unmount, before navigation, before a recording's draft is adopted).
+ * unmount, before navigation, before the window closes).
  * Notes are therefore on disk about a second after the last keystroke,
  * which is what lets them survive a crash.
  */

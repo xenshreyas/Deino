@@ -1,8 +1,7 @@
 /**
  * The notepad's editors, loaded on first use. TipTap and ProseMirror are
  * about a third of the app's JavaScript; keeping them out of the entry
- * chunk lets the shell paint first, and the stop path (`adoptLiveNotes`)
- * can import this feature without pulling the editor in.
+ * chunk lets the shell paint first.
  */
 import { forwardRef, lazy, Suspense } from 'react';
 
@@ -14,9 +13,6 @@ import type { SummaryDocumentHandle, SummaryDocumentProps } from './components/s
 
 const LazyNotepad = lazy(() =>
   import('./components/notepad').then((module) => ({ default: module.Notepad })),
-);
-const LazyLiveNotepad = lazy(() =>
-  import('./components/live-notepad').then((module) => ({ default: module.LiveNotepad })),
 );
 const LazyNotepadWindow = lazy(() =>
   import('./components/notepad-window').then((module) => ({ default: module.NotepadWindow })),
@@ -32,15 +28,6 @@ export function Notepad(props: NotepadProps) {
   return (
     <Suspense fallback={<SkeletonText lines={3} />}>
       <LazyNotepad {...props} />
-    </Suspense>
-  );
-}
-
-/** The record screen's notepad (see `components/live-notepad.tsx`). */
-export function LiveNotepad() {
-  return (
-    <Suspense fallback={null}>
-      <LazyLiveNotepad />
     </Suspense>
   );
 }

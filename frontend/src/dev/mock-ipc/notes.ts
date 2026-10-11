@@ -37,12 +37,6 @@ export const commands = {
     await latency();
     return mockDatabase.addScheduled(title, new Date());
   },
-  async adopt(draft, into) {
-    await latency();
-    const saved = mockNotes.adopt(draft, into, new Date());
-    mockDatabase.remove(draft);
-    return ok(saved);
-  },
   async saveImage(meetingId, base64) {
     await latency();
     return ok({ src: mockNotes.saveImage(meetingId, base64) });

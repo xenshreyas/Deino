@@ -73,16 +73,6 @@ export class MockNotes {
     return { meetingId, updatedAt };
   }
 
-  /** Moves a draft's notes after the target's, and forgets the draft. */
-  adopt(draft: MeetingId, into: MeetingId, now: Date): SavedNotes {
-    const moved = this.state.notes[draft]?.doc.content ?? [];
-    const existing = this.state.notes[into]?.doc.content ?? [];
-    this.state.notes = Object.fromEntries(
-      Object.entries(this.state.notes).filter(([id]) => id !== draft),
-    );
-    return this.save(into, { type: 'doc', content: [...existing, ...moved] }, now);
-  }
-
   /** Keeps an image and returns its source. */
   saveImage(meetingId: MeetingId, base64: string): string {
     const src = `images/${crypto.randomUUID()}.png`;

@@ -24,9 +24,6 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke }));
 vi.mock('sonner', () => ({
   toast: { info: notify, error: notify, success: notify, warning: notify },
 }));
-vi.mock('@/contexts/RecordingStateContext', () => ({
-  useRecordingState: () => ({ isRecording: false }),
-}));
 vi.mock('@tanstack/react-router', () => ({
   useLocation: (options: { select: (location: { pathname: string }) => string }) =>
     options.select({ pathname: '/meetings/meeting-a' }),

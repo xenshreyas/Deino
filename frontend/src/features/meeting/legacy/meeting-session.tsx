@@ -6,9 +6,6 @@ import PageContent from "./meeting-panels";
 import { LegacyMeetingPanelsProvider } from "./panels-context";
 import type { MeetingSource } from "../search";
 import { invoke } from "@tauri-apps/api/core";
-import { useConfig } from "@/contexts/ConfigContext";
-import { legacyOllamaModels } from "@/features/llm";
-import { settingsApi } from "@/features/settings";
 import { usePaginatedTranscripts } from "@/hooks/usePaginatedTranscripts";
 import { parseSummaryContent } from "@/lib/summary-content";
 
@@ -23,7 +20,8 @@ interface MeetingDetailsResponse {
 
 interface LegacyMeetingSessionProps {
   meetingId: string;
-  /** How the user got here; `'recording'` may auto-generate the summary. */
+  /** How the user got here. The summary after a recording comes from the
+   * pipeline (`legacy_summary`, which honours the auto-summary setting). */
   source?: MeetingSource | undefined;
   /** The meeting page; its Notes and Transcript slots read the published panels. */
   children: ReactNode;
@@ -35,16 +33,13 @@ interface LegacyMeetingSessionProps {
  * page's slots (`panels-context.tsx`). Inherited code: NOT-01 and TRN-01
  * replace it with typed queries.
  */
-export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeetingSessionProps) {
+export function LegacyMeetingSession({ meetingId, children }: LegacyMeetingSessionProps) {
   const { setCurrentMeeting, refetchMeetings } = useSidebar();
-  const { isAutoSummary } = useConfig(); // Get auto-summary toggle state
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsResponse | null>(null);
   const [summaryResponse, setSummaryResponse] = useState<SummaryProcessResponse | null>(null);
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [shouldAutoGenerate, setShouldAutoGenerate] = useState<boolean>(false);
-  const [hasCheckedAutoGen, setHasCheckedAutoGen] = useState<boolean>(false);
 
   // Use pagination hook for efficient transcript loading
   const {
@@ -60,70 +55,6 @@ export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeet
     refetch,
     error: transcriptError,
   } = usePaginatedTranscripts({ meetingId: meetingId || '' });
-
-  // Check if gemma3:1b model is available in Ollama
-  const checkForGemmaModel = useCallback(async (): Promise<boolean> => {
-    try {
-      const models = await legacyOllamaModels();
-      const hasGemma = models.some((m) => m.name === 'gemma3:1b');
-      console.log('🔍 Checked for gemma3:1b:', hasGemma);
-      return hasGemma;
-    } catch (error) {
-      console.error('❌ Failed to check Ollama models:', error);
-      return false;
-    }
-  }, []);
-
-  // Set up auto-generation - respects DB as source of truth
-  const setupAutoGeneration = useCallback(async () => {
-    if (hasCheckedAutoGen) return; // Only check once
-
-    // Only auto-generate if navigated from recording
-    if (source !== 'recording') {
-      console.log('Not from recording navigation, skipping auto-generation');
-      setHasCheckedAutoGen(true);
-      return;
-    }
-
-    // Respect user's auto-summary toggle preference
-    if (!isAutoSummary) {
-      console.log('Auto-summary is disabled in settings');
-      setHasCheckedAutoGen(true);
-      return;
-    }
-
-    try {
-      // The saved model choice is the source of truth (FND-06 settings)
-      const { ai } = await settingsApi.get();
-
-      // If a model is already chosen, use it (never override!)
-      if (ai.model) {
-        console.log('Using the saved summary model');
-        setShouldAutoGenerate(true);
-        setHasCheckedAutoGen(true);
-        return;
-      }
-
-      // Nothing chosen - check if gemma3:1b exists as fallback
-      const hasGemma = await checkForGemmaModel();
-
-      if (hasGemma) {
-        console.log('💾 No model chosen, using gemma3:1b as initial default');
-
-        await settingsApi.patch({
-          ai: { provider: 'ollama', model: 'gemma3:1b', providerModels: { ollama: 'gemma3:1b' } },
-        });
-
-        setShouldAutoGenerate(true);
-      } else {
-        console.log('⚠️ No model configured and gemma3:1b not found');
-      }
-    } catch (error) {
-      console.error('❌ Failed to setup auto-generation:', error);
-    }
-
-    setHasCheckedAutoGen(true);
-  }, [hasCheckedAutoGen, checkForGemmaModel, source, isAutoSummary]);
 
   // Sync meeting metadata from pagination hook to meeting details state
   useEffect(() => {
@@ -176,9 +107,6 @@ export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeet
     setSummaryResponse(null);
     setError(null);
     setIsLoading(true);
-    // Reset auto-generation state to allow new meeting to be checked
-    setHasCheckedAutoGen(false);
-    setShouldAutoGenerate(false);
   }, [meetingId]);
 
   useEffect(() => {
@@ -228,31 +156,6 @@ export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeet
     return () => { cancelled = true; };
   }, [meetingId]);
 
-  // Auto-generation check: runs when meeting is loaded with no summary
-  useEffect(() => {
-    const checkAutoGen = async () => {
-      // Only auto-generate if:
-      // 1. We have meeting details
-      // 2. No summary exists
-      // 3. Meeting has transcripts
-      // 4. Haven't checked yet
-      if (
-        meetingDetails &&
-        !isLoading &&
-        summaryResponse?.status === 'idle' &&
-        meetingSummary === null &&
-        meetingDetails.transcripts &&
-        meetingDetails.transcripts.length > 0 &&
-        !hasCheckedAutoGen
-      ) {
-        console.log('No summary found, checking for auto-generation...');
-        await setupAutoGeneration();
-      }
-    };
-
-    checkAutoGen();
-  }, [meetingDetails, meetingSummary, summaryResponse, isLoading, hasCheckedAutoGen, setupAutoGeneration]);
-
   if (error) {
     return (
       <LegacyMeetingPanelsProvider value={{ status: 'error', message: error }}>
@@ -275,8 +178,6 @@ export function LegacyMeetingSession({ meetingId, source, children }: LegacyMeet
     initialSummary={summaryResponse}
     meeting={meetingDetails}
     summaryData={meetingSummary}
-    shouldAutoGenerate={shouldAutoGenerate}
-    onAutoGenerateComplete={() => setShouldAutoGenerate(false)}
     onMeetingUpdated={async () => {
       // Refetch meeting details to get updated title from backend
       await fetchMeetingDetails();

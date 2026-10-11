@@ -7,9 +7,7 @@ import { ConfigProvider } from '@/contexts/ConfigContext';
 import { ImportDialogProvider } from '@/contexts/ImportDialogContext';
 import { OllamaDownloadProvider } from '@/contexts/OllamaDownloadContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
-import { RecordingPostProcessingProvider } from '@/contexts/RecordingPostProcessingProvider';
-import { RecordingStateProvider } from '@/contexts/RecordingStateContext';
-import { TranscriptProvider } from '@/contexts/TranscriptContext';
+import { RecordingSync } from '@/features/recording';
 import { SettingsSync } from '@/features/settings';
 
 interface AppProvidersProps {
@@ -21,35 +19,33 @@ interface AppProvidersProps {
 /**
  * The app-wide React contexts, in dependency order (outermost first).
  *
- * The order is load-bearing: later providers read earlier ones (for example
- * `SidebarProvider` reads recording state). Rust data is moving out of these
- * contexts into TanStack Query (the meetings list already lives in
- * `@/features/meetings`); the query client itself is provided in `main.tsx`.
- * `SettingsSync` keeps the cached settings equal to the saved ones.
+ * The order is load-bearing: later providers read earlier ones. Rust data
+ * is moving out of these contexts into TanStack Query (the meetings list
+ * lives in `@/features/meetings`, the recorder in `@/features/recording`);
+ * the query client itself is provided in `main.tsx`. `SettingsSync` keeps
+ * the cached settings equal to the saved ones; `RecordingSync` keeps the
+ * recorder's state current.
  */
 export function AppProviders({ onOpenImportDialog, children }: AppProvidersProps) {
   return (
-    <RecordingStateProvider>
+    <>
       <SettingsSync />
-      <TranscriptProvider>
-        <ConfigProvider>
-          <OllamaDownloadProvider>
-            <OnboardingProvider>
-              <UpdateCheckProvider>
-                <SidebarProvider>
-                  <TooltipProvider>
-                    <RecordingPostProcessingProvider>
-                      <ImportDialogProvider onOpen={onOpenImportDialog}>
-                        {children}
-                      </ImportDialogProvider>
-                    </RecordingPostProcessingProvider>
-                  </TooltipProvider>
-                </SidebarProvider>
-              </UpdateCheckProvider>
-            </OnboardingProvider>
-          </OllamaDownloadProvider>
-        </ConfigProvider>
-      </TranscriptProvider>
-    </RecordingStateProvider>
+      <RecordingSync />
+      <ConfigProvider>
+        <OllamaDownloadProvider>
+          <OnboardingProvider>
+            <UpdateCheckProvider>
+              <SidebarProvider>
+                <TooltipProvider>
+                  <ImportDialogProvider onOpen={onOpenImportDialog}>
+                    {children}
+                  </ImportDialogProvider>
+                </TooltipProvider>
+              </SidebarProvider>
+            </UpdateCheckProvider>
+          </OnboardingProvider>
+        </OllamaDownloadProvider>
+      </ConfigProvider>
+    </>
   );
 }

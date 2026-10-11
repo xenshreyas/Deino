@@ -23,7 +23,6 @@ export const LEGACY_FILES = [
   'src/features/meeting/legacy/meeting-panels.tsx',
   'src/features/meeting/legacy/meeting-session.test.tsx',
   'src/features/meeting/legacy/meeting-session.tsx',
-  'src/features/record/components/settings-modals.tsx',
   'src/features/record/record-screen.tsx',
   // GPU build helpers behind `pnpm tauri:dev` and `pnpm tauri:build`.
   'scripts/auto-detect-gpu.js',
