@@ -1,14 +1,16 @@
 /**
  * Where a hit leads: its meeting (at the moment's time for a transcript
- * hit), a filter (people and companies narrow the search to their
- * meetings), a folder, or the action items.
+ * hit), a person's or company's page (ORG-04), a folder, or the action
+ * items. People and companies still narrow a search when chosen as `@`
+ * filters.
  */
-import type { FilterChip, Hit } from './types';
+import type { Hit } from './types';
 
 /** What choosing a hit does. */
 export type HitTarget =
   | { kind: 'meeting'; meetingId: string; atMs: number | null }
-  | { kind: 'filter'; chip: FilterChip }
+  | { kind: 'person'; personId: string }
+  | { kind: 'company'; companyId: string }
   | { kind: 'folder'; folderId: string }
   | { kind: 'action-items' };
 
@@ -16,8 +18,9 @@ export type HitTarget =
 export function hitTarget(hit: Hit): HitTarget {
   switch (hit.kind) {
     case 'person':
+      return { kind: 'person', personId: hit.refId };
     case 'company':
-      return { kind: 'filter', chip: { kind: hit.kind, id: hit.refId, label: hit.label.text } };
+      return { kind: 'company', companyId: hit.refId };
     case 'folder':
       return { kind: 'folder', folderId: hit.refId };
     case 'segment':

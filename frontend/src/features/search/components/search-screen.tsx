@@ -14,7 +14,7 @@ import { searchCopy } from '../copy';
 import { hitTarget } from '../hit-target';
 import { useSearch } from '../queries';
 import type { SearchPageParams, SearchTab } from '../search';
-import type { FilterChip, Hit, SearchResults } from '../types';
+import type { Hit, SearchResults } from '../types';
 import { FilterChips } from './filter-chips';
 import { ResultList, ResultsSkeleton } from './result-list';
 import { NoResults, SearchField, StartSearching } from './search-field';
@@ -72,7 +72,7 @@ function SearchBody({ params, onParamsChange }: SearchScreenProps) {
   const enabled = text.trim() !== '' || filters.length > 0;
   const request = { text, filters: { chips: filters, domains: [] }, limit: PAGE_LIMIT };
   const results = useSearch(request, enabled);
-  const open = useResultOpener(filters, onParamsChange);
+  const open = useResultOpener();
   if (!enabled) return <StartSearching />;
   if (results.isError) return <SearchError message={results.error.message} />;
   const toMoments = () => {
@@ -93,24 +93,11 @@ function SearchBody({ params, onParamsChange }: SearchScreenProps) {
   );
 }
 
-/** Opens a hit: people and companies become filters on the Meetings tab. */
-function useResultOpener(
-  filters: FilterChip[],
-  onParamsChange: (params: SearchPageParams) => void,
-) {
+/** Opens a hit where it leads: a meeting, a person's or company's page, a folder. */
+function useResultOpener() {
   const openHit = useOpenHit();
   return (hit: Hit) => {
-    const target = hitTarget(hit);
-    if (target.kind !== 'filter') {
-      openHit(target);
-      return;
-    }
-    const known = filters.some((chip) => chip.id === target.chip.id);
-    onParamsChange({
-      filters: known ? filters : [...filters, target.chip],
-      q: '',
-      tab: 'meetings',
-    });
+    openHit(hitTarget(hit));
   };
 }
 

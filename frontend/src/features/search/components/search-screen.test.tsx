@@ -56,8 +56,9 @@ function renderScreen(params: SearchPageParams) {
     component: () => <SearchScreen params={params} onParamsChange={onParamsChange} />,
   });
   const meeting = createRoute({ getParentRoute: () => root, path: '/meetings/$meetingId' });
+  const person = createRoute({ getParentRoute: () => root, path: '/people/$personId' });
   const router = createRouter({
-    routeTree: root.addChildren([page, meeting]),
+    routeTree: root.addChildren([page, meeting, person]),
     history: createMemoryHistory({ initialEntries: ['/'] }),
   });
   render(
@@ -99,15 +100,13 @@ describe('the results page', () => {
     expect(router.state.location.search).toEqual({ tab: 'transcript', t: 3_723_000 });
   });
 
-  test('choosing a person turns them into a filter on the meetings tab', async () => {
-    const { onParamsChange } = renderScreen({ q: 'maya', tab: 'people' });
+  test('choosing a person opens their page', async () => {
+    const { router } = renderScreen({ q: 'maya', tab: 'people' });
 
     fireEvent.click(await screen.findByRole('button', { name: /Maya Chen/ }));
 
-    expect(onParamsChange).toHaveBeenCalledWith({
-      filters: [{ kind: 'person', id: 'person-1', label: 'Maya Chen' }],
-      q: '',
-      tab: 'meetings',
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/people/person-1');
     });
   });
 
