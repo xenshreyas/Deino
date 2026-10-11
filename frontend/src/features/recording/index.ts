@@ -10,11 +10,15 @@
  * | {@link RecordingControls} | the record screen (its live transcript is `features/transcript`) |
  * | {@link useRecordingState}, {@link useElapsed}, {@link useRecordingActions} | the sidebar's record block, anything that shows the recorder |
  * | {@link startRecording} | the shell's start paths (sidebar, ⌘⇧R, palette, detection) |
+ * | {@link RecordPanel} | the floating record panel's page (`record-panel.html`, CAP-10) |
+ * | {@link ResumeRecordingButton} | the meeting header: record more of a finished meeting (CAP-07) |
  */
 export { recordingApi } from './api';
+export { RecordPanel } from './components/record-panel/record-panel';
 export { RecordingControls } from './components/recording-controls';
 export { RecordingSync } from './components/recording-sync';
-export { recordingCopy } from './copy';
+export { ResumeRecordingButton } from './components/resume-recording';
+export { issueLabel, recordingCopy } from './copy';
 export { formatElapsed } from './elapsed';
 export { useElapsed } from './hooks/use-elapsed';
 export {
@@ -25,4 +29,4 @@ export {
   useRecordingActions,
   useRecordingState,
 } from './queries';
-export type { RecordingPhase, RecordingSnapshot } from './types';
+export type { HealthIssue, RecordingPhase, RecordingSnapshot } from './types';

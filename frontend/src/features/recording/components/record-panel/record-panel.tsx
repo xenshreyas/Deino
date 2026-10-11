@@ -1,0 +1,156 @@
+/**
+ * The record panel's page (CAP-10): the pill, wired to the recorder, and
+ * auto-stop's offer under it (CAP-07). The window is transparent and a
+ * little larger than the pill; the pill hugs the screen edge the panel is
+ * snapped to and grows away from it.
+ */
+import { useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+
+import { useIpcEvent } from '@/lib/ipc';
+import { events } from '@/lib/ipc/generated/recording';
+import { cn } from '@/ui/cn';
+
+import { recordingApi } from '../../api';
+import { endingReason, issueLabel } from '../../copy';
+import { formatElapsed } from '../../elapsed';
+import { useAutoStop, useAutoStopAnswers } from '../../hooks/use-auto-stop';
+import { useDeviceControls } from '../../hooks/use-device-controls';
+import { useElapsed } from '../../hooks/use-elapsed';
+import {
+  usePanelHover,
+  usePanelLevels,
+  usePanelRegion,
+  usePanelTheme,
+  usePressOrDrag,
+  useSecondsUntil,
+} from '../../hooks/use-record-panel';
+import { showMicrophoneMenu } from '../../panel-window';
+import { recordingKeys, useRecordingActions, useRecordingState } from '../../queries';
+import type { AutoStopState, RecordingSnapshot } from '../../types';
+import { Pill, type PillView } from './pill';
+import type { PillActions } from './pill-controls';
+import { SplitCard } from './split-card';
+
+/** Keeps the cached recorder state current (the panel has no `RecordingSync`). */
+function useFollowRecorder(): RecordingSnapshot {
+  const client = useQueryClient();
+  useIpcEvent(events.recordingState, ({ snapshot }) => {
+    client.setQueryData(recordingKeys.state(), snapshot);
+  });
+  return useRecordingState();
+}
+
+/** Opens the live meeting in the main window. */
+function openNotes(): void {
+  recordingApi.openLiveMeeting().catch((error: unknown) => {
+    console.error('[recording] Could not open the live meeting', error);
+  });
+}
+
+/** The pill's actions over the recorder, the devices and auto-stop. */
+function usePillActions(snapshot: RecordingSnapshot): PillActions {
+  const recorder = useRecordingActions();
+  const devices = useDeviceControls();
+  const answers = useAutoStopAnswers();
+  return {
+    onPause: () => {
+      recorder.pause.mutate();
+    },
+    onResume: () => {
+      recorder.resume.mutate();
+    },
+    onStop: () => {
+      recorder.stop.mutate();
+    },
+    onMicrophone: () => {
+      void recordingApi.microphones().then((microphones) =>
+        showMicrophoneMenu(microphones, snapshot.microphone, (name) => {
+          devices.microphone.mutate(name);
+        }),
+      );
+    },
+    onSystemAudio: () => {
+      devices.systemAudio.mutate(!snapshot.systemAudio);
+    },
+    onOpenNotes: openNotes,
+    onKeep: () => {
+      answers.keep.mutate();
+    },
+  };
+}
+
+/** What the pill shows now. */
+function usePillView(
+  snapshot: RecordingSnapshot,
+  autoStop: AutoStopState,
+  expanded: boolean,
+): PillView {
+  const seconds = useElapsed(snapshot);
+  const levels = usePanelLevels();
+  const endingIn = useSecondsUntil(autoStop.ending?.stopAt ?? null);
+  const issue = snapshot.issues[0];
+  return {
+    phase: snapshot.phase,
+    elapsed: formatElapsed(seconds),
+    levels,
+    expanded,
+    warning: issue === undefined ? null : issueLabel(issue),
+    ending:
+      autoStop.ending === null || endingIn === null
+        ? null
+        : { seconds: endingIn, reason: endingReason[autoStop.ending.reason] },
+    systemAudio: snapshot.systemAudio,
+  };
+}
+
+/** Auto-stop's back-to-back offer, while there is one. */
+function NextMeetingOffer({ autoStop }: { autoStop: AutoStopState }) {
+  const answers = useAutoStopAnswers();
+  if (autoStop.split === null) return null;
+  return (
+    <SplitCard
+      offer={autoStop.split}
+      busy={answers.split.isPending}
+      onAccept={() => {
+        answers.split.mutate(true);
+      }}
+      onDismiss={() => {
+        answers.split.mutate(false);
+      }}
+    />
+  );
+}
+
+/** The record panel. */
+export function RecordPanel() {
+  usePanelTheme();
+  const snapshot = useFollowRecorder();
+  const autoStop = useAutoStop();
+  const hover = usePanelHover();
+  const stack = useRef<HTMLDivElement>(null);
+  const edge = usePanelRegion(stack);
+  const actions = usePillActions(snapshot);
+  const view = usePillView(snapshot, autoStop, hover.expanded);
+  const onPointerDown = usePressOrDrag(openNotes);
+  return (
+    <main
+      className={cn(
+        'flex h-screen w-screen p-3',
+        edge === 'right' ? 'justify-end' : 'justify-start',
+      )}
+    >
+      <div
+        ref={stack}
+        onPointerEnter={hover.onPointerEnter}
+        onPointerLeave={hover.onPointerLeave}
+        className={cn('flex h-max flex-col gap-2', edge === 'right' ? 'items-end' : 'items-start')}
+      >
+        {snapshot.phase === 'idle' ? null : (
+          <Pill view={view} actions={actions} onPointerDown={onPointerDown} />
+        )}
+        <NextMeetingOffer autoStop={autoStop} />
+      </div>
+    </main>
+  );
+}

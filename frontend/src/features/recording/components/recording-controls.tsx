@@ -8,7 +8,7 @@ import { Button } from '@/ui/button';
 import { ICON_PROPS, Pause, Play, Square } from '@/ui/icons';
 import { LevelBars } from '@/ui/level-bars';
 
-import { recordingCopy } from '../copy';
+import { issueLabel, recordingCopy } from '../copy';
 import { formatElapsed } from '../elapsed';
 import { useElapsed } from '../hooks/use-elapsed';
 import { useRecordingActions, useRecordingState } from '../queries';
@@ -18,6 +18,17 @@ const BAR =
   'flex h-11 items-center gap-3 rounded-full border border-border bg-surface-raised px-4 shadow-md';
 
 type Actions = ReturnType<typeof useRecordingActions>;
+
+/** The first open health issue, in the warning colour (CAP-10). */
+function HealthLabel({ snapshot }: { snapshot: RecordingSnapshot }) {
+  const issue = snapshot.issues[0];
+  if (issue === undefined) return null;
+  return (
+    <span role="alert" className="text-xs whitespace-nowrap text-warning-text">
+      {issueLabel(issue)}
+    </span>
+  );
+}
 
 /** Recording or paused: the timer and the pause and stop buttons. */
 function Running({ snapshot, actions }: { snapshot: RecordingSnapshot; actions: Actions }) {
@@ -30,6 +41,7 @@ function Running({ snapshot, actions }: { snapshot: RecordingSnapshot; actions: 
       <span className="min-w-12 text-sm text-fg tabular-nums">
         {paused ? recordingCopy.paused : formatElapsed(seconds)}
       </span>
+      <HealthLabel snapshot={snapshot} />
       <Button
         variant="ghost"
         size="sm"

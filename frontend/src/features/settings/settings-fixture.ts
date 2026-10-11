@@ -17,7 +17,13 @@ const DEFAULT_SETTINGS: Settings = {
     routes: {},
   },
   audio: { preferredMicDevice: null, preferredSystemDevice: null, usesHeadphones: false },
-  recording: { autoSave: true, showRecordingNotice: true },
+  recording: {
+    autoSave: true,
+    showRecordingNotice: true,
+    showPanel: true,
+    panelPosition: null,
+    autoStop: { enabled: true, afterCalendarEnd: false, offerNextMeeting: true },
+  },
   transcription: {
     engine: 'parakeet_unified',
     model: '',

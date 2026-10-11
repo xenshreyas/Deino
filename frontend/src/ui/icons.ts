@@ -107,6 +107,8 @@ export {
   UserRound,
   Users,
   Video,
+  Volume2,
+  VolumeX,
   Workflow,
   Wrench,
   X,

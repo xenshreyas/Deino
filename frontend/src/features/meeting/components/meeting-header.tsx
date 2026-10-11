@@ -5,6 +5,7 @@ import { MeetingAttendees } from '@/features/entities';
 import { MeetingFolders } from '@/features/folders';
 import { type MeetingId, useMeeting } from '@/features/meetings';
 import { PipelineStrip } from '@/features/pipeline';
+import { ResumeRecordingButton } from '@/features/recording';
 import { MeetingTags } from '@/features/tags';
 import { MetaChip } from '@/ui/chip';
 import { Calendar } from '@/ui/icons';
@@ -49,6 +50,9 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
         <MeetingAttendees meetingId={meetingId} restingClassName={REVEAL_ON_HOVER} />
         <MeetingFolders meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
         <MeetingTags meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
+        <span className="ml-auto">
+          <ResumeRecordingButton meetingId={meetingId} />
+        </span>
       </div>
       {/* FND-08: processing status, minimally placed; FND-10 follow-up gives it its home. */}
       <PipelineStrip meetingId={meetingId} />

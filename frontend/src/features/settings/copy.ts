@@ -118,6 +118,23 @@ export const settingsCopy = {
   },
 } as const;
 
+/** Settings → Recording: the record panel and auto-stop (CAP-10, CAP-07). */
+export const recordingSettingsCopy = {
+  heading: 'While recording',
+  panelTitle: 'Show the record panel',
+  panelDescription:
+    'A small pill at the edge of the screen with the time, a level meter and the controls. It never takes focus from your call.',
+  autoStopTitle: 'End recordings automatically',
+  autoStopDescription:
+    'When the call app lets go of the microphone, after 15 minutes without speech, or when your Mac sleeps. You get 15 seconds to keep recording.',
+  calendarTitle: 'Also when the calendar event is over',
+  calendarDescription:
+    'Ten minutes after the event ends, once nobody has spoken for two minutes. Off by default: meetings often run over.',
+  nextMeetingTitle: 'Offer a new note when the next meeting starts',
+  nextMeetingDescription:
+    'If you are still recording when a meeting with other people begins, ask whether to start a new note for it.',
+} as const;
+
 /** The placeholder for an API key field: a typed key replaces a saved one. */
 export function apiKeyPlaceholder(status: SecretStatus | undefined): string {
   return status === 'stored'

@@ -11,6 +11,7 @@ import { failure, ok } from './command-result';
 import { mockDatabase, mockEventLinks, mockTranscripts } from './database';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
+import { panelCommands, panelEvents } from './mock-record-panel';
 
 /** How often a word is heard. */
 const WORD_MS = 350;
@@ -31,9 +32,14 @@ const IDLE: Generated.RecordingSnapshot = {
   pausedMs: 0,
   pausedAt: null,
   echo: null,
+  calendarEventId: null,
+  microphone: null,
+  systemAudio: true,
+  issues: [],
 };
 
 export const events = {
+  ...panelEvents,
   health: mockEvent<Generated.Health>('plugin:recording:health'),
   liveSegment: mockEvent<Generated.LiveSegment>('plugin:recording:live-segment'),
   recordingState: mockEvent<Generated.RecordingState>('plugin:recording:recording-state'),
@@ -158,4 +164,12 @@ export const commands = {
     await latency();
     return ok(snapshot);
   },
+  async resumeMeeting() {
+    await latency();
+    return failure<Generated.MeetingId>({
+      code: 'unavailable',
+      message: 'resuming a meeting needs the app',
+    });
+  },
+  ...panelCommands({ get: () => snapshot, publish }),
 } satisfies typeof Generated.commands;
