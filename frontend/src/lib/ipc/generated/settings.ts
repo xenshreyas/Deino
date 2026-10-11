@@ -341,6 +341,28 @@ transcriptSidecar: boolean;
  */
 obsidian: boolean }
 /**
+ * Cosine similarities between a speaker's voice and a person's best
+ * exemplar that decide what `identify_speakers` does.
+ */
+export type IdentifyThresholds = { 
+/**
+ * A calendar attendee is named automatically from this score...
+ */
+autoAssign: number; 
+/**
+ * ...anyone else only from this one (a stranger's voice must be clearer).
+ */
+autoAssignNonAttendee: number; 
+/**
+ * ...and only when the best score beats the runner-up by this much, in
+ * both directions (mutual best).
+ */
+margin: number; 
+/**
+ * Below automatic naming, from this score the UI asks "Is this Alex?".
+ */
+suggest: number }
+/**
  * An app the user chose to always ignore.
  */
 export type IgnoredApp = { 
@@ -793,6 +815,10 @@ notifications: NotificationSettings;
  */
 detection: DetectionSettings; 
 /**
+ * Naming speakers by voice (CAP-04).
+ */
+speakers: SpeakerSettings; 
+/**
  * Privacy controls (PRV-01).
  */
 privacy: PrivacySettings; 
@@ -840,6 +866,19 @@ export type SettingsChanged = {
  * Every setting, as now saved.
  */
 settings: Settings }
+/**
+ * The speakers section of `Settings`.
+ */
+export type SpeakerSettings = { 
+/**
+ * Name speakers from voice profiles and the calendar after each
+ * meeting (the `identify_speakers` stage). On by default.
+ */
+autoIdentify: boolean; 
+/**
+ * When a voice counts as a known person.
+ */
+thresholds: IdentifyThresholds }
 /**
  * A provider and model, chosen by a route or pinned by the caller.
  */

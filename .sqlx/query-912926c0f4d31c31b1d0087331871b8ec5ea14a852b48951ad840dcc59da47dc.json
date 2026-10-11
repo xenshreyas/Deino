@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments SET speaker_id = ?1 WHERE speaker_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "912926c0f4d31c31b1d0087331871b8ec5ea14a852b48951ad840dcc59da47dc"
+}

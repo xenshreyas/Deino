@@ -34,6 +34,10 @@ export const settingsCopy = {
       label: 'Transcription',
       description: 'The local speech-to-text engine and its models.',
     },
+    people: {
+      label: 'People',
+      description: 'Recognise speakers by voice, and the voice profiles Deino knows.',
+    },
     ai: {
       label: 'AI models',
       description: 'Which provider and model serve each AI task, and a quick test for each.',

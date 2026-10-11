@@ -12,8 +12,12 @@ use deino_testkit::at;
 use super::*;
 use crate::diarization::{FAKE_EMBEDDING_MODEL, FakeTrackDiarizer, SpeakerHint, Voice, VoiceTurn};
 use crate::meetings::{FakeMeetingRepo, MeetingAudio, MeetingTitle, NewMeeting};
+use crate::people::AttendeeRepo;
 use crate::people::{Attendee, FakePeopleRepo};
 use crate::segments::{FakeSegmentRepo, NewSegment, WordTiming};
+use crate::voiceprints::{
+    FakeVoiceprintRepo, Quality, VOICEPRINT_DIM, VoiceEmbedding, Voiceprint, VoiceprintRepo,
+};
 
 const MEETING: &str = "meeting-a";
 const NOW: &str = "2026-10-08T10:00:00Z";
@@ -23,6 +27,8 @@ struct Harness {
     service: DiarizeService,
     segments: Arc<FakeSegmentRepo>,
     diarizer: Arc<FakeTrackDiarizer>,
+    people: Arc<FakePeopleRepo>,
+    voiceprints: Arc<FakeVoiceprintRepo>,
 }
 
 fn meeting() -> MeetingId {
@@ -142,19 +148,24 @@ async fn harness(
     store.append(segments).await.unwrap();
     let diarizer =
         Arc::new(result.map_or_else(FakeTrackDiarizer::default, FakeTrackDiarizer::returning));
+    let people = invitees(attendees).await;
+    let voiceprints = Arc::new(FakeVoiceprintRepo::default());
     let deps = DiarizeDeps {
         meetings: recorded_meeting().await,
-        attendees: invitees(attendees).await,
+        attendees: people.clone(),
         segments: store.clone(),
         writer: store.clone(),
         speakers: store.clone(),
         diarizer: diarizer.clone(),
+        exemplars: voiceprints.clone(),
         clock: Arc::new(clock()),
     };
     Harness {
         service: DiarizeService::new(deps),
         segments: store,
         diarizer,
+        people,
+        voiceprints,
     }
 }
 
@@ -292,4 +303,25 @@ async fn engine_failures_and_unknown_meetings_are_typed() {
         h.segments.speakers(&meeting()).await.unwrap().is_empty(),
         "nothing written on failure"
     );
+}
+
+#[tokio::test]
+async fn the_attendees_voiceprints_reach_the_engine() {
+    let h = harness(&call(), 3, Some(two_voices())).await;
+    let invitee = h.people.attendees(&meeting()).await.unwrap()[1].person_id;
+    let print = Voiceprint {
+        id: deino_domain::VoiceprintId::generate(&clock()),
+        person_id: invitee,
+        embedding: VoiceEmbedding::new(vec![0.5; VOICEPRINT_DIM], FAKE_EMBEDDING_MODEL).unwrap(),
+        source_meeting_id: None,
+        quality: Quality::new(0.5),
+        created_at: at(NOW),
+    };
+    h.voiceprints.enrol(&print, 5).await.unwrap();
+
+    h.service.run(&meeting()).await.unwrap();
+
+    let known = &h.diarizer.requests()[0].known;
+    assert_eq!(known.len(), 1);
+    assert_eq!(known[0].person, invitee);
 }

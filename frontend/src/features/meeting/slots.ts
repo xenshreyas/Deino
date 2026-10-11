@@ -13,22 +13,19 @@
  * | Insights tab | empty state | AI-06 |
  * | Clips tab | empty state | TRN-04 |
  * | Chat panel | empty state | AI-02 |
- * | Participants panel | empty state | CAP-04, ORG-04 |
+ * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
  * | Details panel | created and edited dates | ORG-03 and later |
  * | Player | resting bar | TRN-03 |
  */
 import type { ComponentType } from 'react';
 
+import { ParticipantsPanel } from '@/features/speakers';
+
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { TranscriptSlot } from './slots/legacy-slots';
 import { NotesSlot } from './slots/notes-slot';
-import {
-  ChatPanelSlot,
-  ClipsSlot,
-  InsightsSlot,
-  ParticipantsPanelSlot,
-} from './slots/placeholder-slots';
+import { ChatPanelSlot, ClipsSlot, InsightsSlot } from './slots/placeholder-slots';
 import { PlayerPlaceholder } from './slots/player-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
 
@@ -43,11 +40,7 @@ export const MEETING_TABS: readonly MeetingTabSlot[] = [
 /** The right panel's sections, in order. */
 export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
   { id: 'chat', label: meetingCopy.chat, Component: ChatPanelSlot },
-  {
-    id: 'participants',
-    label: meetingCopy.participants,
-    Component: ParticipantsPanelSlot,
-  },
+  { id: 'participants', label: meetingCopy.participants, Component: ParticipantsPanel },
   { id: 'details', label: meetingCopy.details, Component: DetailsPanelSlot },
 ];
 

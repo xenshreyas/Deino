@@ -55,7 +55,7 @@ pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
     FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId,
-    SpeakerId, StageId, TagId, TemplateId,
+    SpeakerId, StageId, TagId, TemplateId, VoiceprintId,
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};

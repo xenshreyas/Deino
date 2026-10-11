@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Settings → People → Voice profiles: every unmerged person's exemplars, by\n-- name, best exemplar first, with the meeting each was confirmed in.\nSELECT\n    p.id AS \"person_id: PersonId\",\n    p.name,\n    p.is_me AS \"is_me: bool\",\n    v.id AS \"id: VoiceprintId\",\n    v.source_meeting_id AS \"source_meeting_id: MeetingId\",\n    m.title AS \"source_meeting_title?\",\n    v.quality,\n    v.created_at AS \"created_at: DateTime<Utc>\"\nFROM voiceprints AS v\nJOIN people AS p ON p.id = v.person_id\nLEFT JOIN meetings AS m ON m.id = v.source_meeting_id\nWHERE p.merged_into IS NULL\nORDER BY p.name COLLATE NOCASE, p.id, v.quality DESC, v.created_at DESC, v.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "person_id: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me: bool",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "id: VoiceprintId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "source_meeting_id: MeetingId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "source_meeting_title?",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "quality",
+        "ordinal": 6,
+        "type_info": "Float"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "fbc0d1b2ea68f9c44c54e78d3e04d66b71176415d4d20b50b028e116b57f3f78"
+}

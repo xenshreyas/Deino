@@ -1,10 +1,10 @@
 /**
  * Resting states for the meeting slots whose feature cards have not shipped:
- * Insights (AI-06), Clips (TRN-04), Chat (AI-02) and Participants (CAP-04).
+ * Insights (AI-06), Clips (TRN-04) and Chat (AI-02).
  * Each card replaces its entry in `slots.ts`.
  */
 import { EmptyState } from '@/ui/empty-state';
-import { type Icon, ICON_PROPS_LARGE, Lightbulb, MessageCircle, Play, Users } from '@/ui/icons';
+import { type Icon, ICON_PROPS_LARGE, Lightbulb, MessageCircle, Play } from '@/ui/icons';
 
 import { meetingCopy } from '../copy';
 
@@ -57,17 +57,6 @@ export function ChatPanelSlot() {
       icon={MessageCircle}
       title={meetingCopy.chatTitle}
       body={meetingCopy.chatBody}
-    />
-  );
-}
-
-/** Participants panel. */
-export function ParticipantsPanelSlot() {
-  return (
-    <PanelPlaceholder
-      icon={Users}
-      title={meetingCopy.participantsTitle}
-      body={meetingCopy.participantsBody}
     />
   );
 }

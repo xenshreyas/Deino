@@ -5,6 +5,7 @@
 //! |---|---|---|
 //! | 10 | [`FinalizeAudioStage`] (`finalize_audio`) | |
 //! | 30 | [`DiarizeStage`] (`diarize`) | |
+//! | 35 | [`IdentifySpeakersStage`] (`identify_speakers`) | |
 //! | 50 | [`LegacySummaryStage`] (`legacy_summary`) | NOT-02's `enhance_notes` replaces it |
 //! | 60 | [`ExtractActionItemsStage`] (`extract_action_items`) | |
 //! | 70 | [`AutoTagStage`] (`auto_tag`) | |
@@ -21,6 +22,7 @@ mod auto_tag;
 mod diarize;
 mod extract_action_items;
 mod finalize_audio;
+mod identify_speakers;
 mod legacy_summary;
 
 pub use auto_export::AutoExportStage;
@@ -35,6 +37,9 @@ pub use auto_tag::RecordedAutoTags;
 pub use diarize::DiarizeStage;
 pub use extract_action_items::ExtractActionItemsStage;
 pub use finalize_audio::FinalizeAudioStage;
+pub use identify_speakers::IdentifySpeakersStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use identify_speakers::RecordedIdentifications;
 #[cfg(any(test, feature = "test-support"))]
 pub use legacy_summary::RecordedSummaries;
 pub use legacy_summary::{LegacySummaryStage, Summarizer, SummaryInput};

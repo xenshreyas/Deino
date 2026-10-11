@@ -19,6 +19,7 @@ import { ExportSettingsPage } from '@/features/export';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ProfilePage } from '@/features/profile';
+import { PeopleSettings } from '@/features/speakers';
 import { TemplatesPage } from '@/features/templates';
 import {
   AudioLines,
@@ -35,6 +36,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  Users,
   Video,
   Wrench,
 } from '@/ui/icons';
@@ -117,6 +119,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
+  { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },

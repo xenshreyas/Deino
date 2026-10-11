@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM voiceprints WHERE person_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "eb118c8626f0ba4d2f5d070fec6f23d5f7d6353e943660f1a4e339b63e1ca84e"
+}

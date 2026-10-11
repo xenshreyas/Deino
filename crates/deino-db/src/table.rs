@@ -64,6 +64,10 @@ pub enum Table {
     Templates,
     /// The ordered sections of each template.
     TemplateSections,
+    /// Confirmed exemplars of people's voices (CAP-04).
+    Voiceprints,
+    /// "Is this Alex?" suggestions for unnamed speakers (CAP-04).
+    SpeakerSuggestions,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -71,7 +75,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 26] = [
+    pub const ALL: [Self; 28] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -97,6 +101,8 @@ impl Table {
         Self::EgressLog,
         Self::Templates,
         Self::TemplateSections,
+        Self::Voiceprints,
+        Self::SpeakerSuggestions,
         Self::ExampleNotes,
     ];
 
@@ -131,6 +137,8 @@ impl Table {
             "egress_log" => Self::EgressLog,
             "templates" => Self::Templates,
             "template_sections" => Self::TemplateSections,
+            "voiceprints" => Self::Voiceprints,
+            "speaker_suggestions" => Self::SpeakerSuggestions,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

@@ -99,7 +99,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
+| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `_example` (debug builds) |
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014); `capture`: the cpal microphone and the Core Audio process tap, conditioners (native → 48 kHz), the supervisor (device and power listeners, stall watchdog, route probe) (ADR 0026) |
 | `crates/deino-recording` | The live recorder (FND-05b, CAP-02, ADR 0026): `RecordingService` (start, stop, pause, resume; creates the meeting, moves it to `processing`), two lanes (Me = microphone, Them = system) each with VAD and a `deino-stt` engine, WebRTC AEC3 (`sonora`) plus the text holdback against echo, the transcript router that saves segments as they are spoken, launch recovery |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
@@ -111,7 +111,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-detect` | Meeting detection (ADR 0023): Core Audio process-object, default-input and CoreMediaIO camera listeners, outermost-`.app` attribution, Accessibility browser URLs, the bundle tables, Muesli's resolver, the `Clock`-driven `DetectionPolicy`, `DetectionService` and the `Detector` thread; no network |
 | `crates/deino-eventkit` | macOS Calendar through EventKit (ADR 0027): `EventKitSource` (the core's `CalendarSource`), the worker thread that owns the `EKEventStore`, store-changed and wake observers; no network |
 | `crates/deino-connect` | Online accounts (ADR 0027): `oauth` (loopback PKCE sign-in, reused by INT-00) and the Google Calendar and Microsoft Graph calendar sources over `deino-net`, refresh tokens in the Keychain |
-| `crates/deino-diarize` | Local speaker diarization (ADR 0020): anarlog's pyannote port, WeSpeaker on Core ML, `policy`, `prune`, pinned `models` via the `ByteSource` downloader, `OnnxTrackDiarizer`, `voiceprint`, `online`, DER bench; the stage's rules are `deino-core::diarization` |
+| `crates/deino-diarize` | Local speaker diarization (ADR 0020): anarlog's pyannote port, WeSpeaker on Core ML, `policy`, `prune`, pinned `models` via the `ByteSource` downloader, `OnnxTrackDiarizer` (known voiceprints merge clusters), `online`, DER bench; the stage's rules are `deino-core::diarization`, voice matching is `deino-core::voiceprints` |
 | `crates/third_party/knf-rs` | Vendored Kaldi filterbank (knf-rs MIT + kaldi-native-fbank Apache-2.0), built with `cc` |
 | `crates/deino-testkit` | Fixture meetings (`fixtures/`) as typed values, `FixtureSeeder`, fixture audio; fakes behind `test-support` |
 | `frontend/src-tauri` | The Tauri app (`deino_lib`) |
@@ -129,7 +129,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `folders`, `tags`, `export`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `people`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `folders`, `tags`, `export`, `speakers`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

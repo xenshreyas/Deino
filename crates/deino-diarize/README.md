@@ -20,14 +20,17 @@ Core ML, centroid-linkage clustering under calendar speaker bounds.
   (`ByteSource` port).
 - `track::OnnxTrackDiarizer`: `deino-core`'s `TrackDiarizer` port (decode the
   finalized track with `deino-audio`, run, prune).
-- `voiceprint` (matching primitives, enrolment spans) for CAP-04, `online`
-  (live clustering) for CAP-02, `metrics` (DER) and the `diarize-bench`
+- `online` (live clustering) for CAP-02, `metrics` (DER) and the `diarize-bench`
   harness (`docs/perf/diarization.md`).
 
 ## Does Not Own
 
 - The stage's rules (channel planning, segment attribution, speaker rows):
   `deino-core::diarization`.
+- Voiceprint matching (`pick_unique`, `complete_by_elimination`), enrolment
+  spans and `identify_speakers` (CAP-04): `deino-core::voiceprints` and
+  `deino-core::diarization::identify`. The known-voiceprint merge here
+  takes its `KnownSpeaker`s from `TrackRequest::known`.
 - Where the models live and which `ByteSource` fetches them: the app's
   composition root.
 - The filterbank itself: `crates/third_party/knf-rs` (vendored).

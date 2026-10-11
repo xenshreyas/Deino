@@ -296,10 +296,3 @@ async fn the_schema_rejects_an_empty_centroid() {
         .await;
     assert!(result.is_err());
 }
-
-#[test]
-fn centroids_round_trip_bit_for_bit() {
-    let values = vec![0.25, -1.5, f32::MIN_POSITIVE, 3.0e38];
-    assert_eq!(voices::decode(&voices::encode(&values)), values);
-    assert_eq!(voices::encode(&[1.0]), 1.0_f32.to_le_bytes().to_vec());
-}

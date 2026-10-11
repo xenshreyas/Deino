@@ -45,6 +45,10 @@ const DEFAULT_SETTINGS: Settings = {
     ignoredApps: [],
     autoStart: { enabled: false, countdownSeconds: 10 },
   },
+  speakers: {
+    autoIdentify: true,
+    thresholds: { autoAssign: 0.72, autoAssignNonAttendee: 0.77, margin: 0.08, suggest: 0.55 },
+  },
   privacy: {},
   network: { offlineMode: false, services: {} },
   profile: {

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use super::{
     AiSettings, AudioSettings, BetaSettings, CalendarSettings, DetectionSettings, ExportSettings,
     NetworkSettings, NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings,
-    ProfileSettings, RecordingSettings, SettingsError, TemplateSettings, TranscriptionSettings,
-    UiSettings,
+    ProfileSettings, RecordingSettings, SettingsError, SpeakerSettings, TemplateSettings,
+    TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -34,6 +34,8 @@ pub struct Settings {
     pub notifications: NotificationSettings,
     /// Meeting detection and auto-start (CAP-06).
     pub detection: DetectionSettings,
+    /// Naming speakers by voice (CAP-04).
+    pub speakers: SpeakerSettings,
     /// Privacy controls (PRV-01).
     pub privacy: PrivacySettings,
     /// Which outside services may send data, and offline mode (FND-12).
@@ -66,6 +68,7 @@ impl Default for Settings {
             transcription: TranscriptionSettings::default(),
             notifications: NotificationSettings::default(),
             detection: DetectionSettings::default(),
+            speakers: SpeakerSettings::default(),
             privacy: PrivacySettings::default(),
             network: NetworkSettings::default(),
             profile: ProfileSettings::default(),
@@ -89,6 +92,7 @@ impl Settings {
         self.detection.validate()?;
         self.export.validate()?;
         self.calendar.validate()?;
+        self.speakers.validate()?;
         self.ui.validate()
     }
 

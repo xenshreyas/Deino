@@ -22,8 +22,6 @@ export const meetingCopy = {
   clipsBody: 'Save the moments worth sharing from the transcript and recording.',
   chatTitle: 'Ask about this meeting',
   chatBody: 'Chat with your meeting’s notes and transcript is coming soon.',
-  participantsTitle: 'No participants yet',
-  participantsBody: 'Speakers and attendees will be listed here with their talk time.',
   created: 'Created',
   updated: 'Last edited',
   playerLabel: 'Recording',

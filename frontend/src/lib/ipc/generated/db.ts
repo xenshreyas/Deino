@@ -146,6 +146,14 @@ export type Table =
  */
 "template_sections" | 
 /**
+ * Confirmed exemplars of people's voices (CAP-04).
+ */
+"voiceprints" | 
+/**
+ * "Is this Alex?" suggestions for unnamed speakers (CAP-04).
+ */
+"speaker_suggestions" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

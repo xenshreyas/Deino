@@ -14,7 +14,9 @@ use super::{DiarizeRequest, KnownSpeaker, SpeakerIdentity};
 use crate::clustering;
 use crate::config::DiarizationConfig;
 use crate::vector::cosine_similarity;
-use crate::voiceprint::{self, MIN_UNIQUE_MARGIN, MIN_UNIQUE_SCORE, MatchRule};
+use deino_core::voiceprints::matching::{
+    MIN_UNIQUE_MARGIN, MIN_UNIQUE_SCORE, MatchRule, pick_unique,
+};
 
 /// Merges clusters of the same known voice, then names each cluster that
 /// matches a known person uniquely (`clusters.identities`).
@@ -154,7 +156,7 @@ fn identify(
         min_margin: MIN_UNIQUE_MARGIN,
     };
     let mut identities = vec![None; centroids.len()];
-    for assignment in voiceprint::pick_unique(&scores, rule) {
+    for assignment in pick_unique(&scores, rule) {
         if let Some(slot) = identities.get_mut(assignment.speaker) {
             *slot = Some(SpeakerIdentity {
                 person: assignment.person,

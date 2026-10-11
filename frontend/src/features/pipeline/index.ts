@@ -9,4 +9,5 @@ export { pipelineApi } from './api';
 export { PipelineStrip } from './components/pipeline-strip';
 export { usePipelineProgress } from './hooks/use-pipeline-progress';
 export { pipelineKeys, pipelineStatusQuery, usePipelineStatus, useRerunStage } from './queries';
+export { NOTES_STAGE } from './types';
 export type { JobStatus, PipelineProgress, StageId, StageStatus } from './types';

@@ -175,6 +175,21 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "disconnect",
         ],
     ),
+    // ── CAP-04 speaker naming and voice profiles ──
+    (
+        "speakers",
+        &[
+            "participants",
+            "candidates",
+            "rename",
+            "merge",
+            "confirm_suggestion",
+            "dismiss_suggestion",
+            "voice_profiles",
+            "delete_voiceprint",
+            "forget_voice",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers
