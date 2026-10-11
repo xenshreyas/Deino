@@ -24,128 +24,103 @@ fn health() -> FieldKind {
     }
 }
 
-#[test]
-fn each_field_type_accepts_repairs_or_drops_values() {
-    let cases: Vec<(FieldKind, WireScalar, Option<FieldValue>)> = vec![
-        // Text: trimmed; numbers and yes/no written out; lists joined; blank dropped.
-        (
-            FieldKind::Text,
-            text("  Okta SSO "),
-            Some(FieldValue::Text("Okta SSO".into())),
-        ),
-        (
-            FieldKind::Text,
-            number(120.0),
-            Some(FieldValue::Text("120".into())),
-        ),
-        (
-            FieldKind::Text,
-            WireScalar::Bool(true),
-            Some(FieldValue::Text("Yes".into())),
-        ),
-        (
-            FieldKind::Text,
-            WireScalar::List(vec![text("slow"), text(""), text("manual")]),
-            Some(FieldValue::Text("slow; manual".into())),
-        ),
-        (FieldKind::Text, text("   "), None),
-        // Number: currency, separators, suffixes and percents repaired.
-        (
-            FieldKind::Number,
-            number(4.0),
-            Some(FieldValue::Number(4.0)),
-        ),
-        (
-            FieldKind::Number,
-            text("$40,000"),
-            Some(FieldValue::Number(40_000.0)),
-        ),
-        (
-            FieldKind::Number,
-            text("40k"),
-            Some(FieldValue::Number(40_000.0)),
-        ),
-        (
-            FieldKind::Number,
-            text("1.5M"),
-            Some(FieldValue::Number(1_500_000.0)),
-        ),
-        (
-            FieldKind::Number,
-            text("12.5%"),
-            Some(FieldValue::Number(12.5)),
-        ),
-        (
-            FieldKind::Number,
-            text("~120"),
-            Some(FieldValue::Number(120.0)),
-        ),
-        (FieldKind::Number, text("four"), None),
-        (FieldKind::Number, text("4/5"), None),
-        (FieldKind::Number, WireScalar::Bool(true), None),
-        (FieldKind::Number, number(f64::INFINITY), None),
-        // Boolean: booleans, 1/0 and yes/no words.
-        (
-            FieldKind::Boolean,
-            WireScalar::Bool(false),
-            Some(FieldValue::Boolean(false)),
-        ),
-        (
-            FieldKind::Boolean,
-            text("Yes."),
-            Some(FieldValue::Boolean(true)),
-        ),
-        (
-            FieldKind::Boolean,
-            text("FALSE"),
-            Some(FieldValue::Boolean(false)),
-        ),
-        (
-            FieldKind::Boolean,
-            number(1.0),
-            Some(FieldValue::Boolean(true)),
-        ),
-        (FieldKind::Boolean, number(2.0), None),
-        (FieldKind::Boolean, text("maybe"), None),
-        // Date: ISO, ISO date-times and written-out dates.
-        (FieldKind::Date, text("2026-10-08"), Some(day(2026, 10, 8))),
-        (
-            FieldKind::Date,
-            text("2026-10-08T09:30:00Z"),
-            Some(day(2026, 10, 8)),
-        ),
-        (
-            FieldKind::Date,
-            text("October 8, 2026"),
-            Some(day(2026, 10, 8)),
-        ),
-        (FieldKind::Date, text("8 Oct 2026"), Some(day(2026, 10, 8))),
-        (FieldKind::Date, text("next Friday"), None),
-        (FieldKind::Date, text("2026-02-30"), None),
-        (FieldKind::Date, number(20_261_008.0), None),
-        // Enum: the option as spelled, matched ignoring case and punctuation.
-        (
-            health(),
-            text("Green"),
-            Some(FieldValue::Choice("Green".into())),
-        ),
-        (
-            health(),
-            text("yellow"),
-            Some(FieldValue::Choice("Yellow".into())),
-        ),
-        (
-            health(),
-            text(" red. "),
-            Some(FieldValue::Choice("Red".into())),
-        ),
-        (health(), text("Amber"), None),
-        (health(), number(1.0), None),
-    ];
-
-    for (kind, raw, expected) in cases {
-        assert_eq!(coerce(&kind, &raw), expected, "{kind:?} {raw:?}");
+/// Coerces every raw value of `cases` as `kind` and checks the outcome.
+fn check(kind: &FieldKind, cases: Vec<(WireScalar, Option<FieldValue>)>) {
+    for (raw, expected) in cases {
+        assert_eq!(coerce(kind, &raw), expected, "{kind:?} {raw:?}");
     }
+}
+
+fn as_text(value: &str) -> FieldValue {
+    FieldValue::Text(value.into())
+}
+
+fn as_number(value: f64) -> FieldValue {
+    FieldValue::Number(value)
+}
+
+fn as_choice(value: &str) -> FieldValue {
+    FieldValue::Choice(value.into())
+}
+
+#[test]
+fn text_is_trimmed_numbers_and_flags_are_written_out_and_lists_joined() {
+    let list = WireScalar::List(vec![text("slow"), text(""), text("manual")]);
+    check(
+        &FieldKind::Text,
+        vec![
+            (text("  Okta SSO "), Some(as_text("Okta SSO"))),
+            (number(120.0), Some(as_text("120"))),
+            (WireScalar::Bool(true), Some(as_text("Yes"))),
+            (list, Some(as_text("slow; manual"))),
+            (text("   "), None),
+        ],
+    );
+}
+
+#[test]
+fn numbers_repair_currency_separators_suffixes_and_percents() {
+    check(
+        &FieldKind::Number,
+        vec![
+            (number(4.0), Some(as_number(4.0))),
+            (text("$40,000"), Some(as_number(40_000.0))),
+            (text("40k"), Some(as_number(40_000.0))),
+            (text("1.5M"), Some(as_number(1_500_000.0))),
+            (text("12.5%"), Some(as_number(12.5))),
+            (text("~120"), Some(as_number(120.0))),
+            (text("four"), None),
+            (text("4/5"), None),
+            (WireScalar::Bool(true), None),
+            (number(f64::INFINITY), None),
+        ],
+    );
+}
+
+#[test]
+fn yes_no_reads_booleans_one_and_zero_and_words() {
+    let flag = |value| Some(FieldValue::Boolean(value));
+    check(
+        &FieldKind::Boolean,
+        vec![
+            (WireScalar::Bool(false), flag(false)),
+            (text("Yes."), flag(true)),
+            (text("FALSE"), flag(false)),
+            (number(1.0), flag(true)),
+            (number(2.0), None),
+            (text("maybe"), None),
+        ],
+    );
+}
+
+#[test]
+fn dates_read_iso_date_times_and_written_out_days() {
+    check(
+        &FieldKind::Date,
+        vec![
+            (text("2026-10-08"), Some(day(2026, 10, 8))),
+            (text("2026-10-08T09:30:00Z"), Some(day(2026, 10, 8))),
+            (text("October 8, 2026"), Some(day(2026, 10, 8))),
+            (text("8 Oct 2026"), Some(day(2026, 10, 8))),
+            (text("next Friday"), None),
+            (text("2026-02-30"), None),
+            (number(20_261_008.0), None),
+        ],
+    );
+}
+
+#[test]
+fn options_match_as_spelled_ignoring_case_and_punctuation() {
+    check(
+        &health(),
+        vec![
+            (text("Green"), Some(as_choice("Green"))),
+            (text("yellow"), Some(as_choice("Yellow"))),
+            (text(" red. "), Some(as_choice("Red"))),
+            (text("Amber"), None),
+            (number(1.0), None),
+        ],
+    );
 }
 
 #[test]

@@ -116,7 +116,9 @@ fn run_contract(meeting: &FixtureMeeting) -> Result<(), Failed> {
         return Err(format!("the prompt lacks {missing:?}").into());
     }
     match &request.output {
-        OutputFormat::Json(json) if json.schema["required"] == serde_json::json!(["answers"]) => {
+        OutputFormat::Json(json)
+            if json.schema.get("required") == Some(&serde_json::json!(["answers"])) =>
+        {
             Ok(())
         }
         _ => Err("the request does not ask for the answers schema".into()),
@@ -156,7 +158,6 @@ fn run_live(meetings: &[FixtureMeeting]) -> Result<(), Failed> {
         let answers = run_template(meeting, "decisions", live::gateway_for(ROUTE)?)?;
         tally += score::tally_decisions(meeting, &answers);
     }
-    eprintln!("extract.insights decisions: {}", tally.summary());
     tally.passes().map_err(Failed::from)
 }
 

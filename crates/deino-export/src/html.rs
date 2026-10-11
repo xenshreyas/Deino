@@ -107,7 +107,7 @@ fn insights(export: &MeetingExport) -> String {
         .insights
         .iter()
         .map(|insight| {
-            let answers: String = insight
+            let answers = insight
                 .answers
                 .iter()
                 .map(|answer| {
@@ -117,13 +117,15 @@ fn insights(export: &MeetingExport) -> String {
                     let line = escape(&answer.line()).replace('\n', "<br>");
                     format!("<li>{line}{source}</li>")
                 })
-                .collect();
+                .collect::<Vec<_>>()
+                .concat();
             format!(
                 "<h3 style=\"font-size:14px;font-weight:600;margin:12px 0 4px\">{}</h3><ul>{answers}</ul>",
                 escape(&insight.name)
             )
         })
-        .collect()
+        .collect::<Vec<_>>()
+        .concat()
 }
 
 fn transcript(export: &MeetingExport) -> String {

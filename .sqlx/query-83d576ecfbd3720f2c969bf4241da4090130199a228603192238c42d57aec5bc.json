@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The current name of each cited segment's speaker: their person, else the\n-- user (Me) for the user's voice, else the speaker's label, else the channel.\n-- ?1 is a JSON array of segment IDs.\nSELECT\n    s.id AS \"segment_id!: SegmentId\",\n    coalesce(\n        p.name,\n        CASE WHEN sp.is_me = 1 OR (sp.id IS NULL AND s.channel = 'mic')\n            THEN coalesce((SELECT name FROM people WHERE is_me = 1 LIMIT 1), 'Me') END,\n        sp.label,\n        CASE s.channel WHEN 'system' THEN 'Them' ELSE 'Speaker' END\n    ) AS \"name!: String\"\nFROM transcript_segments AS s\nLEFT JOIN speakers AS sp ON sp.id = s.speaker_id\nLEFT JOIN people AS p ON p.id = sp.person_id\nWHERE s.id IN (SELECT value FROM json_each(?1))\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "segment_id!: SegmentId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "83d576ecfbd3720f2c969bf4241da4090130199a228603192238c42d57aec5bc"
+}

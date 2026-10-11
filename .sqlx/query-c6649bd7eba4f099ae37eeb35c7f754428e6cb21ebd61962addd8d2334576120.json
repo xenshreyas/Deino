@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Finished meetings outside the trash that have a transcript, newest first:\n-- what \"Run on past meetings\" offers.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    coalesce(m.started_at, m.created_at) AS \"started_at!: DateTime<Utc>\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL AND m.status IN ('ready', 'failed')\n    AND EXISTS (\n        SELECT 1 FROM transcript_segments AS s\n        WHERE s.meeting_id = m.id AND s.is_deleted = 0\n    )\nORDER BY coalesce(m.started_at, m.created_at) DESC, m.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "started_at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c6649bd7eba4f099ae37eeb35c7f754428e6cb21ebd61962addd8d2334576120"
+}

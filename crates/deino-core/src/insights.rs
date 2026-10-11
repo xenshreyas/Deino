@@ -1,4 +1,4 @@
-//! Custom AI insights (AI-06, ADR 0033): questions the user asks of their
+//! Custom AI insights (AI-06, ADR 0034): questions the user asks of their
 //! meetings, answered with typed fields and attributed to the moment each
 //! answer was said.
 //!
@@ -33,6 +33,8 @@ mod export;
 mod facts;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
+#[cfg(any(test, feature = "test-support"))]
+mod fake_ports;
 mod gallery;
 mod generate;
 mod input;
@@ -51,10 +53,12 @@ mod wire;
 
 pub use attribution::Attribution;
 pub use error::InsightError;
-pub use export::{InsightExports, export_of};
+pub use export::InsightExports;
 pub use facts::{MeetingRecord, MeetingRecords, OwnDomains, PastMeeting};
 #[cfg(any(test, feature = "test-support"))]
-pub use fake::{FakeInsightStore, FixedDomains, RecordedScheduler, ScriptedInsightModel};
+pub use fake::FakeInsightStore;
+#[cfg(any(test, feature = "test-support"))]
+pub use fake_ports::{FixedDomains, RecordedScheduler, ScriptedInsightModel};
 pub use gallery::{InsightTemplate, gallery, template};
 pub use generate::{
     Attempt, GenerateDeps, GenerateOutcome, GenerateService, InsightGenerator, NO_TRANSCRIPT,
@@ -67,7 +71,7 @@ pub use llm::{GatewayInsightModel, InsightModel, InsightRequest, NoInsightModel}
 pub use model::{ApplyWhen, Cardinality, FieldKind, InsightDef, InsightField, InsightInput};
 pub use repo::{InsightRepo, SqliteInsightRepo};
 pub use results_repo::{InsightResultRepo, SpeakerNames};
-pub use run::{InsightRun, MeetingRun, RunAnswers, RunProgress};
+pub use run::{InsightRun, MeetingRun, RunAnswers, RunFailure, RunProgress};
 pub use runs::MAX_RUN_MEETINGS;
 pub use schema::answer_schema;
 pub use service::{InsightFiles, InsightPorts, InsightService, InsightSummary, RunScheduler};

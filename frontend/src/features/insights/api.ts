@@ -21,7 +21,7 @@ import type {
 
 export const insightsApi = {
   /** The twelve ready-made insights to start from. */
-  templates: (): Promise<InsightTemplate[]> => commands.templates(),
+  templates: (): Promise<InsightTemplate[]> => unwrap(commands.templates()),
   /** Every insight, oldest first, with where its runs stand. */
   list: (): Promise<InsightSummary[]> => unwrap(commands.list()),
   /** One insight. */

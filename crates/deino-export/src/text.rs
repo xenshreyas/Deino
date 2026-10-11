@@ -10,9 +10,7 @@ use crate::{MeetingExport, RenderOptions, Section, doc};
 pub fn render(export: &MeetingExport, options: &RenderOptions) -> String {
     let mut parts = vec![header(export)];
     for section in export.sections(options.sections) {
-        if let Some(body) = section_body(export, section) {
-            parts.push(body);
-        }
+        parts.push(section_body(export, section));
     }
     let mut text = parts.join("\n\n");
     text.push('\n');
@@ -28,7 +26,7 @@ fn header(export: &MeetingExport) -> String {
     format!("{}\n{meta}", export.title)
 }
 
-fn section_body(export: &MeetingExport, section: Section) -> Option<String> {
+fn section_body(export: &MeetingExport, section: Section) -> String {
     let (title, body) = match section {
         Section::Attendees => (heading::ATTENDEES, attendees(export)),
         Section::Notes => (heading::NOTES, notes(export.notes.as_deref())),
@@ -38,7 +36,7 @@ fn section_body(export: &MeetingExport, section: Section) -> Option<String> {
         Section::Transcript => (heading::TRANSCRIPT, transcript(export)),
     };
     let rule = "-".repeat(title.chars().count());
-    Some(format!("{title}\n{rule}\n{body}"))
+    format!("{title}\n{rule}\n{body}")
 }
 
 fn attendees(export: &MeetingExport) -> String {

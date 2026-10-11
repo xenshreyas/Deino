@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT folder_id AS \"folder_id: FolderId\" FROM meeting_folders WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "folder_id: FolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0dbc180cd00ddcc71037bfc4cddf60fc76d41b298b45bab3fff64a828537ce3f"
+}

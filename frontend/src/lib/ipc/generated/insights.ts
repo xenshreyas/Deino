@@ -8,8 +8,13 @@ export const commands = {
 /**
  * The twelve ready-made insights to start from.
  */
-async templates() : Promise<InsightTemplate[]> {
-    return await TAURI_INVOKE("plugin:insights|templates");
+async templates() : Promise<Result<InsightTemplate[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:insights|templates") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 /**
  * Every insight, oldest first, with where its runs stand.

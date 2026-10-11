@@ -13,7 +13,7 @@ import { MOCK_INSIGHT_TEMPLATES } from './mock-insight-templates';
 export const commands = {
   async templates() {
     await latency();
-    return MOCK_INSIGHT_TEMPLATES;
+    return ok(MOCK_INSIGHT_TEMPLATES);
   },
   async list() {
     await latency();

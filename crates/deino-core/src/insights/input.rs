@@ -59,14 +59,14 @@ fn field(field: InsightField) -> Result<InsightField, InsightError> {
     let name = bounded(&field.name, MAX_FIELD_NAME_CHARS, "field name")?;
     let kind = match field.kind {
         FieldKind::Enum { options } => FieldKind::Enum {
-            options: options_of(options)?,
+            options: options_of(&options)?,
         },
         kind => kind,
     };
     Ok(InsightField { name, kind })
 }
 
-fn options_of(options: Vec<String>) -> Result<Vec<String>, InsightError> {
+fn options_of(options: &[String]) -> Result<Vec<String>, InsightError> {
     if options.is_empty() || options.len() > MAX_OPTIONS {
         return Err(InsightError::invalid("options", "must number 1 to 20"));
     }
@@ -159,87 +159,64 @@ mod tests {
         );
     }
 
-    #[test]
-    fn each_rule_names_the_field_it_protects() {
-        let enum_of = |options: Vec<&str>| InsightField {
-            name: "Health".into(),
-            kind: FieldKind::Enum {
-                options: options.into_iter().map(str::to_owned).collect(),
-            },
-        };
-        let text = |name: &str| InsightField {
+    /// The valid input with one change.
+    fn with(change: impl FnOnce(&mut InsightInput)) -> InsightInput {
+        let mut input = input();
+        change(&mut input);
+        input
+    }
+
+    fn text(name: &str) -> InsightField {
+        InsightField {
             name: name.into(),
             kind: FieldKind::Text,
-        };
+        }
+    }
+
+    fn enum_of(options: &[&str]) -> InsightField {
+        let options = options.iter().map(|option| (*option).to_owned()).collect();
+        InsightField {
+            name: "Health".into(),
+            kind: FieldKind::Enum { options },
+        }
+    }
+
+    #[test]
+    fn each_rule_names_the_field_it_protects() {
+        let fixed = |count| Cardinality::Fixed { count };
         let cases: Vec<(InsightInput, &str)> = vec![
+            (with(|i| i.name = " ".into()), "name cannot be empty"),
+            (with(|i| i.name = "x".repeat(81)), "name is too long"),
             (
-                InsightInput {
-                    name: " ".into(),
-                    ..input()
-                },
-                "name cannot be empty",
-            ),
-            (
-                InsightInput {
-                    name: "x".repeat(81),
-                    ..input()
-                },
-                "name is too long",
-            ),
-            (
-                InsightInput {
-                    description: String::new(),
-                    ..input()
-                },
+                with(|i| i.description = String::new()),
                 "description cannot be empty",
             ),
             (
-                InsightInput {
-                    fields: vec![text("Pain"), text("pain ")],
-                    ..input()
-                },
+                with(|i| i.fields = vec![text("Pain"), text("pain ")]),
                 "field names must differ",
             ),
             (
-                InsightInput {
-                    fields: vec![text(""); 1],
-                    ..input()
-                },
+                with(|i| i.fields = vec![text("")]),
                 "field name cannot be empty",
             ),
             (
-                InsightInput {
-                    fields: vec![text("x"); 13],
-                    ..input()
-                },
+                with(|i| i.fields = vec![text("x"); 13]),
                 "fields are too many",
             ),
             (
-                InsightInput {
-                    fields: vec![enum_of(vec![])],
-                    ..input()
-                },
+                with(|i| i.fields = vec![enum_of(&[])]),
                 "options must number 1 to 20",
             ),
             (
-                InsightInput {
-                    fields: vec![enum_of(vec!["Red", "red"])],
-                    ..input()
-                },
+                with(|i| i.fields = vec![enum_of(&["Red", "red"])]),
                 "options must differ",
             ),
             (
-                InsightInput {
-                    cardinality: Cardinality::Fixed { count: 0 },
-                    ..input()
-                },
+                with(|i| i.cardinality = fixed(0)),
                 "answer count must be 1 to 20",
             ),
             (
-                InsightInput {
-                    cardinality: Cardinality::Fixed { count: 21 },
-                    ..input()
-                },
+                with(|i| i.cardinality = fixed(21)),
                 "answer count must be 1 to 20",
             ),
         ];

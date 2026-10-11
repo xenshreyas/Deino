@@ -39,9 +39,7 @@ pub fn note(
         meta_line(export, options.links),
     ];
     for section in export.sections(options.sections) {
-        if let Some(body) = section_body(export, section, options.links) {
-            parts.push(body);
-        }
+        parts.push(section_body(export, section, options.links));
     }
     if let Some(link) = transcript_link {
         parts.push(format!("## {}\n\n[[{link}]]", heading::TRANSCRIPT));
@@ -94,7 +92,7 @@ fn meta_line(export: &MeetingExport, style: LinkStyle) -> String {
     }
 }
 
-fn section_body(export: &MeetingExport, section: Section, style: LinkStyle) -> Option<String> {
+fn section_body(export: &MeetingExport, section: Section, style: LinkStyle) -> String {
     let (title, body) = match section {
         Section::Attendees => (heading::ATTENDEES, attendees(export, style)),
         Section::Notes => (heading::NOTES, notes(export.notes.as_deref())),
@@ -103,7 +101,7 @@ fn section_body(export: &MeetingExport, section: Section, style: LinkStyle) -> O
         Section::Insights => (heading::INSIGHTS, insights(export)),
         Section::Transcript => (heading::TRANSCRIPT, transcript(export)),
     };
-    Some(format!("## {title}\n\n{body}"))
+    format!("## {title}\n\n{body}")
 }
 
 /// Each insight as a `###` heading over its answers, one list item each,

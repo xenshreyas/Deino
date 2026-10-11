@@ -181,7 +181,7 @@ fn a_meetings_tab_and_an_insights_table_carry_typed_attributed_answers() {
             { "name": "Budget", "value": { "type": "number", "value": 40000.0 } }
         ] },
         "speaker": "Marcus Webb",
-        "timestampMs": 271000,
+        "timestampMs": 271_000,
         "segmentId": null
     });
     assert_eq!(tab["entries"][0]["run"]["answers"][0], expected);

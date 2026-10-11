@@ -148,12 +148,12 @@ async fn a_failure_keeps_the_answers_and_a_success_clears_the_error() {
     repo.create(&insight).await.unwrap();
     let meeting = MeetingId::new(SALES);
 
-    repo.save_failure(
-        &insight.id,
-        &meeting,
-        "Add an Anthropic key",
-        at("2026-10-08T10:00:00Z"),
-    )
+    repo.save_failure(&RunFailure {
+        insight_id: insight.id,
+        meeting_id: meeting.clone(),
+        message: "Add an Anthropic key".into(),
+        at: at("2026-10-08T10:00:00Z"),
+    })
     .await
     .unwrap();
     let failed = repo.for_meeting(&meeting).await.unwrap();

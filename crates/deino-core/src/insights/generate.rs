@@ -26,7 +26,7 @@ use super::attribution::Attribution;
 use super::validate::validate;
 use super::{
     InsightDef, InsightError, InsightModel, InsightRepo, InsightRequest, InsightResultRepo,
-    MeetingRecords, OwnDomains, RunAnswers,
+    MeetingRecords, OwnDomains, RunAnswers, RunFailure,
 };
 use crate::enhance::{Material, MaterialSources, render_lines};
 
@@ -182,11 +182,13 @@ impl GenerateService {
         message: &str,
     ) -> Result<(), InsightError> {
         for def in defs {
-            let now = self.deps.clock.now();
-            self.deps
-                .results
-                .save_failure(&def.id, meeting, message, now)
-                .await?;
+            let failure = RunFailure {
+                insight_id: def.id,
+                meeting_id: meeting.clone(),
+                message: message.to_owned(),
+                at: self.deps.clock.now(),
+            };
+            self.deps.results.save_failure(&failure).await?;
         }
         Ok(())
     }

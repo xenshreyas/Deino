@@ -9,7 +9,9 @@ use deino_db::DbError;
 use deino_domain::{InsightId, InsightStatus, MeetingId, SegmentId};
 use sqlx::types::Json;
 
-use super::{InsightAnswer, InsightRun, MeetingRun, RunAnswers, RunProgress, SqliteInsightRepo};
+use super::{
+    InsightAnswer, InsightRun, MeetingRun, RunAnswers, RunFailure, RunProgress, SqliteInsightRepo,
+};
 
 /// Reads and writes insight runs.
 #[async_trait]
@@ -32,14 +34,8 @@ pub trait InsightResultRepo: Send + Sync {
     /// Stores a successful run's answers.
     async fn save_answers(&self, answers: &RunAnswers) -> Result<(), DbError>;
 
-    /// Records that `insight` failed on `meeting` with a user-safe `message`.
-    async fn save_failure(
-        &self,
-        insight: &InsightId,
-        meeting: &MeetingId,
-        message: &str,
-        at: DateTime<Utc>,
-    ) -> Result<(), DbError>;
+    /// Records a failed run, keeping its earlier answers.
+    async fn save_failure(&self, failure: &RunFailure) -> Result<(), DbError>;
 
     /// How many of `insight`'s runs on meetings outside the trash are in
     /// each state.
@@ -163,22 +159,16 @@ impl InsightResultRepo for SqliteInsightRepo {
         Ok(())
     }
 
-    async fn save_failure(
-        &self,
-        insight: &InsightId,
-        meeting: &MeetingId,
-        message: &str,
-        at: DateTime<Utc>,
-    ) -> Result<(), DbError> {
+    async fn save_failure(&self, failure: &RunFailure) -> Result<(), DbError> {
         sqlx::query!(
             "INSERT INTO insight_results (insight_id, meeting_id, status, error, requested_at, updated_at)
              VALUES (?1, ?2, 'failed', ?3, ?4, ?4)
              ON CONFLICT (insight_id, meeting_id) DO UPDATE SET
                  status = 'failed', error = excluded.error, updated_at = excluded.updated_at",
-            insight,
-            meeting,
-            message,
-            at,
+            failure.insight_id,
+            failure.meeting_id,
+            failure.message,
+            failure.at,
         )
         .execute(self.database.writer())
         .await?;

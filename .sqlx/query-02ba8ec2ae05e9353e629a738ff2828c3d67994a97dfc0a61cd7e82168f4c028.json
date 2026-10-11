@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT r.status AS \"status: InsightStatus\", count(*) AS \"count!: i64\"\n               FROM insight_results AS r JOIN meetings AS m ON m.id = r.meeting_id\n               WHERE r.insight_id = ?1 AND m.deleted_at IS NULL\n               GROUP BY r.status",
+  "describe": {
+    "columns": [
+      {
+        "name": "status: InsightStatus",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "count!: i64",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "02ba8ec2ae05e9353e629a738ff2828c3d67994a97dfc0a61cd7e82168f4c028"
+}

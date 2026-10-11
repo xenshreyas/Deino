@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "-- An insight's runs on meetings outside the trash, newest meeting first,\n-- with each meeting's title and start (the primary key narrows to the insight).\nSELECT\n    r.insight_id AS \"insight_id: InsightId\",\n    r.meeting_id AS \"meeting_id: MeetingId\",\n    r.status AS \"status: InsightStatus\",\n    r.instances_json AS \"answers: Json<Vec<InsightAnswer>>\",\n    r.revision,\n    r.error,\n    r.requested_at AS \"requested_at: DateTime<Utc>\",\n    r.generated_at AS \"generated_at: DateTime<Utc>\",\n    m.title AS meeting_title,\n    coalesce(m.started_at, m.created_at) AS \"meeting_started_at!: DateTime<Utc>\"\nFROM insight_results AS r\nJOIN meetings AS m ON m.id = r.meeting_id\nWHERE r.insight_id = ?1 AND m.deleted_at IS NULL\nORDER BY coalesce(m.started_at, m.created_at) DESC, m.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "insight_id: InsightId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: InsightStatus",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "answers: Json<Vec<InsightAnswer>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "revision",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "error",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "requested_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_title",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_started_at!: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "0e74abac9b9ab82d1c685a7b957c417d3c0a9f728bccbc7e1c87988eb8b7fd01"
+}

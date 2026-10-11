@@ -63,6 +63,19 @@ pub struct RunProgress {
     pub failed: u32,
 }
 
+/// A failed run, to store.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RunFailure {
+    /// The insight.
+    pub insight_id: InsightId,
+    /// The meeting.
+    pub meeting_id: MeetingId,
+    /// Why it failed, user-safe.
+    pub message: String,
+    /// When.
+    pub at: DateTime<Utc>,
+}
+
 /// A successful run, to store.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RunAnswers {

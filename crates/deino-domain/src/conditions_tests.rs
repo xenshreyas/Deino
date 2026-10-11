@@ -30,57 +30,39 @@ fn title(text: &str) -> Condition {
     Condition::TitleContains { text: text.into() }
 }
 
+fn template(id: &str) -> Condition {
+    Condition::TemplateIs {
+        template_id: TemplateId::new(id),
+    }
+}
+
+fn has_tag(id: &str) -> Condition {
+    Condition::HasTag { tag_id: tag(id) }
+}
+
+fn in_folder(id: &str) -> Condition {
+    Condition::InFolder {
+        folder_id: folder(id),
+    }
+}
+
+fn domain(name: &str) -> Condition {
+    Condition::AttendeeDomain {
+        domain: name.into(),
+    }
+}
+
 #[test]
 fn each_condition_tests_its_own_fact() {
     let cases: [(Condition, bool); 12] = [
-        (
-            Condition::TemplateIs {
-                template_id: TemplateId::new("sales_discovery"),
-            },
-            true,
-        ),
-        (
-            Condition::TemplateIs {
-                template_id: TemplateId::new("one_on_one"),
-            },
-            false,
-        ),
-        (
-            Condition::HasTag {
-                tag_id: tag(SALES_TAG),
-            },
-            true,
-        ),
-        (
-            Condition::HasTag {
-                tag_id: tag(OTHER_TAG),
-            },
-            false,
-        ),
-        (
-            Condition::InFolder {
-                folder_id: folder(CUSTOMERS),
-            },
-            true,
-        ),
-        (
-            Condition::InFolder {
-                folder_id: folder(OTHER_TAG),
-            },
-            false,
-        ),
-        (
-            Condition::AttendeeDomain {
-                domain: "acme.com".into(),
-            },
-            true,
-        ),
-        (
-            Condition::AttendeeDomain {
-                domain: "globex.com".into(),
-            },
-            false,
-        ),
+        (template("sales_discovery"), true),
+        (template("one_on_one"), false),
+        (has_tag(SALES_TAG), true),
+        (has_tag(OTHER_TAG), false),
+        (in_folder(CUSTOMERS), true),
+        (in_folder(OTHER_TAG), false),
+        (domain("acme.com"), true),
+        (domain("globex.com"), false),
         (Condition::External { external: true }, true),
         (Condition::External { external: false }, false),
         (title("DISCOVERY"), true),

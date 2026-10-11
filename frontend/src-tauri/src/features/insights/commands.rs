@@ -41,8 +41,8 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
 /// The twelve ready-made insights to start from.
 #[tauri::command]
 #[specta::specta]
-fn templates(insights: Insights<'_>) -> Vec<InsightTemplate> {
-    insights.templates()
+async fn templates(insights: Insights<'_>) -> Result<Vec<InsightTemplate>, AppError> {
+    Ok(insights.templates())
 }
 
 /// Every insight, oldest first, with where its runs stand.

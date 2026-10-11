@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every insight definition, oldest first (`idx_insight_defs_created`).\nSELECT\n    id AS \"id: InsightId\",\n    name,\n    description,\n    fields_json AS \"fields: Json<Vec<InsightField>>\",\n    max_answers,\n    apply_mode AS \"apply_mode: InsightApplyMode\",\n    conditions_json AS \"conditions: Json<ConditionGroups>\",\n    revision,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM insight_defs\nORDER BY created_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: InsightId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "fields: Json<Vec<InsightField>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "max_answers",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "apply_mode: InsightApplyMode",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "conditions: Json<ConditionGroups>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "revision",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4dd0bc01c2191721e1c91be6ba9e8f4db8bc90d0f8a6ed406192a5182efc43d3"
+}

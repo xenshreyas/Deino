@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's insight runs (`idx_insight_results_meeting`).\nSELECT\n    insight_id AS \"insight_id: InsightId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    status AS \"status: InsightStatus\",\n    instances_json AS \"answers: Json<Vec<InsightAnswer>>\",\n    revision,\n    error,\n    requested_at AS \"requested_at: DateTime<Utc>\",\n    generated_at AS \"generated_at: DateTime<Utc>\"\nFROM insight_results\nWHERE meeting_id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "insight_id: InsightId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: InsightStatus",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "answers: Json<Vec<InsightAnswer>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "revision",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "error",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "requested_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "8147b18a5d8be1bc40c2292ead58f17893803445c43e0389cbe16ba3fed094da"
+}

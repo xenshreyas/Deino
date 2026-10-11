@@ -42,7 +42,7 @@ impl InsightExports for SqliteInsightRepo {
 }
 
 /// `run` as an export section entry; `None` when it has no answers to show.
-pub fn export_of(
+fn export_of(
     def: &InsightDef,
     run: &InsightRun,
     names: &HashMap<SegmentId, String>,

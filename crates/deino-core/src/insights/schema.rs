@@ -17,8 +17,8 @@ const EVIDENCE: &str = "The id of the transcript line the answer comes from, for
 /// The schema of an answer to an insight with `fields` (none: free text).
 pub fn answer_schema(fields: &[InsightField], cardinality: Cardinality) -> Value {
     let mut answers = json!({ "type": "array", "items": instance_schema(fields) });
-    if let Cardinality::Fixed { count } = cardinality {
-        answers["maxItems"] = json!(count);
+    if let (Cardinality::Fixed { count }, Some(object)) = (cardinality, answers.as_object_mut()) {
+        object.insert("maxItems".to_owned(), json!(count));
     }
     json!({
         "type": "object",

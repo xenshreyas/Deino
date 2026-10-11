@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting outside the trash: its title, and the template its notes were\n-- written with (the newest enhanced notes' own), else the one chosen for it.\nSELECT\n    m.title,\n    coalesce(\n        (SELECT e.template_id FROM enhanced_notes AS e\n         WHERE e.meeting_id = m.id ORDER BY e.version DESC LIMIT 1),\n        m.template_id\n    ) AS \"template_id: TemplateId\"\nFROM meetings AS m\nWHERE m.id = ?1 AND m.deleted_at IS NULL\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "3bc435ba9caac127d6960d6ccb3c25b28dd45aceac737258b4b003b0991ddff7"
+}

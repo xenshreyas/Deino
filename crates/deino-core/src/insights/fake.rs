@@ -7,21 +7,18 @@
 //!
 //! [`SqliteInsightRepo`]: super::SqliteInsightRepo
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::DbError;
-use deino_domain::{AppError, ErrorCode, InsightId, InsightStatus, MeetingId, SegmentId};
-use deino_llm::LlmError;
+use deino_domain::{InsightId, InsightStatus, MeetingId, SegmentId};
 
 use super::{
-    InsightDef, InsightModel, InsightRepo, InsightRequest, InsightResultRepo, InsightRun,
-    MeetingRecord, MeetingRecords, MeetingRun, OwnDomains, PastMeeting, RunAnswers, RunProgress,
-    RunScheduler, SpeakerNames, WireAnswer,
+    InsightDef, InsightRepo, InsightResultRepo, InsightRun, MeetingRecord, MeetingRecords,
+    MeetingRun, PastMeeting, RunAnswers, RunFailure, RunProgress, SpeakerNames,
 };
-use crate::profile::InternalDomains;
 use crate::testing::lock;
 
 /// Definitions, runs, meetings and speaker names, in memory.
@@ -49,10 +46,10 @@ impl FakeInsightStore {
         lock(&self.runs).clone()
     }
 
+    /// Applies `apply` to the run of `(insight, meeting)`, created pending first.
     fn upsert(
         &self,
-        insight: &InsightId,
-        meeting: &MeetingId,
+        (insight, meeting): (&InsightId, &MeetingId),
         at: DateTime<Utc>,
         apply: impl FnOnce(&mut InsightRun),
     ) {
@@ -130,7 +127,7 @@ impl InsightResultRepo for FakeInsightStore {
         at: DateTime<Utc>,
     ) -> Result<(), DbError> {
         for meeting in meetings {
-            self.upsert(insight, meeting, at, |run| {
+            self.upsert((insight, meeting), at, |run| {
                 run.status = InsightStatus::Pending;
                 run.error = None;
                 run.requested_at = at;
@@ -160,14 +157,13 @@ impl InsightResultRepo for FakeInsightStore {
                 })
             })
             .collect();
-        rows.sort_by(|a, b| b.meeting_started_at.cmp(&a.meeting_started_at));
+        rows.sort_by_key(|row| std::cmp::Reverse(row.meeting_started_at));
         Ok(rows)
     }
 
     async fn save_answers(&self, answers: &RunAnswers) -> Result<(), DbError> {
         self.upsert(
-            &answers.insight_id,
-            &answers.meeting_id,
+            (&answers.insight_id, &answers.meeting_id),
             answers.at,
             |run| {
                 run.status = InsightStatus::Done;
@@ -180,17 +176,15 @@ impl InsightResultRepo for FakeInsightStore {
         Ok(())
     }
 
-    async fn save_failure(
-        &self,
-        insight: &InsightId,
-        meeting: &MeetingId,
-        message: &str,
-        at: DateTime<Utc>,
-    ) -> Result<(), DbError> {
-        self.upsert(insight, meeting, at, |run| {
-            run.status = InsightStatus::Failed;
-            run.error = Some(message.to_owned());
-        });
+    async fn save_failure(&self, failure: &RunFailure) -> Result<(), DbError> {
+        self.upsert(
+            (&failure.insight_id, &failure.meeting_id),
+            failure.at,
+            |run| {
+                run.status = InsightStatus::Failed;
+                run.error = Some(failure.message.clone());
+            },
+        );
         Ok(())
     }
 
@@ -218,7 +212,7 @@ impl MeetingRecords for FakeInsightStore {
             .iter()
             .map(|(meeting, _)| meeting.clone())
             .collect();
-        meetings.sort_by(|a, b| b.started_at.cmp(&a.started_at));
+        meetings.sort_by_key(|meeting| std::cmp::Reverse(meeting.started_at));
         Ok(meetings)
     }
 }
@@ -231,86 +225,5 @@ impl SpeakerNames for FakeInsightStore {
             .iter()
             .filter_map(|segment| names.get(segment).map(|name| (*segment, name.clone())))
             .collect())
-    }
-}
-
-/// The user's own domains, fixed.
-#[derive(Clone, Debug, Default)]
-pub struct FixedDomains(pub InternalDomains);
-
-#[async_trait]
-impl OwnDomains for FixedDomains {
-    async fn internal_domains(&self) -> InternalDomains {
-        self.0.clone()
-    }
-}
-
-/// A scheduler that records what it scheduled, failing for chosen meetings.
-#[derive(Default)]
-pub struct RecordedScheduler {
-    scheduled: Mutex<Vec<MeetingId>>,
-    refused: Mutex<Vec<MeetingId>>,
-}
-
-impl RecordedScheduler {
-    /// Refuses to schedule `meeting`, as the pipeline does for a meeting
-    /// that is still recording.
-    pub fn refuse(&self, meeting: MeetingId) {
-        lock(&self.refused).push(meeting);
-    }
-
-    /// The meetings scheduled, in order.
-    pub fn scheduled(&self) -> Vec<MeetingId> {
-        lock(&self.scheduled).clone()
-    }
-}
-
-#[async_trait]
-impl RunScheduler for RecordedScheduler {
-    async fn schedule(&self, meeting: &MeetingId) -> Result<(), AppError> {
-        if lock(&self.refused).contains(meeting) {
-            return Err(AppError::new(
-                ErrorCode::Invalid,
-                "the meeting is still recording",
-            ));
-        }
-        lock(&self.scheduled).push(meeting.clone());
-        Ok(())
-    }
-}
-
-/// A model that answers by insight name, and records what it was asked.
-#[derive(Default)]
-pub struct ScriptedInsightModel {
-    answers: Mutex<BTreeMap<String, Vec<Result<WireAnswer, LlmError>>>>,
-    asked: Mutex<Vec<InsightRequest>>,
-}
-
-impl ScriptedInsightModel {
-    /// Answers the next request for the insight `name` with `answer`.
-    pub fn answer(self, name: &str, answer: Result<WireAnswer, LlmError>) -> Self {
-        lock(&self.answers)
-            .entry(name.to_owned())
-            .or_default()
-            .push(answer);
-        self
-    }
-
-    /// Every request, in order.
-    pub fn asked(&self) -> Vec<InsightRequest> {
-        lock(&self.asked).clone()
-    }
-}
-
-#[async_trait]
-impl InsightModel for ScriptedInsightModel {
-    async fn answer(&self, request: &InsightRequest) -> Result<WireAnswer, LlmError> {
-        lock(&self.asked).push(request.clone());
-        let mut answers = lock(&self.answers);
-        let queue = answers.entry(request.name.clone()).or_default();
-        if queue.is_empty() {
-            return Ok(WireAnswer::default());
-        }
-        queue.remove(0)
     }
 }

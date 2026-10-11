@@ -169,8 +169,8 @@ fn parse_number(text: &str) -> Option<f64> {
 fn boolean_of(raw: &WireScalar) -> Option<bool> {
     match raw {
         WireScalar::Bool(flag) => Some(*flag),
-        WireScalar::Number(number) if *number == 1.0 => Some(true),
-        WireScalar::Number(number) if *number == 0.0 => Some(false),
+        WireScalar::Number(number) if (*number - 1.0).abs() < f64::EPSILON => Some(true),
+        WireScalar::Number(number) if number.abs() < f64::EPSILON => Some(false),
         WireScalar::Text(text) => {
             let word = text.trim().trim_end_matches(['.', '!']).to_lowercase();
             match word.as_str() {
