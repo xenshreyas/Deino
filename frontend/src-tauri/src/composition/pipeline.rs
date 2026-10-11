@@ -11,6 +11,7 @@ use deino_core::export::AutoExporter;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
+use deino_core::search::SearchIndexing;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::SqliteVoiceprintRepo;
@@ -60,6 +61,7 @@ pub(crate) struct StageAdapters {
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
     /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
+    pub(crate) search: Arc<dyn SearchIndexing>,
 }
 
 /// The ports the registered stages read: SQLite repositories over
@@ -93,6 +95,7 @@ fn stage_ports(
         action_items: adapters.ai.adapters.action_items,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
+        search: adapters.ai.adapters.search,
     }
 }
 

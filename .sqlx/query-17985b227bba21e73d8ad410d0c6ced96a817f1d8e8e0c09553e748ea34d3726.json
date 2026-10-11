@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT text AS \"text!\", model AS \"model!\", vector AS \"vector!\"\n               FROM embeddings WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "text!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "model!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "vector!",
+        "ordinal": 2,
+        "type_info": "Blob"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "17985b227bba21e73d8ad410d0c6ced96a817f1d8e8e0c09553e748ea34d3726"
+}

@@ -24,6 +24,9 @@ interface TranscriptPanelProps {
   meetingId?: string;
   meetingFolderPath?: string | null;
   onRefetchTranscripts?: () => Promise<void>;
+
+  /** A moment to scroll to and highlight, in ms (a search hit). */
+  focusMs?: number;
 }
 
 export function TranscriptPanel({
@@ -42,6 +45,7 @@ export function TranscriptPanel({
   meetingId,
   meetingFolderPath,
   onRefetchTranscripts,
+  focusMs,
 }: TranscriptPanelProps) {
   // Convert transcripts to segments if pagination is not used but we want virtualization
   const convertedSegments = useMemo(() => {
@@ -75,6 +79,7 @@ export function TranscriptPanel({
       {/* Transcript content - use virtualized view for better performance */}
       <div className="flex-1 overflow-hidden pb-4">
         <VirtualizedTranscriptView
+          focusMs={focusMs}
           segments={convertedSegments}
           isRecording={isRecording}
           isPaused={false}

@@ -40,9 +40,11 @@ sha2 = "0.10.9"
 specta.workspace = true
 sqlx = { workspace = true, features = ["json"] }
 thiserror.workspace = true
-# Async file I/O, timeouts and cancellation for model downloads.
+# Async file I/O, timeouts and cancellation for model downloads; the
+# `TaskTracker` that owns the semantic index's background work (`rt`).
 tokio.workspace = true
-# Cancellation, and the tracked task of the account export (`rt`).
+# Cancellation, and the tracked tasks of the account export and the
+# semantic backfill (`rt`).
 tokio-util.workspace = true
 # The account export's zip archive (EXP-02).
 zip.workspace = true

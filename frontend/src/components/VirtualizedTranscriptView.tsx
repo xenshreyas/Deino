@@ -31,6 +31,19 @@ export interface VirtualizedTranscriptViewProps {
     totalCount?: number;
     loadedCount?: number;
     onLoadMore?: () => void;
+
+    /** A moment to scroll to and highlight, in ms (a search hit, ORG-08). */
+    focusMs?: number;
+}
+
+/** The segment a moment falls in: the last one starting at or before it. */
+function focusIndex(segments: TranscriptSegmentData[], focusMs: number | undefined): number {
+    if (focusMs === undefined) return -1;
+    let found = -1;
+    segments.forEach((segment, index) => {
+        if (Math.round(segment.timestamp * 1000) <= focusMs) found = index;
+    });
+    return found;
 }
 
 // Threshold for enabling virtualization (below this, use simple rendering)
@@ -68,7 +81,9 @@ const TranscriptSegment = memo(function TranscriptSegment({
     confidence,
     isStreaming,
     showConfidence,
+    focused = false,
 }: {
+    focused?: boolean;
     id: string;
     timestamp: number;
     text: string;
@@ -79,7 +94,11 @@ const TranscriptSegment = memo(function TranscriptSegment({
     const displayText = cleanStopWords(text) || (text.trim() === '' ? '[Silence]' : text);
 
     return (
-        <div id={`segment-${id}`} className="mb-3">
+        <div
+            id={`segment-${id}`}
+            aria-current={focused ? 'true' : undefined}
+            className={`mb-3 rounded-md transition-colors duration-(--dur-slow) ${focused ? '-mx-2 bg-highlight/60 px-2 py-1' : ''}`}
+        >
             <div className="flex items-start gap-2">
                 <Tooltip>
                     <TooltipTrigger>
@@ -121,6 +140,7 @@ export const VirtualizedTranscriptView: React.FC<VirtualizedTranscriptViewProps>
     totalCount = 0,
     loadedCount = 0,
     onLoadMore,
+    focusMs,
 }) => {
     // Create scroll ref first - shared between virtualizer and auto-scroll hook
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -217,6 +237,27 @@ export const VirtualizedTranscriptView: React.FC<VirtualizedTranscriptViewProps>
         return () => scrollElement.removeEventListener('scroll', handleScroll);
     }, [onLoadMore, hasMore, isLoadingMore, isRecording]);
 
+    // Search moments (ORG-08): load pages until the moment is in, then
+    // scroll to it once. A moment past the last loaded segment keeps loading.
+    const focused = focusIndex(segments, focusMs);
+    const lastSegment = segments[segments.length - 1];
+    const beyondLoaded = focusMs !== undefined && hasMore
+        && (lastSegment === undefined || lastSegment.timestamp * 1000 < focusMs);
+    const scrolledToFocus = useRef(false);
+    useEffect(() => {
+        if (beyondLoaded) {
+            if (!isLoadingMore) onLoadMore?.();
+            return;
+        }
+        if (focused < 0 || scrolledToFocus.current) return;
+        scrolledToFocus.current = true;
+        if (segments.length >= VIRTUALIZATION_THRESHOLD) {
+            virtualizer.scrollToIndex(focused, { align: 'center' });
+        } else {
+            document.getElementById(`segment-${segments[focused].id}`)?.scrollIntoView({ block: 'center' });
+        }
+    }, [beyondLoaded, focused, isLoadingMore, onLoadMore, segments, virtualizer]);
+
     // Use simple rendering for small lists, virtualization for large lists
     const useVirtualization = segments.length >= VIRTUALIZATION_THRESHOLD;
 
@@ -285,6 +326,7 @@ export const VirtualizedTranscriptView: React.FC<VirtualizedTranscriptViewProps>
                                         confidence={segment.confidence}
                                         isStreaming={isStreaming}
                                         showConfidence={showConfidence}
+                                        focused={virtualRow.index === focused}
                                     />
                                 </div>
                             );
@@ -324,7 +366,7 @@ export const VirtualizedTranscriptView: React.FC<VirtualizedTranscriptViewProps>
                 // Simple rendering for small lists (better animations)
                 <>
                     <div className="space-y-1">
-                        {segments.map((segment) => {
+                        {segments.map((segment, index) => {
                             const isStreaming = streamingSegmentId === segment.id;
 
                             return (
@@ -341,6 +383,7 @@ export const VirtualizedTranscriptView: React.FC<VirtualizedTranscriptViewProps>
                                         confidence={segment.confidence}
                                         isStreaming={isStreaming}
                                         showConfidence={showConfidence}
+                                        focused={index === focused}
                                     />
                                 </motion.div>
                             );

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Enhanced notes (NOT-02): the newest version of each meeting's AI notes, as\n-- its `summary` document; ?1 is one meeting's ID, or NULL. The same rule as\n-- the `search_enhanced_notes_*` triggers.\nINSERT INTO search_documents (kind, ref_id, meeting_id, body)\nSELECT 'summary', meeting_id, meeting_id, markdown FROM enhanced_notes AS e\nWHERE (?1 IS NULL OR meeting_id = ?1)\n    AND version = (SELECT max(version) FROM enhanced_notes WHERE meeting_id = e.meeting_id)\n    AND trim(markdown) <> ''\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8e56a64d8739275b58fddd551b7b95bcf9ab9c840e11aa40454109445181558a"
+}

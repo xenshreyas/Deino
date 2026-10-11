@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings outside the trash that pass every filter, newest first.\n--\n-- Each parameter is a JSON array; an empty array does not filter. Within a\n-- kind every listed value must hold (AND), except ?5, which lists meetings\n-- to choose from.\n--\n-- ?1  person IDs: each attended (an attendee, or a speaker linked to them)\n-- ?2  company IDs: someone from each attended\n-- ?3  tag IDs: each is on the meeting\n-- ?4  folder IDs: the meeting is in each folder or one of its subfolders\n-- ?5  meeting IDs: the meeting is one of them\n-- ?6  domains: an attendee's email is at the domain (or a subdomain), or\n--     their company's domain is it\nWITH RECURSIVE folder_tree (root, id) AS (\n    SELECT value, value FROM json_each(?4)\n    UNION\n    SELECT tree.root, child.id\n    FROM folders AS child\n    JOIN folder_tree AS tree ON child.parent_id = tree.id\n)\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title AS \"title!\",\n    coalesce(m.started_at, m.created_at) AS \"date!: DateTime<Utc>\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND NOT EXISTS (\n        SELECT 1 FROM json_each(?1) AS wanted\n        WHERE NOT EXISTS (\n            SELECT 1 FROM meeting_attendees AS a\n            WHERE a.meeting_id = m.id AND a.person_id = wanted.value\n        )\n        AND NOT EXISTS (\n            SELECT 1 FROM speakers AS s\n            WHERE s.meeting_id = m.id AND s.person_id = wanted.value\n        )\n    )\n    AND NOT EXISTS (\n        SELECT 1 FROM json_each(?2) AS wanted\n        WHERE NOT EXISTS (\n            SELECT 1 FROM meeting_attendees AS a\n            JOIN people AS p ON p.id = a.person_id\n            WHERE a.meeting_id = m.id AND p.company_id = wanted.value\n        )\n    )\n    AND NOT EXISTS (\n        SELECT 1 FROM json_each(?3) AS wanted\n        WHERE NOT EXISTS (\n            SELECT 1 FROM meeting_tags AS t\n            WHERE t.meeting_id = m.id AND t.tag_id = wanted.value\n        )\n    )\n    AND NOT EXISTS (\n        SELECT 1 FROM json_each(?4) AS wanted\n        WHERE NOT EXISTS (\n            SELECT 1 FROM meeting_folders AS f\n            JOIN folder_tree AS tree ON tree.id = f.folder_id\n            WHERE f.meeting_id = m.id AND tree.root = wanted.value\n        )\n    )\n    AND (json_array_length(?5) = 0 OR m.id IN (SELECT value FROM json_each(?5)))\n    AND NOT EXISTS (\n        SELECT 1 FROM json_each(?6) AS wanted\n        WHERE NOT EXISTS (\n            SELECT 1 FROM meeting_attendees AS a\n            JOIN people AS p ON p.id = a.person_id\n            LEFT JOIN companies AS c ON c.id = p.company_id\n            WHERE a.meeting_id = m.id\n                AND (\n                    p.email LIKE '%@' || wanted.value\n                    OR p.email LIKE '%.' || wanted.value\n                    OR c.domain = wanted.value\n                )\n        )\n    )\nORDER BY coalesce(m.started_at, m.created_at) DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "date!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "8b6110c32f1d1246fb44dd1e77b08156d893e8919f2dfe695934b18eea21f531"
+}

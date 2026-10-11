@@ -10,7 +10,7 @@ use tokio_util::sync::CancellationToken;
 use super::download::{self, Control, Download, Limits};
 use super::{
     ByteSource, Catalog, CatalogFile, CatalogModel, DownloadProgress, ModelError, ModelEvents,
-    ModelFileId, ModelFileView, ModelState, ModelStore, Quant,
+    ModelFileId, ModelFileView, ModelPurpose, ModelState, ModelStore, Quant,
 };
 
 /// A download in progress.
@@ -34,9 +34,11 @@ pub struct ModelServiceParts {
     pub memory_bytes: u64,
 }
 
-/// Manages the downloadable transcription models.
+/// Manages the files of the catalog model of one purpose: the transcription
+/// model by default, or another with [`ModelService::serving`].
 pub struct ModelService {
     catalog: Catalog,
+    purpose: ModelPurpose,
     store: ModelStore,
     source: Arc<dyn ByteSource>,
     events: Arc<dyn ModelEvents>,
@@ -51,12 +53,21 @@ impl ModelService {
         Self {
             recommended: Quant::default_for_memory(parts.memory_bytes),
             catalog: parts.catalog,
+            purpose: ModelPurpose::Transcription,
             store: parts.store,
             source: parts.source,
             events: parts.events,
             limits: Limits::default(),
             active: Mutex::new(HashMap::new()),
         }
+    }
+
+    /// The same service for the catalog's model of `purpose` (its store
+    /// should be that model's own folder).
+    #[must_use]
+    pub fn serving(mut self, purpose: ModelPurpose) -> Self {
+        self.purpose = purpose;
+        self
     }
 
     /// The same service with other transfer limits (tests shorten them).
@@ -70,9 +81,10 @@ impl ModelService {
         self.active.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Every file of the live model, smallest first, with its state here.
+    /// Every file of the served model, smallest first, with its state here.
     pub async fn list(&self) -> Result<Vec<ModelFileView>, ModelError> {
-        let model = self.catalog.live_model()?;
+        let model = self.catalog.model(self.purpose)?;
+        let recommended = self.recommended()?;
         let mut views = Vec::with_capacity(model.files.len());
         for file in &model.files {
             views.push(ModelFileView {
@@ -81,7 +93,7 @@ impl ModelService {
                 quant: file.quant,
                 size_bytes: file.size_bytes,
                 state: self.state(file).await?,
-                recommended: file.quant == self.recommended,
+                recommended: file.id == recommended,
             });
         }
         Ok(views)
@@ -95,9 +107,10 @@ impl ModelService {
         self.store.state(file).await
     }
 
-    /// The file this Mac should use: the live model at the quant its memory suits.
+    /// The file this Mac should use: the served model at the quant its
+    /// memory suits, else at its default quant.
     pub fn recommended(&self) -> Result<ModelFileId, ModelError> {
-        let model = self.catalog.live_model()?;
+        let model = self.catalog.model(self.purpose)?;
         let file = model
             .file(self.recommended)
             .or_else(|| model.file(model.default_quant))
@@ -105,9 +118,11 @@ impl ModelService {
         Ok(file.id.clone())
     }
 
+    /// The served model's file `id`; another model's file is unknown here.
     fn resolve(&self, id: &ModelFileId) -> Result<(&CatalogModel, &CatalogFile), ModelError> {
         self.catalog
             .find(id)
+            .filter(|(model, _)| model.purpose == self.purpose)
             .ok_or_else(|| ModelError::UnknownModel(id.clone()))
     }
 

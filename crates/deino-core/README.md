@@ -95,8 +95,10 @@ the SQLite adapters behind those ports.
     `extract.action_items`, and the pure `resolve_due`, `Roster` and
     `Transcript` that turn the model's phrases, names and citations into
     days, people and segments). Fakes: `FakeActionItemExtractor`.
-- `models` (CAP-01): the bundled model catalog (`catalog.json`: Parakeet
-  Unified EN 0.6B, six quants pinned to a revision, size and SHA-256),
+- `models` (CAP-01, AI-01): the bundled model catalog (`catalog.json`: Parakeet
+  Unified EN 0.6B, six quants, and Nomic Embed Text v1.5 Q8_0, each pinned to a
+  revision, size and SHA-256, each with a purpose; a `ModelService` serves one
+  purpose),
   `ModelService` (list with state, recommended quant by RAM, download, cancel,
   delete, ready path), `ModelStore` (`<app_data_dir>/models/parakeet-unified/`)
   and the resumable, verified download over the `ByteSource` port.
@@ -134,6 +136,20 @@ the SQLite adapters behind those ports.
   `FolderDialog`, `Clipboard`, `UrlOpener`) and `Vault` (`FsVault`, atomic
   writes). Fakes: `FakeVault`, `ScriptedDialog`, `RecordedClipboard`,
   `RecordedOpener`.
+- `search` (ORG-08, AI-01, ADR 0032): the query language (`query`), FTS5
+  expressions (`fts`), snippets with UTF-16 highlight ranges (`snippet`),
+  `SqliteSearchIndex` (`SearchIndex`: keyword hits, filter scopes, refresh,
+  reindex; `FilterDirectory`: `@` names and known domains), reciprocal rank
+  fusion (`hybrid`), `sections`, `SearchService` (`search`, `search_hybrid`,
+  `suggest_filters`, `reindex_all`) and `MeetingIndexer` (`SearchIndexing`,
+  the `index` stage's port). `Retriever`: read-only hybrid search for
+  another process (the `deino` CLI and MCP server) over a read-only pool and
+  an optional `Embedder`, keyword-only without one; writes through its
+  adapters fail with `SearchError::ReadOnly`. `semantic`: the chunker, the `Embedder` port
+  (`GatewayEmbedder`, nomic task prefixes; `NoEmbedder`), `SqliteEmbeddingStore`
+  (`MeetingSourceReader`, `EmbeddingStore`), `VectorIndex` behind
+  `SharedVectors`, `SemanticIndexer`, `SemanticIndex` (`SemanticSearch`), the
+  `Backfill` and `SemanticAdmin`. Fakes: `FakeEmbedder`, `FakeSemanticSearch`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

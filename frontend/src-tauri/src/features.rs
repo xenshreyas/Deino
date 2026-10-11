@@ -37,6 +37,7 @@ pub mod people;
 pub mod pipeline;
 pub mod profile;
 pub mod recording;
+pub mod search;
 pub mod secrets;
 pub mod settings;
 pub mod speakers;
@@ -65,6 +66,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (secrets::NAME, secrets::specta()),
         (llm::NAME, llm::specta()),
         (profile::NAME, profile::specta()),
+        (search::NAME, search::specta()),
         (settings::NAME, settings::specta()),
         (templates::NAME, templates::specta()),
         (transcription::NAME, transcription::specta()),

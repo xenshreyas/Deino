@@ -63,11 +63,11 @@ pub use sleeper::{ClockSleeper, Sleeper};
 pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
 pub use stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
-    EnhanceNotesStage, IdentifySpeakersStage, MeetingTitler, NotesEnhancer,
+    EnhanceNotesStage, IdentifySpeakersStage, IndexStage, MeetingTitler, NotesEnhancer,
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::{
     FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer,
-    RecordedIdentifications, RecordedTitler, ScriptedAutoExporter,
+    RecordedIdentifications, RecordedIndexing, RecordedTitler, ScriptedAutoExporter,
 };
 pub use trigger::PipelineTrigger;

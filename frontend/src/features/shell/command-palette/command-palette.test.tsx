@@ -31,9 +31,6 @@ vi.mock('@/contexts/ConfigContext', () => ({
 vi.mock('@/contexts/ImportDialogContext', () => ({
   useImportDialog: () => ({ openImportDialog: vi.fn() }),
 }));
-vi.mock('@/services/transcriptService', () => ({
-  transcriptService: { searchTranscripts: vi.fn(() => Promise.resolve([])) },
-}));
 
 /** A router with the palette in its root and two pages to land on. */
 function renderPalette() {
@@ -84,6 +81,19 @@ describe('command palette', () => {
     expect(screen.getByText('Go to')).toBeDefined();
     expect(screen.getByText('Actions')).toBeDefined();
     expect(await screen.findByText('Q4 roadmap alignment')).toBeDefined();
+  });
+
+  test('shows the unfinished chat action as WIP and disabled (D13)', async () => {
+    renderPalette();
+    act(() => {
+      useShellLayout.getState().setPaletteOpen(true);
+    });
+
+    const chat = await screen.findByRole('option', { name: /Ask Deino/ });
+    expect(chat.textContent).toContain('WIP');
+    expect(chat.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(chat);
+    expect(useShellLayout.getState().chatOpen).toBe(false);
   });
 
   test('choosing a destination navigates there and closes the palette', async () => {

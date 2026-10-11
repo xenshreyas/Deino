@@ -15,8 +15,11 @@ export default function PageContent({
   totalCount,
   loadedCount,
   onLoadMore,
+  focusMs,
   children,
 }: {
+  /** A moment to open the transcript at, in ms (a search hit). */
+  focusMs?: number | undefined;
   /** The meeting page whose Transcript slot shows this panel. */
   children: ReactNode;
   meeting: any;
@@ -54,6 +57,7 @@ export default function PageContent({
             meetingId={meeting.id}
             meetingFolderPath={meeting.folder_path}
             onRefetchTranscripts={onRefetchTranscripts}
+            focusMs={focusMs}
           />
         ),
       }}

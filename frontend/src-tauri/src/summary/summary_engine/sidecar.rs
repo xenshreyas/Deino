@@ -371,6 +371,19 @@ impl SidecarManager {
         Ok(())
     }
 
+    /// Starts the process if it is not running, whatever model it last
+    /// loaded: every request names its own model (AI-01 embeddings). A later
+    /// `ensure_running` for a generation model restarts it only if that model
+    /// differs from the last one recorded.
+    pub async fn ensure_started(&self) -> Result<()> {
+        if self.is_healthy() {
+            self.update_activity().await;
+            return Ok(());
+        }
+        let current = self.current_model_path.read().await.clone();
+        self.spawn(current.unwrap_or_default()).await
+    }
+
     // ── FND-09: streamed exchanges for the LLM gateway ──
 
     /// Writes one request line and returns the [`Exchange`] that reads its

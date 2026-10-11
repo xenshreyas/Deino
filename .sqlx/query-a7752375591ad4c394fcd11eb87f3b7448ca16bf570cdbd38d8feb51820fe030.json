@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- People (not merged), companies and folders: the documents that belong to\n-- no meeting. The same rules as their triggers.\nINSERT INTO search_documents (kind, ref_id, title, body)\nSELECT 'person', id, name, trim(coalesce(email, '') || ' ' || coalesce(title, '')) FROM people\nWHERE merged_into IS NULL\nUNION ALL\nSELECT 'company', id, name, coalesce(domain, '') FROM companies\nUNION ALL\nSELECT 'folder', id, name, description FROM folders\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "a7752375591ad4c394fcd11eb87f3b7448ca16bf570cdbd38d8feb51820fe030"
+}

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings the backfill embeds: finished ones (ready or failed) outside the\n-- trash that have something to embed, newest first. Meetings still\n-- recording or processing get their `index` stage instead.\nSELECT m.id AS \"id!: MeetingId\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND m.status IN ('ready', 'failed')\n    AND EXISTS (\n        SELECT 1 FROM search_documents AS d\n        WHERE d.meeting_id = m.id AND d.kind IN ('segment', 'note', 'summary')\n    )\nORDER BY coalesce(m.started_at, m.created_at) DESC, m.id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "b0d6640e3f120be756e532347dda79cbb8747c78a79cb5355b0b0e3338378766"
+}

@@ -51,6 +51,10 @@ export const settingsCopy = {
       label: 'Profile',
       description: 'Who you are and how you like notes written, for every AI prompt.',
     },
+    search: {
+      label: 'Search index',
+      description: 'Find meetings by meaning with a small model that runs on this Mac.',
+    },
     calendar: {
       label: 'Calendar',
       description: 'Your calendars from macOS Calendar, and which ones Deino shows.',

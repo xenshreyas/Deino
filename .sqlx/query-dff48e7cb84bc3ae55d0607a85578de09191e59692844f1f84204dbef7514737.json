@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT count(*) AS \"count!: u32\" FROM search_documents",
+  "describe": {
+    "columns": [
+      {
+        "name": "count!: u32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dff48e7cb84bc3ae55d0607a85578de09191e59692844f1f84204dbef7514737"
+}

@@ -18,13 +18,14 @@ export const Route = createFileRoute('/meetings/$meetingId')({
 
 function MeetingRoute() {
   const { meetingId } = Route.useParams();
-  const { source, tab = 'notes' } = Route.useSearch();
+  const { source, t, tab = t === undefined ? 'notes' : 'transcript' } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
     <MeetingScreen
       meetingId={meetingId}
       source={source}
       tab={tab}
+      focusMs={t}
       onTabChange={(next) =>
         void navigate({ search: (previous) => ({ ...previous, tab: next }), replace: true })
       }

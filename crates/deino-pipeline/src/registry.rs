@@ -13,6 +13,7 @@ use deino_core::export::AutoExporter;
 use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
+use deino_core::search::SearchIndexing;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::ExemplarReader;
@@ -21,7 +22,7 @@ use deino_domain::{Clock, StageId};
 use crate::stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
     EnhanceNotesStage, ExtractActionItemsStage, FinalizeAudioStage, IdentifySpeakersStage,
-    MeetingTitler, NotesEnhancer,
+    IndexStage, MeetingTitler, NotesEnhancer,
 };
 use crate::{Job, PipelineStage};
 
@@ -63,6 +64,8 @@ pub struct StagePorts {
     pub auto_filer: Arc<dyn AutoFiler>,
     /// The folder holding every live recording's folder (`finalize_audio`).
     pub recordings: PathBuf,
+    /// Search indexing: keyword documents and embeddings (ORG-08, AI-01).
+    pub search: Arc<dyn SearchIndexing>,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -97,6 +100,7 @@ impl StagePorts {
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
             recordings: PathBuf::from("no-recordings"),
+            search: Arc::new(crate::stages::RecordedIndexing::default()),
         }
     }
 }
@@ -120,6 +124,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(AutoTagStage::new(ports)),
         // 75 · ORG-05.
         Arc::new(AutoFolderStage::new(ports)),
+        // 80 · ORG-08 / AI-01: keyword documents and embeddings.
+        Arc::new(IndexStage::new(ports)),
         // 99 · EXP-02: the notes into the user's folder, last.
         Arc::new(AutoExportStage::new(ports)),
     ])
@@ -205,6 +211,7 @@ mod tests {
                 "auto_title",
                 "auto_tag",
                 "auto_folder",
+                "index",
                 "auto_export"
             ]
             .map(StageId::new)

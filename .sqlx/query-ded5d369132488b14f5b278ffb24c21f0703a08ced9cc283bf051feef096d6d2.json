@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The user's notes (Readable Markdown); ?1 is one meeting's ID, or NULL.\n-- The same rule as the `search_meeting_notes_*` triggers.\nINSERT INTO search_documents (kind, ref_id, meeting_id, body)\nSELECT 'note', meeting_id, meeting_id, notes_markdown FROM meeting_notes\nWHERE (?1 IS NULL OR meeting_id = ?1) AND trim(coalesce(notes_markdown, '')) <> ''\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ded5d369132488b14f5b278ffb24c21f0703a08ced9cc283bf051feef096d6d2"
+}

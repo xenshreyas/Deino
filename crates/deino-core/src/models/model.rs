@@ -134,11 +134,25 @@ pub struct CatalogFile {
     pub sha256: Sha256Digest,
 }
 
+/// What a catalog model is for; each [`ModelService`](super::ModelService)
+/// serves one purpose.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelPurpose {
+    /// Speech to text (Parakeet Unified), the default.
+    #[default]
+    Transcription,
+    /// Text to vectors for semantic search (AI-01).
+    Embedding,
+}
+
 /// A model in the catalog, pinned to one repository revision.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CatalogModel {
     /// The name the UI shows.
     pub name: String,
+    /// What it is for.
+    pub purpose: ModelPurpose,
     /// The Hugging Face repository.
     pub repo: String,
     /// The pinned revision (a commit hash).

@@ -6,11 +6,12 @@ export const paletteCopy = {
   goTo: 'Go to',
   actions: 'Actions',
   meetings: 'Meetings',
-  transcripts: 'In transcripts',
   newNote: 'New note',
   newActionItem: 'New action item',
   startRecording: 'Start recording',
   askDeino: 'Ask Deino',
+  /** Marks a feature that is not finished. */
+  wip: 'WIP',
   importAudio: 'Import audio',
   toggleSidebar: 'Toggle sidebar',
   toggleRightPanel: 'Toggle right panel',

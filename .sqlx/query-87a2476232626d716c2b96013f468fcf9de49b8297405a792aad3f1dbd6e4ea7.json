@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The chunks with the row IDs in the JSON array ?1, with their meeting's\n-- title and date, leaving out trashed meetings (and rows deleted since the\n-- in-memory index loaded them).\nSELECT\n    e.id AS \"id!\",\n    e.meeting_id AS \"meeting_id!: MeetingId\",\n    e.ref_kind AS \"kind!: ChunkKind\",\n    e.ref_id AS \"ref_id!\",\n    e.ts_ms AS \"ts_ms: Millis\",\n    e.end_ms AS \"end_ms: Millis\",\n    e.text AS \"text!\",\n    m.title AS \"title!\",\n    coalesce(m.started_at, m.created_at) AS \"date!: DateTime<Utc>\"\nFROM embeddings AS e\nJOIN meetings AS m ON m.id = e.meeting_id\nWHERE e.id IN (SELECT value FROM json_each(?1)) AND m.deleted_at IS NULL\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind!: ChunkKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "ref_id!",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "ts_ms: Millis",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end_ms: Millis",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "text!",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "date!: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "87a2476232626d716c2b96013f468fcf9de49b8297405a792aad3f1dbd6e4ea7"
+}

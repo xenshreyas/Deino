@@ -11,6 +11,7 @@
 //! | 65 | [`AutoTitleStage`] (`auto_title`) | NOT-02 |
 //! | 70 | [`AutoTagStage`] (`auto_tag`) | ORG-06 |
 //! | 75 | [`AutoFolderStage`] (`auto_folder`) | ORG-05 |
+//! | 80 | [`IndexStage`] (`index`) | ORG-08, AI-01 |
 //! | 99 | [`AutoExportStage`] (`auto_export`) | EXP-02 |
 //!
 //! PARITY_PLAN §4.2 lists the orders the later cards' stages take.
@@ -26,6 +27,7 @@ mod enhance_notes;
 mod extract_action_items;
 mod finalize_audio;
 mod identify_speakers;
+mod index;
 
 pub use auto_export::AutoExportStage;
 #[cfg(any(test, feature = "test-support"))]
@@ -50,3 +52,6 @@ pub use finalize_audio::FinalizeAudioStage;
 pub use identify_speakers::IdentifySpeakersStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use identify_speakers::RecordedIdentifications;
+pub use index::IndexStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use index::RecordedIndexing;

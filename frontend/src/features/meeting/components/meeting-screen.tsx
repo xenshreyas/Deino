@@ -29,6 +29,8 @@ export interface MeetingScreenProps {
   meetingId: string;
   source?: MeetingSource | undefined;
   tab: MeetingTabId;
+  /** A moment to open the transcript at (ms into the recording), from search. */
+  focusMs?: number | undefined;
   onTabChange: (tab: MeetingTabId) => void;
 }
 
@@ -90,13 +92,19 @@ function MeetingTabs({
 }
 
 /** The meeting page. */
-export function MeetingScreen({ meetingId, source, tab, onTabChange }: MeetingScreenProps) {
+export function MeetingScreen({
+  meetingId,
+  source,
+  tab,
+  focusMs,
+  onTabChange,
+}: MeetingScreenProps) {
   const id = asMeetingId(meetingId);
   const rightPanelOpen = useShellLayout((state) => state.rightPanelOpen);
   useTabShortcuts(onTabChange);
   const Player = MEETING_PLAYER;
   return (
-    <LegacyMeetingSession key={meetingId} meetingId={meetingId} source={source}>
+    <LegacyMeetingSession key={meetingId} meetingId={meetingId} source={source} focusMs={focusMs}>
       <MeetingTitleBar meetingId={id} />
       <div className="flex h-full min-w-0">
         <div className="flex min-w-0 flex-1 flex-col">

@@ -127,8 +127,9 @@ async fn a_committed_transaction_publishes_its_tables_once() {
         .unwrap();
     transaction.commit().await.unwrap();
 
+    // A meeting's search document is written by trigger in the same commit (ORG-08).
     let expected = TableChanges {
-        tables: vec![Table::Meetings, Table::MeetingNotes],
+        tables: vec![Table::Meetings, Table::MeetingNotes, Table::SearchDocuments],
         seq: 1,
     };
     assert_eq!(changes.try_recv().unwrap(), expected);
@@ -155,7 +156,7 @@ async fn a_rolled_back_transaction_publishes_nothing() {
 
     // The rolled-back insert left nothing pending, and the no-op UPDATE touched no rows.
     let expected = TableChanges {
-        tables: vec![Table::Meetings],
+        tables: vec![Table::Meetings, Table::SearchDocuments],
         seq: 1,
     };
     assert_eq!(changes.try_recv().unwrap(), expected);

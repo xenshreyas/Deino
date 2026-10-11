@@ -39,6 +39,7 @@ mod notes;
 mod organize;
 mod pipeline;
 mod recording;
+mod search;
 mod speakers;
 mod stt;
 
@@ -58,6 +59,7 @@ pub(crate) use speakers::Speakers;
 pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
+use deino_core::search::SearchIndexing;
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
@@ -153,13 +155,13 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         log::error!(target: "startup", "settings were not wired before the database; AI, templates and the profile are unavailable");
         return;
     };
-    let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
+    let (gateway, search) = search::attach_gateway_and_search(app, &database, &settings, &clock);
     let wiring = ActionItemWiring {
         gateway: gateway.clone(),
         settings: Arc::clone(&settings),
         clock: Arc::clone(&clock),
     };
-    let stage_adapters = attach_stage_services(app, &database, &organize, &wiring);
+    let stage_adapters = attach_stage_services(app, &database, &wiring, (&organize, search));
     let deps = NoteDeps {
         settings: Arc::clone(&settings),
         gateway: gateway.clone(),
@@ -208,12 +210,13 @@ fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock
 
 /// Builds and manages the services behind the pipeline's AI and export
 /// stages: the auto-tagger, the exports (EXP-01/02), action items (AI-05)
-/// and the speaker identifier (CAP-04).
+/// and the speaker identifier (CAP-04); the search indexer (ORG-08) is
+/// already built.
 fn attach_stage_services(
     app: &AppHandle,
     database: &Database,
-    organize: &Organize,
     wiring: &ActionItemWiring,
+    (organize, search): (&Organize, Arc<dyn SearchIndexing>),
 ) -> StageAdapters {
     let auto_tagger = organize.auto_tagger(wiring.gateway.clone(), Arc::clone(&wiring.settings));
     let exports = ExportServices::build(
@@ -229,6 +232,7 @@ fn attach_stage_services(
         auto_export,
         action_items: action_items::attach_action_items(app, database, wiring),
         identifier: speakers::identifier(database, wiring.settings.clone()),
+        search,
     }
 }
 
@@ -363,6 +367,7 @@ mod tests {
                         deino_core::action_items::FakeActionItemExtractor::default(),
                     ),
                     identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
+                    search: Arc::new(deino_pipeline::RecordedIndexing::default()),
                 },
             },
             recordings: std::path::PathBuf::from("no-recordings"),
