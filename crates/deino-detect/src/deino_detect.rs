@@ -21,11 +21,14 @@
 //! - [`resolver`] and [`policy`]: the decision, pure over a `Clock`.
 //! - [`service`]: the rules around the policy and the prompt's buttons.
 //! - [`outputs`] and [`calendar`]: the ports the app implements.
+//! - [`autostop`]: CAP-07, ending a recording when its meeting is over and
+//!   offering a new note when the next one begins.
 //!
 //! Detection reads no audio and sends nothing anywhere. It logs prompt ids
 //! and counts, never window titles, URLs or calendar titles.
 
 pub mod attribution;
+pub mod autostop;
 pub mod calendar;
 pub mod classify;
 mod detector;

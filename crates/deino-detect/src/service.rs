@@ -6,7 +6,9 @@
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use chrono::{DateTime, Utc};
-use deino_domain::Clock;
+use deino_domain::{BundleId, Clock};
+
+use crate::autostop::MicrophoneHolders;
 
 use crate::error::DetectError;
 use crate::event::{Detection, DetectionEvent, DetectionId};
@@ -39,10 +41,14 @@ pub struct DetectionService {
     state: Mutex<State>,
 }
 
-/// The policy and the prompt on screen.
+/// The policy, the prompt on screen and what the last evaluation saw.
 struct State {
     policy: DetectionPolicy,
     shown: Option<Detection>,
+    /// Apps capturing from the microphone at the last evaluation.
+    holders: Vec<BundleId>,
+    /// The meeting app the last evaluation resolved, if any.
+    meeting_app: Option<BundleId>,
 }
 
 impl DetectionService {
@@ -55,6 +61,8 @@ impl DetectionService {
             state: Mutex::new(State {
                 policy,
                 shown: None,
+                holders: Vec::new(),
+                meeting_app: None,
             }),
         }
     }
@@ -71,6 +79,7 @@ impl DetectionService {
         let now = self.clock.now();
         let (mut events, auto_start) = {
             let mut state = self.lock();
+            state.remember(snapshot, candidate.as_ref());
             let auto_start = state.auto_start_due(now);
             let actions = state.policy.evaluate(candidate, gate);
             (state.apply(actions, &config, now), auto_start)
@@ -159,7 +168,28 @@ impl DetectionService {
     }
 }
 
+impl MicrophoneHolders for DetectionService {
+    fn holds(&self, app: &BundleId) -> bool {
+        self.lock().holders.contains(app)
+    }
+
+    fn meeting_app(&self) -> Option<BundleId> {
+        self.lock().meeting_app.clone()
+    }
+}
+
 impl State {
+    /// Keeps who held the microphone and which meeting app was resolved,
+    /// for auto-stop (CAP-07), which follows a recording's meeting app.
+    fn remember(&mut self, snapshot: &SignalSnapshot, candidate: Option<&Candidate>) {
+        self.holders = snapshot
+            .clients
+            .iter()
+            .map(|client| client.app.bundle_id.clone())
+            .collect();
+        self.meeting_app = candidate.map(|candidate| candidate.app.bundle_id.clone());
+    }
+
     /// The shown prompt whose countdown has run out, answered as "Take notes".
     fn auto_start_due(&mut self, now: DateTime<Utc>) -> Option<Detection> {
         let due = self
