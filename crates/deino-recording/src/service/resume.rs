@@ -11,6 +11,7 @@ use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
 
 use super::{Launched, RecordingService, blocking, meeting};
 use crate::error::RecordingError;
+use crate::events::RecordingSnapshot;
 use crate::session::{Plan, Take};
 
 /// A finished meeting, ready to take more audio.
@@ -18,6 +19,7 @@ struct Reopened {
     plan: Plan,
     title: deino_core::meetings::MeetingTitle,
     began_at: DateTime<Utc>,
+    event: Option<deino_domain::CalendarEventId>,
 }
 
 impl RecordingService {
@@ -36,9 +38,13 @@ impl RecordingService {
             plan,
             title,
             began_at,
+            event,
         } = self.reopened(id).await?;
         let recorded = plan.take.start().as_duration();
-        let starting = Self::starting(&plan, &title);
+        let starting = RecordingSnapshot {
+            calendar_event_id: event,
+            ..Self::starting(&plan, &title)
+        };
         self.state.set(starting.clone());
         let prepared = self.prepare(plan).await?;
         let moved = self
@@ -83,6 +89,7 @@ impl RecordingService {
             },
             title,
             began_at: state.started_at.unwrap_or(now),
+            event: state.calendar_event_id,
         })
     }
 }

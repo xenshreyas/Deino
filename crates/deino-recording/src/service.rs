@@ -151,7 +151,13 @@ impl RecordingService {
             speakers: plan.speakers,
             link: request.link.as_ref(),
         };
-        let starting = Self::starting(&plan, &title);
+        let starting = RecordingSnapshot {
+            calendar_event_id: request
+                .link
+                .as_ref()
+                .and_then(|link| link.calendar_event_id),
+            ..Self::starting(&plan, &title)
+        };
         self.state.set(starting.clone());
         let prepared = self.prepare(plan).await?;
         if let Err(error) = meeting::create(&self.deps, &row).await {

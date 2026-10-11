@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, Utc};
 use deino_audio::HealthEvent;
-use deino_domain::{Channel, MeetingId, Millis, SegmentId};
+use deino_domain::{CalendarEventId, Channel, MeetingId, Millis, SegmentId};
 use serde::Serialize;
 
 use crate::echo::EchoMode;
@@ -46,6 +46,9 @@ pub struct RecordingSnapshot {
     /// Whether echo is being removed from the microphone (speakers) or not
     /// needed (headphones).
     pub echo: Option<EchoMode>,
+    /// The calendar event the meeting is recorded for, if any (the menu
+    /// bar's "Xm left", auto-stop's calendar rule).
+    pub calendar_event_id: Option<CalendarEventId>,
     /// The microphone picked for this recording by name; `None` follows
     /// the system default.
     pub microphone: Option<String>,
@@ -67,6 +70,7 @@ impl RecordingSnapshot {
             paused_ms: 0,
             paused_at: None,
             echo: None,
+            calendar_event_id: None,
             microphone: None,
             system_audio: true,
             issues: Vec::new(),

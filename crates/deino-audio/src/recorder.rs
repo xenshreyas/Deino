@@ -87,23 +87,12 @@ pub struct RecordingInputs {
     pub start: Frames,
 }
 
-/// Where a take of the recording is anchored.
+/// Where a take of the recording is anchored: the host time of its first
+/// frame, and the timeline frame captured then.
 #[derive(Clone, Copy, Debug)]
 struct Take {
-    /// The host time of the take's first frame.
     origin: HostTime,
-    /// The timeline frame captured at `origin`.
     start: Frames,
-}
-
-impl Take {
-    /// The first take of a new recording.
-    const fn first(origin: HostTime) -> Self {
-        Self {
-            origin,
-            start: Frames::ZERO,
-        }
-    }
 }
 
 /// Both tracks' placed audio: 48 kHz blocks stamped with timeline positions.
@@ -141,7 +130,8 @@ impl Recorder {
         std::fs::create_dir_all(dir.join(AUDIO_DIR))?;
         let origin = deps.host_clock.now();
         let manifest = RecordingManifest::start(origin, deps.wall_clock.now());
-        Self::launch(dir, deps, manifest, Take::first(origin))
+        let start = Frames::ZERO;
+        Self::launch(dir, deps, manifest, Take { origin, start })
     }
 
     /// Resumes the stopped recording in `dir` (CAP-07): each track gets a
