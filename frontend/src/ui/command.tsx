@@ -9,6 +9,7 @@ import {
   type ElementRef,
   forwardRef,
   type HTMLAttributes,
+  type ReactNode,
 } from 'react';
 
 import { cn } from './cn';
@@ -31,13 +32,15 @@ Command.displayName = 'Command';
 export interface CommandInputProps extends ComponentPropsWithoutRef<typeof CommandPrimitive.Input> {
   /** `palette` is the ⌘K palette's 48px input; `combobox` fits a popover. */
   variant?: 'combobox' | 'palette';
+  /** Shown between the icon and the text, such as the palette's filter chips. */
+  before?: ReactNode;
 }
 
 /** The search field with its icon and a hairline underneath. */
 export const CommandInput = forwardRef<
   ElementRef<typeof CommandPrimitive.Input>,
   CommandInputProps
->(({ className, variant = 'combobox', ...props }, ref) => (
+>(({ className, variant = 'combobox', before, ...props }, ref) => (
   <div
     className={cn(
       'flex items-center gap-2.5 border-b border-border',
@@ -49,6 +52,7 @@ export const CommandInput = forwardRef<
       size={variant === 'palette' ? 20 : 16}
       className="shrink-0 text-fg-muted"
     />
+    {before}
     <CommandPrimitive.Input
       ref={ref}
       className={cn(

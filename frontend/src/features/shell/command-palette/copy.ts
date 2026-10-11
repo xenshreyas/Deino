@@ -6,7 +6,6 @@ export const paletteCopy = {
   goTo: 'Go to',
   actions: 'Actions',
   meetings: 'Meetings',
-  transcripts: 'In transcripts',
   newNote: 'New note',
   newActionItem: 'New action item',
   startRecording: 'Start recording',

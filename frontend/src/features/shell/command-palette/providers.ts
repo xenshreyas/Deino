@@ -3,16 +3,18 @@
  * provider here (see `registry.ts`).
  */
 import { FoldersPalette } from '@/features/folders';
+import { FilterPalette, SearchPalette } from '@/features/search';
 import { TagsPalette } from '@/features/tags';
 
 import { ActionsProvider } from './actions-provider';
 import { GoToProvider } from './go-to-provider';
-import { MeetingsProvider, TranscriptsProvider } from './meetings-provider';
+import { MeetingsProvider } from './meetings-provider';
 import type { PaletteProvider } from './registry';
 
 export const PALETTE_PROVIDERS: readonly PaletteProvider[] = [
+  { id: 'search-filters', order: 5, Component: FilterPalette },
   { id: 'meetings', order: 10, Component: MeetingsProvider },
-  { id: 'transcripts', order: 20, Component: TranscriptsProvider },
+  { id: 'search', order: 20, Component: SearchPalette },
   { id: 'folders', order: 24, Component: FoldersPalette },
   { id: 'tags', order: 26, Component: TagsPalette },
   { id: 'actions', order: 30, Component: ActionsProvider },

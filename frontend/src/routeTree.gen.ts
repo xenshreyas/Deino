@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TagsRouteImport } from './routes/tags'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as MeetingDetailsRouteImport } from './routes/meeting-details'
@@ -34,6 +35,11 @@ const TagsRoute = TagsRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipesRoute = RecipesRouteImport.update({
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/meeting-details': typeof MeetingDetailsRoute
   '/people': typeof PeopleRoute
   '/recipes': typeof RecipesRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tags': typeof TagsRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/meeting-details'
     | '/people'
     | '/recipes'
+    | '/search'
     | '/settings'
     | '/tags'
     | '/folders/$folderId'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/meeting-details'
     | '/people'
     | '/recipes'
+    | '/search'
     | '/settings'
     | '/tags'
     | '/folders/$folderId'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/meeting-details'
     | '/people'
     | '/recipes'
+    | '/search'
     | '/settings'
     | '/tags'
     | '/folders/$folderId'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   MeetingDetailsRoute: typeof MeetingDetailsRoute
   PeopleRoute: typeof PeopleRoute
   RecipesRoute: typeof RecipesRoute
+  SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   TagsRoute: typeof TagsRoute
   FoldersFolderIdRoute: typeof FoldersFolderIdRoute
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipes': {
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetingDetailsRoute: MeetingDetailsRoute,
   PeopleRoute: PeopleRoute,
   RecipesRoute: RecipesRoute,
+  SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   TagsRoute: TagsRoute,
   FoldersFolderIdRoute: FoldersFolderIdRoute,

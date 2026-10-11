@@ -13,12 +13,20 @@
  */
 import type { ComponentType } from 'react';
 
+import type { FilterChip } from '@/features/search';
+
 /** What every provider receives. */
 export interface PaletteProviderProps {
   /** The text in the palette input. */
   search: string;
   /** Closes the palette; call it after running an item. */
   close: () => void;
+  /** The `@` filters picked so far (shown as chips in the input). */
+  filters: readonly FilterChip[];
+  /** Replaces the filters (a provider adds one, the chips remove one). */
+  onFiltersChange: (filters: FilterChip[]) => void;
+  /** Replaces the input's text (choosing an `@` filter removes the `@word`). */
+  onSearchChange: (search: string) => void;
 }
 
 /** One source of palette results. */

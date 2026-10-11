@@ -20,6 +20,8 @@ interface LegacyMeetingSessionProps {
   meetingId: string;
   /** How the user got here; kept for the route contract. */
   source?: MeetingSource | undefined;
+  /** A moment to open the transcript at, in ms (a search hit). */
+  focusMs?: number | undefined;
   /** The meeting page; its Transcript slot reads the published panel. */
   children: ReactNode;
 }
@@ -30,7 +32,7 @@ interface LegacyMeetingSessionProps {
  * (`panels-context.tsx`). The notes moved to typed queries (NOT-01, NOT-02);
  * TRN-01 replaces what is left.
  */
-export function LegacyMeetingSession({ meetingId, children }: LegacyMeetingSessionProps) {
+export function LegacyMeetingSession({ meetingId, focusMs, children }: LegacyMeetingSessionProps) {
   const { setCurrentMeeting, refetchMeetings } = useSidebar();
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +114,7 @@ export function LegacyMeetingSession({ meetingId, children }: LegacyMeetingSessi
         await refetchMeetings();
       }}
       onRefetchTranscripts={refetch}
+      focusMs={focusMs}
       segments={segments}
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}

@@ -20,6 +20,7 @@ import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ProfilePage } from '@/features/profile';
+import { IndexSettings } from '@/features/search';
 import { PeopleSettings } from '@/features/speakers';
 import { TemplatesPage } from '@/features/templates';
 import {
@@ -34,6 +35,7 @@ import {
   Mic,
   Palette,
   Plug,
+  Search,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -132,6 +134,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },
   { id: 'profile', group: 'ai', icon: UserRound, Component: ProfilePage },
+  { id: 'search', group: 'ai', icon: Search, Component: IndexSettings },
   { id: 'calendar', group: 'workspace', icon: Calendar, Component: CalendarSettings },
   { id: 'integrations', group: 'workspace', icon: Plug, Component: IntegrationsSection },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },

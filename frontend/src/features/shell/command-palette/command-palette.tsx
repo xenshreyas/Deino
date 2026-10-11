@@ -5,6 +5,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useState } from 'react';
 
+import { type FilterChip, FilterChips } from '@/features/search';
 import { Command, CommandEmpty, CommandInput, CommandList } from '@/ui/command';
 import { VisuallyHidden } from '@/ui/controls';
 
@@ -25,22 +26,37 @@ function PaletteFooter() {
   );
 }
 
-/** The palette body; mounted only while open, so the search starts empty. */
+/** The palette body; mounted only while open, so search and filters start empty. */
 function PaletteBody({ close }: { close: () => void }) {
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<FilterChip[]>([]);
+  const removeFilter = (removed: FilterChip) => {
+    setFilters((current) => current.filter((chip) => chip !== removed));
+  };
+  const props = { search, close, filters, onFiltersChange: setFilters, onSearchChange: setSearch };
   return (
-    <Command loop label={paletteCopy.title}>
+    <Command
+      loop
+      label={paletteCopy.title}
+      onKeyDown={(event) => {
+        // Backspace in an empty input takes off the last filter.
+        if (event.key === 'Backspace' && search === '' && filters.length > 0) {
+          setFilters((current) => current.slice(0, -1));
+        }
+      }}
+    >
       <CommandInput
         variant="palette"
         value={search}
         onValueChange={setSearch}
-        placeholder={paletteCopy.placeholder}
+        placeholder={filters.length === 0 ? paletteCopy.placeholder : ''}
         autoFocus
+        before={<FilterChips filters={filters} onRemove={removeFilter} className="shrink-0" />}
       />
       <CommandList>
         <CommandEmpty>{paletteCopy.empty}</CommandEmpty>
         {PROVIDERS.map(({ id, Component }) => (
-          <Component key={id} search={search} close={close} />
+          <Component key={id} {...props} />
         ))}
       </CommandList>
       <PaletteFooter />

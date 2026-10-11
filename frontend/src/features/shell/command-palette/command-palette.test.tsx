@@ -31,9 +31,6 @@ vi.mock('@/contexts/ConfigContext', () => ({
 vi.mock('@/contexts/ImportDialogContext', () => ({
   useImportDialog: () => ({ openImportDialog: vi.fn() }),
 }));
-vi.mock('@/services/transcriptService', () => ({
-  transcriptService: { searchTranscripts: vi.fn(() => Promise.resolve([])) },
-}));
 
 /** A router with the palette in its root and two pages to land on. */
 function renderPalette() {

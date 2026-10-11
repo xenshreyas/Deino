@@ -20,8 +20,8 @@ export type MeetingTabId = z.infer<typeof meetingTabSchema>;
 
 /**
  * `/meetings/$meetingId?source=recording&tab=transcript&t=221900`: `t` is a
- * moment in the recording, in milliseconds (an action item's evidence); the
- * transcript and player cards (TRN-01, TRN-03) scroll and seek to it.
+ * moment in the recording, in milliseconds (a search hit or an action item's
+ * evidence): the transcript opens scrolled to it, with that line highlighted.
  * `segment=<id>` is the transcript segment a citation points at (NOT-03),
  * for the Transcript tab to bring into view.
  */
