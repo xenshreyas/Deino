@@ -46,10 +46,11 @@ function EventRow({
         className="size-2 shrink-0 rounded-full bg-fg-subtle"
         style={color === undefined ? undefined : { backgroundColor: color }}
       />
-      <span className="min-w-0 flex-1 truncate text-sm text-fg">
+      {/* The title keeps at least half the row; the details give way first. */}
+      <span className="min-w-[50%] flex-1 truncate text-sm text-fg">
         {event.title === '' ? calendarCopy.untitled : event.title}
       </span>
-      <span className="hidden shrink-0 truncate text-xs text-fg-muted sm:inline">
+      <span className="hidden min-w-0 truncate text-xs text-fg-muted sm:inline">
         {eventMeta(event)}
       </span>
       {countdown === null ? null : (
