@@ -150,7 +150,7 @@ the SQLite adapters behind those ports.
   (`MeetingSourceReader`, `EmbeddingStore`), `VectorIndex` behind
   `SharedVectors`, `SemanticIndexer`, `SemanticIndex` (`SemanticSearch`), the
   `Backfill` and `SemanticAdmin`. Fakes: `FakeEmbedder`, `FakeSemanticSearch`.
-- `transcript` (TRN-01, ADR 0030): `TranscriptService::transcript`, one
+- `transcript` (TRN-01, ADR 0033): `TranscriptService::transcript`, one
   meeting's whole `Transcript` (segments in spoken order, each with its
   `speaker_id`) over `SegmentReader`; the view names speakers from
   `speakers` (CAP-04). No SQL of its own; TRN-02 adds the segment edits here.
