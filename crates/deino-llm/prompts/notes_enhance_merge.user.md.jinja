@@ -1,0 +1,35 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<template>
+{{ template }}
+</template>
+{%- if let Some(previous) = previous %}
+
+<previous_meeting>
+{{ previous }}
+</previous_meeting>
+{%- endif %}
+{%- if let Some(vocabulary) = vocabulary %}
+
+<vocabulary>
+{{ vocabulary }}
+</vocabulary>
+{%- endif %}
+
+<user_notes>
+{%- if let Some(notes) = notes %}
+{{ notes }}
+{%- else %}
+The user typed no notes.
+{%- endif %}
+</user_notes>
+
+<partial_notes>
+{{ partials }}
+</partial_notes>
+
+The meeting was long, so its transcript was read in parts and each part was noted separately. In the partial notes, every line ends with its transcript references in brackets, like `[s12, s40]`; those are the references to use as evidence.
+
+Merge the parts into the notes of the whole meeting: one set of sections in the template's order, the user's lines placed and quoted exactly, repeated points combined (with their references combined), and nothing dropped that someone who missed the meeting needs.

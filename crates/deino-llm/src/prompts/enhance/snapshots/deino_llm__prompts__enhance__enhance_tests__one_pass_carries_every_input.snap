@@ -1,0 +1,35 @@
+---
+source: crates/deino-llm/src/prompts/enhance/enhance_tests.rs
+expression: prompt.text()
+---
+<meeting>
+Title: Maya 1:1
+Date: Wednesday 7 October 2026, 15:00 UTC
+Attendees (2): Shreyas (me), Maya Chen (Staff engineer)
+</meeting>
+
+<template>
+1:1. A weekly one-on-one.
+1. Overview: the state of things. Format: bullet blocks.
+</template>
+
+<previous_meeting>
+Maya 1:1 on 30 September:
+- beta on track
+</previous_meeting>
+
+<vocabulary>
+Fernhollow, PagerDuty
+</vocabulary>
+
+<user_notes>
+- v tired post fernhollow
+- [ ] update pagerduty
+</user_notes>
+
+<transcript>
+[s1 00:04] Shreyas: How are you holding up?
+[s2 00:09] Maya: Tired, honestly.
+</transcript>
+
+Now write the notes of this meeting.

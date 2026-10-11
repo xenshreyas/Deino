@@ -1,7 +1,9 @@
 //! LLM evals: route prompts scored against the fixture meetings' ground truth
 //! (PARITY_PLAN §3A "Testing"; the anarlog `template-eval` harness pattern, MIT).
 //!
-//! Every case yields three trials:
+//! Routes: `title` (`cases.rs`) and `notes.enhance` (`notes.rs`, the whole
+//! NOT-02 engine over each seeded fixture meeting). Every case yields three
+//! trials:
 //!
 //! - `contract::<route>::<case>`: the prompt renders and carries what the
 //!   model needs (offline, always runs);
@@ -17,6 +19,7 @@
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval extract.action_items
+//! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval notes.enhance
 //! DEINO_EVAL=1 cargo test -p deino-llm --test llm_eval -- title
 //! ```
 //!
@@ -28,6 +31,7 @@ mod cases;
 mod expectations;
 mod live;
 mod scoring;
+mod notes;
 
 use std::sync::Arc;
 
@@ -45,6 +49,7 @@ fn main() {
         })],
     };
     trials.extend(action_items::trials(live_enabled()));
+    trials.extend(notes::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 

@@ -25,8 +25,7 @@ use serde::{Deserialize, Serialize};
     sqlx::Type,
 )]
 pub enum Route {
-    /// Enhanced notes from a transcript and the user's notes (and, until
-    /// NOT-02, the legacy template summaries).
+    /// Enhanced notes from a transcript and the user's notes (NOT-02).
     #[serde(rename = "notes.enhance")]
     #[sqlx(rename = "notes.enhance")]
     NotesEnhance,

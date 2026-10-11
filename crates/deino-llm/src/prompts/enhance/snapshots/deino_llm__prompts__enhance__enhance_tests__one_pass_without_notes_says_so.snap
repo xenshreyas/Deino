@@ -1,0 +1,25 @@
+---
+source: crates/deino-llm/src/prompts/enhance/enhance_tests.rs
+expression: prompt.text()
+---
+<meeting>
+Title: Maya 1:1
+Date: Wednesday 7 October 2026, 15:00 UTC
+Attendees (2): Shreyas (me), Maya Chen (Staff engineer)
+</meeting>
+
+<template>
+1:1. A weekly one-on-one.
+1. Overview: the state of things. Format: bullet blocks.
+</template>
+
+<user_notes>
+The user typed no notes.
+</user_notes>
+
+<transcript>
+[s1 00:04] Shreyas: How are you holding up?
+[s2 00:09] Maya: Tired, honestly.
+</transcript>
+
+Now write the notes of this meeting.

@@ -1,0 +1,33 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<template>
+{{ template }}
+</template>
+{%- if let Some(previous) = previous %}
+
+<previous_meeting>
+{{ previous }}
+</previous_meeting>
+{%- endif %}
+{%- if let Some(vocabulary) = vocabulary %}
+
+<vocabulary>
+{{ vocabulary }}
+</vocabulary>
+{%- endif %}
+
+<user_notes>
+{%- if let Some(notes) = notes %}
+{{ notes }}
+{%- else %}
+The user typed no notes.
+{%- endif %}
+</user_notes>
+
+<transcript>
+{{ transcript }}
+</transcript>
+
+Now write the notes of this meeting.

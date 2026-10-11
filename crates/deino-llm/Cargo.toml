@@ -35,7 +35,11 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 
 [dev-dependencies]
+# The `notes.enhance` eval runs NOT-02's engine end to end (a dev-only cycle:
+# deino-core depends on this crate).
+deino-core.workspace = true
 deino-db = { workspace = true, features = ["test-support"] }
+deino-doc.workspace = true
 deino-domain = { workspace = true, features = ["test-support"] }
 # The eval harness (an integration test) uses `MockProvider` for its offline trials.
 deino-llm = { path = ".", features = ["test-support"] }

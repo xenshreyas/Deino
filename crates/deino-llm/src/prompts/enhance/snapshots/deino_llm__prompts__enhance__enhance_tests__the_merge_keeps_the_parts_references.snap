@@ -1,0 +1,29 @@
+---
+source: crates/deino-llm/src/prompts/enhance/enhance_tests.rs
+expression: prompt.text()
+---
+<meeting>
+Title: Maya 1:1
+Date: Wednesday 7 October 2026, 15:00 UTC
+Attendees (2): Shreyas (me), Maya Chen (Staff engineer)
+</meeting>
+
+<template>
+1:1. A weekly one-on-one.
+1. Overview: the state of things. Format: bullet blocks.
+</template>
+
+<user_notes>
+- v tired post fernhollow
+</user_notes>
+
+<partial_notes>
+<part number="1" span="00:00–20:00">
+### Overview
+- Maya is tired after the incident [s2]
+</part>
+</partial_notes>
+
+The meeting was long, so its transcript was read in parts and each part was noted separately. In the partial notes, every line ends with its transcript references in brackets, like `[s12, s40]`; those are the references to use as evidence.
+
+Merge the parts into the notes of the whole meeting: one set of sections in the template's order, the user's lines placed and quoted exactly, repeated points combined (with their references combined), and nothing dropped that someone who missed the meeting needs.

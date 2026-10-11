@@ -3,6 +3,7 @@
  * Runs the LLM evals for one route against a real provider (never in CI).
  *
  *   DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title
+ *   DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval notes.enhance   (NOT-02, every fixture meeting)
  *   DEINO_EVAL=1 DEINO_EVAL_TARGET=openai:gpt-5-mini OPENAI_API_KEY=… pnpm eval title
  *   pnpm eval                        offline contract and smoke trials only
  *
