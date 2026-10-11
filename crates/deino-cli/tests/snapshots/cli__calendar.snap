@@ -1,0 +1,8 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"calendar\", \"--from\", \"2026-10-07\", \"--to\", \"2026-10-08\"])"
+---
+# Calendar events (2)
+
+- Wed 7 Oct 2026, 16:00–16:30 · **Shreyas / Maya 1:1** · google_meet · RSVP accepted · with Shreyas, Maya Chen
+- Thu 8 Oct 2026, 15:30–15:45 · **Eng standup** · google_meet · RSVP accepted · with Shreyas, Maya Chen, Diego Alvarez, Priya Nair, Tom Becker, Noor Haddad

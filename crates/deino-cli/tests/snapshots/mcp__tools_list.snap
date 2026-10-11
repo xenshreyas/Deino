@@ -1,0 +1,466 @@
+---
+source: crates/deino-cli/tests/mcp.rs
+expression: catalogue
+---
+[
+  {
+    "description": "List the user's recorded meetings, newest first, with their ID, title, date, duration, attendees and tags. Use it to find meetings by date range (from/to, YYYY-MM-DD, inclusive, the user's local days), tag, folder, attendee (person) or company, or just the most recent ones (limit). It returns no notes or transcript: pass the IDs to read_meeting for notes and action items, or to get_transcript for what was said. To find meetings by what was discussed, use search.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "company": {
+          "default": null,
+          "description": "Only meetings someone from this company attended (name, domain or ID).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "folder": {
+          "default": null,
+          "description": "Only meetings in this folder or its subfolders (name or ID).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "from": {
+          "default": null,
+          "description": "Only meetings on or after this local day (YYYY-MM-DD).",
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit": {
+          "default": null,
+          "description": "How many meetings to return (default 20, at most 200).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "person": {
+          "default": null,
+          "description": "Only meetings this person attended (name, email or ID).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tag": {
+          "default": null,
+          "description": "Only meetings with this tag (name or ID).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to": {
+          "default": null,
+          "description": "Only meetings on or before this local day (YYYY-MM-DD).",
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_meetings"
+  },
+  {
+    "description": "Read one or more meetings in full by ID (at most 10 per call): title, date, duration, attendees with emails, tags, folders, the user's own notes and the AI notes (both Markdown), action items with owners, due days and links to the moment they were said, and the recording's file paths. It does not include the transcript; call get_transcript for that. Get IDs from list_meetings or search.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "ids": {
+          "description": "The meeting IDs to read (from `list_meetings` or `search`), at most 10.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "ids"
+      ],
+      "type": "object"
+    },
+    "name": "read_meeting"
+  },
+  {
+    "description": "Read what was said in a meeting: speaker-attributed, timestamped lines in time order (deleted lines are left out). Long meetings come in pages of at most `limit` lines (default 300): when nextFromMs is set, call again with from_ms = nextFromMs to continue. Use from_ms/to_ms (milliseconds from the start) to read only part, for example around a moment from search. Each line's start is also a link: deino://meeting/<id>?t=<startMs>. Prefer read_meeting's notes for summaries; use this for exact wording, quotes and who said what.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "from_ms": {
+          "default": null,
+          "description": "Start of the window, in milliseconds from the start of the recording.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "limit": {
+          "default": null,
+          "description": "The most lines to return (default 300, at most 2000). The terminal\nprints every line when this is not given.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "meeting_id": {
+          "description": "The meeting's ID.",
+          "type": "string"
+        },
+        "to_ms": {
+          "default": null,
+          "description": "End of the window (exclusive), in milliseconds.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "meeting_id"
+      ],
+      "type": "object"
+    },
+    "name": "get_transcript"
+  },
+  {
+    "description": "Find where something was discussed across all meetings, with Deino's own search: titles, the user's notes, AI notes, action items, transcript moments, people, companies and folders, best first. It matches words (\"phrases\" in quotes, @name to narrow to a person, tag or folder, a domain for a company) and, when the local embedding model is installed, meaning too; `mode` says which ran (try other words if a keyword search finds nothing). Transcript hits carry atMs and a deino://meeting/<id>?t=<ms> link: read around them with get_transcript (from_ms a minute before atMs) or read the meeting with read_meeting. meeting_id limits the search to one meeting.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "limit": {
+          "default": null,
+          "description": "The most hits (default 20, at most 100).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "meeting_id": {
+          "default": null,
+          "description": "Only search this meeting.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "query": {
+          "description": "What to find: words, \"exact phrases\", @person or @tag filters, or a\ncompany's domain (as in Deino's own search).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search"
+  },
+  {
+    "description": "List action items (commitments and to-dos from meetings) with their owner, due day, status, meeting and a link to the moment they were said. Defaults to everyone's open items. Use assignee=me for what the user committed to, status=done or any for finished ones, due=overdue|today|this_week|no_date for deadlines, and meeting_id for one meeting's items.",
+    "input": {
+      "$defs": {
+        "AssigneeArg": {
+          "description": "Whose items: `me`, `others`, `anyone`, `unassigned`, or a person's\nname, email or ID.",
+          "type": "string"
+        },
+        "DueArg": {
+          "description": "Which due days to list, in the user's local days.",
+          "oneOf": [
+            {
+              "const": "overdue",
+              "description": "Open items due before today.",
+              "type": "string"
+            },
+            {
+              "const": "today",
+              "description": "Due today.",
+              "type": "string"
+            },
+            {
+              "const": "this_week",
+              "description": "Due from today to Sunday.",
+              "type": "string"
+            },
+            {
+              "const": "no_date",
+              "description": "Without a due day.",
+              "type": "string"
+            }
+          ]
+        },
+        "StatusArg": {
+          "description": "Which statuses to list.",
+          "oneOf": [
+            {
+              "const": "open",
+              "description": "Still to do.",
+              "type": "string"
+            },
+            {
+              "const": "done",
+              "description": "Done.",
+              "type": "string"
+            },
+            {
+              "const": "any",
+              "description": "Both.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "assignee": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AssigneeArg"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Whose: `me`, `others`, `anyone` (default), `unassigned`, or a person's name, email or ID."
+        },
+        "due": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DueArg"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`overdue`, `today`, `this_week` or `no_date`."
+        },
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "limit": {
+          "default": null,
+          "description": "How many items to return (default 50, at most 500).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "meeting_id": {
+          "default": null,
+          "description": "Only this meeting's items.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StatusArg"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`open` (default), `done` or `any`."
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_action_items"
+  },
+  {
+    "description": "List the people the user has met or added, with email, job title and company; query filters by part of a name or email. Use it to find the exact name or email to pass as person to list_meetings or as assignee to list_action_items.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "limit": {
+          "default": null,
+          "description": "How many people to return (default 100, at most 1000).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "query": {
+          "default": null,
+          "description": "Only people whose name or email contains this text.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_people"
+  },
+  {
+    "description": "List the companies of the people the user meets, with their email domain and how many known people work there. Pass a name or domain as company to list_meetings to find meetings with that company.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_companies"
+  },
+  {
+    "description": "List the user's meeting tags with their description and how many meetings carry each. Pass a tag's name as tag to list_meetings.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_tags"
+  },
+  {
+    "description": "List the user's meeting folders as a tree (each with its path, such as \"Customers / Acme\", and how many meetings it holds). Pass a folder's name as folder to list_meetings; subfolders are included.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_folders"
+  },
+  {
+    "description": "List the user's synced calendar events (past and upcoming) starting between from and to (YYYY-MM-DD, local days, at most 92 days; default a week either side of today), with times, call link, organiser, invitees and the user's RSVP. Use it for the schedule; recorded meetings come from list_meetings.",
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "How to write the text result: compact Markdown (default) or JSON.",
+          "enum": [
+            "markdown",
+            "json"
+          ],
+          "type": "string"
+        },
+        "from": {
+          "default": null,
+          "description": "The first local day (YYYY-MM-DD); default a week ago.",
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to": {
+          "default": null,
+          "description": "The last local day (YYYY-MM-DD), inclusive; default a week from today.",
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_calendar_events"
+  }
+]

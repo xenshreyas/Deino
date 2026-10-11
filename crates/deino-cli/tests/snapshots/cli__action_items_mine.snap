@@ -1,0 +1,24 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"action-items\", \"--assignee\", \"me\", \"--status\", \"any\"])"
+---
+# Action items (18)
+
+- [x] Write up the Q4 plan (priorities, cuts, owners, dates) and send it to everyone — Shreyas (me) · due Mon 28 Sep 2026 · Q4 planning · deino://meeting/meeting-fixture-planning?t=3330073
+- [x] Book the follow-up review for 13 October and send the invite — Shreyas (me) · due Thu 1 Oct 2026 · Onboarding revamp brainstorm · deino://meeting/meeting-fixture-brainstorm?t=1690152
+- [x] Send Hannah the security package (SOC 2 Type I report, Type II timeline, pen-test summary, sub-processors, data residency, mobile cache details) — Shreyas (me) · due Thu 1 Oct 2026 · Deino × Brightkite Logistics: discovery · deino://meeting/meeting-fixture-sales-discovery?t=794702
+- [x] Draft job descriptions for the senior backend and mobile engineer roles — Shreyas (me) · due Fri 2 Oct 2026 · Q4 planning · deino://meeting/meeting-fixture-planning?t=4477858
+- [x] Submit written interview feedback in Ashby — Shreyas (me) · due Fri 2 Oct 2026 · Interview: Jordan Ellis (Senior Backend Engineer) · deino://meeting/meeting-fixture-interview?t=1817012
+- [x] Send Jordan the doc on how on-call and remote work at Deino — Shreyas (me) · due Fri 2 Oct 2026 · Interview: Jordan Ellis (Senior Backend Engineer) · deino://meeting/meeting-fixture-interview?t=1773480
+- [ ] Update the PagerDuty on-call schedule to take Maya off for two weeks and post it in the eng channel — Shreyas (me) · due Wed 7 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=91042
+- [ ] Tell the recruiter to take Maya off the screening rotation — Shreyas (me) · due Wed 7 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=156479
+- [ ] Get back to Jordan with the interview outcome — Shreyas (me) · due Wed 7 Oct 2026 · Interview: Jordan Ellis (Senior Backend Engineer) · deino://meeting/meeting-fixture-interview?t=1733065
+- [ ] Send Maya the Fernhollow postmortem draft for a technical check — Shreyas (me) · due Thu 8 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=240148
+- [ ] Talk to Aisha about prioritising the senior backend hire over the mobile hire — Shreyas (me) · due Thu 8 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=849596
+- [ ] Confirm the $2,700 service credit in writing in the postmortem — Shreyas (me) · due Fri 9 Oct 2026 · Fernhollow: duplicate jobs follow-up · deino://meeting/meeting-fixture-customer-support?t=663429
+- [ ] Write and send the Fernhollow postmortem (timeline, root cause, changes made and planned) — Shreyas (me) · due Fri 9 Oct 2026 · Fernhollow: duplicate jobs follow-up · deino://meeting/meeting-fixture-customer-support?t=572470
+- [ ] Write an incident-review one-pager on the Calendar Sync v1.4 incident for the board — Shreyas (me) · due Fri 9 Oct 2026 · Deino Q3 board update · deino://meeting/meeting-fixture-board-update?t=1367312
+- [ ] Send the Fernhollow postmortem to Owen with Tom on copy — Shreyas (me) · due Fri 9 Oct 2026 · Eng standup · deino://meeting/meeting-fixture-standup?t=285024
+- [ ] Write Maya's staff-engineer promotion doc — Shreyas (me) · due Fri 16 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=988983
+- [ ] Write the incident communication rules (owners, hourly updates, single channel) into the incident runbook — Shreyas (me) · due Wed 21 Oct 2026 · Shreyas / Maya 1:1 · deino://meeting/meeting-fixture-one-on-one?t=315267
+- [ ] Get a customer-facing status page live — Shreyas (me) · due Sat 31 Oct 2026 · Deino Q3 board update · deino://meeting/meeting-fixture-board-update?t=1313630

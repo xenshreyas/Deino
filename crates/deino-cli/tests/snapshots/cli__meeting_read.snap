@@ -1,0 +1,42 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"meetings\", \"read\", \"meeting-fixture-standup\"])"
+---
+# Eng standup
+
+Thu 8 Oct 2026, 15:31 · 7 min · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup
+Attendees: Shreyas (me) <shreyas@deino.dev>, Maya Chen <maya@deino.dev>, Diego Alvarez <diego@deino.dev>, Priya Nair <priya@deino.dev>, Tom Becker <tom@deino.dev>
+
+## AI notes
+
+#### Decisions
+
+- The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday.
+- The read-only offline job list will ship in next week's release, not in today's release cut.
+- The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut.
+- The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty.
+- The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup.
+
+#### Commitments
+
+- Add a last modified at field to each job in the jobs list endpoint for Diego's offline cache [1:21]
+- Quarantine the flaky webhook retry integration test and file a ticket with the logs [3:12]
+- Drive the release cut at four o'clock today [3:51]
+- Send the Fernhollow postmortem to Owen with Tom on copy [4:45]
+- Set up a follow-up huddle with Maya on the Outlook one-hour-offset ticket [5:32]
+- Send each engineer their SOC 2 evidence items from Kestrel Audit's request list [2:38]
+
+Cited moments: [1:21](deino://meeting/meeting-fixture-standup?t=81469) · [2:38](deino://meeting/meeting-fixture-standup?t=158956) · [3:12](deino://meeting/meeting-fixture-standup?t=192585) · [3:51](deino://meeting/meeting-fixture-standup?t=231259) · [4:45](deino://meeting/meeting-fixture-standup?t=285024) · [5:32](deino://meeting/meeting-fixture-standup?t=332189)
+
+## Action items
+
+- [ ] Quarantine the flaky webhook retry integration test and file a ticket with the logs — Priya Nair · due Thu 8 Oct 2026 · deino://meeting/meeting-fixture-standup?t=192585
+- [ ] Drive the release cut at four o'clock today — Priya Nair · due Thu 8 Oct 2026 · deino://meeting/meeting-fixture-standup?t=231259
+- [ ] Set up a follow-up huddle with Maya on the Outlook one-hour-offset ticket — Tom Becker · due Thu 8 Oct 2026 · deino://meeting/meeting-fixture-standup?t=332189
+- [ ] Add a last modified at field to each job in the jobs list endpoint for Diego's offline cache — Maya Chen · due Fri 9 Oct 2026 · deino://meeting/meeting-fixture-standup?t=81469
+- [ ] Send the Fernhollow postmortem to Owen with Tom on copy — Shreyas (me) · due Fri 9 Oct 2026 · deino://meeting/meeting-fixture-standup?t=285024
+- [ ] Send each engineer their SOC 2 evidence items from Kestrel Audit's request list — Priya Nair · due Mon 12 Oct 2026 · deino://meeting/meeting-fixture-standup?t=158956
+
+## Recording
+
+- Transcript: 58 segments (get_transcript, or `deino transcripts read meeting-fixture-standup`)

@@ -1,0 +1,11 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"companies\"])"
+---
+# Companies (5)
+
+- **Abernathy Advisory** · abernathy-advisory.com · 1 person
+- **Brightkite Logistics** · brightkite-logistics.com · 2 people
+- **Deino** · deino.dev · 8 people
+- **Fernhollow Home Services** · fernhollow.co · 1 person
+- **Quarrystone Ventures** · quarrystone.vc · 2 people
