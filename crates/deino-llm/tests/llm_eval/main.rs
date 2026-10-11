@@ -30,8 +30,8 @@ mod action_items;
 mod cases;
 mod expectations;
 mod live;
-mod scoring;
 mod notes;
+mod scoring;
 
 use std::sync::Arc;
 

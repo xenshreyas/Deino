@@ -151,9 +151,8 @@ fn ports(database: &Database, engine: TrackDiarization) -> StagePorts {
         identifier: Arc::new(IdentifyService::new(
             identify_ports,
             Arc::new(Defaults),
-            naming.clone(),
+            naming,
         )),
-        participants: naming,
         clock: clock(),
         ..StagePorts::fakes()
     }

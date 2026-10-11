@@ -26,7 +26,7 @@ export const mockDatabase = new MockDatabase(fixtureMeetings, (tables) => {
 export const mockNotes = new MockNotes(fixtureMeetings);
 
 /** The mock `enhanced_notes` table (persisted per tab). */
-export const mockEnhanced = new MockEnhanced(fixtures);
+export const mockEnhanced = new MockEnhanced(fixtureMeetings);
 
 /** The fixtures' people, as the Rust seeder writes them. */
 export const mockPeople = fixturePeople(fixtureMeetings);

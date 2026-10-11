@@ -183,4 +183,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","llm_calls","jobs","job_runs","egress_log","templates","template_sections","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","example_notes"] as const satisfies readonly Table[]

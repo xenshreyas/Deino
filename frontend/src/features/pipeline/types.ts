@@ -11,6 +11,6 @@ export type {
 
 /**
  * The stage that writes the meeting's notes, re-run when names change.
- * NOT-02's `enhance_notes` replaces `legacy_summary`.
+ * NOT-02's `enhance_notes`.
  */
-export const NOTES_STAGE = 'legacy_summary' as StageId;
+export const NOTES_STAGE = 'enhance_notes' as StageId;

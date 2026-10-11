@@ -36,10 +36,6 @@ pub use auto_folder::RecordedAutoFiling;
 pub use auto_tag::AutoTagStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use auto_tag::RecordedAutoTags;
-pub use extract_action_items::ExtractActionItemsStage;
-pub use identify_speakers::IdentifySpeakersStage;
-#[cfg(any(test, feature = "test-support"))]
-pub use identify_speakers::RecordedIdentifications;
 #[cfg(any(test, feature = "test-support"))]
 pub use auto_title::RecordedTitler;
 pub use auto_title::{AutoTitleStage, MeetingTitler};
@@ -49,4 +45,8 @@ pub use enhance_notes::{
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use enhance_notes::{FixedAutomaticNotes, RecordedEnhancer};
+pub use extract_action_items::ExtractActionItemsStage;
 pub use finalize_audio::FinalizeAudioStage;
+pub use identify_speakers::IdentifySpeakersStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use identify_speakers::RecordedIdentifications;

@@ -332,30 +332,29 @@ mod tests {
             .unwrap();
     }
 
-    #[tokio::test]
-    async fn stopping_a_recording_runs_the_notes_stages_and_readies_the_meeting() {
-        use deino_core::meetings::MeetingLifecycleRepo;
-        use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
-        use deino_pipeline::{
-            FixedAutomaticNotes, RecordedAutoTags, RecordedEnhancer, RecordedProgress,
-            RecordedTitler,
-        };
+    /// The recorded stage services the test reads back.
+    struct Recorded {
+        enhancer: Arc<deino_pipeline::RecordedEnhancer>,
+        titler: Arc<deino_pipeline::RecordedTitler>,
+        auto_tags: Arc<deino_pipeline::RecordedAutoTags>,
+    }
 
-        let database = test_db().await;
-        let fake_clock = Arc::new(FakeClock::new(at("2026-10-08T10:00:00Z")));
-        recording_with_transcript(&database, &fake_clock).await;
-        let enhancer = Arc::new(RecordedEnhancer::default());
-        let titler = Arc::new(RecordedTitler::default());
-        let auto_tags = Arc::new(RecordedAutoTags::default());
+    /// Pipeline adapters over fakes, recording what the AI stages were asked.
+    fn recorded_adapters() -> (PipelineAdapters, Recorded) {
+        let recorded = Recorded {
+            enhancer: Arc::default(),
+            titler: Arc::default(),
+            auto_tags: Arc::default(),
+        };
         let adapters = PipelineAdapters {
-            progress: Arc::new(RecordedProgress::default()),
+            progress: Arc::new(deino_pipeline::RecordedProgress::default()),
             diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
             ai: StageServices {
-                enhancer: enhancer.clone(),
-                titler: titler.clone(),
-                automatic: Arc::new(FixedAutomaticNotes(true)),
+                enhancer: recorded.enhancer.clone(),
+                titler: recorded.titler.clone(),
+                automatic: Arc::new(deino_pipeline::FixedAutomaticNotes(true)),
                 adapters: StageAdapters {
-                    auto_tagger: auto_tags.clone(),
+                    auto_tagger: recorded.auto_tags.clone(),
                     auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
                     action_items: Arc::new(
                         deino_core::action_items::FakeActionItemExtractor::default(),
@@ -365,6 +364,25 @@ mod tests {
             },
             recordings: std::path::PathBuf::from("no-recordings"),
         };
+        (adapters, recorded)
+    }
+
+    #[tokio::test]
+    async fn stopping_a_recording_runs_the_notes_stages_and_readies_the_meeting() {
+        use deino_core::meetings::MeetingLifecycleRepo;
+        use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
+
+        let database = test_db().await;
+        let fake_clock = Arc::new(FakeClock::new(at("2026-10-08T10:00:00Z")));
+        recording_with_transcript(&database, &fake_clock).await;
+        let (
+            adapters,
+            Recorded {
+                enhancer,
+                titler,
+                auto_tags,
+            },
+        ) = recorded_adapters();
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);
         wired.pipeline.reconcile().await.unwrap();
