@@ -4,7 +4,7 @@ use std::fmt;
 
 use zeroize::Zeroizing;
 
-use crate::SecretError;
+use crate::{MAX_CREDENTIAL_CHARS, SecretError};
 
 /// The longest secret Deino accepts, in characters. Real API keys are under
 /// 200; the cap only stops a pasted document from landing in the keychain.
@@ -20,11 +20,21 @@ pub struct SecretValue(Zeroizing<String>);
 impl SecretValue {
     /// Validates user input as a secret.
     pub fn parse(input: &str) -> Result<Self, SecretError> {
+        Self::parse_within(input, MAX_SECRET_CHARS)
+    }
+
+    /// Validates a credential (INT-00): like [`SecretValue::parse`], but up
+    /// to [`MAX_CREDENTIAL_CHARS`], since OAuth tokens are long.
+    pub fn parse_credential(input: &str) -> Result<Self, SecretError> {
+        Self::parse_within(input, MAX_CREDENTIAL_CHARS)
+    }
+
+    fn parse_within(input: &str, limit: usize) -> Result<Self, SecretError> {
         let value = input.trim();
         if value.is_empty() {
             return Err(SecretError::Empty);
         }
-        if value.chars().count() > MAX_SECRET_CHARS {
+        if value.chars().count() > limit {
             return Err(SecretError::TooLong);
         }
         Ok(Self(Zeroizing::new(value.to_owned())))
@@ -57,6 +67,17 @@ mod tests {
         let overlong = "k".repeat(MAX_SECRET_CHARS + 1);
         assert!(matches!(
             SecretValue::parse(&overlong),
+            Err(SecretError::TooLong)
+        ));
+    }
+
+    #[test]
+    fn credentials_may_be_longer_than_keys() {
+        let token = "t".repeat(MAX_SECRET_CHARS + 1);
+        assert!(SecretValue::parse_credential(&token).is_ok());
+        let overlong = "t".repeat(MAX_CREDENTIAL_CHARS + 1);
+        assert!(matches!(
+            SecretValue::parse_credential(&overlong),
             Err(SecretError::TooLong)
         ));
     }

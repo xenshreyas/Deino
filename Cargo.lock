@@ -1811,6 +1811,7 @@ dependencies = [
  "deino-domain",
  "deino-eventkit",
  "deino-export",
+ "deino-integrations",
  "deino-llm",
  "deino-net",
  "deino-pipeline",
@@ -1908,20 +1909,18 @@ name = "deino-connect"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "base64 0.22.1",
  "chrono",
- "deino-connect",
  "deino-core",
  "deino-domain",
+ "deino-integrations",
  "deino-net",
  "deino-secrets",
- "getrandom 0.3.4",
  "log",
  "serde",
  "serde_json",
- "sha2",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-util",
  "url",
 ]
 
@@ -2080,6 +2079,33 @@ dependencies = [
  "typst-layout",
  "typst-pdf",
  "zip 8.6.0",
+]
+
+[[package]]
+name = "deino-integrations"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "deino-db",
+ "deino-domain",
+ "deino-integrations",
+ "deino-net",
+ "deino-secrets",
+ "getrandom 0.3.4",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
+ "specta",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "url",
+ "zeroize",
 ]
 
 [[package]]

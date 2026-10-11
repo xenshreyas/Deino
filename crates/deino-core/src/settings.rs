@@ -23,6 +23,7 @@ mod events;
 mod export;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
+mod integrations;
 pub mod legacy;
 mod llm_access;
 mod model;
@@ -54,6 +55,7 @@ pub use events::SettingsEvents;
 pub use export::{DEFAULT_FILE_NAME, DEFAULT_SUBFOLDER, ExportSettings};
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{FakeSettingsStore, RecordedSettingsEvents};
+pub use integrations::{IntegrationSettings, MIN_REDIRECT_PORT, OAuthAppSettings};
 pub use legacy::{LegacyFileImport, LegacySqliteImport};
 pub use llm_access::{LlmAccess, secret_for};
 pub use model::{SETTINGS_VERSION, Settings};

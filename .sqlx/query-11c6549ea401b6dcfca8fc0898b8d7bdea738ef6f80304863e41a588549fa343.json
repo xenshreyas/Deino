@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE integration_deliveries\n             SET status = 'succeeded', external_id = ?2, external_url = ?3,\n                 error_code = NULL, error_message = NULL, updated_at = ?4\n             WHERE id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "11c6549ea401b6dcfca8fc0898b8d7bdea738ef6f80304863e41a588549fa343"
+}

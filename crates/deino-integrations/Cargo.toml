@@ -1,0 +1,54 @@
+[package]
+name = "deino-integrations"
+version = "0.1.0"
+description = "Deino's integrations framework: providers, capabilities, OAuth with PKCE over a loopback redirect, connections and the delivery log"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_integrations.rs"
+
+[features]
+# `ScriptedIntegration`, `FakeBrowser`, `FakeEgress`, `FakeOAuthApps` and
+# `FakeSleeper` for other crates' tests. Never enable outside dev-dependencies.
+test-support = ["deino-domain/test-support", "deino-net/test-support", "deino-secrets/test-support"]
+
+[dependencies]
+async-trait.workspace = true
+# PKCE verifiers, `state`, and HTTP Basic credentials (already in the tree).
+base64 = "0.22.1"
+bytes = "1.11.1"
+chrono.workspace = true
+deino-db.workspace = true
+deino-domain.workspace = true
+deino-net.workspace = true
+deino-secrets.workspace = true
+# Random PKCE verifiers and OAuth `state` from the OS (already in the tree,
+# MIT OR Apache-2.0).
+getrandom = "0.3.4"
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# The PKCE S256 challenge (already in the tree).
+sha2 = "0.10.9"
+specta.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+# Cancelling a connect that waits for the browser.
+tokio-util.workspace = true
+url = "2.5.8"
+# Wipes credential JSON from memory once it is parsed (already in the tree).
+zeroize = "1.8.2"
+
+[dev-dependencies]
+deino-db = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+# Enables `test-support` for this crate's own unit and integration tests.
+deino-integrations = { path = ".", features = ["test-support"] }
+deino-net = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true

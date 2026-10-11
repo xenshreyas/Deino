@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM integration_connection_scopes WHERE connection_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "a1d8c65359fe18e3a89b657123b4126012c56443d7df16bc02bdc2bcb26d07e6"
+}

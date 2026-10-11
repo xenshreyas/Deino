@@ -231,6 +231,16 @@ uuid_id!(
     VoiceprintId
 );
 
+uuid_id!(
+    /// Identifies a connected integration account (INT-00).
+    ConnectionId
+);
+
+uuid_id!(
+    /// Identifies one delivery to an integration, in the delivery log (INT-00).
+    DeliveryId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

@@ -50,6 +50,8 @@ deino-domain = { path = "crates/deino-domain" }
 deino-export = { path = "crates/deino-export" }
 # macOS Calendar through EventKit (ORG-01); a stub elsewhere.
 deino-eventkit = { path = "crates/deino-eventkit" }
+# Tests add `features = ["test-support"]` for its fakes and the scripted provider.
+deino-integrations = { path = "crates/deino-integrations" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }
 deino-net = { path = "crates/deino-net" }

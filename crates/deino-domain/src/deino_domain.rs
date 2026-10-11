@@ -17,6 +17,8 @@
 //!   [`ErrorCode`] and the [`ErrorClass`] trait that module errors implement;
 //! - [`service`]: [`ServiceId`], every outside service Deino may talk to
 //!   (FND-12), so settings, the egress log and `deino-net` name it alike;
+//! - [`integration`]: the integrations framework's closed sets
+//!   ([`IntegrationProvider`], [`Capability`], [`ConnectionStatus`], ...; INT-00);
 //! - [`clock`]: the [`Clock`] port, so time-dependent logic is testable.
 //!
 //! Feature models and services live in `deino-core`; persistence lives in
@@ -32,6 +34,7 @@ pub mod email;
 pub mod enums;
 pub mod error;
 pub mod id;
+pub mod integration;
 pub mod job;
 pub mod service;
 pub mod status;
@@ -54,8 +57,11 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
-    FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId,
-    SpeakerId, StageId, TagId, TemplateId, VoiceprintId,
+    ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId,
+    SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VoiceprintId,
+};
+pub use integration::{
+    AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};

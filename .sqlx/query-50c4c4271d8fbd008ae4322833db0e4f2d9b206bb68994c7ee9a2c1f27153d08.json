@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: ConnectionId\" FROM integration_connections\n               WHERE provider = ?1 AND account_id = ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ConnectionId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "50c4c4271d8fbd008ae4322833db0e4f2d9b206bb68994c7ee9a2c1f27153d08"
+}

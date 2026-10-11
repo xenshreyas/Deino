@@ -1,0 +1,98 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The newest ?1 deliveries (idx_integration_deliveries_recent).\nSELECT\n    id AS \"id: DeliveryId\",\n    connection_id AS \"connection_id: ConnectionId\",\n    provider AS \"provider: IntegrationProvider\",\n    capability AS \"capability: Capability\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    idempotency_key,\n    status AS \"status: DeliveryStatus\",\n    attempts AS \"attempts: u32\",\n    external_id,\n    external_url,\n    error_code AS \"error_code: ErrorCode\",\n    error_message,\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM integration_deliveries\nORDER BY created_at DESC, id DESC\nLIMIT ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: DeliveryId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "connection_id: ConnectionId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider: IntegrationProvider",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "capability: Capability",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "idempotency_key",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: DeliveryStatus",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "attempts: u32",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "external_id",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "external_url",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_code: ErrorCode",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_message",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 13,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "743cec70a624ed3c85c2b91ecd88867b3d6ca1aaa85abcfad84b75cb626b2a0b"
+}

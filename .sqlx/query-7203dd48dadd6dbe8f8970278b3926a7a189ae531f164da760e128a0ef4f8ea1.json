@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO integration_deliveries (\n                 id, connection_id, provider, capability, meeting_id, idempotency_key,\n                 status, attempts, created_at, updated_at\n             )\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'pending', 0, ?7, ?7)\n             ON CONFLICT (idempotency_key) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "7203dd48dadd6dbe8f8970278b3926a7a189ae531f164da760e128a0ef4f8ea1"
+}
