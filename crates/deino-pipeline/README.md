@@ -29,8 +29,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   (order 65, NOT-02) over `deino_core::enhance::AutoTitler`; `auto_tag`
   (order 70, ORG-06)
   over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
-  `deino_core::folders::AutoFiler`; `auto_export` (order 99, EXP-02) over
-  `deino_core::export::AutoExporter`.
+  `deino_core::folders::AutoFiler`; `index` (order 80, ORG-08 and AI-01) over
+  `deino_core::search::SearchIndexing` (keyword refresh and embeddings; skipped
+  with a reason while the embedding model is not downloaded); `auto_export`
+  (order 99, EXP-02) over `deino_core::export::AutoExporter`.
 - The queue: the `jobs` and `job_runs` tables (migration
   `20261009071429_fnd08_pipeline_jobs.sql` in `deino-db`), behind the
   `JobRepo` port and `SqliteJobRepo`.
