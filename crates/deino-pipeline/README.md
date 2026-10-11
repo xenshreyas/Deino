@@ -19,7 +19,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   thread, storing the mic, system and mixed paths with `set_audio` (skipped
   for meetings without a live recording folder); `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService`; `legacy_summary` (order 50) over the
-  `Summarizer` port, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `auto_tag` (order 70, ORG-06)
+  `Summarizer` port, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `extract_action_items`
+  (order 60, AI-05) over
+  `deino_core::action_items::extraction::ActionItemExtractor`; `auto_tag`
+  (order 70, ORG-06)
   over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
   `deino_core::folders::AutoFiler`; `auto_export` (order 99, EXP-02) over
   `deino_core::export::AutoExporter`.

@@ -7,6 +7,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::TrackDiarizer;
 use deino_core::export::AutoExporter;
 use deino_core::folders::AutoFiler;
@@ -17,8 +18,8 @@ use deino_core::tags::AutoTagger;
 use deino_domain::{Clock, StageId};
 
 use crate::stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, FinalizeAudioStage,
-    LegacySummaryStage, Summarizer,
+    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, ExtractActionItemsStage,
+    FinalizeAudioStage, LegacySummaryStage, Summarizer,
 };
 use crate::{Job, PipelineStage};
 
@@ -42,6 +43,8 @@ pub struct StagePorts {
     pub diarizer: Arc<dyn TrackDiarizer>,
     /// Writes the meeting into the user's notes folder (EXP-02).
     pub auto_export: Arc<dyn AutoExporter>,
+    /// Action item extraction over the LLM gateway (AI-05).
+    pub action_items: Arc<dyn ActionItemExtractor>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
     /// The auto-tagger (ORG-06).
@@ -57,6 +60,7 @@ impl StagePorts {
     /// Ports over in-memory fakes, for tests that replace the ones they use
     /// (`StagePorts { segments, ..StagePorts::fakes() }`).
     pub fn fakes() -> Self {
+        use deino_core::action_items::FakeActionItemExtractor;
         use deino_core::diarization::FakeTrackDiarizer;
         use deino_core::meetings::FakeMeetingRepo;
         use deino_core::people::FakePeopleRepo;
@@ -73,6 +77,7 @@ impl StagePorts {
             speakers: segments,
             diarizer: Arc::new(FakeTrackDiarizer::default()),
             auto_export: Arc::new(crate::stages::ScriptedAutoExporter::default()),
+            action_items: Arc::new(FakeActionItemExtractor::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
@@ -90,6 +95,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(DiarizeStage::new(ports)),
         // 50 · until NOT-02's enhance_notes replaces it.
         Arc::new(LegacySummaryStage::new(ports)),
+        // 60 · AI-05: commitments, owners and due days.
+        Arc::new(ExtractActionItemsStage::new(ports)),
         // 70 · ORG-06.
         Arc::new(AutoTagStage::new(ports)),
         // 75 · ORG-05.
@@ -174,6 +181,7 @@ mod tests {
                 "finalize_audio",
                 "diarize",
                 "legacy_summary",
+                "extract_action_items",
                 "auto_tag",
                 "auto_folder",
                 "auto_export"
