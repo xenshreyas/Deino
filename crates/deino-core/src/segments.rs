@@ -23,6 +23,8 @@
 //! find and replace may change.
 
 mod editor;
+#[cfg(test)]
+mod editor_tests;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
 #[cfg(any(test, feature = "test-support"))]
@@ -38,9 +40,9 @@ mod voices;
 #[cfg(test)]
 mod voices_tests;
 
+pub use editor::{SegmentEditor, SegmentText, TextEdit};
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::FakeSegmentRepo;
-pub use editor::{SegmentEditor, SegmentText, TextEdit};
 pub use model::{
     NewSegment, NewSpeaker, Page, Reattribution, Segment, SegmentPiece, Speaker, SpeakerVoice,
     WordTiming,

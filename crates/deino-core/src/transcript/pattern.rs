@@ -75,13 +75,13 @@ mod tests {
         let text = "Ship it. SHIP the ship!";
 
         assert_eq!(Pattern::new("ship", false).ranges(text).len(), 3);
-        assert_eq!(Pattern::new("ship", true).ranges(text), [19..23]);
+        assert_eq!(Pattern::new("ship", true).ranges(text), vec![18..22]);
     }
 
     #[test]
     fn matches_do_not_overlap_and_are_literal() {
         assert_eq!(Pattern::new("aa", false).ranges("aaaa"), [0..2, 2..4]);
-        assert_eq!(Pattern::new("a.b", false).ranges("axb a.b"), [4..7]);
+        assert_eq!(Pattern::new("a.b", false).ranges("axb a.b"), vec![4..7]);
     }
 
     #[test]

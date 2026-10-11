@@ -15,12 +15,29 @@ pub enum TranscriptError {
     /// The database failed; the source carries the detail.
     #[error("could not load the transcript")]
     Storage(#[from] DbError),
+    /// No transcript line has the ID.
+    #[error("that line is no longer in the transcript")]
+    SegmentNotFound,
+    /// An edit would leave the line blank.
+    #[error("a line cannot be empty; delete it instead")]
+    EmptyText,
+    /// An edited line or a search is longer than the limit.
+    #[error("that is longer than {max} characters")]
+    TooLong {
+        /// The limit, in characters.
+        max: usize,
+    },
+    /// Find and replace was asked to find nothing.
+    #[error("type the text to find")]
+    EmptyFind,
 }
 
 impl ErrorClass for TranscriptError {
     fn code(&self) -> ErrorCode {
         match self {
             Self::Storage(_) => ErrorCode::Internal,
+            Self::SegmentNotFound => ErrorCode::NotFound,
+            Self::EmptyText | Self::TooLong { .. } | Self::EmptyFind => ErrorCode::Invalid,
         }
     }
 }

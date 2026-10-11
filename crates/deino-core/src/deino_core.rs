@@ -44,7 +44,9 @@
 //! meeting onboarding offers.
 //!
 //! TRN-01 added [`transcript`]: a meeting's transcript with its speakers'
-//! display names, as the transcript view reads it.
+//! display names, as the transcript view reads it; TRN-02 its edits (edit,
+//! delete, find and replace) and TRN-03 [`player`], the recording files the
+//! meeting player plays and downloads.
 //!
 //! ORG-04 added [`entities`]: the rules over people and companies (upserts,
 //! merges, pages, AI summaries, company logos).
@@ -73,6 +75,7 @@ pub mod models;
 pub mod notes;
 pub mod people;
 pub mod permissions;
+pub mod player;
 pub mod profile;
 pub mod query;
 pub mod redaction;

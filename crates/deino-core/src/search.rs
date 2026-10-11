@@ -14,6 +14,8 @@
 //! - [`SearchService`]: the palette and results page ([`SearchService::search`])
 //!   and chat's retrieval API ([`SearchService::search_hybrid`]).
 //! - [`MeetingIndexer`]: the `index` pipeline stage's work for one meeting.
+//! - [`ReindexQueue`]: re-indexes meetings after the user edits their
+//!   transcript (TRN-02), one at a time in the background.
 //! - [`Retriever`]: read-only hybrid search for another process (the `deino`
 //!   CLI and MCP server); keyword-only when it has no embedder.
 //!
@@ -30,6 +32,7 @@ mod meeting_indexer;
 mod model;
 mod pools;
 pub mod query;
+mod reindex;
 mod retrieval;
 pub mod sections;
 pub mod semantic;
@@ -46,9 +49,12 @@ pub use model::{
     FilterChip, FilterKind, Highlight, Hit, HitKind, MAX_HITS_PER_KIND, SearchFilters,
     SearchRequest, SearchResults, Snippet,
 };
+pub use reindex::ReindexQueue;
 pub use retrieval::Retriever;
 pub use service::{MAX_SUGGESTIONS, SearchService};
 pub use sqlite::SqliteSearchIndex;
 
 #[cfg(test)]
 mod bench_tests;
+#[cfg(test)]
+mod transcript_edit_tests;
