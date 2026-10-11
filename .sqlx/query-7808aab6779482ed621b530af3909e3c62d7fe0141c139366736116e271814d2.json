@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Action items; ?1 is one meeting's ID, or NULL for every item (standalone\n-- ones included). The same rule as the `search_action_items_*` triggers.\nINSERT INTO search_documents (kind, ref_id, meeting_id, title, body)\nSELECT 'action_item', id, meeting_id, title, description FROM action_items\nWHERE ?1 IS NULL OR meeting_id = ?1\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "7808aab6779482ed621b530af3909e3c62d7fe0141c139366736116e271814d2"
+}

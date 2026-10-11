@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- `@` filter candidates: people (not merged), companies, tags, folders and\n-- meetings outside the trash, in that order, then by name.\n--\n-- ?1  a filter kind to keep, or NULL for every kind\n-- ?2  a LIKE pattern on the name (`prefix%`, or the exact name); LIKE\n--     ignores ASCII case\n-- ?3  a LIKE pattern for a later word of the name (`% prefix%`), or NULL\n-- ?4  the most candidates\n--\n-- Small tables; the meetings scan is bounded by the user's meeting count.\nWITH entries (kind, id, label, rank) AS (\n    SELECT 'person', id, name, 1 FROM people WHERE merged_into IS NULL\n    UNION ALL\n    SELECT 'company', id, name, 2 FROM companies\n    UNION ALL\n    SELECT 'tag', id, name, 3 FROM tags\n    UNION ALL\n    SELECT 'folder', id, name, 4 FROM folders\n    UNION ALL\n    SELECT 'meeting', id, title, 5 FROM meetings WHERE deleted_at IS NULL\n)\nSELECT\n    kind AS \"kind!: FilterKind\",\n    id AS \"id!\",\n    label AS \"label!\"\nFROM entries\nWHERE (?1 IS NULL OR kind = ?1)\n    AND (label LIKE ?2 ESCAPE '\\' OR label LIKE ?3 ESCAPE '\\')\nORDER BY rank, label COLLATE NOCASE, id\nLIMIT ?4\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "kind!: FilterKind",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "label!",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "5b9ccd3a456170fdaba35d8faa0de395660046991e3eefbd6766f56690e63013"
+}

@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's transcript in time order, with who said each line: the linked\n-- person's name, else the speaker's label. Soft-deleted segments are left\n-- out. Served by idx_transcript_segments_meeting_id_start_ms.\nSELECT\n    s.id AS \"segment_id!\",\n    s.start_ms AS \"start!: Millis\",\n    s.end_ms AS \"end!: Millis\",\n    coalesce(p.name, sp.label) AS \"speaker: String\",\n    s.text AS \"text!\"\nFROM transcript_segments AS s\nLEFT JOIN speakers AS sp ON sp.id = s.speaker_id\nLEFT JOIN people AS p ON p.id = sp.person_id\nWHERE s.meeting_id = ?1 AND s.is_deleted = 0 AND trim(s.text) <> ''\nORDER BY s.start_ms, s.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "segment_id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "start!: Millis",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end!: Millis",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "speaker: String",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "text!",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "68d2fcca14add7c83ef81cdcf19ba703af129d2ea053ff0aaa1970615d9691d2"
+}

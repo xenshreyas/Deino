@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO embeddings\n               (meeting_id, ref_kind, ref_id, chunk_ix, ts_ms, end_ms, text, model, vector, created_at)\n           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)\n           RETURNING id AS \"id!\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "de66b81c32ec6029256621ebafe0757d099c8d4fb006dd2ae511914c07d94b78"
+}

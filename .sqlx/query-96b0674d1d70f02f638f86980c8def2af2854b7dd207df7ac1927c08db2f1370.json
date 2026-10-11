@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meeting titles; ?1 is one meeting's ID, or NULL for every meeting.\n-- The same rule as the `search_meetings_*` triggers (migration org08).\nINSERT INTO search_documents (kind, ref_id, meeting_id, title)\nSELECT 'meeting', id, id, title FROM meetings\nWHERE ?1 IS NULL OR id = ?1\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "96b0674d1d70f02f638f86980c8def2af2854b7dd207df7ac1927c08db2f1370"
+}

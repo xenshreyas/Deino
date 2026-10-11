@@ -48,6 +48,7 @@ pub mod models;
 pub mod notes;
 pub mod people;
 pub mod profile;
+pub mod search;
 pub mod segments;
 pub mod settings;
 pub mod speakers;

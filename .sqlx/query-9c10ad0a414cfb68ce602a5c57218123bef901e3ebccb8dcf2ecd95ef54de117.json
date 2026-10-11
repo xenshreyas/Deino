@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Keyword hits, best first, at most ?3 of each kind.\n--\n-- ?1  the FTS5 MATCH expression (`fts::match_expression`)\n-- ?2  NULL to search everything outside the trash; else a JSON array of\n--     meeting IDs, and only those meetings' documents are searched\n-- ?3  hits per kind\n--\n-- `rank` is the table's BM25 (title matches weigh four times body matches,\n-- set in the ORG-08 migration). Unfiltered, only the best 1,000 matches are\n-- considered, through FTS5's own ORDER BY rank LIMIT: a word in half of all\n-- segments would otherwise rank every one of them. A filtered search ranks\n-- all its matches, since the best global ones may lie outside the filter.\n-- highlight() and snippet(), the expensive part, run only for the rows that\n-- survive the per-kind cut.\nWITH ranked AS (\n    SELECT search_fts.rowid AS doc, search_fts.rank AS rank\n    FROM search_fts\n    WHERE search_fts MATCH ?1\n    ORDER BY search_fts.rank\n    LIMIT CASE WHEN ?2 IS NULL THEN 1000 ELSE -1 END\n),\nkept AS (\n    SELECT\n        ranked.doc,\n        ranked.rank,\n        row_number() OVER (PARTITION BY d.kind ORDER BY ranked.rank, ranked.doc) AS place\n    FROM ranked\n    JOIN search_documents AS d ON d.id = ranked.doc\n    LEFT JOIN meetings AS m ON m.id = d.meeting_id\n    WHERE CASE\n        WHEN ?2 IS NULL THEN d.meeting_id IS NULL OR m.deleted_at IS NULL\n        ELSE d.meeting_id IN (SELECT value FROM json_each(?2))\n    END\n)\nSELECT\n    d.kind AS \"kind!: HitKind\",\n    d.ref_id AS \"ref_id!\",\n    d.meeting_id AS \"meeting_id: MeetingId\",\n    d.ts_ms AS \"ts_ms: Millis\",\n    CASE\n        WHEN d.title = '' THEN coalesce(m.title, '')\n        ELSE highlight(search_fts, 3, char(2), char(3))\n    END AS \"label!: String\",\n    snippet(search_fts, 4, char(2), char(3), '…', 16) AS \"snippet!: String\",\n    coalesce(m.started_at, m.created_at) AS \"date: DateTime<Utc>\",\n    -kept.rank AS \"score!: f64\"\nFROM search_fts\nJOIN kept ON kept.doc = search_fts.rowid\nJOIN search_documents AS d ON d.id = kept.doc\nLEFT JOIN meetings AS m ON m.id = d.meeting_id\nWHERE search_fts MATCH ?1 AND kept.place <= ?3\nORDER BY kept.rank, kept.doc\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "kind!: HitKind",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "ref_id!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "ts_ms: Millis",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "label!: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "snippet!: String",
+        "ordinal": 5,
+        "type_info": "Null"
+      },
+      {
+        "name": "date: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "score!: f64",
+        "ordinal": 7,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      null,
+      true,
+      true
+    ]
+  },
+  "hash": "9c10ad0a414cfb68ce602a5c57218123bef901e3ebccb8dcf2ecd95ef54de117"
+}

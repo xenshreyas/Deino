@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Whether anyone's email, or any company, uses the domain ?1 (or a\n-- subdomain of it), so a typed `acme.com` is a filter and not a word.\nSELECT EXISTS (\n    SELECT 1 FROM people WHERE email LIKE '%@' || ?1 OR email LIKE '%.' || ?1\n    UNION ALL\n    SELECT 1 FROM companies WHERE domain = ?1 OR domain LIKE '%.' || ?1\n) AS \"known!: bool\"\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "known!: bool",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a60abba2997219b9212c75b7fd64c57f75963cca5aff624b24423ae3ca07f169"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO search_fts (search_fts) VALUES ('optimize')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "497acd009923902a5815c058c5dce3d412044c0d17ad4d30a3a06d21a1830021"
+}

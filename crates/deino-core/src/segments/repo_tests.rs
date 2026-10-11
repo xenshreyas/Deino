@@ -198,7 +198,14 @@ async fn a_batch_publishes_one_change_signal() {
         .unwrap();
 
     let signal = changes.try_recv().unwrap();
-    assert_eq!(signal.tables, [deino_db::Table::TranscriptSegments]);
+    // The search index follows in the same commit (ORG-08 triggers).
+    assert_eq!(
+        signal.tables,
+        [
+            deino_db::Table::TranscriptSegments,
+            deino_db::Table::SearchDocuments
+        ]
+    );
     assert!(changes.try_recv().is_err(), "one commit, one signal");
 }
 

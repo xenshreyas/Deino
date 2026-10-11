@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Transcript segments that are not soft-deleted; ?1 is one meeting's ID, or\n-- NULL. The same rule as the `search_segments_*` triggers.\nINSERT INTO search_documents (kind, ref_id, meeting_id, body, ts_ms)\nSELECT 'segment', id, meeting_id, text, start_ms FROM transcript_segments\nWHERE (?1 IS NULL OR meeting_id = ?1) AND is_deleted = 0 AND trim(text) <> ''\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "87b094ea1c02ef3899653a07ec7591ba085ba9e7802e094ef93b439754013678"
+}

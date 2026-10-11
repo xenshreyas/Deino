@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO search_fts (search_fts) VALUES ('rebuild')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "b1b5e267298aa27e9ec670ba9e7a5aaca07041e93a5f400b8ed878cb9c83efb9"
+}

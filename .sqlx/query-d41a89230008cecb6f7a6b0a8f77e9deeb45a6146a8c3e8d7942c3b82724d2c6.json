@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT kind AS \"kind!\", body AS \"body!\" FROM search_documents\n               WHERE meeting_id = ?1 AND kind IN ('note', 'summary')",
+  "describe": {
+    "columns": [
+      {
+        "name": "kind!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "body!",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d41a89230008cecb6f7a6b0a8f77e9deeb45a6146a8c3e8d7942c3b82724d2c6"
+}

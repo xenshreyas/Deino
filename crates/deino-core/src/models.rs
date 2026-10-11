@@ -25,8 +25,8 @@ pub use events::ModelEvents;
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{FakeByteSource, FakeServer, RecordedModelEvents};
 pub use model::{
-    CatalogFile, CatalogModel, DownloadProgress, ModelFileId, ModelFileView, ModelState, Quant,
-    Sha256Digest,
+    CatalogFile, CatalogModel, DownloadProgress, ModelFileId, ModelFileView, ModelPurpose,
+    ModelState, Quant, Sha256Digest,
 };
 pub use service::{ModelService, ModelServiceParts};
 pub use source::{ByteSource, ByteStream, FetchError};
