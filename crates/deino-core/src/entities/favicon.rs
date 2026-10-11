@@ -149,7 +149,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_saved_logo_replaces_the_companys_older_file() {
+    async fn a_saved_logo_replaces_the_older_file_of_the_company() {
         let folder = tempfile::tempdir().unwrap();
         let files = FsLogoFiles::new(folder.path().join("logos"));
         let company = CompanyId::generate(&FakeClock::new(at("2026-10-11T09:00:00Z")));

@@ -147,7 +147,7 @@ async fn personal_providers_and_vanity_domains_make_no_company() {
 }
 
 #[tokio::test]
-async fn a_merged_companys_domain_resolves_to_its_survivor() {
+async fn the_domain_of_a_merged_company_resolves_to_its_survivor() {
     let Harness {
         directory,
         companies,

@@ -81,7 +81,7 @@ async fn an_answer_that_is_only_reasoning_leaves_the_summary_alone() {
 }
 
 #[tokio::test]
-async fn a_companys_briefing_names_its_people_and_reads_their_meetings() {
+async fn a_company_briefing_names_its_people_and_reads_their_meetings() {
     let world = World::new().await;
     let fernhollow = world.company("Fernhollow", Some("fernhollow.co")).await;
     let mut owen = world.person("Owen Price", None).await;

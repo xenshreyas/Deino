@@ -96,7 +96,7 @@ async fn people_are_listed_by_last_met_with_counts_from_past_live_meetings() {
 }
 
 #[tokio::test]
-async fn a_companys_rows_count_its_people_and_their_meetings() {
+async fn company_rows_count_its_people_and_their_meetings() {
     let world = world().await;
     let repo = SqliteEntityRepo::new(world.database.clone());
 
