@@ -15,12 +15,13 @@ use deino_audio::capture::{
 };
 use deino_audio::source::{AudioSource, SourceFactory};
 use deino_audio::{
-    Bytes, FakeDiskSpace, FakeEncoderFactory, HostClock, HostTime, MockAudioSource, RecorderDeps,
-    SystemHostClock, TestSignal, Track,
+    Bytes, EncoderFactory, FakeDiskSpace, FakeEncoderFactory, HostClock, HostTime, MockAudioSource,
+    RecorderDeps, SystemHostClock, TestSignal, Track,
 };
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
+use deino_core::vocabulary::{LiveVocabulary, NoLiveVocabulary};
 use deino_db::Database;
 use deino_domain::FakeClock;
 use deino_recording::events::RecordedEvents;
@@ -131,33 +132,48 @@ pub async fn rig(capture: FixtureCapture) -> Rig {
 
 /// A service recording `capture` and transcribing with `engines`.
 pub async fn rig_with(capture: FixtureCapture, engines: Arc<dyn LaneEngines>) -> Rig {
+    let options = RigOptions {
+        engines,
+        ..RigOptions::default()
+    };
+    rig_over(capture, options).await
+}
+
+/// What a rig transcribes, corrects and encodes with, and the user's settings.
+pub struct RigOptions {
+    pub engines: Arc<dyn LaneEngines>,
+    pub vocabulary: Arc<dyn LiveVocabulary>,
+    pub preferences: Preferences,
+    pub encoders: Arc<dyn EncoderFactory>,
+}
+
+impl Default for RigOptions {
+    fn default() -> Self {
+        Self {
+            engines: Arc::new(ScriptedEngines),
+            vocabulary: Arc::new(NoLiveVocabulary),
+            preferences: Preferences::default(),
+            encoders: Arc::new(FakeEncoderFactory::default()),
+        }
+    }
+}
+
+/// A service recording `capture` with `options`.
+pub async fn rig_over(capture: FixtureCapture, options: RigOptions) -> Rig {
     let database = deino_testkit::test_db().await;
     let capture_clock = Arc::clone(&capture.clock);
     let recordings = tempfile::tempdir().unwrap();
     let wall = Arc::new(FakeClock::new(
         Utc.with_ymd_and_hms(2026, 10, 9, 10, 0, 0).unwrap(),
     ));
-    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
-    let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     let events = Arc::new(RecordedEvents::default());
-    let deps = RecordingDeps {
-        meetings: meetings.clone(),
-        lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
-        segments: segments.clone(),
-        speakers: segments,
-        people: Arc::new(SqlitePeopleRepo::new(database.clone())),
-        engines,
-        recorder: RecorderDeps {
-            encoders: Arc::new(FakeEncoderFactory::default()),
-            host_clock: capture.clock.clone(),
-            wall_clock: wall.clone(),
-            disk: Arc::new(FakeDiskSpace::new(Bytes::gib(100))),
-        },
-        capture: Arc::new(capture),
-        preferences: Arc::new(Preferences::default()),
-        events: events.clone(),
-        recordings: PathBuf::from(recordings.path()),
+    let parts = Parts {
+        database: &database,
+        wall: &wall,
+        events: &events,
+        recordings: &recordings,
     };
+    let deps = deps(capture, options, &parts);
     Rig {
         clock: capture_clock,
         service: RecordingService::new(deps.clone()),
@@ -166,5 +182,45 @@ pub async fn rig_with(capture: FixtureCapture, engines: Arc<dyn LaneEngines>) ->
         database,
         events,
         recordings,
+    }
+}
+
+/// What the rig's dependencies are built over.
+struct Parts<'a> {
+    database: &'a Database,
+    wall: &'a Arc<FakeClock>,
+    events: &'a Arc<RecordedEvents>,
+    recordings: &'a tempfile::TempDir,
+}
+
+/// The recorder's ports over SQLite, the capture and `options`.
+fn deps(capture: FixtureCapture, options: RigOptions, parts: &Parts<'_>) -> RecordingDeps {
+    let RigOptions {
+        engines,
+        vocabulary,
+        preferences,
+        encoders,
+    } = options;
+    let (database, wall) = (parts.database, parts.wall);
+    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
+    let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
+    RecordingDeps {
+        meetings: meetings.clone(),
+        lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
+        segments: segments.clone(),
+        speakers: segments,
+        people: Arc::new(SqlitePeopleRepo::new(database.clone())),
+        engines,
+        recorder: RecorderDeps {
+            encoders,
+            host_clock: capture.clock.clone(),
+            wall_clock: wall.clone(),
+            disk: Arc::new(FakeDiskSpace::new(Bytes::gib(100))),
+        },
+        capture: Arc::new(capture),
+        preferences: Arc::new(preferences),
+        events: parts.events.clone(),
+        vocabulary,
+        recordings: PathBuf::from(parts.recordings.path()),
     }
 }

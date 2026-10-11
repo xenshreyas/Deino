@@ -44,6 +44,10 @@ deino-domain = { workspace = true, features = ["test-support"] }
 deino-stt = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 tempfile = "3.3.0"
+tokio-util.workspace = true
+
+[target.'cfg(unix)'.dev-dependencies]
+libc = "0.2.186"
 
 [lints]
 workspace = true

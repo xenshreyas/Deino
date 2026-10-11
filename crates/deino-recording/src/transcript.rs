@@ -14,10 +14,13 @@
 //!   [`router::FLUSH`] ([`SegmentStore`]), so the UI gets one `DbChanged`
 //!   per batch.
 //! - **Live events.** Every change also goes to the UI as a [`SegmentUpdate`](crate::events::SegmentUpdate).
+//! - **Vocabulary.** Saved rows and shown text are corrected with the user's
+//!   vocabulary and the known names ([`vocabulary`], TRN-05).
 
 mod drafts;
 mod router;
 mod store;
+pub mod vocabulary;
 
 use std::sync::mpsc::{Sender, SyncSender};
 

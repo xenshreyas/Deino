@@ -4,49 +4,46 @@ use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use std::thread::JoinHandle;
 
-use deino_audio::capture::Capture;
-use deino_audio::{Frames, HealthEvent, HostClock, Recorder};
+use deino_audio::capture::{Capture, OutputRoute};
+use deino_audio::{Frames, HealthEvent, HostClock, PlacedAudio, Recorder};
 use deino_domain::MeetingId;
 
 use super::Prepared;
 use crate::echo::SonoraAec;
+use crate::engine::LaneTranscriber;
 use crate::error::RecordingError;
 use crate::events::{HealthNotice, RecordingEvents};
 use crate::lane::{Lane, PerLane};
 use crate::live::{LaneInput, LiveParts, LivePipeline, PlacedReader};
-use crate::transcript::Router;
+use crate::transcript::{Router, RouterHandle};
 
 /// A running recording.
 pub(crate) struct Session {
     meeting: MeetingId,
     recorder: Recorder,
     capture: Capture,
-    pipeline: LivePipeline,
+    /// The live transcription; `None` when the recording is record-only.
+    pipeline: Option<LivePipeline>,
     router: Router,
     health: Option<JoinHandle<()>>,
 }
 
 impl Prepared {
     /// Starts transcribing (the meeting row exists now) and forwarding health.
+    /// A record-only recording starts no live pipeline: its placed audio is
+    /// left unread, which costs nothing (CAP-08).
     pub fn go(self, events: Arc<dyn RecordingEvents>) -> Result<Session, RecordingError> {
-        let handle = self.router.handle();
-        let readers = PerLane {
-            me: PlacedReader::new(self.placed.microphone).map_err(std::io::Error::other)?,
-            them: PlacedReader::new(self.placed.system).map_err(std::io::Error::other)?,
+        let pipeline = match self.transcribers {
+            Some(transcribers) => Some(live_pipeline(LiveStart {
+                placed: self.placed,
+                transcribers,
+                router: self.router.handle(),
+                uses_headphones: self.plan.preferences.uses_headphones,
+                route: self.route,
+                routes: self.routes,
+            })?),
+            None => None,
         };
-        let PerLane { me, them } = self.transcribers;
-        let pipeline = LivePipeline::start(LiveParts {
-            readers,
-            lanes: PerLane {
-                me: LaneInput::new(Lane::Me, me, handle.clone()),
-                them: LaneInput::new(Lane::Them, them, handle.clone()),
-            },
-            echo: Box::new(SonoraAec::new()),
-            uses_headphones: self.plan.preferences.uses_headphones,
-            route: self.route,
-            routes: self.routes,
-            router: handle,
-        })?;
         let health = forward_health(self.plan.meeting.clone(), self.health, events)?;
         Ok(Session {
             meeting: self.plan.meeting,
@@ -98,7 +95,9 @@ impl Session {
                     .unwrap_or_default()
             })
             .unwrap_or_default();
-        self.pipeline.finish(length);
+        if let Some(pipeline) = self.pipeline.take() {
+            pipeline.finish(length);
+        }
         self.router.finish();
         if let Some(health) = self.health.take() {
             health.join().ok();
@@ -106,6 +105,37 @@ impl Session {
         summary?;
         Ok(length)
     }
+}
+
+/// What the live pipeline starts from.
+struct LiveStart {
+    placed: PlacedAudio,
+    transcribers: PerLane<Box<dyn LaneTranscriber>>,
+    router: RouterHandle,
+    uses_headphones: bool,
+    route: Option<OutputRoute>,
+    routes: Receiver<OutputRoute>,
+}
+
+/// Starts the live pipeline: both tracks' placed audio into both lanes.
+fn live_pipeline(start: LiveStart) -> Result<LivePipeline, RecordingError> {
+    let readers = PerLane {
+        me: PlacedReader::new(start.placed.microphone).map_err(std::io::Error::other)?,
+        them: PlacedReader::new(start.placed.system).map_err(std::io::Error::other)?,
+    };
+    let PerLane { me, them } = start.transcribers;
+    Ok(LivePipeline::start(LiveParts {
+        readers,
+        lanes: PerLane {
+            me: LaneInput::new(Lane::Me, me, start.router.clone()),
+            them: LaneInput::new(Lane::Them, them, start.router.clone()),
+        },
+        echo: Box::new(SonoraAec::new()),
+        uses_headphones: start.uses_headphones,
+        route: start.route,
+        routes: start.routes,
+        router: start.router,
+    })?)
 }
 
 /// Forwards the recording's health events to the UI until the recording's

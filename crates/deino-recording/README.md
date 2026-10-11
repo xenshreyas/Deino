@@ -37,6 +37,16 @@ spoken. The UI only watches.
 - The transcript router (`transcript/`): drafts saved about once a second
   (`SegmentWriter::save_live`), holdback verdicts, batched final saves,
   `SegmentUpdate` events.
+- The live vocabulary pass (`transcript/vocabulary.rs`, TRN-05):
+  `CorrectedStore` and `CorrectedEvents` correct what the router saves and
+  shows, and keep each original through `LiveVocabulary`.
+- Record-only recordings (`Preferences::record_only`, CAP-08): no engines,
+  no live pipeline; only capture and the track writers run.
+- Transcribing finished tracks (`offline.rs`, `offline/utterances.rs`,
+  CAP-08): `OfflineTranscriber` (the `final_transcription` stage's
+  `TrackTranscriber`) over the `TrackDecoder` (`NativeDecoder`:
+  `ExtAudioFile`) and `BatchEngines` ports; VAD utterances of at most 30 s,
+  runs that stopped early read again in halves.
 - Launch recovery (`recovery.rs`): meetings left in `recording`.
 - The events port (`events.rs`): `RecordingSnapshot`, `SegmentUpdate`,
   `HealthNotice`.
@@ -73,7 +83,13 @@ spoken. The UI only watches.
 ```bash
 cargo test -p deino-recording                     # unit tests, service, fixture end to end
 cargo test -p deino-recording --test live_fixture -- --ignored   # ten minutes on speakers (~2.5 min)
+cargo test -p deino-recording --test record_only_cpu -- --ignored --nocapture   # CAP-08 CPU (macOS, ~1 min)
 ```
+
+`tests/capture_modes.rs` records the fixture with live transcription off
+(no engine may open; segments appear only once the `final_transcription`
+rules run after stop) and with a live vocabulary (every saved and shown
+line corrected, every original kept).
 
 `tests/live_fixture.rs` plays `fixtures/audio/one-on-one/{mic,system}.m4a`
 through mock capture, the real writers (fake encoder), the echo canceller,
