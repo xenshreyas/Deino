@@ -22,7 +22,7 @@ mod validate;
 mod vocab;
 
 pub use audio::{AudioError, PcmTrack};
-pub use ids::fixture_uuid;
+pub use ids::{fixture_uuid, person_key, segment_key};
 pub use load::{FixtureError, Fixtures};
 pub use model::{
     Attendee, CalendarEvent, Company, ExpectedActionItem, ExpectedFact, FixtureAudio,

@@ -157,6 +157,23 @@ the SQLite adapters behind those ports.
   meeting's whole `Transcript` (segments in spoken order, each with its
   `speaker_id`) over `SegmentReader`; the view names speakers from
   `speakers` (CAP-04). No SQL of its own; TRN-02 adds the segment edits here.
+- `query` (DEV-02/04, ADR 0033): the read side the `deino` CLI and its MCP
+  server answer from. `Library` bundles `MeetingQueries` (list by date, tag,
+  folder, person and company; read one with its notes, the newest enhanced
+  notes and their cited moments, action items and files),
+  `TranscriptQueries` (time windows with a cursor), `ActionItemQueries`
+  (over `ActionItemService`), `DirectoryQueries` (people, companies, tags,
+  folders, calendar events) and the `Search` port (`HybridSearch` over
+  `search::Retriever`, reporting keyword or hybrid; `EmbedProbe`), all over
+  `ReadPorts` and `ReadContext`, the app's own
+  repositories and services. `Resolver` turns names, emails and domains into
+  IDs; `link` writes `deino://meeting/<id>[?t=<ms>]`. `seed_sample_library`
+  (feature `test-support`) seeds the fixtures plus tags, folders, action
+  items and AI notes for tests and demos.
+- `cli_setup` (DEV-02/04): `CliSetupService` (where the bundled CLI is, its
+  install targets `~/.local/bin` and `/usr/local/bin`, installing it as a
+  symlink that never replaces a file it did not make), the `Links` port
+  (`FsLinks`) and the Claude Code and Claude Desktop `snippets`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

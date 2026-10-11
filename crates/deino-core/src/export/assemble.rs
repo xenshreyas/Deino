@@ -142,7 +142,8 @@ impl ExportAssembler {
         })
     }
 
-    async fn attendees(&self, id: &MeetingId) -> Result<Vec<Participant>, ExportError> {
+    /// Who attended `id`, by name: invitees who declined are left out.
+    pub async fn attendees(&self, id: &MeetingId) -> Result<Vec<Participant>, ExportError> {
         let mut participants = Vec::new();
         for attendee in self.ports.attendees.attendees(id).await? {
             if attendee.rsvp == Some(Rsvp::Declined) {
@@ -179,7 +180,9 @@ impl ExportAssembler {
         Ok(items)
     }
 
-    async fn transcript(&self, id: &MeetingId) -> Result<Vec<Utterance>, ExportError> {
+    /// The transcript of `id` in time order, each segment with its
+    /// speaker's name (the library's `get_transcript` reads it too).
+    pub async fn transcript(&self, id: &MeetingId) -> Result<Vec<Utterance>, ExportError> {
         let speakers = self
             .speaker_names(&self.ports.speakers.speakers(id).await?)
             .await?;

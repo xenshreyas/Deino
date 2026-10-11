@@ -11,7 +11,12 @@ path = "src/deino_core.rs"
 
 [features]
 # Fakes of this crate's ports (`FakeMeetingRepo`, ...) for other crates' tests.
-test-support = ["deino-domain/test-support", "deino-secrets/test-support"]
+# Also the sample library (`query::seed_sample_library`) over the fixtures.
+test-support = [
+    "deino-domain/test-support",
+    "deino-secrets/test-support",
+    "dep:deino-testkit",
+]
 
 [dependencies]
 async-trait.workspace = true
@@ -24,6 +29,8 @@ deino-export.workspace = true
 deino-llm.workspace = true
 futures-util.workspace = true
 deino-secrets.workspace = true
+# The fixture meetings behind the sample library (feature `test-support`).
+deino-testkit = { workspace = true, optional = true }
 # RFC 7396 merge patches for settings (already in the tree through Tauri).
 json-patch = { version = "3.0.1", default-features = false }
 log.workspace = true
@@ -31,8 +38,9 @@ log.workspace = true
 # (NOT-04 auto rules); already in the tree through the app.
 regex = "1.12.3"
 # Schemas for structured LLM answers (the template classifier, the
-# auto-tagger); deino-llm's version.
-schemars = "1.2.1"
+# auto-tagger) and for the read models the MCP server publishes (DEV-02);
+# deino-llm's version, with chrono's date and time types.
+schemars = { version = "1.2.1", features = ["chrono04"] }
 serde.workspace = true
 serde_json.workspace = true
 # Model file verification (models/download.rs).

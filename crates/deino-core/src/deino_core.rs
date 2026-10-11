@@ -27,6 +27,9 @@
 //! [`tags`] and [`action_items`], plus the lifecycle and trash ports of
 //! [`meetings`].
 //!
+//! DEV-02/04 added [`query`], the read side the `deino` CLI and its MCP
+//! server answer from.
+//!
 //! NOT-04 and NOT-05 added [`templates`] (the note templates, built-ins
 //! seeded from a versioned catalogue, auto selection) and [`profile`] (the
 //! user's profile as AI context, the "Me" person, internal vs external).
@@ -38,6 +41,7 @@
 pub mod _example;
 pub mod action_items;
 pub mod calendar;
+pub mod cli_setup;
 pub mod companies;
 pub mod diarization;
 pub mod enhance;
@@ -51,6 +55,7 @@ pub mod models;
 pub mod notes;
 pub mod people;
 pub mod profile;
+pub mod query;
 pub mod search;
 pub mod segments;
 pub mod settings;
