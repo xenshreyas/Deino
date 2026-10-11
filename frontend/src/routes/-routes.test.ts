@@ -61,6 +61,18 @@ describe('route URLs', () => {
     expect(search).toEqual({ source: undefined, tab: undefined });
   });
 
+  test('a moment link carries ?t= in milliseconds for the transcript (TRN-01)', async () => {
+    const { search } = await resolve('/meetings/meeting-123?tab=transcript&t=754000');
+    expect(search).toEqual({ tab: 'transcript', t: 754_000 });
+  });
+
+  test('a malformed moment is dropped rather than failing the meeting route', async () => {
+    for (const bad of ['-5', '1.5', 'soon']) {
+      const { search } = await resolve(`/meetings/meeting-123?t=${bad}`);
+      expect(search).toEqual({});
+    }
+  });
+
   test('every sidebar destination resolves to a route', async () => {
     const { NAV_ITEMS } = await import('@/features/shell');
     for (const item of NAV_ITEMS) {

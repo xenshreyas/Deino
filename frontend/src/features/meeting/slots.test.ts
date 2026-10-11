@@ -5,7 +5,7 @@ import { meetingTabSchema } from './search';
 import { MEETING_PANELS, MEETING_TABS } from './slots';
 
 // The Notes and Transcript slots reach the legacy session; keep it out of this test.
-vi.mock('./slots/legacy-slots', () => ({ NotesSlot: () => null, TranscriptSlot: () => null }));
+vi.mock('./slots/transcript-slot', () => ({ TranscriptSlot: () => null }));
 
 describe('meeting slots', () => {
   test('the tabs registry and the URL ?tab= schema list the same tabs, in order', () => {

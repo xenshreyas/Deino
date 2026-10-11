@@ -7,12 +7,11 @@
  * | Export | Where |
  * |---|---|
  * | {@link RecordingSync} | once, in the app shell: state events, the stop hand-off, health toasts |
- * | {@link RecordingControls}, {@link LiveTranscript} | the record screen |
+ * | {@link RecordingControls} | the record screen (its live transcript is `features/transcript`) |
  * | {@link useRecordingState}, {@link useElapsed}, {@link useRecordingActions} | the sidebar's record block, anything that shows the recorder |
  * | {@link startRecording} | the shell's start paths (sidebar, ⌘⇧R, palette, detection) |
  */
 export { recordingApi } from './api';
-export { LiveTranscript } from './components/live-transcript';
 export { RecordingControls } from './components/recording-controls';
 export { RecordingSync } from './components/recording-sync';
 export { recordingCopy } from './copy';
@@ -26,4 +25,4 @@ export {
   useRecordingActions,
   useRecordingState,
 } from './queries';
-export type { RecordingPhase, RecordingSnapshot, TranscriptLine } from './types';
+export type { RecordingPhase, RecordingSnapshot } from './types';

@@ -5,10 +5,17 @@
  */
 import { events } from './db';
 import { loadFixtureMeetings } from './fixtures';
+import {
+  LONG_MEETING_ID,
+  LONG_MEETING_TITLE,
+  longTranscript,
+  requestedLongMeeting,
+} from './long-meeting';
 import { MockDatabase } from './mock-database';
 import { MockEnhanced } from './mock-enhanced';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
+import { MockTranscripts } from './mock-transcripts';
 
 /** The commit sequence number, increasing by one per write. */
 let seq = 0;
@@ -30,3 +37,19 @@ export const mockEnhanced = new MockEnhanced(fixtureMeetings);
 
 /** The fixtures' people, as the Rust seeder writes them. */
 export const mockPeople = fixturePeople(fixtureMeetings);
+
+/** The mock `transcript_segments` and `speakers` tables. */
+export const mockTranscripts = new MockTranscripts(fixtureMeetings);
+
+/** The generated long meeting, when session storage asks for it (`long-meeting.ts`). */
+const longMeeting = requestedLongMeeting();
+if (longMeeting !== null) {
+  const savedAt = new Date().toISOString();
+  mockDatabase.insert({
+    id: LONG_MEETING_ID,
+    title: LONG_MEETING_TITLE,
+    createdAt: savedAt,
+    updatedAt: savedAt,
+  });
+  mockTranscripts.put(LONG_MEETING_ID, longTranscript(longMeeting));
+}

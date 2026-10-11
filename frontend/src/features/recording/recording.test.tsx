@@ -1,13 +1,12 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { EventCallback } from '@tauri-apps/api/event';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { asMeetingId } from '@/features/meetings';
 import type * as Generated from '@/lib/ipc/generated/recording';
 import { createQueryClient } from '@/lib/ipc';
 
-import { LiveTranscript } from './components/live-transcript';
 import { RecordingControls } from './components/recording-controls';
 import { IDLE } from './queries';
 
@@ -27,7 +26,6 @@ const bindings = vi.hoisted(() => {
     pause: vi.fn<typeof Generated.commands.pause>(),
     resume: vi.fn<typeof Generated.commands.resume>(),
     state: vi.fn<typeof Generated.commands.state>(),
-    transcript: vi.fn<typeof Generated.commands.transcript>(),
   } satisfies typeof Generated.commands;
   const events = {
     health: { listen: listenFor('health') },
@@ -54,21 +52,6 @@ const RECORDING: Generated.RecordingSnapshot = {
 
 function renderWithClient(ui: React.ReactElement) {
   render(<QueryClientProvider client={createQueryClient()}>{ui}</QueryClientProvider>);
-}
-
-function segment(text: string): Generated.Segment {
-  return {
-    id: 'segment-1' as Generated.SegmentId,
-    meetingId: MEETING,
-    channel: 'system',
-    speakerId: null,
-    start: 0,
-    end: 2_000,
-    text,
-    words: [],
-    isDeleted: false,
-    editedAt: null,
-  };
 }
 
 describe('RecordingControls', () => {
@@ -104,30 +87,5 @@ describe('RecordingControls', () => {
     await waitFor(() => {
       expect(bindings.commands.stop).toHaveBeenCalledOnce();
     });
-  });
-});
-
-describe('LiveTranscript', () => {
-  it('shows saved lines, then grows them with live updates, labelled by channel', async () => {
-    bindings.commands.transcript.mockResolvedValue({ status: 'ok', data: [segment('Hello')] });
-    renderWithClient(<LiveTranscript meetingId={MEETING} />);
-    expect(await screen.findByText('Hello')).toBeTruthy();
-    expect(screen.getByText('Them')).toBeTruthy();
-
-    const update: Generated.SegmentUpdate = {
-      meetingId: MEETING,
-      segmentId: 'segment-2' as Generated.SegmentId,
-      channel: 'mic',
-      start: 2_500,
-      end: 2_500,
-      text: 'Hi, shall we',
-      state: 'open',
-    };
-    act(() => {
-      bindings.handlers.liveSegment?.({ event: 'live-segment', id: 0, payload: { update } });
-    });
-
-    expect(await screen.findByText('Hi, shall we')).toBeTruthy();
-    expect(screen.getByText('Me')).toBeTruthy();
   });
 });

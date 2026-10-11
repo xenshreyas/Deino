@@ -20,6 +20,7 @@ import { meetingCopy } from '../copy';
 import { useTabShortcuts } from '../hooks/use-tab-shortcuts';
 import { LegacyMeetingSession } from '../legacy/meeting-session';
 import type { MeetingSource, MeetingTabId } from '../search';
+import type { MeetingMoment } from '../types';
 import { MEETING_PLAYER, MEETING_TABS } from '../slots';
 import { MeetingHeader } from './meeting-header';
 import { MeetingSidePanel } from './meeting-side-panel';
@@ -29,9 +30,11 @@ export interface MeetingScreenProps {
   meetingId: string;
   source?: MeetingSource | undefined;
   tab: MeetingTabId;
-  /** A moment to open the transcript at (ms into the recording), from search. */
-  focusMs?: number | undefined;
   onTabChange: (tab: MeetingTabId) => void;
+  /** A moment of the recording to show (`?t=`, milliseconds). */
+  moment?: number | undefined;
+  /** Called once the moment has been shown. */
+  onMomentShown?: (() => void) | undefined;
 }
 
 /** "‹ Meetings" on the left of the title bar; Enhance, Share and the panel toggle on the right. */
@@ -68,7 +71,11 @@ function MeetingTabs({
   meetingId,
   tab,
   onTabChange,
-}: { meetingId: MeetingId } & Pick<MeetingScreenProps, 'tab' | 'onTabChange'>) {
+  moment,
+}: { meetingId: MeetingId; moment: MeetingMoment | undefined } & Pick<
+  MeetingScreenProps,
+  'tab' | 'onTabChange'
+>) {
   const select = (value: string) => {
     const next = MEETING_TABS.find((candidate) => candidate.id === value);
     if (next !== undefined) onTabChange(next.id);
@@ -84,7 +91,7 @@ function MeetingTabs({
       </TabsList>
       {MEETING_TABS.map(({ id, Component }) => (
         <TabsContent key={id} value={id} className="min-h-0 flex-1">
-          <Component meetingId={meetingId} />
+          <Component meetingId={meetingId} moment={moment} />
         </TabsContent>
       ))}
     </Tabs>
@@ -96,21 +103,24 @@ export function MeetingScreen({
   meetingId,
   source,
   tab,
-  focusMs,
   onTabChange,
+  moment,
+  onMomentShown,
 }: MeetingScreenProps) {
   const id = asMeetingId(meetingId);
+  const shown =
+    moment === undefined ? undefined : { at: moment, onShown: onMomentShown ?? (() => undefined) };
   const rightPanelOpen = useShellLayout((state) => state.rightPanelOpen);
   useTabShortcuts(onTabChange);
   const Player = MEETING_PLAYER;
   return (
-    <LegacyMeetingSession key={meetingId} meetingId={meetingId} source={source} focusMs={focusMs}>
+    <LegacyMeetingSession key={meetingId} meetingId={meetingId} source={source}>
       <MeetingTitleBar meetingId={id} />
       <div className="flex h-full min-w-0">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col px-6">
             <MeetingHeader meetingId={id} />
-            <MeetingTabs meetingId={id} tab={tab} onTabChange={onTabChange} />
+            <MeetingTabs meetingId={id} tab={tab} onTabChange={onTabChange} moment={shown} />
           </div>
           <Player meetingId={id} />
         </div>

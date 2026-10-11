@@ -2,13 +2,13 @@
  * Mock of `@/lib/ipc/generated/recording`: a recorder that "hears" a short
  * scripted conversation, so `pnpm dev:mock` shows the record screen, the
  * sidebar's live row and the live transcript. Start creates a meeting in the
- * mock database; every couple of seconds a Me or Them line grows word by
- * word, then is saved; stop returns the meeting.
+ * mock database with its Me and Them speakers; every couple of seconds a Me
+ * or Them line grows word by word, then is saved; stop returns the meeting.
  */
 import type * as Generated from '@/lib/ipc/generated/recording';
 
 import { failure, ok } from './command-result';
-import { mockDatabase } from './database';
+import { mockDatabase, mockTranscripts } from './database';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
 
@@ -42,7 +42,6 @@ export const events = {
 let snapshot: Generated.RecordingSnapshot = IDLE;
 let timer: number | undefined;
 let heard = 0;
-const transcripts = new Map<Generated.MeetingId, Generated.Segment[]>();
 
 function publish(next: Generated.RecordingSnapshot): Generated.RecordingSnapshot {
   snapshot = next;
@@ -86,20 +85,19 @@ function hear(meetingId: Generated.MeetingId): void {
   if (done) save(update);
 }
 
+/** Saves a finished line on its channel's speaker, as the transcript router does. */
 function save(update: Generated.SegmentUpdate): void {
-  const segment: Generated.Segment = {
+  mockTranscripts.save({
     id: update.segmentId,
     meetingId: update.meetingId,
     channel: update.channel,
-    speakerId: null,
     start: update.start,
     end: update.end,
     text: update.text,
     words: [],
     isDeleted: false,
     editedAt: null,
-  };
-  transcripts.set(update.meetingId, [...(transcripts.get(update.meetingId) ?? []), segment]);
+  });
   mockDatabase.touch(['transcript_segments']);
 }
 
@@ -111,6 +109,7 @@ async function start(title: string | null) {
   const created = mockDatabase.addScheduled(title ?? 'Untitled meeting', new Date());
   if (created.status === 'error') return created;
   const meetingId = created.data.id;
+  mockTranscripts.startRecording(meetingId);
   const base = { ...IDLE, meetingId, title: created.data.title };
   publish({ ...base, phase: 'starting' });
   publish({ ...base, phase: 'recording', startedAt: new Date().toISOString(), echo: 'cancel' });
@@ -156,9 +155,5 @@ export const commands = {
   async state() {
     await latency();
     return ok(snapshot);
-  },
-  async transcript(meetingId) {
-    await latency();
-    return ok(transcripts.get(meetingId) ?? []);
   },
 } satisfies typeof Generated.commands;

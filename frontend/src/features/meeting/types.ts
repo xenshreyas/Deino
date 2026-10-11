@@ -10,9 +10,19 @@ export type { MeetingTabId } from './search';
 /** The right panel's sections. */
 export type MeetingPanelId = 'chat' | 'participants' | 'details';
 
+/** A moment of the recording a link asked to show (`?t=`). */
+export interface MeetingMoment {
+  /** Milliseconds from the start of the recording. */
+  at: number;
+  /** Called once it has been shown, to drop it from the URL. */
+  onShown: () => void;
+}
+
 /** What every slot component receives. */
 export interface MeetingSlotProps {
   meetingId: MeetingId;
+  /** The moment to show, for the slots that can (the Transcript tab). */
+  moment?: MeetingMoment | undefined;
 }
 
 /** A tab of the meeting page. */

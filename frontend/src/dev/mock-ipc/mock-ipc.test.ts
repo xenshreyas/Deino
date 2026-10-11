@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { asMeetingId } from '@/features/meetings';
 import type { Table } from '@/lib/ipc/generated/shared';
+import type * as Generated from '@/lib/ipc/generated/transcript';
 
 import { fixtureUuid } from './fixture-ids';
 import { loadFixtureMeetings } from './fixtures';
 import { legacyMeetingResponses } from './legacy-meetings';
+import { longTranscript, PHRASE } from './long-meeting';
 import { MockDatabase } from './mock-database';
+import { MockTranscripts } from './mock-transcripts';
 
 /** Every generated binding module and every mock module, by feature name. */
 const generated = import.meta.glob<Record<string, unknown>>('../../lib/ipc/generated/*.ts', {
@@ -89,6 +92,53 @@ describe('MockDatabase', () => {
 
     expect(report.meetings).toBe(8);
     expect(db.meeting(ONE_ON_ONE)).toMatchObject({ data: { title: 'Shreyas / Maya 1:1' } });
+  });
+});
+
+describe('MockTranscripts', () => {
+  it('serves fixture transcripts with the seeder IDs and speakers named after people', () => {
+    const transcripts = new MockTranscripts(loadFixtureMeetings());
+
+    const { segments, speakers } = transcripts.get(ONE_ON_ONE);
+
+    expect(segments[0]?.id).toBe(fixtureUuid('segment/meeting-fixture-one-on-one/0'));
+    expect(segments[0]?.speakerId).toBe(
+      fixtureUuid('speaker/meeting-fixture-one-on-one/Speaker 1'),
+    );
+    expect(speakers.map(({ name, isMe }) => [name, isMe])).toEqual([
+      ['Shreyas', true],
+      ['Maya Chen', false],
+    ]);
+  });
+
+  it('saves a recording line on the speaker of its channel', () => {
+    const transcripts = new MockTranscripts([]);
+    const live = asMeetingId('meeting-live');
+    transcripts.startRecording(live);
+
+    transcripts.save({
+      id: 'segment-1' as Generated.SegmentId,
+      meetingId: live,
+      channel: 'mic',
+      start: 0,
+      end: 900,
+      text: 'Hello',
+      words: [],
+      isDeleted: false,
+      editedAt: null,
+    });
+
+    const { segments, speakers } = transcripts.get(live);
+    expect(segments[0]?.speakerId).toBe(speakers.find(({ isMe }) => isMe)?.id);
+  });
+
+  it('generates the long meeting deterministically, with a known number of hits', () => {
+    const first = longTranscript(1_000);
+
+    expect(first).toEqual(longTranscript(1_000));
+    expect(first.segments).toHaveLength(1_000);
+    expect(first.segments.filter(({ text }) => text.includes(PHRASE))).toHaveLength(4);
+    expect(first.segments.at(-1)?.start).toBeLessThan(2 * 60 * 60 * 1000);
   });
 });
 

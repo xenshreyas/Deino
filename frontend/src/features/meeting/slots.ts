@@ -9,7 +9,7 @@
  * | Slot | Today | Filled by |
  * |---|---|---|
  * | Notes tab | Enhanced (NOT-02, NOT-03) and My notes (NOT-01) | |
- * | Transcript tab | legacy transcript | TRN-01 |
+ * | Transcript tab | transcript view (`features/transcript`), with the inherited folder and re-transcribe tools | TRN-01 |
  * | Insights tab | empty state | AI-06 |
  * | Clips tab | empty state | TRN-04 |
  * | Chat panel | empty state | AI-02 |
@@ -23,10 +23,10 @@ import { ParticipantsPanel } from '@/features/speakers';
 
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
-import { TranscriptSlot } from './slots/legacy-slots';
 import { NotesSlot } from './slots/notes-slot';
 import { ChatPanelSlot, ClipsSlot, InsightsSlot } from './slots/placeholder-slots';
 import { PlayerPlaceholder } from './slots/player-slot';
+import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
 
 /** The tabs, in order. */

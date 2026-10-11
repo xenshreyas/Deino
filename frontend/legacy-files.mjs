@@ -19,11 +19,10 @@ export const LEGACY_FILES = [
   'src/services/**',
   'src/types/**',
   // Legacy screens moved into features/ by FND-10a. FND-10 moved the meeting
-  // session behind the meeting page's slots; NOT-01 and TRN-01 replace it.
+  // session behind the meeting page's slots; NOT-02 replaces the rest of it.
   'src/features/meeting/legacy/meeting-panels.tsx',
   'src/features/meeting/legacy/meeting-session.test.tsx',
   'src/features/meeting/legacy/meeting-session.tsx',
-  'src/features/record/record-screen.tsx',
   // GPU build helpers behind `pnpm tauri:dev` and `pnpm tauri:build`.
   'scripts/auto-detect-gpu.js',
   'scripts/tauri-auto.js',

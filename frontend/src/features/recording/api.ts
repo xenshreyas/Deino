@@ -7,7 +7,7 @@ import type { MeetingId } from '@/features/meetings';
 import { commands } from '@/lib/ipc/generated/recording';
 import { unwrap } from '@/lib/ipc/result';
 
-import type { RecordingSnapshot, Segment } from './types';
+import type { RecordingSnapshot } from './types';
 
 export const recordingApi = {
   /** Starts recording a new meeting; resolves to its ID once audio flows. */
@@ -20,6 +20,4 @@ export const recordingApi = {
   resume: (): Promise<RecordingSnapshot> => unwrap(commands.resume()),
   /** The recorder's state now. */
   state: (): Promise<RecordingSnapshot> => unwrap(commands.state()),
-  /** The meeting's saved transcript, oldest first. */
-  transcript: (meetingId: MeetingId): Promise<Segment[]> => unwrap(commands.transcript(meetingId)),
 };
