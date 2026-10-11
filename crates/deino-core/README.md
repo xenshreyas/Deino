@@ -136,7 +136,7 @@ the SQLite adapters behind those ports.
   `FolderDialog`, `Clipboard`, `UrlOpener`) and `Vault` (`FsVault`, atomic
   writes). Fakes: `FakeVault`, `ScriptedDialog`, `RecordedClipboard`,
   `RecordedOpener`.
-- `search` (ORG-08, AI-01, ADR 0026): the query language (`query`), FTS5
+- `search` (ORG-08, AI-01, ADR 0028): the query language (`query`), FTS5
   expressions (`fts`), snippets with UTF-16 highlight ranges (`snippet`),
   `SqliteSearchIndex` (`SearchIndex`: keyword hits, filter scopes, refresh,
   reindex; `FilterDirectory`: `@` names and known domains), reciprocal rank

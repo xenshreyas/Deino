@@ -30,6 +30,8 @@ name, so a green local run is a green CI run. Each row is also one command.
 | Recording acceptance (macOS, real time) | `cargo test -p deino-audio --test kill_harness -- --ignored --nocapture --test-threads=1` (`kill -9` loss and CPU per track) |
 | LLM evals (never CI) | `cd frontend && DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval <route>` (offline contract and smoke trials run with `cargo test`) |
 | Real-model smoke | `DEINO_SMOKE_APP_DATA=<dir with models/summary/*.gguf> DEINO_LLAMA_HELPER=target/release/llama-helper cargo test -p deino --lib llm::smoke_tests -- --ignored` |
+| Search acceptance (2,000 meetings < 100 ms) | `cargo test -p deino-core --release --lib search::bench_tests -- --ignored --nocapture` |
+| Semantic eval (real embedding model) | `DEINO_SMOKE_APP_DATA=<dir with models/embedding/nomic-embed-text-v1.5.Q8_0.gguf> DEINO_LLAMA_HELPER=target/release/llama-helper cargo test -p deino --lib llm::retrieval_eval -- --ignored --nocapture` |
 | UI by hand | `cd frontend && pnpm dev:mock`, then open http://localhost:3119 |
 
 Every test must pass on every machine. A test never reads real hardware:

@@ -401,6 +401,17 @@ Copyright (c) 2023 CNRS (Hervé Bredin and contributors).
 
 ---
 
+## Nomic Embed Text v1.5 (model weights)
+
+Downloaded on demand (not bundled) from
+https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF (revision
+`0188c9b`, file `nomic-embed-text-v1.5.Q8_0.gguf`, SHA-256 `3e243421…c3b7`),
+a GGUF conversion of https://huggingface.co/nomic-ai/nomic-embed-text-v1.5,
+licensed under the Apache License 2.0, Copyright Nomic AI. Deino uses it
+unmodified, on the Mac, to embed meeting text for semantic search.
+
+---
+
 ## WeSpeaker ResNet34-LM (model weights)
 
 Downloaded on demand (not bundled) from

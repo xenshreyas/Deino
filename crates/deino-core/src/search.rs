@@ -1,5 +1,5 @@
 //! Global search (ORG-08) and the semantic index (AI-01), PARITY_PLAN §4.4,
-//! ADR 0026.
+//! ADR 0028.
 //!
 //! - **Keyword:** `search_documents` holds one row per searchable thing
 //!   (meeting titles, notes, summaries, transcript segments, action items,
