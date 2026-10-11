@@ -74,6 +74,20 @@ describe('searchTranscript', () => {
   });
 });
 
+/** Runs per measurement; the fastest counts, so a busy machine's pauses do not. */
+const RUNS = 5;
+
+/** The fastest of {@link RUNS} timings of `work`, in milliseconds. */
+function fastest(work: () => unknown): number {
+  let best = Number.POSITIVE_INFINITY;
+  for (let run = 0; run < RUNS; run += 1) {
+    const start = performance.now();
+    work();
+    best = Math.min(best, performance.now() - start);
+  }
+  return best;
+}
+
 describe('search performance', () => {
   /** A two-hour meeting at 5,000 lines (about one line every 1.4 s). */
   const meeting = longTranscript(5_000);
@@ -81,28 +95,28 @@ describe('search performance', () => {
     mergeLines(meeting.segments, new Map()),
     new SpeakerDirectory(longMeetingParticipants()),
   );
+  const queries: SearchQuery[] = [
+    { text: PHRASE, speakers: [] },
+    { text: 'the', speakers: [] },
+    { text: 'e', speakers: [] },
+    { text: 'speaker:priya launch', speakers: [] },
+    { text: 'no such words anywhere', speakers: [] },
+  ];
 
-  it('indexes and searches a two-hour meeting in well under 100 ms per query', () => {
-    const started = performance.now();
+  it('indexes a two-hour meeting in under 100 ms', () => {
+    expect(fastest(() => buildSearchIndex(rows))).toBeLessThan(100);
+  });
+
+  it.each(queries)('searches a two-hour meeting for "$text" in under 100 ms', (query) => {
     const big = buildSearchIndex(rows);
-    const indexed = performance.now() - started;
-    const queries: SearchQuery[] = [
-      { text: PHRASE, speakers: [] },
-      { text: 'the', speakers: [] },
-      { text: 'e', speakers: [] },
-      { text: 'speaker:priya launch', speakers: [] },
-      { text: 'no such words anywhere', speakers: [] },
-    ];
 
-    const timings = queries.map((query) => {
-      const start = performance.now();
-      searchTranscript(big, query);
-      return performance.now() - start;
-    });
+    expect(fastest(() => searchTranscript(big, query))).toBeLessThan(100);
+  });
 
-    expect(indexed).toBeLessThan(100);
-    expect(Math.max(...timings)).toBeLessThan(100);
-    expect(searchTranscript(big, queries[0] ?? { text: '', speakers: [] }).hits).toHaveLength(
+  it('finds every mention of the phrase', () => {
+    const big = buildSearchIndex(rows);
+
+    expect(searchTranscript(big, { text: PHRASE, speakers: [] }).hits).toHaveLength(
       5_000 / PHRASE_EVERY,
     );
   });
