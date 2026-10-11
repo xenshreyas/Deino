@@ -15,7 +15,7 @@ use async_trait::async_trait;
 use deino_audio::TestSignal;
 use deino_audio::capture::OutputRoute;
 use deino_domain::MeetingId;
-use deino_recording::{RecordingService, StartObserver};
+use deino_recording::{RecordingService, StartObserver, StartRequest};
 use rig::{FastClock, FixtureCapture, rig};
 
 /// Names untitled meetings "Design review", like a linked calendar event.
@@ -49,7 +49,8 @@ async fn start(title: Option<&str>) -> (MeetingId, Option<String>, Vec<(MeetingI
     let linker = Arc::new(Linker::default());
     let service = RecordingService::new(rig.deps.clone()).observing_starts(linker.clone());
 
-    let meeting = service.start(title.map(str::to_owned)).await.unwrap();
+    let request = StartRequest::titled(title.map(str::to_owned));
+    let meeting = service.start(request).await.unwrap();
 
     let heard = linker.heard.lock().unwrap().clone();
     (meeting, service.state().title, heard)

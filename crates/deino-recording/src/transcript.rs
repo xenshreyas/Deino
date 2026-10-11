@@ -24,7 +24,7 @@ pub mod vocabulary;
 
 use std::sync::mpsc::{Sender, SyncSender};
 
-use deino_stt::{FinalSegment, LiveText, SessionSink};
+use deino_stt::{FinalSegment, LiveText, Millis, SessionSink};
 pub use router::{Router, RouterParts};
 pub use store::{SegmentStore, StoreError, WriterStore};
 
@@ -40,6 +40,8 @@ pub(crate) enum RouterInput {
     Final(Lane, FinalSegment),
     /// A lane's voice detector changed state.
     Voice(Lane, VoiceChange),
+    /// A lane's transcript is complete up to this point.
+    Progress(Lane, Millis),
     /// Echo is now cancelled, or not needed.
     Mode(EchoMode),
     /// Judge everything held, save everything, reply, and stop.
@@ -90,5 +92,9 @@ impl SessionSink for LaneSink {
 
     fn segment(&mut self, segment: FinalSegment) {
         self.router.send(RouterInput::Final(self.lane, segment));
+    }
+
+    fn progress(&mut self, through: Millis) {
+        self.router.send(RouterInput::Progress(self.lane, through));
     }
 }

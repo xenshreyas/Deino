@@ -137,6 +137,15 @@ impl Default for LaneVad {
 }
 
 impl LaneVad {
+    /// A detector whose first sample sits at `start` on the recording's
+    /// timeline (a resumed meeting goes on after its recorded length).
+    pub fn starting_at(start: Millis) -> Self {
+        Self {
+            position: u64::try_from(start.to_samples()).unwrap_or(u64::MAX),
+            ..Self::default()
+        }
+    }
+
     /// Scores `samples` (continuing the lane's audio); calls `changed` for
     /// every start and end of speech.
     pub fn push(&mut self, samples: &[f32], mut changed: impl FnMut(VoiceChange)) {

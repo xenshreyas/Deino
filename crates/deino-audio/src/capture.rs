@@ -21,6 +21,7 @@
 //! | [`route`] | Speakers or headphones (pure verdict, two-probe debounce) |
 //! | [`events`] | Hardware and power events, and the `SystemWatch` port |
 //! | [`meter`] | Per-track activity atomics and the pause ledger |
+//! | [`state`] | Each track's meter and status for the whole recording (`TrackStates`) |
 //!
 //! Real-time callbacks only push into a preallocated ring and touch atomics
 //! (§3C); everything else runs on ordinary threads.
@@ -35,6 +36,7 @@ pub mod mic;
 pub mod resample;
 pub mod route;
 pub mod sources;
+pub mod state;
 pub mod supervisor;
 pub mod track;
 pub mod watchdog;
@@ -45,5 +47,6 @@ pub use events::{DeviceEvent, NoSystemWatch, PowerEvent, SystemEvent, SystemWatc
 pub use mic::MicSource;
 pub use route::{FixedRoute, OutputRoute, RouteProbe};
 pub use sources::{DeviceSources, Unavailable};
+pub use state::{TrackState, TrackStates, TrackStatus};
 pub use supervisor::{Capture, CaptureInputs, CaptureParts};
 pub use track::TrackCapture;

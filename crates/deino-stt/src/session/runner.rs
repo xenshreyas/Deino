@@ -8,7 +8,9 @@ use std::sync::mpsc::{Receiver, TryRecvError};
 
 use super::assembler::{Assembler, Closed};
 use super::retained::Retained;
-use super::{FinalSegment, Input, LiveText, SegmentOrigin, SessionConfig, SessionSink};
+use super::{
+    FinalSegment, Input, LiveText, SegmentOrigin, SessionConfig, SessionSink, SharedStatus,
+};
 use crate::clock::MonotonicClock;
 use crate::pcm::Millis;
 use crate::perf::{FeedSample, PerfReport, StreamPerf};
@@ -31,6 +33,7 @@ pub(super) struct Parts {
     pub clock: Arc<dyn MonotonicClock>,
     pub config: SessionConfig,
     pub queued: Arc<AtomicUsize>,
+    pub status: Arc<SharedStatus>,
 }
 
 /// The lane's state, owned by its thread.
@@ -41,6 +44,9 @@ pub(super) struct Runner {
     clock: Arc<dyn MonotonicClock>,
     config: SessionConfig,
     queued: Arc<AtomicUsize>,
+    status: Arc<SharedStatus>,
+    /// The transcript watermark last reported ([`SessionSink::progress`]).
+    reported: Millis,
     /// Timeline position where the current stream began.
     stream_start: Millis,
     /// Samples fed so far, from the session start.
@@ -60,6 +66,7 @@ impl Runner {
             clock,
             config,
             queued,
+            status,
         } = parts;
         let perf = StreamPerf::new(config.label, config.perf_interval, clock.now());
         Self {
@@ -68,6 +75,8 @@ impl Runner {
             sink,
             clock,
             queued,
+            status,
+            reported: config.start,
             stream_start: config.start,
             fed: 0,
             retained: Retained::at(config.start),
@@ -142,6 +151,7 @@ impl Runner {
             .map(|token| Millis::from_engine(token.start_ms));
         self.retained.trim_before(open_start.unwrap_or(decoded));
         self.publish_live(delta.tentative.as_deref());
+        self.report_progress(decoded);
         let pending = Millis::from_engine(delta.progress.pending_ms());
         let queued = Millis::from_samples(self.queued.load(Ordering::Relaxed));
         self.perf.feed(&FeedSample {
@@ -163,6 +173,14 @@ impl Runner {
         self.retained.trim_before(segment.end);
         self.perf.segment();
         self.sink.segment(segment);
+    }
+
+    /// Reports the transcript watermark when it moved forward.
+    pub(super) fn report_progress(&mut self, through: Millis) {
+        if through > self.reported {
+            self.reported = through;
+            self.sink.progress(through);
+        }
     }
 
     /// Sends the open segment's text when it changed.

@@ -9,6 +9,7 @@ use deino_domain::Clock;
 
 use super::tracks::TrackSet;
 use super::{CaptureParts, DEVICE_DEBOUNCE, TICK, TICK_GAP};
+use crate::capture::devices::MicChoice;
 use crate::capture::events::{DeviceEvent, PowerEvent, SystemEvent};
 use crate::capture::meter::PauseLedger;
 use crate::capture::route::{OutputRoute, ROUTE_POLL, RouteProbe, RouteTracker};
@@ -21,6 +22,10 @@ pub(super) enum Command {
     Pause(SyncSender<()>),
     Resume(SyncSender<()>),
     Stop(SyncSender<()>),
+    /// Record from this microphone from now on.
+    Microphone(MicChoice, SyncSender<()>),
+    /// Turn system audio on or off.
+    SystemAudio(bool, SyncSender<()>),
 }
 
 /// Everything the supervisor thread receives.
@@ -83,11 +88,22 @@ impl Supervisor {
     }
 
     /// Applies a command; returns true for stop.
-    fn command(&mut self, command: Command) -> bool {
+    pub(super) fn command(&mut self, command: Command) -> bool {
+        let now = self.host_clock.now();
         let (reply, stop) = match command {
             Command::Pause(reply) => (reply, self.pause()),
             Command::Resume(reply) => (reply, self.resume()),
             Command::Stop(reply) => (reply, true),
+            Command::Microphone(choice, reply) => {
+                if let Err(error) = self.tracks.switch_microphone(choice, now) {
+                    log::warn!(target: "deino_audio::capture", "the chosen microphone did not start: {error}");
+                }
+                (reply, false)
+            }
+            Command::SystemAudio(enabled, reply) => {
+                self.tracks.set_enabled(Track::System, enabled, now);
+                (reply, false)
+            }
         };
         reply.send(()).ok();
         stop

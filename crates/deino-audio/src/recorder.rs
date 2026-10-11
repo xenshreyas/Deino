@@ -41,11 +41,17 @@ pub enum RecordError {
     /// Syncing or closing failed.
     #[error(transparent)]
     Persist(#[from] PersistError),
+    /// The recording to resume was never closed; launch recovery repairs it first.
+    #[error("the recording is still open and cannot be resumed")]
+    StillOpen,
 }
 
 impl ErrorClass for RecordError {
     fn code(&self) -> ErrorCode {
-        ErrorCode::Internal
+        match self {
+            Self::StillOpen => ErrorCode::Conflict,
+            _ => ErrorCode::Internal,
+        }
     }
 }
 
@@ -76,6 +82,28 @@ pub struct RecordingInputs {
     /// Each track's audio as it was placed on the timeline, for live
     /// transcription. Undrained rings drop blocks; recording is unaffected.
     pub placed: PlacedAudio,
+    /// Where this take starts on the timeline: zero, or the recorded length
+    /// when a finished recording resumes.
+    pub start: Frames,
+}
+
+/// Where a take of the recording is anchored.
+#[derive(Clone, Copy, Debug)]
+struct Take {
+    /// The host time of the take's first frame.
+    origin: HostTime,
+    /// The timeline frame captured at `origin`.
+    start: Frames,
+}
+
+impl Take {
+    /// The first take of a new recording.
+    const fn first(origin: HostTime) -> Self {
+        Self {
+            origin,
+            start: Frames::ZERO,
+        }
+    }
 }
 
 /// Both tracks' placed audio: 48 kHz blocks stamped with timeline positions.
@@ -111,17 +139,44 @@ impl Recorder {
     /// sources right after, with the returned [`RecordingInputs`].
     pub fn start(dir: &Path, deps: &RecorderDeps) -> Result<(Self, RecordingInputs), RecordError> {
         std::fs::create_dir_all(dir.join(AUDIO_DIR))?;
-        let manifest = RecordingManifest::start(deps.host_clock.now(), deps.wall_clock.now());
+        let origin = deps.host_clock.now();
+        let manifest = RecordingManifest::start(origin, deps.wall_clock.now());
+        Self::launch(dir, deps, manifest, Take::first(origin))
+    }
+
+    /// Resumes the stopped recording in `dir` (CAP-07): each track gets a
+    /// new segment that starts where the recording ended, so new audio is
+    /// appended on the same timeline and finalize splices the segments.
+    /// [`RecordingInputs::start`] says where the new take begins. Fails for
+    /// a recording that is still open (it needs launch recovery first).
+    pub fn resume(dir: &Path, deps: &RecorderDeps) -> Result<(Self, RecordingInputs), RecordError> {
+        let mut manifest = ManifestStore::new(dir).read()?;
+        if manifest.status.needs_recovery() {
+            return Err(RecordError::StillOpen);
+        }
+        let origin = deps.host_clock.now();
+        let start = manifest.resume(origin);
+        Self::launch(dir, deps, manifest, Take { origin, start })
+    }
+
+    /// Writes `manifest`, then starts both tracks' writers and the persister.
+    fn launch(
+        dir: &Path,
+        deps: &RecorderDeps,
+        manifest: RecordingManifest,
+        take: Take,
+    ) -> Result<(Self, RecordingInputs), RecordError> {
         ManifestStore::new(dir).write(&manifest)?;
         let (health, events) = health_channel();
         let context = WriterContext {
             encoders: Arc::clone(&deps.encoders),
             clock: Arc::clone(&deps.host_clock),
             health: health.clone(),
-            epoch: manifest.epoch,
+            epoch: take.origin,
+            start: take.start,
         };
-        let mic = start_track(dir, Track::Microphone, &context)?;
-        let system = start_track(dir, Track::System, &context)?;
+        let mic = start_track(dir, &manifest, Track::Microphone, &context)?;
+        let system = start_track(dir, &manifest, Track::System, &context)?;
         let persister = PersisterThread::spawn(
             Persister::new(PersisterParts {
                 dir: dir.to_owned(),
@@ -148,6 +203,7 @@ impl Recorder {
                 microphone: mic.placed,
                 system: system.placed,
             },
+            start: take.start,
         };
         Ok((recorder, inputs))
     }
@@ -206,17 +262,23 @@ struct StartedTrack {
     persisted: PersistedTrack,
 }
 
-/// Creates one track's rings, `.part` sink and writer thread.
+/// Creates one track's rings, `.part` sink (for its open segment in
+/// `manifest`) and writer thread.
 fn start_track(
     dir: &Path,
+    manifest: &RecordingManifest,
     track: Track,
     context: &WriterContext,
 ) -> Result<StartedTrack, RecordError> {
     let (input, source) = track_ring();
     let (placed_sink, placed) = timeline_ring();
-    let manifest_path =
-        crate::manifest::SegmentManifest::open(1, Frames::ZERO).relative_path(track);
-    let sink = Arc::new(PartFileSink::create(&dir.join(manifest_path))?);
+    let segment = manifest
+        .track(track)
+        .and_then(|entry| entry.segments.last().copied())
+        .unwrap_or_else(|| crate::manifest::SegmentManifest::open(1, context.start));
+    let sink = Arc::new(PartFileSink::create(
+        &dir.join(segment.relative_path(track)),
+    )?);
     let output = SegmentOutput {
         sink: sink.clone(),
         ledger: Arc::default(),

@@ -13,6 +13,9 @@
 //!                                                     failed                        │
 //!                                                        │                          │
 //!                         processing ◀───reprocess───────┴───────reprocess──────────┘
+//!
+//! A `ready` or `failed` meeting can also `resume_recording` (back to
+//! `recording`): new audio is appended to it (CAP-07).
 //! ```
 
 db_enum! {
@@ -44,6 +47,9 @@ db_enum! {
         Fail = "fail",
         /// The user asked to run the pipeline again (re-transcribe, regenerate).
         Reprocess = "reprocess",
+        /// Recording resumed on a finished meeting: new audio and transcript
+        /// are appended (CAP-07).
+        ResumeRecording = "resume_recording",
     }
 }
 
@@ -63,7 +69,9 @@ impl MeetingStatus {
         use MeetingEvent as E;
         use MeetingStatus as S;
         match (self, event) {
-            (S::Scheduled, E::StartRecording) => Ok(S::Recording),
+            (S::Scheduled, E::StartRecording) | (S::Ready | S::Failed, E::ResumeRecording) => {
+                Ok(S::Recording)
+            }
             (S::Recording, E::StopRecording) | (S::Ready | S::Failed, E::Reprocess) => {
                 Ok(S::Processing)
             }
@@ -96,6 +104,11 @@ impl MeetingStatus {
     /// `ready` or `failed` → `processing`.
     pub fn reprocess(self) -> Result<Self, InvalidTransition> {
         self.apply(MeetingEvent::Reprocess)
+    }
+
+    /// `ready` or `failed` → `recording` (Resume on a finished meeting).
+    pub fn resume_recording(self) -> Result<Self, InvalidTransition> {
+        self.apply(MeetingEvent::ResumeRecording)
     }
 
     /// True while capture or the pipeline still owns the meeting.
@@ -151,7 +164,9 @@ mod tests {
                 (S::Processing, E::Complete),
                 (S::Processing, E::Fail),
                 (S::Ready, E::Reprocess),
+                (S::Ready, E::ResumeRecording),
                 (S::Failed, E::Reprocess),
+                (S::Failed, E::ResumeRecording),
             ]
         );
     }

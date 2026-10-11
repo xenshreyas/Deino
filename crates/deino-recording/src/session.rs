@@ -4,10 +4,14 @@
 //! the transcript router, both lanes' engines (a missing model fails here;
 //! a record-only recording opens none, CAP-08), the track writers and the
 //! capture. Audio is already being recorded when
-//! the service then creates the meeting row, and only after that does
-//! [`Prepared::go`] start the live pipeline, so no segment is saved for a
-//! meeting that does not exist. Every step here blocks; the service runs it
-//! off the async runtime.
+//! the service then creates (or reopens) the meeting row, and only after
+//! that does [`Prepared::go`] start the live pipeline and the health
+//! watcher, so no segment is saved for a meeting that does not exist. Every
+//! step here blocks; the service runs it off the async runtime.
+//!
+//! A [`Take`] is either a new recording or more audio for a finished one
+//! (CAP-07's Resume): the resumed take starts where the recording ended, on
+//! the same timeline, for the writers, the lanes and their voice detectors.
 
 mod running;
 
@@ -16,20 +20,44 @@ use std::sync::Arc;
 use std::sync::mpsc::{Receiver, channel};
 
 use deino_audio::capture::{Capture, CaptureInputs, CaptureParts, OutputRoute};
-use deino_audio::{HealthEvent, PlacedAudio, Recorder};
+use deino_audio::{Frames, HealthEvent, PlacedAudio, Recorder};
 use deino_core::vocabulary::Corrector;
 use deino_domain::{MeetingId, SpeakerId};
+use deino_stt::Millis;
 pub(crate) use running::Session;
 use tokio::runtime::Handle;
 
+use crate::activity::LiveActivity;
 use crate::bleed::HoldbackPolicy;
 use crate::deps::{Preferences, RecordingDeps};
-use crate::engine::LaneTranscriber;
+use crate::engine::{LaneRequest, LaneTranscriber};
 use crate::error::RecordingError;
 use crate::events::RecordingEvents;
 use crate::lane::{Lane, PerLane};
 use crate::transcript::vocabulary::{CorrectedEvents, CorrectedStore, CorrectedStoreParts};
 use crate::transcript::{Router, RouterParts, SegmentStore, WriterStore};
+
+/// Whether a recording is new or continues a finished meeting.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Take {
+    /// A new meeting, from frame zero.
+    New,
+    /// More audio for a meeting whose recording is `start` frames long.
+    Resume {
+        /// Where the new audio starts on the timeline.
+        start: Frames,
+    },
+}
+
+impl Take {
+    /// Where this take starts on the timeline.
+    pub const fn start(self) -> Frames {
+        match self {
+            Self::New => Frames::ZERO,
+            Self::Resume { start } => start,
+        }
+    }
+}
 
 /// What a recording will be.
 #[derive(Clone, Debug)]
@@ -39,12 +67,14 @@ pub(crate) struct Plan {
     pub dir: PathBuf,
     pub preferences: Preferences,
     pub runtime: Handle,
+    pub take: Take,
 }
 
 /// A recording that captures audio but does not transcribe yet.
 pub(crate) struct Prepared {
     plan: Plan,
     router: Router,
+    activity: Arc<LiveActivity>,
     /// Each lane's engine; `None` when the recording is record-only.
     transcribers: Option<PerLane<Box<dyn LaneTranscriber>>>,
     recorder: Recorder,
@@ -57,13 +87,17 @@ pub(crate) struct Prepared {
 
 /// Opens the router, the engines, the writers and the capture, in that order.
 pub(crate) fn prepare(deps: &RecordingDeps, plan: Plan) -> Result<Prepared, RecordingError> {
-    let router = start_router(deps, &plan)?;
+    let activity = Arc::new(LiveActivity::default());
+    let router = start_router(deps, &plan, &activity)?;
     let transcribers = if plan.preferences.record_only {
         None
     } else {
-        Some(open_lanes(deps, &router)?)
+        Some(open_lanes(deps, &router, lane_start(plan.take.start()))?)
     };
-    let (recorder, inputs) = Recorder::start(&plan.dir, &deps.recorder)?;
+    let (recorder, inputs) = match plan.take {
+        Take::New => Recorder::start(&plan.dir, &deps.recorder)?,
+        Take::Resume { .. } => Recorder::resume(&plan.dir, &deps.recorder)?,
+    };
     let (route_changes, route_updates) = channel();
     let route_probe = deps.capture.route();
     let parts = CaptureParts {
@@ -81,18 +115,16 @@ pub(crate) fn prepare(deps: &RecordingDeps, plan: Plan) -> Result<Prepared, Reco
     };
     let capture = match Capture::start(rings, &parts) {
         Ok(capture) => capture,
-        Err(error) => {
-            discard_recorder(recorder, &plan.dir);
-            return Err(error.into());
-        }
+        Err(error) => return Err(discard_recorder(recorder, &plan, error.into())),
     };
     Ok(Prepared {
+        capture,
         route: route_probe.route(),
         plan,
         router,
+        activity,
         transcribers,
         recorder,
-        capture,
         placed: inputs.placed,
         health: inputs.health,
         routes: route_updates,
@@ -100,11 +132,11 @@ pub(crate) fn prepare(deps: &RecordingDeps, plan: Plan) -> Result<Prepared, Reco
 }
 
 impl Prepared {
-    /// Gives up before the meeting exists: stops everything and deletes the
-    /// recording folder.
+    /// Gives up before the meeting exists (or reopened): stops everything,
+    /// and deletes a new recording's folder.
     pub fn abort(self) {
         self.capture.stop();
-        discard_recorder(self.recorder, &self.plan.dir);
+        discard(self.recorder, &self.plan);
         if let Some(PerLane { me, them }) = self.transcribers {
             me.finish();
             them.finish();
@@ -113,9 +145,18 @@ impl Prepared {
     }
 }
 
+/// A frame position as the lanes' timeline time.
+fn lane_start(start: Frames) -> Millis {
+    Millis(u64::try_from(start.as_duration().as_millis()).unwrap_or(u64::MAX))
+}
+
 /// Starts the router, saving and showing segments corrected by the
 /// vocabulary (TRN-05).
-fn start_router(deps: &RecordingDeps, plan: &Plan) -> Result<Router, RecordingError> {
+fn start_router(
+    deps: &RecordingDeps,
+    plan: &Plan,
+    activity: &Arc<LiveActivity>,
+) -> Result<Router, RecordingError> {
     let corrector = Arc::new(live_corrector(deps, plan));
     let store = WriterStore::new(Arc::clone(&deps.segments), plan.runtime.clone());
     let store: Arc<dyn SegmentStore> = Arc::new(CorrectedStore::new(CorrectedStoreParts {
@@ -134,6 +175,7 @@ fn start_router(deps: &RecordingDeps, plan: &Plan) -> Result<Router, RecordingEr
         clock: Arc::clone(&deps.recorder.wall_clock),
         host_clock: Arc::clone(&deps.recorder.host_clock),
         policy: HoldbackPolicy::default(),
+        activity: Arc::clone(activity),
     })?)
 }
 
@@ -156,8 +198,15 @@ fn live_corrector(deps: &RecordingDeps, plan: &Plan) -> Corrector {
 fn open_lanes(
     deps: &RecordingDeps,
     router: &Router,
+    start: Millis,
 ) -> Result<PerLane<Box<dyn LaneTranscriber>>, RecordingError> {
-    let open = |lane: Lane| deps.engines.open(lane, router.handle().sink(lane));
+    let open = |lane: Lane| {
+        deps.engines.open(LaneRequest {
+            lane,
+            sink: router.handle().sink(lane),
+            start,
+        })
+    };
     let (me, them) = std::thread::scope(|scope| {
         let me = scope.spawn(|| open(Lane::Me));
         let them = open(Lane::Them);
@@ -170,12 +219,23 @@ fn open_lanes(
     })
 }
 
-/// Stops the writers and deletes a recording that never became a meeting.
-fn discard_recorder(recorder: Recorder, dir: &std::path::Path) {
+/// Discards a take whose capture failed to start, passing on why.
+fn discard_recorder(recorder: Recorder, plan: &Plan, error: RecordingError) -> RecordingError {
+    discard(recorder, plan);
+    error
+}
+
+/// Stops the writers of a take that never got going. A new recording's
+/// folder is deleted; a resumed one keeps its earlier audio (the empty
+/// segment just added is closed and ignored by finalize).
+fn discard(recorder: Recorder, plan: &Plan) {
     if let Err(error) = recorder.stop() {
         log::warn!(target: "recording", "closing an abandoned recording failed: {error}");
     }
-    if let Err(error) = std::fs::remove_dir_all(dir) {
+    if plan.take != Take::New {
+        return;
+    }
+    if let Err(error) = std::fs::remove_dir_all(&plan.dir) {
         log::warn!(target: "recording", "could not delete an abandoned recording folder: {error}");
     }
 }

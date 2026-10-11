@@ -61,6 +61,7 @@ impl EncoderFactory for FakeEncoderFactory {
             track,
             output,
             factory: self.clone(),
+            written: Frames::ZERO,
         }))
     }
 }
@@ -71,6 +72,9 @@ struct FakeEncoder {
     track: Track,
     output: SegmentOutput,
     factory: FakeEncoderFactory,
+    /// Frames this encoder (one segment) has taken; timestamps are relative
+    /// to the segment, like `AVAssetWriter`'s.
+    written: Frames,
 }
 
 impl TrackEncoder for FakeEncoder {
@@ -84,10 +88,11 @@ impl TrackEncoder for FakeEncoder {
             .received
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        let track = received.samples.entry(self.track).or_default();
-        if Frames::of_len(track.len()) != at {
+        if self.written != at {
             return Err(EncodeError::Rejected("a non-contiguous timestamp"));
         }
+        self.written += Frames::of_len(samples.len());
+        let track = received.samples.entry(self.track).or_default();
         track.extend_from_slice(samples);
         let bytes: Vec<u8> = samples.iter().flat_map(|s| s.to_le_bytes()).collect();
         if self.output.sink.append(&bytes).is_ok() {

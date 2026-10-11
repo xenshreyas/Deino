@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use deino_audio::RecorderDeps;
 use deino_audio::capture::{MicChoice, RouteProbe, SystemWatch};
 use deino_audio::source::SourceFactory;
-use deino_core::meetings::{MeetingLifecycleRepo, MeetingLifecycleService};
+use deino_core::meetings::{MeetingLifecycleRepo, MeetingLifecycleService, MeetingRepo};
 use deino_core::people::PersonRepo;
 use deino_core::segments::{SegmentWriter, SpeakerRepo};
 use deino_core::vocabulary::LiveVocabulary;
@@ -58,6 +58,8 @@ impl RecordingPreferences for Preferences {
 pub struct RecordingDeps {
     /// Creates meetings and stores their timing.
     pub meetings: Arc<dyn MeetingLifecycleRepo>,
+    /// Reads meetings back (a resumed meeting's title).
+    pub catalog: Arc<dyn MeetingRepo>,
     /// Moves meetings to `processing` (which starts the pipeline).
     pub lifecycle: Arc<MeetingLifecycleService>,
     /// Saves the live transcript.

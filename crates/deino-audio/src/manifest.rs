@@ -176,6 +176,33 @@ impl RecordingManifest {
         }
     }
 
+    /// The recording's length: where its longest track's durable audio ends.
+    pub fn length(&self) -> Frames {
+        self.tracks
+            .iter()
+            .map(TrackManifest::durable_end)
+            .max()
+            .unwrap_or_default()
+    }
+
+    /// Reopens a stopped recording for a new take starting at `origin` (host
+    /// time): every track gets a new open segment where the longest track
+    /// ended, and the status returns to recording. Returns that length, the
+    /// timeline frame the take starts at. `epoch` is moved back from
+    /// `origin` by the length, so it still names frame zero (saturating on
+    /// a Mac that booted more recently than the recording is long).
+    pub fn resume(&mut self, origin: HostTime) -> Frames {
+        let length = self.length();
+        for entry in &mut self.tracks {
+            let index = entry.segments.iter().map(|s| s.index).max().unwrap_or(0) + 1;
+            entry.segments.push(SegmentManifest::open(index, length));
+        }
+        let length_ns = u64::try_from(length.as_duration().as_nanos()).unwrap_or(u64::MAX);
+        self.epoch = HostTime(origin.0.saturating_sub(length_ns));
+        self.status = RecordingStatus::Recording;
+        length
+    }
+
     /// The entry for `track`, if the manifest has one.
     pub fn track(&self, track: Track) -> Option<&TrackManifest> {
         self.tracks.iter().find(|entry| entry.track == track)
@@ -242,6 +269,26 @@ mod tests {
         assert_eq!(json["status"], "recording");
         assert_eq!(json["tracks"][1]["track"], "system");
         assert_eq!(json["tracks"][0]["segments"][0]["state"], "open");
+    }
+
+    #[test]
+    fn resuming_opens_a_segment_per_track_where_the_longest_ended() {
+        let mut manifest = RecordingManifest::start(HostTime(5), started_at());
+        manifest.status = RecordingStatus::Finalized;
+        for (entry, frames) in manifest.tracks.iter_mut().zip([48_000, 96_000]) {
+            entry.segments[0].state = SegmentState::Closed;
+            entry.segments[0].durable_frames = Frames(frames);
+        }
+
+        let start = manifest.resume(HostTime(10_000_000_000));
+
+        assert_eq!(start, Frames(96_000));
+        assert_eq!(manifest.status, RecordingStatus::Recording);
+        assert_eq!(manifest.epoch, HostTime(8_000_000_000));
+        for track in Track::ALL {
+            let segments = &manifest.track(track).unwrap().segments;
+            assert_eq!(segments[1], SegmentManifest::open(2, Frames(96_000)));
+        }
     }
 
     #[test]

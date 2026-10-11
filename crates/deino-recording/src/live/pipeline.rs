@@ -3,17 +3,23 @@
 //! Every [`POLL`] it reads both tracks' placed audio ([`PlacedReader`]),
 //! pairs their 16 kHz frames by timeline index, cancels the system audio's
 //! echo out of the microphone frame (system track as the reference, in
-//! 10 ms frames, [`crate::echo`]) and hands each lane its frame. A track
-//! that falls more than [`MAX_LAG`] behind the other (a tap that has not
-//! attached yet, a stalled device) is padded with silence, so the other
-//! lane never waits for it.
+//! 10 ms frames, [`crate::echo`]) and hands each lane its frame.
+//!
+//! A track that falls more than [`MAX_LAG`] behind the other is padded with
+//! silence only when its capture is not delivering (no device, a recovery
+//! in progress, switched off), so the other lane never waits for a dead
+//! track. A live track that is merely late (its threads were not scheduled
+//! for a moment) is waited for: padding it would throw away the audio that
+//! is about to arrive, and with it that lane's words.
 
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, SyncSender, channel, sync_channel};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use std::sync::Arc;
+
 use deino_audio::Frames;
-use deino_audio::capture::OutputRoute;
+use deino_audio::capture::{OutputRoute, TrackStates};
 
 use super::lanes::LaneInput;
 use super::placed::PlacedReader;
@@ -44,6 +50,8 @@ pub struct LiveParts {
     pub routes: Receiver<OutputRoute>,
     /// Where the echo mode is reported.
     pub router: RouterHandle,
+    /// Whether each track's capture is delivering.
+    pub tracks: Arc<TrackStates>,
 }
 
 enum Control {
@@ -94,6 +102,7 @@ struct Worker {
     mode: EchoMode,
     routes: Receiver<OutputRoute>,
     router: RouterHandle,
+    tracks: Arc<TrackStates>,
     frames: PerLane<[f32; FRAME]>,
 }
 
@@ -109,6 +118,7 @@ impl Worker {
             mode,
             routes: parts.routes,
             router: parts.router,
+            tracks: parts.tracks,
             frames: PerLane {
                 me: [0.0; FRAME],
                 them: [0.0; FRAME],
@@ -155,14 +165,20 @@ impl Worker {
         }
     }
 
-    /// Pads a track that fell more than [`MAX_LAG`] behind the other.
+    /// Pads a track that fell more than [`MAX_LAG`] behind the other, when
+    /// its capture is not delivering.
     fn keep_up(&mut self) {
         let (me, them) = (self.readers.me.position(), self.readers.them.position());
-        if me > them + MAX_LAG {
+        if me > them + MAX_LAG && !self.delivers(Lane::Them) {
             self.readers.them.pad_to(me - MAX_LAG);
-        } else if them > me + MAX_LAG {
+        } else if them > me + MAX_LAG && !self.delivers(Lane::Me) {
             self.readers.me.pad_to(them - MAX_LAG);
         }
+    }
+
+    /// Whether `lane`'s track is expected to deliver audio now.
+    fn delivers(&self, lane: Lane) -> bool {
+        self.tracks.get(lane.track()).status().delivers()
     }
 
     fn take_pair(&mut self) -> bool {

@@ -1,9 +1,10 @@
 //! What can go wrong starting, stopping or recovering a recording.
 
+use deino_audio::manifest::ManifestError;
 use deino_audio::{RecordError, RecoveryError, SourceError};
 use deino_core::meetings::MeetingError;
 use deino_db::DbError;
-use deino_domain::{ErrorClass, ErrorCode};
+use deino_domain::{ErrorClass, ErrorCode, MeetingId, MeetingStatus};
 
 use crate::engine::EngineError;
 
@@ -17,6 +18,16 @@ pub enum RecordingError {
     /// There is no recording to stop, pause or resume.
     #[error("nothing is being recorded")]
     NotRecording,
+    /// The meeting to resume does not exist.
+    #[error("meeting {0} does not exist")]
+    NotFound(MeetingId),
+    /// The meeting is still being recorded or processed; only a finished
+    /// meeting can take more audio.
+    #[error("a {0} meeting cannot be resumed")]
+    NotResumable(MeetingStatus),
+    /// The meeting's recording manifest could not be read.
+    #[error("the meeting's recording could not be read")]
+    Manifest(#[from] ManifestError),
     /// The microphone could not start.
     #[error("the microphone could not start")]
     Capture(#[from] SourceError),
@@ -43,7 +54,11 @@ pub enum RecordingError {
 impl ErrorClass for RecordingError {
     fn code(&self) -> ErrorCode {
         match self {
-            Self::AlreadyRecording | Self::NotRecording => ErrorCode::Conflict,
+            Self::AlreadyRecording | Self::NotRecording | Self::NotResumable(_) => {
+                ErrorCode::Conflict
+            }
+            Self::NotFound(_) => ErrorCode::NotFound,
+            Self::Manifest(error) => error.code(),
             Self::Capture(_) | Self::Engine(_) => ErrorCode::Unavailable,
             Self::Meeting(error) => error.code(),
             Self::Audio(_) | Self::Recovery(_) | Self::Storage(_) | Self::Thread(_) => {

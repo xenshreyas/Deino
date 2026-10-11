@@ -13,6 +13,8 @@ pub struct TrackMeter {
     frames: AtomicU64,
     last_at: AtomicU64,
     peak: AtomicU32,
+    /// The loudest sample since the level was last taken (max-hold).
+    level: AtomicU32,
 }
 
 impl TrackMeter {
@@ -23,6 +25,17 @@ impl TrackMeter {
         self.frames.fetch_add(len, Ordering::Relaxed);
         self.last_at.store(at.0, Ordering::Relaxed);
         self.peak.store(peak.to_bits(), Ordering::Relaxed);
+        // Non-negative floats order like their bit patterns, so the
+        // integer max is the float max.
+        self.level
+            .fetch_max(peak.max(0.0).to_bits(), Ordering::Relaxed);
+    }
+
+    /// The loudest sample since the previous call, in `[0, 1]`, and resets
+    /// it: a level meter polling at its frame rate sees every peak once.
+    /// Meant for one reader (the record panel).
+    pub fn take_level(&self) -> f32 {
+        f32::from_bits(self.level.swap(0, Ordering::Relaxed))
     }
 
     /// Native-rate frames delivered so far; the watchdog looks for change.
@@ -89,6 +102,16 @@ mod tests {
         assert_eq!(meter.frames(), Frames(960));
         assert_eq!(meter.last_at(), HostTime(20));
         assert!((meter.peak() - 0.25).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn the_level_holds_the_loudest_peak_until_it_is_taken() {
+        let meter = TrackMeter::default();
+        meter.record(480, HostTime(10), 0.25);
+        meter.record(480, HostTime(20), 0.75);
+        meter.record(480, HostTime(30), 0.5);
+        assert!((meter.take_level() - 0.75).abs() < f32::EPSILON);
+        assert!(meter.take_level().abs() < f32::EPSILON);
     }
 
     #[test]

@@ -21,6 +21,7 @@ mod signal;
 pub use mock::{MOCK_BLOCK, MOCK_SYSTEM_DELAY, MockAudioSource, MockSources};
 pub use signal::TestSignal;
 
+use crate::capture::devices::MicChoice;
 use crate::ring::RtSource;
 use crate::units::{SampleRate, Track};
 
@@ -102,6 +103,14 @@ pub trait AudioSource: std::fmt::Debug + Send {
 pub trait SourceFactory: std::fmt::Debug + Send + Sync {
     /// The microphone source (it picks its device when started).
     fn microphone(&self) -> Box<dyn AudioSource>;
+
+    /// A microphone source following `choice` instead of the recording's
+    /// setting (a switch mid-recording). Sources without devices to choose
+    /// from (mocks) give their usual microphone.
+    fn microphone_for(&self, choice: &MicChoice) -> Box<dyn AudioSource> {
+        let _ = choice;
+        self.microphone()
+    }
 
     /// The system-audio source.
     fn system(&self) -> Box<dyn AudioSource>;

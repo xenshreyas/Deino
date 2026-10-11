@@ -18,7 +18,7 @@ mod utterance;
 pub use streaming::{StreamingLane, StreamingParts};
 pub use utterance::{UtteranceLane, UtteranceTranscriber};
 
-use deino_stt::{Millis, SessionSink};
+use deino_stt::{Millis, SessionSink, StatusHandle};
 
 use crate::lane::Lane;
 use crate::vad::VoiceChange;
@@ -47,18 +47,31 @@ pub trait LaneTranscriber: Send {
         Millis::ZERO
     }
 
+    /// A handle on the engine's stream status, for recording health
+    /// (`None` for engines that do not stream).
+    fn status(&self) -> Option<StatusHandle> {
+        None
+    }
+
     /// Transcribes everything fed so far and delivers the last segment.
     /// Blocks until done.
     fn finish(self: Box<Self>);
 }
 
+/// What a lane's transcriber is opened for.
+pub struct LaneRequest {
+    /// The lane.
+    pub lane: Lane,
+    /// Where its text goes.
+    pub sink: Box<dyn SessionSink>,
+    /// Where its audio starts on the recording's timeline: zero, or the
+    /// recorded length when a finished meeting resumes (CAP-07).
+    pub start: Millis,
+}
+
 /// Opens each lane's transcriber for a recording.
 pub trait LaneEngines: Send + Sync {
-    /// Opens `lane`'s transcriber, delivering text into `sink`. May load a
-    /// model, so it blocks (about a second warm); call it off async threads.
-    fn open(
-        &self,
-        lane: Lane,
-        sink: Box<dyn SessionSink>,
-    ) -> Result<Box<dyn LaneTranscriber>, EngineError>;
+    /// Opens the requested lane's transcriber. May load a model, so it
+    /// blocks (about a second warm); call it off async threads.
+    fn open(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError>;
 }

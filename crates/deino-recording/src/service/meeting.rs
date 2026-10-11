@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use deino_audio::Frames;
-use deino_core::meetings::{MeetingTiming, MeetingTitle, NewMeeting};
+use deino_core::meetings::{MeetingLink, MeetingTiming, MeetingTitle, NewMeeting};
 use deino_core::segments::Speaker;
 use deino_domain::{
     Clock, MeetingEvent, MeetingId, MeetingSource, MeetingStatus, PaletteColor, Seconds, SpeakerId,
@@ -43,6 +43,8 @@ pub struct MeetingRow<'a> {
     pub now: DateTime<Utc>,
     /// The Me and Them speaker IDs the transcript router already uses.
     pub speakers: PerLane<Option<SpeakerId>>,
+    /// The calendar event the meeting is recorded for, if any.
+    pub link: Option<&'a MeetingLink>,
 }
 
 /// Creates the meeting (`recording`, `live`, its recording folder) and its
@@ -60,6 +62,9 @@ pub async fn create(deps: &RecordingDeps, row: &MeetingRow<'_>) -> Result<(), Re
             folder_path: Some(folder.to_string_lossy().into_owned()),
         })
         .await?;
+    if let Some(link) = row.link {
+        deps.meetings.link(row.meeting, link, row.now).await?;
+    }
     let me = deps
         .people
         .list()
@@ -74,6 +79,38 @@ pub async fn create(deps: &RecordingDeps, row: &MeetingRow<'_>) -> Result<(), Re
         deps.speakers.add_speaker(&speaker).await?;
     }
     Ok(())
+}
+
+/// The Me and Them speakers a resumed meeting's new segments go to: its
+/// own Me speaker, and its "Them" speaker, recreated when diarization has
+/// since replaced it (the pipeline names the voices again after the stop).
+pub async fn resume_speakers(
+    deps: &RecordingDeps,
+    meeting: &MeetingId,
+) -> Result<PerLane<Option<SpeakerId>>, RecordingError> {
+    let speakers = deps.speakers.speakers(meeting).await?;
+    let me = speakers
+        .iter()
+        .find(|speaker| speaker.is_me)
+        .map(|speaker| speaker.id);
+    let them_label = Lane::Them.speaker_label();
+    let existing = speakers
+        .iter()
+        .find(|speaker| !speaker.is_me && speaker.label == them_label)
+        .map(|speaker| speaker.id);
+    let them = if let Some(id) = existing {
+        id
+    } else {
+        let id = SpeakerId::generate(deps.recorder.wall_clock.as_ref());
+        deps.speakers
+            .add_speaker(&speaker(meeting, Lane::Them, id, None))
+            .await?;
+        id
+    };
+    Ok(PerLane {
+        me,
+        them: Some(them),
+    })
 }
 
 /// The speaker row of `lane`: Me is the user (linked to their person), Them

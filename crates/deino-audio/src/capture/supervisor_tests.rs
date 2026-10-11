@@ -8,9 +8,11 @@ use std::sync::mpsc::{Receiver, channel};
 use deino_domain::FakeClock;
 
 use super::*;
+use crate::capture::devices::MicChoice;
 use crate::capture::events::NoSystemWatch;
 use crate::capture::events::{DeviceEvent, PowerEvent};
 use crate::capture::route::FixedRoute;
+use crate::capture::state::{TrackStates, TrackStatus};
 use crate::clock::FakeHostClock;
 use crate::health::HealthEvent;
 use crate::health::health_channel;
@@ -62,6 +64,8 @@ impl AudioSource for ScriptedSource {
 struct ScriptedFactory {
     microphone: Arc<Script>,
     system: Arc<Script>,
+    /// The microphone picked mid-recording.
+    chosen: Arc<Script>,
 }
 
 impl SourceFactory for ScriptedFactory {
@@ -78,10 +82,18 @@ impl SourceFactory for ScriptedFactory {
             script: Arc::clone(&self.system),
         })
     }
+
+    fn microphone_for(&self, _choice: &MicChoice) -> Box<dyn AudioSource> {
+        Box::new(ScriptedSource {
+            track: Track::Microphone,
+            script: Arc::clone(&self.chosen),
+        })
+    }
 }
 
 struct Rig {
     supervisor: Supervisor,
+    tracks: Arc<TrackStates>,
     factory: Arc<ScriptedFactory>,
     host: Arc<FakeHostClock>,
     wall: Arc<FakeClock>,
@@ -103,9 +115,11 @@ fn rig_with(factory: ScriptedFactory) -> Rig {
         wall_clock: wall.clone(),
         health: health.clone(),
     };
+    let shared = CaptureShared::default();
+    let states = Arc::clone(&shared.tracks);
     let tracks = TrackSet::start(TrackSetParts {
         factory: factory.clone(),
-        shared: CaptureShared::default(),
+        shared,
         health,
         microphone: track_ring().0,
         system: track_ring().0,
@@ -115,6 +129,7 @@ fn rig_with(factory: ScriptedFactory) -> Rig {
     let supervisor = Supervisor::new(tracks, &parts, Arc::default());
     Rig {
         supervisor,
+        tracks: states,
         factory,
         host,
         wall,
@@ -136,6 +151,15 @@ impl Rig {
 
     fn health(&self) -> Vec<HealthEvent> {
         self.health.try_iter().collect()
+    }
+
+    fn status(&self, track: Track) -> TrackStatus {
+        self.tracks.get(track).status()
+    }
+
+    fn command(&mut self, command: impl FnOnce(std::sync::mpsc::SyncSender<()>) -> Command) {
+        let (reply, _done) = std::sync::mpsc::sync_channel(1);
+        self.supervisor.command(command(reply));
     }
 }
 
@@ -215,4 +239,72 @@ fn a_pause_is_added_to_the_ledger_on_resume() {
 
     assert_eq!(rig.supervisor.pause.total(), Duration::from_secs(31));
     assert_eq!(rig.mic_starts(), 2);
+}
+
+#[test]
+fn each_track_publishes_what_its_capture_is_doing() {
+    let factory = ScriptedFactory::default();
+    factory.system.refuse.store(true, Ordering::SeqCst);
+    let mut rig = rig_with(factory);
+    assert_eq!(rig.status(Track::Microphone), TrackStatus::Live);
+    assert_eq!(rig.status(Track::System), TrackStatus::Absent);
+
+    rig.factory.microphone.dead.store(true, Ordering::SeqCst);
+    rig.tick();
+    assert_eq!(rig.status(Track::Microphone), TrackStatus::Recovering);
+
+    rig.supervisor.pause();
+    assert_eq!(rig.status(Track::Microphone), TrackStatus::Off);
+    assert_eq!(rig.status(Track::System), TrackStatus::Off);
+}
+
+#[test]
+fn switching_the_microphone_starts_the_chosen_device_at_once() {
+    let mut rig = rig_with(ScriptedFactory::default());
+
+    rig.command(|reply| Command::Microphone(MicChoice::default(), reply));
+
+    assert_eq!(rig.factory.chosen.starts.load(Ordering::SeqCst), 1);
+    assert_eq!(rig.status(Track::Microphone), TrackStatus::Live);
+}
+
+#[test]
+fn a_microphone_chosen_while_paused_starts_on_resume() {
+    let mut rig = rig_with(ScriptedFactory::default());
+    rig.supervisor.pause();
+
+    rig.command(|reply| Command::Microphone(MicChoice::default(), reply));
+    assert_eq!(rig.factory.chosen.starts.load(Ordering::SeqCst), 0);
+    rig.supervisor.resume();
+
+    assert_eq!(rig.factory.chosen.starts.load(Ordering::SeqCst), 1);
+    assert_eq!(rig.mic_starts(), 1, "the old device does not come back");
+}
+
+#[test]
+fn system_audio_switched_off_records_silence_until_switched_on() {
+    let mut rig = rig_with(ScriptedFactory::default());
+    assert_eq!(rig.factory.system.starts.load(Ordering::SeqCst), 1);
+
+    rig.command(|reply| Command::SystemAudio(false, reply));
+    for _ in 0..10 {
+        rig.tick();
+    }
+    assert_eq!(rig.status(Track::System), TrackStatus::Off);
+    assert_eq!(
+        rig.factory.system.starts.load(Ordering::SeqCst),
+        1,
+        "the watchdog leaves it off"
+    );
+    rig.supervisor.pause();
+    rig.supervisor.resume();
+    assert_eq!(
+        rig.factory.system.starts.load(Ordering::SeqCst),
+        1,
+        "resuming keeps it off"
+    );
+
+    rig.command(|reply| Command::SystemAudio(true, reply));
+    assert_eq!(rig.factory.system.starts.load(Ordering::SeqCst), 2);
+    assert_eq!(rig.status(Track::System), TrackStatus::Live);
 }

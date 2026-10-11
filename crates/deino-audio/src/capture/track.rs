@@ -58,7 +58,7 @@ impl TrackCapture {
         shared: &CaptureShared,
     ) -> Result<Self, SourceError> {
         let track = source.track();
-        let meter = Arc::new(TrackMeter::default());
+        let meter = Arc::clone(shared.tracks.get(track).meter());
         let conditioner = Conditioner::new(stream.rate, shared, Arc::clone(&meter))
             .map_err(|error| open_error(track, error))?;
         let (control, controls) = channel();
@@ -121,6 +121,14 @@ impl TrackCapture {
         self.running = true;
         self.switch_to(stream);
         Ok(())
+    }
+
+    /// Replaces the source with `source` without starting it (a device
+    /// switch while paused; resuming starts the new one).
+    pub fn adopt(&mut self, source: Box<dyn AudioSource>) {
+        self.source.stop();
+        self.source = source;
+        self.running = false;
     }
 
     /// Replaces the source with `source` and starts it (a device change).

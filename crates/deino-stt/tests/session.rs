@@ -24,6 +24,7 @@ use deino_stt::{
 enum Seen {
     Live(LiveText),
     Segment(FinalSegment),
+    Progress(Millis),
 }
 
 struct ChannelSink(Mutex<Sender<Seen>>);
@@ -39,6 +40,14 @@ impl SessionSink for ChannelSink {
 
     fn segment(&mut self, segment: FinalSegment) {
         self.0.lock().unwrap().send(Seen::Segment(segment)).unwrap();
+    }
+
+    fn progress(&mut self, through: Millis) {
+        self.0
+            .lock()
+            .unwrap()
+            .send(Seen::Progress(through))
+            .unwrap();
     }
 }
 
@@ -84,7 +93,7 @@ fn segments(seen: &Receiver<Seen>) -> Vec<FinalSegment> {
     seen.try_iter()
         .filter_map(|seen| match seen {
             Seen::Segment(segment) => Some(segment),
-            Seen::Live(_) => None,
+            Seen::Live(_) | Seen::Progress(_) => None,
         })
         .collect()
 }
@@ -135,7 +144,7 @@ fn live_text_grows_with_the_open_segment_and_clears_when_it_closes() {
         .iter()
         .filter_map(|seen| match seen {
             Seen::Live(text) => Some(text.committed.clone()),
-            Seen::Segment(_) => None,
+            Seen::Segment(_) | Seen::Progress(_) => None,
         })
         .collect();
     // However the session batched the frames, the open segment's text only
@@ -153,7 +162,7 @@ fn live_text_grows_with_the_open_segment_and_clears_when_it_closes() {
         .iter()
         .filter_map(|seen| match seen {
             Seen::Segment(segment) => Some(segment.text.as_str()),
-            Seen::Live(_) => None,
+            Seen::Live(_) | Seen::Progress(_) => None,
         })
         .collect();
     assert_eq!(closed, ["w0 w1 w2"]);
@@ -221,4 +230,68 @@ fn a_long_stream_is_rotated_at_a_silence() {
     );
     assert_eq!(segments.len(), 2);
     assert_eq!(fake.calls().streams, 2);
+}
+
+/// Words delivered so far: the closed segments' and the open one's.
+fn delivered_words(live: &LiveText, closed: &[FinalSegment]) -> usize {
+    let open = live.committed.split_whitespace().count();
+    closed.iter().map(|s| s.words.len()).sum::<usize>() + open
+}
+
+#[test]
+fn the_progress_watermark_only_rises_and_follows_the_words_it_covers() {
+    let fake = Arc::new(FakeTranscriber::new());
+    let (session, seen) = start(&fake, SessionConfig::default());
+
+    feed(
+        &session,
+        &[loud(1200), silent(2000), loud(800), silent(2000)],
+    );
+    session.finish();
+
+    let mut closed = Vec::new();
+    let mut live = LiveText::default();
+    let mut last = Millis::ZERO;
+    for event in seen.try_iter() {
+        match event {
+            Seen::Live(text) => live = text,
+            Seen::Segment(segment) => closed.push(segment),
+            Seen::Progress(through) => {
+                assert!(through > last, "{through:?} after {last:?}");
+                last = through;
+                // Every word ending at or before the watermark is out.
+                assert!(delivered_words(&live, &closed) >= word_count(through));
+            }
+        }
+    }
+    assert_eq!(
+        last,
+        Millis(6_000),
+        "the final watermark covers all the audio"
+    );
+}
+
+/// Words of the fed speech (`w0`–`w2` then `w8`, `w9`) ending by `through`.
+fn word_count(through: Millis) -> usize {
+    [400, 800, 1200, 3600, 4000]
+        .iter()
+        .filter(|end| **end <= through.0)
+        .count()
+}
+
+#[test]
+fn a_lost_stream_is_counted_in_the_lane_status() {
+    let fake = Arc::new(FakeTranscriber::new().losing_streams_after(Millis(1000), 1));
+    let (session, seen) = start(&fake, SessionConfig::default());
+    assert_eq!(session.status().recoveries, 0);
+
+    feed_in(&session, Millis(400), &[loud(2000), silent(2000)]);
+    let recovered = (0..500).any(|_| {
+        seen.recv_timeout(std::time::Duration::from_millis(10)).ok();
+        session.status().recoveries == 1
+    });
+
+    assert!(recovered, "the loss is reported while the lane runs");
+    assert!(session.status().streaming, "a new stream opened");
+    session.finish();
 }

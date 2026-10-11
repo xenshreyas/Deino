@@ -25,7 +25,7 @@ mod retained;
 mod runner;
 
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
@@ -83,6 +83,60 @@ pub trait SessionSink: Send {
     fn live(&mut self, text: &LiveText);
     /// A segment closed.
     fn segment(&mut self, segment: FinalSegment);
+    /// The lane's transcript is complete up to `through`: every word that
+    /// ends before it has been delivered (as live or final text), and no
+    /// text for earlier audio will follow. Called after the text it
+    /// covers, never with a smaller value than before. A consumer that waits
+    /// for the other lane's words (the bleed holdback) waits on this
+    /// watermark rather than on a clock, so a lane that falls behind delays
+    /// the judgement instead of falsifying it.
+    fn progress(&mut self, _through: Millis) {}
+}
+
+/// What a running session reports about its stream, for recording health.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LaneStatus {
+    /// Times the stream was lost (worker crash, hang, engine error) and the
+    /// lane fell back to a batch run.
+    pub recoveries: u32,
+    /// Whether a live stream is open. False after a loss until a new stream
+    /// opens; the lane then transcribes in batches.
+    pub streaming: bool,
+}
+
+/// Reads a running session's [`LaneStatus`] from any thread.
+#[derive(Clone, Debug)]
+pub struct StatusHandle(Arc<SharedStatus>);
+
+impl StatusHandle {
+    /// The session's status now.
+    pub fn read(&self) -> LaneStatus {
+        self.0.read()
+    }
+}
+
+/// [`LaneStatus`] shared between the session thread and its owner.
+#[derive(Debug, Default)]
+pub(crate) struct SharedStatus {
+    recoveries: AtomicU32,
+    streaming: AtomicBool,
+}
+
+impl SharedStatus {
+    fn read(&self) -> LaneStatus {
+        LaneStatus {
+            recoveries: self.recoveries.load(Ordering::Relaxed),
+            streaming: self.streaming.load(Ordering::Relaxed),
+        }
+    }
+
+    pub(crate) fn set_streaming(&self, streaming: bool) {
+        self.streaming.store(streaming, Ordering::Relaxed);
+    }
+
+    pub(crate) fn recovered(&self) {
+        self.recoveries.fetch_add(1, Ordering::Relaxed);
+    }
 }
 
 /// How a session runs.
@@ -132,6 +186,8 @@ pub struct LiveSession {
     thread: Option<JoinHandle<PerfReport>>,
     /// Samples queued for the session thread.
     queued: Arc<AtomicUsize>,
+    /// The stream's health, written by the session thread.
+    status: Arc<SharedStatus>,
 }
 
 impl LiveSession {
@@ -145,6 +201,8 @@ impl LiveSession {
     ) -> Result<Self, SttError> {
         let stream = transcriber.open_stream(config.params)?;
         let queued = Arc::new(AtomicUsize::new(0));
+        let status = Arc::new(SharedStatus::default());
+        status.set_streaming(true);
         let runner = runner::Runner::new(runner::Parts {
             transcriber,
             stream,
@@ -152,6 +210,7 @@ impl LiveSession {
             clock,
             config,
             queued: Arc::clone(&queued),
+            status: Arc::clone(&status),
         });
         let (input, receiver) = mpsc::channel();
         let thread = thread::Builder::new()
@@ -162,6 +221,7 @@ impl LiveSession {
             input,
             thread: Some(thread),
             queued,
+            status,
         })
     }
 
@@ -178,6 +238,17 @@ impl LiveSession {
     /// Audio queued and not yet fed to the engine.
     pub fn backlog(&self) -> Millis {
         Millis::from_samples(self.queued.load(Ordering::Relaxed))
+    }
+
+    /// Whether the stream is open and how often it was lost.
+    pub fn status(&self) -> LaneStatus {
+        self.status.read()
+    }
+
+    /// A handle that reads [`Self::status`] from another thread for as
+    /// long as the session lives (recording health polls it).
+    pub fn status_handle(&self) -> StatusHandle {
+        StatusHandle(Arc::clone(&self.status))
     }
 
     /// Transcribes everything fed so far, flushes the last segment and stops.

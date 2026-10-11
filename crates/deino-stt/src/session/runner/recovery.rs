@@ -18,7 +18,10 @@ impl Runner {
     /// The stream is gone: transcribes the retained audio in one run, then
     /// (when `reopen`) opens a new stream where the old one stopped.
     pub(super) fn recover(&mut self, reopen: bool) {
-        self.stream = None;
+        if self.stream.take().is_some() {
+            self.status.set_streaming(false);
+            self.status.recovered();
+        }
         self.assembler.discard_open();
         let (start, pcm) = self.retained.take();
         if !pcm.is_empty() {
@@ -26,6 +29,9 @@ impl Runner {
             self.transcribe_retained(start, pcm);
         }
         self.publish_live(Some(""));
+        // Everything retained is transcribed (or, if the batch failed, lost
+        // for good): no text for audio before here will follow.
+        self.report_progress(self.position());
         if reopen {
             self.reopen();
         }
@@ -53,6 +59,7 @@ impl Runner {
         match self.transcriber.open_stream(self.config.params) {
             Ok(stream) => {
                 self.stream = Some(stream);
+                self.status.set_streaming(true);
                 self.stream_start = self.position();
                 self.retained = Retained::at(self.stream_start);
             }
@@ -108,6 +115,7 @@ impl Runner {
             self.recover(false);
         }
         self.publish_live(Some(""));
+        self.report_progress(self.position());
         self.perf.log_summary();
         self.perf.report()
     }

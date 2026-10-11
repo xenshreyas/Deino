@@ -40,6 +40,9 @@ pub enum Placement {
 #[derive(Clone, Copy, Debug)]
 pub struct TrackTimeline {
     epoch: HostTime,
+    /// The timeline frame captured at `epoch`: zero for a new recording,
+    /// the recorded length for one that resumes.
+    base: Frames,
     written: Frames,
     tolerance: Frames,
 }
@@ -47,9 +50,17 @@ pub struct TrackTimeline {
 impl TrackTimeline {
     /// A timeline anchored at the recording epoch `t0`, with nothing written.
     pub fn new(epoch: HostTime) -> Self {
+        Self::resuming(epoch, Frames::ZERO)
+    }
+
+    /// A timeline that continues a recording `base` frames long: the frame
+    /// captured at `epoch` is frame `base`, so a resumed take goes on where
+    /// the earlier ones ended (CAP-07), however long ago that was.
+    pub fn resuming(epoch: HostTime, base: Frames) -> Self {
         Self {
             epoch,
-            written: Frames::ZERO,
+            base,
+            written: base,
             tolerance: Frames::from_duration(PLACEMENT_TOLERANCE),
         }
     }
@@ -95,9 +106,9 @@ impl TrackTimeline {
         tail
     }
 
-    /// The timeline frame captured at `stamp` (zero before the epoch).
+    /// The timeline frame captured at `stamp` (`base` before the epoch).
     fn frame_at(&self, stamp: HostTime) -> Frames {
-        Frames::from_duration(stamp.since(self.epoch))
+        self.base + Frames::from_duration(stamp.since(self.epoch))
     }
 }
 
@@ -122,6 +133,20 @@ mod tests {
                 placement
             })
             .collect()
+    }
+
+    #[test]
+    fn a_resumed_timeline_continues_after_the_recorded_length() {
+        let clock = FakeHostClock::new(HostTime(7_000));
+        let mut timeline = TrackTimeline::resuming(clock.now(), Frames(96_000));
+
+        assert_eq!(
+            capture(&clock, &mut timeline, 2),
+            [Placement::Contiguous; 2]
+        );
+        assert_eq!(timeline.written(), Frames(96_960));
+        clock.advance(Duration::from_secs(1));
+        assert_eq!(timeline.pad_to(clock.now()), Frames(48_000));
     }
 
     #[test]

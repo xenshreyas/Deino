@@ -8,6 +8,10 @@
 //! - **Speakers:** the microphone also hears the call (the system track,
 //!   40 ms late, at −9 dB): fewer than 5 % of the stored lines are
 //!   duplicates of Them (CAP-02).
+//!
+//! The recording is paced by sample count, not wall time
+//! (`support/paced.rs`): it runs as fast as the lanes transcribe, so the
+//! result depends on the audio alone, however loaded the machine is.
 #![allow(
     clippy::unwrap_used,
     clippy::indexing_slicing,
@@ -16,6 +20,8 @@
     reason = "an integration-test crate: helpers fail the test by panicking, and report numbers"
 )]
 
+#[path = "support/paced.rs"]
+mod paced;
 #[path = "support/rig.rs"]
 mod rig;
 
@@ -27,10 +33,11 @@ use deino_audio::capture::OutputRoute;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 use deino_domain::{Channel, MeetingId, MeetingStatus};
-use deino_recording::SegmentUpdateKind;
+use deino_recording::{SegmentUpdateKind, StartRequest};
 use deino_testkit::Fixtures;
 use deino_testkit::fixture::{MeetingKind, PcmTrack, Segment as TruthSegment};
-use rig::{FastClock, FixtureCapture, rig};
+use paced::paced;
+use rig::rig_on;
 
 /// How far a stored segment may sit from the fixture's (the fake engine
 /// works in 400 ms blocks, and a word ends where its block ends).
@@ -106,37 +113,19 @@ fn with_bleed(mic: &PcmTrack, system: &PcmTrack, delay_ms: u32, gain: f32) -> Ve
         .collect()
 }
 
-/// Recording time per real second in the short tests (the long one runs
-/// slower, so a loaded machine cannot starve it).
-const SPEED: u32 = 8;
-
-/// Records `microphone` and `system` for the fixture's length.
+/// Records `microphone` and the fixture's system track on `route` for the
+/// fixture's length.
 async fn record(
     fixture: &Fixture,
     microphone: TestSignal,
     route: OutputRoute,
 ) -> (rig::Rig, MeetingId) {
-    record_at(SPEED, fixture, microphone, route).await
-}
-
-/// [`record`] with the host clock at `speed`× real time.
-async fn record_at(
-    speed: u32,
-    fixture: &Fixture,
-    microphone: TestSignal,
-    route: OutputRoute,
-) -> (rig::Rig, MeetingId) {
-    let clock = Arc::new(FastClock::new(speed));
-    let rig = rig(FixtureCapture {
-        clock,
-        microphone,
-        system: TestSignal::from_pcm(&fixture.system.samples, fixture.system.sample_rate),
-        route,
-    })
-    .await;
+    let system = TestSignal::from_pcm(&fixture.system.samples, fixture.system.sample_rate);
+    let (harness, options) = paced(microphone, system, route);
+    let rig = rig_on(harness, options).await;
     let meeting = rig
         .service
-        .start(Some("Weekly one-on-one".into()))
+        .start(StartRequest::titled(Some("Weekly one-on-one".into())))
         .await
         .unwrap();
     tokio::task::spawn_blocking({
@@ -201,10 +190,11 @@ fn assert_channel_heard(segments: &[Segment], fixture: &Fixture, channel: Channe
         "{channel:?}: {heard} of {}",
         expected.len()
     );
-    assert!(
-        unexplained(segments, &fixture.truth, channel).is_empty(),
-        "{channel:?} has stray lines"
-    );
+    let stray: Vec<(u32, u32, &str)> = unexplained(segments, &fixture.truth, channel)
+        .iter()
+        .map(|s| (s.start.0, s.end.0, s.text.as_str()))
+        .collect();
+    assert!(stray.is_empty(), "{channel:?} has stray lines: {stray:?}");
 }
 
 /// Me lines carry the Me speaker; the meeting is processing with its length.
@@ -269,14 +259,14 @@ async fn on_speakers_fewer_than_five_percent_of_lines_are_echo() {
 }
 
 /// CAP-02's acceptance on a 10-minute speakers-mode recording (the fixture
-/// looped 11 times, at 4× real time: about 2.5 minutes).
+/// looped 11 times).
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "about 2.5 minutes; run with --ignored"]
+#[ignore = "ten minutes of audio; run with --ignored"]
 async fn on_speakers_for_ten_minutes_fewer_than_five_percent_of_lines_are_echo() {
     let fixture = one_on_one().looped(11);
     let bled = with_bleed(&fixture.mic, &fixture.system, 40, 0.35);
     let mic = TestSignal::from_pcm(&bled, fixture.mic.sample_rate);
-    let (rig, meeting) = record_at(4, &fixture, mic, OutputRoute::Speakers).await;
+    let (rig, meeting) = record(&fixture, mic, OutputRoute::Speakers).await;
     let segments = stored(&rig, &meeting).await;
 
     assert_few_echoes(&rig, &segments, &fixture);

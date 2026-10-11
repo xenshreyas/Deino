@@ -42,6 +42,7 @@ fn rig(track: Track) -> Rig {
         source,
         placed: placed_sink,
         epoch: clock.now(),
+        start: Frames::ZERO,
         encoder: encoders.open(track, output).unwrap(),
         clock: clock.clone(),
         health,

@@ -7,6 +7,7 @@ use deino_domain::{Channel, MeetingId, Millis, SegmentId};
 use serde::Serialize;
 
 use crate::echo::EchoMode;
+use crate::monitor::HealthIssue;
 
 /// Where the recorder is in its lifecycle.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type)]
@@ -34,7 +35,9 @@ pub struct RecordingSnapshot {
     pub meeting_id: Option<MeetingId>,
     /// Its title.
     pub title: Option<String>,
-    /// When capture started.
+    /// When the recording's elapsed time counts from: when capture started,
+    /// or for a resumed meeting that moment moved back by what was already
+    /// recorded, so the timer goes on from the meeting's length.
     pub started_at: Option<DateTime<Utc>>,
     /// Time spent paused so far; elapsed recording time is now − started − paused.
     pub paused_ms: u64,
@@ -43,6 +46,14 @@ pub struct RecordingSnapshot {
     /// Whether echo is being removed from the microphone (speakers) or not
     /// needed (headphones).
     pub echo: Option<EchoMode>,
+    /// The microphone picked for this recording by name; `None` follows
+    /// the system default.
+    pub microphone: Option<String>,
+    /// Whether system audio (the other side of the call) is recorded.
+    pub system_audio: bool,
+    /// What is wrong with the recording now (CAP-10 health), most severe
+    /// first; empty when all is well.
+    pub issues: Vec<HealthIssue>,
 }
 
 impl RecordingSnapshot {
@@ -56,8 +67,30 @@ impl RecordingSnapshot {
             paused_ms: 0,
             paused_at: None,
             echo: None,
+            microphone: None,
+            system_audio: true,
+            issues: Vec::new(),
         }
     }
+
+    /// Whether audio is being captured or the recording is paused: the
+    /// phases a meeting is open in.
+    pub fn is_running(&self) -> bool {
+        matches!(
+            self.phase,
+            RecordingPhase::Recording | RecordingPhase::Paused
+        )
+    }
+}
+
+/// How loud each track is, for the record panel's meter (CAP-10).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioLevels {
+    /// The microphone's loudest sample since the last reading, in `[0, 1]`.
+    pub microphone: f32,
+    /// System audio's loudest sample since the last reading, in `[0, 1]`.
+    pub system: f32,
 }
 
 /// What happened to a live segment.
@@ -158,7 +191,9 @@ impl HealthNotice {
     }
 }
 
-/// Delivers recording events to the UI. Implementations never block.
+/// Delivers recording events to the UI. Implementations never block and
+/// never call back into the recorder (state changes are announced under
+/// its lock, so they arrive in order).
 pub trait RecordingEvents: Send + Sync {
     /// The recorder's state changed.
     fn state(&self, state: &RecordingSnapshot);
