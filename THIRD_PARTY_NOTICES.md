@@ -77,7 +77,9 @@ Adapted in Deino:
 - `crates/deino-diarize/` (CAP-03): the speaker diarizer, ported from
   `crates/pyannote-local` (`pipeline.rs`, `segmentation.rs`,
   `clustering.rs`, `metrics.rs`), `crates/embedding/src/onnx/mod.rs` and
-  `crates/onnx/src/lib.rs`; the voiceprint matching primitives and
+  `crates/onnx/src/lib.rs`.
+- `crates/deino-core/src/voiceprints/{matching,spans}.rs` (CAP-03, moved
+  from `deino-diarize` by CAP-04): the voiceprint matching primitives and
   enrolment spans from `crates/voiceprint/src/{lib,matching}.rs`.
 - `crates/deino-core/src/diarization/plan.rs` and `assign.rs`: channel
   planning (the in-person shared-microphone rule) from

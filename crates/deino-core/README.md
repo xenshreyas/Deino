@@ -33,8 +33,22 @@ the SQLite adapters behind those ports.
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:
   - `diarization` (CAP-03): `DiarizeService` (the `diarize` stage's rules)
-  over the `TrackDiarizer` engine port, `plan_channels` and `attribute`
-  (pure), `FakeTrackDiarizer`. The engine lives in `deino-diarize`.
+  over the `TrackDiarizer` engine port, `plan_channels`, `attribute` and
+  `known_voices` (pure), `FakeTrackDiarizer`. The engine lives in
+  `deino-diarize`. `diarization::identify` (CAP-04, ADR 0029): the
+  `identify_speakers` stage's rules: `Lineup` (reads the meeting), the pure
+  `decide` (by voice with margin and mutual best, by elimination,
+  suggestions) and `IdentifyService` over `IdentifyPolicy`
+  (`Settings::speakers`) and `IdentificationWriter`.
+  - `voiceprints` (CAP-04): `VoiceprintRepo` and `ExemplarReader` over the
+  `voiceprints` table (five best exemplars per person, evicted in the
+  enrolment's transaction), `VoiceprintService` (enrolment from a confirmed
+  rename only, quality from clean spans, profiles, delete, forget), the
+  pure `matching` primitives and enrolment `spans`; `FakeVoiceprintRepo`.
+  - `speakers` (CAP-04): `ParticipantReader`, `NamingRepo` and
+  `IdentificationWriter` (`SqliteNamingRepo`, `speaker_suggestions`),
+  `SpeakerService` (participants, candidates, rename one segment or all,
+  merge, suggestions; action items follow the voice).
 - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
     batch) and `SpeakerRepo`;
   - `people`: `PersonRepo` (with `search` by name, word or email prefix),

@@ -18,8 +18,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   `deino_audio::{recover_recording, finalize_recording}` on a blocking
   thread, storing the mic, system and mixed paths with `set_audio` (skipped
   for meetings without a live recording folder); `diarize` (order 30, CAP-03) over
-  `deino_core::diarization::DiarizeService`; `legacy_summary` (order 50) over the
-  `Summarizer` port, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `extract_action_items`
+  `deino_core::diarization::DiarizeService` (with the attendees' voiceprints);
+  `identify_speakers` (order 35, CAP-04) over
+  `deino_core::diarization::SpeakerIdentifier`; `legacy_summary` (order 50) over the
+  `Summarizer` port, with each transcript line prefixed by its speaker's name, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `extract_action_items`
   (order 60, AI-05) over
   `deino_core::action_items::extraction::ActionItemExtractor`; `auto_tag`
   (order 70, ORG-06)
