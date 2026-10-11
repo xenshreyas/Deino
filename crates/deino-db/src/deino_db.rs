@@ -7,6 +7,9 @@
 //! - [`ChangeNotifier`] turns SQLite commit hooks into [`TableChanges`]
 //!   signals, which the app forwards to the UI as `DbChanged` events so
 //!   TanStack Query refetches exactly what changed.
+//! - [`Database::open_read_only`] opens the app's file from another process
+//!   (the `deino` CLI and MCP server) without ever writing it, after a
+//!   [`SchemaCheck`] against the embedded migrations.
 //! - `test_db()` (feature `test-support`) gives repository tests an in-memory
 //!   database with every migration applied.
 //!
@@ -17,12 +20,14 @@ mod change_notifier;
 mod data_migration;
 mod database;
 mod error;
+mod read_only;
 mod table;
 
 pub use change_notifier::{ChangeNotifier, TableChanges};
 pub use data_migration::{DataMigration, DataMigrationError};
 pub use database::{Database, DbLocation};
 pub use error::DbError;
+pub use read_only::SchemaCheck;
 pub use table::Table;
 
 /// Every migration in `migrations/`, embedded at compile time.

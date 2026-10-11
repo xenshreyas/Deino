@@ -9,9 +9,9 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePo
 use crate::{ChangeNotifier, DataMigration, DbError};
 
 /// Read connections. In WAL mode SQLite serves readers alongside the writer.
-const READ_POOL_SIZE: u32 = 4;
+pub(crate) const READ_POOL_SIZE: u32 = 4;
 /// How long a statement waits for a lock before failing with `SQLITE_BUSY`.
-const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
+pub(crate) const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Where a database lives.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -33,6 +33,8 @@ pub struct Database {
     writer: SqlitePool,
     reader: SqlitePool,
     changes: ChangeNotifier,
+    /// False for a database opened with [`Database::open_read_only`].
+    writable: bool,
 }
 
 impl Database {
@@ -99,7 +101,18 @@ impl Database {
             writer,
             reader,
             changes,
+            writable: true,
         })
+    }
+
+    /// A database whose writer and reader are both the read-only `pool`.
+    pub(crate) fn from_read_only(pool: SqlitePool, changes: ChangeNotifier) -> Self {
+        Self {
+            writer: pool.clone(),
+            reader: pool,
+            changes,
+            writable: false,
+        }
     }
 
     /// The single write connection. Use it for every `INSERT`, `UPDATE`,
@@ -120,10 +133,13 @@ impl Database {
 
     /// Checkpoints the WAL into the main file and closes every connection.
     ///
-    /// Call it on shutdown so no `-wal`/`-shm` files are left behind.
+    /// Call it on shutdown so no `-wal`/`-shm` files are left behind. A
+    /// read-only database only closes: the WAL belongs to the app.
     pub async fn close(&self) {
         self.reader.close().await;
-        self.checkpoint().await;
+        if self.writable {
+            self.checkpoint().await;
+        }
         self.writer.close().await;
     }
 
