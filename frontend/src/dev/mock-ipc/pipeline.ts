@@ -84,6 +84,14 @@ const ORGANISE_STAGES: readonly StageStatus[] = [
     message: 'No folder has auto-add rules.',
     updatedAt: PROCESSED_AT,
   },
+  {
+    stage: 'insights' as Generated.StageId,
+    status: 'skipped',
+    attempts: 1,
+    retryAt: null,
+    message: 'No insight applies to this meeting.',
+    updatedAt: PROCESSED_AT,
+  },
 ];
 
 /** The meeting's stages: re-run ones, else the fixture state. */

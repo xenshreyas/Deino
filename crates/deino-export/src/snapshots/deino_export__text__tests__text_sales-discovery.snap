@@ -63,3 +63,12 @@ Action items
 [ ] Send the calendar invite for the dispatcher demo on Wednesday 7 October — Lena Okafor, due Sep 30, 2026
 [ ] Run the tailored demo for Brightkite dispatchers, with drag-and-drop rescheduling front and center — Lena Okafor, due Oct 7, 2026
 [ ] Confirm which region the pilot will run in — Marcus Webb, due Oct 7, 2026
+
+Insights
+--------
+Decisions
+- The pilot will cover one Brightkite region with about 70 technicians for 60 days, instead of all three regions at once. — Lena Okafor, 00:00
+- The pilot proposal will be priced on the enterprise tier ($60 per technician per month) because Brightkite needs Okta SSO and SCIM.
+- The pilot will be paid (no free pilot), with the pilot fee credited against the first year if Brightkite signs an annual contract.
+- No real Brightkite data goes into Deino until Hannah signs off on the security review; an anonymised sample sent via Brightkite's secure file share is allowed before that.
+- Deino will run a tailored demo for Brightkite's dispatchers on Wednesday 7 October at 2pm Brightkite time, focused on drag-and-drop rescheduling.

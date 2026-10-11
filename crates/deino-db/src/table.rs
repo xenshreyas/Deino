@@ -83,6 +83,10 @@ pub enum Table {
     VocabVariants,
     /// The originals of segments the vocabulary corrected (TRN-05).
     VocabCorrections,
+    /// Insights the user defined: what to extract from meetings (AI-06).
+    InsightDefs,
+    /// Each insight's latest run on each meeting, with its answers (AI-06).
+    InsightResults,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -90,7 +94,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 35] = [
+    pub const ALL: [Self; 37] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -125,6 +129,8 @@ impl Table {
         Self::VocabTerms,
         Self::VocabVariants,
         Self::VocabCorrections,
+        Self::InsightDefs,
+        Self::InsightResults,
         Self::ExampleNotes,
     ];
 
@@ -168,6 +174,8 @@ impl Table {
             "vocab_terms" => Self::VocabTerms,
             "vocab_variants" => Self::VocabVariants,
             "vocab_corrections" => Self::VocabCorrections,
+            "insight_defs" => Self::InsightDefs,
+            "insight_results" => Self::InsightResults,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

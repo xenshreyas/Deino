@@ -4,10 +4,10 @@ use chrono::{DateTime, FixedOffset, NaiveDate};
 use deino_domain::{MeetingId, Millis, Seconds};
 use serde::Serialize;
 
-use crate::{ExportSections, Section};
+use crate::{ExportSections, InsightExport, Section};
 
 /// The scheme of the links that open a meeting in Deino (DEV-05 registers it).
-const LINK_PREFIX: &str = "deino://meetings/";
+pub(crate) const LINK_PREFIX: &str = "deino://meetings/";
 
 /// One meeting, as every export format sees it.
 ///
@@ -36,6 +36,9 @@ pub struct MeetingExport {
     pub my_notes: Option<String>,
     /// The meeting's action items, in the order they were created.
     pub action_items: Vec<ActionItemExport>,
+    /// The meeting's insights that have answers (AI-06), in the order the
+    /// Insights page lists them.
+    pub insights: Vec<InsightExport>,
     /// The transcript, in time order, with speaker names.
     pub transcript: Vec<Utterance>,
 }
@@ -78,8 +81,7 @@ impl MeetingExport {
             Section::Notes => written(&self.notes),
             Section::MyNotes => written(&self.my_notes),
             Section::ActionItems => !self.action_items.is_empty(),
-            // AI-06 adds insights to the export.
-            Section::Insights => false,
+            Section::Insights => !self.insights.is_empty(),
             Section::Transcript => !self.transcript.is_empty(),
         }
     }

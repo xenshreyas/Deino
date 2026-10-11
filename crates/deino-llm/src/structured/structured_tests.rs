@@ -129,3 +129,33 @@ async fn a_failed_repair_is_invalid_output_without_the_content() {
             .all(|call| call.outcome == CallOutcome::Ok)
     );
 }
+
+#[tokio::test]
+async fn a_run_time_schema_is_sent_as_given_and_the_answer_parses_into_the_wire_type() {
+    let mock = Arc::new(MockProvider::new().reply(
+        Route::ExtractInsights,
+        r#"{"items":[{"title":"Budget is $40k"}]}"#,
+    ));
+    let harness = mock_gateway(mock.clone());
+    let schema = serde_json::json!({
+        "type": "object",
+        "properties": { "items": { "type": "array", "maxItems": 1 } },
+        "required": ["items"]
+    });
+    let output = JsonOutput {
+        name: "budget".into(),
+        schema: schema.clone(),
+    };
+
+    let items: ActionItems = harness
+        .gateway
+        .structured_as(Route::ExtractInsights, Prompt::new("transcript"), output)
+        .await
+        .unwrap();
+
+    assert_eq!(items.items[0].title, "Budget is $40k");
+    let OutputFormat::Json(json) = &mock.requests()[0].output else {
+        panic!("structured requests ask for JSON");
+    };
+    assert_eq!((json.name.as_str(), &json.schema), ("budget", &schema));
+}

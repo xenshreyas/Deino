@@ -6,6 +6,7 @@
  */
 import type * as Generated from '@/lib/ipc/generated/export';
 
+import { mockInsights } from './database';
 import type { FixtureMeeting } from './fixture-schema';
 
 type Sections = Generated.ExportSections;
@@ -71,8 +72,28 @@ export function markdown(meeting: FixtureMeeting, sections: Sections): string {
     parts.push(
       `## Action items\n\n${meeting.groundTruth.actionItems.map(({ title }) => `- [ ] ${title}`).join('\n')}`,
     );
+  if (sections.insights) parts.push(...insightsMarkdown(meeting));
   if (sections.transcript) parts.push(`## Transcript\n\n${transcriptLines(meeting).join('\n\n')}`);
   return `${parts.join('\n\n')}\n`;
+}
+
+/** The meeting's answered insights as a Markdown section (none when there are none). */
+function insightsMarkdown(meeting: FixtureMeeting): string[] {
+  const answered = mockInsights.answeredOn(meeting.id);
+  if (answered.length === 0) return [];
+  const blocks = answered.map(({ name, answers }) => {
+    const lines = answers.map((answer) =>
+      answer.value.kind === 'text'
+        ? `- ${answer.value.text}`
+        : `- ${answer.value.fields
+            .map(
+              (field) => `${field.name}: ${field.value === null ? '' : String(field.value.value)}`,
+            )
+            .join(' · ')}`,
+    );
+    return `### ${name}\n\n${lines.join('\n')}`;
+  });
+  return [`## Insights\n\n${blocks.join('\n\n')}`];
 }
 
 /** The meeting as plain text. */

@@ -61,3 +61,13 @@ Thursday, October 8, 2026 at 08:31 · 7 min
 - [ ] Send the Fernhollow postmortem to Owen with Tom on copy — Shreyas, due Oct 9, 2026
 - [ ] Set up a follow-up huddle with Maya on the Outlook one-hour-offset ticket — Tom Becker, due Oct 8, 2026
 - [ ] Send each engineer their SOC 2 evidence items from Kestrel Audit's request list — Priya Nair, due Oct 12, 2026
+
+## Insights
+
+### Decisions
+
+- The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday. — Shreyas, 00:00
+- The read-only offline job list will ship in next week's release, not in today's release cut.
+- The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut.
+- The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty.
+- The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup.

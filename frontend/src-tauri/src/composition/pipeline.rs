@@ -11,6 +11,7 @@ use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
+use deino_core::insights::InsightGenerator;
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::search::SearchIndexing;
@@ -73,6 +74,8 @@ pub(crate) struct StageAdapters {
     /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
     pub(crate) auto_export: Arc<dyn AutoExporter>,
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
+    /// The insights generator (`insights` stage, AI-06).
+    pub(crate) insights: Arc<dyn InsightGenerator>,
     /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
     pub(crate) search: Arc<dyn SearchIndexing>,
@@ -109,6 +112,7 @@ fn stage_ports(
         auto_tagger: adapters.ai.adapters.auto_tagger,
         auto_export: adapters.ai.adapters.auto_export,
         action_items: adapters.ai.adapters.action_items,
+        insights: adapters.ai.adapters.insights,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
         search: adapters.ai.adapters.search,

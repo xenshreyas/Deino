@@ -63,8 +63,10 @@ impl SegmentIndex {
     }
 }
 
-/// The number of the first `s<digits>` in `reference`.
-fn parse_reference(reference: &str) -> Option<u32> {
+/// The number of the first `s<digits>` in `reference`: `s12`, `S12`,
+/// `[s12]` and `s12 04:31` all name line 12. Insights (AI-06) resolve their
+/// answers' references with it too.
+pub fn parse_reference(reference: &str) -> Option<u32> {
     let lower = reference.to_ascii_lowercase();
     let start = lower.find('s')?;
     let digits: String = lower

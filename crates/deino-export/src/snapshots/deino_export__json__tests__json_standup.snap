@@ -90,6 +90,53 @@ expression: json
         "done": false
       }
     ],
+    "insights": [
+      {
+        "name": "Decisions",
+        "answers": [
+          {
+            "value": {
+              "kind": "text",
+              "text": "The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday."
+            },
+            "speaker": "Shreyas",
+            "at": 696
+          },
+          {
+            "value": {
+              "kind": "text",
+              "text": "The read-only offline job list will ship in next week's release, not in today's release cut."
+            },
+            "speaker": null,
+            "at": null
+          },
+          {
+            "value": {
+              "kind": "text",
+              "text": "The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut."
+            },
+            "speaker": null,
+            "at": null
+          },
+          {
+            "value": {
+              "kind": "text",
+              "text": "The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty."
+            },
+            "speaker": null,
+            "at": null
+          },
+          {
+            "value": {
+              "kind": "text",
+              "text": "The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup."
+            },
+            "speaker": null,
+            "at": null
+          }
+        ]
+      }
+    ],
     "transcript": [
       {
         "speaker": "Shreyas",

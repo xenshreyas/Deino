@@ -143,6 +143,23 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "delete_view",
         ],
     ),
+    // ── AI-06 custom insights (features/insights.rs) ──
+    (
+        "insights",
+        &[
+            "templates",
+            "list",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "for_meeting",
+            "table",
+            "candidates",
+            "run",
+            "export_csv",
+        ],
+    ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── ORG-08 / AI-01 search (features/search.rs) ──

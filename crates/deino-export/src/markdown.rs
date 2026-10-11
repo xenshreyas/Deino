@@ -100,10 +100,35 @@ fn section_body(export: &MeetingExport, section: Section, style: LinkStyle) -> O
         Section::Notes => (heading::NOTES, notes(export.notes.as_deref())),
         Section::MyNotes => (heading::MY_NOTES, notes(export.my_notes.as_deref())),
         Section::ActionItems => (heading::ACTION_ITEMS, action_items(export, style)),
+        Section::Insights => (heading::INSIGHTS, insights(export)),
         Section::Transcript => (heading::TRANSCRIPT, transcript(export)),
-        Section::Insights => return None,
     };
     Some(format!("## {title}\n\n{body}"))
+}
+
+/// Each insight as a `###` heading over its answers, one list item each,
+/// then who said it and when.
+fn insights(export: &MeetingExport) -> String {
+    export
+        .insights
+        .iter()
+        .map(|insight| {
+            let answers: Vec<String> = insight
+                .answers
+                .iter()
+                .map(|answer| {
+                    let line = blocks::escape(&answer.line()).replace('\n', "\n  ");
+                    match answer.attribution() {
+                        Some(source) => format!("- {line} — {}", blocks::escape(&source)),
+                        None => format!("- {line}"),
+                    }
+                })
+                .collect();
+            let name = blocks::escape(&insight.name);
+            format!("### {name}\n\n{}", answers.join("\n"))
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
 
 fn attendees(export: &MeetingExport, style: LinkStyle) -> String {

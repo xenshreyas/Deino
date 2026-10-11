@@ -120,6 +120,14 @@
     for b in s.blocks { render-block(b) }
   } else if s.kind == "tasks" {
     stack(spacing: 0.8em, ..s.items.map(i => task(i.done, i.title, i.details)))
+  } else if s.kind == "insights" {
+    for insight in s.insights {
+      heading(level: 2, outlined: false, insight.name)
+      list(..insight.answers.map(a => {
+        a.text
+        if a.source != "" { text(fill: muted, size: 8.5pt, [ #h(3pt)— #a.source]) }
+      }))
+    }
   } else if s.kind == "transcript" {
     grid(
       columns: (2.6em, 1fr), column-gutter: 10pt,

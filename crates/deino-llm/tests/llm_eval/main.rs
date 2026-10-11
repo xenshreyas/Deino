@@ -15,11 +15,15 @@
 //!
 //! `extract.action_items` (AI-05) scores the extracted items of all eight
 //! fixtures against their ground truth (`action_items.rs`, `scoring.rs`).
+//! `extract.insights` (AI-06, `insights.rs`) runs the insights engine over
+//! them: the Decisions template scored on recall and attribution, and the
+//! typed Discovery scorecard checked field by field.
 //!
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval extract.action_items
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval notes.enhance
+//! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval extract.insights
 //! DEINO_EVAL=1 cargo test -p deino-llm --test llm_eval -- title
 //! ```
 //!
@@ -29,6 +33,7 @@
 mod action_items;
 mod cases;
 mod expectations;
+mod insights;
 mod live;
 mod notes;
 mod scoring;
@@ -50,6 +55,7 @@ fn main() {
     };
     trials.extend(action_items::trials(live_enabled()));
     trials.extend(notes::trials(live_enabled()));
+    trials.extend(insights::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 

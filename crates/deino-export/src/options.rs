@@ -94,7 +94,7 @@ pub enum Section {
     MyNotes,
     /// The action items.
     ActionItems,
-    /// Answers to the user's tracked questions (AI-06; empty until then).
+    /// The answers to the user's insights (AI-06).
     Insights,
     /// The speaker-labelled transcript with timestamps.
     Transcript,

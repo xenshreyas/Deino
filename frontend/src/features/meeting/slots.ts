@@ -10,7 +10,7 @@
  * |---|---|---|
  * | Notes tab | Enhanced (NOT-02, NOT-03) and My notes (NOT-01) | |
  * | Transcript tab | transcript view (`features/transcript`), with the inherited folder and re-transcribe tools | TRN-01 |
- * | Insights tab | empty state | AI-06 |
+ * | Insights tab | each insight's answers, attributed (AI-06) | |
  * | Clips tab | empty state | TRN-04 |
  * | Chat panel | empty state | AI-02 |
  * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
@@ -19,12 +19,13 @@
  */
 import type { ComponentType } from 'react';
 
+import { MeetingInsights } from '@/features/insights';
 import { ParticipantsPanel } from '@/features/speakers';
 
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { NotesSlot } from './slots/notes-slot';
-import { ChatPanelSlot, ClipsSlot, InsightsSlot } from './slots/placeholder-slots';
+import { ChatPanelSlot, ClipsSlot } from './slots/placeholder-slots';
 import { PlayerPlaceholder } from './slots/player-slot';
 import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
@@ -33,7 +34,7 @@ import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types
 export const MEETING_TABS: readonly MeetingTabSlot[] = [
   { id: 'notes', label: meetingCopy.notes, shortcut: '⌘1', Component: NotesSlot },
   { id: 'transcript', label: meetingCopy.transcript, shortcut: '⌘2', Component: TranscriptSlot },
-  { id: 'insights', label: meetingCopy.insights, shortcut: '⌘3', Component: InsightsSlot },
+  { id: 'insights', label: meetingCopy.insights, shortcut: '⌘3', Component: MeetingInsights },
   { id: 'clips', label: meetingCopy.clips, shortcut: '⌘4', Component: ClipsSlot },
 ];
 

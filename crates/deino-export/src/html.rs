@@ -50,8 +50,8 @@ fn section_body(export: &MeetingExport, section: Section) -> String {
         Section::Notes => (heading::NOTES, notes(export.notes.as_deref())),
         Section::MyNotes => (heading::MY_NOTES, notes(export.my_notes.as_deref())),
         Section::ActionItems => (heading::ACTION_ITEMS, action_items(export)),
+        Section::Insights => (heading::INSIGHTS, insights(export)),
         Section::Transcript => (heading::TRANSCRIPT, transcript(export)),
-        Section::Insights => return String::new(),
     };
     format!("<h2 style=\"font-size:16px;font-weight:600;margin:20px 0 8px\">{title}</h2>{body}")
 }
@@ -98,6 +98,32 @@ fn action_items(export: &MeetingExport) -> String {
         .collect::<Vec<_>>()
         .concat();
     format!("<ul style=\"list-style:none;padding-left:4px\">{items}</ul>")
+}
+
+/// Each insight's name as a small heading over a list of its answers, each
+/// followed by who said it and when, muted.
+fn insights(export: &MeetingExport) -> String {
+    export
+        .insights
+        .iter()
+        .map(|insight| {
+            let answers: String = insight
+                .answers
+                .iter()
+                .map(|answer| {
+                    let source = answer.attribution().map_or_else(String::new, |source| {
+                        format!(" <span data-role=\"meta\" style=\"{MUTED}\">— {}</span>", escape(&source))
+                    });
+                    let line = escape(&answer.line()).replace('\n', "<br>");
+                    format!("<li>{line}{source}</li>")
+                })
+                .collect();
+            format!(
+                "<h3 style=\"font-size:14px;font-weight:600;margin:12px 0 4px\">{}</h3><ul>{answers}</ul>",
+                escape(&insight.name)
+            )
+        })
+        .collect()
 }
 
 fn transcript(export: &MeetingExport) -> String {

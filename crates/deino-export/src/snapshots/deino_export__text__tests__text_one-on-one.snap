@@ -86,3 +86,15 @@ Action items
 [ ] Write Maya's staff-engineer promotion doc — Shreyas, due Oct 16, 2026
 [ ] Send Shreyas a list of the things she is proudest of from this year — Maya Chen, due Oct 12, 2026
 [ ] Write the incident communication rules (owners, hourly updates, single channel) into the incident runbook — Shreyas, due Oct 21, 2026
+
+Insights
+--------
+Decisions
+- Maya comes off the on-call rotation for the next two weeks, starting 7 October and returning on 21 October, with Shreyas as primary and Diego as secondary for sync. — Shreyas, 00:01
+- Maya takes Friday 9 October off.
+- Maya is paused from phone screens until the end of the month but will do final-round interviews for the senior backend role.
+- No contractor for the Microsoft side of Calendar Sync v2; hiring energy goes into the senior backend hire instead.
+- Calendar Sync v2 dates hold (beta 13 November, GA 4 December); a Google-only beta is a fallback to revisit in two weeks, not the plan.
+- The Microsoft subscription renewal design adds an hourly reconciliation sweep for unhealthy subscriptions and an alert when more than one percent of subscriptions are expired.
+- The recurring-event test harness (moved occurrences, cancelled occurrences, series time zone changes) is part of Calendar Sync v2 scope.
+- For customer-impacting incidents, Tom owns customer updates, Shreyas owns internal updates with an hourly cadence, and the person fixing it only talks in the incident channel.

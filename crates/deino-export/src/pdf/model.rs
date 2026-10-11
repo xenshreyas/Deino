@@ -39,10 +39,28 @@ enum PrintSection {
         heading: &'static str,
         items: Vec<Task>,
     },
+    Insights {
+        heading: &'static str,
+        insights: Vec<PrintInsight>,
+    },
     Transcript {
         heading: &'static str,
         lines: Vec<Line>,
     },
+}
+
+/// One insight: its name over its answers.
+#[derive(Serialize)]
+struct PrintInsight {
+    name: String,
+    answers: Vec<PrintAnswer>,
+}
+
+/// One answer and, muted after it, who said it and when.
+#[derive(Serialize)]
+struct PrintAnswer {
+    text: String,
+    source: String,
 }
 
 #[derive(Serialize)]
@@ -79,15 +97,15 @@ impl PrintModel {
             sections: export
                 .sections(options.sections)
                 .into_iter()
-                .filter_map(|section| section_of(export, section))
+                .map(|section| section_of(export, section))
                 .collect(),
         }
     }
 }
 
-fn section_of(export: &MeetingExport, section: Section) -> Option<PrintSection> {
+fn section_of(export: &MeetingExport, section: Section) -> PrintSection {
     let notes = |markdown: Option<&str>| doc::demote(doc::parse(markdown.unwrap_or_default()), 1);
-    Some(match section {
+    match section {
         Section::Attendees => PrintSection::Names {
             heading: heading::ATTENDEES,
             names: export
@@ -112,8 +130,29 @@ fn section_of(export: &MeetingExport, section: Section) -> Option<PrintSection> 
             heading: heading::TRANSCRIPT,
             lines: lines(export),
         },
-        Section::Insights => return None,
-    })
+        Section::Insights => PrintSection::Insights {
+            heading: heading::INSIGHTS,
+            insights: insights(export),
+        },
+    }
+}
+
+fn insights(export: &MeetingExport) -> Vec<PrintInsight> {
+    export
+        .insights
+        .iter()
+        .map(|insight| PrintInsight {
+            name: insight.name.clone(),
+            answers: insight
+                .answers
+                .iter()
+                .map(|answer| PrintAnswer {
+                    text: answer.line(),
+                    source: answer.attribution().unwrap_or_default(),
+                })
+                .collect(),
+        })
+        .collect()
 }
 
 fn tasks(export: &MeetingExport) -> Vec<Task> {

@@ -46,3 +46,13 @@ Action items
 [ ] Set up a forty-eight hour pre-release notice email to Fernhollow for sync changes — Tom Becker
 [ ] Have dispatchers spot-check this week's schedule for leftover duplicates and report to Tom — Owen Price, due Oct 7, 2026
 [ ] Have Fernhollow's billing person void the two draft invoices created from duplicate jobs — Owen Price, due Oct 9, 2026
+
+Insights
+--------
+Decisions
+- Fernhollow receives a service credit of one month of fees for all sixty technicians ($2,700 at $45 per technician), applied to the November invoice, covering the three double dispatches. — Tom Becker, 00:00
+- Owen and his two dispatch leads are added to Deino's release-notes email list.
+- Deino will send Fernhollow a notice forty-eight hours before any release that touches calendar sync; the office manager is left off that list.
+- Shreyas will deliver a written postmortem to Fernhollow by Friday 9 October.
+- Fernhollow will not join the Calendar Sync v2 beta and will wait for general availability.
+- Any support ticket about duplicate or missing jobs is now high priority by default.
