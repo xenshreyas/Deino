@@ -257,7 +257,11 @@ async fn legacy_writes_through_the_view_land_in_segments_and_signal_them() {
     assert_eq!(meeting_a[0].0, "3e8fd3c2-1111-4222-8333-444455556666");
     assert_eq!((meeting_a[0].3, meeting_a[0].4), (2_000, 2_500));
     let signal = changes.try_recv().unwrap();
-    assert_eq!(signal.tables, [Table::TranscriptSegments]);
+    // The search index follows the segments in the same commit (ORG-08).
+    assert_eq!(
+        signal.tables,
+        [Table::TranscriptSegments, Table::SearchDocuments]
+    );
     assert_eq!(changes.try_recv().unwrap_err(), TryRecvError::Empty);
 }
 
@@ -273,4 +277,34 @@ async fn deleting_a_meeting_cascades_to_its_segments() {
         .map(|row| row.1)
         .collect();
     assert_eq!(remaining, ["meeting-b"]);
+}
+
+#[tokio::test]
+async fn the_search_migration_indexes_every_existing_meeting_and_segment() {
+    let database = migrated_legacy_database().await;
+
+    let indexed: Vec<(String, i64)> =
+        sqlx::query_as("SELECT kind, count(*) FROM search_documents GROUP BY kind ORDER BY kind")
+            .fetch_all(database.reader())
+            .await
+            .unwrap();
+    let meetings: i64 = sqlx::query_scalar("SELECT count(*) FROM meetings")
+        .fetch_one(database.reader())
+        .await
+        .unwrap();
+    let segments = i64::try_from(segments(&database).await.len()).unwrap();
+
+    assert_eq!(
+        indexed,
+        [
+            ("meeting".to_owned(), meetings),
+            ("segment".to_owned(), segments)
+        ]
+    );
+    let matched: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM search_fts WHERE search_fts MATCH 'untimed'")
+            .fetch_one(database.reader())
+            .await
+            .unwrap();
+    assert_eq!(matched, 1, "the FTS index was built from the documents");
 }

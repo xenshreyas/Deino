@@ -72,6 +72,11 @@ pub enum Table {
     IntegrationConnectionScopes,
     /// The delivery log: what Deino sent to which integration (INT-00).
     IntegrationDeliveries,
+    /// The keyword search index's documents (ORG-08), kept in step with
+    /// their sources by triggers; its FTS5 shadow tables are not tracked.
+    SearchDocuments,
+    /// Embedded chunks of meetings for semantic search (AI-01).
+    Embeddings,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -79,7 +84,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 30] = [
+    pub const ALL: [Self; 32] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -109,6 +114,8 @@ impl Table {
         Self::IntegrationConnections,
         Self::IntegrationConnectionScopes,
         Self::IntegrationDeliveries,
+        Self::SearchDocuments,
+        Self::Embeddings,
         Self::ExampleNotes,
     ];
 
@@ -147,6 +154,8 @@ impl Table {
             "integration_connections" => Self::IntegrationConnections,
             "integration_connection_scopes" => Self::IntegrationConnectionScopes,
             "integration_deliveries" => Self::IntegrationDeliveries,
+            "search_documents" => Self::SearchDocuments,
+            "embeddings" => Self::Embeddings,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })
@@ -172,5 +181,7 @@ mod tests {
         // A view never reaches the update hook; writes through it report the
         // table underneath (`transcript_segments`).
         assert_eq!(Table::from_name("transcripts"), None);
+        // FTS5 keeps its index in shadow tables; `search_documents` reports it.
+        assert_eq!(Table::from_name("search_fts_data"), None);
     }
 }
