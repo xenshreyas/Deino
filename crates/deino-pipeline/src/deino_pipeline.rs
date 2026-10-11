@@ -9,7 +9,7 @@
 //! - [`stage`]: the contract every stage implements ([`PipelineStage`],
 //!   [`StageCtx`], [`StageOutcome`], [`StageError`]).
 //! - [`registry`]: the one list of stages; adding a stage is one line there.
-//! - [`stages`]: the stages themselves ([`LegacySummaryStage`] until NOT-02).
+//! - [`stages`]: the stages themselves (`diarize`, `enhance_notes`, `auto_title`).
 //! - [`PipelineService`]: the API the app calls (`enqueue`, `rerun`,
 //!   `status`, `cancel`, `start`, `shutdown`), and [`PipelineTrigger`], which
 //!   enqueues a meeting when the meetings lifecycle moves it to `processing`.
@@ -62,12 +62,13 @@ pub use sleeper::FakeSleeper;
 pub use sleeper::{ClockSleeper, Sleeper};
 pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
 pub use stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, IdentifySpeakersStage, LegacySummaryStage,
-    Summarizer, SummaryInput,
+    AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
+    EnhanceNotesStage, IdentifySpeakersStage, MeetingTitler, NotesEnhancer,
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::{
-    RecordedAutoFiling, RecordedAutoTags, RecordedIdentifications, RecordedSummaries,
+    FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer,
+    RecordedIdentifications, RecordedTitler,
     ScriptedAutoExporter,
 };
 pub use trigger::PipelineTrigger;

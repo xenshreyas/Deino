@@ -21,6 +21,7 @@ deino-audio.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
+deino-llm.workspace = true
 log.workspace = true
 serde.workspace = true
 specta.workspace = true
