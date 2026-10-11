@@ -109,10 +109,11 @@ async fn move_attendance(
     Ok(())
 }
 
-/// Points @mentions in the user's notes at the survivor. A mention stores
-/// the person's UUID in the opaque TipTap JSON (`attrs.id`); a 36-character
-/// UUID never occurs there by chance, so replacing the text is exact. The
-/// chip keeps the label it was written with.
+/// Points @mentions at the survivor, in the user's notes and in every
+/// version of the enhanced notes (NOT-02). A mention stores the person's
+/// UUID in the opaque TipTap JSON (`attrs.id`); a 36-character UUID never
+/// occurs there by chance, so replacing the text is exact. The chip keeps
+/// the label it was written with, and the Markdown copies hold labels only.
 async fn move_mentions(
     connection: &mut SqliteConnection,
     merge: &PersonMerge,
@@ -121,6 +122,14 @@ async fn move_mentions(
     sqlx::query!(
         "UPDATE meeting_notes SET notes_json = replace(notes_json, ?2, ?1)
          WHERE instr(notes_json, ?2) > 0",
+        to,
+        from,
+    )
+    .execute(&mut *connection)
+    .await?;
+    sqlx::query!(
+        "UPDATE enhanced_notes SET doc_json = replace(doc_json, ?2, ?1)
+         WHERE instr(doc_json, ?2) > 0",
         to,
         from,
     )

@@ -165,6 +165,26 @@ async fn speakers_action_items_and_mentions_move() {
 }
 
 #[tokio::test]
+async fn mentions_in_enhanced_notes_move_too() {
+    let merge = Merge::new().await;
+    merge.attendance().await;
+    let (s, a) = merge.ids();
+    let doc = format!(
+        r#"{{"type":"doc","content":[{{"type":"paragraph","content":[
+            {{"type":"mention","attrs":{{"id":"{a}","label":"Priya"}}}}]}}]}}"#
+    );
+    let insert = "INSERT INTO enhanced_notes (meeting_id, version, doc_json, markdown, model,
+        created_at, updated_at) VALUES ('only', 1, ?1, '@Priya', 'mock', ?2, ?2)";
+    merge.world.run(insert, &[&doc, NOW]).await;
+
+    merge.merge().await;
+
+    let sql = "SELECT doc_json FROM enhanced_notes WHERE meeting_id = ?1";
+    let stored = merge.text(sql, "only").await.unwrap();
+    assert!(stored.contains(&s) && !stored.contains(&a), "{stored}");
+}
+
+#[tokio::test]
 async fn the_address_and_earlier_merges_point_at_the_survivor() {
     let merge = Merge::new().await;
 

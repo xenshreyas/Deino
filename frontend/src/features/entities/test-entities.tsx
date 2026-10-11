@@ -12,7 +12,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
-import type { ComponentType } from 'react';
+import type { ReactNode } from 'react';
 
 import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
@@ -128,7 +128,7 @@ const PATHS = [
 ] as const;
 
 /** Renders `Screen` at `url` with every route the entity pages link to. */
-export function renderAt(url: string, Screen: ComponentType) {
+export function renderAt(url: string, Screen: () => ReactNode) {
   const root = createRootRoute({ component: Screen });
   const routes = PATHS.map((path) => createRoute({ getParentRoute: () => root, path }));
   const router = createRouter({
