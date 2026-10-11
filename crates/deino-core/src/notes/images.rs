@@ -7,7 +7,7 @@
 //! asset protocol, scoped to the app data folder, can show them.
 
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use async_trait::async_trait;
 use deino_domain::MeetingId;
@@ -23,10 +23,6 @@ pub trait NoteImages: Send + Sync {
 
     /// Stores `bytes` as `name` in the meeting's images folder, atomically.
     async fn write(&self, meeting: &MeetingId, name: &ImageName, bytes: &[u8]) -> io::Result<()>;
-
-    /// Moves every image of `from` into `into`'s images folder. Image names
-    /// are UUIDs, so nothing is overwritten; moving twice is harmless.
-    async fn relocate(&self, from: &MeetingId, into: &MeetingId) -> io::Result<()>;
 }
 
 /// [`NoteImages`] on disk, under one root folder.
@@ -70,29 +66,6 @@ impl NoteImages for FsNoteImages {
         tokio::fs::write(&partial, bytes).await?;
         tokio::fs::rename(&partial, folder.join(name.to_string())).await
     }
-
-    async fn relocate(&self, from: &MeetingId, into: &MeetingId) -> io::Result<()> {
-        let source = self.images(from)?;
-        if !tokio::fs::try_exists(&source).await? {
-            return Ok(());
-        }
-        let target = self.images(into)?;
-        tokio::fs::create_dir_all(&target).await?;
-        let mut entries = tokio::fs::read_dir(&source).await?;
-        while let Some(entry) = entries.next_entry().await? {
-            tokio::fs::rename(entry.path(), target.join(entry.file_name())).await?;
-        }
-        remove_empty(&source).await;
-        remove_empty(&self.folder(from)?).await;
-        Ok(())
-    }
-}
-
-/// Removes `folder` if it is empty; a folder with anything left stays.
-async fn remove_empty(folder: &Path) {
-    if let Err(error) = tokio::fs::remove_dir(folder).await {
-        log::debug!(target: "notes", "kept {}: {error}", folder.display());
-    }
 }
 
 #[cfg(test)]
@@ -127,29 +100,6 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn relocating_moves_every_image_and_drops_the_empty_folder() {
-        let root = tempfile::tempdir().unwrap();
-        let images = FsNoteImages::new(root.path());
-        let (draft, saved) = (
-            MeetingId::new("meeting-draft"),
-            MeetingId::new("meeting-saved"),
-        );
-        images.write(&draft, &name(1), b"a").await.unwrap();
-        images.write(&saved, &name(2), b"b").await.unwrap();
-
-        images.relocate(&draft, &saved).await.unwrap();
-        images.relocate(&draft, &saved).await.unwrap();
-
-        assert!(!root.path().join("meeting-draft").exists());
-        assert_eq!(
-            std::fs::read_dir(root.path().join("meeting-saved/images"))
-                .unwrap()
-                .count(),
-            2
-        );
-    }
-
     #[test]
     fn meeting_ids_that_are_not_plain_names_have_no_folder() {
         let images = FsNoteImages::new("/data/meetings");
@@ -159,6 +109,9 @@ mod tests {
         let folder = images
             .folder(&MeetingId::new("meeting-fixture-standup"))
             .unwrap();
-        assert_eq!(folder, Path::new("/data/meetings/meeting-fixture-standup"));
+        assert_eq!(
+            folder,
+            std::path::Path::new("/data/meetings/meeting-fixture-standup")
+        );
     }
 }

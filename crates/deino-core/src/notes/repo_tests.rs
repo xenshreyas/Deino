@@ -64,39 +64,6 @@ async fn saves_replace_and_keep_created_at(repo: &impl NotesRepo) {
     assert_eq!(repo.get(&MeetingId::new("meeting-b")).await.unwrap(), None);
 }
 
-/// A transfer saves the target and removes the draft's notes, once.
-async fn transfers_remove_the_draft_once(repo: &impl NotesRepo) {
-    repo.save(&notes("meeting-draft", "typed live", at(SAVED_AT)))
-        .await
-        .unwrap();
-    let merged = notes("meeting-a", "typed live", at(SAVED_AT));
-
-    assert!(
-        repo.transfer(&merged, &MeetingId::new("meeting-draft"))
-            .await
-            .unwrap()
-    );
-    assert!(
-        !repo
-            .transfer(&merged, &MeetingId::new("meeting-draft"))
-            .await
-            .unwrap()
-    );
-
-    assert_eq!(
-        repo.get(&MeetingId::new("meeting-draft")).await.unwrap(),
-        None
-    );
-    assert_eq!(
-        repo.get(&MeetingId::new("meeting-a"))
-            .await
-            .unwrap()
-            .unwrap()
-            .doc,
-        doc("typed live")
-    );
-}
-
 async fn sqlite_repo() -> SqliteNotesRepo {
     let database = test_db().await;
     seed::meeting(&database, "meeting-a", "Standup", at(SAVED_AT)).await;
@@ -112,44 +79,6 @@ async fn sqlite_saves_replace_and_keep_created_at() {
 #[tokio::test]
 async fn fake_saves_replace_and_keep_created_at() {
     saves_replace_and_keep_created_at(&FakeNotesRepo::default()).await;
-}
-
-#[tokio::test]
-async fn sqlite_transfers_remove_the_draft_once() {
-    let repo = sqlite_repo().await;
-    transfers_remove_the_draft_once(&repo).await;
-    let meetings = SqliteMeetingRepo::new(repo.database.clone());
-    assert_eq!(
-        meetings
-            .state(&MeetingId::new("meeting-draft"))
-            .await
-            .unwrap(),
-        None
-    );
-}
-
-#[tokio::test]
-async fn fake_transfers_remove_the_draft_once() {
-    let repo = FakeNotesRepo::with_drafts([MeetingId::new("meeting-draft")]);
-    transfers_remove_the_draft_once(&repo).await;
-    assert!(repo.drafts().is_empty());
-}
-
-#[tokio::test]
-async fn a_recorded_meeting_is_never_deleted_as_a_draft() {
-    let repo = sqlite_repo().await;
-    let target = notes("meeting-draft", "x", at(SAVED_AT));
-
-    let moved = repo
-        .transfer(&target, &MeetingId::new("meeting-a"))
-        .await
-        .unwrap();
-
-    assert!(!moved);
-    assert_eq!(
-        repo.get(&MeetingId::new("meeting-draft")).await.unwrap(),
-        None
-    );
 }
 
 #[tokio::test]

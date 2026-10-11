@@ -1,6 +1,6 @@
 //! In-memory notes ports for tests, honouring the traits' contracts.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::io;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -12,27 +12,10 @@ use deino_domain::MeetingId;
 use super::{ImageName, NoteImages, NotesEvents, NotesRepo, SavedNotes, StoredNotes};
 use crate::testing::lock;
 
-/// Keeps notes in a map. `transfer` succeeds for drafts registered with
-/// [`FakeNotesRepo::with_drafts`] (the scheduled meetings it may delete).
+/// Keeps notes in a map.
 #[derive(Debug, Default)]
 pub struct FakeNotesRepo {
     notes: Mutex<BTreeMap<MeetingId, StoredNotes>>,
-    drafts: Mutex<BTreeSet<MeetingId>>,
-}
-
-impl FakeNotesRepo {
-    /// A repository that may delete these scheduled drafts.
-    pub fn with_drafts(drafts: impl IntoIterator<Item = MeetingId>) -> Self {
-        Self {
-            drafts: Mutex::new(drafts.into_iter().collect()),
-            ..Self::default()
-        }
-    }
-
-    /// The drafts not deleted yet.
-    pub fn drafts(&self) -> Vec<MeetingId> {
-        lock(&self.drafts).iter().cloned().collect()
-    }
 }
 
 #[async_trait]
@@ -50,15 +33,6 @@ impl NotesRepo for FakeNotesRepo {
         notes.created_at = created_at;
         stored.insert(notes.meeting_id.clone(), notes);
         Ok(())
-    }
-
-    async fn transfer(&self, notes: &StoredNotes, draft: &MeetingId) -> Result<bool, DbError> {
-        if !lock(&self.drafts).remove(draft) {
-            return Ok(false);
-        }
-        lock(&self.notes).remove(draft);
-        self.save(notes).await?;
-        Ok(true)
     }
 }
 
@@ -88,21 +62,6 @@ impl NoteImages for MemoryNoteImages {
     async fn write(&self, meeting: &MeetingId, name: &ImageName, bytes: &[u8]) -> io::Result<()> {
         let key = (meeting.clone(), name.to_string());
         lock(&self.files).insert(key, bytes.to_vec());
-        Ok(())
-    }
-
-    async fn relocate(&self, from: &MeetingId, into: &MeetingId) -> io::Result<()> {
-        let mut files = lock(&self.files);
-        let moving: Vec<_> = files
-            .keys()
-            .filter(|(owner, _)| owner == from)
-            .cloned()
-            .collect();
-        for key in moving {
-            if let Some(bytes) = files.remove(&key) {
-                files.insert((into.clone(), key.1), bytes);
-            }
-        }
         Ok(())
     }
 }

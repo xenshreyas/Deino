@@ -5,9 +5,10 @@
 //! the derived Readable Markdown in `notes_markdown`), so notes typed during
 //! a recording are on disk within a second and survive a crash. It also
 //! stores pasted and dropped images in the meeting's folder
-//! ([`NoteImages`]), creates `scheduled` meetings for notes written before a
-//! recording ([`NoteService::create_scheduled`]), and moves a draft's notes
-//! into the meeting a recording saved ([`NoteService::adopt`]).
+//! ([`NoteImages`]), and creates `scheduled` meetings for notes written
+//! ahead of a meeting ([`NoteService::create_scheduled`]). A live
+//! recording's notes go straight into its meeting, which the recorder
+//! creates when recording starts (FND-05b).
 //!
 //! | File | Role |
 //! |---|---|
@@ -16,10 +17,9 @@
 //! | `repo.rs` | [`NotesRepo`] and [`SqliteNotesRepo`] (SQL only) |
 //! | `images.rs` | [`NoteImages`] and [`FsNoteImages`] |
 //! | `events.rs` | [`NotesEvents`] |
-//! | `service.rs`, `adopt.rs` | [`NoteService`] |
+//! | `service.rs` | [`NoteService`] |
 //! | `fake.rs` | in-memory ports for tests |
 
-mod adopt;
 mod error;
 mod events;
 #[cfg(any(test, feature = "test-support"))]

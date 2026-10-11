@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::{Database, DbError};
 use deino_doc::Doc;
-use deino_domain::{MeetingId, MeetingStatus};
+use deino_domain::MeetingId;
 use sqlx::SqliteConnection;
 
 use super::StoredNotes;
@@ -22,11 +22,6 @@ pub trait NotesRepo: Send + Sync {
 
     /// Creates or replaces the meeting's notes, keeping the first `created_at`.
     async fn save(&self, notes: &StoredNotes) -> Result<(), DbError>;
-
-    /// Saves `notes` and deletes the scheduled meeting `draft` (with its own
-    /// notes) in one transaction. Returns `false`, changing nothing, when
-    /// `draft` is missing or no longer scheduled.
-    async fn transfer(&self, notes: &StoredNotes, draft: &MeetingId) -> Result<bool, DbError>;
 }
 
 /// [`NotesRepo`] over Deino's SQLite database.
@@ -54,24 +49,6 @@ impl NotesRepo for SqliteNotesRepo {
     async fn save(&self, notes: &StoredNotes) -> Result<(), DbError> {
         let mut connection = self.database.writer().acquire().await?;
         upsert(&mut connection, notes).await
-    }
-
-    async fn transfer(&self, notes: &StoredNotes, draft: &MeetingId) -> Result<bool, DbError> {
-        let mut transaction = self.database.writer().begin().await?;
-        let scheduled = MeetingStatus::Scheduled;
-        let deleted = sqlx::query!(
-            "DELETE FROM meetings WHERE id = ?1 AND status = ?2",
-            draft,
-            scheduled,
-        )
-        .execute(&mut *transaction)
-        .await?;
-        if deleted.rows_affected() == 0 {
-            return Ok(false);
-        }
-        upsert(&mut transaction, notes).await?;
-        transaction.commit().await?;
-        Ok(true)
     }
 }
 
