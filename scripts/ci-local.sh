@@ -230,6 +230,35 @@ summary() {
     echo "$status"
 }
 
+# ── Machine-wide lock ────────────────────────────────────────────────────────
+# Parallel worktrees each running the full gate overloads the machine (load
+# 100+), and timing-sensitive tests then flake. One gate runs at a time; the
+# others wait. A lock whose owner died is reclaimed. DEINO_GATE_NO_LOCK=1 skips it.
+readonly GATE_LOCK="${HOME}/.cache/deino/gate.lock"
+
+acquire_gate_lock() {
+    [[ "${DEINO_GATE_NO_LOCK:-}" == 1 ]] && return 0
+    mkdir -p "$(dirname "$GATE_LOCK")"
+    local waited=0 owner
+    until mkdir "$GATE_LOCK" 2>/dev/null; do
+        owner="$(cat "$GATE_LOCK/pid" 2>/dev/null || true)"
+        if [[ -n "$owner" ]] && ! kill -0 "$owner" 2>/dev/null; then
+            rm -rf "$GATE_LOCK"
+            continue
+        fi
+        ((waited % 60 == 0)) && echo "Waiting for another gate run (pid ${owner:-?}) to finish…"
+        sleep 5
+        waited=$((waited + 5))
+    done
+    echo $$ >"$GATE_LOCK/pid"
+    trap release_gate_lock EXIT
+}
+
+release_gate_lock() {
+    [[ "$(cat "$GATE_LOCK/pid" 2>/dev/null)" == "$$" ]] && rm -rf "$GATE_LOCK"
+    return 0
+}
+
 main() {
     case "${1:-}" in
         -h | --help | --list) usage && return 0 ;;
@@ -241,6 +270,7 @@ main() {
         tools+=("${needed[@]}")
     done
     require_tools "${tools[@]}"
+    acquire_gate_lock
 
     results=()
     started=$SECONDS
