@@ -10,7 +10,8 @@ and model, streams the answer, and meters the call into `llm_calls`.
 
 - `Gateway` (`gateway.rs`): `complete`, `stream`, `structured::<T>()`
   (`structured.rs`: schemars draft-07 with inlined subschemas, one repair
-  retry), `with_tools` (`tools.rs`: typed `Tool`s, a step-limited loop),
+  retry; `structured_as` takes a schema built at run time, for AI-06's
+  per-insight fields), `with_tools` (`tools.rs`: typed `Tool`s, a step-limited loop),
   `embed` (always local), and usage metering (`gateway/metering.rs`).
 - `Route` and `RouteTier` (`route.rs`), `Router` (`router.rs`): per-route
   user choices over the §4.3 defaults (Claude Sonnet/Haiku with a key, the

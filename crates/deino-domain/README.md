@@ -38,6 +38,11 @@ crate and across IPC. No I/O, no Tauri.
 - The `LocalZone` port (`zone.rs`, ADR 0028): the user's time zone for local
   days (`day_of`, `at`, `start_of`); `SystemZone` over the Mac's zone and
   `FixedZone` for tests. Due days are stored as `NOON` local.
+- `Condition` and `ConditionGroups` (`conditions.rs`, AI-06, shared with
+  AUT-01): which meetings something applies to, and `MeetingFacts`, what
+  they test; pure evaluation (AND within a group, OR across, none = every
+  meeting) and `normalized`. `InsightId` (`id.rs`), `InsightStatus` and
+  `InsightApplyMode` (`enums.rs`).
 
 ## Does Not Own
 

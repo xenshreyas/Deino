@@ -16,7 +16,9 @@ typed `MeetingExport` and `RenderOptions` in, a file's bytes out.
   `subtitles` (SRT, WebVTT), `html` (the rich clipboard fragment and the
   preview), `docx` (`docx-rs`, re-deflated), `pdf` (Typst with
   `template.typ` and the bundled Inter), `csv` (meetings, action items,
-  people), `mailto`.
+  people, insights; `insight_table`, one insight's answers across meetings
+  with the user's field names as headers), `mailto`. Every rich format
+  renders the Insights section (`insights`: `InsightExport`, AI-06).
 - `doc`: notes Markdown parsed once into typed `Block`s (pulldown-cmark).
 - `naming`: `NameTemplate` (`{date} {title}.md`, `{yyyy}/{mm}`) and
   `sanitize`, so no title can escape the export folder.
