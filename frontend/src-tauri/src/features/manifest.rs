@@ -283,8 +283,20 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "deliveries",
         ],
     ),
-    // ── TRN-01 transcript view (features/transcript.rs) ──
-    ("transcript", &["get"]),
+    // ── TRN-01 / TRN-02 transcript view and edits (features/transcript.rs) ──
+    (
+        "transcript",
+        &[
+            "get",
+            "edit",
+            "delete",
+            "restore",
+            "preview_replace",
+            "replace",
+        ],
+    ),
+    // ── TRN-03 meeting player (features/player.rs) ──
+    ("player", &["media", "download"]),
     // ── FND-11 onboarding: the permissions it asks for ──
     (
         "onboarding",

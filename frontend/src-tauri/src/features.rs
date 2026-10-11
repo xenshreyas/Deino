@@ -41,6 +41,7 @@ pub mod notes;
 pub mod onboarding;
 pub mod people;
 pub mod pipeline;
+pub mod player;
 pub mod profile;
 pub mod recording;
 pub mod search;
@@ -89,6 +90,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (speakers::NAME, speakers::specta()),
         (transcript::NAME, transcript::specta()),
         (vocabulary::NAME, vocabulary::specta()),
+        (player::NAME, player::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

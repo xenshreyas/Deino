@@ -47,6 +47,7 @@ mod search;
 mod speakers;
 mod stt;
 mod transcript;
+mod player;
 mod vocabulary;
 
 use std::sync::Arc;
@@ -199,9 +200,9 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 
 /// Wires the services that need only the database: [`Services`], folders and
 /// tags, speakers (CAP-04), the vocabulary (TRN-05), the notepad, the sample
-/// meeting (FND-11), the egress log, the fixture seeder (debug builds) and the
-/// `DbChanged` bridge. Returns folders and tags, whose auto-tagger the
-/// pipeline needs once the gateway is up.
+/// meeting (FND-11), the player (TRN-03), the egress log, the fixture seeder
+/// (debug builds) and the `DbChanged` bridge. Returns folders and tags,
+/// whose auto-tagger the pipeline needs once the gateway is up.
 fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
     Services::build(database, clock).manage(app);
     let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
@@ -211,6 +212,7 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     Vocabulary::build(database, clock).manage(app);
     notepad::attach_notepad(app, database, clock);
     onboarding::attach_sample(app, database, clock);
+    player::attach_player(app, database);
     network::attach_network_log(app, database);
     #[cfg(debug_assertions)]
     developer::attach_fixture_seeder(app, database);
@@ -219,10 +221,11 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
 }
 
 /// Wires the services that run on their own once the pipeline is up: the
-/// live recorder, calendar sync (its scheduler starts here) and the
-/// integrations service.
+/// live recorder, the transcript edits (their re-index queue is search's),
+/// calendar sync (its scheduler starts here) and the integrations service.
 fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     recording::attach_recording(app, database);
+    transcript::attach_transcript_edits(app, database, clock);
     calendar::attach_calendar(app, database, clock);
     integrations::attach_integrations(app, database, clock);
 }

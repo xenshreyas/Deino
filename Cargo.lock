@@ -1918,7 +1918,6 @@ dependencies = [
  "tauri-build",
  "tauri-nspanel",
  "tauri-plugin-dialog",
- "tauri-plugin-fs",
  "tauri-plugin-log",
  "tauri-plugin-notification",
  "tauri-plugin-process",

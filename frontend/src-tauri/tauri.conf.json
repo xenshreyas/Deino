@@ -40,7 +40,8 @@
             "assetProtocol": {
                 "enable": true,
                 "scope": [
-                    "$APPDATA/**"
+                    "$APPDATA/recordings/**",
+                    "$APPDATA/meetings/**"
                 ]
             }
         }

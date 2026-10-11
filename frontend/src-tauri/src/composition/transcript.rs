@@ -1,14 +1,21 @@
 //! Wiring for the transcript stages: `final_transcription` (CAP-08) over
 //! `deino-recording`'s `OfflineTranscriber` (the finished tracks decoded
 //! with `ExtAudioFile`, the batch engine chosen in Settings), its re-pass
-//! setting, and `vocab_fixups` (TRN-05) over the vocabulary's fixups.
+//! setting, and `vocab_fixups` (TRN-05) over the vocabulary's fixups; and
+//! the user's transcript edits (TRN-02, ADR 0038), re-indexed through the
+//! `ReindexQueue` that `search::attach_gateway_and_search` manages.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::final_transcription::{HeardSpan, TrackError, TrackRequest, TrackTranscriber};
+use deino_core::search::ReindexQueue;
+use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::SettingsService;
+use deino_core::transcript::{TranscriptEditDeps, TranscriptEditService, TranscriptIndexer};
 use deino_core::vocabulary::FixupService;
+use deino_db::Database;
+use deino_domain::Clock;
 use deino_recording::{NativeDecoder, OfflineTranscriber};
 use tauri::{AppHandle, Manager};
 
@@ -59,4 +66,22 @@ impl TrackTranscriber for NoTranscription {
             "speech-to-text could not start".into(),
         ))
     }
+}
+
+/// Manages `Arc<TranscriptEditService>`; logs and skips it when search (and
+/// so the re-index queue) was not wired.
+pub(super) fn attach_transcript_edits(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
+    let Some(queue) = app.try_state::<Arc<ReindexQueue>>() else {
+        log::error!(target: "startup", "the re-index queue is missing; transcript edits are unavailable");
+        return;
+    };
+    let indexer: Arc<dyn TranscriptIndexer> = queue.inner().clone();
+    let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
+    let service = TranscriptEditService::new(TranscriptEditDeps {
+        editor: segments.clone(),
+        writer: segments,
+        indexer,
+        clock: Arc::clone(clock),
+    });
+    app.manage(Arc::new(service));
 }
