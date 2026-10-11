@@ -193,7 +193,23 @@ async fn soft_deleted_segments_and_trashed_meetings_never_match() {
     );
 }
 
-/// Notes and a summary for meeting-a, an action item and a person.
+/// Writes version `version` of a meeting's enhanced notes (NOT-02).
+async fn enhanced_notes(database: &Database, meeting: &str, version: i64, markdown: &str) {
+    sqlx::query(
+        r#"INSERT INTO enhanced_notes
+            (meeting_id, version, doc_json, markdown, model, created_at, updated_at)
+        VALUES (?1, ?2, '{"type":"doc","content":[]}', ?3, 'test:model', '', '')"#,
+    )
+    .bind(meeting)
+    .bind(version)
+    .bind(markdown)
+    .execute(database.writer())
+    .await
+    .unwrap();
+}
+
+/// Notes and two versions of enhanced notes for meeting-a, an action item
+/// and a person.
 async fn with_entities(database: &Database) {
     execute(
         database,
@@ -201,13 +217,8 @@ async fn with_entities(database: &Database) {
         VALUES ('meeting-a', '# Risks\n- Graph renewals', '', '')",
     )
     .await;
-    execute(
-        database,
-        r#"INSERT INTO summary_processes (meeting_id, status, created_at, updated_at, result)
-        VALUES ('meeting-a', 'completed', '', '', '{"markdown": "Decided to hire"}'),
-               ('meeting-b', 'failed', '', '', 'not json')"#,
-    )
-    .await;
+    enhanced_notes(database, "meeting-a", 1, "Decided to postpone").await;
+    enhanced_notes(database, "meeting-a", 2, "Decided to hire").await;
     execute(database, "INSERT INTO action_items (id, meeting_id, title, created_by, created_at, updated_at)
         VALUES ('0192f3a0-0000-7000-8000-0000000000c1', 'meeting-a', 'Send the deck', 'user', '', '')").await;
     execute(
@@ -449,5 +460,33 @@ async fn trigger_lookups_use_the_kind_and_ref_index() {
         plan.iter()
             .any(|step| step.contains("sqlite_autoindex_search_documents_1")),
         "{plan:?}"
+    );
+}
+
+#[tokio::test]
+async fn only_the_newest_enhanced_notes_version_is_searchable() {
+    let database = seeded().await;
+    with_entities(&database).await;
+
+    assert!(search(&database, "postpone").await.is_empty());
+    execute(
+        &database,
+        "UPDATE enhanced_notes SET markdown = 'Decided to wait' WHERE meeting_id = 'meeting-a' AND version = 2",
+    )
+    .await;
+    assert!(search(&database, "hire").await.is_empty());
+    assert_eq!(
+        refs(&search(&database, "wait").await),
+        [(HitKind::Summary, "meeting-a")]
+    );
+    execute(
+        &database,
+        "DELETE FROM enhanced_notes WHERE meeting_id = 'meeting-a' AND version = 2",
+    )
+    .await;
+    assert_eq!(
+        refs(&search(&database, "postpone").await),
+        [(HitKind::Summary, "meeting-a")],
+        "deleting the newest version falls back to the one before"
     );
 }

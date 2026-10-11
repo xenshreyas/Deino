@@ -1,15 +1,15 @@
--- AI-01: the semantic index (PARITY_PLAN §4.4, ADR 0029).
+-- AI-01: the semantic index (PARITY_PLAN §4.4, ADR 0032).
 --
 -- One row per embedded chunk: a window of the transcript (about 400 tokens,
 -- cut at speaker turns, overlapping by one turn) or a section of the user's
--- notes or the summary. Vectors are little-endian f32 BLOBs, unit length,
+-- notes or of the AI's enhanced notes. Vectors are little-endian f32 BLOBs, unit length,
 -- searched by an in-memory cosine index in `deino_core::search::semantic`
--- (ADR 0029 explains why not the sqlite-vec extension).
+-- (ADR 0032 explains why not the sqlite-vec extension).
 --
 -- Denormalised on purpose (§3A): `text` copies the chunk's source text, so
 -- results can show it and chat (AI-02) can quote it without re-reading the
 -- transcript. Source of truth: `transcript_segments`, `meeting_notes` and
--- `summary_processes`. The one writer is `SqliteEmbeddingStore::replace`
+-- `enhanced_notes` (the newest version). The one writer is `SqliteEmbeddingStore::replace`
 -- (the `index` pipeline stage and the backfill), which replaces a meeting's
 -- chunks in one transaction and reuses the vector of every chunk whose text
 -- and model are unchanged.

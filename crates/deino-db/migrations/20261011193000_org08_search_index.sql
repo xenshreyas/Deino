@@ -1,4 +1,4 @@
--- ORG-08: the keyword search index (PARITY_PLAN §4.4, ADR 0029).
+-- ORG-08: the keyword search index (PARITY_PLAN §4.4, ADR 0032).
 --
 -- Two parts, both denormalised copies kept in sync by triggers in this file
 -- (§3A "Database design"):
@@ -17,7 +17,7 @@
 -- |---------------|-----------------------------------------|-------------|---------------|-------------------------|-----------|
 -- | `meeting`     | meetings.title                          | meeting id  | title         | ''                      | NULL      |
 -- | `note`        | meeting_notes.notes_markdown (Readable) | meeting id  | ''            | the Markdown            | NULL      |
--- | `summary`     | summary_processes.result ($.markdown)   | meeting id  | ''            | the Markdown            | NULL      |
+-- | `summary`     | enhanced_notes.markdown, newest version | meeting id  | ''            | the Markdown            | NULL      |
 -- | `segment`     | transcript_segments (not soft-deleted)  | segment id  | ''            | text                    | start_ms  |
 -- | `action_item` | action_items                            | item id     | title         | description             | NULL      |
 -- | `person`      | people (not merged)                     | person id   | name          | email and job title     | NULL      |
@@ -132,31 +132,46 @@ BEGIN
     DELETE FROM search_documents WHERE kind = 'note' AND ref_id = OLD.meeting_id;
 END;
 
--- Summaries (the legacy `summary_processes` result until NOT-02) -------------
--- `result` is the legacy JSON (`{"markdown": ..., ...}`) or NULL while the
--- summary runs. Nested CASEs, because SQLite may evaluate the terms of a
--- WHERE in any order and `json_type` fails on text that is not JSON.
+-- Enhanced notes (NOT-02) ----------------------------------------------------
+-- A meeting's AI notes are versioned; only the newest version is searchable,
+-- as one `summary` document per meeting. Every write re-derives it: a new
+-- version replaces the previous one's document, an edit of the newest
+-- version updates it, and deleting versions falls back to the newest left.
 
-CREATE TRIGGER search_summaries_after_insert AFTER INSERT ON summary_processes
+CREATE TRIGGER search_enhanced_notes_after_insert AFTER INSERT ON enhanced_notes
 BEGIN
+    DELETE FROM search_documents WHERE kind = 'summary' AND ref_id = NEW.meeting_id;
     INSERT INTO search_documents (kind, ref_id, meeting_id, body)
-    SELECT 'summary', NEW.meeting_id, NEW.meeting_id, markdown
-    FROM (SELECT CASE WHEN json_valid(NEW.result) THEN CASE WHEN json_type(NEW.result, '$.markdown') = 'text' THEN json_extract(NEW.result, '$.markdown') END END AS markdown)
-    WHERE trim(coalesce(markdown, '')) <> '';
+    SELECT 'summary', meeting_id, meeting_id, markdown
+    FROM (
+        SELECT meeting_id, markdown FROM enhanced_notes
+        WHERE meeting_id = NEW.meeting_id ORDER BY version DESC LIMIT 1
+    )
+    WHERE trim(markdown) <> '';
 END;
 
-CREATE TRIGGER search_summaries_after_update AFTER UPDATE OF result, meeting_id ON summary_processes
+CREATE TRIGGER search_enhanced_notes_after_update AFTER UPDATE OF markdown ON enhanced_notes
+BEGIN
+    DELETE FROM search_documents WHERE kind = 'summary' AND ref_id = NEW.meeting_id;
+    INSERT INTO search_documents (kind, ref_id, meeting_id, body)
+    SELECT 'summary', meeting_id, meeting_id, markdown
+    FROM (
+        SELECT meeting_id, markdown FROM enhanced_notes
+        WHERE meeting_id = NEW.meeting_id ORDER BY version DESC LIMIT 1
+    )
+    WHERE trim(markdown) <> '';
+END;
+
+CREATE TRIGGER search_enhanced_notes_after_delete AFTER DELETE ON enhanced_notes
 BEGIN
     DELETE FROM search_documents WHERE kind = 'summary' AND ref_id = OLD.meeting_id;
     INSERT INTO search_documents (kind, ref_id, meeting_id, body)
-    SELECT 'summary', NEW.meeting_id, NEW.meeting_id, markdown
-    FROM (SELECT CASE WHEN json_valid(NEW.result) THEN CASE WHEN json_type(NEW.result, '$.markdown') = 'text' THEN json_extract(NEW.result, '$.markdown') END END AS markdown)
-    WHERE trim(coalesce(markdown, '')) <> '';
-END;
-
-CREATE TRIGGER search_summaries_after_delete AFTER DELETE ON summary_processes
-BEGIN
-    DELETE FROM search_documents WHERE kind = 'summary' AND ref_id = OLD.meeting_id;
+    SELECT 'summary', meeting_id, meeting_id, markdown
+    FROM (
+        SELECT meeting_id, markdown FROM enhanced_notes
+        WHERE meeting_id = OLD.meeting_id ORDER BY version DESC LIMIT 1
+    )
+    WHERE trim(markdown) <> '';
 END;
 
 -- Transcript segments --------------------------------------------------------
@@ -275,9 +290,9 @@ SELECT 'note', meeting_id, meeting_id, notes_markdown FROM meeting_notes
 WHERE trim(coalesce(notes_markdown, '')) <> '';
 
 INSERT INTO search_documents (kind, ref_id, meeting_id, body)
-SELECT 'summary', meeting_id, meeting_id, markdown
-FROM (SELECT meeting_id, CASE WHEN json_valid(result) THEN CASE WHEN json_type(result, '$.markdown') = 'text' THEN json_extract(result, '$.markdown') END END AS markdown FROM summary_processes)
-WHERE trim(coalesce(markdown, '')) <> '';
+SELECT 'summary', meeting_id, meeting_id, markdown FROM enhanced_notes AS e
+WHERE version = (SELECT max(version) FROM enhanced_notes WHERE meeting_id = e.meeting_id)
+    AND trim(markdown) <> '';
 
 INSERT INTO search_documents (kind, ref_id, meeting_id, body, ts_ms)
 SELECT 'segment', id, meeting_id, text, start_ms FROM transcript_segments

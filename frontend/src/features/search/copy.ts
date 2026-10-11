@@ -10,7 +10,7 @@ export const searchCopy = {
   removeFilter: (label: string) => `Remove filter ${label}`,
   inTranscript: 'in transcript',
   inNotes: 'in your notes',
-  inSummary: 'in the summary',
+  inSummary: 'in the enhanced notes',
   filterKinds: {
     person: 'Person',
     company: 'Company',

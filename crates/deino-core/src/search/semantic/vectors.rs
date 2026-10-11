@@ -3,7 +3,7 @@
 //! Vectors are kept unit length in one contiguous `f32` matrix, so a search
 //! is one dot product per row, a loop the compiler vectorises. At personal
 //! scale this is fast enough and exact: 40,000 chunks of 768 dimensions take
-//! about 15 ms on an M-series Mac and 120 MB (ADR 0029). Rows are added and
+//! about 15 ms on an M-series Mac and 120 MB (ADR 0032). Rows are added and
 //! removed a meeting at a time, as the indexer replaces a meeting's chunks.
 
 use deino_domain::MeetingId;

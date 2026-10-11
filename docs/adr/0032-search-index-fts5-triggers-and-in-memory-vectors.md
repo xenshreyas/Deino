@@ -1,4 +1,4 @@
-# 0029. Search: an FTS5 index kept by triggers, and an in-memory vector index fused by RRF
+# 0032. Search: an FTS5 index kept by triggers, and an in-memory vector index fused by RRF
 
 - **Status:** Accepted
 - **Date:** 2026-10-11
@@ -149,8 +149,10 @@ index current through triggers and the `index` stage, the CLI never writes.
   shadow tables) in the same transaction, so `DbChanged` reports
   `search_documents` alongside the source table; search queries listen to it.
 - A new searchable source is a trigger set plus a `queries/documents/` file
-  and a `HitKind`; NOT-02's `enhanced_notes` replaces the legacy summary
-  triggers (follow-up).
+  and a `HitKind`. The `summary` kind is the newest version of a meeting's
+  enhanced notes (NOT-02's `enhanced_notes.markdown`): its triggers
+  re-derive the one document per meeting on every insert, edit or delete
+  of a version, so older versions are never found.
 - Measured: 2,000 synthetic meetings (100,000 segments, a 24-word vocabulary
   so common words hit half of all segments) answer in 39–62 ms (slowest of
   three runs per query) at load ~40 in a release build (`search::bench_tests`); the semantic eval finds 10 of
