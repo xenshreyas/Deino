@@ -3,7 +3,7 @@
 ## Role
 
 macOS Calendar through EventKit: Deino's default calendar source (ORG-01,
-[ADR 0020](../../docs/adr/0020-calendar-sync-through-eventkit.md)). Every
+[ADR 0027](../../docs/adr/0027-calendar-sync-through-eventkit.md)). Every
 account the user added to the Mac (iCloud, Google, Exchange, CalDAV,
 subscriptions) comes through one Calendars permission, with no OAuth and no
 network.
