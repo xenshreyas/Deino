@@ -26,5 +26,6 @@ export const shellCopy = {
   chatLabel: 'Ask Deino',
   chatPlaceholder: 'Ask anything',
   chatComingSoon: 'Chat across all your meetings is coming soon.',
+  chatSoonToast: 'Ask Deino is coming soon.',
   close: 'Close',
 } as const;

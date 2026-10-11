@@ -38,3 +38,13 @@ test('`[` collapses and restores the sidebar', async ({ page }) => {
   await page.keyboard.press('[');
   await expect(sidebar.getByRole('link', { name: 'Home' })).toBeVisible();
 });
+
+test('⌘J says Ask Deino is coming soon instead of opening chat (D13)', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('complementary', { name: 'Sidebar' })).toBeVisible();
+
+  await page.keyboard.press('ControlOrMeta+j');
+
+  await expect(page.getByText('Ask Deino is coming soon.')).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Ask Deino' })).toHaveCount(0);
+});
