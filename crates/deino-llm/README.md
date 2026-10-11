@@ -42,7 +42,9 @@ and model, streams the answer, and meters the call into `llm_calls`.
   number the transcript the prompt cites.
 - The eval harness: `tests/llm_eval/` (libtest-mimic, `pnpm eval <route>`;
   `extract.action_items` scores precision and recall against the fixtures'
-  `groundTruth`, live with `DEINO_EVAL=1 ANTHROPIC_API_KEY=…`).
+  `groundTruth`; `notes.enhance` runs `deino_core::enhance` end to end over
+  every seeded fixture meeting, a dev-only dependency on `deino-core`; live
+  with `DEINO_EVAL=1 ANTHROPIC_API_KEY=…`).
 
 ## Does Not Own
 
@@ -53,8 +55,10 @@ and model, streams the answer, and meters the call into `llm_calls`.
 - The llama-helper process, model files and chat templates: the app's
   `llm::local` adapter over `summary/summary_engine`.
 - IPC: the app's `llm` plugin (`features/llm.rs`).
-- Feature logic that uses LLMs (`deino_core::summaries`, later notes, chat,
-  extraction).
+- Feature logic that uses LLMs (`deino_core::enhance` for notes and
+  titles, later chat and extraction). The `notes.enhance` prompts live here
+  (`prompts/notes_enhance*.jinja`); the engine that fills and checks them is
+  `deino_core::enhance`.
 
 ## Invariants
 

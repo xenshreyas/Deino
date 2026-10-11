@@ -20,10 +20,13 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   for meetings without a live recording folder); `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService` (with the attendees' voiceprints);
   `identify_speakers` (order 35, CAP-04) over
-  `deino_core::diarization::SpeakerIdentifier`; `legacy_summary` (order 50) over the
-  `Summarizer` port, with each transcript line prefixed by its speaker's name, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `extract_action_items`
+  `deino_core::diarization::SpeakerIdentifier`; `enhance_notes` (order 50, NOT-02)
+  over `deino_core::enhance::EnhanceService` (skipped when
+  `Settings::ai.auto_summary`, "Generate notes automatically", is off; the
+  meeting page's Enhance button writes notes on demand); `extract_action_items`
   (order 60, AI-05) over
-  `deino_core::action_items::extraction::ActionItemExtractor`; `auto_tag`
+  `deino_core::action_items::extraction::ActionItemExtractor`; `auto_title`
+  (order 65, NOT-02) over `deino_core::enhance::AutoTitler`; `auto_tag`
   (order 70, ORG-06)
   over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
   `deino_core::folders::AutoFiler`; `auto_export` (order 99, EXP-02) over
@@ -40,14 +43,14 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   `MeetingStatusObserver` that enqueues meetings entering `processing`.
 - `PipelineProgress` and the `ProgressSink` port.
 - Fakes behind `test-support`: `FakeSleeper`, `RecordedProgress`,
-  `RecordedSummaries`.
+  `RecordedEnhancer`, `RecordedTitler`, `FixedAutomaticNotes`.
 
 ## Does Not Own
 
 - Meetings and their status rules: `deino-core::meetings`
   (`MeetingLifecycleService`).
-- IPC, the Tauri event and the legacy summary adapter: the app crate
-  (`features/pipeline*`).
+- IPC and the Tauri event: the app crate (`features/pipeline*`).
+- How notes are written: `deino_core::enhance` (the stages only call it).
 - What a stage does: each stage's card (§4.2 lists the planned orders).
 
 ## Invariants
