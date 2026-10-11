@@ -108,6 +108,8 @@ mod tests {
 
         let payload: Value =
             serde_json::from_str(&received.recv_timeout(EVENT_TIMEOUT).unwrap()).unwrap();
-        assert_eq!(payload, json!({ "tables": ["meetings"], "seq": 1 }));
+        // The search index follows the meeting in the same commit (ORG-08).
+        let tables = json!(["meetings", "search_documents"]);
+        assert_eq!(payload, json!({ "tables": tables, "seq": 1 }));
     }
 }

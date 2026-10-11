@@ -79,7 +79,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         console_utils::hide_console,
         console_utils::toggle_console,
         // Meetings and transcripts (list/get/rename: the meetings plugin; settings: the settings plugin)
-        api::api_search_transcripts,
         api::api_delete_meeting,
         api::api_get_meeting_metadata,
         api::api_get_meeting_transcripts,

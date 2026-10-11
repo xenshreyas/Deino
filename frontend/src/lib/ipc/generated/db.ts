@@ -162,6 +162,15 @@ export type Table =
  */
 "integration_deliveries" | 
 /**
+ * The keyword search index's documents (ORG-08), kept in step with
+ * their sources by triggers; its FTS5 shadow tables are not tracked.
+ */
+"search_documents" | 
+/**
+ * Embedded chunks of meetings for semantic search (AI-01).
+ */
+"embeddings" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

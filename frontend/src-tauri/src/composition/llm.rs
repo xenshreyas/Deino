@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 
+use deino_core::models::ModelService;
 use deino_core::profile::ProfileContext;
 use deino_core::settings::{LlmAccess, SettingsService};
 use deino_db::Database;
@@ -21,7 +22,7 @@ pub(super) fn attach_llm(
     app: &AppHandle,
     database: &Database,
     settings: &Arc<SettingsService>,
-    clock: Arc<dyn Clock>,
+    (clock, embedding_models): (Arc<dyn Clock>, Option<Arc<ModelService>>),
 ) -> Option<Arc<Gateway>> {
     let (Some(secrets), Some(net)) = (
         app.try_state::<Arc<dyn SecretStore>>(),
@@ -39,6 +40,7 @@ pub(super) fn attach_llm(
         context: Arc::new(ProfileContext::new(Arc::clone(settings))),
         clock,
         net: net.inner().clone(),
+        embedding_models,
     });
     // Owned for the app's lifetime: it ends when the gateway, and with it the
     // last usage channel, is dropped at exit.

@@ -115,6 +115,20 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
+    // ── ORG-08 / AI-01 search (features/search.rs) ──
+    (
+        "search",
+        &[
+            "search",
+            "suggest_filters",
+            "reindex_all",
+            "index_status",
+            "download_model",
+            "cancel_download",
+            "delete_model",
+            "start_backfill",
+        ],
+    ),
     // ── ORG-05 folders ──
     (
         "folders",

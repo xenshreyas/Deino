@@ -187,6 +187,15 @@ export type Table =
  */
 "integration_deliveries" | 
 /**
+ * The keyword search index's documents (ORG-08), kept in step with
+ * their sources by triggers; its FTS5 shadow tables are not tracked.
+ */
+"search_documents" | 
+/**
+ * Embedded chunks of meetings for semantic search (AI-01).
+ */
+"embeddings" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -196,4 +205,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","integration_connections","integration_connection_scopes","integration_deliveries","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","example_notes"] as const satisfies readonly Table[]

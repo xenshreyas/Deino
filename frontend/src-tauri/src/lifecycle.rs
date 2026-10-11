@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::export::FullExportService;
+use deino_core::search::semantic::Backfill;
 use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
@@ -61,8 +62,8 @@ pub(crate) fn on_run_event(app: &AppHandle, event: RunEvent) {
     }
 }
 
-/// Stops the pipeline (its interrupted stages resume at the next start),
-/// checkpoints the database WAL and stops the llama-helper sidecar.
+/// Stops the pipeline (its interrupted stages resume at the next start), the
+/// calendar scheduler and the search backfill, checkpoints the database WAL and stops the llama-helper sidecar.
 async fn cleanup(app: &AppHandle) {
     // First, so no stage writes after the database is closed.
     if let Some(pipeline) = app.try_state::<Arc<PipelineService>>() {
@@ -74,6 +75,9 @@ async fn cleanup(app: &AppHandle) {
     }
     if let Some(calendar) = app.try_state::<CalendarSchedule>() {
         calendar.stop();
+    }
+    if let Some(backfill) = app.try_state::<Arc<Backfill>>() {
+        backfill.shutdown().await;
     }
     match app.try_state::<AppState>() {
         Some(state) => state.db_manager.cleanup().await,

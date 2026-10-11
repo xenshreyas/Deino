@@ -8,8 +8,11 @@
 //! | `LocalModels` | [`local::SidecarLocalModels`] (the llama-helper sidecar) |
 //! | `UsageRecorder` | `UsageChannel` → `UsageWriter` → `SqliteLlmCallRepo` (`llm_calls`) |
 
+mod embedding;
 mod http;
 mod local;
+#[cfg(test)]
+mod retrieval_eval;
 #[cfg(test)]
 mod smoke_tests;
 
@@ -17,6 +20,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use deino_core::models::ModelService;
 use deino_core::settings::LlmAccess;
 use deino_db::Database;
 use deino_domain::{Clock, ServiceId};
@@ -41,6 +45,8 @@ pub(crate) struct LlmPorts {
     pub clock: Arc<dyn Clock>,
     /// The network; each provider gets a client scoped to its own service.
     pub net: Net,
+    /// The embedding model's files, for `embed` (AI-01), when wired.
+    pub embedding_models: Option<Arc<ModelService>>,
 }
 
 /// The LLM services the app manages, and the usage writer to run.
@@ -55,7 +61,10 @@ pub(crate) struct LlmServices {
 
 /// Builds the gateway, its providers and the services over it.
 pub(crate) fn build(ports: LlmPorts) -> LlmServices {
-    let local: Arc<dyn LocalModels> = Arc::new(local::SidecarLocalModels::new(ports.app_data_dir));
+    let local: Arc<dyn LocalModels> = Arc::new(
+        local::SidecarLocalModels::new(ports.app_data_dir)
+            .with_embedding_models(ports.embedding_models),
+    );
     let ollama = Arc::new(OllamaProvider::new(
         transport(&ports.net, ServiceId::LlmOllama),
         ports.access.clone(),

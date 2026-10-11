@@ -46,6 +46,7 @@
         "network:default",
         "pipeline:default",
         "profile:default",
+        "search:default",
         "notes:default",
         "people:default",
         "recording:default",

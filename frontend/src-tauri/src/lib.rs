@@ -85,6 +85,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::network::init())
         .plugin(features::pipeline::init())
         .plugin(features::profile::init())
+        .plugin(features::search::init())
         .plugin(features::notes::init())
         .plugin(features::people::init())
         .plugin(features::recording::init())

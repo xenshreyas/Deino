@@ -12,9 +12,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use deino_core::models::ModelService;
 use deino_llm::{
-    EmbedReply, HelperCompletion, HelperEvent, HelperEventStream, HelperRequest, HelperSampling,
-    LlmError, LocalGeneration, LocalModels, ModelInfo, ProviderId,
+    HelperCompletion, HelperEvent, HelperEventStream, HelperRequest, HelperSampling, LlmError,
+    LocalGeneration, LocalModels, ModelInfo, ProviderId,
 };
 use futures_util::StreamExt;
 use futures_util::stream;
@@ -26,18 +27,26 @@ use crate::summary::summary_engine::sidecar::{Exchange, SidecarManager};
 const PROVIDER: ProviderId = ProviderId::BuiltIn;
 /// The longest the helper may stay silent before a line (the legacy limit).
 const LINE_TIMEOUT: Duration = Duration::from_mins(15);
-/// Where embedding models are kept, next to `models/summary/`.
-const EMBEDDING_DIR: &str = "embedding";
-
 /// The built-in models, run by the sidecar.
 pub(crate) struct SidecarLocalModels {
     app_data_dir: PathBuf,
+    /// The embedding model's files (AI-01), when the app has them.
+    embedding: Option<Arc<ModelService>>,
 }
 
 impl SidecarLocalModels {
-    /// Models under `<app_data_dir>/models/`.
+    /// Models under `<app_data_dir>/models/`; no embedding model.
     pub(crate) fn new(app_data_dir: PathBuf) -> Self {
-        Self { app_data_dir }
+        Self {
+            app_data_dir,
+            embedding: None,
+        }
+    }
+
+    /// The same models, embedding with the file `models` serves (if any).
+    pub(crate) fn with_embedding_models(mut self, models: Option<Arc<ModelService>>) -> Self {
+        self.embedding = models;
+        self
     }
 
     async fn running(&self, model_path: PathBuf) -> Result<Arc<SidecarManager>, LlmError> {
@@ -49,13 +58,6 @@ impl SidecarLocalModels {
             .await
             .map_err(|error| unavailable(&error))?;
         Ok(manager)
-    }
-
-    fn embedding_path(&self, model: &str) -> PathBuf {
-        self.app_data_dir
-            .join("models")
-            .join(EMBEDDING_DIR)
-            .join(format!("{model}.gguf"))
     }
 }
 
@@ -91,36 +93,14 @@ impl LocalModels for SidecarLocalModels {
     }
 
     async fn embed(&self, model: &str, inputs: Vec<String>) -> Result<Vec<Vec<f32>>, LlmError> {
-        let model_path = self.embedding_path(model);
-        if !model_path.exists() {
+        if model != deino_llm::LOCAL_EMBEDDING_MODEL {
             return Err(LlmError::Unavailable {
                 provider: PROVIDER,
-                reason: format!("the embedding model {model} is not downloaded yet"),
+                reason: format!("'{model}' is not the built-in embedding model"),
             });
         }
-        let path = model_path.to_string_lossy().into_owned();
-        let line = serde_json::to_string(&HelperRequest::Embed {
-            model_path: path,
-            inputs,
-        })
-        .map_err(|_| malformed("the request"))?;
-        let manager = client::sidecar(&self.app_data_dir)
-            .await
-            .map_err(|error| unavailable(&error))?;
-        let mut exchange = manager
-            .begin_exchange(&line)
-            .await
-            .map_err(|error| unavailable(&error))?;
-        match serde_json::from_str(&next_line(&mut exchange).await?)
-            .map_err(|_| malformed("an embedding"))?
-        {
-            EmbedReply::Embeddings { vectors } => Ok(vectors),
-            EmbedReply::Error { message } => Err(LlmError::Provider {
-                provider: PROVIDER,
-                status: 0,
-                message,
-            }),
-        }
+        let model_path = super::embedding::model_path(self.embedding.as_ref()).await?;
+        super::embedding::embed(&self.app_data_dir, &model_path, inputs).await
     }
 
     async fn models(&self) -> Vec<ModelInfo> {
@@ -188,7 +168,7 @@ fn malformed(what: &str) -> LlmError {
     }
 }
 
-async fn next_line(exchange: &mut Exchange) -> Result<String, LlmError> {
+pub(super) async fn next_line(exchange: &mut Exchange) -> Result<String, LlmError> {
     match tokio::time::timeout(LINE_TIMEOUT, exchange.next_line()).await {
         Ok(Ok(Some(line))) => Ok(line),
         Ok(Ok(None)) => Err(LlmError::Unavailable {

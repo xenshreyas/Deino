@@ -5,7 +5,7 @@ use tauri::{AppHandle, Runtime};
 use crate::{
     database::{
         models::MeetingModel,
-        repositories::{meeting::MeetingsRepository, transcript::TranscriptsRepository},
+        repositories::meeting::MeetingsRepository,
     },
     state::AppState,
 };
@@ -14,20 +14,6 @@ use crate::{
 pub struct Meeting {
     pub id: String,
     pub title: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SearchRequest {
-    pub query: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TranscriptSearchResult {
-    pub id: String,
-    pub title: String,
-    #[serde(rename = "matchContext")]
-    pub match_context: String,
-    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -104,36 +90,6 @@ pub struct TranscriptSegment {
 }
 
 // API Commands for Tauri
-
-#[tauri::command]
-pub async fn api_search_transcripts<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    query: String,
-    auth_token: Option<String>,
-) -> Result<Vec<TranscriptSearchResult>, String> {
-    log_info!(
-        "api_search_transcripts called with query: '{}', auth_token: {}",
-        query,
-        auth_token.is_some()
-    );
-
-    let pool = state.db_manager.pool();
-
-    match TranscriptsRepository::search_transcripts(pool, &query).await {
-        Ok(results) => {
-            log_info!(
-                "Search completed successfully with {} results.",
-                results.len()
-            );
-            Ok(results)
-        }
-        Err(e) => {
-            log_error!("Error searching transcripts for query '{}': {}", query, e);
-            Err(format!("Failed to search transcripts: {}", e))
-        }
-    }
-}
 
 #[tauri::command]
 pub async fn api_delete_meeting<R: Runtime>(
