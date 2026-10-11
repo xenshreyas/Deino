@@ -30,6 +30,7 @@ mod context;
 mod credentials;
 mod error;
 mod event;
+pub mod extraction;
 mod gateway;
 mod http;
 #[cfg(any(test, feature = "test-support"))]

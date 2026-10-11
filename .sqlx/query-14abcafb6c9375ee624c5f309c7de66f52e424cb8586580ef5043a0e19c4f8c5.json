@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE action_items\n         SET meeting_id = ?1, title = ?2, description = ?3, assignee_person_id = ?4, due_at = ?5,\n             priority = ?6, updated_at = ?7\n         WHERE id = ?8",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "14abcafb6c9375ee624c5f309c7de66f52e424cb8586580ef5043a0e19c4f8c5"
+}

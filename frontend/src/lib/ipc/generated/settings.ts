@@ -451,7 +451,11 @@ showSystemErrors: boolean;
 /**
  * Minutes before a meeting to remind the user, each at most a day.
  */
-meetingReminderMinutes: number[] }
+meetingReminderMinutes: number[]; 
+/**
+ * The morning reminder of the user's action items due today (AI-05).
+ */
+showActionItemReminders: boolean }
 /**
  * The notifications section of `Settings`.
  */

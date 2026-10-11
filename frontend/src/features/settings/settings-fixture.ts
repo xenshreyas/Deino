@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
       showMeetingReminders: true,
       showSystemErrors: true,
       meetingReminderMinutes: [15, 5],
+      showActionItemReminders: true,
     },
   },
   detection: {

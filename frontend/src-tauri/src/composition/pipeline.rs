@@ -5,6 +5,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::TrackDiarizer;
 use deino_core::export::AutoExporter;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
@@ -27,8 +28,8 @@ use crate::paths::AppPaths;
 
 /// What the pipeline gets from the app: where progress goes, the legacy
 /// summary service behind `legacy_summary`, the diarization engine behind
-/// `diarize`, the services behind `auto_tag` and `auto_export`, and the live
-/// recordings' folder that `finalize_audio` reads.
+/// `diarize`, the services behind `extract_action_items`, `auto_tag` and
+/// `auto_export`, and the live recordings' folder that `finalize_audio` reads.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) summaries: Arc<dyn Summarizer>,
@@ -39,13 +40,16 @@ pub(crate) struct PipelineAdapters {
     pub(crate) recordings: PathBuf,
     /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
     pub(crate) auto_export: Arc<dyn AutoExporter>,
+    /// Over the LLM gateway (`composition/action_items.rs`, AI-05).
+    pub(crate) action_items: Arc<dyn ActionItemExtractor>,
 }
 
-/// The stage services built before the pipeline: the auto-tagger and the
-/// auto-exporter.
+/// The stage services built before the pipeline: the auto-tagger, the
+/// auto-exporter and the action item extraction.
 pub(crate) struct StageAdapters {
     pub(crate) auto_tagger: Arc<dyn AutoTagger>,
     pub(crate) auto_export: Arc<dyn AutoExporter>,
+    pub(crate) action_items: Arc<dyn ActionItemExtractor>,
 }
 
 /// The ports the registered stages read: SQLite repositories over
@@ -72,6 +76,7 @@ fn stage_ports(
         clock: Arc::clone(clock),
         auto_tagger: adapters.auto_tagger,
         auto_export: adapters.auto_export,
+        action_items: adapters.action_items,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
     }
@@ -159,6 +164,7 @@ pub(super) fn attach_pipeline(
         auto_tagger: stages.auto_tagger,
         auto_export: stages.auto_export,
         recordings,
+        action_items: stages.action_items,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
 }

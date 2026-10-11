@@ -50,6 +50,8 @@ pub enum Table {
     MeetingTags,
     /// Action items, from meetings or standalone.
     ActionItems,
+    /// Saved views (filters) of the Action Items page (AI-05).
+    ActionItemViews,
     /// One row per LLM provider call: usage, never content.
     LlmCalls,
     /// Post-meeting pipeline jobs: one row per meeting and stage (FND-08).
@@ -69,7 +71,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 25] = [
+    pub const ALL: [Self; 26] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -88,6 +90,7 @@ impl Table {
         Self::Tags,
         Self::MeetingTags,
         Self::ActionItems,
+        Self::ActionItemViews,
         Self::LlmCalls,
         Self::Jobs,
         Self::JobRuns,
@@ -121,6 +124,7 @@ impl Table {
             "tags" => Self::Tags,
             "meeting_tags" => Self::MeetingTags,
             "action_items" => Self::ActionItems,
+            "action_item_views" => Self::ActionItemViews,
             "llm_calls" => Self::LlmCalls,
             "jobs" => Self::Jobs,
             "job_runs" => Self::JobRuns,

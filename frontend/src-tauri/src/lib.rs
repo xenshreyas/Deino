@@ -78,6 +78,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::db::init())
         .plugin(features::detection::init())
         .plugin(features::export::init())
+        .plugin(features::action_items::init())
         .plugin(features::calendar::init())
         .plugin(features::meetings::init())
         .plugin(features::network::init())

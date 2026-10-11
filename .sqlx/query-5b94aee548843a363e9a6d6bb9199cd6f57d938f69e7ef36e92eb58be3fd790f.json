@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                id AS \"id: ActionItemViewId\",\n                name,\n                filter_json AS \"filter: Json<ActionItemFilter>\",\n                position,\n                created_at AS \"created_at: DateTime<Utc>\",\n                updated_at AS \"updated_at: DateTime<Utc>\"\n            FROM action_item_views\n            ORDER BY position, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ActionItemViewId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "filter: Json<ActionItemFilter>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "position",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5b94aee548843a363e9a6d6bb9199cd6f57d938f69e7ef36e92eb58be3fd790f"
+}

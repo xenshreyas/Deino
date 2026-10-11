@@ -97,6 +97,7 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
             pending("finalize_audio"),
             pending("diarize"),
             pending("legacy_summary"),
+            pending("extract_action_items"),
             pending("auto_tag"),
             pending("auto_folder"),
             pending("auto_export")

@@ -36,6 +36,7 @@ pub mod job;
 pub mod service;
 pub mod status;
 pub mod units;
+pub mod zone;
 
 pub use bundle_id::{BundleId, InvalidBundleId};
 #[cfg(any(test, feature = "test-support"))]
@@ -52,11 +53,12 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId, FolderId,
-    FolderRuleId, IdError, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId,
-    TagId, TemplateId,
+    ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
+    FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId,
+    SpeakerId, StageId, TagId, TemplateId,
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};
 pub use status::{InvalidTransition, MeetingEvent, MeetingStatus};
 pub use units::{Millis, Seconds};
+pub use zone::{FixedZone, LocalZone, NOON, SystemZone};

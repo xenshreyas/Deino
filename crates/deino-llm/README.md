@@ -36,7 +36,13 @@ and model, streams the answer, and meters the call into `llm_calls`.
 - Test support (feature `test-support`): `MockProvider` keyed by route
   (scripted text, tool calls, errors), `mock_gateway`, `FakeHttp`,
   `FakeLocalModels`, `MemoryRouteStore`, `MemoryUsage`, `StaticCredentials`.
-- The eval harness: `tests/llm_eval/` (libtest-mimic, `pnpm eval <route>`).
+- Extraction answers (`extraction.rs`): `ActionItemsAnswer` (AI-05), the
+  shape `extract.action_items` returns, and the prompt-line helpers
+  (`meeting_header`, `attendee_line`, `transcript_line`) callers use to
+  number the transcript the prompt cites.
+- The eval harness: `tests/llm_eval/` (libtest-mimic, `pnpm eval <route>`;
+  `extract.action_items` scores precision and recall against the fixtures'
+  `groundTruth`, live with `DEINO_EVAL=1 ANTHROPIC_API_KEY=…`).
 
 ## Does Not Own
 

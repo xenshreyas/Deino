@@ -118,6 +118,10 @@ export type Table =
  */
 "action_items" | 
 /**
+ * Saved views (filters) of the Action Items page (AI-05).
+ */
+"action_item_views" | 
+/**
  * One row per LLM provider call: usage, never content.
  */
 "llm_calls" | 

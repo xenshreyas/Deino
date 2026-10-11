@@ -24,6 +24,7 @@ export const statusLabels: Record<JobStatus, string> = {
 const stageLabels: Partial<Record<string, string>> = {
   diarize: 'Speakers',
   legacy_summary: 'Summary',
+  extract_action_items: 'Action items',
   auto_tag: 'Tags',
   auto_folder: 'Folders',
   auto_export: 'Export',

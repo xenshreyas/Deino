@@ -1,4 +1,5 @@
-//! An in-memory [`ActionItemRepo`].
+//! In-memory ports: [`FakeActionItemRepo`] (single and many-item writes)
+//! and [`FakeActionItemExtractor`] (a scripted extraction).
 
 use std::sync::Mutex;
 
@@ -7,7 +8,8 @@ use chrono::{DateTime, Utc};
 use deino_db::DbError;
 use deino_domain::{ActionItemId, ActionItemStatus, MeetingId, PersonId};
 
-use super::{ActionItem, ActionItemRepo};
+use super::extraction::{ActionItemExtractor, ExtractionError, ExtractionOutcome};
+use super::{ActionItem, ActionItemBatch, ActionItemRepo};
 use crate::testing::lock;
 
 /// Keeps items in a `Vec` and honours the [`ActionItemRepo`] contract,
@@ -106,5 +108,93 @@ impl ActionItemRepo for FakeActionItemRepo {
     ) -> Result<Vec<ActionItem>, DbError> {
         Ok(self
             .by_due_date(|item| item.assignee_person_id == Some(*person) && item.status == status))
+    }
+}
+
+#[async_trait]
+impl ActionItemBatch for FakeActionItemRepo {
+    async fn replace_untouched_ai(
+        &self,
+        meeting: &MeetingId,
+        fresh: &[ActionItem],
+    ) -> Result<u64, DbError> {
+        let mut items = lock(&self.items);
+        let before = items.len();
+        items.retain(|item| item.meeting_id.as_ref() != Some(meeting) || !item.is_untouched_ai());
+        let removed = before - items.len();
+        items.extend_from_slice(fresh);
+        Ok(u64::try_from(removed).unwrap_or(u64::MAX))
+    }
+
+    async fn update_many(&self, items: &[ActionItem]) -> Result<u64, DbError> {
+        let mut updated = 0;
+        for item in items {
+            updated += u64::from(self.update(item).await?);
+        }
+        Ok(updated)
+    }
+
+    async fn set_status_many(
+        &self,
+        ids: &[ActionItemId],
+        status: ActionItemStatus,
+        at: DateTime<Utc>,
+    ) -> Result<u64, DbError> {
+        let mut changed = 0;
+        for id in ids {
+            changed += u64::from(self.set_status(id, status, at).await?);
+        }
+        Ok(changed)
+    }
+
+    async fn delete_many(&self, ids: &[ActionItemId]) -> Result<u64, DbError> {
+        let mut deleted = 0;
+        for id in ids {
+            deleted += u64::from(self.delete(id).await?);
+        }
+        Ok(deleted)
+    }
+}
+
+/// An extraction that records the meetings it is asked about and answers
+/// with a scripted outcome, for the pipeline stage's tests.
+#[derive(Debug)]
+pub struct FakeActionItemExtractor {
+    answer: Mutex<Result<ExtractionOutcome, fn() -> ExtractionError>>,
+    asked: Mutex<Vec<MeetingId>>,
+}
+
+impl FakeActionItemExtractor {
+    /// Extracts `saved` items for every meeting.
+    pub fn saving(saved: usize) -> Self {
+        Self::answering(Ok(ExtractionOutcome::Extracted { saved, replaced: 0 }))
+    }
+
+    /// Answers every meeting with `answer` (an error is built per call).
+    pub fn answering(answer: Result<ExtractionOutcome, fn() -> ExtractionError>) -> Self {
+        Self {
+            answer: Mutex::new(answer),
+            asked: Mutex::new(Vec::new()),
+        }
+    }
+
+    /// The meetings extracted so far, in order.
+    pub fn asked(&self) -> Vec<MeetingId> {
+        lock(&self.asked).clone()
+    }
+}
+
+impl Default for FakeActionItemExtractor {
+    fn default() -> Self {
+        Self::saving(0)
+    }
+}
+
+#[async_trait]
+impl ActionItemExtractor for FakeActionItemExtractor {
+    async fn extract(&self, meeting: &MeetingId) -> Result<ExtractionOutcome, ExtractionError> {
+        lock(&self.asked).push(meeting.clone());
+        let answer = *lock(&self.answer);
+        answer.map_err(|error| error())
     }
 }

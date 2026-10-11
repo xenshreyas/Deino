@@ -8,6 +8,7 @@ export const paletteCopy = {
   meetings: 'Meetings',
   transcripts: 'In transcripts',
   newNote: 'New note',
+  newActionItem: 'New action item',
   startRecording: 'Start recording',
   askDeino: 'Ask Deino',
   importAudio: 'Import audio',

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE action_items\n                 SET status = ?1,\n                     completed_at = CASE WHEN ?2 THEN coalesce(completed_at, ?3) END,\n                     updated_at = ?3\n                 WHERE id = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "efbb161cf54f73f356e217045a7396f9679b10997f34c9fcd6d6f612a4c6c0af"
+}

@@ -60,7 +60,19 @@ the SQLite adapters behind those ports.
     `TagService` (CRUD, apply/remove, `MeetingTagged` through `TagEvents`)
     and `AutoTagService` (the `auto_tag` stage's rules: existing tags only,
     on route `tagging`, skipped when the user tagged the meeting);
-  - `action_items`: `ActionItemRepo`.
+  - `action_items` (AI-05, ADR 0028): `ActionItemRepo`, `ActionItemBatch`
+    (bulk edits and the regeneration that replaces only untouched AI
+    items), `ActionItemReader` (three indexed list queries chosen by
+    `ItemQuery::access_path`) and `SavedViewRepo` (`action_item_views`);
+    `ActionItemService` (list by `ActionItemFilter`, the "Today" digest,
+    create, edit, bulk edit, delete, "mark all mine done"; changes through
+    `ActionItemEvents`), `SavedViewService`, `DailyReminder` (09:00 local
+    over the `Notifier` and `ReminderSwitch` ports), and `extraction`: the
+    `extract_action_items` stage's rules (`ContextSources`, the
+    `ActionItemModel` port with `GatewayActionItemModel` on route
+    `extract.action_items`, and the pure `resolve_due`, `Roster` and
+    `Transcript` that turn the model's phrases, names and citations into
+    days, people and segments). Fakes: `FakeActionItemExtractor`.
 - `models` (CAP-01): the bundled model catalog (`catalog.json`: Parakeet
   Unified EN 0.6B, six quants pinned to a revision, size and SHA-256),
   `ModelService` (list with state, recommended quant by RAM, download, cancel,

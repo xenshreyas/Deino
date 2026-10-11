@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE action_item_views SET name = ?1, filter_json = ?2, updated_at = ?3 WHERE id = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "4245c7fdaf224dfabf9b59aa54449083a5878da145004759f7d7cbd0a7d4ae7a"
+}

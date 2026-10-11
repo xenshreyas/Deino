@@ -64,6 +64,16 @@ impl Default for NotificationSettings {
 }
 
 impl NotificationSettings {
+    /// True when the morning action item reminder may be shown: the user
+    /// consented, macOS allows it, Deino's Do Not Disturb is off and the
+    /// reminder's own switch is on (the legacy notifications' gating).
+    pub fn allows_action_item_reminders(&self) -> bool {
+        self.consent_given
+            && self.system_permission_granted
+            && !self.manual_dnd_mode
+            && self.preferences.show_action_item_reminders
+    }
+
     /// Checks that every reminder fits in a day.
     pub(super) fn validate(&self) -> Result<(), SettingsError> {
         let minutes = &self.preferences.meeting_reminder_minutes;
@@ -109,6 +119,8 @@ pub struct NotificationPreferences {
     /// Minutes before a meeting to remind the user, each at most a day.
     #[serde(alias = "meeting_reminder_minutes")]
     pub meeting_reminder_minutes: Vec<u16>,
+    /// The morning reminder of the user's action items due today (AI-05).
+    pub show_action_item_reminders: bool,
 }
 
 impl Default for NotificationPreferences {
@@ -122,6 +134,7 @@ impl Default for NotificationPreferences {
             show_meeting_reminders: true,
             show_system_errors: true,
             meeting_reminder_minutes: vec![15, 5],
+            show_action_item_reminders: true,
         }
     }
 }
@@ -136,5 +149,22 @@ mod tests {
         settings.preferences.meeting_reminder_minutes = vec![MAX_REMINDER_MINUTES + 1];
 
         assert!(settings.validate().is_err());
+    }
+
+    #[test]
+    fn action_item_reminders_need_consent_permission_and_their_switch() {
+        let mut settings = NotificationSettings {
+            consent_given: true,
+            system_permission_granted: true,
+            ..NotificationSettings::default()
+        };
+        assert!(settings.allows_action_item_reminders());
+
+        settings.manual_dnd_mode = true;
+        assert!(!settings.allows_action_item_reminders());
+        settings.manual_dnd_mode = false;
+        settings.preferences.show_action_item_reminders = false;
+        assert!(!settings.allows_action_item_reminders());
+        assert!(!NotificationSettings::default().allows_action_item_reminders());
     }
 }

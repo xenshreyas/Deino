@@ -1,0 +1,17 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<attendees>
+{{ attendees }}
+</attendees>
+{% if let Some(notes) = notes %}
+<user_notes>
+{{ notes }}
+</user_notes>
+{% endif %}
+<transcript>
+{{ transcript }}
+</transcript>
+
+Now list the action items of this meeting.

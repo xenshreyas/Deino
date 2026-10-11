@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The Action Items list, read through the status. One of three files with the same\n-- columns, parameters and filters, differing only in the leading condition\n-- that picks the index (idx_action_items_status_due_at,\n-- asserted in list_repo_tests.rs); `ItemQuery::access_path` chooses the file.\n-- Parameters (NULL or false do not filter):\n--   ?1, ?2  statuses to include          ?3  assignee\n--   ?4      only assigned items           ?5  not this assignee\n--   ?6      only unassigned items         ?7  meeting\n--   ?8      meeting tag                   ?9  company (assignee's or an attendee's)\n--   ?10     folder, with its subfolders   ?11, ?12  due in [from, before)\n--   ?13     only undated items            ?14, ?15  held in [from, before)\n-- Items of meetings in the trash are hidden; standalone items have no meeting.\n-- Dated items come first, soonest first; undated ones last.\nSELECT\n    a.id AS \"id: ActionItemId\",\n    a.meeting_id AS \"meeting_id: MeetingId\",\n    a.title,\n    a.description,\n    a.assignee_person_id AS \"assignee_person_id: PersonId\",\n    a.due_at AS \"due_at: DateTime<Utc>\",\n    a.status AS \"status: ActionItemStatus\",\n    a.priority AS \"priority: ActionItemPriority\",\n    a.source_segment_id AS \"source_segment_id: SegmentId\",\n    a.completed_at AS \"completed_at: DateTime<Utc>\",\n    a.created_by AS \"created_by: ActionItemOrigin\",\n    a.created_at AS \"created_at: DateTime<Utc>\",\n    a.updated_at AS \"updated_at: DateTime<Utc>\",\n    m.title AS \"meeting_title?\",\n    coalesce(m.started_at, m.created_at) AS \"meeting_held_at?: DateTime<Utc>\",\n    p.name AS \"assignee_name?\",\n    coalesce(p.is_me, 0) AS \"assignee_is_me!: bool\",\n    s.start_ms AS \"source_start?: Millis\"\nFROM action_items AS a\nLEFT JOIN meetings AS m ON m.id = a.meeting_id\nLEFT JOIN people AS p ON p.id = a.assignee_person_id\nLEFT JOIN transcript_segments AS s ON s.id = a.source_segment_id\nWHERE a.status IN (?1, ?2)\n    AND (?3 IS NULL OR a.assignee_person_id = ?3)\n    AND (NOT ?4 OR a.assignee_person_id IS NOT NULL)\n    AND (?5 IS NULL OR a.assignee_person_id IS NOT ?5)\n    AND (NOT ?6 OR a.assignee_person_id IS NULL)\n    AND (?7 IS NULL OR a.meeting_id = ?7)\n    AND (\n        ?8 IS NULL\n        OR EXISTS (\n            SELECT 1 FROM meeting_tags AS mt WHERE mt.meeting_id = a.meeting_id AND mt.tag_id = ?8\n        )\n    )\n    AND (\n        ?9 IS NULL\n        OR p.company_id = ?9\n        OR EXISTS (\n            SELECT 1\n            FROM meeting_attendees AS ma\n            JOIN people AS colleague ON colleague.id = ma.person_id\n            WHERE ma.meeting_id = a.meeting_id AND colleague.company_id = ?9\n        )\n    )\n    AND (\n        ?10 IS NULL\n        OR a.meeting_id IN (\n            SELECT mf.meeting_id\n            FROM meeting_folders AS mf\n            WHERE mf.folder_id IN (\n                WITH RECURSIVE subtree (id) AS (\n                    SELECT ?10\n                    UNION\n                    SELECT f.id FROM folders AS f JOIN subtree ON f.parent_id = subtree.id\n                )\n                SELECT id FROM subtree\n            )\n        )\n    )\n    AND (?11 IS NULL OR a.due_at >= ?11)\n    AND (?12 IS NULL OR a.due_at < ?12)\n    AND (NOT ?13 OR a.due_at IS NULL)\n    AND (?14 IS NULL OR coalesce(m.started_at, m.created_at, a.created_at) >= ?14)\n    AND (?15 IS NULL OR coalesce(m.started_at, m.created_at, a.created_at) < ?15)\n    AND m.deleted_at IS NULL\nORDER BY a.due_at IS NULL, a.due_at, a.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ActionItemId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "assignee_person_id: PersonId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: ActionItemStatus",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "priority: ActionItemPriority",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "source_segment_id: SegmentId",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "completed_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_by: ActionItemOrigin",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_title?",
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_held_at?: DateTime<Utc>",
+        "ordinal": 14,
+        "type_info": "Null"
+      },
+      {
+        "name": "assignee_name?",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "assignee_is_me!: bool",
+        "ordinal": 16,
+        "type_info": "Null"
+      },
+      {
+        "name": "source_start?: Millis",
+        "ordinal": 17,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 15
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "201446d9505d9a99cc8e7ecdec139e9064bad1265169671ffbe40cead9e1bc1f"
+}

@@ -90,6 +90,24 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "set_meeting_template",
         ],
     ),
+    // ── AI-05 action items (features/action_items.rs) ──
+    (
+        "action-items",
+        &[
+            "list",
+            "today",
+            "create",
+            "update",
+            "bulk_update",
+            "delete",
+            "mark_all_mine_done",
+            "filter_options",
+            "views",
+            "create_view",
+            "update_view",
+            "delete_view",
+        ],
+    ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── ORG-05 folders ──

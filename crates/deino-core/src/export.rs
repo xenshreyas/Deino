@@ -36,10 +36,11 @@ mod service;
 #[cfg(test)]
 mod testing;
 mod vault;
-mod zone;
 
 pub use assemble::{ExportAssembler, ExportPorts};
 pub use auto::{AutoExportOutcome, AutoExportService, AutoExportSkip, AutoExporter, PEOPLE_FOLDER};
+/// The time-zone port is shared with action items (ADR 0028).
+pub use deino_domain::{FixedZone, LocalZone, SystemZone};
 pub use error::ExportError;
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{FakeVault, RecordedClipboard, RecordedOpener, ScriptedDialog};
@@ -51,4 +52,3 @@ pub use notes::{DocNoteRenderer, MeetingNotes, NoteRenderer};
 pub use platform::{Clipboard, ClipboardContent, FolderDialog, SaveDialog, SaveRequest, UrlOpener};
 pub use service::{ExportService, ExportServiceDeps};
 pub use vault::{FsVault, HEAD_BYTES, Vault};
-pub use zone::{FixedZone, LocalZone, SystemZone};

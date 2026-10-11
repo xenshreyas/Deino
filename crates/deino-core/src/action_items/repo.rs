@@ -9,6 +9,7 @@ use deino_domain::{
 };
 
 use super::ActionItem;
+use super::batch_repo::{insert, update};
 
 /// Where action items are stored.
 #[async_trait]
@@ -67,27 +68,8 @@ impl SqliteActionItemRepo {
 #[async_trait]
 impl ActionItemRepo for SqliteActionItemRepo {
     async fn create(&self, item: &ActionItem) -> Result<(), DbError> {
-        sqlx::query!(
-            "INSERT INTO action_items (id, meeting_id, title, description, assignee_person_id, due_at,
-                status, priority, source_segment_id, completed_at, created_by, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-            item.id,
-            item.meeting_id,
-            item.title,
-            item.description,
-            item.assignee_person_id,
-            item.due_at,
-            item.status,
-            item.priority,
-            item.source_segment_id,
-            item.completed_at,
-            item.created_by,
-            item.created_at,
-            item.updated_at,
-        )
-        .execute(self.database.writer())
-        .await?;
-        Ok(())
+        let mut connection = self.database.writer().acquire().await?;
+        insert(&mut connection, item).await
     }
 
     async fn find(&self, id: &ActionItemId) -> Result<Option<ActionItem>, DbError> {
@@ -98,23 +80,8 @@ impl ActionItemRepo for SqliteActionItemRepo {
     }
 
     async fn update(&self, item: &ActionItem) -> Result<bool, DbError> {
-        let result = sqlx::query!(
-            "UPDATE action_items
-             SET meeting_id = ?1, title = ?2, description = ?3, assignee_person_id = ?4, due_at = ?5,
-                 priority = ?6, updated_at = ?7
-             WHERE id = ?8",
-            item.meeting_id,
-            item.title,
-            item.description,
-            item.assignee_person_id,
-            item.due_at,
-            item.priority,
-            item.updated_at,
-            item.id,
-        )
-        .execute(self.database.writer())
-        .await?;
-        Ok(result.rows_affected() > 0)
+        let mut connection = self.database.writer().acquire().await?;
+        Ok(update(&mut connection, item).await? > 0)
     }
 
     async fn set_status(

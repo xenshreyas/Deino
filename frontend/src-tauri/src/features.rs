@@ -17,6 +17,7 @@
 
 #[cfg(debug_assertions)]
 pub mod _example;
+pub mod action_items;
 pub mod calendar;
 pub mod db;
 pub mod detection;
@@ -46,6 +47,7 @@ pub mod transcription;
 #[cfg(test)]
 pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>)> {
     let mut builders = vec![
+        (action_items::NAME, action_items::specta()),
         (db::NAME, db::specta()),
         (detection::NAME, detection::specta()),
         (export::NAME, export::specta()),
