@@ -102,7 +102,8 @@ downloadedBytes: number;
  */
 totalBytes: number }
 /**
- * What kind of failure an [`AppError`] reports. The UI branches on it.
+ * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+ * in the `last_error_code` and `error_code` columns of the integration tables.
  */
 export type ErrorCode = 
 /**

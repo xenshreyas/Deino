@@ -16,6 +16,7 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { CalendarSettings } from '@/features/calendar';
 import { ExportSettingsPage } from '@/features/export';
+import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ProfilePage } from '@/features/profile';
@@ -32,6 +33,7 @@ import {
   LayoutTemplate,
   Mic,
   Palette,
+  Plug,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -90,6 +92,12 @@ function NetworkSection() {
   return <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />;
 }
 
+/** Workspace → Integrations: connected apps, planned ones and what was sent (INT-00). */
+function IntegrationsSection() {
+  const { offlineMode } = useOfflineMode();
+  return <IntegrationsSettings offlineMode={offlineMode} />;
+}
+
 /** Settings → Developer (FND-04), loaded lazily so release builds drop it. */
 const DeveloperSettings = import.meta.env.DEV
   ? lazy(() =>
@@ -125,6 +133,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },
   { id: 'profile', group: 'ai', icon: UserRound, Component: ProfilePage },
   { id: 'calendar', group: 'workspace', icon: Calendar, Component: CalendarSettings },
+  { id: 'integrations', group: 'workspace', icon: Plug, Component: IntegrationsSection },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
   { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },

@@ -234,7 +234,8 @@ autoStart: AutoStartSettings }
  */
 export type Email = string
 /**
- * What kind of failure an [`AppError`] reports. The UI branches on it.
+ * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+ * in the `last_error_code` and `error_code` columns of the integration tables.
  */
 export type ErrorCode = 
 /**
@@ -374,6 +375,91 @@ bundleId: BundleId;
  * The app's name when it was ignored, shown in Settings.
  */
 name: string }
+/**
+ * A service Deino can connect to. Stored in
+ * `integration_connections.provider` and `integration_deliveries.provider`.
+ */
+export type IntegrationProvider = 
+/**
+ * Slack (INT-01).
+ */
+"slack" | 
+/**
+ * Notion (INT-02).
+ */
+"notion" | 
+/**
+ * Linear (INT-03).
+ */
+"linear" | 
+/**
+ * Todoist (INT-03).
+ */
+"todoist" | 
+/**
+ * Asana (INT-03).
+ */
+"asana" | 
+/**
+ * Jira Cloud (INT-03).
+ */
+"jira" | 
+/**
+ * monday.com (INT-03).
+ */
+"monday" | 
+/**
+ * ClickUp (INT-03).
+ */
+"clickup" | 
+/**
+ * Trello (INT-03).
+ */
+"trello" | 
+/**
+ * HubSpot (INT-04).
+ */
+"hubspot" | 
+/**
+ * Attio (INT-04).
+ */
+"attio" | 
+/**
+ * Salesforce (INT-04).
+ */
+"salesforce" | 
+/**
+ * Affinity (INT-04).
+ */
+"affinity" | 
+/**
+ * Zoho CRM (INT-04).
+ */
+"zoho_crm" | 
+/**
+ * Google Docs in Drive (INT-05).
+ */
+"google_docs" | 
+/**
+ * Gmail (INT-07).
+ */
+"gmail" | 
+/**
+ * Outlook mail through Microsoft Graph (INT-07).
+ */
+"outlook_mail" | 
+/**
+ * A provider that talks to nothing: debug builds and tests only.
+ */
+"sandbox"
+/**
+ * The integrations section of `Settings`.
+ */
+export type IntegrationSettings = { 
+/**
+ * The user's OAuth app per provider.
+ */
+apps: Partial<{ [key in IntegrationProvider]: OAuthAppSettings }> }
 export type JsonValue = null | boolean | number | string | JsonValue[] | Partial<{ [key in string]: JsonValue }>
 /**
  * An LLM provider. Serialized names match the ones the app has always used.
@@ -518,6 +604,19 @@ manualDndMode: boolean;
  * Per-kind switches.
  */
 preferences: NotificationPreferences }
+/**
+ * One OAuth app the user registered with a provider.
+ */
+export type OAuthAppSettings = { 
+/**
+ * The app's client ID.
+ */
+clientId: string; 
+/**
+ * The redirect port the app registered, for providers that match it
+ * exactly (Slack, Linear); `None` uses the provider's default.
+ */
+redirectPort: number | null }
 /**
  * The onboarding section of `Settings`.
  */
@@ -771,6 +870,30 @@ export type ServiceId =
  */
 "salesforce" | 
 /**
+ * Jira Cloud (INT-03).
+ */
+"jira" | 
+/**
+ * monday.com (INT-03).
+ */
+"monday" | 
+/**
+ * ClickUp (INT-03).
+ */
+"clickup" | 
+/**
+ * Trello (INT-03).
+ */
+"trello" | 
+/**
+ * Affinity (INT-04).
+ */
+"affinity" | 
+/**
+ * Zoho CRM (INT-04).
+ */
+"zoho_crm" | 
+/**
  * Web search for chat with a user-provided key (D4).
  */
 "web_search" | 
@@ -845,6 +968,10 @@ export: ExportSettings;
  * Calendar sync and which calendars are shown (ORG-01).
  */
 calendar: CalendarSettings; 
+/**
+ * The user's own OAuth apps for integrations (INT-00).
+ */
+integrations: IntegrationSettings; 
 /**
  * Appearance and layout.
  */

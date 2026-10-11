@@ -86,6 +86,7 @@ let settings: Generated.Settings = {
     google: { clientId: '' },
     microsoft: { clientId: '' },
   },
+  integrations: { apps: {} },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
   onboarding: {

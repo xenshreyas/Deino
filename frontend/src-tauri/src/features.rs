@@ -26,6 +26,7 @@ pub mod dev;
 pub mod enhance;
 pub mod export;
 pub mod folders;
+pub mod integrations;
 pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;
@@ -69,6 +70,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (transcription::NAME, transcription::specta()),
         (system::NAME, system::specta()),
         (folders::NAME, folders::specta()),
+        (integrations::NAME, integrations::specta()),
         (tags::NAME, tags::specta()),
         (speakers::NAME, speakers::specta()),
     ];

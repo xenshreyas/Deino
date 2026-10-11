@@ -55,6 +55,10 @@ export const settingsCopy = {
       label: 'Calendar',
       description: 'Your calendars from macOS Calendar, and which ones Deino shows.',
     },
+    integrations: {
+      label: 'Integrations',
+      description: 'Send notes, tasks and messages to the tools you use.',
+    },
     network: {
       label: 'Network',
       description: 'What may leave this Mac, and a log of everything that did.',
