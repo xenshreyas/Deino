@@ -26,6 +26,15 @@ pub enum DbError {
     /// A query failed.
     #[error("a database query failed")]
     Query(#[from] sqlx::Error),
+    /// There is no database file to open read-only.
+    #[error("no Deino database at {}", .0.display())]
+    Missing(std::path::PathBuf),
+    /// The file opened read-only has no migration history.
+    #[error("the file is not a Deino database")]
+    NotDeino(#[source] sqlx::Error),
+    /// The file's schema is not the one this binary was built for.
+    #[error(transparent)]
+    Schema(crate::SchemaCheck),
 }
 
 impl DbError {
@@ -34,8 +43,13 @@ impl DbError {
         let source = match self {
             Self::Open(error)
             | Self::Query(error)
+            | Self::NotDeino(error)
             | Self::Migrate(sqlx::migrate::MigrateError::Execute(error)) => error,
-            Self::CreateDir(_) | Self::Migrate(_) | Self::DataMigration(_) => return false,
+            Self::CreateDir(_)
+            | Self::Migrate(_)
+            | Self::DataMigration(_)
+            | Self::Missing(_)
+            | Self::Schema(_) => return false,
         };
         primary_code(source).is_some_and(|code| code == SQLITE_CORRUPT || code == SQLITE_NOTADB)
     }

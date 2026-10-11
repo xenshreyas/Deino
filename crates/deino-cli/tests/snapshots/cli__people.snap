@@ -1,0 +1,8 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"people\", \"brightkite\"])"
+---
+# People (2)
+
+- **Hannah Pike** · hannah.pike@brightkite-logistics.com · IT Security Lead, Brightkite Logistics · `75cdbbb1-4e86-80e2-b366-af486f14b7f3`
+- **Marcus Webb** · marcus.webb@brightkite-logistics.com · VP Operations, Brightkite Logistics · `a3b63715-d736-88a8-a4c8-251cb106e431`

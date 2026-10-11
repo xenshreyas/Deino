@@ -1,0 +1,8 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"tags\"])"
+---
+# Tags (2)
+
+- **Customer** · 2 meetings · Meetings about customer
+- **Hiring** · 1 meeting · Meetings about hiring

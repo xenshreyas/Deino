@@ -1,0 +1,13 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: page
+---
+# Eng standup — transcript
+
+`meeting-fixture-standup` · 3 of 58 lines · times are from the start; link a moment as deino://meeting/meeting-fixture-standup?t=64070
+
+[1:04] Diego Alvarez: Right now I'm diffing the whole payload, which works, but it's slow and it's going to be terrible on a bad connection out in somebody's basement.
+[1:14] Maya Chen: Oh, that one's on me, sorry. I said I'd add it last week and then the incident ate the week.
+[1:21] Maya Chen: It's a small change. I can have it on the endpoint by end of day tomorrow.
+
+More follows: continue with from_ms=87440 (--from-ms 87440).

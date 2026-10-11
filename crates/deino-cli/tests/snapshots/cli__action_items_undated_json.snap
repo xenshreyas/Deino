@@ -1,0 +1,32 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"--json\", \"action-items\", \"--assignee\", \"Priya\", \"--due\",\n\"no_date\", \"-n\", \"2\",])"
+---
+{
+  "items": [
+    {
+      "id": "97d83827-c2b0-8d23-b534-6b8fd26c5700",
+      "title": "Add Zapier to the SOC 2 vendor inventory",
+      "description": "",
+      "status": "open",
+      "assignee": "Priya Nair",
+      "assigneeIsMe": false,
+      "due": null,
+      "meetingId": "meeting-fixture-planning",
+      "meetingTitle": "Q4 planning",
+      "link": "deino://meeting/meeting-fixture-planning?t=3307343"
+    },
+    {
+      "id": "97d84027-c2b0-8abb-b54f-9b8fd2837048",
+      "title": "Review the duplicate-job cleanup script (dry run) before it runs",
+      "description": "",
+      "status": "open",
+      "assignee": "Priya Nair",
+      "assigneeIsMe": false,
+      "due": null,
+      "meetingId": "meeting-fixture-planning",
+      "meetingTitle": "Q4 planning",
+      "link": "deino://meeting/meeting-fixture-planning?t=701782"
+    }
+  ]
+}

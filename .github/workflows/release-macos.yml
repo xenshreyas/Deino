@@ -50,6 +50,10 @@ jobs:
           mkdir -p frontend/src-tauri/binaries
           cp "target/$TARGET/sidecar/llama-helper" "frontend/src-tauri/binaries/llama-helper-$TARGET"
 
+      # The `deino` CLI and MCP server (DEV-02/04), bundled as Contents/MacOS/cli.
+      - name: Build and stage the deino CLI sidecar
+        run: scripts/stage-cli.sh --release --target "$TARGET"
+
       # Tauri ad-hoc signs the bundle ("signingIdentity": "-"), and codesign
       # rejects files that carry extended attributes (Finder info, provenance)
       # with "resource fork, Finder information, or similar detritus not

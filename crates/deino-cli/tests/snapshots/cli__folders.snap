@@ -1,0 +1,8 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"folders\"])"
+---
+# Folders (2)
+
+- **Customers** · 1 meeting
+- **Customers / Brightkite** · 1 meeting

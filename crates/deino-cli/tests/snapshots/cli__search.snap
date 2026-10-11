@@ -1,0 +1,46 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"search\", \"release\", \"cut\"])"
+---
+# Search "release cut" (20 hits, keyword search)
+
+- action item · **Drive the release cut at four o'clock today** · Thu 8 Oct 2026 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup
+  > Drive the release cut at four o'clock today
+- transcript · **Shreyas / Maya 1:1** · Wed 7 Oct 2026 · at 0:46 · `meeting-fixture-one-on-one` · deino://meeting/meeting-fixture-one-on-one?t=46984
+  > …Who picks up my shifts, though? Priya's already got SOC 2 and the release cuts.
+- action item · **Add Owen to the release-notes email list** · Mon 5 Oct 2026 · `meeting-fixture-customer-support` · deino://meeting/meeting-fixture-customer-support
+  > Add Owen to the release-notes email list
+- action item · **Write up the Q4 plan (priorities, cuts, owners, dates) and send it to everyone** · Mon 28 Sep 2026 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning
+  > Write up the Q4 plan (priorities, cuts, owners, dates) and send it to everyone
+- action item · **Set up a forty-eight hour pre-release notice email to Fernhollow for sync changes** · Mon 5 Oct 2026 · `meeting-fixture-customer-support` · deino://meeting/meeting-fixture-customer-support
+  > Set up a forty-eight hour pre-release notice email to Fernhollow for sync changes
+- transcript · **Eng standup** · Thu 8 Oct 2026 · at 3:51 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup?t=231259
+  > And today I'm driving the release cut. Plan's still Thursday afternoon, so four o…
+- AI notes · **Eng standup** · Thu 8 Oct 2026 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup
+  > …not gate merges or the release cut. - The release cut happens today (Thursday 8 October) at…
+- transcript · **Deino Q3 board update** · Tue 29 Sep 2026 · at 26:46 · `meeting-fixture-board-update` · deino://meeting/meeting-fixture-board-update?t=1606264
+  > And what did you cut?
+- transcript · **Fernhollow: duplicate jobs follow-up** · Mon 5 Oct 2026 · at 11:56 · `meeting-fixture-customer-support` · deino://meeting/meeting-fixture-customer-support?t=716418
+  > …We do have a release notes email that goes out with every release. I'm pretty…
+- transcript · **Deino Q3 board update** · Tue 29 Sep 2026 · at 27:01 · `meeting-fixture-board-update` · deino://meeting/meeting-fixture-board-update?t=1621180
+  > Is cutting Salesforce going to hurt the enterprise deals?
+- transcript · **Eng standup** · Thu 8 Oct 2026 · at 4:03 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup?t=243220
+  > And the quarantined test won't block the cut?
+- transcript · **Eng standup** · Thu 8 Oct 2026 · at 1:55 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup?t=115362
+  > Does that mean the offline list misses today's cut?
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 34:57 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=2097709
+  > Okay. Nobody's arguing for it. That feels like a cut.
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 1:26 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=86075
+  > Tom, you're cutting out pretty badly. We got about every third word.
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 15:15 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=915602
+  > The second thing that didn't go well is the mobile release. Diego?
+- transcript · **Eng standup** · Thu 8 Oct 2026 · at 2:09 · `meeting-fixture-standup` · deino://meeting/meeting-fixture-standup?t=129824
+  > Okay, agreed. Offline list goes in next week's release, not this one. Priya?
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 16:41 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=1001082
+  > Let's carry that into the offline mode conversation, because that's a mobile release too.
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 47:52 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=2872396
+  > …The Salesforce integration is also cut from Q4. We revisit it in the January planning.
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 47:42 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=2862063
+  > Route optimisation is cut from Q4. We're not doing any work on it. Not even…
+- transcript · **Q4 planning** · Mon 28 Sep 2026 · at 1:06:56 · `meeting-fixture-planning` · deino://meeting/meeting-fixture-planning?t=4016729
+  > …app? Like, if App Store review approves offline on the nineteenth, do we hold the release?

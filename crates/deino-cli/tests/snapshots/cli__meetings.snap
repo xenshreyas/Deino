@@ -1,0 +1,12 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"meetings\", \"-n\", \"3\"])"
+---
+# Meetings (3)
+
+- **Eng standup** · Thu 8 Oct 2026, 15:31 · 7 min · `meeting-fixture-standup`
+  Shreyas, Maya Chen, Diego Alvarez, Priya Nair, Tom Becker
+- **Shreyas / Maya 1:1** · Wed 7 Oct 2026, 16:01 · 19 min · `meeting-fixture-one-on-one`
+  Shreyas, Maya Chen
+- **Fernhollow: duplicate jobs follow-up** · Mon 5 Oct 2026, 16:02 · 17 min · `meeting-fixture-customer-support`
+  Tom Becker, Shreyas, Owen Price · tags: Customer

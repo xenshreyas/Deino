@@ -1,0 +1,5 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: stderr(missing.get_output())
+---
+{"error":{"code":"not_found","message":"no meeting matches \"meeting-nope\""}}

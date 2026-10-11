@@ -1,0 +1,41 @@
+---
+source: crates/deino-cli/tests/cli.rs
+expression: "sample.stdout(&[\"--json\", \"meetings\", \"--tag\", \"customer\"])"
+---
+{
+  "meetings": [
+    {
+      "id": "meeting-fixture-customer-support",
+      "title": "Fernhollow: duplicate jobs follow-up",
+      "heldAt": "2026-10-05T16:02:15Z",
+      "durationS": 993,
+      "status": "ready",
+      "attendees": [
+        "Tom Becker",
+        "Shreyas",
+        "Owen Price"
+      ],
+      "tags": [
+        "Customer"
+      ],
+      "link": "deino://meeting/meeting-fixture-customer-support"
+    },
+    {
+      "id": "meeting-fixture-sales-discovery",
+      "title": "Deino × Brightkite Logistics: discovery",
+      "heldAt": "2026-09-30T15:01:24Z",
+      "durationS": 1545,
+      "status": "ready",
+      "attendees": [
+        "Lena Okafor",
+        "Shreyas",
+        "Marcus Webb",
+        "Hannah Pike"
+      ],
+      "tags": [
+        "Customer"
+      ],
+      "link": "deino://meeting/meeting-fixture-sales-discovery"
+    }
+  ]
+}
