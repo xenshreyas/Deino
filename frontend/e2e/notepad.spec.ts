@@ -21,7 +21,10 @@ test('notes typed in a meeting are saved and come back after a reload', async ({
 
   await expect(page.getByRole('heading', { name: 'Release cut' })).toBeVisible();
   await expect(page.getByText('merge the offline list by 3:30', { exact: true })).toBeVisible();
-  await expect(page.getByRole('checkbox')).not.toBeChecked();
+  // The notepad's own task, not the meeting's action items above it.
+  await expect(
+    page.getByRole('textbox', { name: 'My notes' }).getByRole('checkbox'),
+  ).not.toBeChecked();
 });
 
 test('a fixture meeting opens with the notes its user typed', async ({ page }) => {

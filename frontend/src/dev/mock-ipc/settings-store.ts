@@ -37,6 +37,7 @@ let settings: Generated.Settings = {
       showTranscriptionComplete: true,
       showMeetingReminders: true,
       showSystemErrors: true,
+      showActionItemReminders: true,
       meetingReminderMinutes: [15, 5],
     },
   },

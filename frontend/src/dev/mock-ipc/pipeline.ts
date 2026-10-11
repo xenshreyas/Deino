@@ -46,8 +46,16 @@ export const commands = {
   },
 } satisfies typeof Generated.commands;
 
-/** The organising stages after the summary (ORG-06, ORG-05), as processed. */
+/** The stages after the summary (AI-05, ORG-06, ORG-05), as processed. */
 const ORGANISE_STAGES: readonly StageStatus[] = [
+  {
+    stage: 'extract_action_items' as Generated.StageId,
+    status: 'succeeded',
+    attempts: 1,
+    retryAt: null,
+    message: null,
+    updatedAt: PROCESSED_AT,
+  },
   {
     stage: 'auto_tag' as Generated.StageId,
     status: 'succeeded',

@@ -75,10 +75,6 @@ export const NAV_ITEMS = [
     to: '/action-items',
     order: 30,
     section: 'primary',
-    comingSoon: {
-      card: 'AI-05',
-      description: 'Every follow-up from your meetings, with owners and due dates.',
-    },
   },
   {
     id: 'people',

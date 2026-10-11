@@ -8,6 +8,7 @@ import { CommandGroup, CommandItem, CommandShortcut } from '@/ui/command';
 import {
   type Icon,
   ICON_PROPS,
+  ListChecks,
   MessageCircle,
   Mic,
   Monitor,
@@ -26,7 +27,8 @@ import { paletteCopy } from './copy';
 import type { PaletteProviderProps } from './registry';
 
 /** The palette's built-in actions. */
-type ActionId = 'new-note' | 'record' | 'chat' | 'sidebar' | 'right-panel' | 'import';
+type ActionId =
+  'new-note' | 'new-action-item' | 'record' | 'chat' | 'sidebar' | 'right-panel' | 'import';
 
 /** How an action looks in the list. */
 interface ActionView {
@@ -43,6 +45,7 @@ const ACTIONS: readonly ActionView[] = [
     icon: SquarePen,
     shortcut: SHORTCUTS.newNote.display,
   },
+  { id: 'new-action-item', label: paletteCopy.newActionItem, icon: ListChecks },
   {
     id: 'record',
     label: paletteCopy.startRecording,
@@ -84,6 +87,7 @@ function useActionRunners(): Record<ActionId, () => void> {
   const goHome = () => void router.navigate({ to: '/' });
   return {
     'new-note': goHome,
+    'new-action-item': () => void router.navigate({ to: '/action-items', search: { add: true } }),
     record: () => {
       void requestRecordingStart(goHome);
     },

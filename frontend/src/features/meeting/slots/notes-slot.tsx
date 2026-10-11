@@ -1,5 +1,6 @@
 /**
- * The Notes tab: the meeting's template (NOT-04), then the AI summary and
+ * The Notes tab: the meeting's template (NOT-04), its action items (AI-05),
+ * then the AI summary and
  * "My notes" behind a segmented pill (ui.md §3 Tabs, "Notes sub-switch");
  * ⌘E switches between them. NOT-01
  * fills "My notes" with the notepad; NOT-02 replaces the summary with the
@@ -7,6 +8,7 @@
  */
 import { useState } from 'react';
 
+import { MeetingActionItems } from '@/features/action-items';
 import { Notepad, notepadCopy } from '@/features/notepad';
 import { MeetingTemplatePicker } from '@/features/templates';
 import { useMountEffect } from '@/hooks/useMountEffect';
@@ -78,6 +80,7 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
         meetingId={meetingId}
         onRegenerate={panels.status === 'ready' ? panels.regenerateNotes : null}
       />
+      <MeetingActionItems meetingId={meetingId} />
       {view === 'mine' ? (
         <Notepad meetingId={meetingId} toolbar={toggle} />
       ) : (
