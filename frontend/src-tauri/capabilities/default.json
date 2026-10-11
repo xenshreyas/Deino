@@ -39,6 +39,7 @@
         },
         "system:default",
         "detection:default",
+        "action-items:default",
         "calendar:default",
         "meetings:default",
         "export:default",

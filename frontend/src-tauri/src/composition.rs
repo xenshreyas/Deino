@@ -23,6 +23,7 @@
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod action_items;
 mod browser;
 mod calendar;
 mod detection;
@@ -39,6 +40,7 @@ mod stt;
 
 use std::sync::Arc;
 
+use action_items::ActionItemWiring;
 pub(crate) use calendar::CalendarSchedule;
 pub(crate) use detection::attach_detection;
 use export::ExportServices;
@@ -154,10 +156,12 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         return;
     };
     let gateway = llm::attach_llm(app, &database, &settings, clock.clone());
-    let auto_tagger = organize.auto_tagger(gateway.clone(), Arc::clone(&settings));
-    let exports = ExportServices::build(app, &database, Arc::clone(&settings), clock.clone());
-    let auto_export = exports.auto_exporter();
-    exports.manage(app);
+    let wiring = ActionItemWiring {
+        gateway: gateway.clone(),
+        settings: Arc::clone(&settings),
+        clock: Arc::clone(&clock),
+    };
+    let stage_adapters = attach_stage_services(app, &database, &organize, &wiring);
     let deps = NoteDeps {
         settings,
         gateway,
@@ -165,10 +169,6 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     // Templates are seeded before the pipeline starts: its summary stage reads them.
     attach_notes(app, &database, deps).await;
-    let stage_adapters = StageAdapters {
-        auto_tagger,
-        auto_export,
-    };
     attach_pipeline(app, &database, &clock, stage_adapters);
     attach_background(app, &database, &clock);
 }
@@ -178,6 +178,30 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     recording::attach_recording(app, database);
     calendar::attach_calendar(app, database, clock);
+}
+
+/// Builds and manages the services behind the pipeline's AI and export
+/// stages: the auto-tagger, the exports (EXP-01/02) and action items (AI-05).
+fn attach_stage_services(
+    app: &AppHandle,
+    database: &Database,
+    organize: &Organize,
+    wiring: &ActionItemWiring,
+) -> StageAdapters {
+    let auto_tagger = organize.auto_tagger(wiring.gateway.clone(), Arc::clone(&wiring.settings));
+    let exports = ExportServices::build(
+        app,
+        database,
+        Arc::clone(&wiring.settings),
+        Arc::clone(&wiring.clock),
+    );
+    let auto_export = exports.auto_exporter();
+    exports.manage(app);
+    StageAdapters {
+        auto_tagger,
+        auto_export,
+        action_items: action_items::attach_action_items(app, database, wiring),
+    }
 }
 
 /// Wires templates and the profile (`notes.rs`) and prepares them.
@@ -294,6 +318,7 @@ mod tests {
             auto_tagger: auto_tags.clone(),
             auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
             recordings: std::path::PathBuf::from("no-recordings"),
+            action_items: Arc::new(deino_core::action_items::FakeActionItemExtractor::default()),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);
