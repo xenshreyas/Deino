@@ -36,6 +36,8 @@ interface ActionView {
   label: string;
   icon: Icon;
   shortcut?: string;
+  /** Unfinished (D13): shown with a "WIP" badge, and cannot be chosen. */
+  wip?: boolean;
 }
 
 const ACTIONS: readonly ActionView[] = [
@@ -57,6 +59,8 @@ const ACTIONS: readonly ActionView[] = [
     label: paletteCopy.askDeino,
     icon: MessageCircle,
     shortcut: SHORTCUTS.chat.display,
+    // D13: the chat agent (AI-02) is deprioritised.
+    wip: true,
   },
   {
     id: 'sidebar',
@@ -112,10 +116,21 @@ function ActionItem({
 }) {
   const ActionIcon = view.icon;
   const shortcut = 'shortcut' in view ? view.shortcut : undefined;
+  const wip = 'wip' in view ? (view.wip ?? false) : false;
   return (
-    <CommandItem value={`action ${view.label}`} keywords={[view.label]} onSelect={onRun}>
+    <CommandItem
+      value={`action ${view.label}`}
+      keywords={[view.label]}
+      disabled={wip}
+      onSelect={onRun}
+    >
       <ActionIcon {...ICON_PROPS} />
       {view.label}
+      {wip ? (
+        <span className="rounded-full border border-border px-1.5 text-[11px] leading-4 text-fg-muted">
+          {paletteCopy.wip}
+        </span>
+      ) : null}
       {shortcut === undefined ? null : <CommandShortcut>{shortcut}</CommandShortcut>}
     </CommandItem>
   );
