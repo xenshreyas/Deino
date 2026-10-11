@@ -36,6 +36,7 @@ mod notes;
 mod organize;
 mod pipeline;
 mod recording;
+mod speakers;
 mod stt;
 
 use std::sync::Arc;
@@ -49,6 +50,7 @@ pub(crate) use organize::Organize;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
 use pipeline::{StageAdapters, attach_pipeline};
+pub(crate) use speakers::Speakers;
 pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
@@ -143,6 +145,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
     let organize = Organize::build(&database, &clock, tag_events);
     organize.manage(app);
+    Speakers::build(&database, &clock).manage(app);
     notepad::attach_notepad(app, &database, &clock);
     network::attach_network_log(app, &database);
     #[cfg(debug_assertions)]
@@ -181,7 +184,8 @@ fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock
 }
 
 /// Builds and manages the services behind the pipeline's AI and export
-/// stages: the auto-tagger, the exports (EXP-01/02) and action items (AI-05).
+/// stages: the auto-tagger, the exports (EXP-01/02), action items (AI-05)
+/// and the speaker identifier (CAP-04).
 fn attach_stage_services(
     app: &AppHandle,
     database: &Database,
@@ -201,6 +205,7 @@ fn attach_stage_services(
         auto_tagger,
         auto_export,
         action_items: action_items::attach_action_items(app, database, wiring),
+        identifier: speakers::identifier(database, wiring.settings.clone()),
     }
 }
 
@@ -319,6 +324,7 @@ mod tests {
             auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
             recordings: std::path::PathBuf::from("no-recordings"),
             action_items: Arc::new(deino_core::action_items::FakeActionItemExtractor::default()),
+            identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);

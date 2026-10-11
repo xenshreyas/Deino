@@ -6,14 +6,16 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
-use deino_core::diarization::TrackDiarizer;
+use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::export::AutoExporter;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::SettingsService;
+use deino_core::speakers::SqliteNamingRepo;
 use deino_core::tags::AutoTagger;
+use deino_core::voiceprints::SqliteVoiceprintRepo;
 use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::{
@@ -28,8 +30,9 @@ use crate::paths::AppPaths;
 
 /// What the pipeline gets from the app: where progress goes, the legacy
 /// summary service behind `legacy_summary`, the diarization engine behind
-/// `diarize`, the services behind `extract_action_items`, `auto_tag` and
-/// `auto_export`, and the live recordings' folder that `finalize_audio` reads.
+/// `diarize`, the identifier behind `identify_speakers`, the services behind
+/// `extract_action_items`, `auto_tag` and `auto_export`, and the live
+/// recordings' folder that `finalize_audio` reads.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) summaries: Arc<dyn Summarizer>,
@@ -42,14 +45,17 @@ pub(crate) struct PipelineAdapters {
     pub(crate) auto_export: Arc<dyn AutoExporter>,
     /// Over the LLM gateway (`composition/action_items.rs`, AI-05).
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
+    /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
+    pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
 }
 
 /// The stage services built before the pipeline: the auto-tagger, the
-/// auto-exporter and the action item extraction.
+/// auto-exporter, the action item extraction and the speaker identifier.
 pub(crate) struct StageAdapters {
     pub(crate) auto_tagger: Arc<dyn AutoTagger>,
     pub(crate) auto_export: Arc<dyn AutoExporter>,
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
+    pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
 }
 
 /// The ports the registered stages read: SQLite repositories over
@@ -73,6 +79,9 @@ fn stage_ports(
         segment_writer: segments.clone(),
         speakers: segments,
         diarizer: adapters.diarizer,
+        voiceprints: Arc::new(SqliteVoiceprintRepo::new(database.clone())),
+        identifier: adapters.identifier,
+        participants: Arc::new(SqliteNamingRepo::new(database.clone())),
         clock: Arc::clone(clock),
         auto_tagger: adapters.auto_tagger,
         auto_export: adapters.auto_export,
@@ -165,6 +174,7 @@ pub(super) fn attach_pipeline(
         auto_export: stages.auto_export,
         recordings,
         action_items: stages.action_items,
+        identifier: stages.identifier,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
 }

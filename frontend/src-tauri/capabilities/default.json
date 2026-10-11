@@ -55,6 +55,7 @@
         "templates:default",
         "transcription:default",
         "folders:default",
-        "tags:default"
+        "tags:default",
+        "speakers:default"
     ]
 }
