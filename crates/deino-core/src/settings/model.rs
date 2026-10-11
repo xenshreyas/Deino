@@ -3,9 +3,10 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, BetaSettings, DetectionSettings, ExportSettings, NetworkSettings,
-    NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
-    RecordingSettings, SettingsError, TemplateSettings, TranscriptionSettings, UiSettings,
+    AiSettings, AudioSettings, BetaSettings, CalendarSettings, DetectionSettings, ExportSettings,
+    NetworkSettings, NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings,
+    ProfileSettings, RecordingSettings, SettingsError, TemplateSettings, TranscriptionSettings,
+    UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -45,6 +46,8 @@ pub struct Settings {
     pub organize: OrganizeSettings,
     /// Exports and auto-export (EXP-02).
     pub export: ExportSettings,
+    /// Calendar sync and which calendars are shown (ORG-01).
+    pub calendar: CalendarSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -69,6 +72,7 @@ impl Default for Settings {
             templates: TemplateSettings::default(),
             organize: OrganizeSettings::default(),
             export: ExportSettings::default(),
+            calendar: CalendarSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
             onboarding: OnboardingSettings::default(),
@@ -84,6 +88,7 @@ impl Settings {
         self.profile.validate()?;
         self.detection.validate()?;
         self.export.validate()?;
+        self.calendar.validate()?;
         self.ui.validate()
     }
 

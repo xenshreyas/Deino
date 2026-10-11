@@ -40,6 +40,7 @@ zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
 deino-audio = { path = "crates/deino-audio" }
 deino-core = { path = "crates/deino-core" }
+deino-connect = { path = "crates/deino-connect" }
 deino-db = { path = "crates/deino-db" }
 # Tests add `features = ["test-support"]` for the fakes of its ports.
 deino-detect = { path = "crates/deino-detect" }
@@ -47,6 +48,8 @@ deino-diarize = { path = "crates/deino-diarize" }
 deino-doc = { path = "crates/deino-doc" }
 deino-domain = { path = "crates/deino-domain" }
 deino-export = { path = "crates/deino-export" }
+# macOS Calendar through EventKit (ORG-01); a stub elsewhere.
+deino-eventkit = { path = "crates/deino-eventkit" }
 # Tests add `features = ["test-support"]` for `MockProvider` and the fakes of its ports.
 deino-llm = { path = "crates/deino-llm" }
 deino-net = { path = "crates/deino-net" }

@@ -65,7 +65,7 @@ type LegacyTranscriptRow = (
 );
 
 /// A migrator with only the migrations before `version`.
-fn migrator_before(version: i64) -> Migrator {
+pub(crate) fn migrator_before(version: i64) -> Migrator {
     let migrations = MIGRATOR.iter().filter(|m| m.version < version).cloned();
     Migrator {
         migrations: Cow::Owned(migrations.collect()),

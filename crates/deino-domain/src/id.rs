@@ -187,6 +187,11 @@ uuid_id!(
 );
 
 uuid_id!(
+    /// Identifies one calendar inside a calendar account ("Work", "Family").
+    CalendarId
+);
+
+uuid_id!(
     /// Identifies a calendar event synced from a calendar account.
     CalendarEventId
 );

@@ -23,6 +23,8 @@
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
 
+mod browser;
+mod calendar;
 mod detection;
 mod diarize;
 mod export;
@@ -37,6 +39,7 @@ mod stt;
 
 use std::sync::Arc;
 
+pub(crate) use calendar::CalendarSchedule;
 pub(crate) use detection::attach_detection;
 use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
@@ -167,7 +170,14 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         auto_export,
     };
     attach_pipeline(app, &database, &clock, stage_adapters);
-    recording::attach_recording(app, &database);
+    attach_background(app, &database, &clock);
+}
+
+/// Wires the services that run on their own once the pipeline is up: the
+/// live recorder and calendar sync (its scheduler starts here).
+fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
+    recording::attach_recording(app, database);
+    calendar::attach_calendar(app, database, clock);
 }
 
 /// Wires templates and the profile (`notes.rs`) and prepares them.

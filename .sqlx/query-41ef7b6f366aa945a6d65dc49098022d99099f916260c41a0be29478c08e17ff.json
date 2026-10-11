@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: CalendarEventId\", provider_event_id FROM calendar_events\n        WHERE account_id = ?1 AND start_at >= ?2 AND start_at < ?3",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarEventId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider_event_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "41ef7b6f366aa945a6d65dc49098022d99099f916260c41a0be29478c08e17ff"
+}

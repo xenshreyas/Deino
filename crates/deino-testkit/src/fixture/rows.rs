@@ -3,7 +3,7 @@
 //!
 //! | Target | Tables |
 //! |---|---|
-//! | [`CalendarRows`] | `calendar_accounts`, `calendar_events` |
+//! | [`CalendarRows`] | `calendar_accounts`, `calendars`, `calendar_events` |
 //! | [`MeetingRows`] | `meetings` (with its calendar link and series) |
 //! | [`PeopleRows`] | `companies`, `people`, `meeting_attendees` |
 //! | [`TranscriptRows`] | `speakers`, `transcript_segments` |

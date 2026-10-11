@@ -90,6 +90,10 @@ export type Table =
  */
 "calendar_events" | 
 /**
+ * The calendars inside each calendar account (ORG-01).
+ */
+"calendars" | 
+/**
  * Folders, nested through `parent_id`.
  */
 "folders" | 

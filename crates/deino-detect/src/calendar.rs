@@ -2,8 +2,9 @@
 //! is assumed to be that event (Granola §2.3), so the prompt names it.
 //!
 //! The link window is an event that started less than 15 minutes ago or
-//! starts within 5 minutes. Calendars arrive with ORG-01; until then the app
-//! wires [`NoCalendar`].
+//! starts within 5 minutes. The app wires the synced calendar (ORG-01,
+//! `features::calendar::SyncedCalendar`); [`NoCalendar`] is for tests and
+//! builds without calendars.
 
 use chrono::{DateTime, TimeDelta, Utc};
 use deino_domain::CalendarEventId;

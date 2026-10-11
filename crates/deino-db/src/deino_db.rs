@@ -58,4 +58,6 @@ mod database_tests;
 #[cfg(test)]
 mod migration_tests;
 #[cfg(test)]
+mod org01_migration_tests;
+#[cfg(test)]
 mod templates_migration_tests;

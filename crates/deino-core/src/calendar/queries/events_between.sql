@@ -4,6 +4,7 @@
 SELECT
     id AS "id: CalendarEventId",
     account_id AS "account_id: CalendarAccountId",
+    calendar_id AS "calendar_id: CalendarId",
     provider_event_id,
     ical_uid,
     series_id AS "series_id: SeriesId",
@@ -11,6 +12,7 @@ SELECT
     description,
     start_at AS "start_at: DateTime<Utc>",
     end_at AS "end_at: DateTime<Utc>",
+    is_all_day AS "is_all_day: bool",
     conference_url,
     platform AS "platform: ConferencePlatform",
     organizer_email,

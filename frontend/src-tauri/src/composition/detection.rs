@@ -1,19 +1,19 @@
 //! Wiring for meeting detection (CAP-06): the service over the app's
 //! adapters, and the detector thread over this Mac's sensors.
 //!
-//! Calendar association waits for ORG-01, so the detector links no events
-//! yet ([`NoCalendar`]); recording starts on the live recorder
+//! Calls are linked to the synced calendar ([`SyncedCalendar`], ORG-01),
+//! which links nothing until the calendar service is attached with the
+//! database; recording starts on the live recorder
 //! (`features::detection::recorder`).
 
 use std::sync::Arc;
 
 use deino_core::settings::SettingsService;
-use deino_detect::{
-    DetectionPorts, DetectionService, Detector, DetectorParts, NoCalendar, platform_sensors,
-};
+use deino_detect::{DetectionPorts, DetectionService, Detector, DetectorParts, platform_sensors};
 use deino_domain::{Clock, SystemClock};
 use tauri::{AppHandle, Manager};
 
+use crate::features::calendar::SyncedCalendar;
 use crate::features::detection::adapters::{SettingsDetection, TauriDetectionSink};
 use crate::features::detection::recorder::{RecorderStarter, RecorderStatus};
 
@@ -29,7 +29,7 @@ pub(crate) fn attach_detection(app: &AppHandle) {
     app.manage(Arc::clone(&service));
     let parts = DetectorParts {
         service,
-        calendar: Arc::new(NoCalendar),
+        calendar: Arc::new(SyncedCalendar::new(app.clone())),
         clock,
     };
     match Detector::spawn(platform_sensors, parts) {

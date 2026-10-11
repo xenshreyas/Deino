@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every calendar, by account and title (case-insensitive). A handful of\n-- rows per account, so the sort stays in memory.\nSELECT\n    id AS \"id: CalendarId\",\n    account_id AS \"account_id: CalendarAccountId\",\n    provider_calendar_id,\n    title,\n    color AS \"color: CalendarColor\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM calendars\nORDER BY account_id, title COLLATE NOCASE, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CalendarId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "account_id: CalendarAccountId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider_calendar_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "color: CalendarColor",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c2bb0070ccd1af12e8ae8fb4181962b8bfd24ee0aece63e05ed28455c7e4af06"
+}

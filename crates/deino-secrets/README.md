@@ -8,7 +8,9 @@ Deino stores a secret.
 ## Owns
 
 - `SecretName`: the closed set of secrets, each its own keychain account
-  (`openai_api_key`, `anthropic_api_key`, …).
+  (`openai_api_key`, `anthropic_api_key`, …, and ORG-01's
+  `google_oauth_client_secret`, `google_calendar_refresh_token`,
+  `microsoft_calendar_refresh_token`).
 - `SecretValue`: a validated value that cannot be printed, serialized or
   cloned, and is wiped from memory on drop.
 - `SecretStore`: `set`, `get`, `delete`, and `status` (`missing`, `stored`,

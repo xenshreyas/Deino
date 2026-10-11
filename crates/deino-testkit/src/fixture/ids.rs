@@ -43,6 +43,16 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 /// The fixture calendar account every fixture event belongs to.
 pub const CALENDAR_ACCOUNT_NAME: &str = "Deino fixtures";
 
+/// The fixture calendar (in [`CALENDAR_ACCOUNT_NAME`]) every fixture event
+/// belongs to.
+pub const CALENDAR_NAME: &str = "Work";
+
+/// The key of the fixture calendar's ID.
+pub const CALENDAR_KEY: &str = "calendar/work";
+
+/// The fixture calendar's colour (macOS Calendar's blue).
+pub const CALENDAR_COLOR: &str = "#34AADC";
+
 /// The key of a fixture company's ID.
 pub fn company_key(domain: &str) -> String {
     format!("company/{domain}")

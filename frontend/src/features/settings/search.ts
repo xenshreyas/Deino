@@ -15,6 +15,7 @@ export const settingsSectionSchema = z.enum([
   'models',
   'templates',
   'profile',
+  'calendar',
   'network',
   'export',
   'beta',

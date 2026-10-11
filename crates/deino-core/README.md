@@ -41,8 +41,15 @@ the SQLite adapters behind those ports.
     `AttendeeRepo` and `MeRepo` (the one person who is the user, moved in one
     transaction); `PeopleService::search` feeds the notepad's @mentions;
   - `companies`: `CompanyRepo`;
-  - `calendar`: `CalendarAccountRepo` and `CalendarEventRepo` (upsert by
-    provider ID);
+  - `calendar` (ORG-01, ADR 0027): `CalendarAccountRepo`,
+    `CalendarEventRepo` (upsert by provider ID, change-only) and
+    `CalendarRepo`; the `CalendarSource` port that `deino-eventkit` and
+    `deino-connect` implement; the conference-link parser, the filters, the
+    mapping into a `SyncBatch` and `CalendarSyncRepo::apply` (one
+    transaction, per-provider pruning, `record_override` never written);
+    `AttendeeDirectory` (people and companies from attendees);
+    `CalendarService` and `SyncScheduler`. No network client: web
+    providers live in `deino-connect`;
   - `folders` (ORG-05, ADR 0024): `FolderRepo` (the only writer of
     `parent_id`, refusing cycles), `MeetingFolderRepo`, `FolderRuleRepo`
     (`folder_rules`) and `MeetingFactsReader`; `FolderService` (the tree),

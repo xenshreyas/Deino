@@ -2,8 +2,8 @@
 //!
 //! The user's own addresses (Settings → Profile) define their organisation:
 //! every work domain they list is internal, and so are its subdomains.
-//! Personal mail providers never are, since sharing `gmail.com` with someone
-//! says nothing about working together (Granola draws the same line for its
+//! Personal mail providers (`companies::PUBLIC_EMAIL_DOMAINS`) never are,
+//! since sharing `gmail.com` with someone says nothing about working together (Granola draws the same line for its
 //! organisation sharing, `docs/research/granola.md` §3.4).
 //!
 //! Pure and synchronous, so template auto rules (NOT-04), follow-up emails
@@ -13,32 +13,8 @@ use std::collections::BTreeSet;
 
 use deino_domain::{Audience, Email};
 
+use crate::companies::is_public_email_domain;
 use crate::settings::ProfileSettings;
-
-/// Mail providers whose domain does not identify an organisation.
-pub const PERSONAL_EMAIL_DOMAINS: &[&str] = &[
-    "aol.com",
-    "fastmail.com",
-    "gmail.com",
-    "gmx.com",
-    "googlemail.com",
-    "hey.com",
-    "hotmail.com",
-    "icloud.com",
-    "live.com",
-    "mac.com",
-    "mail.com",
-    "me.com",
-    "msn.com",
-    "outlook.com",
-    "pm.me",
-    "proton.me",
-    "protonmail.com",
-    "yahoo.com",
-    "yandex.com",
-    "ymail.com",
-    "zoho.com",
-];
 
 /// The user's own addresses and the work domains they make internal.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -58,7 +34,7 @@ impl InternalDomains {
         let domains = emails
             .iter()
             .map(Email::domain)
-            .filter(|domain| !PERSONAL_EMAIL_DOMAINS.contains(domain))
+            .filter(|domain| !is_public_email_domain(domain))
             .map(str::to_owned)
             .collect();
         Self {

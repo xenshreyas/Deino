@@ -9,7 +9,7 @@ use deino_db::{Database, test_db};
 use deino_domain::{Email, MeetingId, MeetingStatus};
 use deino_testkit::fixture::{Fixtures, MeetingKind, seed_fixtures};
 
-use crate::calendar::{CalendarEventRepo, SqliteCalendarRepo};
+use crate::calendar::{CalendarEventRepo, CalendarRepo, SqliteCalendarRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, MeetingTrashRepo, SqliteMeetingRepo};
 use crate::notes::{NotesRepo, SqliteNotesRepo};
 use crate::people::{AttendeeRepo, PersonRepo, SqlitePeopleRepo};
@@ -66,6 +66,9 @@ async fn seeded_meetings_are_ready_and_linked_to_their_events() {
     assert_eq!(event.provider_event_id, fixture.calendar_event.id);
     assert_eq!(event.attendees.len(), fixture.attendees.len());
     assert_eq!(state.series_id, event.series_id);
+    let calendars = calendar.calendars().await.unwrap();
+    assert_eq!(event.calendar_id, Some(calendars[0].id));
+    assert_eq!(calendars[0].title, "Work");
     let listed = meetings.list().await.unwrap();
     assert_eq!(listed.len(), fixtures.meetings().len());
 }

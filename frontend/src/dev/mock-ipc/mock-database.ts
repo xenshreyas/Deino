@@ -101,6 +101,7 @@ export class MockDatabase {
     this.onChange([
       'calendar_accounts',
       'calendar_events',
+      'calendars',
       'meetings',
       'companies',
       'people',

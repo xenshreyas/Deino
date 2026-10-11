@@ -14,6 +14,7 @@ export const settingsCopy = {
     app: 'App',
     capture: 'Capture',
     ai: 'AI',
+    workspace: 'Workspace',
     privacy: 'Privacy',
     data: 'Data',
     more: 'More',
@@ -45,6 +46,10 @@ export const settingsCopy = {
     profile: {
       label: 'Profile',
       description: 'Who you are and how you like notes written, for every AI prompt.',
+    },
+    calendar: {
+      label: 'Calendar',
+      description: 'Your calendars from macOS Calendar, and which ones Deino shows.',
     },
     network: {
       label: 'Network',
