@@ -1,0 +1,15 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "record-panel",
+    "description": "The floating record panel (CAP-10): the recording plugin's commands and events, window dragging, the microphone menu, and its theme",
+    "windows": [
+        "record_panel"
+    ],
+    "permissions": [
+        "core:event:default",
+        "core:menu:default",
+        "core:window:allow-start-dragging",
+        "core:window:allow-set-theme",
+        "recording:default"
+    ]
+}

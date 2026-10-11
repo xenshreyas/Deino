@@ -31,7 +31,7 @@ use deino_recording::{
 use tauri::{AppHandle, Manager};
 
 use crate::features::calendar::LinkOnStart;
-use crate::features::recording::TauriRecordingEvents;
+use crate::features::recording::{RecordPanel, TauriRecordingEvents};
 use crate::features::speaker_tags::WatchOnStart;
 use crate::paths::AppPaths;
 use crate::stt::{SttLanes, SttRuntime};
@@ -95,8 +95,10 @@ fn recording_deps(
         lifecycle,
         vocabulary,
     } = managed;
+    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
     RecordingDeps {
-        meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
+        catalog: meetings.clone(),
+        meetings,
         lifecycle,
         segments: segments.clone(),
         speakers: segments,
@@ -115,7 +117,7 @@ fn recording_deps(
             wall_clock: Arc::new(SystemClock),
             disk: Arc::new(SystemDiskSpace),
         },
-        events: Arc::new(TauriRecordingEvents::new(app.clone())),
+        events: Arc::new(TauriRecordingEvents::new(app.clone()).with(RecordPanel)),
         vocabulary,
         recordings: paths.recordings(),
     }

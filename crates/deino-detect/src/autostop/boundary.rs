@@ -9,10 +9,13 @@ use std::collections::BTreeSet;
 use chrono::{DateTime, TimeDelta, Utc};
 use deino_domain::{CalendarEventId, SeriesId};
 
-use crate::calendar::is_linkable;
-
 /// How long after the next event's start it is still offered.
 pub const OFFER_WINDOW: TimeDelta = TimeDelta::minutes(5);
+
+/// How far ahead an event may start and still be the one a recording
+/// starting now belongs to: the calendar's linking rule (ORG-03,
+/// `deino_core::calendar::linking::LINK_WINDOW`).
+pub const LINK_WINDOW: TimeDelta = TimeDelta::minutes(15);
 
 /// A calendar event, as auto-stop sees it. The title is meeting content:
 /// shown, never logged.
@@ -37,10 +40,17 @@ impl EventWindow {
     fn invitees(&self) -> BTreeSet<&str> {
         self.attendees.iter().map(String::as_str).collect()
     }
+
+    /// Whether a recording starting at `at` belongs to this event: it is
+    /// under way or starts within [`LINK_WINDOW`] (ORG-03's rule).
+    fn is_near(&self, at: DateTime<Utc>) -> bool {
+        self.starts_at - LINK_WINDOW <= at && at < self.ends_at
+    }
 }
 
 /// The event a recording that started at `started_at` belongs to: the one
-/// it names, else the one a call at that time links to (CAP-06's window).
+/// it names, else the one a meeting starting then links to (ORG-03's
+/// nearest-event rule: the closest start; on a tie, the one under way).
 pub fn current_event(
     events: &[EventWindow],
     named: Option<CalendarEventId>,
@@ -51,8 +61,13 @@ pub fn current_event(
     }
     events
         .iter()
-        .filter(|event| is_linkable(event.starts_at, started_at))
-        .min_by_key(|event| (event.starts_at - started_at).abs())
+        .filter(|event| event.is_near(started_at))
+        .min_by_key(|event| {
+            (
+                (event.starts_at - started_at).abs(),
+                event.starts_at > started_at,
+            )
+        })
         .cloned()
 }
 
@@ -70,7 +85,7 @@ pub fn next_meeting<'a>(
         .iter()
         .filter(|event| current.is_none_or(|current| current.id != event.id))
         .filter(|event| event.starts_at <= now && now - event.starts_at < OFFER_WINDOW)
-        .filter(|event| !is_linkable(event.starts_at, started_at))
+        .filter(|event| !event.is_near(started_at))
         .filter(|event| event.starts_at > started_at)
         .filter(|event| !event.attendees.is_empty())
         .filter(|event| current.is_none_or(|current| current.invitees() != event.invitees()))

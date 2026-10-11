@@ -1,25 +1,18 @@
-//! The `recording` plugin's typed events and the adapter that emits them.
-//!
-//! Names are namespaced by the plugin: `plugin:recording:recording-state`,
-//! `plugin:recording:live-segment`, `plugin:recording:health`. The adapter
-//! also keeps the tray menu in step with the phase and shows the "recording
-//! started / stopped" notifications on the transitions.
+//! The `recording` plugin's typed events. Names are namespaced by the
+//! plugin: `plugin:recording:recording-state`, `plugin:recording:live-segment`,
+//! `plugin:recording:health`, and for the record panel and auto-stop
+//! (CAP-10, CAP-07) `audio-level`, `panel-pointer`, `panel-side`,
+//! `auto-stop-changed` and `open-live-meeting`.
 
-use std::sync::{Mutex, PoisonError};
-
-use deino_recording::{
-    HealthNotice, RecordingEvents, RecordingPhase, RecordingSnapshot, SegmentUpdate,
-};
+use deino_core::settings::PanelEdge;
+use deino_detect::autostop::AutoStopState;
+use deino_domain::MeetingId;
+use deino_recording::{AudioLevels, HealthNotice, RecordingSnapshot, SegmentUpdate};
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime};
 use tauri_specta::Event;
 
-use crate::notifications::commands::{
-    NotificationManagerState, show_recording_started_notification,
-    show_recording_stopped_notification,
-};
-
-/// The recorder's state changed (phase, meeting, pause time, echo mode).
+/// The recorder's state changed (phase, meeting, pause time, echo mode,
+/// devices, health issues).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordingState {
@@ -43,96 +36,45 @@ pub struct Health {
     pub notice: HealthNotice,
 }
 
-/// A transition the user is notified of.
-enum Transition {
-    /// Recording started, of the meeting with this title.
-    Started(Option<String>),
-    /// Recording stopped.
-    Stopped,
+/// How loud each track is, about 30 times a second, to the record panel only.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioLevel {
+    /// The loudest sample per track since the last event.
+    pub levels: AudioLevels,
 }
 
-/// Emits the recorder's events to the UI.
-pub struct TauriRecordingEvents<R: Runtime> {
-    app: AppHandle<R>,
-    phase: Mutex<RecordingPhase>,
+/// The pointer entered or left the record panel's pill. The panel window
+/// ignores the mouse outside the pill (clicks pass through to the app
+/// below), so it cannot see hover itself; Rust tracks the pointer instead.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct PanelPointer {
+    /// The pointer is over the pill.
+    pub inside: bool,
 }
 
-impl<R: Runtime> TauriRecordingEvents<R> {
-    /// An adapter that emits through `app`.
-    pub fn new(app: AppHandle<R>) -> Self {
-        Self {
-            app,
-            phase: Mutex::new(RecordingPhase::Idle),
-        }
-    }
-
-    /// Refreshes the tray and notifies on the start and stop transitions.
-    fn follow(&self, state: &RecordingSnapshot) {
-        let previous = {
-            let mut phase = self.phase.lock().unwrap_or_else(PoisonError::into_inner);
-            std::mem::replace(&mut *phase, state.phase)
-        };
-        if previous == state.phase {
-            return;
-        }
-        crate::tray::update_tray_menu(&self.app);
-        match (previous, state.phase) {
-            (RecordingPhase::Starting, RecordingPhase::Recording) => {
-                self.notify(Transition::Started(state.title.clone()));
-            }
-            (RecordingPhase::Stopping, RecordingPhase::Idle) => self.notify(Transition::Stopped),
-            _ => {}
-        }
-    }
-
-    /// Shows the started or stopped notification, honouring the user's
-    /// notification settings.
-    fn notify(&self, transition: Transition) {
-        let app = self.app.clone();
-        tauri::async_runtime::spawn(async move {
-            let Some(state) = app.try_state::<NotificationManagerState<R>>() else {
-                return;
-            };
-            let shown = match transition {
-                Transition::Started(title) => {
-                    show_recording_started_notification(&app, &state, title).await
-                }
-                Transition::Stopped => show_recording_stopped_notification(&app, &state).await,
-            };
-            if let Err(error) = shown {
-                log::warn!(target: "recording", "could not show the recording notification: {error}");
-            }
-        });
-    }
+/// The record panel snapped to a screen edge; the pill hugs that side.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct PanelSide {
+    /// The edge.
+    pub edge: PanelEdge,
 }
 
-impl<R: Runtime> RecordingEvents for TauriRecordingEvents<R> {
-    fn state(&self, state: &RecordingSnapshot) {
-        let event = RecordingState {
-            snapshot: state.clone(),
-        };
-        if let Err(error) = event.emit(&self.app) {
-            log::warn!(target: "recording", "could not emit recording-state: {error}");
-        }
-        self.follow(state);
-    }
+/// The "Ending…" notice or the "Start new note" offer changed (CAP-07).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoStopChanged {
+    /// What is shown now.
+    pub state: AutoStopState,
+}
 
-    fn segment(&self, segment: &SegmentUpdate) {
-        let event = LiveSegment {
-            update: segment.clone(),
-        };
-        // A missed update is replaced by the next one, or by the saved row.
-        if let Err(error) = event.emit(&self.app) {
-            log::debug!(target: "recording", "could not emit live-segment: {error}");
-        }
-    }
-
-    fn health(&self, notice: &HealthNotice) {
-        let event = Health {
-            notice: notice.clone(),
-        };
-        if let Err(error) = event.emit(&self.app) {
-            log::warn!(target: "recording", "could not emit health: {error}");
-        }
-    }
+/// The record panel asked for the live meeting's notes: the main window
+/// opens the record screen.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenLiveMeeting {
+    /// The meeting being recorded.
+    pub meeting_id: MeetingId,
 }

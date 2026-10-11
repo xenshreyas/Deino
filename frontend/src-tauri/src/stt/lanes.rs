@@ -14,9 +14,8 @@ use std::sync::Arc;
 use deino_core::settings::{SettingsService, TranscriptionEngine};
 use deino_recording::Lane;
 use deino_recording::engine::{
-    EngineError, LaneEngines, LaneTranscriber, UtteranceLane, UtteranceTranscriber,
+    EngineError, LaneEngines, LaneRequest, LaneTranscriber, UtteranceLane, UtteranceTranscriber,
 };
-use deino_stt::SessionSink;
 use tauri::{AppHandle, Runtime};
 use tokio::runtime::Handle;
 
@@ -52,21 +51,17 @@ impl<R: Runtime> SttLanes<R> {
 
     fn streaming(
         &self,
-        lane: Lane,
+        request: LaneRequest,
         model: &str,
-        sink: Box<dyn SessionSink>,
     ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
         self.runtime
             .block_on(self.stt.select_model(model))
-            .map_err(|source| failed(lane, source))?;
-        Ok(Box::new(self.stt.open_lane(lane, sink)?))
+            .map_err(|source| failed(request.lane, source))?;
+        Ok(Box::new(self.stt.open_lane(request)?))
     }
 
-    fn utterances(
-        &self,
-        lane: Lane,
-        sink: Box<dyn SessionSink>,
-    ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+    fn utterances(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+        let lane = request.lane;
         let engine = self.runtime.block_on(async {
             validate_transcription_model_ready(&self.app).await?;
             get_or_init_transcription_engine(&self.app).await
@@ -76,23 +71,17 @@ impl<R: Runtime> SttLanes<R> {
             engine,
             runtime: self.runtime.clone(),
         });
-        Ok(Box::new(UtteranceLane::start(lane, transcriber, sink)?))
+        Ok(Box::new(UtteranceLane::start(request, transcriber)?))
     }
 }
 
 impl<R: Runtime> LaneEngines for SttLanes<R> {
-    fn open(
-        &self,
-        lane: Lane,
-        sink: Box<dyn SessionSink>,
-    ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+    fn open(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError> {
         let transcription = self.runtime.block_on(self.settings.get()).transcription;
         match transcription.engine {
-            TranscriptionEngine::ParakeetUnified => {
-                self.streaming(lane, &transcription.model, sink)
-            }
+            TranscriptionEngine::ParakeetUnified => self.streaming(request, &transcription.model),
             TranscriptionEngine::Parakeet | TranscriptionEngine::Whisper => {
-                self.utterances(lane, sink)
+                self.utterances(request)
             }
         }
     }

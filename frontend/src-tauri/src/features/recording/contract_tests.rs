@@ -38,6 +38,7 @@ fn recording_app(recordings: &tempfile::TempDir) -> App<MockRuntime> {
     let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
     let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     let deps = RecordingDeps {
+        catalog: meetings.clone(),
         meetings: meetings.clone(),
         lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
         segments: segments.clone(),
@@ -81,6 +82,10 @@ fn state_is_idle_with_camel_case_fields_before_a_recording() {
             "pausedMs": 0,
             "pausedAt": null,
             "echo": null,
+            "calendarEventId": null,
+            "microphone": null,
+            "systemAudio": true,
+            "issues": [],
         }))
     );
 }
@@ -129,4 +134,53 @@ fn start_records_a_meeting_announces_its_state_and_stop_returns_it() {
     assert_eq!(first["snapshot"]["phase"], "starting");
     assert_eq!(first["snapshot"]["meetingId"], started);
     assert_eq!(first["snapshot"]["title"], "Standup");
+}
+
+#[test]
+fn resume_meeting_of_an_unknown_meeting_is_not_found() {
+    let recordings = tempfile::tempdir().unwrap();
+    let app = recording_app(&recordings);
+
+    let resumed = invoke(
+        &main_window(&app),
+        "plugin:recording|resume_meeting",
+        json!({ "meetingId": "meeting-missing" }),
+    );
+
+    assert_eq!(resumed.unwrap_err()["code"], "not_found");
+}
+
+#[test]
+fn device_switches_without_a_recording_are_conflicts() {
+    let recordings = tempfile::tempdir().unwrap();
+    let app = recording_app(&recordings);
+    let window = main_window(&app);
+
+    let microphone = invoke(
+        &window,
+        "plugin:recording|set_microphone",
+        json!({ "name": "USB" }),
+    );
+    let system = invoke(
+        &window,
+        "plugin:recording|set_system_audio",
+        json!({ "enabled": false }),
+    );
+
+    assert_eq!(microphone.unwrap_err()["code"], "conflict");
+    assert_eq!(system.unwrap_err()["code"], "conflict");
+}
+
+#[test]
+fn the_panel_reports_its_region_and_lists_microphones() {
+    let recordings = tempfile::tempdir().unwrap();
+    let app = recording_app(&recordings);
+    let window = main_window(&app);
+
+    let region = json!({ "region": { "x": 260.0, "y": 12.0, "width": 112.0, "height": 36.0 } });
+    let reported = invoke(&window, "plugin:recording|set_panel_region", region);
+    let microphones = invoke(&window, "plugin:recording|microphones", Value::Null).unwrap();
+
+    assert_eq!(reported, Ok(json!("right")));
+    assert!(microphones.is_array());
 }

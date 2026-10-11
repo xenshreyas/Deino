@@ -224,8 +224,26 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "full_export_status",
         ],
     ),
-    // ── FND-05b / CAP-02 live recorder (features/recording.rs) ──
-    ("recording", &["start", "stop", "pause", "resume", "state"]),
+    // ── FND-05b / CAP-02 / CAP-07 / CAP-10 live recorder and record panel (features/recording.rs) ──
+    (
+        "recording",
+        &[
+            "start",
+            "stop",
+            "pause",
+            "resume",
+            "state",
+            "resume_meeting",
+            "set_microphone",
+            "set_system_audio",
+            "microphones",
+            "keep_recording",
+            "answer_split",
+            "auto_stop",
+            "open_live_meeting",
+            "set_panel_region",
+        ],
+    ),
     // ── ORG-01 calendar sync (features/calendar.rs) ──
     (
         "calendar",
