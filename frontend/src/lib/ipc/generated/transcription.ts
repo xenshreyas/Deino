@@ -56,11 +56,9 @@ async deleteModel(id: ModelFileId) : Promise<Result<null, AppError>> {
 
 
 export const events = __makeEvents__<{
-liveTranscript: LiveTranscript,
 modelChanged: ModelChanged,
 modelDownloadProgress: ModelDownloadProgress
 }>({
-liveTranscript: "plugin:transcription:live-transcript",
 modelChanged: "plugin:transcription:model-changed",
 modelDownloadProgress: "plugin:transcription:model-download-progress"
 })
@@ -143,43 +141,6 @@ export type ErrorCode =
  * A bug or an unexpected failure; the details are in the log.
  */
 "internal"
-/**
- * Which audio a live line comes from.
- */
-export type LiveLane = 
-/**
- * The user's microphone.
- */
-"microphone" | 
-/**
- * System audio (the other side of the call).
- */
-"system" | 
-/**
- * Both mixed, until CAP-02 splits the lanes.
- */
-"mixed"
-/**
- * The text of the segment being spoken now, as it grows. Empty text means
- * the segment closed (it arrives as a final `transcript-update`).
- */
-export type LiveTranscript = { 
-/**
- * The lane it comes from.
- */
-lane: LiveLane; 
-/**
- * Committed text: final, never rewritten.
- */
-committed: string; 
-/**
- * The uncommitted tail, which may still change (empty for Parakeet).
- */
-tentative: string; 
-/**
- * When the segment started, in seconds from the recording start.
- */
-startSeconds: number }
 /**
  * A model file's state changed: started, finished, failed, cancelled or deleted.
  */
