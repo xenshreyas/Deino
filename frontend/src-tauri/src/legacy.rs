@@ -12,7 +12,6 @@
 //! banner.
 
 mod devices;
-mod recording;
 
 use crate::{
     api, audio, console_utils, database, notifications, onboarding, parakeet_engine, summary,
@@ -21,7 +20,6 @@ use crate::{
 #[cfg(target_os = "macos")]
 use crate::utils;
 use devices::*;
-use recording::*;
 
 /// Returns the invoke handler for every legacy command.
 ///
@@ -29,13 +27,7 @@ use recording::*;
 /// from the 40-line function limit (§3A); it shrinks as cards port commands.
 pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync + 'static {
     tauri::generate_handler![
-        // Recording lifecycle and devices (legacy/recording.rs, legacy/devices.rs)
-        start_recording,
-        stop_recording,
-        is_recording,
-        get_transcription_status,
-        start_recording_with_devices,
-        start_recording_with_devices_and_meeting,
+        // Devices and level meters for the device picker (legacy/devices.rs); recording is the `recording` plugin
         get_audio_devices,
         trigger_microphone_permission,
         start_audio_level_monitoring,
@@ -82,19 +74,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         whisper_engine::parallel_commands::calculate_optimal_workers,
         whisper_engine::parallel_commands::prepare_audio_chunks,
         whisper_engine::parallel_commands::test_parallel_processing_setup,
-        // Recording pause/resume, reload sync, playback device detection
-        audio::recording_commands::pause_recording,
-        audio::recording_commands::resume_recording,
-        audio::recording_commands::is_recording_paused,
-        audio::recording_commands::get_recording_state,
-        audio::recording_commands::get_meeting_folder_path,
-        audio::recording_commands::get_transcript_history,
-        audio::recording_commands::get_recording_meeting_name,
-        audio::recording_commands::get_active_audio_output,
-        // Audio recovery
-        audio::incremental_saver::recover_audio_from_checkpoints,
-        audio::incremental_saver::cleanup_checkpoints,
-        audio::incremental_saver::has_audio_checkpoints,
         // Debug console (Windows)
         console_utils::show_console,
         console_utils::hide_console,
@@ -104,7 +83,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         api::api_delete_meeting,
         api::api_get_meeting_metadata,
         api::api_get_meeting_transcripts,
-        api::api_save_transcript,
         api::open_meeting_folder,
         api::open_external_url,
         api::api_test_custom_openai_connection,
@@ -122,14 +100,10 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         summary::summary_engine::commands::builtin_ai_is_model_ready,
         summary::summary_engine::commands::builtin_ai_get_available_summary_model,
         summary::summary_engine::commands::builtin_ai_get_recommended_model,
-        // Recordings folder and audio backends (preferences: the settings plugin)
+        // Recordings folder (preferences: the settings plugin)
         audio::recording_preferences::get_default_recordings_folder_path,
         audio::recording_preferences::open_recordings_folder,
         audio::recording_preferences::select_recording_folder,
-        audio::recording_preferences::get_available_audio_backends,
-        audio::recording_preferences::get_current_audio_backend,
-        audio::recording_preferences::set_audio_backend,
-        audio::recording_preferences::get_audio_backend_info,
         // Notifications
         notifications::commands::request_notification_permission,
         notifications::commands::show_notification,
@@ -143,7 +117,7 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         notifications::commands::initialize_notification_manager_manual,
         notifications::commands::test_notification_with_auto_consent,
         notifications::commands::get_notification_stats,
-        // System audio capture and permissions
+        // Screen and system-audio permissions
         audio::permissions::check_screen_recording_permission_command,
         audio::permissions::request_screen_recording_permission_command,
         audio::permissions::trigger_system_audio_permission_command,

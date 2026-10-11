@@ -2,8 +2,8 @@
 //! adapters, and the detector thread over this Mac's sensors.
 //!
 //! Calendar association waits for ORG-01, so the detector links no events
-//! yet ([`NoCalendar`]); recording still starts through the record screen
-//! until CAP-02's typed `recording.start` (see `features::detection::adapters`).
+//! yet ([`NoCalendar`]); recording starts on the live recorder
+//! (`features::detection::recorder`).
 
 use std::sync::Arc;
 
@@ -14,9 +14,8 @@ use deino_detect::{
 use deino_domain::{Clock, SystemClock};
 use tauri::{AppHandle, Manager};
 
-use crate::features::detection::adapters::{
-    LegacyRecordingStatus, SettingsDetection, ShellRecordingStarter, TauriDetectionSink,
-};
+use crate::features::detection::adapters::{SettingsDetection, TauriDetectionSink};
+use crate::features::detection::recorder::{RecorderStarter, RecorderStatus};
 
 /// Manages `Arc<DetectionService>` and starts the detector, which lives in
 /// Tauri state until the app exits. Needs `attach_settings` to have run.
@@ -49,8 +48,8 @@ fn service(
     let settings = Arc::new(SettingsDetection::new(settings));
     let ports = DetectionPorts {
         sink: Arc::new(TauriDetectionSink::new(app.clone())),
-        recorder: Arc::new(ShellRecordingStarter::new(app.clone())),
-        status: Arc::new(LegacyRecordingStatus),
+        recorder: Arc::new(RecorderStarter::new(app.clone())),
+        status: Arc::new(RecorderStatus::new(app.clone())),
         config: Arc::clone(&settings) as _,
         ignore_list: settings,
     };

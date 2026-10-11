@@ -12,8 +12,9 @@
 //!    database and which everything else reads;
 //! 2. [`attach_network`]: the one network client (`deino_net::Net`), whose
 //!    policy reads the settings (FND-12);
-//! 3. [`attach_database`]: the database-backed [`Services`] and the
-//!    post-meeting [`Pipeline`] (started in the background), once
+//! 3. [`attach_database`]: the database-backed [`Services`], the
+//!    post-meeting [`Pipeline`] (started in the background) and the live
+//!    recorder (`recording.rs`, which also recovers interrupted recordings), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
 //!    by [`legacy_settings_import`]), the egress log's table, the LLM
 //!    gateway (`llm.rs`), and templates and the profile (`notes.rs`: the
@@ -31,6 +32,7 @@ mod notepad;
 mod notes;
 mod organize;
 mod pipeline;
+mod recording;
 mod stt;
 
 use std::sync::Arc;
@@ -165,6 +167,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         auto_export,
     };
     attach_pipeline(app, &database, &clock, stage_adapters);
+    recording::attach_recording(app, &database);
 }
 
 /// Wires templates and the profile (`notes.rs`) and prepares them.
@@ -280,6 +283,7 @@ mod tests {
             diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
             auto_tagger: auto_tags.clone(),
             auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
+            recordings: std::path::PathBuf::from("no-recordings"),
         };
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);

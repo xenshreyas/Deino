@@ -49,8 +49,6 @@ ignore = [
     # reqwest 0.11 (the app crate and its build script) brings these in.
     { id = "RUSTSEC-2026-0258", reason = "h2 0.3 DoS from a hostile HTTP/2 server; fixed only in h2 0.4. FND-12 moves all HTTP to deino-net on a current reqwest" },
     { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile 1 is unmaintained, no vulnerability. FND-12 replaces reqwest 0.11" },
-    # Ring buffer between the Core Audio callback and the mixer.
-    { id = "RUSTSEC-2026-0293", reason = "ringbuf 0.4 double free needs an element whose Drop panics; Deino only buffers f32, which has no Drop. The 0.5 API change lands with the audio rewrite (FND-05 / CAP-02)" },
     # Upstream: no fix is possible from Deino's side until the parent updates.
     { id = "RUSTSEC-2024-0436", reason = "paste is unmaintained, no vulnerability; a compile-time proc macro of specta 2.0.0-rc. Revisit when the specta set is bumped" },
     { id = "RUSTSEC-2024-0370", reason = "proc-macro-error is unmaintained, no vulnerability; a compile-time proc macro of gtk-rs, only on Linux through tauri's tray. Upstream tauri" },

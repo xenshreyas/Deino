@@ -30,38 +30,6 @@ pub struct TranscriptSearchResult {
     pub timestamp: String,
 }
 
-/// The transcription engine and model in the legacy shape, where
-/// `provider` is "parakeetUnified", "parakeet" or "localWhisper".
-///
-/// A bridge for the STT code that CAP-01 rewrites: the value comes from the
-/// typed settings (`Settings::transcription`), not the dropped
-/// `transcript_settings` table.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TranscriptConfig {
-    pub provider: String,
-    pub model: String,
-}
-
-/// The current [`TranscriptConfig`]. Never fails and is never `None`; the
-/// signature matches the retired `api_get_transcript_config` command so its
-/// callers did not change shape.
-pub async fn current_transcript_config<R: Runtime>(
-    app: &AppHandle<R>,
-) -> Result<Option<TranscriptConfig>, String> {
-    use deino_core::settings::TranscriptionEngine;
-
-    let transcription = crate::features::settings::current(app).await.transcription;
-    let provider = match transcription.engine {
-        TranscriptionEngine::ParakeetUnified => crate::stt::PROVIDER,
-        TranscriptionEngine::Parakeet => "parakeet",
-        TranscriptionEngine::Whisper => "localWhisper",
-    };
-    Ok(Some(TranscriptConfig {
-        provider: provider.to_owned(),
-        model: transcription.model,
-    }))
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteMeetingRequest {
     pub meeting_id: String,
@@ -119,12 +87,6 @@ pub struct SaveMeetingTitleRequest {
 pub struct SaveMeetingSummaryRequest {
     pub meeting_id: String,
     pub summary: serde_json::Value,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SaveTranscriptRequest {
-    pub meeting_title: String,
-    pub transcripts: Vec<TranscriptSegment>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -294,83 +256,6 @@ pub async fn api_get_meeting_transcripts<R: Runtime>(
         Err(e) => {
             log_error!("Error retrieving transcripts for meeting {}: {}", meeting_id, e);
             Err(format!("Failed to retrieve transcripts: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn api_save_transcript<R: Runtime>(
-    _app: AppHandle<R>,
-    state: tauri::State<'_, AppState>,
-    meeting_title: String,
-    transcripts: Vec<serde_json::Value>,
-    folder_path: Option<String>,
-    auth_token: Option<String>,
-) -> Result<serde_json::Value, String> {
-    log_info!(
-        "api_save_transcript called for meeting: {}, transcripts: {}, folder_path: {:?}, auth_token: {}",
-        meeting_title,
-        transcripts.len(),
-        folder_path,
-        auth_token.is_some()
-    );
-
-    // Log first transcript for debugging
-    if let Some(first) = transcripts.first() {
-        log_debug!(
-            "First transcript data: {}",
-            serde_json::to_string_pretty(first).unwrap_or_default()
-        );
-    }
-
-    // Convert serde_json::Value to TranscriptSegment
-    let transcripts_to_save: Vec<TranscriptSegment> = transcripts
-        .into_iter()
-        .map(serde_json::from_value)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| {
-            log_error!("Failed to parse transcript segments: {}", e);
-            format!("Invalid transcript data format: {}. Please check the data structure.", e)
-        })?;
-
-    // Log parsed segments count and first segment details
-    if let Some(first_seg) = transcripts_to_save.first() {
-        // Never log the transcript text itself (CLAUDE.md privacy rule).
-        log_debug!("First parsed segment: audio_start_time={:?}, audio_end_time={:?}, duration={:?}",
-                   first_seg.audio_start_time,
-                   first_seg.audio_end_time,
-                   first_seg.duration);
-    }
-
-    let pool = state.db_manager.pool();
-
-    // Now, call the repository with the correctly typed data.
-    match TranscriptsRepository::save_transcript(
-        pool,
-        &meeting_title,
-        &transcripts_to_save,
-        folder_path,
-    )
-    .await
-    {
-        Ok(meeting_id) => {
-            log_info!(
-                "Successfully saved transcript and created meeting with id: {}",
-                meeting_id
-            );
-            Ok(serde_json::json!({
-                "status": "success",
-                "message": "Transcript saved successfully",
-                "meeting_id": meeting_id
-            }))
-        }
-        Err(e) => {
-            log_error!(
-                "Error saving transcript for meeting '{}': {}",
-                meeting_title,
-                e
-            );
-            Err(format!("Failed to save transcript: {}", e))
         }
     }
 }

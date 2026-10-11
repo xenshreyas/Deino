@@ -10,8 +10,8 @@
 //! - events: [`MeetingDetected`], [`MeetingEnded`], [`PromptClosed`], and
 //!   [`RecordingRequested`] for the main window's shell;
 //! - [`prompt`]: the always-on-top, non-activating prompt window;
-//! - [`adapters`]: the output ports (events and window, recording start,
-//!   recording status, settings).
+//! - [`adapters`]: the output ports (events and window, settings);
+//!   [`recorder`]: recording start and status over the live recorder.
 //!
 //! The composition root starts the detector (`composition::attach_detection`).
 
@@ -21,6 +21,7 @@ mod commands;
 mod contract_tests;
 mod events;
 pub mod prompt;
+pub mod recorder;
 
 pub use commands::DetectionOverview;
 pub use events::{MeetingDetected, MeetingEnded, PromptClosed, RecordingRequested};

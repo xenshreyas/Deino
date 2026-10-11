@@ -27,7 +27,6 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         get,
         save,
         create_scheduled,
-        adopt,
         save_image,
         attach_dropped_image,
         markdown_to_doc,
@@ -66,17 +65,6 @@ async fn create_scheduled(
     title: String,
 ) -> Result<Meeting, AppError> {
     notes.create_scheduled(&title).await.into_ipc()
-}
-
-/// Moves a scheduled draft's notes and images into `into` and deletes it.
-#[tauri::command]
-#[specta::specta]
-async fn adopt(
-    notes: State<'_, Arc<NoteService>>,
-    draft: MeetingId,
-    into: MeetingId,
-) -> Result<SavedNotes, AppError> {
-    notes.adopt(&draft, &into).await.into_ipc()
 }
 
 /// Stores a pasted image, sent as base64, and returns its source.

@@ -2,11 +2,7 @@
 //!
 //! - [`TauriDetectionSink`]: emits the plugin's events and shows or hides
 //!   the prompt window.
-//! - [`ShellRecordingStarter`]: asks the main window's shell to start
-//!   recording, the same path as the sidebar, ⌘⇧R and the tray, because the
-//!   record screen still owns the recording lifecycle (CAP-02 replaces this
-//!   with its typed `recording.start`).
-//! - [`LegacyRecordingStatus`]: the legacy recorder's flag.
+//! - the recording ports are in [`super::recorder`] (the live recorder).
 //! - [`SettingsDetection`]: the `detection` section of the typed settings.
 
 use std::sync::Arc;
@@ -16,12 +12,12 @@ use chrono::TimeDelta;
 use deino_core::settings::{IgnoredApp, SettingsService};
 use deino_detect::{
     AppIdentity, ConfigSource, DetectError, DetectionConfig, DetectionEvent, DetectionSink,
-    IgnoreList, RecordingRequest, RecordingStarter, RecordingStatus,
+    IgnoreList,
 };
 use tauri::{AppHandle, Wry};
 use tauri_specta::Event;
 
-use super::events::{MeetingDetected, MeetingEnded, PromptClosed, RecordingRequested};
+use super::events::{MeetingDetected, MeetingEnded, PromptClosed};
 use super::prompt;
 
 /// Publishes detection events to the UI and drives the prompt window.
@@ -66,43 +62,6 @@ fn label(event: &DetectionEvent) -> &'static str {
         DetectionEvent::MeetingDetected(_) => "meeting detected",
         DetectionEvent::MeetingEnded(_) => "meeting ended",
         DetectionEvent::PromptClosed(_) => "closed",
-    }
-}
-
-/// Starts recording through the main window's shell.
-pub struct ShellRecordingStarter {
-    app: AppHandle<Wry>,
-}
-
-impl ShellRecordingStarter {
-    /// A starter that asks `app`'s main window.
-    pub fn new(app: AppHandle<Wry>) -> Self {
-        Self { app }
-    }
-}
-
-impl RecordingStarter for ShellRecordingStarter {
-    fn start(&self, request: &RecordingRequest) -> Result<(), DetectError> {
-        if request.open_notes {
-            crate::tray::focus_main_window(&self.app);
-        }
-        let event = RecordingRequested {
-            detection: request.detection.clone(),
-            open_notes: request.open_notes,
-        };
-        event
-            .emit(&self.app)
-            .map_err(|error| DetectError::Recording(Box::new(error)))
-    }
-}
-
-/// Whether the legacy recorder is recording.
-pub struct LegacyRecordingStatus;
-
-impl RecordingStatus for LegacyRecordingStatus {
-    fn is_recording(&self) -> bool {
-        // An atomic read behind an `async fn`; never waits.
-        tauri::async_runtime::block_on(crate::audio::recording_commands::is_recording())
     }
 }
 

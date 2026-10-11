@@ -10,7 +10,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::models::{Catalog, ModelService, ModelServiceParts, ModelStore};
-use deino_domain::SystemClock;
 use deino_stt::clock::{MonotonicClock, SystemMonotonic};
 use deino_stt::{EnginePool, SupervisorConfig, WorkerLauncher};
 use sysinfo::System;
@@ -40,7 +39,6 @@ pub(crate) fn attach_stt(
         pool: Arc::new(pool),
         models: Arc::clone(&models),
         monotonic,
-        clock: Arc::new(SystemClock),
         model_override: model_override(),
     }));
     runtime.start_background()?;

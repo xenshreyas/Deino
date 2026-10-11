@@ -277,7 +277,7 @@ pub async fn start_import<R: Runtime>(
     .await;
 
     // Unload the engine after the batch job (success, failure, or cancellation)
-    super::common::unload_engine_after_batch(use_parakeet).await;
+    super::common::unload_engine_after_batch(&app, use_parakeet).await;
 
     // Guard will automatically clear flag on drop
     // No need for manual: IMPORT_IN_PROGRESS.store(false, Ordering::SeqCst);
@@ -862,32 +862,18 @@ async fn get_configured_model<R: Runtime>(app: &AppHandle<R>, provider_type: &st
         .try_state::<AppState>()
         .ok_or_else(|| anyhow!("App state not available"))?;
 
-    let result: Option<(String, String)> = crate::api::api::current_transcript_config(app)
-        .await
-        .map_err(|e| anyhow!(e))?
-        .map(|config| (config.provider, config.model));
-
-    match result {
-        Some((provider, model)) => {
-            if (provider_type == "whisper" && (provider == "localWhisper" || provider == "whisper"))
-                || (provider_type == "parakeet" && provider == "parakeet")
-            {
-                Ok(model)
-            } else {
-                // Return default model for the requested type
-                Ok(if provider_type == "parakeet" {
-                    DEFAULT_PARAKEET_MODEL.to_string()
-                } else {
-                    DEFAULT_WHISPER_MODEL.to_string()
-                })
-            }
-        }
-        None => Ok(if provider_type == "parakeet" {
+    let engine = if provider_type == "parakeet" {
+        deino_core::settings::TranscriptionEngine::Parakeet
+    } else {
+        deino_core::settings::TranscriptionEngine::Whisper
+    };
+    Ok(crate::stt::settings::model_for(app, engine).await.unwrap_or_else(|| {
+        if provider_type == "parakeet" {
             DEFAULT_PARAKEET_MODEL.to_string()
         } else {
             DEFAULT_WHISPER_MODEL.to_string()
-        }),
-    }
+        }
+    }))
 }
 
 /// Write metadata.json to a meeting folder (atomic write with temp file)

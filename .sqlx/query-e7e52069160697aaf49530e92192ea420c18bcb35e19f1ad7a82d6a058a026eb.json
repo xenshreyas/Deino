@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO transcript_segments (id, meeting_id, channel, speaker_id, start_ms, end_ms, text, words_json)\n         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)\n         ON CONFLICT (id) DO UPDATE SET\n             start_ms = excluded.start_ms, end_ms = excluded.end_ms,\n             text = excluded.text, words_json = excluded.words_json",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "e7e52069160697aaf49530e92192ea420c18bcb35e19f1ad7a82d6a058a026eb"
+}

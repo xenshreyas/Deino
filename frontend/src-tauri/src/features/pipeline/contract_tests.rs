@@ -94,6 +94,7 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
     assert_eq!(
         stages,
         Ok(json!([
+            pending("finalize_audio"),
             pending("diarize"),
             pending("legacy_summary"),
             pending("auto_tag"),

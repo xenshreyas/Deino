@@ -4,7 +4,6 @@
 //! - `get`, `save`: a meeting's notes as a TipTap document; the UI autosaves
 //!   about once a second;
 //! - `create_scheduled`: a meeting for notes written before a recording;
-//! - `adopt`: moves the record screen's draft into the meeting a recording saved;
 //! - `save_image`: a pasted image's bytes (base64), checked and stored by Rust;
 //! - `attach_dropped_image`: a file dropped on the window, by path, accepted
 //!   only if the window really received that drop ([`DroppedFiles`]);
