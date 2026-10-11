@@ -16,6 +16,13 @@ extend-exclude = [
     "crates/third_party/*/kaldi-native-fbank/",
 ]
 
+[default]
+extend-ignore-re = [
+    # The ordinal suffix as a string literal ("2nd"), in action items' due
+    # phrases; a bare `nd` elsewhere is still a typo for "and".
+    '"nd"',
+]
+
 [default.extend-words]
 # Card prefix in PARITY_PLAN ("FND-13").
 FND = "FND"

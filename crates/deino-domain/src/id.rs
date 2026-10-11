@@ -217,6 +217,11 @@ uuid_id!(
 );
 
 uuid_id!(
+    /// Identifies a saved view of the Action Items page (AI-05).
+    ActionItemViewId
+);
+
+uuid_id!(
     /// Identifies one LLM provider call in the `llm_calls` usage log.
     LlmCallId
 );

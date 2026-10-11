@@ -131,6 +131,26 @@ pub struct RouteTestUser<'a> {
     pub route: &'a str,
 }
 
+/// `extract.action_items` (AI-05): what counts as a commitment, and the fields.
+#[derive(Template)]
+#[template(path = "action_items.system.md.jinja", escape = "none")]
+pub struct ActionItemsSystem;
+
+/// `extract.action_items`: the meeting, its people, the user's notes and the
+/// numbered transcript.
+#[derive(Template)]
+#[template(path = "action_items.user.md.jinja", escape = "none")]
+pub struct ActionItemsUser<'a> {
+    /// The title, then the local date with its weekday and time zone.
+    pub meeting: &'a str,
+    /// One `- Name (title)` line per attendee; the user is marked `(me)`.
+    pub attendees: &'a str,
+    /// The user's own notes, which mark what mattered to them.
+    pub notes: Option<&'a str>,
+    /// One `[s<n> mm:ss] Speaker: text` line per segment.
+    pub transcript: &'a str,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -356,5 +376,91 @@ mod tests {
         route_test_names_the_route,
         RouteTestUser { route: "chat" },
         @r#"This is a connection test from Deino's settings for the "chat" task. Reply with one short, friendly sentence confirming you received it. Do not ask questions."#
+    );
+
+    prompt_snapshot!(
+        action_items_system_asks_for_clear_commitments_only,
+        ActionItemsSystem,
+        @r#"
+        # General Instructions
+
+        - You find the action items of a meeting, in English: the clear commitments someone made to do something after it.
+        - A commitment is someone saying they will do something ("I'll send it tonight"), or accepting a task they are asked to do ("Can you review it?" "Sure").
+        - Skip everything that is not a clear commitment: ideas floated ("maybe we could…", "we should think about…"), suggestions nobody took on, questions, wishes, plans that wait on a decision not yet made, and work that is already done.
+        - The user's notes show what the user found important. Use them to confirm and word items; never add an item the transcript does not support.
+        - One item per commitment: merge repeats of the same promise, and split one sentence that promises two separate deliverables.
+
+        # Fields
+
+        - `title`: an imperative instruction under 80 characters that starts with a verb and names the people and things concretely ("Send Owen the duplicate-cleanup spreadsheet"). No trailing period.
+        - `description`: one or two sentences of context: what it is for and anything needed to do it.
+        - `assignee`: who committed, written exactly as their name appears in the attendees or the transcript; "me" when the user ("Me") committed; null when nobody took it on.
+        - `due_phrase`: the words that set the deadline, as said ("by Friday", "end of day tomorrow", "the ninth of October"); null when no deadline was said.
+        - `due`: that deadline as a date (YYYY-MM-DD), worked out from the meeting's date and weekday; null when no deadline was said. Never invent one.
+        - `priority`: "high" only when the speakers call it urgent or blocking, "low" when they say it can wait, otherwise null.
+        - `evidence_quote`: the words of one transcript line where the commitment is made, copied exactly (at most 25 words).
+        - `evidence_segment_id`: that line's id, for example "s12".
+
+        # Format Requirements
+
+        - Answer with JSON matching the schema; an empty `items` list when nobody committed to anything.
+        - Never ask questions or add commentary.
+        "#
+    );
+
+    prompt_snapshot!(
+        action_items_user_carries_meeting_people_notes_and_numbered_lines,
+        ActionItemsUser {
+            meeting: "Title: Eng standup\nDate: Thursday 8 October 2026, 08:31 (UTC-07:00)",
+            attendees: "- Shreyas Patel (me), CTO\n- Maya Chen, Staff Engineer",
+            notes: Some("- maya: last modified at on jobs list!!"),
+            transcript: "[s0 00:03] Maya Chen: I can have it on the endpoint by end of day tomorrow.",
+        },
+        @r"
+        <meeting>
+        Title: Eng standup
+        Date: Thursday 8 October 2026, 08:31 (UTC-07:00)
+        </meeting>
+
+        <attendees>
+        - Shreyas Patel (me), CTO
+        - Maya Chen, Staff Engineer
+        </attendees>
+
+        <user_notes>
+        - maya: last modified at on jobs list!!
+        </user_notes>
+
+        <transcript>
+        [s0 00:03] Maya Chen: I can have it on the endpoint by end of day tomorrow.
+        </transcript>
+
+        Now list the action items of this meeting.
+        "
+    );
+
+    prompt_snapshot!(
+        action_items_user_without_notes_leaves_the_notes_out,
+        ActionItemsUser {
+            meeting: "Title: Fernhollow follow-up",
+            attendees: "- Owen Hart",
+            notes: None,
+            transcript: "[s0 00:01] Owen Hart: Thanks for making time.",
+        },
+        @r"
+        <meeting>
+        Title: Fernhollow follow-up
+        </meeting>
+
+        <attendees>
+        - Owen Hart
+        </attendees>
+
+        <transcript>
+        [s0 00:01] Owen Hart: Thanks for making time.
+        </transcript>
+
+        Now list the action items of this meeting.
+        "
     );
 }

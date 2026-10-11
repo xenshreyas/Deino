@@ -11,17 +11,23 @@
 //!   (default 1), passing when the share of samples that meet every
 //!   expectation reaches the case's bar. Ignored unless `DEINO_EVAL=1`.
 //!
+//! `extract.action_items` (AI-05) scores the extracted items of all eight
+//! fixtures against their ground truth (`action_items.rs`, `scoring.rs`).
+//!
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
+//! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval extract.action_items
 //! DEINO_EVAL=1 cargo test -p deino-llm --test llm_eval -- title
 //! ```
 //!
 //! `DEINO_EVAL_TARGET=openai:gpt-5-mini` serves the live trials from another
 //! provider (its key in `OPENAI_API_KEY`). Evals never run in CI.
 
+mod action_items;
 mod cases;
 mod expectations;
 mod live;
+mod scoring;
 
 use std::sync::Arc;
 
@@ -32,17 +38,23 @@ use crate::cases::Case;
 
 fn main() {
     let args = Arguments::from_args();
-    let trials = match cases::all() {
+    let mut trials: Vec<Trial> = match cases::all() {
         Ok(cases) => cases.into_iter().flat_map(trials).collect(),
         Err(error) => vec![Trial::test("setup::load_fixtures", move || {
             Err(error.into())
         })],
     };
+    trials.extend(action_items::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 
+/// True when `DEINO_EVAL=1` asks for the live trials.
+fn live_enabled() -> bool {
+    std::env::var("DEINO_EVAL").is_ok_and(|value| value == "1")
+}
+
 fn trials(case: Case) -> Vec<Trial> {
-    let live_enabled = std::env::var("DEINO_EVAL").is_ok_and(|value| value == "1");
+    let live_enabled = live_enabled();
     let name = format!("{}::{}", case.route, case.name);
     let (contract, smoke, live) = (case.clone(), case.clone(), case);
     vec![

@@ -40,3 +40,15 @@ pub struct ActionItem {
     /// it, so regeneration (AI-05) can leave touched items alone.
     pub updated_at: DateTime<Utc>,
 }
+
+impl ActionItem {
+    /// True for an item the AI extracted and the user has not touched since:
+    /// still open and never edited (`updated_at` equals `created_at`, since
+    /// every change through the service moves `updated_at`). Regenerating a
+    /// meeting's items replaces only these.
+    pub fn is_untouched_ai(&self) -> bool {
+        self.created_by == ActionItemOrigin::Ai
+            && self.status == ActionItemStatus::Open
+            && self.updated_at == self.created_at
+    }
+}

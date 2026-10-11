@@ -25,15 +25,12 @@ use crate::expectations;
 
 /// Runs `case` against a real provider `DEINO_EVAL_SAMPLES` times.
 pub fn run(case: &Case) -> Result<(), Failed> {
-    let samples: usize = env("DEINO_EVAL_SAMPLES")
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(1)
-        .max(1);
+    let samples = samples();
     let runtime =
         tokio::runtime::Runtime::new().map_err(|error| Failed::from(error.to_string()))?;
     let gateway = gateway();
     let mut prompt = case.prompt.clone();
-    prompt.target = env("DEINO_EVAL_TARGET").and_then(|target| parse_target(&target));
+    prompt.target = target();
     let mut failures = Vec::new();
     for _ in 0..samples {
         let completion = runtime
@@ -53,6 +50,19 @@ pub fn run(case: &Case) -> Result<(), Failed> {
     }
 }
 
+/// How many times each live case runs: `DEINO_EVAL_SAMPLES`, at least 1.
+pub fn samples() -> usize {
+    env("DEINO_EVAL_SAMPLES")
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(1)
+        .max(1)
+}
+
+/// The provider and model `DEINO_EVAL_TARGET` names, if any.
+pub fn target() -> Option<Target> {
+    env("DEINO_EVAL_TARGET").and_then(|target| parse_target(&target))
+}
+
 fn env(name: &str) -> Option<String> {
     std::env::var(name)
         .ok()
@@ -69,7 +79,9 @@ fn parse_target(target: &str) -> Option<Target> {
     })
 }
 
-fn gateway() -> Gateway {
+/// A gateway over the real Anthropic and OpenAI providers, with keys from
+/// `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
+pub fn gateway() -> Gateway {
     let mut credentials = StaticCredentials::new();
     for (provider, variable) in [
         (ProviderId::Anthropic, "ANTHROPIC_API_KEY"),

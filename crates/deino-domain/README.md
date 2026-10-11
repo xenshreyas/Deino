@@ -31,6 +31,9 @@ crate and across IPC. No I/O, no Tauri.
   and the `ErrorClass` trait every module error implements (ADR 0009).
 - The `Clock` port (`clock.rs`): `SystemClock`, and `FakeClock` behind the
   `test-support` feature.
+- The `LocalZone` port (`zone.rs`, ADR 0028): the user's time zone for local
+  days (`day_of`, `at`, `start_of`); `SystemZone` over the Mac's zone and
+  `FixedZone` for tests. Due days are stored as `NOON` local.
 
 ## Does Not Own
 
