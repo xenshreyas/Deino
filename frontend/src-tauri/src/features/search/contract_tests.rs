@@ -51,7 +51,7 @@ fn admin(app: &App<MockRuntime>, database: &Database, dir: &std::path::Path) -> 
         })
         .serving(ModelPurpose::Embedding),
     );
-    let store = Arc::new(SqliteEmbeddingStore::new(database.clone()));
+    let store = Arc::new(SqliteEmbeddingStore::new(database));
     let indexer = Arc::new(SemanticIndexer::new(IndexerParts {
         sources: store.clone(),
         store: store.clone(),
@@ -71,7 +71,7 @@ fn admin(app: &App<MockRuntime>, database: &Database, dir: &std::path::Path) -> 
 fn search_app(dir: &std::path::Path) -> App<MockRuntime> {
     let app = mock_app(mock_builder().plugin(super::init()));
     let database = database();
-    let index = Arc::new(SqliteSearchIndex::new(database.clone()));
+    let index = Arc::new(SqliteSearchIndex::new(&database));
     app.manage(Arc::new(SearchService::new(
         index.clone(),
         index,

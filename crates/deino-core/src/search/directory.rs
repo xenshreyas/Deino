@@ -27,7 +27,7 @@ impl FilterDirectory for SqliteSearchIndex {
             later_word,
             limit
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         Ok(chips)
     }
@@ -46,14 +46,14 @@ impl FilterDirectory for SqliteSearchIndex {
             None::<String>,
             RESOLVE_CANDIDATES
         )
-        .fetch_optional(self.database.reader())
+        .fetch_optional(self.pools.reader())
         .await?;
         Ok(chip)
     }
 
     async fn knows_domain(&self, domain: &str) -> Result<bool, SearchError> {
         let known = sqlx::query_file_scalar!("src/search/queries/known_domain.sql", domain)
-            .fetch_one(self.database.reader())
+            .fetch_one(self.pools.reader())
             .await?;
         Ok(known)
     }

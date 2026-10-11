@@ -116,7 +116,7 @@ async fn indexed_fixtures(app_data: &str) -> (SearchService, Arc<SemanticIndex>)
         gateway(app_data, models.clone()),
         models,
     ));
-    let store = Arc::new(SqliteEmbeddingStore::new(database.clone()));
+    let store = Arc::new(SqliteEmbeddingStore::new(&database));
     let vectors = Arc::new(SharedVectors::new(store.clone(), "nomic-embed-text-v1.5"));
     let semantic_indexer = SemanticIndexer::new(IndexerParts {
         sources: store.clone(),
@@ -132,7 +132,7 @@ async fn indexed_fixtures(app_data: &str) -> (SearchService, Arc<SemanticIndex>)
     let semantic = Arc::new(
         SemanticIndex::new(store, embedder, vectors).with_deadline(Duration::from_mins(1)),
     );
-    let keyword = Arc::new(SqliteSearchIndex::new(database));
+    let keyword = Arc::new(SqliteSearchIndex::new(&database));
     let search = SearchService::new(keyword.clone(), keyword, semantic.clone());
     (search, semantic)
 }

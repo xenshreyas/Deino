@@ -54,7 +54,7 @@ async fn seeded() -> Database {
 }
 
 fn service(database: &Database, semantic: Arc<FakeSemanticSearch>) -> SearchService {
-    let index = Arc::new(SqliteSearchIndex::new(database.clone()));
+    let index = Arc::new(SqliteSearchIndex::new(database));
     SearchService::new(index.clone(), index, semantic)
 }
 

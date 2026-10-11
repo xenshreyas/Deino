@@ -75,8 +75,8 @@ fn attach_search(
     (gateway, models): (Option<Arc<Gateway>>, Option<Arc<ModelService>>),
     clock: &Arc<dyn Clock>,
 ) -> Arc<dyn SearchIndexing> {
-    let keyword = Arc::new(SqliteSearchIndex::new(database.clone()));
-    let store = Arc::new(SqliteEmbeddingStore::new(database.clone()));
+    let keyword = Arc::new(SqliteSearchIndex::new(database));
+    let store = Arc::new(SqliteEmbeddingStore::new(database));
     let embedder: Arc<dyn Embedder> = match (gateway, &models) {
         (Some(gateway), Some(models)) => {
             Arc::new(GatewayEmbedder::new(gateway, Arc::clone(models)))

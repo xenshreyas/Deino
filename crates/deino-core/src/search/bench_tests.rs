@@ -122,7 +122,7 @@ async fn search_over_two_thousand_meetings_answers_within_100_ms() {
     let seeding = Instant::now();
     seed(&database).await;
     println!("seeded {MEETINGS} meetings in {:?}", seeding.elapsed());
-    let index = Arc::new(SqliteSearchIndex::new(database));
+    let index = Arc::new(SqliteSearchIndex::new(&database));
     let service = SearchService::new(index.clone(), index, Arc::new(NoSemanticSearch));
 
     for text in [

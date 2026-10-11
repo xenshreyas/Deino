@@ -1,4 +1,4 @@
-# 0028. Search: an FTS5 index kept by triggers, and an in-memory vector index fused by RRF
+# 0029. Search: an FTS5 index kept by triggers, and an in-memory vector index fused by RRF
 
 - **Status:** Accepted
 - **Date:** 2026-10-11
@@ -109,6 +109,27 @@ groups hits for the UI (one row per meeting with its best hit, moments,
 people, companies, action items, folders); `SearchService::search_hybrid`
 is AI-02's retrieval API: fused hits (passages with meeting, time window and
 text), matching a question's words with OR.
+
+**Search from another process: `Retriever`, keyword-only without a model.**
+D13 has Claude Code read meetings through the `deino` CLI and MCP server
+(DEV-02/04), a separate binary that opens the database read-only and may run
+while the app is closed. `deino_core::search::Retriever::open(pool,
+embedder)` needs only a read-only `SqlitePool` and an optional `Embedder`;
+`hybrid_search(query, filters, limit) -> Vec<Hit>` is `search_hybrid` over
+it. Its adapters (`SqliteSearchIndex::read_only`,
+`SqliteEmbeddingStore::read_only`) hold no writer: a write fails with
+`SearchError::ReadOnly`. Search degrades to FTS5 alone, with the same
+filters and hit shape, whenever there is no semantic answer:
+
+- no embedder was given (the model is not downloaded, or no llama-helper is
+  running for that process);
+- the embedder is not ready, fails, or misses the 300 ms query deadline;
+- the `embeddings` table holds no vectors for the embedder's model.
+
+Hits found only by meaning are then missing, never wrong. The CLI loads the
+vectors on its first semantic query (~120 MB at 40,000 chunks), so a
+long-lived MCP server should keep one `Retriever`. Since the app keeps the
+index current through triggers and the `index` stage, the CLI never writes.
 
 ## Alternatives considered
 

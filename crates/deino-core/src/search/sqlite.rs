@@ -7,21 +7,34 @@ use chrono::{DateTime, Utc};
 use deino_db::Database;
 use deino_domain::{MeetingId, Millis};
 use sqlx::SqliteConnection;
+use sqlx::SqlitePool;
 
 use super::index::{KeywordQuery, ReindexReport, ScopedMeeting, SearchIndex};
+use super::pools::Pools;
 use super::{FilterKind, Hit, HitKind, SearchError, SearchFilters, snippet};
 
 /// [`SearchIndex`] and [`FilterDirectory`](super::FilterDirectory) over
 /// Deino's database.
 #[derive(Clone, Debug)]
 pub struct SqliteSearchIndex {
-    pub(super) database: Database,
+    pub(super) pools: Pools,
 }
 
 impl SqliteSearchIndex {
     /// An index over an open, migrated database.
-    pub fn new(database: Database) -> Self {
-        Self { database }
+    pub fn new(database: &Database) -> Self {
+        Self {
+            pools: Pools::of(database),
+        }
+    }
+
+    /// An index that only reads, over `pool` (a read-only connection another
+    /// process opened); refreshing or rebuilding fails with
+    /// [`SearchError::ReadOnly`].
+    pub fn read_only(pool: SqlitePool) -> Self {
+        Self {
+            pools: Pools::read_only(pool),
+        }
     }
 }
 
@@ -66,7 +79,7 @@ impl SearchIndex for SqliteSearchIndex {
             scope,
             query.limit
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         Ok(rows.into_iter().map(Hit::from).collect())
     }
@@ -90,13 +103,13 @@ impl SearchIndex for SqliteSearchIndex {
             meetings,
             domains
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         Ok(rows)
     }
 
     async fn refresh_meeting(&self, meeting: &MeetingId) -> Result<(), SearchError> {
-        let mut transaction = self.database.writer().begin().await?;
+        let mut transaction = self.pools.writer()?.begin().await?;
         sqlx::query!(
             "DELETE FROM search_documents WHERE meeting_id = ?1",
             meeting
@@ -109,7 +122,7 @@ impl SearchIndex for SqliteSearchIndex {
     }
 
     async fn reindex_all(&self) -> Result<ReindexReport, SearchError> {
-        let mut transaction = self.database.writer().begin().await?;
+        let mut transaction = self.pools.writer()?.begin().await?;
         sqlx::query!("DELETE FROM search_documents")
             .execute(&mut *transaction)
             .await?;

@@ -136,13 +136,16 @@ the SQLite adapters behind those ports.
   `FolderDialog`, `Clipboard`, `UrlOpener`) and `Vault` (`FsVault`, atomic
   writes). Fakes: `FakeVault`, `ScriptedDialog`, `RecordedClipboard`,
   `RecordedOpener`.
-- `search` (ORG-08, AI-01, ADR 0028): the query language (`query`), FTS5
+- `search` (ORG-08, AI-01, ADR 0029): the query language (`query`), FTS5
   expressions (`fts`), snippets with UTF-16 highlight ranges (`snippet`),
   `SqliteSearchIndex` (`SearchIndex`: keyword hits, filter scopes, refresh,
   reindex; `FilterDirectory`: `@` names and known domains), reciprocal rank
   fusion (`hybrid`), `sections`, `SearchService` (`search`, `search_hybrid`,
   `suggest_filters`, `reindex_all`) and `MeetingIndexer` (`SearchIndexing`,
-  the `index` stage's port). `semantic`: the chunker, the `Embedder` port
+  the `index` stage's port). `Retriever`: read-only hybrid search for
+  another process (the `deino` CLI and MCP server) over a read-only pool and
+  an optional `Embedder`, keyword-only without one; writes through its
+  adapters fail with `SearchError::ReadOnly`. `semantic`: the chunker, the `Embedder` port
   (`GatewayEmbedder`, nomic task prefixes; `NoEmbedder`), `SqliteEmbeddingStore`
   (`MeetingSourceReader`, `EmbeddingStore`), `VectorIndex` behind
   `SharedVectors`, `SemanticIndexer`, `SemanticIndex` (`SemanticSearch`), the

@@ -1,4 +1,4 @@
-//! Semantic search (AI-01, ADR 0028): meetings cut into chunks, embedded on
+//! Semantic search (AI-01, ADR 0029): meetings cut into chunks, embedded on
 //! the Mac by `nomic-embed-text-v1.5`, and found by meaning.
 //!
 //! - [`chunk`]: transcript windows of about 400 tokens cut at speaker turns
@@ -30,7 +30,7 @@ mod shared;
 mod sqlite_store;
 mod store;
 #[cfg(test)]
-mod test_harness;
+pub(super) mod test_harness;
 mod vectors;
 
 use async_trait::async_trait;

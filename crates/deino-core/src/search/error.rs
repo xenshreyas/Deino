@@ -22,6 +22,10 @@ pub enum SearchError {
     /// The database failed; the source carries the detail.
     #[error("could not read or update the search index")]
     Storage(#[from] DbError),
+    /// A write through adapters opened read-only (another process's
+    /// [`Retriever`](super::Retriever)).
+    #[error("the search index was opened read-only")]
+    ReadOnly,
 }
 
 impl From<sqlx::Error> for SearchError {
@@ -44,7 +48,7 @@ impl ErrorClass for SearchError {
             Self::ModelMissing => ErrorCode::Unavailable,
             Self::Model(error) => error.code(),
             Self::Embedding(_) => ErrorCode::Llm,
-            Self::Storage(_) => ErrorCode::Internal,
+            Self::Storage(_) | Self::ReadOnly => ErrorCode::Internal,
         }
     }
 }

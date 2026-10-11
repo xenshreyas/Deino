@@ -12,7 +12,7 @@ use super::{SemanticIndex, SemanticIndexer, SharedVectors, SqliteEmbeddingStore}
 use crate::search::FakeEmbedder;
 
 /// Everything a semantic test needs, wired over one database.
-pub(super) struct Harness {
+pub(in crate::search) struct Harness {
     pub database: Database,
     pub embedder: Arc<FakeEmbedder>,
     pub store: Arc<SqliteEmbeddingStore>,
@@ -24,7 +24,7 @@ impl Harness {
     pub async fn new() -> Self {
         let database = test_db().await;
         let embedder = Arc::new(FakeEmbedder::default());
-        let store = Arc::new(SqliteEmbeddingStore::new(database.clone()));
+        let store = Arc::new(SqliteEmbeddingStore::new(&database));
         let vectors = Arc::new(SharedVectors::new(store.clone(), "fake-embedder"));
         let clock: Arc<dyn Clock> = Arc::new(FakeClock::new(at("2026-10-10T09:00:00Z")));
         let indexer = Arc::new(SemanticIndexer::new(IndexerParts {

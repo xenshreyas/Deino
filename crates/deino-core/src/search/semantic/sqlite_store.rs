@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::Database;
 use deino_domain::{MeetingId, Millis};
+use sqlx::SqlitePool;
 
 use super::store::{
     ChunkRow, Coverage, EmbeddingStore, ExistingEmbedding, MeetingSourceReader, MeetingSources,
@@ -15,18 +16,29 @@ use super::store::{
 };
 use super::{Chunk, ChunkKind, StoredVector, TranscriptLine};
 use crate::search::SearchError;
+use crate::search::pools::Pools;
 use crate::search::sqlite::json_array;
 
 /// The semantic index's storage in Deino's database.
 #[derive(Clone, Debug)]
 pub struct SqliteEmbeddingStore {
-    database: Database,
+    pools: Pools,
 }
 
 impl SqliteEmbeddingStore {
     /// A store over an open, migrated database.
-    pub fn new(database: Database) -> Self {
-        Self { database }
+    pub fn new(database: &Database) -> Self {
+        Self {
+            pools: Pools::of(database),
+        }
+    }
+
+    /// A store that only reads, over `pool` (a read-only connection another
+    /// process opened); saving vectors fails with [`SearchError::ReadOnly`].
+    pub fn read_only(pool: SqlitePool) -> Self {
+        Self {
+            pools: Pools::read_only(pool),
+        }
     }
 }
 
@@ -38,14 +50,14 @@ impl MeetingSourceReader for SqliteEmbeddingStore {
             "src/search/semantic/queries/transcript.sql",
             meeting
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         let sections = sqlx::query!(
             r#"SELECT kind AS "kind!", body AS "body!" FROM search_documents
                WHERE meeting_id = ?1 AND kind IN ('note', 'summary')"#,
             meeting
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         let section = |kind: &str| {
             sections
@@ -62,7 +74,7 @@ impl MeetingSourceReader for SqliteEmbeddingStore {
 
     async fn to_index(&self) -> Result<Vec<MeetingId>, SearchError> {
         let meetings = sqlx::query_file_scalar!("src/search/semantic/queries/to_index.sql")
-            .fetch_all(self.database.reader())
+            .fetch_all(self.pools.reader())
             .await?;
         Ok(meetings)
     }
@@ -76,7 +88,7 @@ impl EmbeddingStore for SqliteEmbeddingStore {
                FROM embeddings WHERE meeting_id = ?1"#,
             meeting
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         Ok(rows
             .into_iter()
@@ -92,7 +104,7 @@ impl EmbeddingStore for SqliteEmbeddingStore {
         &self,
         replacement: Replacement<'_>,
     ) -> Result<Vec<StoredVector>, SearchError> {
-        let mut transaction = self.database.writer().begin().await?;
+        let mut transaction = self.pools.writer()?.begin().await?;
         sqlx::query!(
             "DELETE FROM embeddings WHERE meeting_id = ?1",
             replacement.meeting
@@ -118,7 +130,7 @@ impl EmbeddingStore for SqliteEmbeddingStore {
                FROM embeddings WHERE model = ?1"#,
             model
         )
-        .fetch_all(self.database.reader())
+        .fetch_all(self.pools.reader())
         .await?;
         Ok(rows
             .into_iter()
@@ -134,14 +146,14 @@ impl EmbeddingStore for SqliteEmbeddingStore {
         let ids: Vec<String> = ids.iter().map(ToString::to_string).collect();
         let ids = json_array(ids.iter().map(String::as_str));
         let rows = sqlx::query_file_as!(ChunkRow, "src/search/semantic/queries/hydrate.sql", ids)
-            .fetch_all(self.database.reader())
+            .fetch_all(self.pools.reader())
             .await?;
         Ok(rows)
     }
 
     async fn coverage(&self, model: &str) -> Result<Coverage, SearchError> {
         let row = sqlx::query_file!("src/search/semantic/queries/coverage.sql", model)
-            .fetch_one(self.database.reader())
+            .fetch_one(self.pools.reader())
             .await?;
         Ok(Coverage {
             indexed: row.indexed,

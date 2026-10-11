@@ -52,7 +52,7 @@ fn chunk(index: u32, text: &str) -> Chunk {
 #[tokio::test]
 async fn sources_are_the_live_transcript_in_order_with_speakers_and_the_notes() {
     let database = seeded().await;
-    let store = SqliteEmbeddingStore::new(database);
+    let store = SqliteEmbeddingStore::new(&database);
 
     let sources = store.sources(&MeetingId::new("meeting-a")).await.unwrap();
 
@@ -85,7 +85,7 @@ async fn replace(
 
 #[tokio::test]
 async fn a_replace_drops_the_old_rows_and_vectors_round_trip() {
-    let store = SqliteEmbeddingStore::new(seeded().await);
+    let store = SqliteEmbeddingStore::new(&seeded().await);
     let chunks = [chunk(0, "first second"), chunk(1, "more")];
     let vectors = [vec![0.25, -1.5], vec![1.0, 0.0]];
 
@@ -102,7 +102,7 @@ async fn a_replace_drops_the_old_rows_and_vectors_round_trip() {
 #[tokio::test]
 async fn hydrate_reads_chunks_with_their_meeting_and_skips_the_trash() {
     let database = seeded().await;
-    let store = SqliteEmbeddingStore::new(database.clone());
+    let store = SqliteEmbeddingStore::new(&database);
     let stored = replace(&store, &[chunk(0, "first second")], &[vec![1.0]]).await;
 
     let rows = store.hydrate(&[stored[0].id]).await.unwrap();
@@ -131,7 +131,7 @@ async fn coverage_and_the_work_list_count_meetings_with_something_to_embed() {
         at("2026-10-09T09:00:00Z"),
     )
     .await;
-    let store = SqliteEmbeddingStore::new(database);
+    let store = SqliteEmbeddingStore::new(&database);
     let meeting = MeetingId::new("meeting-a");
 
     assert_eq!(

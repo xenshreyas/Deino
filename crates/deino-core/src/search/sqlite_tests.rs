@@ -47,7 +47,7 @@ async fn seeded() -> Database {
 }
 
 fn index(database: &Database) -> SqliteSearchIndex {
-    SqliteSearchIndex::new(database.clone())
+    SqliteSearchIndex::new(database)
 }
 
 async fn search(database: &Database, text: &str) -> Vec<Hit> {

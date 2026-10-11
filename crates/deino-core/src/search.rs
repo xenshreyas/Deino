@@ -1,5 +1,5 @@
 //! Global search (ORG-08) and the semantic index (AI-01), PARITY_PLAN §4.4,
-//! ADR 0028.
+//! ADR 0029.
 //!
 //! - **Keyword:** `search_documents` holds one row per searchable thing
 //!   (meeting titles, notes, summaries, transcript segments, action items,
@@ -14,6 +14,8 @@
 //! - [`SearchService`]: the palette and results page ([`SearchService::search`])
 //!   and chat's retrieval API ([`SearchService::search_hybrid`]).
 //! - [`MeetingIndexer`]: the `index` pipeline stage's work for one meeting.
+//! - [`Retriever`]: read-only hybrid search for another process (the `deino`
+//!   CLI and MCP server); keyword-only when it has no embedder.
 //!
 //! Nothing here logs queries, snippets or indexed text.
 
@@ -26,7 +28,9 @@ pub mod hybrid;
 mod index;
 mod meeting_indexer;
 mod model;
+mod pools;
 pub mod query;
+mod retrieval;
 pub mod sections;
 pub mod semantic;
 mod service;
@@ -42,6 +46,7 @@ pub use model::{
     FilterChip, FilterKind, Highlight, Hit, HitKind, MAX_HITS_PER_KIND, SearchFilters,
     SearchRequest, SearchResults, Snippet,
 };
+pub use retrieval::Retriever;
 pub use service::{MAX_SUGGESTIONS, SearchService};
 pub use sqlite::SqliteSearchIndex;
 
