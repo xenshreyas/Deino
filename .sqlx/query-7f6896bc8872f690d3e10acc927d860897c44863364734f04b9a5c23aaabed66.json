@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO companies (id, name, domain, logo_path, notes_md, summary_md, summary_updated_at,\n                logo_checked_at, merged_into, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 11
+    },
+    "nullable": []
+  },
+  "hash": "7f6896bc8872f690d3e10acc927d860897c44863364734f04b9a5c23aaabed66"
+}

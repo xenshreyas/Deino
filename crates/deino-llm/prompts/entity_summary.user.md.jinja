@@ -1,0 +1,29 @@
+<subject>
+Name: {{ name }}
+{%- for detail in details %}
+{{ detail }}
+{%- endfor %}
+{%- if let Some(notes) = notes %}
+
+The user's notes:
+{{ notes }}
+{%- endif %}
+</subject>
+
+<meetings>
+{%- for meeting in meetings %}
+
+## {{ meeting.title }} ({{ meeting.date }})
+{{ meeting.content }}
+{%- endfor %}
+</meetings>
+{%- if !open_items.is_empty() %}
+
+<open_action_items>
+{%- for item in open_items %}
+- {{ item }}
+{%- endfor %}
+</open_action_items>
+{%- endif %}
+
+Now write the briefing about {{ name }}.

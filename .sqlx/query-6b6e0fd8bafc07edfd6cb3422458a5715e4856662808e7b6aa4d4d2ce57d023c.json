@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "-- One company by ID (?1), merged or not.\nSELECT\n    id AS \"id: CompanyId\",\n    name,\n    domain AS \"domain: CompanyDomain\",\n    logo_path,\n    notes_md,\n    summary_md,\n    summary_updated_at AS \"summary_updated_at: DateTime<Utc>\",\n    logo_checked_at AS \"logo_checked_at: DateTime<Utc>\",\n    merged_into AS \"merged_into: CompanyId\",\n    created_at AS \"created_at: DateTime<Utc>\",\n    updated_at AS \"updated_at: DateTime<Utc>\"\nFROM companies\nWHERE id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CompanyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain: CompanyDomain",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "logo_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes_md",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_md",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary_updated_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "logo_checked_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "merged_into: CompanyId",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "6b6e0fd8bafc07edfd6cb3422458a5715e4856662808e7b6aa4d4d2ce57d023c"
+}

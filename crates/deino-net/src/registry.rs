@@ -48,7 +48,8 @@ pub const fn spec(service: ServiceId) -> ServiceSpec {
     }
 }
 
-/// Integrations, web search and webhooks: off until the user connects them.
+/// Integrations, web search, webhooks and company logos: off until the user
+/// connects or switches them on.
 const fn integration(service: ServiceId) -> ServiceSpec {
     let hosts = match service {
         ServiceId::GoogleCalendar => hosts::GOOGLE_CALENDAR,
@@ -70,6 +71,7 @@ const fn integration(service: ServiceId) -> ServiceSpec {
         ServiceId::Affinity => hosts::AFFINITY,
         ServiceId::ZohoCrm => hosts::ZOHO,
         ServiceId::WebSearch => hosts::WEB_SEARCH,
+        ServiceId::Favicons => hosts::ANY_PUBLIC_NAME,
         _ => &[],
     };
     ServiceSpec {
@@ -163,6 +165,8 @@ mod hosts {
     ];
     pub(super) const WEB_SEARCH: &[HostPattern] =
         &[exact("api.search.brave.com"), exact("api.tavily.com")];
+    /// Company logos come from each company's own website, whichever it is.
+    pub(super) const ANY_PUBLIC_NAME: &[HostPattern] = &[HostPattern::AnyPublicName];
 
     /// Google's OAuth token endpoint, shared by every Google service.
     const GOOGLE_OAUTH: HostPattern = exact("oauth2.googleapis.com");
@@ -200,6 +204,7 @@ mod tests {
         assert!(on.contains(&ServiceId::HfModels));
         assert!(!on.contains(&ServiceId::Slack));
         assert!(!on.contains(&ServiceId::WebSearch));
+        assert!(!on.contains(&ServiceId::Favicons));
     }
 
     #[test]

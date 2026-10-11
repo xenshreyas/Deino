@@ -15,7 +15,7 @@ import { Autosaver } from '../autosave';
 import { notepadCopy } from '../copy';
 import { toNoteDoc } from '../doc-schema';
 import { noteExtensions } from '../editor/extensions';
-import { rankMentionCandidates } from '../editor/mention-ranking';
+import { rankMentionCandidates, withNewPerson } from '../editor/mention-ranking';
 import { createMentionStore, type MenuStore, type MentionStore } from '../editor/menu-store';
 import type { TemplateCommandOptions } from '../editor/template-command';
 import { imageFiles, insertFiles } from '../images';
@@ -54,7 +54,7 @@ function startsTyping(event: KeyboardEvent): boolean {
 }
 
 async function searchPeople(query: string) {
-  return rankMentionCandidates(await peopleApi.search(query), query);
+  return withNewPerson(rankMentionCandidates(await peopleApi.search(query), query), query);
 }
 
 /** The note schema for one editor: images resolve against the target's folder. */

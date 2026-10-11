@@ -30,3 +30,23 @@ export function rankMentionCandidates(
     .slice(0, MENTION_LIMIT)
     .map(({ person }) => ({ id: person.id, label: person.name, detail: person.email }));
 }
+
+/** The shortest name worth offering to add, so `@a` does not invite "Add “a”". */
+const MIN_NEW_NAME = 2;
+
+/**
+ * `candidates`, then an "Add “Name”" entry when the typed name matches
+ * nobody exactly (ORG-04: people come from @mentions too). Choosing it adds
+ * the person, or reuses a namesake Rust finds.
+ */
+export function withNewPerson(
+  candidates: readonly MentionCandidate[],
+  query: string,
+): MentionCandidate[] {
+  const name = query.trim().replace(/\s+/g, ' ');
+  const known = candidates.some(
+    (candidate) => candidate.label.toLowerCase() === name.toLowerCase(),
+  );
+  if (name.length < MIN_NEW_NAME || known) return [...candidates];
+  return [...candidates, { id: `new:${name}`, label: name, detail: null, isNew: true }];
+}

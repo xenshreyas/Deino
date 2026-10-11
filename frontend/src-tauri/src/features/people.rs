@@ -1,25 +1,21 @@
-//! `people` feature: the IPC surface of `deino_core::people`, exposed as the
-//! inline plugin `plugin:people|<command>`.
+//! `people` feature: the IPC surface of people, exposed as the inline plugin
+//! `plugin:people|<command>`.
 //!
-//! NOT-01 adds `search`, which feeds the notepad's @mention suggestions;
-//! ORG-04 adds the people pages' commands here.
+//! - `search` feeds the notepad's @mention suggestions (NOT-01) and
+//!   `from_mention` adds someone new from one;
+//! - the People list and page, adding, editing, notes, merging and the AI
+//!   summary refresh (ORG-04, `deino_core::entities::PersonService`);
+//! - a meeting's attendees for the meeting header, added and removed by
+//!   hand (`AttendanceService`).
+//!
+//! Every service is built in `composition/entities.rs`.
 
-#![allow(
-    clippy::let_underscore_must_use,
-    reason = "#[tauri::command] on an async fn with a State<'_> argument expands to a `let _` type check of its Result"
-)]
-
+mod commands;
 #[cfg(test)]
 mod contract_tests;
 
-use std::sync::Arc;
-
-use deino_core::people::{PeopleService, Person};
-use deino_domain::AppError;
+use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
-use tauri::{Runtime, State};
-
-use crate::error::IntoIpc;
 
 /// Plugin name; must match this feature's entry in `features::manifest`.
 pub const NAME: &str = "people";
@@ -28,7 +24,7 @@ pub const NAME: &str = "people";
 pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
     tauri_specta::Builder::new()
         .plugin_name(NAME)
-        .commands(tauri_specta::collect_commands![search])
+        .commands(commands::collect())
         .error_handling(tauri_specta::ErrorHandlingMode::Result)
 }
 
@@ -37,15 +33,4 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new(NAME)
         .invoke_handler(specta().invoke_handler())
         .build()
-}
-
-/// Up to eight people whose name, a word of it, or email starts with `query`;
-/// the first people by name for an empty query.
-#[tauri::command]
-#[specta::specta]
-async fn search(
-    people: State<'_, Arc<PeopleService>>,
-    query: String,
-) -> Result<Vec<Person>, AppError> {
-    people.search(&query).await.into_ipc()
 }

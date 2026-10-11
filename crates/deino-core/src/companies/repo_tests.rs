@@ -10,16 +10,12 @@ use crate::testing::query_plan;
 
 fn company(name: &str, domain: Option<&str>) -> Company {
     let created_at = at("2026-10-08T09:00:00Z");
-    Company {
-        id: CompanyId::generate(&FakeClock::new(created_at)),
-        name: name.into(),
-        domain: domain.and_then(CompanyDomain::parse),
-        logo_path: None,
-        notes_md: String::new(),
-        summary_md: None,
+    Company::new(
+        CompanyId::generate(&FakeClock::new(created_at)),
+        name.into(),
+        domain.and_then(CompanyDomain::parse),
         created_at,
-        updated_at: created_at,
-    }
+    )
 }
 
 async fn sqlite_repo() -> SqliteCompanyRepo {
@@ -33,16 +29,20 @@ fn names(companies: &[Company]) -> Vec<&str> {
         .collect()
 }
 
-/// Companies list by name ignoring case and are found by domain.
+/// Companies list by name ignoring case, without merged ones, and are found
+/// by domain, merged or not.
 async fn companies_list_by_name_and_are_found_by_domain(repo: &impl CompanyRepo) {
     let acme = company("acme", Some("acme.com"));
+    let mut initech = company("Initech", Some("initech.com"));
+    initech.merged_into = Some(acme.id);
     repo.create(&company("Globex", None)).await.unwrap();
     repo.create(&acme).await.unwrap();
+    repo.create(&initech).await.unwrap();
 
-    let domain = CompanyDomain::parse("acme.com").unwrap();
+    let domain = CompanyDomain::parse("initech.com").unwrap();
 
     assert_eq!(names(&repo.list().await.unwrap()), ["acme", "Globex"]);
-    assert_eq!(repo.find_by_domain(&domain).await.unwrap(), Some(acme));
+    assert_eq!(repo.find_by_domain(&domain).await.unwrap(), Some(initech));
 }
 
 /// Updates save every editable field; deletes report what they removed.
@@ -51,6 +51,9 @@ async fn companies_update_and_delete(repo: &impl CompanyRepo) {
     repo.create(&acme).await.unwrap();
 
     acme.notes_md = "Our biggest customer".into();
+    acme.summary_md = Some("Renewing in Q1.".into());
+    acme.summary_updated_at = Some(at("2026-10-09T08:00:00Z"));
+    acme.logo_checked_at = Some(at("2026-10-09T08:30:00Z"));
     acme.updated_at = at("2026-10-09T09:00:00Z");
     assert!(repo.update(&acme).await.unwrap());
     assert_eq!(repo.find(&acme.id).await.unwrap(), Some(acme.clone()));
@@ -107,5 +110,8 @@ async fn the_list_is_read_in_index_order() {
 
     let plan = query_plan(&repo.database, include_str!("queries/list.sql")).await;
 
-    assert_eq!(plan, ["SCAN companies USING INDEX idx_companies_name"]);
+    assert_eq!(
+        plan,
+        ["SCAN companies USING INDEX idx_companies_listed_name"]
+    );
 }

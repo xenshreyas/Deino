@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The meetings outside the trash that any listed person at a company (?1)\n-- attended and that already happened, each once, most recent first, at most\n-- ?2. The company's people come through idx_people_company_id and their\n-- attendance through idx_meeting_attendees_person_id.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    coalesce(m.started_at, m.created_at) AS \"at!: DateTime<Utc>\",\n    m.duration_s AS \"duration_s: u32\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL AND m.status <> 'scheduled' AND m.id IN (\n    SELECT a.meeting_id\n    FROM people AS p\n    JOIN meeting_attendees AS a ON a.person_id = p.id\n    WHERE p.company_id = ?1 AND p.merged_into IS NULL AND p.is_me = 0\n)\nORDER BY 3 DESC, m.id DESC\nLIMIT ?2\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Null"
+      },
+      {
+        "name": "duration_s: u32",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      false,
+      null,
+      true
+    ]
+  },
+  "hash": "837ada326bd76ac1e0278189f1571ca7c16533ecbd0ecdd3b8c947b53e3b1f7b"
+}

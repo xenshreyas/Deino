@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE companies SET logo_path = coalesce(?1, logo_path), logo_checked_at = ?2\n             WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "058a1cd9671dcd4002c35a1fc08cddbbc820c5106886b874ab3573ca4ff739d7"
+}

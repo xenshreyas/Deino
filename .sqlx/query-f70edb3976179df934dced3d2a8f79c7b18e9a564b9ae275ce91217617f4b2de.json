@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The meetings outside the trash that a person (?1) attended and that\n-- already happened, most recent first, at most ?2. Filtered through\n-- idx_meeting_attendees_person_id and joined on the meetings primary key;\n-- one person's meetings are few enough to sort.\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title,\n    coalesce(m.started_at, m.created_at) AS \"at!: DateTime<Utc>\",\n    m.duration_s AS \"duration_s: u32\"\nFROM meeting_attendees AS a\nJOIN meetings AS m ON m.id = a.meeting_id\nWHERE a.person_id = ?1 AND m.deleted_at IS NULL AND m.status <> 'scheduled'\nORDER BY 3 DESC, m.id DESC\nLIMIT ?2\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Null"
+      },
+      {
+        "name": "duration_s: u32",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      false,
+      null,
+      true
+    ]
+  },
+  "hash": "f70edb3976179df934dced3d2a8f79c7b18e9a564b9ae275ce91217617f4b2de"
+}

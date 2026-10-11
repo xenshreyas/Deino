@@ -15,6 +15,8 @@ import {
 } from './long-meeting';
 import { MockDatabase } from './mock-database';
 import { MockEnhanced } from './mock-enhanced';
+import { MockEntities } from './mock-entities';
+import { MockEntityPages } from './mock-entity-pages';
 import { MockEventLinks } from './mock-event-links';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
@@ -64,3 +66,9 @@ export const mockCalendarEvents = fixtureCalendarEvents(fixtureMeetings, new Dat
 
 /** The meetings' links to calendar events (ORG-03). */
 export const mockEventLinks = new MockEventLinks(fixtureMeetings, mockCalendarEvents, mockDatabase);
+
+/** The mock people, companies and attendance (ORG-04). */
+export const mockEntities = new MockEntities(fixtureMeetings, mockPeople);
+
+/** The People and Companies pages over `mockEntities`. */
+export const mockEntityPages = new MockEntityPages(mockEntities, fixtureMeetings);

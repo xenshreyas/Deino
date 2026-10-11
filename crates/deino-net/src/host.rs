@@ -13,7 +13,22 @@ pub enum HostPattern {
     /// Any subdomain of this domain (not the domain itself), for example
     /// `hf.co` for `cas-bridge.xethub.hf.co`.
     SubdomainsOf(&'static str),
+    /// Any public web host named by DNS: never an IP address, this Mac or a
+    /// name that only resolves on a local network (`printer.local`). For a
+    /// service whose hosts come from the user's own data, such as the domain
+    /// of a company they meet (company logos, ORG-04).
+    AnyPublicName,
 }
+
+/// Name suffixes that only resolve on this Mac or a private network.
+const PRIVATE_SUFFIXES: &[&str] = &[
+    "home.arpa",
+    "internal",
+    "intranet",
+    "lan",
+    "local",
+    "localhost",
+];
 
 impl HostPattern {
     /// A pattern matching exactly `host` (stored lower case).
@@ -31,6 +46,7 @@ impl HostPattern {
                 .and_then(|dot| host.get(dot..))
                 .and_then(|tail| tail.strip_prefix('.'))
                 .is_some_and(|tail| tail.eq_ignore_ascii_case(domain)),
+            Self::AnyPublicName => is_public_name(host),
         }
     }
 
@@ -39,8 +55,31 @@ impl HostPattern {
         match self {
             Self::Exact(exact) => exact.to_string(),
             Self::SubdomainsOf(domain) => format!("*.{domain}"),
+            Self::AnyPublicName => "any public website".to_owned(),
         }
     }
+}
+
+/// Whether `host` is a dotted DNS name on the public internet: labels of
+/// letters, digits and hyphens only (so never an IPv6 literal), not all
+/// digits (so never an IPv4 one), and not a private-network name.
+fn is_public_name(host: &str) -> bool {
+    let host = host.to_ascii_lowercase();
+    let labels: Vec<&str> = host.split('.').collect();
+    let well_formed = labels.len() > 1
+        && labels.iter().all(|label| {
+            !label.is_empty() && label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+        });
+    let numeric = labels
+        .iter()
+        .all(|label| label.chars().all(|c| c.is_ascii_digit()));
+    let private = PRIVATE_SUFFIXES.iter().any(|suffix| {
+        host == *suffix
+            || host
+                .strip_suffix(suffix)
+                .is_some_and(|rest| rest.ends_with('.'))
+    });
+    well_formed && !numeric && !private
 }
 
 /// The host of `url`, lower case, or `None` unless it is an absolute
@@ -73,6 +112,30 @@ mod tests {
         assert!(!pattern.matches("hf.co"));
         assert!(!pattern.matches("evilhf.co"));
         assert!(!pattern.matches("co"));
+    }
+
+    #[test]
+    fn any_public_name_refuses_addresses_this_mac_and_local_names() {
+        let pattern = HostPattern::AnyPublicName;
+        for public in ["acme.com", "www.brightkite-logistics.com", "eng.acme.co.uk"] {
+            assert!(pattern.matches(public), "{public}");
+        }
+        let private = [
+            "localhost",
+            "127.0.0.1",
+            "10.0.0.8",
+            "[::1]",
+            "printer.local",
+            "router.lan",
+            "app.localhost",
+            "nas.home.arpa",
+            "acme",
+            "acme..com",
+            "",
+        ];
+        for host in private {
+            assert!(!pattern.matches(host), "{host}");
+        }
     }
 
     #[test]

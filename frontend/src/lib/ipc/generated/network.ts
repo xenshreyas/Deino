@@ -300,7 +300,12 @@ export type ServiceId =
 /**
  * Outbound webhooks to URLs the user enters (DEV-01).
  */
-"webhooks"
+"webhooks" | 
+/**
+ * Company logos: `https://<domain>/favicon.ico`, fetched once per
+ * company (ORG-04).
+ */
+"favicons"
 /**
  * What kind of service a [`ServiceId`] is, for grouping in the UI.
  */
@@ -318,7 +323,7 @@ export type ServiceKind =
  */
 "integration" | 
 /**
- * Web search and webhooks.
+ * Web search, webhooks and company logos.
  */
 "web"
 /**

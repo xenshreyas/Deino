@@ -28,6 +28,8 @@ deino-domain.workspace = true
 deino-export.workspace = true
 deino-llm.workspace = true
 futures-util.workspace = true
+# Company logos: the favicon fetch over the `favicons` service (ORG-04).
+deino-net.workspace = true
 deino-secrets.workspace = true
 # The fixture meetings behind the sample library (feature `test-support`).
 deino-testkit = { workspace = true, optional = true }
@@ -65,6 +67,7 @@ url = "2.5.8"
 deino-db = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
+deino-net = { workspace = true, features = ["test-support"] }
 deino-secrets = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 # Snapshot tests of rendered prompts (profile context, template prompts).

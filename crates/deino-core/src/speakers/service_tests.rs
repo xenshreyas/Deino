@@ -13,6 +13,8 @@ use deino_testkit::{at, seed, test_db};
 
 use super::*;
 use crate::action_items::{ActionItem, ActionItemRepo, SqliteActionItemRepo};
+use crate::companies::SqliteCompanyRepo;
+use crate::entities::EntityDirectory;
 use crate::people::{Attendee, AttendeeRepo, Person, PersonRepo, SqlitePeopleRepo};
 use crate::segments::{
     NewSegment, NewSpeaker, Page, SegmentReader, SegmentWriter, Speaker, SpeakerRepo, SpeakerVoice,
@@ -65,6 +67,11 @@ impl World {
             people: people.clone(),
             attendees: people.clone(),
             voiceprints: Arc::new(enrolment),
+            directory: Arc::new(EntityDirectory::new(
+                people.clone(),
+                Arc::new(SqliteCompanyRepo::new(database.clone())),
+                clock(),
+            )),
             clock: clock(),
         });
         Self {

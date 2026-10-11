@@ -22,7 +22,7 @@ fn harness() -> Harness {
     let repo = Arc::new(FakeCalendarRepo::default());
     let people = Arc::new(FakePeopleRepo::default());
     let clock = Arc::new(clock());
-    let directory = AttendeeDirectory::new(
+    let directory = AttendeeDirectory::over(
         people.clone(),
         Arc::new(FakeCompanyRepo::default()),
         clock.clone(),

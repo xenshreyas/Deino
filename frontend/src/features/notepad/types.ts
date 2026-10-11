@@ -23,4 +23,6 @@ export interface MentionCandidate {
   label: string;
   /** A second line: their email, when known. */
   detail: string | null;
+  /** Set on the "Add “Name”" entry: choosing it adds someone new (ORG-04). */
+  isNew?: true;
 }

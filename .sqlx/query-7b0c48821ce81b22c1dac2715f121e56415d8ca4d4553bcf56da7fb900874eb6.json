@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people SET company_id = ?1 WHERE company_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7b0c48821ce81b22c1dac2715f121e56415d8ca4d4553bcf56da7fb900874eb6"
+}

@@ -34,7 +34,37 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "doc_to_markdown",
         ],
     ),
-    ("people", &["search"]),
+    (
+        "people",
+        &[
+            "search",
+            "list",
+            "page",
+            "create",
+            "update",
+            "set_notes",
+            "merge",
+            "from_mention",
+            "refresh_summary",
+            "attendees",
+            "add_attendee",
+            "remove_attendee",
+        ],
+    ),
+    // ── ORG-04 companies ──
+    (
+        "companies",
+        &[
+            "list",
+            "page",
+            "create",
+            "update",
+            "set_notes",
+            "merge",
+            "refresh_summary",
+            "fetch_logo",
+        ],
+    ),
     // ── NOT-02/NOT-03 enhanced notes and citations (features/enhance.rs) ──
     (
         "enhance",

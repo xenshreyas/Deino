@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The Companies list: every company not merged into another, with how many\n-- listed people work there and the meetings outside the trash that any of\n-- them attended. Most recently met first, then by name. Computed on read\n-- like the People list (ADR 0030).\nSELECT\n    c.id AS \"id!: CompanyId\",\n    c.name AS \"name!\",\n    c.domain AS \"domain: CompanyDomain\",\n    c.logo_path,\n    count(DISTINCT p.id) AS \"people_count!: u32\",\n    count(DISTINCT m.id) AS \"meeting_count!: u32\",\n    max(coalesce(m.started_at, m.created_at)) AS \"last_met_at?: DateTime<Utc>\"\nFROM companies AS c\nLEFT JOIN people AS p ON p.company_id = c.id AND p.merged_into IS NULL AND p.is_me = 0\nLEFT JOIN meeting_attendees AS a ON a.person_id = p.id\nLEFT JOIN meetings AS m\n    ON m.id = a.meeting_id AND m.deleted_at IS NULL AND m.status <> 'scheduled'\nWHERE c.merged_into IS NULL\nGROUP BY c.id\nORDER BY 7 IS NULL, 7 DESC, c.name COLLATE NOCASE, c.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: CompanyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain: CompanyDomain",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "logo_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "people_count!: u32",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "meeting_count!: u32",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_met_at?: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "39da46f2b6cfa572bbedbcff509a7ab9928d6aef554c7b3000723d0ebcc67734"
+}

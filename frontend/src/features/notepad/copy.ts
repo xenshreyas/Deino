@@ -9,6 +9,7 @@ export const notepadCopy = {
   retry: 'Try again',
   mentionsLabel: 'People',
   noPeople: 'No one by that name yet',
+  addPerson: (name: string) => `Add “${name}”`,
   imageFailedTitle: 'The image was not added',
   templateFailedTitle: 'The template was not set',
   viewLabel: 'Notes view',

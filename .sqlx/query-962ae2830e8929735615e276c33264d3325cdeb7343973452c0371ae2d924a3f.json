@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people SET merged_into = ?1 WHERE merged_into = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "962ae2830e8929735615e276c33264d3325cdeb7343973452c0371ae2d924a3f"
+}

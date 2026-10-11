@@ -187,16 +187,7 @@ impl<'a> Spec<'a> {
 }
 
 async fn company(database: &Database, clock: &FakeClock) -> CompanyId {
-    let company = Company {
-        id: CompanyId::generate(clock),
-        name: "Acme".into(),
-        domain: None,
-        logo_path: None,
-        notes_md: String::new(),
-        summary_md: None,
-        created_at: at(NOW),
-        updated_at: at(NOW),
-    };
+    let company = Company::new(CompanyId::generate(clock), "Acme".into(), None, at(NOW));
     SqliteCompanyRepo::new(database.clone())
         .create(&company)
         .await

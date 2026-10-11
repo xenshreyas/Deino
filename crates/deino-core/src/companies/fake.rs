@@ -10,7 +10,8 @@ use super::{Company, CompanyDomain, CompanyRepo};
 use crate::testing::lock;
 
 /// Keeps companies in a `Vec` and honours the [`CompanyRepo`] contract,
-/// including the case-insensitive name order of `list`.
+/// including the case-insensitive name order of `list`, which hides merged
+/// companies.
 #[derive(Debug, Default)]
 pub struct FakeCompanyRepo {
     companies: Mutex<Vec<Company>>,
@@ -37,7 +38,11 @@ impl CompanyRepo for FakeCompanyRepo {
     }
 
     async fn list(&self) -> Result<Vec<Company>, DbError> {
-        let mut companies = lock(&self.companies).clone();
+        let mut companies: Vec<Company> = lock(&self.companies)
+            .iter()
+            .filter(|company| company.merged_into.is_none())
+            .cloned()
+            .collect();
         companies.sort_by_key(|company| (company.name.to_lowercase(), company.id));
         Ok(companies)
     }

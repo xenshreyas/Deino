@@ -1,24 +1,24 @@
-//! People and companies from calendar attendees (ORG-01 seeds what ORG-04
-//! builds on).
+//! People and companies from calendar invitations (ORG-01), through the
+//! entity rules (ORG-04).
 //!
-//! [`AttendeeDirectory`] adds each person the user is invited to meet,
-//! keyed by email, and their company, keyed by the email's domain (never a
-//! personal mail provider's). It only ever adds: a person or company that
-//! exists is left exactly as the user (or ORG-04) left it. Large broadcast
-//! invitations, declined events and declined invitees add nobody, since none
-//! of them say the user actually meets these people.
+//! [`AttendeeDirectory`] decides which invitees count as people the user
+//! meets and hands each to [`EntityDirectory`], which owns the upsert rules
+//! (keyed by email, companies from the email's domain, never a personal
+//! mail provider's, never changing someone who exists). Large broadcast
+//! invitations, declined events and declined invitees add nobody, since
+//! none of them say the user actually meets these people.
 
 use std::collections::BTreeSet;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use deino_db::DbError;
-use deino_domain::{Clock, CompanyId, Email, PersonId, Rsvp};
+use deino_domain::{Clock, Email, PersonId, Rsvp};
 
 use super::EventAttendee;
 use super::batch::SyncedEvent;
-use super::names::{company_name, person_name};
-use crate::companies::{Company, CompanyDomain, CompanyRepo, is_public_email_domain};
-use crate::people::{Person, PersonRepo};
+use crate::companies::CompanyRepo;
+use crate::entities::{EntityDirectory, PersonSeed};
+use crate::people::PersonRepo;
 use crate::profile::InternalDomains;
 
 /// Invitations with more attendees than this are broadcasts (all-hands,
@@ -27,27 +27,28 @@ pub const MAX_ATTENDEES_FOR_PEOPLE: usize = 25;
 
 /// Adds the people and companies of calendar invitations.
 pub struct AttendeeDirectory {
-    people: Arc<dyn PersonRepo>,
-    companies: Arc<dyn CompanyRepo>,
-    clock: Arc<dyn Clock>,
+    entities: Arc<EntityDirectory>,
     /// Addresses already looked up this session, so a sync every two
     /// minutes does not read every attendee again.
     known: Mutex<BTreeSet<Email>>,
 }
 
 impl AttendeeDirectory {
-    /// A directory over the people and company repositories.
-    pub fn new(
+    /// A directory adding through the entity rules.
+    pub fn new(entities: Arc<EntityDirectory>) -> Self {
+        Self {
+            entities,
+            known: Mutex::new(BTreeSet::new()),
+        }
+    }
+
+    /// A directory over its own [`EntityDirectory`] on these repositories.
+    pub fn over(
         people: Arc<dyn PersonRepo>,
         companies: Arc<dyn CompanyRepo>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        Self {
-            people,
-            companies,
-            clock,
-            known: Mutex::new(BTreeSet::new()),
-        }
+        Self::new(Arc::new(EntityDirectory::new(people, companies, clock)))
     }
 
     /// Adds every new person invited to `events` (and their company);
@@ -69,7 +70,12 @@ impl AttendeeDirectory {
             if self.known().contains(&email) {
                 continue;
             }
-            added += usize::from(self.add_if_new(&email, name).await?);
+            let seed = PersonSeed {
+                email: Some(email.clone()),
+                name,
+            };
+            let upserted = self.entities.upsert_person(&seed).await?;
+            added += usize::from(upserted.is_some_and(|upserted| upserted.created));
             self.known().insert(email);
         }
         Ok(added)
@@ -80,80 +86,24 @@ impl AttendeeDirectory {
         self.known.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Adds the person with `email` unless someone has it; true when added.
-    async fn add_if_new(&self, email: &Email, name: Option<String>) -> Result<bool, DbError> {
-        if self.people.find_by_email(email).await?.is_some() {
-            return Ok(false);
-        }
-        self.add(email, name).await?;
-        Ok(true)
-    }
-
     /// The person with `email` (whoever they were merged into), or, with
-    /// `create`, a new person (and their company) for them; `None` when
-    /// nobody has the address and `create` is false. Event linking (ORG-03)
-    /// turns invitees into attendees with it.
+    /// `create`, a new person (and their company) through the entity rules;
+    /// `None` when nobody has the address and `create` is false. Event
+    /// linking (ORG-03) turns invitees into attendees with it.
     pub(super) async fn person_for(
         &self,
         email: &Email,
         name: Option<String>,
         create: bool,
     ) -> Result<Option<PersonId>, DbError> {
-        if let Some(person) = self.people.find_by_email(email).await? {
-            return Ok(Some(person.merged_into.unwrap_or(person.id)));
-        }
         if !create {
-            return Ok(None);
+            return self.entities.person_with_email(email).await;
         }
-        Ok(Some(self.add(email, name).await?))
-    }
-
-    /// Adds a person for `email`, named `name` or after the address.
-    async fn add(&self, email: &Email, name: Option<String>) -> Result<PersonId, DbError> {
-        let now = self.clock.now();
-        let person = Person {
-            id: PersonId::generate(self.clock.as_ref()),
-            name: name.unwrap_or_else(|| person_name(email.as_str())),
+        let seed = PersonSeed {
             email: Some(email.clone()),
-            company_id: self.company_for(email).await?,
-            title: None,
-            avatar_path: None,
-            notes_md: String::new(),
-            summary_md: None,
-            summary_updated_at: None,
-            is_me: false,
-            merged_into: None,
-            created_at: now,
-            updated_at: now,
+            name,
         };
-        self.people.create(&person).await?;
-        Ok(person.id)
-    }
-
-    /// The company at `email`'s domain, added if new; `None` for a personal
-    /// mail provider.
-    async fn company_for(&self, email: &Email) -> Result<Option<CompanyId>, DbError> {
-        let domain = email.domain();
-        let Some(domain) = CompanyDomain::parse(domain).filter(|_| !is_public_email_domain(domain))
-        else {
-            return Ok(None);
-        };
-        if let Some(company) = self.companies.find_by_domain(&domain).await? {
-            return Ok(Some(company.id));
-        }
-        let now = self.clock.now();
-        let company = Company {
-            id: CompanyId::generate(self.clock.as_ref()),
-            name: company_name(domain.as_str()),
-            domain: Some(domain),
-            logo_path: None,
-            notes_md: String::new(),
-            summary_md: None,
-            created_at: now,
-            updated_at: now,
-        };
-        self.companies.create(&company).await?;
-        Ok(Some(company.id))
+        Ok(self.entities.upsert_person(&seed).await?.map(|upserted| upserted.id))
     }
 }
 

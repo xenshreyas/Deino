@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
+use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
@@ -62,6 +63,8 @@ pub(crate) struct StageAdapters {
     /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
     pub(crate) search: Arc<dyn SearchIndexing>,
+    /// People and companies after a meeting (`composition/entities.rs`, ORG-04).
+    pub(crate) entities: Arc<dyn EntityUpdater>,
 }
 
 /// The ports the registered stages read: SQLite repositories over
@@ -96,6 +99,7 @@ fn stage_ports(
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
         search: adapters.ai.adapters.search,
+        entities: adapters.ai.adapters.entities,
     }
 }
 

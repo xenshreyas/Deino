@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meeting_notes SET notes_json = replace(notes_json, ?2, ?1)\n         WHERE instr(notes_json, ?2) > 0",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6822700dcddcf3d73e80d190d6bf8603a3d491e7056ea5ab188288b0e5f5ee68"
+}

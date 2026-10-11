@@ -72,6 +72,9 @@ db_enum! {
         WebSearch = "web_search",
         /// Outbound webhooks to URLs the user enters (DEV-01).
         Webhooks = "webhooks",
+        /// Company logos: `https://<domain>/favicon.ico`, fetched once per
+        /// company (ORG-04).
+        Favicons = "favicons",
     }
 }
 
@@ -87,7 +90,7 @@ pub enum ServiceKind {
     Models,
     /// A connected app: calendar, mail, chat, docs, tasks or CRM.
     Integration,
-    /// Web search and webhooks.
+    /// Web search, webhooks and company logos.
     Web,
 }
 
@@ -102,7 +105,7 @@ impl ServiceId {
             | Self::LlmCustom
             | Self::LlmOllama => ServiceKind::Llm,
             Self::HfModels => ServiceKind::Models,
-            Self::WebSearch | Self::Webhooks => ServiceKind::Web,
+            Self::WebSearch | Self::Webhooks | Self::Favicons => ServiceKind::Web,
             _ => ServiceKind::Integration,
         }
     }

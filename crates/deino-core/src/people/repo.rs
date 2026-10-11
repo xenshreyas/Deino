@@ -20,6 +20,10 @@ pub trait PersonRepo: Send + Sync {
     /// The person with `email`, for upserting calendar attendees.
     async fn find_by_email(&self, email: &Email) -> Result<Option<Person>, DbError>;
 
+    /// The oldest unmerged person named exactly `name` (ignoring ASCII
+    /// case), for upserting speakers and mentions that have no address.
+    async fn find_by_name(&self, name: &str) -> Result<Option<Person>, DbError>;
+
     /// Every person not merged into another, by name (case-insensitive).
     async fn list(&self) -> Result<Vec<Person>, DbError>;
 
@@ -87,6 +91,13 @@ impl PersonRepo for SqlitePeopleRepo {
 
     async fn find_by_email(&self, email: &Email) -> Result<Option<Person>, DbError> {
         let person = sqlx::query_file_as!(Person, "src/people/queries/find_by_email.sql", email)
+            .fetch_optional(self.database.reader())
+            .await?;
+        Ok(person)
+    }
+
+    async fn find_by_name(&self, name: &str) -> Result<Option<Person>, DbError> {
+        let person = sqlx::query_file_as!(Person, "src/people/queries/find_by_name.sql", name)
             .fetch_optional(self.database.reader())
             .await?;
         Ok(person)

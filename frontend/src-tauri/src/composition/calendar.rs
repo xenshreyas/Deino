@@ -129,7 +129,7 @@ pub(crate) fn attach_calendar(app: &AppHandle, database: &Database, clock: &Arc<
 
 /// People and companies from calendar invitees.
 fn directory(database: &Database, clock: &Arc<dyn Clock>) -> AttendeeDirectory {
-    AttendeeDirectory::new(
+    AttendeeDirectory::over(
         Arc::new(SqlitePeopleRepo::new(database.clone())),
         Arc::new(SqliteCompanyRepo::new(database.clone())),
         Arc::clone(clock),

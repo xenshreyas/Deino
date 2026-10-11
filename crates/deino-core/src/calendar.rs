@@ -50,7 +50,6 @@ mod filter;
 pub mod linking;
 mod mapping;
 mod model;
-mod names;
 mod reads;
 mod schedule;
 mod service;

@@ -7,6 +7,7 @@
 import { mergeAttributes } from '@tiptap/core';
 import Mention from '@tiptap/extension-mention';
 
+import { peopleApi } from '../api';
 import type { MentionCandidate } from '../types';
 import { type MentionStore, suggestionRenderer } from './menu-store';
 
@@ -62,9 +63,22 @@ interface MentionRenderProps {
   command: (attrs: { id: string; label: string }) => void;
 }
 
-/** Drives the menu's store; choosing inserts the person's chip. */
+/**
+ * Drives the menu's store; choosing inserts the person's chip. Choosing
+ * "Add “Name”" first adds the person (or finds a namesake), then inserts
+ * their chip; if that fails, the typed text stays as it is.
+ */
 function suggestionBridge(store: MentionStore | null) {
   return suggestionRenderer<MentionCandidate, MentionRenderProps>(store, (props, candidate) => {
-    props.command({ id: candidate.id, label: candidate.label });
+    if (candidate.isNew !== true) {
+      props.command({ id: candidate.id, label: candidate.label });
+      return;
+    }
+    peopleApi.fromMention(candidate.label).then(
+      (person) => {
+        props.command({ id: person.id, label: person.name });
+      },
+      () => undefined,
+    );
   });
 }

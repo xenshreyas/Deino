@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The People list: every person not merged into another and not the user,\n-- or only those at one company (?1, NULL for everyone), with their company\n-- and their meetings outside the trash that already happened. Most recently\n-- met first, then by name.\n--\n-- The aggregates are computed here rather than stored (ADR 0030): each\n-- person's attendance is read through idx_meeting_attendees_person_id and\n-- each meeting through its primary key (asserted in reads_tests.rs).\nSELECT\n    p.id AS \"id!: PersonId\",\n    p.name AS \"name!\",\n    p.email AS \"email: Email\",\n    p.title,\n    p.company_id AS \"company_id: CompanyId\",\n    c.name AS \"company_name?: String\",\n    c.logo_path AS \"company_logo_path?: String\",\n    max(coalesce(m.started_at, m.created_at)) AS \"last_met_at?: DateTime<Utc>\",\n    count(m.id) AS \"meeting_count!: u32\"\nFROM people AS p\nLEFT JOIN companies AS c ON c.id = p.company_id\nLEFT JOIN meeting_attendees AS a ON a.person_id = p.id\nLEFT JOIN meetings AS m\n    ON m.id = a.meeting_id AND m.deleted_at IS NULL AND m.status <> 'scheduled'\nWHERE p.merged_into IS NULL AND p.is_me = 0 AND (?1 IS NULL OR p.company_id = ?1)\nGROUP BY p.id\nORDER BY 8 IS NULL, 8 DESC, p.name COLLATE NOCASE, p.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "email: Email",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "company_id: CompanyId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "company_name?: String",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "company_logo_path?: String",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_met_at?: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_count!: u32",
+        "ordinal": 8,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "e0a0fe4d9ec083868c9f315e3853a69e90e70a784e9421bdf217d3e644f22382"
+}

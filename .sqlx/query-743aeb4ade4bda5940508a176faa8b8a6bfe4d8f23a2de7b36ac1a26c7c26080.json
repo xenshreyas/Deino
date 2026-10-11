@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE voiceprints SET person_id = ?1 WHERE person_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "743aeb4ade4bda5940508a176faa8b8a6bfe4d8f23a2de7b36ac1a26c7c26080"
+}

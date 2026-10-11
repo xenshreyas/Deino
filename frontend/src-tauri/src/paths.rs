@@ -57,6 +57,12 @@ impl AppPaths {
         self.data.join("recordings")
     }
 
+    /// Cached company logos, one file per company (`<data>/logos`, ORG-04).
+    /// Inside the asset protocol's `$APPDATA` scope, so the UI shows them.
+    pub(crate) fn logos(&self) -> PathBuf {
+        self.data.join("logos")
+    }
+
     /// The pre-NOT-04 custom templates folder (`<data>/templates`), read
     /// once at startup to import its JSON files into the database.
     pub(crate) fn legacy_templates(&self) -> PathBuf {

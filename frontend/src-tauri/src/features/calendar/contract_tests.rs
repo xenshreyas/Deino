@@ -102,7 +102,7 @@ fn calendar_app_over(source: Arc<FakeCalendarSource>) -> App<MockRuntime> {
         source,
         connectors: vec![google],
         store: CalendarStore::over(&repo),
-        directory: AttendeeDirectory::new(
+        directory: AttendeeDirectory::over(
             Arc::new(FakePeopleRepo::default()),
             Arc::new(FakeCompanyRepo::default()),
             clock.clone(),

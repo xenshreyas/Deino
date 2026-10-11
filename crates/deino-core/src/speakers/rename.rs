@@ -19,6 +19,7 @@ use super::{
     SpeakerError, SpeakerName, SpeakerService,
 };
 use crate::diarization::speaker_labels;
+use crate::entities::PersonSeed;
 use crate::people::Person;
 use crate::segments::Speaker;
 use crate::voiceprints::Enrolment;
@@ -173,30 +174,20 @@ impl SpeakerService {
             .ok_or(SpeakerError::PersonNotFound(target))
     }
 
-    /// A minimal new person with only a name.
+    /// The person a typed name stands for, through the entity rules
+    /// (ORG-04): an existing namesake, else someone new with only a name.
     async fn create_person(&self, name: &str) -> Result<Person, SpeakerError> {
         let name = name.trim();
         if name.is_empty() || name.chars().count() > MAX_NAME_CHARS {
             return Err(SpeakerError::InvalidName);
         }
-        let now = self.ports.clock.now();
-        let person = Person {
-            id: PersonId::generate(self.ports.clock.as_ref()),
-            name: name.to_owned(),
+        let seed = PersonSeed {
             email: None,
-            company_id: None,
-            title: None,
-            avatar_path: None,
-            notes_md: String::new(),
-            summary_md: None,
-            summary_updated_at: None,
-            is_me: false,
-            merged_into: None,
-            created_at: now,
-            updated_at: now,
+            name: Some(name.to_owned()),
         };
-        self.ports.people.create(&person).await?;
-        Ok(person)
+        let upserted = self.ports.directory.upsert_person(&seed).await?;
+        let id = upserted.ok_or(SpeakerError::InvalidName)?.id;
+        self.existing(id).await
     }
 
     /// A new "Speaker N" for `person`, in the next palette slot.

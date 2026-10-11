@@ -64,10 +64,11 @@ pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
 pub use stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
     EnhanceNotesStage, IdentifySpeakersStage, IndexStage, MeetingTitler, NotesEnhancer,
+    UpdateEntitiesStage,
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::{
-    FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer,
+    FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer, RecordedEntityUpdates,
     RecordedIdentifications, RecordedIndexing, RecordedTitler, ScriptedAutoExporter,
 };
 pub use trigger::PipelineTrigger;

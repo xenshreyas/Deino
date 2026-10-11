@@ -34,16 +34,12 @@ fn person(name: &str, email: Option<&str>) -> Person {
 async fn sqlite_repo() -> (SqlitePeopleRepo, CompanyId) {
     let database = test_db().await;
     let created_at = at(CREATED_AT);
-    let company = Company {
-        id: CompanyId::generate(&FakeClock::new(created_at)),
-        name: "Acme".into(),
-        domain: None,
-        logo_path: None,
-        notes_md: String::new(),
-        summary_md: None,
+    let company = Company::new(
+        CompanyId::generate(&FakeClock::new(created_at)),
+        "Acme".into(),
+        None,
         created_at,
-        updated_at: created_at,
-    };
+    );
     SqliteCompanyRepo::new(database.clone())
         .create(&company)
         .await
@@ -190,6 +186,35 @@ async fn deleting_a_company_keeps_its_people() {
     assert_eq!(stored.company_id, None);
 }
 
+/// Name lookups match the whole name ignoring case, skip merged people and
+/// take the oldest of two namesakes.
+async fn people_are_found_by_exact_name(repo: &impl PersonRepo) {
+    let priya = person("Priya Shah", None);
+    let mut merged = person("Maya", None);
+    merged.merged_into = Some(priya.id);
+    let mut newer = person("priya shah", None);
+    newer.created_at = at("2026-10-09T09:00:00Z");
+    for someone in [priya.clone(), merged, newer] {
+        repo.create(&someone).await.unwrap();
+    }
+
+    let found = repo.find_by_name("PRIYA SHAH").await.unwrap();
+
+    assert_eq!(found.map(|person| person.id), Some(priya.id));
+    assert_eq!(repo.find_by_name("Priya").await.unwrap(), None);
+    assert_eq!(repo.find_by_name("Maya").await.unwrap(), None);
+}
+
+#[tokio::test]
+async fn sqlite_people_are_found_by_exact_name() {
+    people_are_found_by_exact_name(&sqlite_repo().await.0).await;
+}
+
+#[tokio::test]
+async fn fake_people_are_found_by_exact_name() {
+    people_are_found_by_exact_name(&FakePeopleRepo::default()).await;
+}
+
 #[tokio::test]
 async fn a_person_cannot_be_merged_into_themselves() {
     let (repo, _) = sqlite_repo().await;
@@ -207,8 +232,13 @@ async fn lists_are_read_through_their_indexes() {
 
     let list = query_plan(&repo.database, include_str!("queries/list.sql")).await;
     let by_company = query_plan(&repo.database, include_str!("queries/list_by_company.sql")).await;
+    let by_name = query_plan(&repo.database, include_str!("queries/find_by_name.sql")).await;
 
     assert_eq!(list, ["SCAN people USING INDEX idx_people_listed_name"]);
+    assert_eq!(
+        by_name[0],
+        "SEARCH people USING INDEX idx_people_listed_name (name=?)"
+    );
     assert_eq!(
         by_company,
         [

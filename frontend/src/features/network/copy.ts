@@ -60,6 +60,7 @@ export const networkCopy = {
     zoho_crm: 'Zoho CRM',
     web_search: 'Web search',
     webhooks: 'Webhooks',
+    favicons: 'Company logos',
   } satisfies Record<ServiceId, string>,
   noHosts: 'Set up in Settings first',
 } as const;
