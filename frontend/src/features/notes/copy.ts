@@ -49,6 +49,7 @@ export const notesCopy = {
 
 /** How each regenerate reason reads in the banner. */
 export const reasonLabels: Readonly<Record<RegenerateReason, string>> = {
+  eventChanged: 'the calendar event changed',
   attendeesChanged: 'attendees changed',
   transcriptEdited: 'the transcript was edited',
   notesEdited: 'you edited your notes',

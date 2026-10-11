@@ -5,14 +5,16 @@
  * with `CalendarChanged`, like the Rust service; `upcoming` applies the same
  * rules (overlap, no declined events, no hidden calendars). Google and
  * Microsoft connect once their client ID is in the mock settings, as if the
- * browser sign-in succeeded; they add no events.
+ * browser sign-in succeeded; they add no events. A meeting's event link,
+ * the picker's suggestions and related meetings (ORG-03) come from
+ * `mockEventLinks`.
  */
 import type * as Generated from '@/lib/ipc/generated/calendar';
 import type { CommandResult } from '@/lib/ipc/result';
 
-import { fixtureCalendarEvents, FIXTURE_ACCOUNT, FIXTURE_CALENDAR } from './calendar-fixtures';
+import { FIXTURE_ACCOUNT, FIXTURE_CALENDAR } from './calendar-fixtures';
 import { failure, ok } from './command-result';
-import { loadFixtureMeetings } from './fixtures';
+import { mockCalendarEvents as calendarEvents, mockDatabase, mockEventLinks } from './database';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
 import { currentSettings } from './settings-store';
@@ -28,7 +30,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type DirectProvider = Exclude<Generated.CalendarProvider, 'apple'>;
 const DIRECT_PROVIDERS: readonly DirectProvider[] = ['google', 'microsoft'];
 
-const calendarEvents = fixtureCalendarEvents(loadFixtureMeetings(), new Date());
 const hidden = new Set<CalendarId>();
 /** When each connected direct connector last synced. */
 const connected = new Map<DirectProvider, string>();
@@ -166,4 +167,28 @@ export const commands = {
   },
   connect: (provider) => setConnected(provider, true),
   disconnect: (provider) => setConnected(provider, false),
+  async meetingEvent(meetingId) {
+    await latency();
+    const found = mockDatabase.meeting(meetingId);
+    return found.status === 'error' ? failure(found.error) : ok(mockEventLinks.linked(meetingId));
+  },
+  async eventSuggestions(meetingId) {
+    await latency();
+    const found = mockDatabase.meeting(meetingId);
+    if (found.status === 'error') return failure(found.error);
+    return ok(status.syncEnabled ? mockEventLinks.suggestions(meetingId) : []);
+  },
+  async linkEvent(meetingId, eventId) {
+    await latency();
+    return mockEventLinks.apply(meetingId, eventId, new Date());
+  },
+  async unlinkEvent(meetingId) {
+    await latency();
+    return mockEventLinks.apply(meetingId, null, new Date());
+  },
+  async relatedMeetings(meetingId) {
+    await latency();
+    const found = mockDatabase.meeting(meetingId);
+    return found.status === 'error' ? failure(found.error) : ok(mockEventLinks.related(meetingId));
+  },
 } satisfies typeof Generated.commands;

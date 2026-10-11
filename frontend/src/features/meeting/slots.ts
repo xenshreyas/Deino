@@ -14,7 +14,7 @@
  * | Clips tab | empty state | TRN-04 |
  * | Chat panel | empty state | AI-02 |
  * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
- * | Details panel | created and edited dates | ORG-03 and later |
+ * | Details panel | created and edited dates, calendar event, related meetings (ORG-03) | |
  * | Player | resting bar | TRN-03 |
  */
 import type { ComponentType } from 'react';

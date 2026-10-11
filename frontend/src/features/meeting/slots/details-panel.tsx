@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 
+import { MeetingLinksPanel } from '@/features/event-links';
 import { useMeeting } from '@/features/meetings';
 import { Skeleton } from '@/ui/skeleton';
 
@@ -22,7 +23,10 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Details panel: when the meeting was saved and last edited. */
+/**
+ * Details panel: when the meeting was saved and last edited, then its
+ * calendar event and related meetings (ORG-03).
+ */
 export function DetailsPanelSlot({ meetingId }: MeetingSlotProps) {
   const meeting = useMeeting(meetingId);
   if (meeting.data === undefined) {
@@ -34,9 +38,12 @@ export function DetailsPanelSlot({ meetingId }: MeetingSlotProps) {
     );
   }
   return (
-    <dl className="flex flex-col gap-4 px-4 py-5">
-      <Fact label={meetingCopy.created} value={longDate(meeting.data.createdAt)} />
-      <Fact label={meetingCopy.updated} value={longDate(meeting.data.updatedAt)} />
-    </dl>
+    <div className="flex flex-col gap-6 px-4 py-5">
+      <dl className="flex flex-col gap-4">
+        <Fact label={meetingCopy.created} value={longDate(meeting.data.createdAt)} />
+        <Fact label={meetingCopy.updated} value={longDate(meeting.data.updatedAt)} />
+      </dl>
+      <MeetingLinksPanel meetingId={meetingId} />
+    </div>
   );
 }

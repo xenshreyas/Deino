@@ -27,6 +27,11 @@ export function calendarBindings() {
     event: vi.fn<typeof Generated.commands.event>(),
     connect: vi.fn<typeof Generated.commands.connect>(),
     disconnect: vi.fn<typeof Generated.commands.disconnect>(),
+    meetingEvent: vi.fn<typeof Generated.commands.meetingEvent>(),
+    eventSuggestions: vi.fn<typeof Generated.commands.eventSuggestions>(),
+    linkEvent: vi.fn<typeof Generated.commands.linkEvent>(),
+    unlinkEvent: vi.fn<typeof Generated.commands.unlinkEvent>(),
+    relatedMeetings: vi.fn<typeof Generated.commands.relatedMeetings>(),
   } satisfies typeof Generated.commands;
   const listen = vi.fn<(handler: EventCallback<Generated.CalendarChanged>) => Promise<() => void>>(
     () => Promise.resolve(vi.fn()),
