@@ -10,8 +10,9 @@
 
 use std::sync::Arc;
 
-use deino_core::summaries::{SummaryGenerator, SummaryRequest};
+use deino_core::enhance::EnhancedDoc;
 use deino_domain::SystemClock;
+use deino_llm::prompts::{EnhanceSystem, EnhanceUser, PromptText};
 use deino_llm::{
     BuiltInProvider, CallOutcome, Gateway, GatewayParts, LocalModels, MemoryRouteStore,
     MemoryUsage, Prompt, ProviderId, Providers, Route, Router, StaticCredentials, Target,
@@ -72,10 +73,9 @@ fn standup_transcript() -> String {
         .iter()
         .find(|meeting| meeting.id.as_str().ends_with("standup"))
         .expect("the standup fixture");
-    standup
-        .segments
-        .iter()
-        .map(|segment| format!("{}: {}", segment.speaker, segment.text))
+    (1..)
+        .zip(&standup.segments)
+        .map(|(n, segment)| format!("[s{n}] {}: {}", segment.speaker, segment.text))
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -84,11 +84,11 @@ fn standup_transcript() -> String {
 /// that spawned it, as they do in the app.
 #[tokio::test]
 #[ignore = "needs a downloaded built-in model and the llama-helper binary"]
-async fn the_built_in_model_streams_structures_and_summarizes_through_the_gateway() {
+async fn the_built_in_model_streams_structures_and_writes_notes_through_the_gateway() {
     let smoke = smoke().await;
     the_route_default_streams_tokens_from_the_real_sidecar(&smoke).await;
     structured_output_uses_the_grammar(&smoke).await;
-    a_legacy_summary_is_generated_through_the_gateway(&smoke).await;
+    enhanced_notes_are_written_through_the_gateway(&smoke).await;
 }
 
 async fn the_route_default_streams_tokens_from_the_real_sidecar(smoke: &Smoke) {
@@ -132,33 +132,33 @@ async fn structured_output_uses_the_grammar(smoke: &Smoke) {
     println!("title: {}", title.title);
 }
 
-async fn a_legacy_summary_is_generated_through_the_gateway(smoke: &Smoke) {
-    let generator = SummaryGenerator::new(smoke.gateway.clone());
-    let request = SummaryRequest {
-        transcript: standup_transcript(),
-        user_context: None,
-        section_instructions:
-            "- **Decisions**: the decisions made\n- **Action Items**: who does what".to_owned(),
-        template_markdown: "# <Add Title here>\n\n## Decisions\n\n## Action Items".to_owned(),
-        target: smoke.target.clone(),
+async fn enhanced_notes_are_written_through_the_gateway(smoke: &Smoke) {
+    let transcript = standup_transcript();
+    let user = EnhanceUser {
+        meeting: "Title: Daily standup",
+        template: "General. Sections, in order:\n1. Notes: Write bullet blocks, one idea each.",
+        previous: None,
+        vocabulary: None,
+        notes: Some("- release cut today"),
+        transcript: &transcript,
     };
+    let prompt = Prompt::new(user.text())
+        .system(EnhanceSystem.text())
+        .on(smoke.target.clone())
+        .max_tokens(2_048);
 
-    let summary = generator.generate(&request).await.unwrap();
+    let notes: EnhancedDoc = smoke
+        .gateway
+        .structured(Route::NotesEnhance, prompt)
+        .await
+        .unwrap();
 
-    assert!(
-        summary.markdown.contains("## "),
-        "{}",
-        summary.markdown.len()
-    );
+    assert!(!notes.sections.is_empty());
     let calls = smoke.usage.calls();
-    let last = calls.last().expect("the summary was metered");
+    let last = calls.last().expect("the notes were metered");
     assert_eq!(
         (last.route, last.outcome),
         (Route::NotesEnhance, CallOutcome::Ok)
     );
-    println!(
-        "{} chunks, {} chars",
-        summary.chunks,
-        summary.markdown.len()
-    );
+    println!("{} sections", notes.sections.len());
 }

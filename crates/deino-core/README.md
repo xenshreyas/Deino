@@ -25,10 +25,18 @@ the SQLite adapters behind those ports.
   `FakeSettingsStore`, `RecordedSettingsEvents`.
   `LlmAccess` implements the LLM gateway's `CredentialSource` (Keychain),
   `EndpointSource` and `RouteStore` (`ai.routes`) ports.
-- `summaries`: the legacy template summaries (chunk → combine → fill the
-  template) as `SummaryGenerator` over `deino_llm::Gateway`, with the
-  reasoning cleanup and chunking they need. FND-08 makes it a pipeline stage;
-  NOT-02 replaces it.
+- `enhance` (NOT-02, ADR 0030): the enhanced notes. `EnhanceService`
+  gathers a meeting's material (`MaterialSources`: transcript as short
+  references, the user's notes, the calendar event, attendees, the series'
+  previous notes, vocabulary), asks `notes.enhance` for a structured
+  `EnhancedDoc` (`NotesWriter`: one pass, or ~20-minute parts and a merge),
+  then `assemble` (the provenance guard and `SegmentIndex`) and `to_doc`
+  (origin marks, citations). Versions live in `enhanced_notes`
+  (`SqliteEnhancedNotesRepo`: `EnhancedNotesReader`, `EnhancedNotesWriter`);
+  the newest is editable, an edited one is never replaced without
+  `Overwrite::ReplaceEdits`. `EnhanceBasis` yields the regenerate reasons,
+  `AutoTitler` names placeholder-titled meetings, `LegacySummaryImport`
+  copies the old summaries in as version 1. Fake: `FakeEnhancedNotesRepo`.
 - The core-schema aggregates (FND-07), each with small ports, a SQLite
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:
@@ -98,8 +106,7 @@ the SQLite adapters behind those ports.
   `SectionFormat`, typed `AutoRule`s), validated on the way in; the
   30-template `CATALOG` and `BuiltinSync` (versioned seeding that never
   touches user templates); `TemplateService` (library, duplicate,
-  import/export, the legacy-folder import, the legacy summary's
-  instructions); `MeetingTemplateService` (a meeting's template and its
+  import/export, the legacy-folder import); `MeetingTemplateService` (a meeting's template and its
   `ChoiceReason`, choosing one, previews) over the pure `RuleEngine` and the
   `TemplateClassifier` port (`GatewayTemplateClassifier` on route `tagging`,
   `NoClassifier`); `SqliteTemplateRepo` (`TemplateRepo`, `BuiltinStore`,

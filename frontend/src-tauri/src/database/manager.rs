@@ -38,15 +38,18 @@ impl DatabaseManager {
 
     /// Opens the database in the app data dir, retrying once after removing
     /// orphaned WAL side files when SQLite reports corruption. The legacy
-    /// SQLite settings move to the settings file and the Keychain on the way.
+    /// SQLite settings move to the settings file and the Keychain on the way,
+    /// and the legacy summaries become enhanced notes (NOT-02).
     pub async fn new_from_app_handle(app_handle: &tauri::AppHandle) -> Result<Self, DbError> {
         let db_path = Self::db_path(app_handle);
         log::info!("Database path: {}", db_path.display());
         let import = crate::composition::legacy_settings_import(app_handle);
+        let summaries = deino_core::enhance::LegacySummaryImport;
         let steps: Vec<&dyn DataMigration> = import
             .as_ref()
             .map(|step| step as &dyn DataMigration)
             .into_iter()
+            .chain([&summaries as &dyn DataMigration])
             .collect();
 
         match Self::open(&db_path, &steps).await {

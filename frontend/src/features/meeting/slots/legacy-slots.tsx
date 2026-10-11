@@ -1,27 +1,16 @@
 /**
- * The legacy summary (the Notes tab's Summary view) and the Transcript tab,
- * filled by the inherited session's panels (`legacy/panels-context.tsx`)
- * until NOT-02 and TRN-01 rebuild them.
+ * The Transcript tab, filled by the inherited session's panel
+ * (`legacy/panels-context.tsx`) until TRN-01 rebuilds it.
  */
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { Alert, AlertDescription } from '@/ui/alert';
 import { CircleAlert, ICON_PROPS } from '@/ui/icons';
-import { Skeleton, SkeletonText } from '@/ui/skeleton';
+import { Skeleton } from '@/ui/skeleton';
 
 import { meetingCopy } from '../copy';
 import { type LegacyMeetingPanels, useLegacyMeetingPanels } from '../legacy/panels-context';
-
-/** The notes' loading shape: a heading and a few bullet lines. */
-function NotesSkeleton() {
-  return (
-    <div className="flex flex-col gap-4 pt-6">
-      <Skeleton className="h-3 w-1/3" />
-      <SkeletonText lines={4} />
-    </div>
-  );
-}
 
 /** The transcript's loading shape: alternating turns. */
 function TranscriptSkeleton() {
@@ -62,11 +51,6 @@ function LegacyPanel({
   if (panels.status === 'loading') return skeleton;
   if (panels.status === 'error') return <SessionError message={panels.message} />;
   return <div className="flex h-full min-h-0 flex-col">{pick(panels)}</div>;
-}
-
-/** The Notes tab's Summary view: the AI summary editor, generate and regenerate. */
-export function LegacyNotesPanel() {
-  return <LegacyPanel pick={(ready) => ready.notes} skeleton={<NotesSkeleton />} />;
 }
 
 /** Transcript: the paginated transcript with copy and retranscribe. */

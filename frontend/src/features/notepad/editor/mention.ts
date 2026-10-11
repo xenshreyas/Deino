@@ -25,8 +25,8 @@ export function initials(name: string): string {
 }
 
 /**
- * The mention node. Without a store (a read-mostly document such as the
- * summary) chips render and survive edits, but `@` opens nothing.
+ * The mention node. Without a store (a document such as the enhanced
+ * notes) chips render and survive edits, but `@` opens nothing.
  */
 export function mentionExtension(store: MentionStore | null, search: MentionSearch) {
   return Mention.configure({

@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) newest version, by the primary key (meeting_id, version).\nSELECT\n    meeting_id AS \"meeting_id!: MeetingId\",\n    version AS \"version!: u32\",\n    doc_json,\n    markdown,\n    template_id AS \"template_id: TemplateId\",\n    model,\n    basis_json AS \"basis: Json<EnhanceBasis>\",\n    is_user_edited AS \"is_user_edited!: bool\",\n    created_at AS \"created_at!: DateTime<Utc>\",\n    updated_at AS \"updated_at!: DateTime<Utc>\"\nFROM enhanced_notes\nWHERE meeting_id = ?1\nORDER BY version DESC\nLIMIT 1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "version!: u32",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "doc_json",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "markdown",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "model",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "basis: Json<EnhanceBasis>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_user_edited!: bool",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "123c2479514f68e11af5ac8fc6a9467d705b58526155ab20f24e67d8bda1fe65"
+}

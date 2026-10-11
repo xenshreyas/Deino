@@ -9,6 +9,7 @@ import { Link } from '@tanstack/react-router';
 
 import { ShareMenu } from '@/features/export';
 import { asMeetingId, type MeetingId } from '@/features/meetings';
+import { EnhanceButton } from '@/features/notes';
 import { TitleBarActions, useShellLayout } from '@/features/shell';
 import { buttonVariants } from '@/ui/button';
 import { ChevronRight, ICON_PROPS, PanelRight } from '@/ui/icons';
@@ -31,7 +32,7 @@ export interface MeetingScreenProps {
   onTabChange: (tab: MeetingTabId) => void;
 }
 
-/** "‹ Meetings" on the left of the title bar; Share and the panel toggle on the right. */
+/** "‹ Meetings" on the left of the title bar; Enhance, Share and the panel toggle on the right. */
 function MeetingTitleBar({ meetingId }: { meetingId: MeetingId }) {
   const toggleRightPanel = useShellLayout((state) => state.toggleRightPanel);
   return (
@@ -48,6 +49,7 @@ function MeetingTitleBar({ meetingId }: { meetingId: MeetingId }) {
         {meetingCopy.back}
       </Link>
       <div data-tauri-drag-region className="h-full flex-1" />
+      <EnhanceButton meetingId={meetingId} />
       <ShareMenu meetingId={meetingId} />
       <IconButton
         icon={PanelRight}

@@ -45,6 +45,7 @@ export {
   FolderPlus,
   GraduationCap,
   Heart,
+  History,
   Home,
   Inbox,
   Info,

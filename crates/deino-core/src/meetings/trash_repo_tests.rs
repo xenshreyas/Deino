@@ -71,16 +71,16 @@ async fn the_trash_lists_the_most_recently_trashed_first_through_its_index() {
 #[tokio::test]
 async fn deleting_a_meeting_removes_it_and_its_rows_for_good() {
     let repo = repo_with(&["meeting-a"]).await;
-    seed::transcript_chunk(&repo.database, "meeting-a", "Standup").await;
+    seed::notes(&repo.database, "meeting-a", "- ship it").await;
     let id = MeetingId::new("meeting-a");
 
     assert!(repo.delete(&id).await.unwrap());
     assert!(!repo.delete(&id).await.unwrap());
 
-    let chunks: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM transcript_chunks")
+    let notes: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM meeting_notes")
         .fetch_one(repo.database.reader())
         .await
         .unwrap();
-    assert_eq!(chunks, 0, "foreign keys cascade to the meeting's rows");
+    assert_eq!(notes, 0, "foreign keys cascade to the meeting's rows");
     assert_eq!(repo.find(&id).await.unwrap(), None);
 }

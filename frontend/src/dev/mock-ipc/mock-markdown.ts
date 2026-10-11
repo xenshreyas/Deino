@@ -1,8 +1,8 @@
 /**
  * A small Markdown ↔ document converter for `pnpm dev:mock`, standing in for
  * `deino-doc` (Rust) behind the `notes` plugin mock. It covers what the
- * fixtures' notes and the generated summaries use: `#` headings, `-`/`*`
- * and `1.` lists nested by indentation, `[ ]`/`[x]` items, paragraphs (lines
+ * fixtures' notes use: `#` headings, `-`/`*` and `1.` lists nested by
+ * indentation, `[ ]`/`[x]`/`[]` items (with or without a bullet), paragraphs (lines
  * kept as hard breaks), and `**bold**`, `*italic*` and `` `code` ``. The
  * real app always converts in Rust; this only has to look right.
  */
@@ -48,9 +48,15 @@ function parseLine(raw: string): Line {
       level: heading[1]?.length ?? 1,
       checked: false,
     };
-  const task = /^[-*]\s+\[([ xX])\]\s*(.*)$/.exec(text);
+  const task = /^(?:[-*+]\s+)?\[([ xX]?)\]\s+(.*)$/.exec(text);
   if (task)
-    return { indent, kind: 'task', text: task[2] ?? '', level: 0, checked: task[1] !== ' ' };
+    return {
+      indent,
+      kind: 'task',
+      text: task[2] ?? '',
+      level: 0,
+      checked: /[xX]/.test(task[1] ?? ''),
+    };
   const bullet = /^[-*+]\s+(.*)$/.exec(text);
   if (bullet) return { indent, kind: 'bullet', text: bullet[1] ?? '', level: 0, checked: false };
   const number = /^\d+[.)]\s+(.*)$/.exec(text);

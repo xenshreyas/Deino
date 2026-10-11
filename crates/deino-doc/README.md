@@ -24,7 +24,8 @@ from Markdown. Ported from anarlog's `crates/tiptap` (MIT); see
 ## Does Not Own
 
 - Storage (`deino_core::notes`), the editor (`frontend/src/features/notepad`),
-  images on disk, and what the notes mean (NOT-02's enhancement).
+  images on disk, and what the notes mean (`deino_core::enhance` writes
+  enhanced notes as documents with `origin` marks and citations).
 
 ## Invariants
 

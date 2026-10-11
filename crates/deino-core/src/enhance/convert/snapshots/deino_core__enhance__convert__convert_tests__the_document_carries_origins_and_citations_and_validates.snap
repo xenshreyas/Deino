@@ -1,0 +1,238 @@
+---
+source: crates/deino-core/src/enhance/convert/convert_tests.rs
+expression: doc
+---
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "sync v2",
+          "marks": [
+            {
+              "type": "origin",
+              "attrs": {
+                "author": "user",
+                "edited": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "beta ",
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "user",
+                        "edited": false
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "11/13",
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "user",
+                        "edited": false
+                      }
+                    },
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " ",
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "ai",
+                        "edited": false
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "citation",
+                  "attrs": {
+                    "segmentId": "0192f3a0-6c1e-7b2a-9d4e-000000000004",
+                    "startMs": 271000
+                  },
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "ai",
+                        "edited": false
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "GA holds at 4 December ",
+                          "marks": [
+                            {
+                              "type": "origin",
+                              "attrs": {
+                                "author": "ai",
+                                "edited": false
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "citation",
+                          "attrs": {
+                            "segmentId": "0192f3a0-6c1e-7b2a-9d4e-000000000005",
+                            "startMs": 280000
+                          },
+                          "marks": [
+                            {
+                              "type": "origin",
+                              "attrs": {
+                                "author": "ai",
+                                "edited": false
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "citation",
+                          "attrs": {
+                            "segmentId": "0192f3a0-6c1e-7b2a-9d4e-000000000009",
+                            "startMs": 3871000
+                          },
+                          "marks": [
+                            {
+                              "type": "origin",
+                              "attrs": {
+                                "author": "ai",
+                                "edited": false
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Graph subscriptions expire in under three days",
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "ai",
+                        "edited": false
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Action items",
+          "marks": [
+            {
+              "type": "origin",
+              "attrs": {
+                "author": "ai",
+                "edited": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "update pagerduty",
+                  "marks": [
+                    {
+                      "type": "origin",
+                      "attrs": {
+                        "author": "user",
+                        "edited": false
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

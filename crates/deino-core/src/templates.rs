@@ -7,14 +7,14 @@
 //! - **Built-ins.** [`CATALOG`] holds 30 versioned, immutable templates;
 //!   [`BuiltinSync`] writes them at startup without touching the user's own.
 //! - **Library.** [`TemplateService`]: list, create, edit, duplicate, delete,
-//!   import and export (JSON, current or legacy format), the one-time import
-//!   of the legacy templates folder ([`LegacyTemplateFolder`]), and the
-//!   instructions the legacy summary fills ([`SummaryTemplate`]).
+//!   import and export (JSON, current or legacy format) and the one-time
+//!   import of the legacy templates folder ([`LegacyTemplateFolder`]).
 //! - **Per meeting.** [`MeetingTemplateService`]: which template a meeting
 //!   gets and why ([`TemplateChoice`]: the user's choice, an auto rule from
 //!   the pure [`RuleEngine`], the default template, the LLM
 //!   [`TemplateClassifier`] on route `tagging`, or General), changing it, and
-//!   previewing a template's prompt against a meeting.
+//!   previewing a template's prompt against a meeting. [`template_prompt`]
+//!   is the template block of every `notes.enhance` prompt (NOT-02).
 
 mod builtin;
 mod builtin_store;
@@ -73,9 +73,7 @@ pub use fake::{FakeMeetingFacts, FakeTemplateRepo, FixedClassifier};
 pub use legacy_files::{IMPORTED_FOLDER, LegacyTemplateFile, LegacyTemplateFolder};
 pub use meeting_service::{MeetingTemplatePorts, MeetingTemplateService};
 pub use model::Template;
-pub use prompt::{
-    PromptBlock, SummaryTemplate, TemplatePreview, format_directive, preview, summary_template,
-};
+pub use prompt::{PromptBlock, TemplatePreview, preview, section_directive, template_prompt};
 pub use repo::{SqliteTemplateRepo, TemplateRepo};
 pub use rules::{
     AutoRule, CountRange, MAX_AUTO_RULES, MAX_RULE_DOMAINS, MAX_RULE_LABEL_CHARS,

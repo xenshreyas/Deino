@@ -9,7 +9,6 @@ import { createQueryClient } from '@/lib/ipc';
 
 import { AUTOSAVE_DELAY_MS } from './autosave';
 import { Notepad } from './components/notepad';
-import { SummaryDocument } from './components/summary-document';
 
 // Typed against the generated bindings: a Rust signature change breaks this mock.
 const commands = vi.hoisted(
@@ -91,26 +90,5 @@ describe('the notepad', () => {
     });
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(screen.getByRole('status').textContent).toBe('Saved');
-  });
-
-  it('turns the summary Markdown into a document through deino-doc', async () => {
-    commands.markdownToDoc.mockResolvedValue({
-      status: 'ok',
-      data: {
-        type: 'doc',
-        content: [
-          {
-            type: 'heading',
-            attrs: { level: 2 },
-            content: [{ type: 'text', text: 'Decisions', marks: [] }],
-          },
-        ],
-      },
-    });
-
-    renderWithClient(<SummaryDocument summary={{ markdown: '## Decisions' }} onSave={vi.fn()} />);
-
-    expect(await screen.findByRole('heading', { name: 'Decisions' })).toBeTruthy();
-    expect(commands.markdownToDoc).toHaveBeenCalledWith('## Decisions');
   });
 });

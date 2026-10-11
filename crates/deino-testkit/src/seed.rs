@@ -24,15 +24,15 @@ pub async fn meeting(database: &Database, id: &str, title: &str, created_at: Dat
         .expect("the meeting row is valid");
 }
 
-/// Inserts the transcript chunk that summary generation keeps per meeting.
-pub async fn transcript_chunk(database: &Database, meeting_id: &str, meeting_name: &str) {
+/// Inserts the user's notes for a meeting, as the notepad saves them.
+pub async fn notes(database: &Database, meeting_id: &str, markdown: &str) {
     sqlx::query(
-        "INSERT INTO transcript_chunks (meeting_id, meeting_name, transcript_text, model, model_name, created_at)
-         VALUES (?1, ?2, '', 'builtin-ai', 'test', '2026-10-08T09:00:00Z')",
+        "INSERT INTO meeting_notes (meeting_id, notes_markdown, created_at, updated_at)
+         VALUES (?1, ?2, '2026-10-08T09:00:00Z', '2026-10-08T09:00:00Z')",
     )
     .bind(meeting_id)
-    .bind(meeting_name)
+    .bind(markdown)
     .execute(database.writer())
     .await
-    .expect("the transcript chunk row is valid");
+    .expect("the notes row is valid");
 }

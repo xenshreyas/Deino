@@ -17,8 +17,9 @@
 //!    recorder (`recording.rs`, which also recovers interrupted recordings), once
 //!    `deino.sqlite` is open (its legacy settings are imported on the way
 //!    by [`legacy_settings_import`]), the egress log's table, the LLM
-//!    gateway (`llm.rs`), and templates and the profile (`notes.rs`: the
-//!    built-in catalogue is synced before the pipeline starts).
+//!    gateway (`llm.rs`), templates and the profile (`notes.rs`: the
+//!    built-in catalogue is synced before the pipeline starts), and the
+//!    enhanced notes (`enhance.rs`, NOT-02).
 //!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
@@ -28,6 +29,7 @@ mod browser;
 mod calendar;
 mod detection;
 mod diarize;
+mod enhance;
 mod export;
 mod llm;
 mod network;
@@ -44,12 +46,13 @@ use std::sync::Arc;
 use action_items::ActionItemWiring;
 pub(crate) use calendar::CalendarSchedule;
 pub(crate) use detection::attach_detection;
+use enhance::NotesAi;
 use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use organize::Organize;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
-use pipeline::{StageAdapters, attach_pipeline};
+use pipeline::{StageAdapters, StageServices, attach_pipeline};
 pub(crate) use speakers::Speakers;
 pub(crate) use stt::attach_stt;
 
@@ -141,16 +144,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     app.manage(AppState {
         db_manager: manager,
     });
-    Services::build(&database, &clock).manage(app);
-    let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
-    let organize = Organize::build(&database, &clock, tag_events);
-    organize.manage(app);
-    Speakers::build(&database, &clock).manage(app);
-    notepad::attach_notepad(app, &database, &clock);
-    network::attach_network_log(app, &database);
-    #[cfg(debug_assertions)]
-    attach_fixture_seeder(app, &database);
-    features::db::forward_changes(app, database.changes());
+    let organize = attach_local(app, &database, &clock);
     let Some(settings) = app
         .try_state::<Arc<SettingsService>>()
         .map(|settings| Arc::clone(&settings))
@@ -166,14 +160,40 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     let stage_adapters = attach_stage_services(app, &database, &organize, &wiring);
     let deps = NoteDeps {
-        settings,
-        gateway,
+        settings: Arc::clone(&settings),
+        gateway: gateway.clone(),
         clock: Arc::clone(&clock),
     };
-    // Templates are seeded before the pipeline starts: its summary stage reads them.
-    attach_notes(app, &database, deps).await;
-    attach_pipeline(app, &database, &clock, stage_adapters);
+    // Templates are seeded before the pipeline starts: its notes stage reads them.
+    let templates = attach_notes(app, &database, deps).await;
+    let notes_ai = NotesAi::build(&database, gateway, templates, &clock);
+    notes_ai.manage(app);
+    let ai = StageServices {
+        enhancer: notes_ai.enhancer(),
+        titler: notes_ai.titler(),
+        automatic: settings,
+        adapters: stage_adapters,
+    };
+    attach_pipeline(app, &database, &clock, ai);
     attach_background(app, &database, &clock);
+}
+
+/// Wires the services that need only the database: [`Services`], folders and
+/// tags, speakers (CAP-04), the notepad, the egress log, the fixture seeder
+/// (debug builds) and the `DbChanged` bridge. Returns folders and tags,
+/// whose auto-tagger the pipeline needs once the gateway is up.
+fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
+    Services::build(database, clock).manage(app);
+    let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
+    let organize = Organize::build(database, clock, tag_events);
+    organize.manage(app);
+    Speakers::build(database, clock).manage(app);
+    notepad::attach_notepad(app, database, clock);
+    network::attach_network_log(app, database);
+    #[cfg(debug_assertions)]
+    attach_fixture_seeder(app, database);
+    features::db::forward_changes(app, database.changes());
+    organize
 }
 
 /// Wires the services that run on their own once the pipeline is up: the
@@ -209,14 +229,21 @@ fn attach_stage_services(
     }
 }
 
-/// Wires templates and the profile (`notes.rs`) and prepares them.
-async fn attach_notes(app: &AppHandle, database: &Database, deps: NoteDeps) {
+/// Wires templates and the profile (`notes.rs`) and prepares them; returns
+/// the meeting template choice the enhanced notes are written with.
+async fn attach_notes(
+    app: &AppHandle,
+    database: &Database,
+    deps: NoteDeps,
+) -> Arc<dyn deino_core::enhance::TemplateSource> {
     let notes = NoteServices::build(database, deps);
     let legacy_templates = AppPaths::resolve(app)
         .ok()
         .map(|paths| paths.legacy_templates());
     notes.prepare(legacy_templates.as_deref()).await;
+    let templates = notes.template_source();
     notes.manage(app);
+    templates
 }
 
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
@@ -305,27 +332,57 @@ mod tests {
             .unwrap();
     }
 
+    /// The recorded stage services the test reads back.
+    struct Recorded {
+        enhancer: Arc<deino_pipeline::RecordedEnhancer>,
+        titler: Arc<deino_pipeline::RecordedTitler>,
+        auto_tags: Arc<deino_pipeline::RecordedAutoTags>,
+    }
+
+    /// Pipeline adapters over fakes, recording what the AI stages were asked.
+    fn recorded_adapters() -> (PipelineAdapters, Recorded) {
+        let recorded = Recorded {
+            enhancer: Arc::default(),
+            titler: Arc::default(),
+            auto_tags: Arc::default(),
+        };
+        let adapters = PipelineAdapters {
+            progress: Arc::new(deino_pipeline::RecordedProgress::default()),
+            diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
+            ai: StageServices {
+                enhancer: recorded.enhancer.clone(),
+                titler: recorded.titler.clone(),
+                automatic: Arc::new(deino_pipeline::FixedAutomaticNotes(true)),
+                adapters: StageAdapters {
+                    auto_tagger: recorded.auto_tags.clone(),
+                    auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
+                    action_items: Arc::new(
+                        deino_core::action_items::FakeActionItemExtractor::default(),
+                    ),
+                    identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
+                },
+            },
+            recordings: std::path::PathBuf::from("no-recordings"),
+        };
+        (adapters, recorded)
+    }
+
     #[tokio::test]
-    async fn stopping_a_recording_runs_the_summary_stage_and_readies_the_meeting() {
+    async fn stopping_a_recording_runs_the_notes_stages_and_readies_the_meeting() {
         use deino_core::meetings::MeetingLifecycleRepo;
         use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
-        use deino_pipeline::{RecordedAutoTags, RecordedProgress, RecordedSummaries};
 
         let database = test_db().await;
         let fake_clock = Arc::new(FakeClock::new(at("2026-10-08T10:00:00Z")));
         recording_with_transcript(&database, &fake_clock).await;
-        let summaries = Arc::new(RecordedSummaries::default());
-        let auto_tags = Arc::new(RecordedAutoTags::default());
-        let adapters = PipelineAdapters {
-            progress: Arc::new(RecordedProgress::default()),
-            summaries: summaries.clone(),
-            diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
-            auto_tagger: auto_tags.clone(),
-            auto_export: Arc::new(deino_pipeline::ScriptedAutoExporter::default()),
-            recordings: std::path::PathBuf::from("no-recordings"),
-            action_items: Arc::new(deino_core::action_items::FakeActionItemExtractor::default()),
-            identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
-        };
+        let (
+            adapters,
+            Recorded {
+                enhancer,
+                titler,
+                auto_tags,
+            },
+        ) = recorded_adapters();
         let clock: Arc<dyn Clock> = fake_clock;
         let wired = Pipeline::build(&database, &clock, adapters);
         wired.pipeline.reconcile().await.unwrap();
@@ -338,10 +395,10 @@ mod tests {
             .unwrap();
         wired.pipeline.until_idle().await;
 
-        let requests = summaries.requests();
-        assert_eq!(requests.len(), 1);
-        assert_eq!(requests[0].transcript, "[00:02] let's ship it");
-        assert_eq!(auto_tags.meetings(), std::slice::from_ref(&meeting));
+        let once = std::slice::from_ref(&meeting);
+        assert_eq!(enhancer.meetings(), once);
+        assert_eq!(titler.meetings(), once);
+        assert_eq!(auto_tags.meetings(), once);
         let state = SqliteMeetingRepo::new(database).state(&meeting).await;
         assert_eq!(state.unwrap().unwrap().status, MeetingStatus::Ready);
     }

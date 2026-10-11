@@ -2,7 +2,9 @@
 //! (PARITY_PLAN §3.8). Behind the `test-support` feature.
 //!
 //! Script each route's turns in order; a turn is a text reply, a tool call,
-//! raw events or an error. [`mock_gateway`] builds a real [`Gateway`] whose
+//! raw events or an error. Calls made concurrently (NOT-02's map step) can
+//! instead be answered from the request itself with
+//! [`MockProvider::answer_with`], which does not depend on call order. [`mock_gateway`] builds a real [`Gateway`] whose
 //! every provider is the mock, with an in-memory usage log and a fixed clock.
 
 use std::collections::{BTreeMap, VecDeque};
@@ -26,11 +28,16 @@ pub const MOCK_LOCAL_MODEL: &str = "mock-local";
 
 type Turn = Result<Vec<CompletionEvent>, LlmError>;
 
-/// Answers each route with its scripted turns, in order, and records every
-/// request. A route with no turn left fails with [`LlmError::Unavailable`].
+/// Answers a request with text, from what it asks.
+type Responder = Arc<dyn Fn(&CompletionRequest) -> String + Send + Sync>;
+
+/// Answers each route with its scripted turns, in order, then with its
+/// responder, and records every request. A route with neither left fails
+/// with [`LlmError::Unavailable`].
 #[derive(Default)]
 pub struct MockProvider {
     turns: Mutex<BTreeMap<Route, VecDeque<Turn>>>,
+    responders: Mutex<BTreeMap<Route, Responder>>,
     requests: Mutex<Vec<CompletionRequest>>,
 }
 
@@ -43,18 +50,7 @@ impl MockProvider {
     /// Scripts a text answer for `route`.
     #[must_use]
     pub fn reply(self, route: Route, text: &str) -> Self {
-        let output_tokens = u32::try_from(text.split_whitespace().count()).unwrap_or(u32::MAX);
-        self.events(
-            route,
-            vec![
-                CompletionEvent::Text(text.to_owned()),
-                CompletionEvent::Usage(Usage {
-                    input_tokens: 100,
-                    output_tokens,
-                }),
-                CompletionEvent::Stop(StopReason::EndTurn),
-            ],
-        )
+        self.events(route, text_turn(text))
     }
 
     /// Scripts a turn in which the model calls tool `name` with `input`.
@@ -79,6 +75,18 @@ impl MockProvider {
     #[must_use]
     pub fn events(self, route: Route, events: Vec<CompletionEvent>) -> Self {
         self.push(route, Ok(events))
+    }
+
+    /// Answers every call on `route` that no scripted turn is left for with
+    /// the text `respond` builds from the request.
+    #[must_use]
+    pub fn answer_with(
+        self,
+        route: Route,
+        respond: impl Fn(&CompletionRequest) -> String + Send + Sync + 'static,
+    ) -> Self {
+        lock(&self.responders).insert(route, Arc::new(respond));
+        self
     }
 
     /// Scripts a turn that fails before streaming.
@@ -106,10 +114,12 @@ impl MockProvider {
 impl LlmProvider for MockProvider {
     async fn stream(&self, request: CompletionRequest) -> Result<EventStream, LlmError> {
         let route = request.route;
-        lock(&self.requests).push(request);
-        let turn = lock(&self.turns)
+        let scripted = lock(&self.turns)
             .get_mut(&route)
             .and_then(VecDeque::pop_front);
+        let responder = lock(&self.responders).get(&route).cloned();
+        let turn = scripted.or_else(|| responder.map(|respond| Ok(text_turn(&respond(&request)))));
+        lock(&self.requests).push(request);
         let events = turn.unwrap_or_else(|| {
             Err(LlmError::Unavailable {
                 provider: ProviderId::BuiltIn,
@@ -162,6 +172,19 @@ pub fn mock_gateway(mock: Arc<MockProvider>) -> MockGateway {
         clock,
         mock,
     }
+}
+
+/// A finished text answer, with usage.
+fn text_turn(text: &str) -> Vec<CompletionEvent> {
+    let output_tokens = u32::try_from(text.split_whitespace().count()).unwrap_or(u32::MAX);
+    vec![
+        CompletionEvent::Text(text.to_owned()),
+        CompletionEvent::Usage(Usage {
+            input_tokens: 100,
+            output_tokens,
+        }),
+        CompletionEvent::Stop(StopReason::EndTurn),
+    ]
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {

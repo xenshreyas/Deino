@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Up to ?3 meetings outside the trash carrying a tag (?1), newest first,\n-- other than the meeting being tagged (?2): the auto-tagger's examples of\n-- what the tag means. Filtered through idx_meeting_tags_tag_id (asserted in\n-- auto_tag_repo_tests.rs).\nSELECT\n    m.id AS \"meeting_id!: MeetingId\",\n    m.title,\n    (\n        SELECT e.markdown\n        FROM enhanced_notes AS e\n        WHERE e.meeting_id = m.id\n        ORDER BY e.version DESC\n        LIMIT 1\n    ) AS \"summary?: String\"\nFROM meeting_tags AS mt\nJOIN meetings AS m ON m.id = mt.meeting_id\nWHERE mt.tag_id = ?1 AND mt.meeting_id <> ?2 AND m.deleted_at IS NULL\nORDER BY m.created_at DESC, m.id DESC\nLIMIT ?3\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary?: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c0439edd4d880056799614f192b5e2e8499a276d4367b3ab6dbb1da618f72a98"
+}

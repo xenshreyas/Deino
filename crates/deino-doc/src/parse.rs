@@ -12,6 +12,7 @@
 
 mod block;
 mod inline;
+mod tasks;
 
 use markdown::ParseOptions;
 
@@ -20,7 +21,8 @@ use crate::{Doc, DocError};
 /// Parses `markdown` into a document. The result always passes
 /// [`validate`](crate::validate), and an empty input gives [`Doc::empty`].
 pub fn from_markdown(markdown: &str) -> Result<Doc, DocError> {
-    let tree = markdown::to_mdast(markdown, &options())
+    let markdown = tasks::normalize_task_markers(markdown);
+    let tree = markdown::to_mdast(&markdown, &options())
         .map_err(|message| DocError::Markdown(message.to_string()))?;
     let content = tree
         .children()

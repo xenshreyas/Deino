@@ -13,8 +13,8 @@ use tauri::{AppHandle, Manager};
 
 use crate::features;
 
-/// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>`,
-/// `Arc<LlmAdmin>` and `Arc<SummaryGenerator>`, and starts the usage writer
+/// Wires the LLM gateway (`crate::llm`): manages `Arc<Gateway>` and
+/// `Arc<LlmAdmin>`, and starts the usage writer
 /// that saves `llm_calls`. Every prompt starts with the user's profile
 /// (`ProfileContext`). Needs `attach_settings` to have run.
 pub(super) fn attach_llm(
@@ -45,7 +45,6 @@ pub(super) fn attach_llm(
     tauri::async_runtime::spawn(services.usage_writer.run());
     app.manage(services.gateway.clone());
     app.manage(services.admin);
-    app.manage(services.summaries);
     let pull_events: Arc<dyn features::llm::PullEvents> =
         Arc::new(features::llm::TauriPullEvents::new(app.clone()));
     app.manage(pull_events);

@@ -117,13 +117,6 @@ impl MeetingsRepository {
             return Ok(false); // Meeting not found
         }
 
-        // Update transcript_chunks table
-        sqlx::query("UPDATE transcript_chunks SET meeting_name = ? WHERE meeting_id = ?")
-            .bind(new_title)
-            .bind(meeting_id)
-            .execute(&mut *transaction)
-            .await?;
-
         transaction.commit().await?;
         Ok(true)
     }
@@ -144,26 +137,15 @@ async fn delete_meeting_with_transaction(
         return Ok(false);
     }
 
-    // Delete from related tables in proper order
-    // 1. Delete from transcript_chunks
-    sqlx::query("DELETE FROM transcript_chunks WHERE meeting_id = ?")
-        .bind(meeting_id)
-        .execute(&mut *transaction)
-        .await?;
-
-    // 2. Delete from summary_processes
-    sqlx::query("DELETE FROM summary_processes WHERE meeting_id = ?")
-        .bind(meeting_id)
-        .execute(&mut *transaction)
-        .await?;
-
-    // 3. Delete from transcripts
+    // Delete from related tables in proper order (enhanced notes and the
+    // other child tables cascade with the meeting)
+    // 1. Delete from transcripts
     sqlx::query("DELETE FROM transcripts WHERE meeting_id = ?")
         .bind(meeting_id)
         .execute(&mut *transaction)
         .await?;
 
-    // 4. Finally, delete the meeting
+    // 2. Finally, delete the meeting
     let result = sqlx::query("DELETE FROM meetings WHERE id = ?")
         .bind(meeting_id)
         .execute(&mut *transaction)

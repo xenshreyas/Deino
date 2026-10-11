@@ -9,6 +9,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use deino_core::enhance::TemplateSource;
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::profile::ProfileService;
@@ -94,6 +95,11 @@ impl NoteServices {
         if let Err(error) = self.profile.sync_me().await {
             log::warn!(target: "profile", "could not update the user's person: {error}");
         }
+    }
+
+    /// The meeting template choice, which enhanced notes are written with.
+    pub(crate) fn template_source(&self) -> Arc<dyn TemplateSource> {
+        self.meeting_templates.clone()
     }
 
     /// Registers each service as Tauri state, where commands find it.

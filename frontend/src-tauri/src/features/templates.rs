@@ -5,18 +5,14 @@
 //! (`meeting_template`, `set_meeting_template`, `preview`) use
 //! `MeetingTemplateService`. Both are wired in `composition.rs`. Changes reach
 //! the UI through `DbChanged` (`templates`, `template_sections`, `meetings`),
-//! so the plugin declares no events. [`summary_template`] is the legacy
-//! summary's one adapter onto stored templates.
+//! so the plugin declares no events.
 
 mod commands;
 #[cfg(test)]
 mod contract_tests;
-mod summary_bridge;
 
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
-
-pub(crate) use summary_bridge::summary_template;
 
 /// Plugin name; must match this feature's entry in `features::manifest`.
 pub const NAME: &str = "templates";

@@ -14,14 +14,14 @@ use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
-use deino_core::speakers::ParticipantReader;
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
 
 use crate::stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, ExtractActionItemsStage,
-    FinalizeAudioStage, IdentifySpeakersStage, LegacySummaryStage, Summarizer,
+    AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
+    EnhanceNotesStage, ExtractActionItemsStage, FinalizeAudioStage, IdentifySpeakersStage,
+    MeetingTitler, NotesEnhancer,
 };
 use crate::{Job, PipelineStage};
 
@@ -33,8 +33,12 @@ pub struct StagePorts {
     pub segments: Arc<dyn SegmentReader>,
     /// Meeting state: template, timing, files.
     pub meetings: Arc<dyn MeetingLifecycleRepo>,
-    /// The legacy summariser (until NOT-02).
-    pub summaries: Arc<dyn Summarizer>,
+    /// Writes enhanced notes (NOT-02's `EnhanceService` in the app).
+    pub enhancer: Arc<dyn NotesEnhancer>,
+    /// Names meetings with placeholder titles (NOT-02's `AutoTitler`).
+    pub titler: Arc<dyn MeetingTitler>,
+    /// Settings → AI → "Generate notes automatically".
+    pub automatic: Arc<dyn AutomaticNotes>,
     /// Who was invited (diarization's speaker counts).
     pub attendees: Arc<dyn AttendeeRepo>,
     /// Segment attributions.
@@ -51,8 +55,6 @@ pub struct StagePorts {
     pub voiceprints: Arc<dyn ExemplarReader>,
     /// Names speakers from voice profiles and the calendar (CAP-04).
     pub identifier: Arc<dyn SpeakerIdentifier>,
-    /// Speakers with their names, for the notes input.
-    pub participants: Arc<dyn ParticipantReader>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
     /// The auto-tagger (ORG-06).
@@ -80,7 +82,9 @@ impl StagePorts {
         Self {
             segments: segments.clone(),
             meetings: Arc::new(FakeMeetingRepo::default()),
-            summaries: Arc::new(crate::stages::RecordedSummaries::default()),
+            enhancer: Arc::new(crate::stages::RecordedEnhancer::default()),
+            titler: Arc::new(crate::stages::RecordedTitler::default()),
+            automatic: Arc::new(crate::stages::FixedAutomaticNotes(true)),
             attendees: Arc::new(FakePeopleRepo::default()),
             segment_writer: segments.clone(),
             speakers: segments.clone(),
@@ -89,7 +93,6 @@ impl StagePorts {
             action_items: Arc::new(FakeActionItemExtractor::default()),
             voiceprints: Arc::new(FakeVoiceprintRepo::default()),
             identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
-            participants: segments.clone(),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
@@ -107,10 +110,12 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(DiarizeStage::new(ports)),
         // 35 · CAP-04: their names, from voice profiles and the calendar.
         Arc::new(IdentifySpeakersStage::new(ports)),
-        // 50 · until NOT-02's enhance_notes replaces it.
-        Arc::new(LegacySummaryStage::new(ports)),
+        // 50 · NOT-02: the enhanced notes.
+        Arc::new(EnhanceNotesStage::new(ports)),
         // 60 · AI-05: commitments, owners and due days.
         Arc::new(ExtractActionItemsStage::new(ports)),
+        // 65 · NOT-02: a title for meetings that have none.
+        Arc::new(AutoTitleStage::new(ports)),
         // 70 · ORG-06.
         Arc::new(AutoTagStage::new(ports)),
         // 75 · ORG-05.
@@ -195,8 +200,9 @@ mod tests {
                 "finalize_audio",
                 "diarize",
                 "identify_speakers",
-                "legacy_summary",
+                "enhance_notes",
                 "extract_action_items",
+                "auto_title",
                 "auto_tag",
                 "auto_folder",
                 "auto_export"

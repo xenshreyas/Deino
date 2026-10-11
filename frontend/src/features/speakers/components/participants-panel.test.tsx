@@ -102,7 +102,7 @@ describe('the participants panel', () => {
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Regenerate notes' }));
     await waitFor(() => {
-      expect(pipeline.rerun).toHaveBeenCalledWith(MEETING, 'legacy_summary');
+      expect(pipeline.rerun).toHaveBeenCalledWith(MEETING, 'enhance_notes');
     });
   });
 

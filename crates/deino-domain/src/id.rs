@@ -155,7 +155,7 @@ impl TemplateId {
 
 text_id!(
     /// Identifies a stage of the post-meeting pipeline (FND-08), for example
-    /// `legacy_summary`. Stages name themselves in code
+    /// `enhance_notes`. Stages name themselves in code
     /// (`deino-pipeline/src/registry.rs`); `jobs.stage` stores the name.
     StageId
 );

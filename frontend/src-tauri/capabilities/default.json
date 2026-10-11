@@ -53,6 +53,7 @@
         "llm:default",
         "settings:default",
         "templates:default",
+        "enhance:default",
         "transcription:default",
         "folders:default",
         "tags:default",

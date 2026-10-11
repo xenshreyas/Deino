@@ -15,7 +15,7 @@ use deino_domain::SystemClock;
 use deino_llm::{
     AnthropicProvider, FakeLocalModels, Flavor, Gateway, GatewayParts, HttpError, HttpRequest,
     HttpResponse, HttpTransport, MemoryRouteStore, MemoryUsage, Method, OpenAiCompatProvider,
-    ProviderId, Providers, Router, StaticCredentials, Target,
+    ProviderId, Providers, Route, Router, StaticCredentials, Target,
 };
 use futures_util::StreamExt;
 use libtest_mimic::Failed;
@@ -82,6 +82,37 @@ fn parse_target(target: &str) -> Option<Target> {
 /// A gateway over the real Anthropic and OpenAI providers, with keys from
 /// `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
 pub fn gateway() -> Gateway {
+    let (credentials, providers) = providers();
+    let local = Arc::new(FakeLocalModels::new());
+    let router = Router::new(
+        Arc::new(MemoryRouteStore::default()),
+        credentials,
+        local.clone(),
+    );
+    assemble(providers, router, local)
+}
+
+/// A gateway whose `route` goes to `DEINO_EVAL_TARGET` when it is set, for
+/// trials whose prompts the code under test builds (`notes.enhance`).
+pub fn gateway_for(route: Route) -> Result<Gateway, Failed> {
+    let (credentials, providers) = providers();
+    let local = Arc::new(FakeLocalModels::new());
+    let router = Router::new(
+        Arc::new(MemoryRouteStore::default()),
+        credentials,
+        local.clone(),
+    );
+    if let Some(target) = env("DEINO_EVAL_TARGET").and_then(|target| parse_target(&target)) {
+        let runtime = tokio::runtime::Runtime::new().map_err(|error| error.to_string())?;
+        runtime
+            .block_on(router.set(route, Some(target)))
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(assemble(providers, router, local))
+}
+
+/// The keys from the environment, and the hosted providers over `reqwest`.
+fn providers() -> (Arc<StaticCredentials>, Providers) {
     let mut credentials = StaticCredentials::new();
     for (provider, variable) in [
         (ProviderId::Anthropic, "ANTHROPIC_API_KEY"),
@@ -103,14 +134,13 @@ pub fn gateway() -> Gateway {
             Arc::new(AnthropicProvider::new(http, credentials.clone())),
         )
         .with(ProviderId::OpenAi, Arc::new(openai));
-    let local = Arc::new(FakeLocalModels::new());
+    (credentials, providers)
+}
+
+fn assemble(providers: Providers, router: Router, local: Arc<FakeLocalModels>) -> Gateway {
     Gateway::new(GatewayParts {
         providers,
-        router: Router::new(
-            Arc::new(MemoryRouteStore::default()),
-            credentials,
-            local.clone(),
-        ),
+        router,
         local,
         usage: Arc::new(MemoryUsage::default()),
         clock: Arc::new(SystemClock),

@@ -80,6 +80,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::export::init())
         .plugin(features::action_items::init())
         .plugin(features::calendar::init())
+        .plugin(features::enhance::init())
         .plugin(features::meetings::init())
         .plugin(features::network::init())
         .plugin(features::pipeline::init())

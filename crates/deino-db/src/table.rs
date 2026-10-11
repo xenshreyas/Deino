@@ -20,12 +20,10 @@ pub enum Table {
     TranscriptSegments,
     /// The speakers of each meeting's transcript.
     Speakers,
-    /// Summary generation state and results, one row per meeting.
-    SummaryProcesses,
-    /// The transcript text sent for summarisation.
-    TranscriptChunks,
     /// The user's own notes for a meeting.
     MeetingNotes,
+    /// The AI's enhanced notes for a meeting, one row per version (NOT-02).
+    EnhancedNotes,
     /// People the user meets.
     People,
     /// Companies people work at.
@@ -75,13 +73,12 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 28] = [
+    pub const ALL: [Self; 27] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
-        Self::SummaryProcesses,
-        Self::TranscriptChunks,
         Self::MeetingNotes,
+        Self::EnhancedNotes,
         Self::People,
         Self::Companies,
         Self::MeetingAttendees,
@@ -115,9 +112,8 @@ impl Table {
             "meetings" => Self::Meetings,
             "transcript_segments" => Self::TranscriptSegments,
             "speakers" => Self::Speakers,
-            "summary_processes" => Self::SummaryProcesses,
-            "transcript_chunks" => Self::TranscriptChunks,
             "meeting_notes" => Self::MeetingNotes,
+            "enhanced_notes" => Self::EnhancedNotes,
             "people" => Self::People,
             "companies" => Self::Companies,
             "meeting_attendees" => Self::MeetingAttendees,

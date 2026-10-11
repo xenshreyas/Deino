@@ -82,17 +82,13 @@ export type Table =
  */
 "speakers" | 
 /**
- * Summary generation state and results, one row per meeting.
- */
-"summary_processes" | 
-/**
- * The transcript text sent for summarisation.
- */
-"transcript_chunks" | 
-/**
  * The user's own notes for a meeting.
  */
 "meeting_notes" | 
+/**
+ * The AI's enhanced notes for a meeting, one row per version (NOT-02).
+ */
+"enhanced_notes" | 
 /**
  * People the user meets.
  */
@@ -187,4 +183,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","summary_processes","transcript_chunks","meeting_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","example_notes"] as const satisfies readonly Table[]

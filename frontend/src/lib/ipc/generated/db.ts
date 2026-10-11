@@ -58,17 +58,13 @@ export type Table =
  */
 "speakers" | 
 /**
- * Summary generation state and results, one row per meeting.
- */
-"summary_processes" | 
-/**
- * The transcript text sent for summarisation.
- */
-"transcript_chunks" | 
-/**
  * The user's own notes for a meeting.
  */
 "meeting_notes" | 
+/**
+ * The AI's enhanced notes for a meeting, one row per version (NOT-02).
+ */
+"enhanced_notes" | 
 /**
  * People the user meets.
  */

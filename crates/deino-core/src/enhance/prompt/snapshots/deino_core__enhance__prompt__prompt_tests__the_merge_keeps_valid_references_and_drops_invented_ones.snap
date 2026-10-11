@@ -1,0 +1,43 @@
+---
+source: crates/deino-core/src/enhance/prompt/prompt_tests.rs
+expression: "prompt.messages[0].text()"
+---
+<meeting>
+Title: Maya 1:1
+Date: Wednesday 7 October 2026, 15:00 UTC
+Calendar event: Maya / Shreyas weekly
+Attendees (2): Shreyas (me), Maya Chen (Staff engineer)
+Description: Weekly one-on-one.
+</meeting>
+
+<template>
+1:1. Two people catching up regularly. Capture what each person raised, feedback in both directions and agreed follow-ups. Keep the tone personal and candid, and do not editorialise about anyone's performance.
+Sections, in order:
+1. Check-in: Two or three sentences on how each person is doing (workload, energy, morale), only as far as they shared it. Write one or two paragraph blocks of prose.
+2. Topics: Each topic either person raised, with the key points and where it landed. Write bullet blocks, one idea each.
+3. Feedback: Feedback given in either direction, attributed, in the giver's own words where possible. Omit the section if none was given. Write bullet blocks, one idea each.
+4. Growth: Goals, skills, opportunities or concerns about career growth. Omit the section if not discussed. Write bullet blocks, one idea each.
+5. Action items: Follow-ups for either person, with the owner and due date when stated. Write todo blocks, one action each, naming the owner and the due date when known.
+</template>
+
+<user_notes>
+- v tired post fernhollow
+- [ ] update pagerduty today!!
+</user_notes>
+
+<partial_notes>
+<part number="1" span="00:04–00:13">
+### Wellbeing
+- Maya is exhausted after the incident [s2]
+  - Slept eleven hours [s2]
+</part>
+
+<part number="2" span="00:31–00:35">
+### Action items
+- [ ] Take Maya off on-call [s3]
+</part>
+</partial_notes>
+
+The meeting was long, so its transcript was read in parts and each part was noted separately. In the partial notes, every line ends with its transcript references in brackets, like `[s12, s40]`; those are the references to use as evidence.
+
+Merge the parts into the notes of the whole meeting: one set of sections in the template's order, the user's lines placed and quoted exactly, repeated points combined (with their references combined), and nothing dropped that someone who missed the meeting needs.

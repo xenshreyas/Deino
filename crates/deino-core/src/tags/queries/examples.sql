@@ -6,9 +6,11 @@ SELECT
     m.id AS "meeting_id!: MeetingId",
     m.title,
     (
-        SELECT CASE WHEN json_valid(sp.result) THEN json_extract(sp.result, '$.markdown') END
-        FROM summary_processes AS sp
-        WHERE sp.meeting_id = m.id AND lower(sp.status) = 'completed'
+        SELECT e.markdown
+        FROM enhanced_notes AS e
+        WHERE e.meeting_id = m.id
+        ORDER BY e.version DESC
+        LIMIT 1
     ) AS "summary?: String"
 FROM meeting_tags AS mt
 JOIN meetings AS m ON m.id = mt.meeting_id

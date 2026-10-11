@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) title and the Markdown of its newest enhanced notes\n-- (NOT-02), for the auto-tagger; no row when the meeting is missing or in\n-- the trash.\nSELECT\n    m.id AS \"meeting_id!: MeetingId\",\n    m.title,\n    (\n        SELECT e.markdown\n        FROM enhanced_notes AS e\n        WHERE e.meeting_id = m.id\n        ORDER BY e.version DESC\n        LIMIT 1\n    ) AS \"summary?: String\"\nFROM meetings AS m\nWHERE m.id = ?1 AND m.deleted_at IS NULL\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary?: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "04c22eef50433592066486f62dc833b7f3795b21f75f0551a84c521c79e0bfeb"
+}

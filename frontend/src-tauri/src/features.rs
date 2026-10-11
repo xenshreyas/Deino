@@ -23,6 +23,7 @@ pub mod db;
 pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
+pub mod enhance;
 pub mod export;
 pub mod folders;
 pub mod llm;
@@ -53,6 +54,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (detection::NAME, detection::specta()),
         (export::NAME, export::specta()),
         (calendar::NAME, calendar::specta()),
+        (enhance::NAME, enhance::specta()),
         (meetings::NAME, meetings::specta()),
         (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),

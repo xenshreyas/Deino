@@ -45,6 +45,20 @@ fn nested_emphasis_keeps_each_runs_marks() {
 }
 
 #[test]
+fn checklist_shorthand_in_typed_notes_becomes_task_items() {
+    // A seeded note showed a literal `[] send the board deck` line (NOT-02).
+    assert_eq!(
+        parse("[] send the board deck\n[x] book the room\n- [] call Ruth"),
+        doc(vec![tasks(vec![
+            (false, vec![p(vec![t("send the board deck")])]),
+            (true, vec![p(vec![t("book the room")])]),
+            (false, vec![p(vec![t("call Ruth")])]),
+        ])])
+    );
+    assert_eq!(parse("\\[\\] literal"), doc(vec![p(vec![t("[] literal")])]));
+}
+
+#[test]
 fn gfm_task_lists_become_task_lists() {
     assert_eq!(
         parse("- [ ] open\n- [x] done\n  - [ ] nested"),

@@ -80,7 +80,6 @@ impl MeetingRepo for SqliteMeetingRepo {
         at: DateTime<Utc>,
     ) -> Result<Option<Meeting>, DbError> {
         let title = title.as_str();
-        let mut transaction = self.database.writer().begin().await?;
         let renamed = sqlx::query_as!(
             Meeting,
             r#"UPDATE meetings SET title = ?1, updated_at = ?2 WHERE id = ?3
@@ -93,20 +92,8 @@ impl MeetingRepo for SqliteMeetingRepo {
             at,
             id,
         )
-        .fetch_optional(&mut *transaction)
+        .fetch_optional(self.database.writer())
         .await?;
-        if renamed.is_some() {
-            // `transcript_chunks.meeting_name` is a denormalised copy of the title
-            // that summary generation reads; it changes in the same transaction.
-            sqlx::query!(
-                "UPDATE transcript_chunks SET meeting_name = ?1 WHERE meeting_id = ?2",
-                title,
-                id,
-            )
-            .execute(&mut *transaction)
-            .await?;
-        }
-        transaction.commit().await?;
         Ok(renamed)
     }
 }
@@ -193,9 +180,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn rename_updates_the_title_timestamp_and_summary_copy_together() {
+    async fn rename_updates_the_title_and_timestamp() {
         let repo = repo_with(&[("meeting-a", "Standup", "2026-10-08T09:00:00Z")]).await;
-        seed::transcript_chunk(&repo.database, "meeting-a", "Standup").await;
         let (id, title) = (
             MeetingId::new("meeting-a"),
             MeetingTitle::parse("Planning").unwrap(),
@@ -210,13 +196,6 @@ mod tests {
         assert_eq!(renamed.title, "Planning");
         assert_eq!(renamed.updated_at, at("2026-10-09T10:00:00Z"));
         assert_eq!(renamed.created_at, at("2026-10-08T09:00:00Z"));
-        let copy: Option<String> = sqlx::query_scalar(
-            "SELECT meeting_name FROM transcript_chunks WHERE meeting_id = 'meeting-a'",
-        )
-        .fetch_one(repo.database.reader())
-        .await
-        .unwrap();
-        assert_eq!(copy.as_deref(), Some("Planning"));
     }
 
     #[tokio::test]

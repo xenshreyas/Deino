@@ -1,7 +1,7 @@
 /**
  * The templates feature (NOT-04): the template library and editor
  * (Settings → Templates), the meeting's template picker on the Notes tab,
- * the notepad's `/template` command, and the legacy summary panel's bridge.
+ * and the notepad's `/template` command.
  * Other code imports from here only.
  */
 export { templatesApi } from './api';
@@ -11,11 +11,6 @@ export {
 } from './components/meeting-template-picker';
 export { TemplatesPage } from './components/templates-page';
 export { reasonText, templatesCopy } from './copy';
-export {
-  type LegacyTemplateChoice,
-  type LegacyTemplateOption,
-  useLegacyTemplateChoice,
-} from './hooks/use-legacy-template-choice';
 export {
   meetingTemplateQuery,
   templateKeys,

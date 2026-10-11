@@ -1,0 +1,21 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<template>
+{{ template }}
+</template>
+
+<user_notes>
+{%- if let Some(notes) = notes %}
+{{ notes }}
+{%- else %}
+The user typed no notes.
+{%- endif %}
+</user_notes>
+
+<transcript part="{{ part }} of {{ parts }}" span="{{ span }}">
+{{ transcript }}
+</transcript>
+
+Now write the notes of part {{ part }} of {{ parts }}.

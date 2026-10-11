@@ -1,5 +1,5 @@
-//! How a template becomes prompt text: the per-section instructions and the
-//! Markdown skeleton the summary fills ([`SummaryTemplate`]), and the
+//! How a template becomes prompt text: the template block every
+//! `notes.enhance` prompt carries ([`template_prompt`], NOT-02), and the
 //! labelled blocks Settings → Templates previews ([`TemplatePreview`]).
 //!
 //! Pure functions, snapshot-tested: a wording change shows up in review.
@@ -8,16 +8,6 @@ use deino_domain::{Audience, Email, SectionFormat};
 use serde::Serialize;
 
 use super::{MeetingFacts, TemplateContent};
-
-/// What the summary generator needs from a template
-/// (`deino_core::summaries::SummaryRequest`).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SummaryTemplate {
-    /// One instruction line per section, plus the title and meeting type.
-    pub section_instructions: String,
-    /// The skeleton to fill: a title and one heading per section.
-    pub template_markdown: String,
-}
 
 /// One labelled part of a rendered template prompt.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
@@ -37,41 +27,33 @@ pub struct TemplatePreview {
     pub blocks: Vec<PromptBlock>,
 }
 
-/// How the LLM should write a section of each format.
-pub fn format_directive(format: SectionFormat) -> &'static str {
+/// How the LLM writes a section of each format, as note blocks.
+pub fn section_directive(format: SectionFormat) -> &'static str {
     match format {
-        SectionFormat::Bullets => "Write concise bullet points, one idea per bullet.",
-        SectionFormat::Paragraph => "Write one or two short paragraphs of prose.",
-        SectionFormat::Table => "Write a Markdown table with a header row and clear columns.",
+        SectionFormat::Bullets => "bullet blocks, one idea each",
+        SectionFormat::Paragraph => "one or two paragraph blocks of prose",
+        SectionFormat::Table => {
+            "one bullet block per row, its columns as `column: value; column: value`"
+        }
         SectionFormat::Todo => {
-            "Write a task list (`- [ ]`), one action per line, naming the owner and due date when known."
+            "todo blocks, one action each, naming the owner and the due date when known"
         }
     }
 }
 
-/// The instructions and skeleton the summary generator fills.
-pub fn summary_template(content: &TemplateContent) -> SummaryTemplate {
+/// The template as the notes prompt gives it: its name and meeting context,
+/// then one numbered line per section with its instructions and format.
+pub fn template_prompt(content: &TemplateContent) -> String {
     let mut lines = vec![
-        "- **For the main title (`# [AI-Generated Title]`):** Analyze the entire transcript and create a concise, descriptive title for the meeting.".to_owned(),
-        format!("- **Meeting type:** {}", meeting_type(content)),
+        join_sentences(&format!("{}.", content.name), &content.meeting_context),
+        "Sections, in order:".to_owned(),
     ];
-    lines.extend(content.sections.iter().map(|section| {
-        let instructions = join_sentences(&section.instructions, format_directive(section.format));
-        format!("- **For the '{}' section:** {instructions}", section.title)
-    }));
-    let template_markdown = content.sections.iter().fold(
-        String::from("# <Add Title here>\n\n"),
-        |mut markdown, section| {
-            markdown.push_str("## ");
-            markdown.push_str(&section.title);
-            markdown.push_str("\n\n");
-            markdown
-        },
-    );
-    SummaryTemplate {
-        section_instructions: lines.join("\n"),
-        template_markdown,
+    for (number, section) in (1..).zip(&content.sections) {
+        let write = format!("Write {}.", section_directive(section.format));
+        let instructions = join_sentences(&section.instructions, &write);
+        lines.push(format!("{number}. {}: {instructions}", section.title));
     }
+    lines.join("\n")
 }
 
 /// The template rendered for `meeting`, after the user's profile context.
@@ -81,18 +63,12 @@ pub fn preview(
     audience: Option<Audience>,
     profile_context: Option<String>,
 ) -> TemplatePreview {
-    let summary = summary_template(content);
     let mut blocks = Vec::new();
     if let Some(context) = profile_context {
         blocks.push(block("About you", context));
     }
     blocks.push(block("This meeting", describe_meeting(meeting, audience)));
-    blocks.push(block("Template", meeting_type(content)));
-    blocks.push(block("Sections", summary.section_instructions));
-    blocks.push(block(
-        "Notes skeleton",
-        summary.template_markdown.trim_end().to_owned(),
-    ));
+    blocks.push(block("Template", template_prompt(content)));
     TemplatePreview { blocks }
 }
 
@@ -101,11 +77,6 @@ fn block(heading: &str, body: String) -> PromptBlock {
         heading: heading.to_owned(),
         body,
     }
-}
-
-/// "Sales discovery. The user's team is selling…" (name, then context).
-fn meeting_type(content: &TemplateContent) -> String {
-    join_sentences(&format!("{}.", content.name), &content.meeting_context)
 }
 
 /// Title, date, audience, attendees and description, one per line.
@@ -170,11 +141,8 @@ mod tests {
     }
 
     #[test]
-    fn the_summary_template_lists_every_section_with_its_format() {
-        let summary = summary_template(&discovery());
-
-        insta::assert_snapshot!("discovery_instructions", summary.section_instructions);
-        insta::assert_snapshot!("discovery_skeleton", summary.template_markdown);
+    fn the_template_prompt_numbers_every_section_with_its_format() {
+        insta::assert_snapshot!("discovery_template_prompt", template_prompt(&discovery()));
     }
 
     #[test]
@@ -191,16 +159,7 @@ mod tests {
             .iter()
             .map(|block| block.heading.as_str())
             .collect();
-        assert_eq!(
-            headings,
-            [
-                "About you",
-                "This meeting",
-                "Template",
-                "Sections",
-                "Notes skeleton"
-            ]
-        );
+        assert_eq!(headings, ["About you", "This meeting", "Template"]);
         insta::assert_snapshot!(preview.blocks[1].body);
     }
 }

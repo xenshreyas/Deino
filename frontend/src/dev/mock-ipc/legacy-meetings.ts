@@ -1,6 +1,6 @@
 /**
  * LEGACY SHIM, meeting page part: the untyped commands the inherited meeting
- * screen calls for metadata, transcript pages and the summary. Each one
+ * screen calls for metadata and transcript pages. Each one
  * moves to the `meetings` mock when ORG-07/TRN-01 port it to the plugin.
  *
  * Responses have the shapes of the Rust legacy commands in `api/api.rs`, and
@@ -83,13 +83,6 @@ function transcriptPage(database: MockDatabase, args: Args) {
   };
 }
 
-/** `api_get_summary`: no summary has been generated for a fixture. */
-function summary(database: MockDatabase, args: Args) {
-  const fixture = findFixture(database, args);
-  const empty = { start: null, end: null, data: null, error: null };
-  return { status: 'idle', meetingName: fixture.title, meeting_id: fixture.id, ...empty };
-}
-
 /** `api_search_transcripts`: meetings whose transcript mentions the query (the ⌘K palette). */
 function searchTranscripts(database: MockDatabase, args: Args) {
   const query = stringArg(args, 'query').toLowerCase();
@@ -107,7 +100,6 @@ export function legacyMeetingResponses(database: MockDatabase) {
   return {
     api_get_meeting_metadata: (args: Args) => metadata(database, args),
     api_get_meeting_transcripts: (args: Args) => transcriptPage(database, args),
-    api_get_summary: (args: Args) => summary(database, args),
     api_search_transcripts: (args: Args) => searchTranscripts(database, args),
   };
 }

@@ -15,7 +15,7 @@ import { TemplateMenu } from './template-menu';
 /** Props of {@link NoteSurface}. */
 export interface NoteSurfaceProps {
   handle: NoteEditorHandle;
-  /** Controls at the right of the status row (the Summary / My notes switch). */
+  /** Controls at the right of the status row (the Enhanced / My notes switch). */
   toolbar?: ReactNode;
 }
 

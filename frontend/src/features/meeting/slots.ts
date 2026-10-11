@@ -8,7 +8,7 @@
  *
  * | Slot | Today | Filled by |
  * |---|---|---|
- * | Notes tab | legacy summary and My notes (NOT-01) | NOT-02 |
+ * | Notes tab | Enhanced (NOT-02, NOT-03) and My notes (NOT-01) | |
  * | Transcript tab | legacy transcript | TRN-01 |
  * | Insights tab | empty state | AI-06 |
  * | Clips tab | empty state | TRN-04 |
