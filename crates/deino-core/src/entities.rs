@@ -1,4 +1,4 @@
-//! People and companies as entities (ORG-04, ADR 0033): the one place that
+//! People and companies as entities (ORG-04, ADR 0036): the one place that
 //! decides who becomes a person or a company, merges them, summarises them
 //! and fetches company logos.
 //!

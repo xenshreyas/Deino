@@ -371,7 +371,7 @@ export type MeetingId = string & { readonly __brand: "MeetingId" }
 export type PersonId = string & { readonly __brand: "PersonId" }
 /**
  * A row of the People list: who, where they work, and when the user last
- * met them. The aggregates are computed on read (ADR 0033).
+ * met them. The aggregates are computed on read (ADR 0034).
  */
 export type PersonRow = { 
 /**

@@ -11,7 +11,7 @@
 -- No aggregate is denormalised here. A person's last meeting and meeting
 -- count (and a company's, over its people) are computed when the lists are
 -- read, from `meeting_attendees` through idx_meeting_attendees_person_id and
--- the meetings primary key (ADR 0033 measures it and says why: attendance
+-- the meetings primary key (ADR 0036 measures it and says why: attendance
 -- has many writers, and trash, restore and status changes would all have to
 -- keep a copy in step).
 

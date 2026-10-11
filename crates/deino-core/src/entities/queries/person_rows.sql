@@ -3,7 +3,7 @@
 -- and their meetings outside the trash that already happened. Most recently
 -- met first, then by name.
 --
--- The aggregates are computed here rather than stored (ADR 0033): each
+-- The aggregates are computed here rather than stored (ADR 0036): each
 -- person's attendance is read through idx_meeting_attendees_person_id and
 -- each meeting through its primary key (asserted in reads_tests.rs).
 SELECT

@@ -1,6 +1,6 @@
 //! The entity read port: the lists, a person's or company's meetings, and
 //! what their summaries read. Its SQLite implementation computes every
-//! aggregate on read (ADR 0033).
+//! aggregate on read (ADR 0036).
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

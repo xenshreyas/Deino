@@ -17,6 +17,8 @@ egress log the user can read in Settings → Privacy → Network.
   automatic redirects). `FakeNetClient` and `FakeServicePolicy` behind
   `test-support`.
 - `registry`: the hosts and defaults of every `deino_domain::ServiceId`.
+  `HostPattern::AnyPublicName` (company logos, `favicons`, ORG-04) admits any
+  public DNS name and never an IP address, `localhost` or a private suffix.
 - `Net` and `ScopedClient`: `net.scoped(service)` reaches only that service's
   hosts; `net.approved_download(ServiceId::HfModels)` also works in offline
   mode. Redirects are followed here, one checked and logged hop at a time.

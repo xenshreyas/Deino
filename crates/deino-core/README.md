@@ -69,7 +69,8 @@ the SQLite adapters behind those ports.
     `deino-connect` implement; the conference-link parser, the filters, the
     mapping into a `SyncBatch` and `CalendarSyncRepo::apply` (one
     transaction, per-provider pruning, `record_override` never written);
-    `AttendeeDirectory` (people and companies from attendees);
+    `AttendeeDirectory` (attendees' people and companies, through
+    `entities::EntityDirectory`);
     `CalendarService` and `SyncScheduler`. No network client: web
     providers live in `deino-connect`. `calendar::linking` (ORG-03, ADR
     0034): the nearest-event rule detection shares, `EventLinkService`
@@ -174,6 +175,18 @@ the SQLite adapters behind those ports.
   install targets `~/.local/bin` and `/usr/local/bin`, installing it as a
   symlink that never replaces a file it did not make), the `Links` port
   (`FsLinks`) and the Claude Code and Claude Desktop `snippets`.
+- `entities` (ORG-04, ADR 0036): `EntityDirectory`, the one set of upsert
+  rules for people (email, else exact name) and companies (email domain,
+  never a public or personal one), following `merged_into`;
+  `PersonService` and `CompanyService` (lists with meeting counts and last
+  met computed on read, pages, add, edit, notes, merges); `EntityMerger`
+  (`SqliteEntityRepo`: one transaction that moves attendance, speakers,
+  voiceprints, suggestions, action items and @mentions, and flattens
+  earlier merges); `AttendanceService`; `EntitySummarizer` (route
+  `entity.summary`); `LogoService` over the `LogoSource` (`FaviconSource`,
+  `deino-net`'s `favicons` service) and `LogoFiles` (`FsLogoFiles`) ports;
+  `EntityUpdateService`, the `update_entities` stage's port. A table that
+  references `people` adds its move to `merge_repo.rs`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 
