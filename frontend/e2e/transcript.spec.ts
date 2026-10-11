@@ -75,6 +75,15 @@ test('a meeting transcript reads as speaker turns and searches with speaker filt
   await expect(counter(page)).toHaveText(/^2 of \d+$/);
   await expect(transcript(page).locator('mark[aria-current="true"]')).toBeInViewport();
   await page.screenshot({ path: test.info().outputPath('transcript-search.png') });
+
+  // CAP-04's "Who is …?" opens from a turn's speaker chip, for that line or all of them.
+  await searchBox(page).press('Escape');
+  await transcript(page).getByRole('button', { name: 'Maya Chen' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Who is Maya Chen?' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'This segment' })).toBeChecked();
+  await expect(page.getByText('In this meeting')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('transcript-rename.png') });
+  await page.keyboard.press('Escape');
 });
 
 test('a two-hour meeting with 5,000 lines keeps the DOM small and searches fast', async ({

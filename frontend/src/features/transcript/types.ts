@@ -2,25 +2,18 @@
  * Types of the transcript view: the generated ones, and the lines, speakers
  * and rows it draws.
  */
-import type {
-  Channel,
-  MeetingId,
-  PaletteColor,
-  SegmentId,
-  SpeakerId,
-} from '@/lib/ipc/generated/transcript';
+import type { Channel, SegmentId, SpeakerId } from '@/lib/ipc/generated/transcript';
 
 export type {
   Channel,
   MeetingId,
-  PaletteColor,
   Segment,
   SegmentId,
   SpeakerId,
   Transcript,
-  TranscriptSpeaker,
 } from '@/lib/ipc/generated/transcript';
 export type { SegmentUpdate } from '@/lib/ipc/generated/recording';
+export type { Participant } from '@/features/speakers';
 
 /** One bubble: a saved segment, or a live line still being spoken. */
 export interface TranscriptLine {
@@ -38,19 +31,19 @@ export interface TranscriptLine {
   open: boolean;
 }
 
-/** Who said a line, as the view draws them. */
+/** Who said a line, as the view draws them (from the meeting's participants). */
 export interface SpeakerView {
   /** Groups lines into turns: the speaker's ID, or a channel fallback. */
   key: string;
-  /** The stored speaker, when the line names one. */
+  /** The stored speaker, when the line names one; only these can be renamed. */
   speakerId: SpeakerId | null;
   name: string;
   /** The user's own voice: bubbles on the right, in the accent tint. */
   isMe: boolean;
   /** Palette slot 1–6 (`--speaker-1` …). */
-  color: PaletteColor;
-  /** Known to be someone (the user, or a person); unknown voices are muted. */
-  identified: boolean;
+  color: number;
+  /** Nobody is assigned to the voice yet: muted, with a dashed avatar. */
+  unnamed: boolean;
 }
 
 /** One row of the list: a bubble, the first of its turn carrying the header. */
@@ -65,12 +58,4 @@ export interface TranscriptRow {
 export interface TextRange {
   start: number;
   end: number;
-}
-
-/** Called when the user clicks a speaker's name (CAP-04 opens its rename popover). */
-export type SpeakerClickHandler = (speaker: SpeakerView, anchor: HTMLElement) => void;
-
-/** The meeting a view shows, for actions that act on it. */
-export interface TranscriptScope {
-  meetingId: MeetingId;
 }

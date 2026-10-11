@@ -96,30 +96,37 @@ describe('MockDatabase', () => {
 });
 
 describe('MockTranscripts', () => {
-  it('serves fixture transcripts with the seeder IDs and speakers named after people', () => {
+  it('serves fixture transcripts with the seeder segment and speaker IDs', () => {
     const transcripts = new MockTranscripts(loadFixtureMeetings());
 
-    const { segments, speakers } = transcripts.get(ONE_ON_ONE);
+    const { segments } = transcripts.get(ONE_ON_ONE);
 
     expect(segments[0]?.id).toBe(fixtureUuid('segment/meeting-fixture-one-on-one/0'));
     expect(segments[0]?.speakerId).toBe(
       fixtureUuid('speaker/meeting-fixture-one-on-one/Speaker 1'),
     );
-    expect(speakers.map(({ name, isMe }) => [name, isMe])).toEqual([
-      ['Shreyas', true],
-      ['Maya Chen', false],
-    ]);
   });
 
-  it('saves a recording line on the speaker of its channel', () => {
+  it('puts each segment on the speaker the speakers mock says said it, after renames', () => {
+    const transcripts = new MockTranscripts(loadFixtureMeetings());
+    const moved = 'speaker-moved' as Generated.SpeakerId;
+    const first = fixtureUuid('segment/meeting-fixture-one-on-one/0');
+
+    const { segments } = transcripts.get(ONE_ON_ONE, (id) => (id === first ? moved : undefined));
+
+    expect(segments[0]?.speakerId).toBe(moved);
+    expect(segments[1]?.speakerId).not.toBe(moved);
+  });
+
+  it('keeps the lines the mock recorder saves', () => {
     const transcripts = new MockTranscripts([]);
     const live = asMeetingId('meeting-live');
-    transcripts.startRecording(live);
 
     transcripts.save({
       id: 'segment-1' as Generated.SegmentId,
       meetingId: live,
       channel: 'mic',
+      speakerId: null,
       start: 0,
       end: 900,
       text: 'Hello',
@@ -128,8 +135,7 @@ describe('MockTranscripts', () => {
       editedAt: null,
     });
 
-    const { segments, speakers } = transcripts.get(live);
-    expect(segments[0]?.speakerId).toBe(speakers.find(({ isMe }) => isMe)?.id);
+    expect(transcripts.get(live).segments.map(({ text }) => text)).toEqual(['Hello']);
   });
 
   it('generates the long meeting deterministically, with a known number of hits', () => {

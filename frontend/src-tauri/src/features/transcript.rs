@@ -2,10 +2,10 @@
 //! as the inline plugin `plugin:transcript|<command>` (TRN-01).
 //!
 //! `get` serves the transcript view on the meeting page and the record
-//! screen: the saved segments with their speakers' names. Saved changes
-//! reach the UI through `DbChanged` (`transcript_segments`, `speakers`,
-//! `people`); lines still being spoken arrive as the recorder's
-//! `LiveSegment` events. TRN-02 adds the segment edits here.
+//! screen: the saved segments, each with its speaker ID; the `speakers`
+//! plugin (CAP-04) names the speakers. Saved changes reach the UI through
+//! `DbChanged` (`transcript_segments`); lines still being spoken arrive as
+//! the recorder's `LiveSegment` events. TRN-02 adds the segment edits here.
 
 mod commands;
 #[cfg(test)]

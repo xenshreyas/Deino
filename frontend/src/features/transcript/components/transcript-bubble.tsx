@@ -12,7 +12,7 @@ import { cn } from '@/ui/cn';
 
 import type { TranscriptAction } from '../actions';
 import type { SearchHit } from '../model/search-index';
-import type { MeetingId, SpeakerClickHandler, TranscriptRow } from '../types';
+import type { MeetingId, TranscriptRow } from '../types';
 import { BubbleToolbar } from './bubble-toolbar';
 import { HighlightedText } from './highlighted-text';
 import { TurnHeader } from './turn-header';
@@ -31,7 +31,6 @@ export interface TranscriptBubbleProps {
   /** Holds the list's keyboard focus. */
   focused: boolean;
   actions: readonly TranscriptAction[];
-  onSpeakerClick: SpeakerClickHandler | undefined;
   onFocusRow: (index: number) => void;
   onKeyDown: (event: KeyboardEvent<HTMLDivElement>, index: number) => void;
 }
@@ -86,9 +85,7 @@ export const TranscriptBubble = memo(function TranscriptBubble(props: Transcript
   const { line, speaker } = row;
   return (
     <div className={cn(row.turnStart && index > 0 ? 'pt-4' : 'pt-0.5')}>
-      {row.turnStart ? (
-        <TurnHeader speaker={speaker} start={line.start} onSpeakerClick={props.onSpeakerClick} />
-      ) : null}
+      {row.turnStart ? <TurnHeader meetingId={props.meetingId} row={row} /> : null}
       <div className={cn('group/bubble flex', speaker.isMe ? 'justify-end' : 'justify-start')}>
         <div className="relative max-w-[75%]">
           <BubbleBody {...props} />

@@ -10,7 +10,7 @@ import { actionForKey, type TranscriptAction } from '../actions';
 import { transcriptCopy } from '../copy';
 import type { TranscriptListController } from '../hooks/use-transcript-list';
 import type { SearchHit, SearchResult } from '../model/search-index';
-import type { MeetingId, SpeakerClickHandler, TranscriptRow } from '../types';
+import type { MeetingId, TranscriptRow } from '../types';
 import { TranscriptBubble } from './transcript-bubble';
 
 /** Props of {@link TranscriptList}. */
@@ -23,7 +23,6 @@ export interface TranscriptListProps {
   /** The line a deep link is marking, if any. */
   flashing: string | null;
   actions: readonly TranscriptAction[];
-  onSpeakerClick: SpeakerClickHandler | undefined;
 }
 
 /** The row a navigation key moves to from `index`, if it is one. */
@@ -99,7 +98,6 @@ function VirtualRows(props: TranscriptListProps) {
           flashing={props.flashing === row.line.id}
           focused={keys.focused === item.index}
           actions={props.actions}
-          onSpeakerClick={props.onSpeakerClick}
           onFocusRow={keys.onFocusRow}
           onKeyDown={keys.onKeyDown}
         />

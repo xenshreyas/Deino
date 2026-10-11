@@ -5,6 +5,6 @@ import { unwrap } from '@/lib/ipc/result';
 import type { MeetingId, Transcript } from './types';
 
 export const transcriptApi = {
-  /** The meeting's saved segments in spoken order, with its named speakers. */
+  /** The meeting's saved segments in spoken order, each with its speaker ID. */
   get: (meetingId: MeetingId): Promise<Transcript> => unwrap(commands.get(meetingId)),
 };

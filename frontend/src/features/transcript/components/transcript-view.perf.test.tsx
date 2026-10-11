@@ -7,7 +7,12 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { LONG_MEETING_ID, longTranscript, PHRASE } from '@/dev/mock-ipc/long-meeting';
+import {
+  LONG_MEETING_ID,
+  longMeetingParticipants,
+  longTranscript,
+  PHRASE,
+} from '@/dev/mock-ipc/long-meeting';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import { mergeLines } from '../model/lines';
@@ -24,7 +29,7 @@ const RENDER_BUDGET_MS = 1_500;
 const MAX_DOM_ROWS = 40;
 
 const meeting = longTranscript(SEGMENTS);
-const directory = new SpeakerDirectory(meeting.speakers);
+const directory = new SpeakerDirectory(longMeetingParticipants());
 const rows = buildRows(mergeLines(meeting.segments, new Map()), directory);
 
 const offsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');

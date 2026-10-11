@@ -3,25 +3,26 @@
  * live updates with readable defaults. Test-only; nothing imports it at
  * run time.
  */
-import type {
-  MeetingId,
-  Segment,
-  SegmentId,
-  SegmentUpdate,
-  SpeakerId,
-  TranscriptSpeaker,
-} from './types';
+import type { PersonId } from '@/lib/ipc/generated/speakers';
+
+import type { MeetingId, Participant, Segment, SegmentId, SegmentUpdate, SpeakerId } from './types';
 
 export const MEETING = 'meeting-test' as MeetingId;
 
-/** A speaker; the user's own voice with `isMe`. */
-export function speaker(id: string, name: string, extra: Partial<TranscriptSpeaker> = {}) {
-  const base: TranscriptSpeaker = {
-    id: id as SpeakerId,
-    name,
-    personId: null,
-    isMe: false,
+/**
+ * A participant named `name` (a person); `null` leaves the voice unnamed
+ * ("Speaker 2"). The user's own voice with `{ isMe: true }`.
+ */
+export function speaker(id: string, name: string | null, extra: Partial<Participant> = {}) {
+  const base: Participant = {
+    speakerId: id as SpeakerId,
+    label: 'Speaker 2',
     color: 2,
+    isMe: false,
+    person: name === null ? null : { id: `person-${id}` as PersonId, name },
+    speech: 0,
+    sharePercent: 0,
+    suggestion: null,
   };
   return { ...base, ...extra };
 }

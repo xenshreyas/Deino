@@ -6,9 +6,9 @@
 
 export const commands = {
 /**
- * The saved transcript of `meeting_id`: its segments in spoken order and
- * its speakers with the names the view shows. An unknown meeting has an
- * empty transcript.
+ * The saved transcript of `meeting_id`: its segments in spoken order,
+ * each with its speaker ID (the participants name them). An unknown meeting
+ * has an empty transcript.
  */
 async get(meetingId: MeetingId) : Promise<Result<Transcript, AppError>> {
     try {
@@ -117,17 +117,6 @@ export type MeetingId = string & { readonly __brand: "MeetingId" }
  */
 export type Millis = number
 /**
- * A colour from the `--speaker-1` … `--speaker-6` palette
- * (`docs/references/ui.md`), used by speakers and tags. Stored as the slot
- * number, which the schema checks is between 1 and 6, so the database never
- * holds a hard-coded colour and both themes stay in charge of the shade.
- */
-export type PaletteColor = number
-/**
- * Identifies a person.
- */
-export type PersonId = string & { readonly __brand: "PersonId" }
-/**
  * One utterance of a meeting's transcript.
  */
 export type Segment = { 
@@ -181,42 +170,15 @@ export type SegmentId = string & { readonly __brand: "SegmentId" }
  */
 export type SpeakerId = string & { readonly __brand: "SpeakerId" }
 /**
- * One meeting's saved transcript, as the transcript view shows it.
+ * One meeting's saved transcript, as the transcript view shows it. Who
+ * said each segment (names, colours, "Is this …?") comes from the
+ * meeting's participants (`speakers`, CAP-04), by `Segment::speaker_id`.
  */
 export type Transcript = { 
 /**
  * The segments that are not deleted, in spoken order (start, then ID).
  */
-segments: Segment[]; 
-/**
- * The meeting's speakers, by label; a segment's `speakerId` names one.
- */
-speakers: TranscriptSpeaker[] }
-/**
- * A voice of the transcript with the name the view shows for it.
- */
-export type TranscriptSpeaker = { 
-/**
- * The speaker's ID.
- */
-id: SpeakerId; 
-/**
- * The identified person's name, else the speaker's label ("Speaker 2").
- */
-name: string; 
-/**
- * The person the voice belongs to, once identified (the merge target
- * for a merged person).
- */
-personId: PersonId | null; 
-/**
- * True for the user's own voice: its bubbles sit on the right.
- */
-isMe: boolean; 
-/**
- * The speaker's palette slot for its name and avatar.
- */
-color: PaletteColor }
+segments: Segment[] }
 /**
  * When one word was said. Stored as JSON in `transcript_segments.words_json`.
  */

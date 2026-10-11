@@ -9,7 +9,7 @@ import { type ReactNode, useState } from 'react';
 import { TRANSCRIPT_ACTIONS, type TranscriptAction } from '../actions';
 import { useTranscriptList } from '../hooks/use-transcript-list';
 import { useTranscriptSearch } from '../hooks/use-transcript-search';
-import type { MeetingId, SpeakerClickHandler, SpeakerView, TranscriptRow } from '../types';
+import type { MeetingId, SpeakerView, TranscriptRow } from '../types';
 import { JumpToNow } from './jump-to-now';
 import { MomentFocus } from './moment-focus';
 import { SearchBar } from './search-bar';
@@ -25,8 +25,6 @@ export interface TranscriptViewProps {
   /** A moment to show on mount, in milliseconds (`?t=`). */
   focusAt?: number | undefined;
   onFocusDone?: (() => void) | undefined;
-  /** Clicking a speaker's name (CAP-04's rename popover); plain text without it. */
-  onSpeakerClick?: SpeakerClickHandler | undefined;
   /** The bubble actions; the registry by default. */
   actions?: readonly TranscriptAction[];
   /** Tools beside the search field. */
@@ -50,7 +48,6 @@ export function TranscriptView(props: TranscriptViewProps) {
         current={search.current}
         flashing={flashing}
         actions={props.actions ?? TRANSCRIPT_ACTIONS}
-        onSpeakerClick={props.onSpeakerClick}
       />
       {live ? <JumpToNow visible={!list.following} onJump={list.jumpToNow} /> : null}
       {focusAt === undefined ? null : (

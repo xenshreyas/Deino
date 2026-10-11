@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { longTranscript, PHRASE, PHRASE_EVERY } from '@/dev/mock-ipc/long-meeting';
+import {
+  longMeetingParticipants,
+  longTranscript,
+  PHRASE,
+  PHRASE_EVERY,
+} from '@/dev/mock-ipc/long-meeting';
 
 import { segment, speaker } from '../test-data';
 import { mergeLines } from './lines';
@@ -74,7 +79,7 @@ describe('search performance', () => {
   const meeting = longTranscript(5_000);
   const rows = buildRows(
     mergeLines(meeting.segments, new Map()),
-    new SpeakerDirectory(meeting.speakers),
+    new SpeakerDirectory(longMeetingParticipants()),
   );
 
   it('indexes and searches a two-hour meeting in well under 100 ms per query', () => {

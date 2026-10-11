@@ -8,10 +8,10 @@ test('a recording shows its notes and live transcript, and stop opens the meetin
 
   await page.getByRole('main').getByRole('button', { name: 'Start recording' }).click();
 
-  // The mock recorder hears a scripted call: Them first, then Me.
+  // The mock recorder hears a scripted call: Them first, then the user ("You").
   const transcript = page.getByRole('region', { name: 'Transcript' });
   await expect(transcript.getByText('Them').first()).toBeVisible();
-  await expect(transcript.getByText('Me').first()).toBeVisible({ timeout: 15_000 });
+  await expect(transcript.getByText('You').first()).toBeVisible({ timeout: 15_000 });
   const notes = page.getByRole('textbox', { name: 'My notes' });
   await notes.click();
   await page.keyboard.type('Beta on Monday');

@@ -11,7 +11,7 @@ import {
 } from './search-query';
 
 function view(key: string, name: string): SpeakerView {
-  return { key, speakerId: null, name, isMe: false, color: 2, identified: true };
+  return { key, speakerId: null, name, isMe: false, color: 2, unnamed: false };
 }
 
 const SPEAKERS = [view('priya', 'Priya Shah'), view('paul', 'Paul Ito'), view('me', 'Me')];

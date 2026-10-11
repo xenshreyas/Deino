@@ -20,7 +20,7 @@ const context: TranscriptActionContext = {
     name: 'Me',
     isMe: true,
     color: 1,
-    identified: true,
+    unnamed: false,
   },
 };
 

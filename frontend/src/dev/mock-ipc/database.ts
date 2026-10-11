@@ -38,11 +38,13 @@ export const mockEnhanced = new MockEnhanced(fixtureMeetings);
 /** The fixtures' people, as the Rust seeder writes them. */
 export const mockPeople = fixturePeople(fixtureMeetings);
 
-/** The mock `transcript_segments` and `speakers` tables. */
+/** The mock `transcript_segments` table. */
 export const mockTranscripts = new MockTranscripts(fixtureMeetings);
 
-/** The generated long meeting, when session storage asks for it (`long-meeting.ts`). */
-const longMeeting = requestedLongMeeting();
+const longMeetingLines = requestedLongMeeting();
+
+/** The generated long meeting's transcript, when session storage asks for it (`long-meeting.ts`). */
+export const longMeeting = longMeetingLines === null ? null : longTranscript(longMeetingLines);
 if (longMeeting !== null) {
   const savedAt = new Date().toISOString();
   mockDatabase.insert({
@@ -51,5 +53,5 @@ if (longMeeting !== null) {
     createdAt: savedAt,
     updatedAt: savedAt,
   });
-  mockTranscripts.put(LONG_MEETING_ID, longTranscript(longMeeting));
+  mockTranscripts.put(LONG_MEETING_ID, longMeeting);
 }

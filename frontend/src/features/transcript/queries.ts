@@ -1,7 +1,8 @@
 /**
- * TanStack Query over the transcript. The query names every table a
- * transcript is drawn from, so the recorder's batched saves, diarization,
- * speaker renames and people edits all refresh it through `DbChanged`.
+ * TanStack Query over the transcript. The query names `transcript_segments`,
+ * so the recorder's batched saves, diarization and segment renames refresh
+ * it through `DbChanged`; speaker names come from CAP-04's participants
+ * query, which follows `speakers` and `people`.
  */
 import { queryOptions } from '@tanstack/react-query';
 
@@ -10,11 +11,7 @@ import type { Table } from '@/lib/ipc/generated/shared';
 import { transcriptApi } from './api';
 import type { MeetingId } from './types';
 
-const TRANSCRIPT_TABLES = [
-  'transcript_segments',
-  'speakers',
-  'people',
-] as const satisfies readonly Table[];
+const TRANSCRIPT_TABLES = ['transcript_segments'] as const satisfies readonly Table[];
 
 /** Query keys; every key starts with `transcriptKeys.all`. */
 export const transcriptKeys = {
@@ -22,7 +19,7 @@ export const transcriptKeys = {
   meeting: (meetingId: MeetingId) => [...transcriptKeys.all, meetingId] as const,
 };
 
-/** A meeting's saved transcript and speakers. */
+/** A meeting's saved transcript. */
 export const transcriptQuery = (meetingId: MeetingId) =>
   queryOptions({
     queryKey: transcriptKeys.meeting(meetingId),

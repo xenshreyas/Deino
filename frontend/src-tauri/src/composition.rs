@@ -60,12 +60,11 @@ pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::search::SearchIndexing;
-use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
-use deino_core::transcript::{TranscriptPorts, TranscriptService};
+use deino_core::transcript::TranscriptService;
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
 use deino_secrets::{KeychainSecretStore, SecretStore};
@@ -129,11 +128,7 @@ impl Services {
     pub(crate) fn build(database: &Database, clock: &Arc<dyn Clock>) -> Self {
         let meeting_repo = Arc::new(SqliteMeetingRepo::new(database.clone()));
         let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
-        let transcript = TranscriptService::new(TranscriptPorts {
-            segments: segments.clone(),
-            speakers: segments,
-            people: Arc::new(SqlitePeopleRepo::new(database.clone())),
-        });
+        let transcript = TranscriptService::new(segments);
         Self {
             meetings: Arc::new(MeetingService::new(meeting_repo, Arc::clone(clock))),
             transcript: Arc::new(transcript),

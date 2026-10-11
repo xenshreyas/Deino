@@ -18,9 +18,9 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
     tauri_specta::collect_commands![get]
 }
 
-/// The saved transcript of `meeting_id`: its segments in spoken order and
-/// its speakers with the names the view shows. An unknown meeting has an
-/// empty transcript.
+/// The saved transcript of `meeting_id`: its segments in spoken order,
+/// each with its speaker ID (the participants name them). An unknown meeting
+/// has an empty transcript.
 #[tauri::command]
 #[specta::specta]
 async fn get(

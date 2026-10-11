@@ -2,8 +2,8 @@
  * Mock of `@/lib/ipc/generated/recording`: a recorder that "hears" a short
  * scripted conversation, so `pnpm dev:mock` shows the record screen, the
  * sidebar's live row and the live transcript. Start creates a meeting in the
- * mock database with its Me and Them speakers; every couple of seconds a Me
- * or Them line grows word by word, then is saved; stop returns the meeting.
+ * mock database; every couple of seconds a Me or Them line grows word by
+ * word, then is saved; stop returns the meeting.
  */
 import type * as Generated from '@/lib/ipc/generated/recording';
 
@@ -85,12 +85,13 @@ function hear(meetingId: Generated.MeetingId): void {
   if (done) save(update);
 }
 
-/** Saves a finished line on its channel's speaker, as the transcript router does. */
+/** Saves a finished line (with no speaker: the view names it by channel). */
 function save(update: Generated.SegmentUpdate): void {
   mockTranscripts.save({
     id: update.segmentId,
     meetingId: update.meetingId,
     channel: update.channel,
+    speakerId: null,
     start: update.start,
     end: update.end,
     text: update.text,
@@ -109,7 +110,6 @@ async function start(title: string | null) {
   const created = mockDatabase.addScheduled(title ?? 'Untitled meeting', new Date());
   if (created.status === 'error') return created;
   const meetingId = created.data.id;
-  mockTranscripts.startRecording(meetingId);
   const base = { ...IDLE, meetingId, title: created.data.title };
   publish({ ...base, phase: 'starting' });
   publish({ ...base, phase: 'recording', startedAt: new Date().toISOString(), echo: 'cancel' });

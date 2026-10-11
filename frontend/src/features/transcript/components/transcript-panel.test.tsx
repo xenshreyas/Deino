@@ -3,6 +3,7 @@ import type { EventCallback } from '@tauri-apps/api/event';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as Speakers from '@/lib/ipc/generated/speakers';
 import type * as Generated from '@/lib/ipc/generated/transcript';
 import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
@@ -28,11 +29,27 @@ const bindings = vi.hoisted(() => {
 vi.mock('@/lib/ipc/generated/transcript', () => ({ commands: { get: bindings.get } }));
 vi.mock('@/lib/ipc/generated/recording', () => ({ commands: {}, events: bindings.events }));
 
-const PRIYA = speaker('priya', 'Priya Shah', { personId: 'person-priya' as never });
+const speakers = vi.hoisted(
+  () =>
+    ({
+      participants: vi.fn<typeof Speakers.commands.participants>(),
+      candidates: vi.fn<typeof Speakers.commands.candidates>(),
+      rename: vi.fn<typeof Speakers.commands.rename>(),
+      merge: vi.fn<typeof Speakers.commands.merge>(),
+      confirmSuggestion: vi.fn<typeof Speakers.commands.confirmSuggestion>(),
+      dismissSuggestion: vi.fn<typeof Speakers.commands.dismissSuggestion>(),
+      voiceProfiles: vi.fn<typeof Speakers.commands.voiceProfiles>(),
+      deleteVoiceprint: vi.fn<typeof Speakers.commands.deleteVoiceprint>(),
+      forgetVoice: vi.fn<typeof Speakers.commands.forgetVoice>(),
+    }) satisfies typeof Speakers.commands,
+);
+vi.mock('@/lib/ipc/generated/speakers', () => ({ commands: speakers }));
+
+const PRIYA = speaker('priya', 'Priya Shah');
 const ME = speaker('me', 'Shreyas', { isMe: true, color: 1 });
+const PRIYA_PERSON = { id: 'person-priya' as Speakers.PersonId, name: 'Priya Shah' };
 
 const TRANSCRIPT: Transcript = {
-  speakers: [ME, PRIYA],
   segments: [
     segment('a', 1, 'The budget looks fine to me.', 'priya'),
     segment('b', 3, 'Then the budget is approved.', 'me'),
@@ -57,6 +74,15 @@ afterAll(() => {
 beforeEach(() => {
   vi.clearAllMocks();
   bindings.get.mockResolvedValue({ status: 'ok', data: TRANSCRIPT });
+  speakers.participants.mockResolvedValue({ status: 'ok', data: [ME, PRIYA] });
+  speakers.candidates.mockResolvedValue({
+    status: 'ok',
+    data: [{ person: PRIYA_PERSON, isAttendee: true, isMe: false }],
+  });
+  speakers.rename.mockResolvedValue({
+    status: 'ok',
+    data: { person: PRIYA_PERSON, speakerId: PRIYA.speakerId, enrolled: false },
+  });
 });
 
 function renderPanel(props: Partial<TranscriptPanelProps> = {}) {
@@ -79,7 +105,7 @@ const searchBox = () => screen.getByRole('searchbox', { name: 'Search transcript
 const counter = () => within(screen.getByRole('search')).getByRole('status');
 
 describe('TranscriptPanel', () => {
-  it('shows each line under its speaker turn, names from the data', async () => {
+  it('shows each line under its speaker turn, named from the participants', async () => {
     renderPanel();
 
     expect(await screen.findByText('The budget looks fine to me.')).toBeTruthy();
@@ -169,21 +195,29 @@ describe('TranscriptPanel', () => {
     });
   });
 
-  it('offers speaker names as buttons only when a click handler is given', async () => {
-    const onSpeakerClick = vi.fn();
-    renderPanel({ onSpeakerClick });
+  it('renames one line from its turn header with CAP-04\'s "Who is …?"', async () => {
+    renderPanel();
     await screen.findByText('Great, ship it Monday.');
 
     fireEvent.click(screen.getByRole('button', { name: /Shreyas/ }));
-
-    expect(onSpeakerClick).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Shreyas', isMe: true }),
-      expect.any(HTMLElement),
+    expect(await screen.findByText('Who is Shreyas?')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'This segment' }).getAttribute('aria-checked')).toBe(
+      'true',
     );
+    fireEvent.click(await screen.findByText('Priya Shah', { selector: '[role="option"] *' }));
+
+    await waitFor(() => {
+      expect(speakers.rename).toHaveBeenCalledWith(
+        expect.objectContaining({
+          speakerId: ME.speakerId,
+          scope: { kind: 'segment', segmentId: 'b' },
+        }),
+      );
+    });
   });
 
   it('rests with "No transcript yet", or "Listening" while recording', async () => {
-    bindings.get.mockResolvedValue({ status: 'ok', data: { segments: [], speakers: [] } });
+    bindings.get.mockResolvedValue({ status: 'ok', data: { segments: [] } });
     const { unmount } = renderPanel();
     expect(await screen.findByText('No transcript yet')).toBeTruthy();
     unmount();

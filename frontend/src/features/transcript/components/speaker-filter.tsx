@@ -3,6 +3,7 @@
  * inside the field, and a menu of every speaker to add or remove one
  * (the same as typing `speaker:name `).
  */
+import { speakerTone } from '@/features/speakers';
 import { cn } from '@/ui/cn';
 import {
   DropdownMenu,
@@ -14,18 +15,14 @@ import { Check, ICON_PROPS, Users, X } from '@/ui/icons';
 import { Hint } from '@/ui/tooltip';
 
 import { transcriptCopy } from '../copy';
-import { speakerTextClass } from '../model/speakers';
 import type { SpeakerView } from '../types';
 
-/** A speaker's colour dot (the accent for the user). */
+/** A speaker's colour dot. */
 function SpeakerDot({ speaker }: { speaker: SpeakerView }) {
   return (
     <span
       aria-hidden
-      className={cn(
-        'size-1.5 shrink-0 rounded-full bg-current',
-        speaker.isMe ? 'text-accent' : speakerTextClass(speaker.color),
-      )}
+      className={cn('size-1.5 shrink-0 rounded-full bg-current', speakerTone(speaker.color).text)}
     />
   );
 }

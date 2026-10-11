@@ -11,6 +11,7 @@
  * The text is deterministic (a fixed seed), and every 250th line mentions
  * the "quarterly roadmap", so a search has a known number of hits.
  */
+import type { Participant, PersonId } from '@/lib/ipc/generated/speakers';
 import type * as Generated from '@/lib/ipc/generated/transcript';
 
 import {
@@ -39,22 +40,42 @@ const WORDS = (
   'support load so let us agree owners dates and a short list of risks today'
 ).split(' ');
 
-const SPEAKERS: readonly Generated.TranscriptSpeaker[] = [
-  {
-    id: 'speaker-long-me' as Generated.SpeakerId,
-    name: 'Me',
-    personId: null,
-    isMe: true,
-    color: 1,
-  },
+/** A voice of the meeting: the user, then three colleagues. */
+export interface LongMeetingVoice {
+  speakerId: Generated.SpeakerId;
+  name: string;
+  isMe: boolean;
+  color: number;
+}
+
+const SPEAKERS: readonly LongMeetingVoice[] = [
+  { speakerId: 'speaker-long-me' as Generated.SpeakerId, name: 'Me', isMe: true, color: 1 },
   ...['Priya Shah', 'Marcus Lee', 'Ana Ruiz'].map((name, index) => ({
-    id: `speaker-long-${String(index)}` as Generated.SpeakerId,
+    speakerId: `speaker-long-${String(index)}` as Generated.SpeakerId,
     name,
-    personId: `person-long-${String(index)}` as Generated.PersonId,
     isMe: false,
     color: index + 2,
   })),
 ];
+
+/** The meeting's voices, for the mock speakers (`mock-speaker-store.ts`). */
+export function longMeetingVoices(): readonly LongMeetingVoice[] {
+  return SPEAKERS;
+}
+
+/** The voices as participants, each named after a person: for tests without the mock store. */
+export function longMeetingParticipants(): Participant[] {
+  return SPEAKERS.map((voice, index) => ({
+    speakerId: voice.speakerId,
+    label: `Speaker ${String(index + 1)}`,
+    color: voice.color,
+    isMe: voice.isMe,
+    person: { id: `person-long-${String(index)}` as PersonId, name: voice.name },
+    speech: 0,
+    sharePercent: 0,
+    suggestion: null,
+  }));
+}
 
 /** The requested segment count, or `null` when the meeting is off. */
 export function requestedLongMeeting(): number | null {
@@ -87,7 +108,7 @@ function lineAt(index: number, count: number, random: () => number): Generated.S
     id: `segment-long-${String(index).padStart(5, '0')}` as Generated.SegmentId,
     meetingId: LONG_MEETING_ID,
     channel: speaker?.isMe === true ? 'mic' : 'system',
-    speakerId: speaker?.id ?? null,
+    speakerId: speaker?.speakerId ?? null,
     start,
     end: start + Math.floor(DURATION_MS / count) - 200,
     text: text.charAt(0).toUpperCase() + text.slice(1),
@@ -101,5 +122,5 @@ function lineAt(index: number, count: number, random: () => number): Generated.S
 export function longTranscript(count: number): Generated.Transcript {
   const random = generator(count);
   const segments = Array.from({ length: count }, (_, index) => lineAt(index, count, random));
-  return { segments, speakers: [...SPEAKERS] };
+  return { segments };
 }
