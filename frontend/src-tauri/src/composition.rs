@@ -60,9 +60,12 @@ pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};
 use deino_core::search::SearchIndexing;
+use deino_core::people::SqlitePeopleRepo;
+use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::{
     JsonFileSettingsStore, LegacyFileImport, LegacySqliteImport, SettingsError, SettingsService,
 };
+use deino_core::transcript::{TranscriptPorts, TranscriptService};
 use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
 use deino_secrets::{KeychainSecretStore, SecretStore};
@@ -118,20 +121,29 @@ pub(crate) fn legacy_settings_import<R: Runtime>(app: &AppHandle<R>) -> Option<L
 /// Every feature service backed by the app's database.
 pub(crate) struct Services {
     meetings: Arc<MeetingService>,
+    transcript: Arc<TranscriptService>,
 }
 
 impl Services {
     /// Builds every service over `database`, reading time from `clock`.
     pub(crate) fn build(database: &Database, clock: &Arc<dyn Clock>) -> Self {
         let meeting_repo = Arc::new(SqliteMeetingRepo::new(database.clone()));
+        let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
+        let transcript = TranscriptService::new(TranscriptPorts {
+            segments: segments.clone(),
+            speakers: segments,
+            people: Arc::new(SqlitePeopleRepo::new(database.clone())),
+        });
         Self {
             meetings: Arc::new(MeetingService::new(meeting_repo, Arc::clone(clock))),
+            transcript: Arc::new(transcript),
         }
     }
 
     /// Registers each service as Tauri state, where commands find it.
     pub(crate) fn manage<R: Runtime>(self, app: &impl Manager<R>) {
         app.manage(self.meetings);
+        app.manage(self.transcript);
     }
 }
 

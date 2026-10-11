@@ -9,7 +9,7 @@ use deino_audio::capture::{MicChoice, RouteProbe, SystemWatch};
 use deino_audio::source::SourceFactory;
 use deino_core::meetings::{MeetingLifecycleRepo, MeetingLifecycleService};
 use deino_core::people::PersonRepo;
-use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
+use deino_core::segments::{SegmentWriter, SpeakerRepo};
 
 use crate::engine::LaneEngines;
 use crate::events::RecordingEvents;
@@ -57,8 +57,6 @@ pub struct RecordingDeps {
     pub lifecycle: Arc<MeetingLifecycleService>,
     /// Saves the live transcript.
     pub segments: Arc<dyn SegmentWriter>,
-    /// Reads it back for the record screen.
-    pub transcript: Arc<dyn SegmentReader>,
     /// Creates the Me and Them speakers.
     pub speakers: Arc<dyn SpeakerRepo>,
     /// Finds the user's own person, for the Me speaker.

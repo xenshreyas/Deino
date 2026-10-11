@@ -144,7 +144,6 @@ pub async fn rig_with(capture: FixtureCapture, engines: Arc<dyn LaneEngines>) ->
         meetings: meetings.clone(),
         lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
         segments: segments.clone(),
-        transcript: segments.clone(),
         speakers: segments,
         people: Arc::new(SqlitePeopleRepo::new(database.clone())),
         engines,

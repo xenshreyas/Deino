@@ -64,19 +64,6 @@ async state() : Promise<Result<RecordingSnapshot, AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
-},
-/**
- * The saved transcript of `meeting_id`, oldest first, each line on its
- * channel (Me = `mic`, Them = `system`). Live lines arrive as
- * `live-segment` events; saved ones also change `transcript_segments`.
- */
-async transcript(meetingId: MeetingId) : Promise<Result<Segment[], AppError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|transcript", { meetingId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
 }
 }
 
@@ -344,50 +331,6 @@ export type RecordingState = {
  */
 snapshot: RecordingSnapshot }
 /**
- * One utterance of a meeting's transcript.
- */
-export type Segment = { 
-/**
- * The segment's ID.
- */
-id: SegmentId; 
-/**
- * The meeting it belongs to.
- */
-meetingId: MeetingId; 
-/**
- * Which audio it was heard on.
- */
-channel: Channel; 
-/**
- * Who said it, once diarization or the user knows.
- */
-speakerId: SpeakerId | null; 
-/**
- * Offset of its first word from the start of the recording.
- */
-start: Millis; 
-/**
- * Offset of its end from the start of the recording; never before `start`.
- */
-end: Millis; 
-/**
- * What was said.
- */
-text: string; 
-/**
- * Per-word timing, when the engine provides it.
- */
-words: WordTiming[]; 
-/**
- * Hidden from the transcript by the user (TRN-02); kept for undo.
- */
-isDeleted: boolean; 
-/**
- * When the user last edited `text`.
- */
-editedAt: string | null }
-/**
  * Identifies a transcript segment. Segments migrated from the legacy
  * `transcripts` table keep their UUIDv4.
  */
@@ -440,26 +383,6 @@ export type SegmentUpdateKind =
  * Removed as the call's echo picked up by the microphone.
  */
 "discarded"
-/**
- * Identifies a speaker within one meeting's transcript.
- */
-export type SpeakerId = string & { readonly __brand: "SpeakerId" }
-/**
- * When one word was said. Stored as JSON in `transcript_segments.words_json`.
- */
-export type WordTiming = { 
-/**
- * The word as transcribed.
- */
-text: string; 
-/**
- * Offset of its start from the start of the recording.
- */
-start: Millis; 
-/**
- * Offset of its end from the start of the recording.
- */
-end: Millis }
 
 /** tauri-specta globals **/
 

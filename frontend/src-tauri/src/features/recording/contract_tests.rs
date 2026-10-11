@@ -40,7 +40,6 @@ fn recording_app(recordings: &tempfile::TempDir) -> App<MockRuntime> {
         meetings: meetings.clone(),
         lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
         segments: segments.clone(),
-        transcript: segments.clone(),
         speakers: segments,
         people: Arc::new(SqlitePeopleRepo::new(database)),
         engines: Arc::new(ScriptedEngines),
@@ -128,18 +127,4 @@ fn start_records_a_meeting_announces_its_state_and_stop_returns_it() {
     assert_eq!(first["snapshot"]["phase"], "starting");
     assert_eq!(first["snapshot"]["meetingId"], started);
     assert_eq!(first["snapshot"]["title"], "Standup");
-}
-
-#[test]
-fn transcript_takes_a_meeting_id_and_lists_its_saved_lines() {
-    let recordings = tempfile::tempdir().unwrap();
-    let app = recording_app(&recordings);
-
-    let lines = invoke(
-        &main_window(&app),
-        "plugin:recording|transcript",
-        json!({ "meetingId": "meeting-without-lines" }),
-    );
-
-    assert_eq!(lines, Ok(json!([])));
 }

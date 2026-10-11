@@ -84,7 +84,6 @@ fn recording_deps(
         meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
         lifecycle,
         segments: segments.clone(),
-        transcript: segments.clone(),
         speakers: segments,
         people: Arc::new(SqlitePeopleRepo::new(database.clone())),
         engines: Arc::new(SttLanes::new(

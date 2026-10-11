@@ -44,6 +44,7 @@ pub mod speakers;
 pub mod system;
 pub mod tags;
 pub mod templates;
+pub mod transcript;
 pub mod transcription;
 
 /// Every feature's bindings builder, keyed by the file it is exported to
@@ -75,6 +76,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (integrations::NAME, integrations::specta()),
         (tags::NAME, tags::specta()),
         (speakers::NAME, speakers::specta()),
+        (transcript::NAME, transcript::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

@@ -7,7 +7,6 @@
 
 use std::sync::Arc;
 
-use deino_core::segments::Segment;
 use deino_domain::{AppError, MeetingId};
 use deino_recording::{RecordingService, RecordingSnapshot};
 use tauri::{Runtime, State};
@@ -16,7 +15,7 @@ use crate::error::IntoIpc;
 
 /// The plugin's commands, collected here so they can stay private.
 pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
-    tauri_specta::collect_commands![start, stop, pause, resume, state, transcript]
+    tauri_specta::collect_commands![start, stop, pause, resume, state]
 }
 
 /// Starts recording a new meeting titled `title` (a default when null or
@@ -62,16 +61,4 @@ async fn resume(
 #[specta::specta]
 async fn state(recording: State<'_, Arc<RecordingService>>) -> Result<RecordingSnapshot, AppError> {
     Ok(recording.state())
-}
-
-/// The saved transcript of `meeting_id`, oldest first, each line on its
-/// channel (Me = `mic`, Them = `system`). Live lines arrive as
-/// `live-segment` events; saved ones also change `transcript_segments`.
-#[tauri::command]
-#[specta::specta]
-async fn transcript(
-    recording: State<'_, Arc<RecordingService>>,
-    meeting_id: MeetingId,
-) -> Result<Vec<Segment>, AppError> {
-    recording.transcript(&meeting_id).await.into_ipc()
 }

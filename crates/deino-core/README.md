@@ -150,6 +150,11 @@ the SQLite adapters behind those ports.
   (`MeetingSourceReader`, `EmbeddingStore`), `VectorIndex` behind
   `SharedVectors`, `SemanticIndexer`, `SemanticIndex` (`SemanticSearch`), the
   `Backfill` and `SemanticAdmin`. Fakes: `FakeEmbedder`, `FakeSemanticSearch`.
+- `transcript` (TRN-01): `TranscriptService::transcript`, one meeting's
+  `Transcript` (segments in spoken order and `TranscriptSpeaker`s with the
+  name the view shows: the identified person's, following a merge, else the
+  label) over `SegmentReader`, `SpeakerRepo` and `PersonRepo`. No SQL of its
+  own; TRN-02 adds the segment edits here.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

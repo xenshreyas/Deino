@@ -59,6 +59,7 @@
         "folders:default",
         "integrations:default",
         "tags:default",
-        "speakers:default"
+        "speakers:default",
+        "transcript:default"
     ]
 }
