@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE enhanced_notes\n             SET doc_json = ?3, markdown = ?4, is_user_edited = 1, updated_at = ?5\n             WHERE meeting_id = ?1 AND version = ?2\n                AND version = (SELECT MAX(version) FROM enhanced_notes WHERE meeting_id = ?1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "8b752941fe19065f1613cc140aea18e393b6e891e0de412d7ee917815b653d03"
+}

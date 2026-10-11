@@ -15,7 +15,6 @@ frontend/src-tauri/src/notifications/manager.rs
 frontend/src-tauri/src/parakeet_engine/commands.rs
 frontend/src-tauri/src/parakeet_engine/model.rs
 frontend/src-tauri/src/parakeet_engine/parakeet_engine.rs
-frontend/src-tauri/src/summary/commands.rs
 frontend/src-tauri/src/summary/summary_engine/commands.rs
 frontend/src-tauri/src/summary/summary_engine/model_manager.rs
 frontend/src-tauri/src/summary/summary_engine/models.rs

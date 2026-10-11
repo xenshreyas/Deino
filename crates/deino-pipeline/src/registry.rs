@@ -14,7 +14,6 @@ use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
-use deino_core::speakers::ParticipantReader;
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
@@ -56,8 +55,6 @@ pub struct StagePorts {
     pub voiceprints: Arc<dyn ExemplarReader>,
     /// Names speakers from voice profiles and the calendar (CAP-04).
     pub identifier: Arc<dyn SpeakerIdentifier>,
-    /// Speakers with their names, for the notes input.
-    pub participants: Arc<dyn ParticipantReader>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
     /// The auto-tagger (ORG-06).
@@ -96,7 +93,6 @@ impl StagePorts {
             action_items: Arc::new(FakeActionItemExtractor::default()),
             voiceprints: Arc::new(FakeVoiceprintRepo::default()),
             identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
-            participants: segments.clone(),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),

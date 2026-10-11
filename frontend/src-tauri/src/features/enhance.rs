@@ -1,0 +1,35 @@
+//! `enhance` feature (NOT-02, NOT-03): the IPC surface of
+//! `deino_core::enhance`, exposed as the inline plugin
+//! `plugin:enhance|<command>`.
+//!
+//! The Notes tab's Enhanced view reads a version (`get`) and the version
+//! history (`versions`), writes notes (`enhance`, which asks before
+//! replacing the user's edits), saves edits (`save`), restores an old
+//! version (`restore`) and opens citations (`cited`). The service is wired
+//! in `composition/enhance.rs`. Every change reaches the UI through
+//! `DbChanged` on `enhanced_notes`, so the plugin declares no events.
+
+mod commands;
+#[cfg(test)]
+mod contract_tests;
+
+use tauri::Runtime;
+use tauri::plugin::{Builder, TauriPlugin};
+
+/// Plugin name; must match this feature's entry in `features::manifest`.
+pub const NAME: &str = "enhance";
+
+/// The plugin's commands, for the invoke handler and the TypeScript bindings.
+pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
+    tauri_specta::Builder::new()
+        .plugin_name(NAME)
+        .commands(commands::collect())
+        .error_handling(tauri_specta::ErrorHandlingMode::Result)
+}
+
+/// Builds the `enhance` plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new(NAME)
+        .invoke_handler(specta().invoke_handler())
+        .build()
+}

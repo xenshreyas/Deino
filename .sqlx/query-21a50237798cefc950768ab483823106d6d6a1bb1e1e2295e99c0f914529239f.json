@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The newest notes of the latest meeting of series ?1 before ?3, other than\n-- meeting ?2 and outside the trash: the \"previous meeting\" a prompt quotes.\n-- Served by idx_meetings_series_id and the enhanced_notes primary key.\nSELECT\n    m.title,\n    COALESCE(m.started_at, m.created_at) AS \"date!: DateTime<Utc>\",\n    e.markdown\nFROM meetings AS m\nJOIN enhanced_notes AS e ON e.meeting_id = m.id\nWHERE m.series_id = ?1\n    AND m.id <> ?2\n    AND m.deleted_at IS NULL\n    AND COALESCE(m.started_at, m.created_at) < ?3\nORDER BY COALESCE(m.started_at, m.created_at) DESC, e.version DESC\nLIMIT 1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "date!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "markdown",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "21a50237798cefc950768ab483823106d6d6a1bb1e1e2295e99c0f914529239f"
+}

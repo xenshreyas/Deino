@@ -1,6 +1,6 @@
 //! Contract tests: the JSON of `status`, `rerun` and `PipelineProgress`,
-//! through the real plugin and ACL, over the real registry with a recorded
-//! summariser in place of the legacy summary service.
+//! through the real plugin and ACL, over the real registry with recorded
+//! AI services in place of the gateway-backed ones.
 
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
@@ -8,8 +8,7 @@ use std::time::Duration;
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::segments::SqliteSegmentRepo;
 use deino_pipeline::{
-    FakeSleeper, PipelineDeps, PipelineService, RecordedSummaries, SqliteJobRepo, StagePorts,
-    registry,
+    FakeSleeper, PipelineDeps, PipelineService, SqliteJobRepo, StagePorts, registry,
 };
 use deino_testkit::{FakeClock, at, seed, test_db};
 use serde_json::{Value, json};
@@ -37,7 +36,6 @@ fn pipeline_app() -> App<MockRuntime> {
     let ports = StagePorts {
         segments: Arc::new(SqliteSegmentRepo::new(database.clone())),
         meetings: meetings.clone(),
-        summaries: Arc::new(RecordedSummaries::default()),
         ..StagePorts::fakes()
     };
     let service = Arc::new(PipelineService::new(PipelineDeps {
@@ -97,8 +95,9 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
             pending("finalize_audio"),
             pending("diarize"),
             pending("identify_speakers"),
-            pending("legacy_summary"),
+            pending("enhance_notes"),
             pending("extract_action_items"),
+            pending("auto_title"),
             pending("auto_tag"),
             pending("auto_folder"),
             pending("auto_export")
@@ -116,14 +115,14 @@ fn rerun_emits_pipeline_progress_with_the_meeting_stage_and_status() {
             .expect("the test is still listening");
     });
 
-    let args = json!({ "meetingId": "meeting-1", "stage": "legacy_summary" });
+    let args = json!({ "meetingId": "meeting-1", "stage": "enhance_notes" });
     invoke(&main_window(&app), "plugin:pipeline|rerun", args).unwrap();
 
     let payload: Value =
         serde_json::from_str(&received.recv_timeout(EVENT_TIMEOUT).unwrap()).unwrap();
     assert_eq!(
         payload,
-        json!({ "meetingId": "meeting-1", "stage": "legacy_summary", "status": "pending" })
+        json!({ "meetingId": "meeting-1", "stage": "enhance_notes", "status": "pending" })
     );
 }
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO enhanced_notes (meeting_id, version, doc_json, markdown, template_id,\n                model, basis_json, is_user_edited, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "a640ea8e1b6d5a6b11e5fcd6de7da326ca372752864e0593131ff876c82f434a"
+}

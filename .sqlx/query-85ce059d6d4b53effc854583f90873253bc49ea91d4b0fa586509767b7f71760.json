@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COALESCE(MAX(version), 0) + 1 AS \"next!: u32\"\n               FROM enhanced_notes WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "next!: u32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "85ce059d6d4b53effc854583f90873253bc49ea91d4b0fa586509767b7f71760"
+}

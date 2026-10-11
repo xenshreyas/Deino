@@ -35,6 +35,11 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     ("people", &["search"]),
+    // ── NOT-02/NOT-03 enhanced notes and citations (features/enhance.rs) ──
+    (
+        "enhance",
+        &["get", "versions", "enhance", "save", "restore", "cited"],
+    ),
     // ── FND-06 settings and secrets ──
     ("settings", &["get", "patch"]),
     ("secrets", &["set", "status", "delete"]),

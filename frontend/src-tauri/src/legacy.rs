@@ -87,10 +87,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         api::open_external_url,
         api::api_test_custom_openai_connection,
         // Summaries
-        summary::commands::api_process_transcript,
-        summary::commands::api_get_summary,
-        summary::commands::api_save_meeting_summary,
-        summary::commands::api_cancel_summary,
         // Built-in local LLM
         summary::summary_engine::commands::builtin_ai_list_models,
         summary::summary_engine::commands::builtin_ai_get_model_info,

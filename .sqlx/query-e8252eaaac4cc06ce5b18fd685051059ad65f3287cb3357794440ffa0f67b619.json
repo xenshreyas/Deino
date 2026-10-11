@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) versions, newest first, with their template's name: the\n-- version history menu. The primary key serves the filter and the order.\nSELECT\n    e.version AS \"version!: u32\",\n    e.created_at AS \"created_at!: DateTime<Utc>\",\n    e.updated_at AS \"updated_at!: DateTime<Utc>\",\n    e.template_id AS \"template_id: TemplateId\",\n    t.name AS \"template_name?: String\",\n    e.model,\n    e.is_user_edited AS \"is_user_edited!: bool\"\nFROM enhanced_notes AS e\nLEFT JOIN templates AS t ON t.id = e.template_id\nWHERE e.meeting_id = ?1\nORDER BY e.version DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "version!: u32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_name?: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "model",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_user_edited!: bool",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e8252eaaac4cc06ce5b18fd685051059ad65f3287cb3357794440ffa0f67b619"
+}

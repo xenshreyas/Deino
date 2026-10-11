@@ -646,8 +646,7 @@ showRecordingNotice: boolean }
  */
 export type Route = 
 /**
- * Enhanced notes from a transcript and the user's notes (and, until
- * NOT-02, the legacy template summaries).
+ * Enhanced notes from a transcript and the user's notes (NOT-02).
  */
 "notes.enhance" | 
 /**

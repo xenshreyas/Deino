@@ -7,7 +7,7 @@
 //! - `save_image`: a pasted image's bytes (base64), checked and stored by Rust;
 //! - `attach_dropped_image`: a file dropped on the window, by path, accepted
 //!   only if the window really received that drop ([`DroppedFiles`]);
-//! - `markdown_to_doc`, `doc_to_markdown`: `deino-doc` for the summary view.
+//! - `markdown_to_doc`, `doc_to_markdown`: `deino-doc` for views that hold Markdown.
 //!
 //! [`NotesSaved`] tells other windows a meeting's notes changed; queries
 //! stay fresh through `DbChanged` on `meeting_notes`.
@@ -18,14 +18,10 @@ mod contract_tests;
 mod dropped;
 mod events;
 
-use std::sync::Arc;
-
-use deino_core::notes::NoteService;
-use deino_domain::MeetingId;
 pub use dropped::DroppedFiles;
 pub use events::{NotesSaved, TauriNotesEvents};
+use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
-use tauri::{AppHandle, Manager, Runtime};
 
 /// Plugin name; must match this feature's entry in `features::manifest`.
 pub const NAME: &str = "notes";
@@ -49,22 +45,4 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             Ok(())
         })
         .build()
-}
-
-/// The meeting's notes as Readable Markdown, the legacy summary's user
-/// context until NOT-02 (the notepad replaced the "Add context for AI
-/// summary" box). `None` when there are no notes or they cannot be read; a
-/// summary never fails because of notes.
-pub(crate) async fn summary_context<R: Runtime>(
-    app: &AppHandle<R>,
-    meeting: &str,
-) -> Option<String> {
-    let notes = app.try_state::<Arc<NoteService>>()?;
-    match notes.markdown(&MeetingId::new(meeting)).await {
-        Ok(markdown) => markdown,
-        Err(error) => {
-            log::warn!(target: "notes", "summary for {meeting} runs without its notes: {error}");
-            None
-        }
-    }
 }

@@ -18,7 +18,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::settings::LlmAccess;
-use deino_core::summaries::SummaryGenerator;
 use deino_db::Database;
 use deino_domain::{Clock, ServiceId};
 use deino_llm::{
@@ -50,8 +49,6 @@ pub(crate) struct LlmServices {
     pub gateway: Arc<Gateway>,
     /// Settings → AI.
     pub admin: Arc<LlmAdmin>,
-    /// The legacy template summaries.
-    pub summaries: Arc<SummaryGenerator>,
     /// Drains usage records into `llm_calls`; run it once.
     pub usage_writer: UsageWriter,
 }
@@ -83,7 +80,6 @@ pub(crate) fn build(ports: LlmPorts) -> LlmServices {
         clock: ports.clock,
     }));
     LlmServices {
-        summaries: Arc::new(SummaryGenerator::new(gateway.clone())),
         gateway,
         admin,
         usage_writer,

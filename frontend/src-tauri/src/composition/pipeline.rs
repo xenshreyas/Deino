@@ -12,15 +12,13 @@ use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
-use deino_core::settings::SettingsService;
-use deino_core::speakers::SqliteNamingRepo;
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::SqliteVoiceprintRepo;
 use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::{
-    ClockSleeper, PipelineDeps, PipelineService, PipelineTrigger, ProgressSink, SqliteJobRepo,
-    StagePorts, Summarizer, registry,
+    AutomaticNotes, ClockSleeper, MeetingTitler, NotesEnhancer, PipelineDeps, PipelineService,
+    PipelineTrigger, ProgressSink, SqliteJobRepo, StagePorts, registry,
 };
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -28,33 +26,39 @@ use super::diarize;
 use crate::features;
 use crate::paths::AppPaths;
 
-/// What the pipeline gets from the app: where progress goes, the legacy
-/// summary service behind `legacy_summary`, the diarization engine behind
-/// `diarize`, the identifier behind `identify_speakers`, the services behind
-/// `extract_action_items`, `auto_tag` and `auto_export`, and the live
-/// recordings' folder that `finalize_audio` reads.
+/// What the pipeline gets from the app: where progress goes, the
+/// diarization engine behind `diarize`, the services behind the speaker,
+/// AI and export stages, and the live recordings' folder that
+/// `finalize_audio` reads.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
-    pub(crate) summaries: Arc<dyn Summarizer>,
     pub(crate) diarizer: Arc<dyn TrackDiarizer>,
-    /// Over the LLM gateway (`Organize::auto_tagger`).
-    pub(crate) auto_tagger: Arc<dyn AutoTagger>,
+    pub(crate) ai: StageServices,
     /// Every live recording's folder lives here (`AppPaths::recordings`).
     pub(crate) recordings: PathBuf,
-    /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
-    pub(crate) auto_export: Arc<dyn AutoExporter>,
-    /// Over the LLM gateway (`composition/action_items.rs`, AI-05).
-    pub(crate) action_items: Arc<dyn ActionItemExtractor>,
-    /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
-    pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
 }
 
-/// The stage services built before the pipeline: the auto-tagger, the
-/// auto-exporter, the action item extraction and the speaker identifier.
+/// The AI and export stages' services, built by the composition root.
+pub(crate) struct StageServices {
+    /// `enhance_notes` (NOT-02, `NotesAi::enhancer`).
+    pub(crate) enhancer: Arc<dyn NotesEnhancer>,
+    /// `auto_title` (NOT-02, `NotesAi::titler`).
+    pub(crate) titler: Arc<dyn MeetingTitler>,
+    /// "Generate notes automatically" (the settings).
+    pub(crate) automatic: Arc<dyn AutomaticNotes>,
+    /// The auto-tagger, the exporter, the action item extraction and the speaker identifier.
+    pub(crate) adapters: StageAdapters,
+}
+
+/// The stage services built before the notes: the auto-tagger (`auto_tag`,
+/// ORG-06), the auto-exporter, the action item extraction (AI-05) and the
+/// speaker identifier (`identify_speakers`, CAP-04).
 pub(crate) struct StageAdapters {
     pub(crate) auto_tagger: Arc<dyn AutoTagger>,
+    /// The vault exporter (`ExportServices::auto_exporter`, EXP-02).
     pub(crate) auto_export: Arc<dyn AutoExporter>,
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
+    /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
 }
 
@@ -74,18 +78,19 @@ fn stage_ports(
     StagePorts {
         segments: segments.clone(),
         meetings: meetings.clone(),
-        summaries: adapters.summaries,
+        enhancer: adapters.ai.enhancer,
+        titler: adapters.ai.titler,
+        automatic: adapters.ai.automatic,
         attendees: Arc::new(SqlitePeopleRepo::new(database.clone())),
         segment_writer: segments.clone(),
         speakers: segments,
         diarizer: adapters.diarizer,
         voiceprints: Arc::new(SqliteVoiceprintRepo::new(database.clone())),
-        identifier: adapters.identifier,
-        participants: Arc::new(SqliteNamingRepo::new(database.clone())),
+        identifier: adapters.ai.adapters.identifier,
         clock: Arc::clone(clock),
-        auto_tagger: adapters.auto_tagger,
-        auto_export: adapters.auto_export,
-        action_items: adapters.action_items,
+        auto_tagger: adapters.ai.adapters.auto_tagger,
+        auto_export: adapters.ai.adapters.auto_export,
+        action_items: adapters.ai.adapters.action_items,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
     }
@@ -138,17 +143,13 @@ impl Pipeline {
 }
 
 /// Builds the pipeline with the app's adapters, starts it and manages it.
-/// Needs the settings (`attach_settings` runs first), which name the
-/// summary model the `legacy_summary` stage uses, and the diarization models.
+/// Needs the diarization models.
 pub(super) fn attach_pipeline(
     app: &AppHandle,
     database: &Database,
     clock: &Arc<dyn Clock>,
-    stages: StageAdapters,
+    ai: StageServices,
 ) {
-    let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
-        return log::error!(target: "pipeline", "settings are not loaded; the pipeline is off");
-    };
     let recordings = match AppPaths::resolve(app) {
         Ok(paths) => paths.recordings(),
         Err(error) => {
@@ -164,17 +165,8 @@ pub(super) fn attach_pipeline(
     let adapters = PipelineAdapters {
         diarizer,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
-        summaries: Arc::new(features::pipeline::LegacySummarizer::new(
-            app.clone(),
-            database.writer().clone(),
-            Arc::clone(&settings),
-            Arc::clone(clock),
-        )),
-        auto_tagger: stages.auto_tagger,
-        auto_export: stages.auto_export,
+        ai,
         recordings,
-        action_items: stages.action_items,
-        identifier: stages.identifier,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);
 }
