@@ -3,6 +3,7 @@
 //!
 //! | Order | Stage | Until |
 //! |---|---|---|
+//! | 10 | [`FinalizeAudioStage`] (`finalize_audio`) | |
 //! | 30 | [`DiarizeStage`] (`diarize`) | |
 //! | 50 | [`LegacySummaryStage`] (`legacy_summary`) | NOT-02's `enhance_notes` replaces it |
 //! | 70 | [`AutoTagStage`] (`auto_tag`) | |
@@ -17,6 +18,7 @@ mod auto_folder;
 mod auto_folder_tests;
 mod auto_tag;
 mod diarize;
+mod finalize_audio;
 mod legacy_summary;
 
 pub use auto_export::AutoExportStage;
@@ -29,6 +31,7 @@ pub use auto_tag::AutoTagStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use auto_tag::RecordedAutoTags;
 pub use diarize::DiarizeStage;
+pub use finalize_audio::FinalizeAudioStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use legacy_summary::RecordedSummaries;
 pub use legacy_summary::{LegacySummaryStage, Summarizer, SummaryInput};

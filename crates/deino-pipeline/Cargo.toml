@@ -16,6 +16,8 @@ test-support = ["deino-core/test-support", "deino-domain/test-support"]
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+# finalize_audio: recovery and the flat per-track and mixed files (FND-05b).
+deino-audio.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
@@ -28,10 +30,12 @@ tokio.workspace = true
 tokio-util.workspace = true
 
 [dev-dependencies]
+deino-audio = { workspace = true, features = ["test-support"] }
 deino-core = { workspace = true, features = ["test-support"] }
 deino-db = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
+tempfile = "3.3.0"
 
 [lints]
 workspace = true

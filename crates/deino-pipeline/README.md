@@ -14,9 +14,12 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   Modelled on spacedrive's job contract (Apache-2.0).
 - The registry (`registry.rs`): `stages(&StagePorts)`, the one list of
   stages. **Adding a stage is one line there.**
-- The stages (`stages/`): `diarize` (order 30, CAP-03) over
+- The stages (`stages/`): `finalize_audio` (order 10, FND-05b) over
+  `deino_audio::{recover_recording, finalize_recording}` on a blocking
+  thread, storing the mic, system and mixed paths with `set_audio` (skipped
+  for meetings without a live recording folder); `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService`; `legacy_summary` (order 50) over the
-  `Summarizer` port, until NOT-02 replaces it; `auto_tag` (order 70, ORG-06)
+  `Summarizer` port, until NOT-02 replaces it (skipped when `Settings::ai.auto_summary` is off; the meeting page still summarizes on demand); `auto_tag` (order 70, ORG-06)
   over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
   `deino_core::folders::AutoFiler`; `auto_export` (order 99, EXP-02) over
   `deino_core::export::AutoExporter`.
