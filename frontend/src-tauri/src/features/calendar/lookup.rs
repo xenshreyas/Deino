@@ -1,5 +1,7 @@
 //! [`SyncedCalendar`]: CAP-06's [`CalendarLookup`] over the synced events,
-//! so a detected call is linked to the calendar event it belongs to.
+//! so a detected call is linked to the calendar event it belongs to, by the
+//! same rule that links a recording when it starts (ORG-03's
+//! [`nearest_event`]).
 //!
 //! The detector asks synchronously from its own thread, so the lookup reads
 //! [`CalendarService::events_near`] (kept in memory by every sync) and never
@@ -9,10 +11,9 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
+use deino_core::calendar::linking::nearest_event;
 use deino_core::calendar::{CalendarEvent, CalendarService};
-use deino_detect::calendar::pick_linked;
 use deino_detect::{CalendarLookup, LinkedEvent};
-use deino_domain::Rsvp;
 use tauri::{AppHandle, Manager, Runtime};
 
 /// The synced calendar, as meeting detection sees it.
@@ -34,25 +35,21 @@ impl<R: Runtime> CalendarLookup for SyncedCalendar<R> {
     }
 }
 
-/// The event among `events` a call at `now` belongs to: never an all-day
-/// event or one the user declined (CAP-06 card), else the start closest to
-/// `now` within the link window.
+/// The event among `events` a call at `now` belongs to ([`nearest_event`]:
+/// never all-day or declined, under way or starting within 15 minutes, the
+/// closest start first).
 pub(crate) fn linked_event(events: &[CalendarEvent], now: DateTime<Utc>) -> Option<LinkedEvent> {
-    let candidates = events
-        .iter()
-        .filter(|event| !event.is_all_day && event.my_rsvp != Some(Rsvp::Declined))
-        .map(|event| LinkedEvent {
-            id: event.id,
-            title: event.title.clone(),
-            starts_at: event.start_at,
-        });
-    pick_linked(candidates, now)
+    nearest_event(events, now).map(|event| LinkedEvent {
+        id: event.id,
+        title: event.title.clone(),
+        starts_at: event.start_at,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::{TimeDelta, TimeZone};
-    use deino_domain::{CalendarAccountId, CalendarEventId};
+    use deino_domain::{CalendarAccountId, CalendarEventId, Rsvp};
 
     use super::*;
 
@@ -122,6 +119,6 @@ mod tests {
 
     #[test]
     fn events_outside_the_link_window_do_not_link() {
-        assert_eq!(linked_event(&[event(1, -20), event(2, 6)], now()), None);
+        assert_eq!(linked_event(&[event(1, -40), event(2, 16)], now()), None);
     }
 }

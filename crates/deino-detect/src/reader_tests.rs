@@ -112,12 +112,12 @@ fn a_failing_sensor_reads_as_idle() {
     assert_eq!(snapshot, SignalSnapshot::default());
 }
 
-/// A calendar with one event.
+/// A calendar whose one event every call belongs to.
 struct OneEvent(LinkedEvent);
 
 impl CalendarLookup for OneEvent {
-    fn linked_event(&self, now: DateTime<Utc>) -> Option<LinkedEvent> {
-        crate::calendar::pick_linked([self.0.clone()], now)
+    fn linked_event(&self, _now: DateTime<Utc>) -> Option<LinkedEvent> {
+        Some(self.0.clone())
     }
 }
 
