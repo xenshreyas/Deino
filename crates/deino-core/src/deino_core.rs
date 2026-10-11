@@ -37,6 +37,7 @@ pub mod calendar;
 pub mod companies;
 pub mod diarization;
 pub mod export;
+mod f32_blob;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;
@@ -47,8 +48,10 @@ pub mod people;
 pub mod profile;
 pub mod segments;
 pub mod settings;
+pub mod speakers;
 pub mod summaries;
 pub mod tags;
 pub mod templates;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;
+pub mod voiceprints;

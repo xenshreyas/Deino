@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use deino_domain::{Channel, Millis};
+use deino_domain::{Channel, Millis, PersonId};
 
 /// How many speakers the calendar expects on the diarized track.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -17,12 +17,24 @@ pub enum SpeakerHint {
 }
 
 /// One track to diarize.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TrackRequest {
     /// The finalized audio file (`system.m4a`, `mic.m4a` or `audio.mp4`).
     pub audio: PathBuf,
     /// The expected speaker count.
     pub speakers: SpeakerHint,
+    /// Confirmed voiceprints of the people expected on the track (CAP-04):
+    /// clusters matching the same one merge, so one voice is one speaker.
+    pub known: Vec<KnownVoice>,
+}
+
+/// A confirmed exemplar of an expected person's voice.
+#[derive(Clone, Debug, PartialEq)]
+pub struct KnownVoice {
+    /// Whose voice it is.
+    pub person: PersonId,
+    /// The exemplar, from the engine's own embedding model.
+    pub embedding: Vec<f32>,
 }
 
 /// A stretch of one voice's speech on the track.

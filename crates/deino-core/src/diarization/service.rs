@@ -19,14 +19,16 @@ use std::sync::Arc;
 use deino_domain::{Channel, Clock, MeetingId, PaletteColor, SegmentId, SpeakerId};
 
 use super::assign::{Attributed, attribute};
+use super::known::known_voices;
 use super::plan::{PlannedTrack, plan_channels};
 use super::{DiarizationError, DiarizationOutcome, TrackDiarization, TrackDiarizer, TrackRequest};
 use crate::meetings::{MeetingAudio, MeetingLifecycleRepo};
-use crate::people::AttendeeRepo;
+use crate::people::{Attendee, AttendeeRepo};
 use crate::segments::{
     NewSpeaker, Page, Reattribution, Segment, SegmentPiece, SegmentReader, SegmentWriter, Speaker,
     SpeakerRepo, SpeakerVoice,
 };
+use crate::voiceprints::ExemplarReader;
 
 /// The label of the user's own speaker.
 pub const ME_LABEL: &str = "Me";
@@ -46,6 +48,8 @@ pub struct DiarizeDeps {
     pub speakers: Arc<dyn SpeakerRepo>,
     /// The engine.
     pub diarizer: Arc<dyn TrackDiarizer>,
+    /// Voiceprints, so the engine merges fragments of a known voice.
+    pub exemplars: Arc<dyn ExemplarReader>,
     /// IDs for new speakers and split segments.
     pub clock: Arc<dyn Clock>,
 }
@@ -73,7 +77,8 @@ impl DiarizeService {
         let mut outcome = DiarizationOutcome::default();
         let mut changes = Vec::new();
         if let Some(track) = plan.diarize {
-            let voices = self.diarize(meeting, &audio, track).await?;
+            let request = self.request(&audio, track, &attendees).await?;
+            let voices = self.diarize(meeting, request).await?;
             outcome.channel = Some(track.channel);
             outcome.speakers = voices.ids.len();
             changes.extend(self.attribute_channel(&segments, track.channel, &voices));
@@ -96,19 +101,31 @@ impl DiarizeService {
         Ok(outcome)
     }
 
-    /// Runs the engine on the planned track and stores its voices.
+    /// The engine's request for the planned track: its file, the expected
+    /// count, and the expected attendees' voiceprints.
+    async fn request(
+        &self,
+        audio: &MeetingAudio,
+        track: PlannedTrack,
+        attendees: &[Attendee],
+    ) -> Result<TrackRequest, DiarizationError> {
+        let path = track_file(audio, track.channel)
+            .ok_or(DiarizationError::AudioMissing(track.channel))?;
+        let model = self.deps.diarizer.embedding_model();
+        let exemplars = self.deps.exemplars.exemplars(model).await?;
+        Ok(TrackRequest {
+            audio: path.into(),
+            speakers: track.speakers,
+            known: known_voices(exemplars, attendees, track.channel),
+        })
+    }
+
+    /// Runs the engine and stores the track's voices.
     async fn diarize(
         &self,
         meeting: &MeetingId,
-        audio: &MeetingAudio,
-        track: PlannedTrack,
+        request: TrackRequest,
     ) -> Result<Voices, DiarizationError> {
-        let path = track_file(audio, track.channel)
-            .ok_or(DiarizationError::AudioMissing(track.channel))?;
-        let request = TrackRequest {
-            audio: path.into(),
-            speakers: track.speakers,
-        };
         let diarization = self.deps.diarizer.diarize(request).await?;
         let kept = self.deps.speakers.speakers(meeting).await?;
         let taken: Vec<String> = kept

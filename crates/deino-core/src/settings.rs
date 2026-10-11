@@ -34,6 +34,7 @@ mod patch;
 mod personal;
 mod profile;
 mod service;
+mod speakers;
 mod store;
 mod templates;
 mod transcription;
@@ -67,6 +68,7 @@ pub use profile::{
     MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,
 };
 pub use service::SettingsService;
+pub use speakers::{IdentifyThresholds, SpeakerSettings};
 pub use store::{JsonFileSettingsStore, SettingsStore};
 pub use templates::TemplateSettings;
 pub use transcription::{DEFAULT_PARAKEET_MODEL, TranscriptionEngine, TranscriptionSettings};

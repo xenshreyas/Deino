@@ -2,7 +2,7 @@
 //! re-attributed to them.
 //!
 //! A centroid is stored as little-endian `f32`s in `speakers.centroid`
-//! (`20261009075316_cap03_speaker_voices.sql`).
+//! (`20261009075316_cap03_speaker_voices.sql`, encoded by `f32_blob`).
 
 use deino_db::{Database, DbError};
 use deino_domain::{MeetingId, Millis, SegmentId, SpeakerId};
@@ -10,6 +10,7 @@ use sqlx::SqliteConnection;
 use sqlx::types::Json;
 
 use super::{NewSpeaker, Reattribution, SegmentPiece, SpeakerVoice};
+use crate::f32_blob::{decode, encode};
 
 /// Replaces the meeting's speakers other than the user's in one transaction.
 pub(super) async fn replace(
@@ -143,21 +144,4 @@ async fn insert_piece(
     .execute(connection)
     .await?;
     Ok(())
-}
-
-/// `values` as little-endian bytes.
-pub(super) fn encode(values: &[f32]) -> Vec<u8> {
-    values
-        .iter()
-        .flat_map(|value| value.to_le_bytes())
-        .collect()
-}
-
-/// Little-endian bytes back into values (a trailing partial value is
-/// dropped; the schema allows none).
-pub(super) fn decode(bytes: &[u8]) -> Vec<f32> {
-    bytes
-        .chunks_exact(4)
-        .filter_map(|chunk| chunk.try_into().ok().map(f32::from_le_bytes))
-        .collect()
 }

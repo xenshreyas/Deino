@@ -44,6 +44,8 @@ pub mod stages;
 #[cfg(test)]
 mod testing;
 mod trigger;
+#[cfg(test)]
+mod voice_profile_tests;
 
 pub use error::PipelineError;
 #[cfg(any(test, feature = "test-support"))]
@@ -60,8 +62,12 @@ pub use sleeper::FakeSleeper;
 pub use sleeper::{ClockSleeper, Sleeper};
 pub use stage::{PipelineStage, StageCtx, StageError, StageOutcome};
 pub use stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, LegacySummaryStage, Summarizer, SummaryInput,
+    AutoExportStage, AutoFolderStage, AutoTagStage, IdentifySpeakersStage, LegacySummaryStage,
+    Summarizer, SummaryInput,
 };
 #[cfg(any(test, feature = "test-support"))]
-pub use stages::{RecordedAutoFiling, RecordedAutoTags, RecordedSummaries, ScriptedAutoExporter};
+pub use stages::{
+    RecordedAutoFiling, RecordedAutoTags, RecordedIdentifications, RecordedSummaries,
+    ScriptedAutoExporter,
+};
 pub use trigger::PipelineTrigger;

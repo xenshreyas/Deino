@@ -226,6 +226,11 @@ uuid_id!(
     LlmCallId
 );
 
+uuid_id!(
+    /// Identifies one enrolled exemplar of a person's voice (CAP-04).
+    VoiceprintId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

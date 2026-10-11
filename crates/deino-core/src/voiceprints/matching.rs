@@ -8,14 +8,11 @@
 //! another voice matched the wrong person at 0.81, and only the two
 //! safeguards together rejected it (`docs/references/spike-diarization.md`).
 //!
-//! [`spans`] picks the clean single-speaker audio a voiceprint is enrolled
-//! from.
-
-pub mod spans;
+//! CAP-03 shipped these in `deino-diarize`; CAP-04 moved them here, beside
+//! the `identify_speakers` rules that use them (ADR 0028). The engine's
+//! known-speaker merge imports them from here.
 
 use std::collections::BTreeMap;
-
-use crate::vector::Embedding;
 
 /// anarlog's floor for a unique match with WeSpeaker ResNet34.
 pub const MIN_UNIQUE_SCORE: f32 = 0.62;
@@ -55,11 +52,26 @@ pub struct Assignment<S, P> {
 /// A person's score for a voice: the best cosine similarity over their
 /// exemplars (anarlog keeps up to five; the max, not the mean, so one good
 /// exemplar is enough). `None` when no exemplar is comparable.
-pub fn best_score(voice: &Embedding, exemplars: &[Embedding]) -> Option<f32> {
+pub fn best_score<'a>(
+    voice: &[f32],
+    exemplars: impl IntoIterator<Item = &'a [f32]>,
+) -> Option<f32> {
     exemplars
-        .iter()
-        .filter_map(|exemplar| voice.cosine(exemplar))
+        .into_iter()
+        .filter_map(|exemplar| cosine(voice, exemplar))
         .max_by(f32::total_cmp)
+}
+
+/// Cosine similarity in `[-1, 1]`; `None` for mismatched lengths, empty or
+/// zero vectors.
+pub fn cosine(left: &[f32], right: &[f32]) -> Option<f32> {
+    if left.len() != right.len() || left.is_empty() {
+        return None;
+    }
+    let dot: f32 = left.iter().zip(right).map(|(l, r)| l * r).sum();
+    let norm = |vector: &[f32]| vector.iter().map(|value| value * value).sum::<f32>().sqrt();
+    let denominator = norm(left) * norm(right);
+    (denominator > 0.0).then(|| (dot / denominator).clamp(-1.0, 1.0))
 }
 
 /// The pairings that are each side's unique best under `rule`, sorted by
@@ -203,13 +215,20 @@ mod tests {
 
     #[test]
     fn best_score_takes_the_max_over_exemplars() {
-        let voice = Embedding::new(vec![1.0, 0.0]).unwrap();
-        let exemplars = [
-            Embedding::new(vec![0.0, 1.0]).unwrap(),
-            Embedding::new(vec![1.0, 0.1]).unwrap(),
-        ];
-        assert!(best_score(&voice, &exemplars).unwrap() > 0.99);
-        assert_eq!(best_score(&voice, &[]), None);
+        let voice = [1.0, 0.0];
+        let exemplars = [[0.0, 1.0], [1.0, 0.1]];
+        let best = best_score(&voice, exemplars.iter().map(<[f32; 2]>::as_slice));
+        assert!(best.unwrap() > 0.99);
+        assert_eq!(best_score(&voice, std::iter::empty()), None);
+    }
+
+    #[test]
+    fn cosine_ignores_scale_and_rejects_mismatches() {
+        assert!((cosine(&[1.0, 0.0], &[5.0, 0.0]).unwrap() - 1.0).abs() < 1e-6);
+        assert_eq!(cosine(&[1.0, 0.0], &[0.0, 1.0]), Some(0.0));
+        assert_eq!(cosine(&[1.0], &[1.0, 0.0]), None);
+        assert_eq!(cosine(&[0.0, 0.0], &[1.0, 0.0]), None);
+        assert_eq!(cosine(&[], &[]), None);
     }
 
     #[test]

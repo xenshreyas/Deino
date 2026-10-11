@@ -23,6 +23,7 @@ use deino_core::meetings::{MeetingAudio, MeetingLifecycleRepo, SqliteMeetingRepo
 use deino_core::models::{FakeByteSource, FakeServer};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::{Page, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
+use deino_core::voiceprints::SqliteVoiceprintRepo;
 use deino_db::Database;
 use deino_diarize::RuntimeConfig;
 use deino_diarize::models::{EMBEDDING_MODEL_ID, ModelStore};
@@ -67,6 +68,7 @@ fn service(database: &Database) -> (DiarizeService, Arc<SqliteSegmentRepo>) {
         writer: segments.clone(),
         speakers: segments.clone(),
         diarizer: Arc::new(engine),
+        exemplars: Arc::new(SqliteVoiceprintRepo::new(database.clone())),
         clock: Arc::new(SystemClock),
     });
     (service, segments)

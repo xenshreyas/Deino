@@ -20,14 +20,15 @@
 //! | [`segmentation`], [`embedding`] | The two ONNX models |
 //! | [`clustering`] | Centroid-linkage clustering under speaker bounds |
 //! | [`prune`] | Phantom-speaker pruning and collapse detection (OpenWhispr rules) |
-//! | [`voiceprint`] | Matching primitives and enrolment spans for CAP-04 |
 //! | [`online`] | Live online clustering for CAP-02 |
 //! | [`metrics`] | Diarization error rate for the benchmark |
 //! | [`models`] | Pinned model files, the verified store, the downloader port |
 //! | [`track`] | The `deino-core` `TrackDiarizer` adapter (decode, run, prune) |
 //!
 //! No `tauri`, no `deino-net`: the store downloads through `deino-core`'s
-//! `ByteSource` port.
+//! `ByteSource` port. The voiceprint matching rules and enrolment spans moved
+//! to `deino-core::voiceprints` (CAP-04), where `identify_speakers` uses
+//! them; the known-speaker merge here imports them from there.
 
 pub mod clustering;
 pub mod config;
@@ -44,7 +45,6 @@ pub mod segmentation;
 pub mod track;
 pub mod units;
 pub mod vector;
-pub mod voiceprint;
 
 pub use config::{DiarizationConfig, RuntimeConfig, SpeakerBounds};
 pub use error::DiarizeError;

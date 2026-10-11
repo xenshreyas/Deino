@@ -8,18 +8,20 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
-use deino_core::diarization::TrackDiarizer;
+use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::export::AutoExporter;
 use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
+use deino_core::speakers::ParticipantReader;
 use deino_core::tags::AutoTagger;
+use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
 
 use crate::stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, DiarizeStage, ExtractActionItemsStage,
-    FinalizeAudioStage, LegacySummaryStage, Summarizer,
+    FinalizeAudioStage, IdentifySpeakersStage, LegacySummaryStage, Summarizer,
 };
 use crate::{Job, PipelineStage};
 
@@ -45,6 +47,12 @@ pub struct StagePorts {
     pub auto_export: Arc<dyn AutoExporter>,
     /// Action item extraction over the LLM gateway (AI-05).
     pub action_items: Arc<dyn ActionItemExtractor>,
+    /// Voice exemplars the engine merges known voices with (CAP-04).
+    pub voiceprints: Arc<dyn ExemplarReader>,
+    /// Names speakers from voice profiles and the calendar (CAP-04).
+    pub identifier: Arc<dyn SpeakerIdentifier>,
+    /// Speakers with their names, for the notes input.
+    pub participants: Arc<dyn ParticipantReader>,
     /// IDs for rows stages create.
     pub clock: Arc<dyn Clock>,
     /// The auto-tagger (ORG-06).
@@ -65,6 +73,7 @@ impl StagePorts {
         use deino_core::meetings::FakeMeetingRepo;
         use deino_core::people::FakePeopleRepo;
         use deino_core::segments::FakeSegmentRepo;
+        use deino_core::voiceprints::FakeVoiceprintRepo;
         use deino_domain::FakeClock;
 
         let segments = Arc::new(FakeSegmentRepo::default());
@@ -74,10 +83,13 @@ impl StagePorts {
             summaries: Arc::new(crate::stages::RecordedSummaries::default()),
             attendees: Arc::new(FakePeopleRepo::default()),
             segment_writer: segments.clone(),
-            speakers: segments,
+            speakers: segments.clone(),
             diarizer: Arc::new(FakeTrackDiarizer::default()),
             auto_export: Arc::new(crate::stages::ScriptedAutoExporter::default()),
             action_items: Arc::new(FakeActionItemExtractor::default()),
+            voiceprints: Arc::new(FakeVoiceprintRepo::default()),
+            identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
+            participants: segments.clone(),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
@@ -93,6 +105,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(FinalizeAudioStage::new(ports)),
         // 30 · CAP-03: speakers from the recording.
         Arc::new(DiarizeStage::new(ports)),
+        // 35 · CAP-04: their names, from voice profiles and the calendar.
+        Arc::new(IdentifySpeakersStage::new(ports)),
         // 50 · until NOT-02's enhance_notes replaces it.
         Arc::new(LegacySummaryStage::new(ports)),
         // 60 · AI-05: commitments, owners and due days.
@@ -180,6 +194,7 @@ mod tests {
             [
                 "finalize_audio",
                 "diarize",
+                "identify_speakers",
                 "legacy_summary",
                 "extract_action_items",
                 "auto_tag",

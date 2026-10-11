@@ -16,7 +16,7 @@ use crate::{PipelineStage, RetryPolicy, StageCtx, StageError, StageOutcome, Stag
 
 /// The stage's stored name.
 const ID: &str = "diarize";
-/// Where it runs: after transcription, before `identify_speakers` (§4.2).
+/// Where it runs: after transcription, before `identify_speakers` (35).
 const ORDER: u16 = 30;
 /// Shown when the meeting has no recorded track to diarize.
 const NO_RECORDING: &str = "The meeting's recording is not available to tell speakers apart.";
@@ -42,6 +42,7 @@ impl DiarizeStage {
             writer: Arc::clone(&ports.segment_writer),
             speakers: Arc::clone(&ports.speakers),
             diarizer: Arc::clone(&ports.diarizer),
+            exemplars: Arc::clone(&ports.voiceprints),
             clock: Arc::clone(&ports.clock),
         });
         Self {

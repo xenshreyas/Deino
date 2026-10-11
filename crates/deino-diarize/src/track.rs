@@ -4,25 +4,28 @@
 //! is missing through the [`ByteSource`] port, verified), decode the finalized track at
 //! 16 kHz with `deino-audio` (`ExtAudioFile`, so the AAC priming is trimmed
 //! and timestamps stay on the recording's timeline), choose the parameters
-//! for its length ([`policy`]), diarize, then prune phantom speakers. All of
-//! it runs on a blocking thread, and the models are loaded per run so a
+//! for its length ([`policy`]), diarize with the request's known voiceprints
+//! (fragments of one known voice merge), then prune phantom speakers. All
+//! of it runs on a blocking thread, and the models are loaded per run so a
 //! finished meeting holds no memory.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::diarization::{
-    SpeakerHint, TrackDiarization, TrackDiarizer, TrackError, TrackRequest, Voice, VoiceTurn,
+    KnownVoice, SpeakerHint, TrackDiarization, TrackDiarizer, TrackError, TrackRequest, Voice,
+    VoiceTurn,
 };
 use deino_core::models::ByteSource;
 
 use crate::config::{RuntimeConfig, SpeakerBounds};
 use crate::error::DiarizeError;
 use crate::models::{EMBEDDING_MODEL_ID, ModelStore};
-use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, ModelPaths};
+use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, KnownSpeaker, ModelPaths};
 use crate::policy::{self, ExpectedSpeakers};
 use crate::prune;
 use crate::units::{SAMPLE_RATE, samples_to_duration};
+use crate::vector::Embedding;
 
 /// The ONNX diarizer as a `TrackDiarizer`.
 ///
@@ -69,8 +72,10 @@ impl TrackDiarizer for OnnxTrackDiarizer {
     }
 }
 
-/// Decodes and diarizes one track file (blocking).
-fn diarize_file(
+/// Decodes and diarizes one track file with the models at `models`
+/// (blocking): the whole engine run of [`OnnxTrackDiarizer`], without the
+/// store. Benchmarks and model tests call it with local model files.
+pub fn diarize_file(
     models: &ModelPaths,
     runtime: RuntimeConfig,
     request: &TrackRequest,
@@ -81,8 +86,10 @@ fn diarize_file(
     let bounds = policy::bounds_for(duration, expected(request.speakers));
     let mut diarizer =
         Diarizer::new(policy::config_for(duration, runtime), models).map_err(engine)?;
+    let known = known_speakers(&request.known);
     let run = DiarizeRequest {
         bounds,
+        known_speakers: &known,
         ..DiarizeRequest::default()
     };
     let diarization = diarizer.diarize(samples.as_slice(), &run).map_err(engine)?;
@@ -104,6 +111,20 @@ pub fn post_process(diarization: Diarization, bounds: SpeakerBounds) -> Diarizat
         return prune::collapse_to_one(diarization);
     }
     prune::prune_phantoms(diarization)
+}
+
+/// The port's voiceprints as the engine's known speakers; a vector the
+/// model could not have produced (not finite) is dropped.
+pub fn known_speakers(known: &[KnownVoice]) -> Vec<KnownSpeaker> {
+    known
+        .iter()
+        .filter_map(|voice| {
+            Some(KnownSpeaker {
+                person: voice.person,
+                embedding: Embedding::new(voice.embedding.clone())?,
+            })
+        })
+        .collect()
 }
 
 /// The port's speaker hint as the policy's expectation.
@@ -173,6 +194,19 @@ mod tests {
                 })
                 .collect(),
         }
+    }
+
+    #[test]
+    fn known_voices_become_known_speakers_unless_unusable() {
+        let clock = deino_domain::FakeClock::new(deino_testkit::at("2026-10-11T09:00:00Z"));
+        let person = deino_domain::PersonId::generate(&clock);
+        let voice = |embedding: Vec<f32>| KnownVoice { person, embedding };
+
+        let known = known_speakers(&[voice(vec![0.6, 0.8]), voice(vec![f32::NAN, 1.0])]);
+
+        assert_eq!(known.len(), 1);
+        assert_eq!(known[0].person, person);
+        assert_eq!(known[0].embedding.as_slice(), [0.6, 0.8]);
     }
 
     #[test]

@@ -1,18 +1,21 @@
 //! `legacy_summary` (order 50): the inherited summary generation as a stage.
 //!
 //! A temporary bridge until NOT-02's `enhance_notes` replaces it. The stage
-//! reads the meeting's transcript and template and hands them to the
-//! [`Summarizer`] port; the app implements the port over the legacy
+//! reads the meeting's transcript, its speakers' names (CAP-04: a renamed
+//! speaker reaches the notes on regeneration) and template and hands them
+//! to the [`Summarizer`] port; the app implements the port over the legacy
 //! summary service (`features/pipeline/legacy_summary.rs`), the one place
 //! that calls it, so FND-09's gateway rewrite of the summary code touches
 //! only that adapter.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::segments::{Page, Segment, SegmentReader};
-use deino_domain::{MeetingId, StageId, TemplateId};
+use deino_core::speakers::{ParticipantReader, ParticipantRow};
+use deino_domain::{MeetingId, SpeakerId, StageId, TemplateId};
 use tokio_util::sync::CancellationToken;
 
 use crate::{PipelineStage, StageCtx, StageError, StageOutcome, StagePorts};
@@ -33,8 +36,8 @@ const SECONDS_PER_MINUTE: u32 = 60;
 pub struct SummaryInput {
     /// The meeting the summary is for.
     pub meeting_id: MeetingId,
-    /// The transcript, one `[MM:SS] text` line per segment, as the meeting
-    /// page used to send it.
+    /// The transcript, one `[MM:SS] Name: text` line per segment (`[MM:SS]
+    /// text` when nobody is attributed), as the meeting page used to send it.
     pub transcript: String,
     /// The meeting's note template, or `None` for the default.
     pub template: Option<TemplateId>,
@@ -60,6 +63,7 @@ pub trait Summarizer: Send + Sync {
 /// Summarises the meeting through the legacy summary service.
 pub struct LegacySummaryStage {
     segments: Arc<dyn SegmentReader>,
+    participants: Arc<dyn ParticipantReader>,
     meetings: Arc<dyn MeetingLifecycleRepo>,
     summaries: Arc<dyn Summarizer>,
 }
@@ -69,6 +73,7 @@ impl LegacySummaryStage {
     pub fn new(ports: &StagePorts) -> Self {
         Self {
             segments: Arc::clone(&ports.segments),
+            participants: Arc::clone(&ports.participants),
             meetings: Arc::clone(&ports.meetings),
             summaries: Arc::clone(&ports.summaries),
         }
@@ -84,14 +89,19 @@ impl LegacySummaryStage {
         if segments.is_empty() {
             return Ok(None);
         }
+        let speakers = self
+            .participants
+            .participants(&meeting)
+            .await
+            .map_err(|error| StageError::retryable_from(&error))?;
         let state = self
             .meetings
             .state(&meeting)
             .await
             .map_err(|error| StageError::retryable_from(&error))?;
         Ok(Some(SummaryInput {
+            transcript: transcript_text(&segments, &names(speakers)),
             meeting_id: meeting,
-            transcript: transcript_text(&segments),
             template: state.and_then(|state| state.template_id),
         }))
     }
@@ -118,14 +128,30 @@ impl PipelineStage for LegacySummaryStage {
     }
 }
 
-/// The transcript as the legacy summariser expects it: `[MM:SS] text` lines.
-fn transcript_text(segments: &[Segment]) -> String {
+/// Each speaker's name: the person it is, else its label ("Speaker 2").
+fn names(speakers: Vec<ParticipantRow>) -> HashMap<SpeakerId, String> {
+    speakers
+        .into_iter()
+        .map(|row| {
+            let name = row.person.map_or(row.speaker.label, |person| person.name);
+            (row.speaker.id, name)
+        })
+        .collect()
+}
+
+/// The transcript as the legacy summariser expects it: `[MM:SS] text`
+/// lines, with the speaker's name before the text when it is known.
+fn transcript_text(segments: &[Segment], names: &HashMap<SpeakerId, String>) -> String {
     let lines: Vec<String> = segments
         .iter()
         .map(|segment| {
             let seconds = segment.start.get() / 1_000;
             let (minutes, seconds) = (seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE);
-            format!("[{minutes:02}:{seconds:02}] {}", segment.text)
+            let speaker = segment.speaker_id.and_then(|id| names.get(&id));
+            match speaker {
+                Some(name) => format!("[{minutes:02}:{seconds:02}] {name}: {}", segment.text),
+                None => format!("[{minutes:02}:{seconds:02}] {}", segment.text),
+            }
         })
         .collect();
     lines.join("\n")
@@ -192,8 +218,10 @@ mod recorded {
 #[cfg(test)]
 mod tests {
     use deino_core::meetings::{FakeMeetingRepo, MeetingTitle, NewMeeting};
-    use deino_core::segments::{FakeSegmentRepo, NewSegment, SegmentWriter};
-    use deino_domain::{Channel, FakeClock, MeetingSource, MeetingStatus, Millis, SegmentId};
+    use deino_core::segments::{FakeSegmentRepo, NewSegment, SegmentWriter, Speaker, SpeakerRepo};
+    use deino_domain::{
+        Channel, FakeClock, MeetingSource, MeetingStatus, Millis, PaletteColor, SegmentId,
+    };
     use deino_testkit::at;
 
     use super::*;
@@ -226,6 +254,7 @@ mod tests {
             .unwrap();
         let ports = StagePorts {
             segments: segments.clone(),
+            participants: segments.clone(),
             meetings: meetings.clone(),
             summaries: summaries.clone(),
             ..StagePorts::fakes()
@@ -312,6 +341,39 @@ mod tests {
 
         assert_eq!(outcome, Ok(StageOutcome::Skipped(TURNED_OFF)));
         assert!(summaries.requests().is_empty());
+    }
+
+    #[tokio::test]
+    async fn lines_carry_the_speakers_names() {
+        let harness = harness().await;
+        let clock = FakeClock::new(at(AT));
+        let speaker = Speaker {
+            id: SpeakerId::generate(&clock),
+            meeting_id: MeetingId::new("meeting-a"),
+            label: "Speaker 2".into(),
+            person_id: None,
+            is_me: false,
+            color: PaletteColor::cycle(1),
+        };
+        harness.segments.add_speaker(&speaker).await.unwrap();
+        let said = NewSegment {
+            speaker_id: Some(speaker.id),
+            ..segment(2_000, "ship it")
+        };
+        harness
+            .segments
+            .append(&[said, segment(3_000, "ok")])
+            .await
+            .unwrap();
+
+        harness
+            .stage
+            .run(&ctx(), MeetingId::new("meeting-a"))
+            .await
+            .unwrap();
+
+        let transcript = &harness.summaries.requests()[0].transcript;
+        assert_eq!(transcript, "[00:02] Speaker 2: ship it\n[00:03] ok");
     }
 
     #[test]
