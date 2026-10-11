@@ -189,6 +189,12 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "event",
             "connect",
             "disconnect",
+            // ── ORG-03 event linking and related meetings ──
+            "meeting_event",
+            "event_suggestions",
+            "link_event",
+            "unlink_event",
+            "related_meetings",
         ],
     ),
     // ── CAP-04 speaker naming and voice profiles ──

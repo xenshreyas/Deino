@@ -409,6 +409,10 @@ export type PersonId = string & { readonly __brand: "PersonId" }
  */
 export type RegenerateReason = 
 /**
+ * The meeting was linked to another calendar event, or unlinked (ORG-03).
+ */
+"eventChanged" | 
+/**
  * Someone was added to or removed from the meeting.
  */
 "attendeesChanged" | 

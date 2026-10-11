@@ -1,5 +1,6 @@
-//! Commands of the `calendar` plugin: sync, Settings → Calendars, and what
-//! "Coming up" lists.
+//! Commands of the `calendar` plugin: sync, Settings → Calendars, what
+//! "Coming up" lists, and a meeting's event link and related meetings
+//! (ORG-03).
 
 #![allow(
     clippy::let_underscore_must_use,
@@ -8,10 +9,13 @@
 
 use std::sync::Arc;
 
+use deino_core::calendar::linking::{
+    EventLinkChange, EventLinkService, RelatedMeetings, RelatedService,
+};
 use deino_core::calendar::{
     CalendarEvent, CalendarService, CalendarStatus, CalendarView, TimeRange,
 };
-use deino_domain::{AppError, CalendarEventId, CalendarId, CalendarProvider};
+use deino_domain::{AppError, CalendarEventId, CalendarId, CalendarProvider, MeetingId};
 use tauri::{Runtime, State};
 
 use crate::error::IntoIpc;
@@ -30,6 +34,11 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         event,
         connect,
         disconnect,
+        meeting_event,
+        event_suggestions,
+        link_event,
+        unlink_event,
+        related_meetings,
     ]
 }
 
@@ -131,4 +140,60 @@ async fn disconnect(
     provider: CalendarProvider,
 ) -> Result<CalendarStatus, AppError> {
     calendar.disconnect(provider).await.into_ipc()
+}
+
+/// The event `meetingId` is linked to; null when it has none (or the event
+/// left the calendar). Fails with `not_found` for an unknown meeting.
+#[tauri::command]
+#[specta::specta]
+async fn meeting_event(
+    links: State<'_, Arc<EventLinkService>>,
+    meeting_id: MeetingId,
+) -> Result<Option<CalendarEvent>, AppError> {
+    links.linked(&meeting_id).await.into_ipc()
+}
+
+/// The events the meeting header's picker suggests: the day before the
+/// meeting to an hour after, closest first; never all-day or declined.
+#[tauri::command]
+#[specta::specta]
+async fn event_suggestions(
+    links: State<'_, Arc<EventLinkService>>,
+    meeting_id: MeetingId,
+) -> Result<Vec<CalendarEvent>, AppError> {
+    links.suggestions(&meeting_id).await.into_ipc()
+}
+
+/// Links the meeting to an event, also mid-recording: takes its title and
+/// makes its invitees the attendees, replacing the previous event's.
+#[tauri::command]
+#[specta::specta]
+async fn link_event(
+    links: State<'_, Arc<EventLinkService>>,
+    meeting_id: MeetingId,
+    event_id: CalendarEventId,
+) -> Result<EventLinkChange, AppError> {
+    links.link(&meeting_id, &event_id).await.into_ipc()
+}
+
+/// Unlinks the meeting from its event and takes the event's invitees off
+/// it; the title stays.
+#[tauri::command]
+#[specta::specta]
+async fn unlink_event(
+    links: State<'_, Arc<EventLinkService>>,
+    meeting_id: MeetingId,
+) -> Result<EventLinkChange, AppError> {
+    links.unlink(&meeting_id).await.into_ipc()
+}
+
+/// The meetings related to this one (same series, or the same title and
+/// people), with "Previous in series".
+#[tauri::command]
+#[specta::specta]
+async fn related_meetings(
+    related: State<'_, Arc<RelatedService>>,
+    meeting_id: MeetingId,
+) -> Result<RelatedMeetings, AppError> {
+    related.related(&meeting_id).await.into_ipc()
 }
