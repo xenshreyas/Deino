@@ -18,14 +18,16 @@ use crate::testing::lock;
 /// paging and hiding deleted segments.
 #[derive(Debug, Default)]
 pub struct FakeSegmentRepo {
-    segments: Mutex<Vec<Segment>>,
+    pub(super) segments: Mutex<Vec<Segment>>,
+    /// Meeting titles for [`SegmentEditor::matching`](super::SegmentEditor::matching).
+    pub(super) titles: Mutex<Vec<(MeetingId, String)>>,
     speakers: Mutex<Vec<Speaker>>,
     voices: Mutex<Vec<(SpeakerId, SpeakerVoice)>>,
 }
 
 impl FakeSegmentRepo {
     /// Runs `change` on the segment with `id`; `false` if missing.
-    fn update(&self, id: &SegmentId, change: impl FnOnce(&mut Segment)) -> bool {
+    pub(super) fn update(&self, id: &SegmentId, change: impl FnOnce(&mut Segment)) -> bool {
         let mut segments = lock(&self.segments);
         segments
             .iter_mut()
@@ -77,6 +79,7 @@ fn split_off(original: &Segment, id: SegmentId, piece: &SegmentPiece) -> Segment
         words: piece.words.clone(),
         is_deleted: false,
         edited_at: None,
+        original_text: None,
         ..original.clone()
     }
 }
@@ -93,6 +96,7 @@ fn stored(segment: &NewSegment) -> Segment {
         words: segment.words.clone(),
         is_deleted: false,
         edited_at: None,
+        original_text: None,
     }
 }
 
@@ -136,10 +140,7 @@ impl SegmentWriter for FakeSegmentRepo {
         text: &str,
         at: DateTime<Utc>,
     ) -> Result<bool, DbError> {
-        Ok(self.update(id, |segment| {
-            text.clone_into(&mut segment.text);
-            segment.edited_at = Some(at);
-        }))
+        Ok(self.update(id, |segment| edit(segment, text, at)))
     }
 
     async fn set_deleted(&self, id: &SegmentId, deleted: bool) -> Result<bool, DbError> {
@@ -252,4 +253,14 @@ impl SpeakerRepo for FakeSegmentRepo {
             .find(|(speaker, _)| speaker == id)
             .map(|(_, voice)| voice.clone()))
     }
+}
+
+/// A user edit, as the repository applies it: the first edit keeps the
+/// engine's text in `original_text`.
+pub(super) fn edit(segment: &mut Segment, text: &str, at: DateTime<Utc>) {
+    if segment.original_text.is_none() {
+        segment.original_text = Some(segment.text.clone());
+    }
+    text.clone_into(&mut segment.text);
+    segment.edited_at = Some(at);
 }

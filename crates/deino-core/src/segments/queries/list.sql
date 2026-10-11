@@ -11,7 +11,8 @@ SELECT
     text,
     words_json AS "words: Json<Vec<WordTiming>>",
     is_deleted AS "is_deleted: bool",
-    edited_at AS "edited_at: DateTime<Utc>"
+    edited_at AS "edited_at: DateTime<Utc>",
+    original_text
 FROM transcript_segments
 WHERE meeting_id = ?1 AND is_deleted = 0
 ORDER BY start_ms, id

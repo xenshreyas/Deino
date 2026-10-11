@@ -28,6 +28,9 @@ pub struct Segment {
     pub is_deleted: bool,
     /// When the user last edited `text`.
     pub edited_at: Option<DateTime<Utc>>,
+    /// What the engine heard, kept by the first edit (TRN-02); `None` while
+    /// the segment was never edited.
+    pub original_text: Option<String>,
 }
 
 /// A segment to store, as the transcription worker produces it.

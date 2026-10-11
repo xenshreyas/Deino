@@ -18,9 +18,15 @@
 //!
 //! The recorder (`deino-recording`) writes through these ports, and the
 //! transcript view reads through them with `crate::transcript` (TRN-01).
+//! The transcript edits (TRN-02) add [`SegmentEditor`]: one segment in any
+//! state, batched text edits that keep `original_text`, and the segments a
+//! find and replace may change.
 
+mod editor;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
+#[cfg(any(test, feature = "test-support"))]
+mod fake_editor;
 mod model;
 mod repo;
 #[cfg(test)]
@@ -34,6 +40,7 @@ mod voices_tests;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::FakeSegmentRepo;
+pub use editor::{SegmentEditor, SegmentText, TextEdit};
 pub use model::{
     NewSegment, NewSpeaker, Page, Reattribution, Segment, SegmentPiece, Speaker, SpeakerVoice,
     WordTiming,
