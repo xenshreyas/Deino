@@ -11,6 +11,7 @@ use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
+use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
@@ -22,8 +23,9 @@ use deino_domain::{Clock, StageId};
 
 use crate::stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
-    EnhanceNotesStage, ExtractActionItemsStage, FinalizeAudioStage, IdentifySpeakersStage,
-    IndexStage, MeetingTitler, NotesEnhancer, UpdateEntitiesStage,
+    EnhanceNotesStage, ExtractActionItemsStage, FinalTranscriptionStage, FinalizeAudioStage,
+    IdentifySpeakersStage, IndexStage, MeetingTitler, NotesEnhancer, RepassSetting,
+    UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
 };
 use crate::{Job, PipelineStage};
 
@@ -69,6 +71,12 @@ pub struct StagePorts {
     pub recordings: PathBuf,
     /// Search indexing: keyword documents and embeddings (ORG-08, AI-01).
     pub search: Arc<dyn SearchIndexing>,
+    /// Transcribes finished tracks (CAP-08, `final_transcription`).
+    pub transcriber: Arc<dyn TrackTranscriber>,
+    /// Settings → Transcription → "High-accuracy re-pass" (CAP-08).
+    pub repass: Arc<dyn RepassSetting>,
+    /// Corrects transcripts with the vocabulary (TRN-05, `vocab_fixups`).
+    pub vocab_fixer: Arc<dyn VocabFixer>,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -78,6 +86,7 @@ impl StagePorts {
     pub fn fakes() -> Self {
         use deino_core::action_items::FakeActionItemExtractor;
         use deino_core::diarization::FakeTrackDiarizer;
+        use deino_core::final_transcription::ScriptedTracks;
         use deino_core::meetings::FakeMeetingRepo;
         use deino_core::people::FakePeopleRepo;
         use deino_core::segments::FakeSegmentRepo;
@@ -105,6 +114,9 @@ impl StagePorts {
             entities: Arc::new(crate::stages::RecordedEntityUpdates::default()),
             recordings: PathBuf::from("no-recordings"),
             search: Arc::new(crate::stages::RecordedIndexing::default()),
+            transcriber: Arc::new(ScriptedTracks::default()),
+            repass: Arc::new(crate::stages::FixedRepass(false)),
+            vocab_fixer: Arc::new(crate::stages::RecordedFixer::default()),
         }
     }
 }
@@ -114,10 +126,14 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
     sorted(vec![
         // 10 · FND-05b: the recording's mic, system and mixed files.
         Arc::new(FinalizeAudioStage::new(ports)),
+        // 20 · CAP-08: the transcript of a record-only meeting, or the re-pass.
+        Arc::new(FinalTranscriptionStage::new(ports)),
         // 30 · CAP-03: speakers from the recording.
         Arc::new(DiarizeStage::new(ports)),
         // 35 · CAP-04: their names, from voice profiles and the calendar.
         Arc::new(IdentifySpeakersStage::new(ports)),
+        // 40 · TRN-05: the transcript corrected with the vocabulary.
+        Arc::new(VocabFixupsStage::new(ports)),
         // 50 · NOT-02: the enhanced notes.
         Arc::new(EnhanceNotesStage::new(ports)),
         // 60 · AI-05: commitments, owners and due days.
@@ -210,8 +226,10 @@ mod tests {
             Registry::new(stages).ids(),
             [
                 "finalize_audio",
+                "final_transcription",
                 "diarize",
                 "identify_speakers",
+                "vocab_fixups",
                 "enhance_notes",
                 "extract_action_items",
                 "auto_title",

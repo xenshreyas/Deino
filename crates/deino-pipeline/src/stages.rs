@@ -4,8 +4,10 @@
 //! | Order | Stage | Card |
 //! |---|---|---|
 //! | 10 | [`FinalizeAudioStage`] (`finalize_audio`) | FND-05b |
+//! | 20 | [`FinalTranscriptionStage`] (`final_transcription`) | CAP-08 |
 //! | 30 | [`DiarizeStage`] (`diarize`) | CAP-03 |
 //! | 35 | [`IdentifySpeakersStage`] (`identify_speakers`) | CAP-04 |
+//! | 40 | [`VocabFixupsStage`] (`vocab_fixups`) | TRN-05 |
 //! | 50 | [`EnhanceNotesStage`] (`enhance_notes`) | NOT-02 |
 //! | 60 | [`ExtractActionItemsStage`] (`extract_action_items`) | AI-05 |
 //! | 65 | [`AutoTitleStage`] (`auto_title`) | NOT-02 |
@@ -26,10 +28,12 @@ mod auto_title;
 mod diarize;
 mod enhance_notes;
 mod extract_action_items;
+mod final_transcription;
 mod finalize_audio;
 mod identify_speakers;
 mod index;
 mod update_entities;
+mod vocab_fixups;
 
 pub use auto_export::AutoExportStage;
 #[cfg(any(test, feature = "test-support"))]
@@ -50,6 +54,9 @@ pub use enhance_notes::{
 #[cfg(any(test, feature = "test-support"))]
 pub use enhance_notes::{FixedAutomaticNotes, RecordedEnhancer};
 pub use extract_action_items::ExtractActionItemsStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use final_transcription::FixedRepass;
+pub use final_transcription::{FinalTranscriptionStage, RepassSetting};
 pub use finalize_audio::FinalizeAudioStage;
 pub use identify_speakers::IdentifySpeakersStage;
 #[cfg(any(test, feature = "test-support"))]
@@ -60,3 +67,6 @@ pub use index::RecordedIndexing;
 #[cfg(any(test, feature = "test-support"))]
 pub use update_entities::RecordedEntityUpdates;
 pub use update_entities::UpdateEntitiesStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use vocab_fixups::RecordedFixer;
+pub use vocab_fixups::{VocabFixer, VocabFixupsStage};
