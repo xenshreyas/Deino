@@ -1,0 +1,45 @@
+---
+source: crates/deino-core/src/enhance/prompt/prompt_tests.rs
+expression: "prompt.messages[0].text()"
+---
+<meeting>
+Title: Maya 1:1
+Date: Wednesday 7 October 2026, 15:00 UTC
+Calendar event: Maya / Shreyas weekly
+Attendees (2): Shreyas (me), Maya Chen (Staff engineer)
+Description: Weekly one-on-one.
+</meeting>
+
+<template>
+1:1. Two people catching up regularly. Capture what each person raised, feedback in both directions and agreed follow-ups. Keep the tone personal and candid, and do not editorialise about anyone's performance.
+Sections, in order:
+1. Check-in: Two or three sentences on how each person is doing (workload, energy, morale), only as far as they shared it. Write one or two paragraph blocks of prose.
+2. Topics: Each topic either person raised, with the key points and where it landed. Write bullet blocks, one idea each.
+3. Feedback: Feedback given in either direction, attributed, in the giver's own words where possible. Omit the section if none was given. Write bullet blocks, one idea each.
+4. Growth: Goals, skills, opportunities or concerns about career growth. Omit the section if not discussed. Write bullet blocks, one idea each.
+5. Action items: Follow-ups for either person, with the owner and due date when stated. Write todo blocks, one action each, naming the owner and the due date when known.
+</template>
+
+<previous_meeting>
+Maya 1:1, on 30 September 2026:
+### Updates
+
+- beta on track
+</previous_meeting>
+
+<vocabulary>
+Fernhollow, PagerDuty
+</vocabulary>
+
+<user_notes>
+- v tired post fernhollow
+- [ ] update pagerduty today!!
+</user_notes>
+
+<transcript>
+[s1 00:04] Shreyas: How are you holding up after Fernhollow?
+[s2 00:09] Maya Chen: Tired, honestly. I slept eleven hours.
+[s3 00:31] Shreyas: Then you're off on-call for two weeks.
+</transcript>
+
+Now write the notes of this meeting.

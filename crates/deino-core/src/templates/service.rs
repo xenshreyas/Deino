@@ -9,8 +9,8 @@ use std::sync::Arc;
 use deino_domain::{Clock, TemplateId};
 
 use super::{
-    LegacyTemplateFolder, MAX_NAME_CHARS, SummaryTemplate, Template, TemplateContent,
-    TemplateError, TemplateRepo, export_document, import_document, summary_template,
+    LegacyTemplateFolder, MAX_NAME_CHARS, Template, TemplateContent, TemplateError, TemplateRepo,
+    export_document, import_document,
 };
 
 /// What a copy's name gets.
@@ -117,14 +117,6 @@ impl TemplateService {
             }
         }
         Ok(imported)
-    }
-
-    /// The instructions and skeleton the legacy summary fills for `id`.
-    pub async fn summary_template(
-        &self,
-        id: &TemplateId,
-    ) -> Result<SummaryTemplate, TemplateError> {
-        Ok(summary_template(&self.get(id).await?.content))
     }
 
     /// The template with `id`, if the user may change it.

@@ -142,24 +142,3 @@ async fn legacy_files_are_imported_once_and_archived() {
         .collect();
     assert!(names.contains(&"My standup".to_owned()));
 }
-
-#[tokio::test]
-async fn the_summary_template_comes_from_the_stored_template() {
-    let Harness { service, .. } = harness().await;
-
-    let summary = service
-        .summary_template(&TemplateId::new("standup"))
-        .await
-        .unwrap();
-    let missing = service
-        .summary_template(&TemplateId::new("daily_standup"))
-        .await;
-
-    assert!(summary.template_markdown.contains("## Blockers"));
-    assert!(
-        summary
-            .section_instructions
-            .contains("**For the 'Updates' section:**")
-    );
-    assert!(matches!(missing, Err(TemplateError::NotFound(_))));
-}

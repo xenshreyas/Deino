@@ -1,4 +1,4 @@
-//! [`MeetingDigestReader`] on SQLite: summaries from `summary_processes`,
+//! [`MeetingDigestReader`] on SQLite: summaries from the newest enhanced notes,
 //! transcript openings and recent examples, through their indexes.
 
 use deino_db::{Database, test_db};
@@ -13,15 +13,16 @@ use crate::testing::query_plan;
 
 const NOW: &str = "2026-10-09T09:00:00Z";
 
-async fn summary(database: &Database, meeting: &str, status: &str, result: &str) {
+/// Stores `markdown` as version `version` of the meeting's enhanced notes.
+async fn notes(database: &Database, meeting: &str, version: u32, markdown: &str) {
     sqlx::query(
-        "INSERT INTO summary_processes (meeting_id, status, created_at, updated_at, result)
-         VALUES (?1, ?2, ?3, ?3, ?4)",
+        "INSERT INTO enhanced_notes (meeting_id, version, doc_json, markdown, model, created_at, updated_at)
+         VALUES (?1, ?2, '{\"type\":\"doc\",\"content\":[]}', ?3, 'builtin:test', ?4, ?4)",
     )
     .bind(meeting)
-    .bind(status)
+    .bind(version)
+    .bind(markdown)
     .bind(NOW)
-    .bind(result)
     .execute(database.writer())
     .await
     .unwrap();
@@ -49,38 +50,17 @@ fn segment(meeting: &str, start_ms: u32, text: &str) -> NewSegment {
 }
 
 #[tokio::test]
-async fn a_digest_carries_the_title_and_only_a_completed_readable_summary() {
-    let repo = repo_with(&[
-        ("done", NOW),
-        ("failed", NOW),
-        ("broken", NOW),
-        ("none", NOW),
-    ])
-    .await;
-    summary(
-        &repo.database,
-        "done",
-        "completed",
-        r###"{"markdown":"## Seats"}"###,
-    )
-    .await;
-    summary(
-        &repo.database,
-        "failed",
-        "failed",
-        r#"{"markdown":"partial"}"#,
-    )
-    .await;
-    summary(&repo.database, "broken", "completed", "not json").await;
+async fn a_digest_carries_the_title_and_the_newest_enhanced_notes() {
+    let repo = repo_with(&[("done", NOW), ("none", NOW)]).await;
+    notes(&repo.database, "done", 1, "## Seats").await;
+    notes(&repo.database, "done", 2, "## Seats and pricing").await;
 
     let done = read(&repo, "done").await.unwrap();
     assert_eq!(
         (done.title.as_str(), done.summary.as_deref()),
-        ("Title of done", Some("## Seats"))
+        ("Title of done", Some("## Seats and pricing"))
     );
-    for id in ["failed", "broken", "none"] {
-        assert_eq!(read(&repo, id).await.unwrap().summary, None, "{id}");
-    }
+    assert_eq!(read(&repo, "none").await.unwrap().summary, None);
     assert_eq!(read(&repo, "missing").await, None);
 }
 
@@ -183,7 +163,7 @@ async fn digest_queries_read_through_their_indexes() {
         [
             "SEARCH m USING INDEX sqlite_autoindex_meetings_1 (id=?)",
             "CORRELATED SCALAR SUBQUERY 1",
-            "SEARCH sp USING INDEX sqlite_autoindex_summary_processes_1 (meeting_id=?)"
+            "SEARCH e USING INDEX sqlite_autoindex_enhanced_notes_1 (meeting_id=?)"
         ]
     );
     assert_eq!(
@@ -192,7 +172,7 @@ async fn digest_queries_read_through_their_indexes() {
             "SEARCH mt USING COVERING INDEX idx_meeting_tags_tag_id (tag_id=?)",
             "SEARCH m USING INDEX sqlite_autoindex_meetings_1 (id=?)",
             "CORRELATED SCALAR SUBQUERY 1",
-            "SEARCH sp USING INDEX sqlite_autoindex_summary_processes_1 (meeting_id=?)",
+            "SEARCH e USING INDEX sqlite_autoindex_enhanced_notes_1 (meeting_id=?)",
             "USE TEMP B-TREE FOR ORDER BY"
         ]
     );

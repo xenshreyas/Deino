@@ -16,6 +16,7 @@ use deino_db::Database;
 
 use super::{DocNoteRenderer, ExportError, LocalZone, NoteRenderer};
 use crate::action_items::{ActionItemRepo, SqliteActionItemRepo};
+use crate::enhance::SqliteEnhancedNotesRepo;
 use crate::folders::{MeetingFolderRepo, SqliteFolderRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, SqliteMeetingRepo};
 use crate::notes::SqliteNotesRepo;
@@ -75,7 +76,7 @@ impl ExportPorts {
             segments: segments.clone(),
             speakers: segments,
             notes: Arc::new(DocNoteRenderer::new(
-                database.clone(),
+                Arc::new(SqliteEnhancedNotesRepo::new(database.clone())),
                 Arc::new(SqliteNotesRepo::new(database.clone())),
             )),
             zone,

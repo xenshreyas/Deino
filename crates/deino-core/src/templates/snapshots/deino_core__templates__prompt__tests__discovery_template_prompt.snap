@@ -1,0 +1,13 @@
+---
+source: crates/deino-core/src/templates/prompt.rs
+expression: template_prompt(&discovery())
+---
+Sales discovery. The user's team is selling to a prospect. Capture the prospect's own words about their pain and goals, the buying process (decision makers, budget, timeline, competitors) and anything that affects qualification. Keep the team's internal commentary out.
+Sections, in order:
+1. Prospect and attendees: Who the prospect is, their company, and the role of each attendee on their side. Write bullet blocks, one idea each.
+2. Current situation: How they work today, the tools they use, and what prompted the conversation now. Write bullet blocks, one idea each.
+3. Pain points: Problems they described, with their impact and short quotes where possible. Write bullet blocks, one idea each.
+4. Goals and success criteria: What they want to achieve and how they will judge a solution. Write bullet blocks, one idea each.
+5. Buying process: One row each for decision makers, budget, timeline, competitors and procurement, with what was learned. Write "Unknown" where nothing was said. Write one bullet block per row, its columns as `column: value; column: value`.
+6. Objections and concerns: Hesitations they raised and how each was answered; mark any left open. Write bullet blocks, one idea each.
+7. Next steps: Next steps agreed on both sides, with the owner and date. Write todo blocks, one action each, naming the owner and the due date when known.
