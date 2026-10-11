@@ -6,7 +6,7 @@ import type * as Generated from '@/lib/ipc/generated/dev';
 import { createQueryClient } from '@/lib/ipc';
 
 import { copy } from '../copy';
-import { DeveloperSettings } from './developer-settings';
+import { SampleMeetings } from './sample-meetings';
 
 // Typed against the generated bindings: a Rust signature change breaks this mock.
 const commands = vi.hoisted(
@@ -20,12 +20,12 @@ vi.mock('@/lib/ipc/generated/dev', () => ({ commands }));
 function renderSettings() {
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <DeveloperSettings />
+      <SampleMeetings />
     </QueryClientProvider>,
   );
 }
 
-describe('DeveloperSettings', () => {
+describe('SampleMeetings', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });

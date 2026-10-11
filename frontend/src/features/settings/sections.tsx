@@ -4,7 +4,7 @@
  * Most pages still render inherited settings panels; FND-06 moves their
  * values into the typed settings store.
  */
-import { type ComponentType, lazy, Suspense } from 'react';
+import type { ComponentType } from 'react';
 
 import { About } from '@/components/About';
 import { BetaSettings } from '@/components/BetaSettings';
@@ -15,6 +15,7 @@ import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { CalendarSettings } from '@/features/calendar';
+import { DeveloperSettings } from '@/features/developer';
 import { ExportSettingsPage } from '@/features/export';
 import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
@@ -100,28 +101,6 @@ function IntegrationsSection() {
   return <IntegrationsSettings offlineMode={offlineMode} />;
 }
 
-/** Settings → Developer (FND-04), loaded lazily so release builds drop it. */
-const DeveloperSettings = import.meta.env.DEV
-  ? lazy(() =>
-      import('@/features/developer').then((module) => ({ default: module.DeveloperSettings })),
-    )
-  : null;
-
-/** Developer: fixture seeding, debug builds only. */
-function DeveloperSection() {
-  if (DeveloperSettings === null) return null;
-  return (
-    <Suspense fallback={null}>
-      <DeveloperSettings />
-    </Suspense>
-  );
-}
-
-/** Pages that exist only in debug builds (the `dev` plugin is absent from release). */
-const DEBUG_SECTIONS: readonly SettingsSection[] = import.meta.env.DEV
-  ? [{ id: 'developer', group: 'more', icon: Wrench, Component: DeveloperSection }]
-  : [];
-
 /** Every page, in order. */
 export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'general', group: 'app', icon: Settings, Component: PreferenceSettings },
@@ -141,5 +120,5 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },
-  ...DEBUG_SECTIONS,
+  { id: 'developer', group: 'more', icon: Wrench, Component: DeveloperSettings },
 ];

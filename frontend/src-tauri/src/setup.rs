@@ -21,6 +21,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     let paths = AppPaths::resolve(handle)?;
     tauri::async_runtime::block_on(composition::attach_settings(handle, &paths))?;
     composition::attach_network(handle)?;
+    composition::attach_developer(handle);
     onnx_runtime::init_bundled(handle);
     create_tray(handle);
     composition::attach_detection(handle);

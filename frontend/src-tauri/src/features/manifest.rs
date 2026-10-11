@@ -197,6 +197,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "related_meetings",
         ],
     ),
+    // ── DEV-02/04 Settings → Developer: the CLI and Claude setup ──
+    ("developer", &["cli_status", "install_cli"]),
     // ── CAP-04 speaker naming and voice profiles ──
     (
         "speakers",

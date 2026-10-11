@@ -145,22 +145,25 @@ ensure_nextest() {
 }
 
 # tauri-build refuses to compile the app unless every `externalBin` exists.
-# Checks and tests never run the llama-helper sidecar, so when the real one is
-# not staged (fresh clones, worktrees, CI), stage a stub that explains itself.
+# Checks and tests never run the llama-helper or `deino` CLI sidecars, so when
+# the real ones are not staged (fresh clones, worktrees, CI), stage stubs that
+# explain themselves (scripts/stage-cli.sh stages the real CLI).
 stage_sidecar() {
+    stage_stub llama-helper "Build the real sidecar as the root README describes, then replace this file."
+    stage_stub cli "Run scripts/stage-cli.sh to build and stage the real deino CLI."
+}
+
+# Stages a placeholder for sidecar $1 unless one is there; $2 says how to get the real one.
+stage_stub() {
     local triple sidecar
     triple="$(rustc -vV | sed -n 's/^host: //p')"
-    sidecar="frontend/src-tauri/binaries/llama-helper-$triple"
+    sidecar="frontend/src-tauri/binaries/$1-$triple"
     [[ -e "$sidecar" ]] && return 0
     mkdir -p "$(dirname "$sidecar")"
-    cat >"$sidecar" <<'STUB'
-#!/bin/sh
-echo "llama-helper: this is a placeholder staged by scripts/ci-local.sh." >&2
-echo "Build the real sidecar as the root README describes, then replace this file." >&2
-exit 1
-STUB
+    printf '#!/bin/sh\necho "%s: this is a placeholder staged by scripts/ci-local.sh." >&2\necho "%s" >&2\nexit 1\n' \
+        "$1" "$2" >"$sidecar"
     chmod +x "$sidecar"
-    warn "staged a placeholder llama-helper sidecar at $sidecar (enough to build and test)"
+    warn "staged a placeholder $1 sidecar at $sidecar (enough to build and test)"
 }
 
 # Fails before any step runs if a tool the selected steps need is missing.

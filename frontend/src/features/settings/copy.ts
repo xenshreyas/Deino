@@ -73,7 +73,10 @@ export const settingsCopy = {
     },
     beta: { label: 'Beta', description: 'Features that are still being finished.' },
     about: { label: 'About', description: 'Version, privacy and updates.' },
-    developer: { label: 'Developer', description: 'Tools for development builds only.' },
+    developer: {
+      label: 'Developer',
+      description: 'The deino command-line tool, and Claude Code access to your meetings.',
+    },
   },
 } as const;
 
