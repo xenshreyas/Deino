@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- What the summary of a person (?1) reads: their latest ?2 meetings outside\n-- the trash that already happened, most recent first, each with its title,\n-- the Markdown of its newest enhanced notes (NOT-02, the same read as the\n-- auto-tagger's digest, through the enhanced_notes primary key) and the\n-- user's own notes.\nSELECT\n    m.id AS \"meeting_id!: MeetingId\",\n    m.title,\n    coalesce(m.started_at, m.created_at) AS \"at!: DateTime<Utc>\",\n    (\n        SELECT e.markdown\n        FROM enhanced_notes AS e\n        WHERE e.meeting_id = m.id\n        ORDER BY e.version DESC\n        LIMIT 1\n    ) AS \"summary?: String\",\n    (SELECT n.notes_markdown FROM meeting_notes AS n WHERE n.meeting_id = m.id) AS \"notes?: String\"\nFROM meeting_attendees AS a\nJOIN meetings AS m ON m.id = a.meeting_id\nWHERE a.person_id = ?1 AND m.deleted_at IS NULL AND m.status <> 'scheduled'\nORDER BY 3 DESC, m.id DESC\nLIMIT ?2\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Null"
+      },
+      {
+        "name": "summary?: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "notes?: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      false,
+      null,
+      false,
+      true
+    ]
+  },
+  "hash": "81439406aa0c29fce49ce0b568a6f1c8802b1e8f88fa1d0eb291968e3e1a6407"
+}

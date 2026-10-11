@@ -8,7 +8,7 @@ use crate::companies::{Company, CompanyDomain};
 use crate::people::Person;
 
 /// A row of the People list: who, where they work, and when the user last
-/// met them. The aggregates are computed on read (ADR 0030).
+/// met them. The aggregates are computed on read (ADR 0033).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PersonRow {

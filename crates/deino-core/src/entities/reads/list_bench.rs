@@ -1,5 +1,5 @@
 //! How long the People and Companies lists take to compute their aggregates
-//! on read (ADR 0030): 2,000 people at 200 companies, 5,000 meetings and
+//! on read (ADR 0033): 2,000 people at 200 companies, 5,000 meetings and
 //! 20,000 attendance rows. Run on demand:
 //!
 //! `cargo test -p deino-core --release list_bench -- --ignored --nocapture`

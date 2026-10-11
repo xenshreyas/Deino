@@ -1,7 +1,7 @@
 -- The Companies list: every company not merged into another, with how many
 -- listed people work there and the meetings outside the trash that any of
 -- them attended. Most recently met first, then by name. Computed on read
--- like the People list (ADR 0030).
+-- like the People list (ADR 0033).
 SELECT
     c.id AS "id!: CompanyId",
     c.name AS "name!",

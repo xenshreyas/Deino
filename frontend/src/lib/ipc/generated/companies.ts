@@ -316,7 +316,8 @@ at: string;
  */
 durationS: number | null }
 /**
- * What kind of failure an [`AppError`] reports. The UI branches on it.
+ * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
+ * in the `last_error_code` and `error_code` columns of the integration tables.
  */
 export type ErrorCode = 
 /**
@@ -370,7 +371,7 @@ export type MeetingId = string & { readonly __brand: "MeetingId" }
 export type PersonId = string & { readonly __brand: "PersonId" }
 /**
  * A row of the People list: who, where they work, and when the user last
- * met them. The aggregates are computed on read (ADR 0030).
+ * met them. The aggregates are computed on read (ADR 0033).
  */
 export type PersonRow = { 
 /**

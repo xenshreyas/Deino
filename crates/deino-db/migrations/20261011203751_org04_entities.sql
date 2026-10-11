@@ -11,7 +11,7 @@
 -- No aggregate is denormalised here. A person's last meeting and meeting
 -- count (and a company's, over its people) are computed when the lists are
 -- read, from `meeting_attendees` through idx_meeting_attendees_person_id and
--- the meetings primary key (ADR 0030 measures it and says why: attendance
+-- the meetings primary key (ADR 0033 measures it and says why: attendance
 -- has many writers, and trash, restore and status changes would all have to
 -- keep a copy in step).
 
@@ -43,7 +43,8 @@ CREATE TABLE egress_log_new (
         'llm_anthropic', 'llm_openai', 'llm_groq', 'llm_openrouter', 'llm_custom',
         'llm_ollama', 'hf_models', 'google_calendar', 'google_drive', 'gmail',
         'microsoft_graph', 'slack', 'notion', 'linear', 'todoist', 'asana',
-        'hubspot', 'attio', 'salesforce', 'web_search', 'webhooks', 'favicons'
+        'hubspot', 'attio', 'salesforce', 'jira', 'monday', 'clickup', 'trello',
+        'affinity', 'zoho_crm', 'web_search', 'webhooks', 'favicons'
     )),
     host TEXT NOT NULL CHECK (host <> '' AND instr(host, '/') = 0 AND instr(host, '?') = 0),
     method TEXT NOT NULL CHECK (method IN ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE')),
@@ -54,7 +55,7 @@ CREATE TABLE egress_log_new (
 ) STRICT;
 
 INSERT INTO egress_log_new (id, at, service, host, method, status, outcome, bytes_up, bytes_down)
-SELECT id, at, service, host, method, status, outcome, bytes_up, bytes_down FROM egress_log;
+SELECT id, at, service, host, method, status, outcome, bytes_up, bytes_down FROM egress_log ORDER BY id;
 
 DROP TABLE egress_log;
 ALTER TABLE egress_log_new RENAME TO egress_log;

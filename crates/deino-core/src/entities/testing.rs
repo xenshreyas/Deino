@@ -122,13 +122,14 @@ impl World {
         .await;
     }
 
-    /// Gives `meeting` a finished legacy summary.
+    /// Gives `meeting` enhanced notes (NOT-02) whose Markdown is `markdown`.
     pub async fn summarize(&self, meeting: &MeetingId, markdown: &str) {
-        let result = serde_json::json!({ "markdown": markdown }).to_string();
+        let doc = r#"{"type":"doc","content":[]}"#;
         self.run(
-            "INSERT INTO summary_processes (meeting_id, status, created_at, updated_at, result)
-             VALUES (?1, 'completed', ?2, ?2, ?3)",
-            &[meeting.as_str(), NOW, &result],
+            "INSERT INTO enhanced_notes (meeting_id, version, doc_json, markdown, model, created_at,
+                updated_at)
+             VALUES (?1, 1, ?2, ?3, 'mock', ?4, ?4)",
+            &[meeting.as_str(), doc, markdown, NOW],
         )
         .await;
     }

@@ -6,8 +6,11 @@
 //! Meetings with neither are left out; with no meeting text and no notes
 //! there is nothing to brief from, and no prompt.
 
+use std::sync::LazyLock;
+
 use deino_llm::Prompt;
 use deino_llm::prompts::{EntityMeetingText, EntitySummarySystem, EntitySummaryUser, PromptText};
+use regex::Regex;
 
 use super::{EntityActionItem, EntityDigest};
 
@@ -110,6 +113,28 @@ fn content(digest: &EntityDigest) -> Option<String> {
     Some(cut(text, MEETING_CHARS))
 }
 
+/// A closed reasoning envelope some local models write inline.
+static REASONING: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"(?is)<think(?:ing)?\b[^>]*>.*?</think(?:ing)?\s*>").ok());
+
+/// The briefing in a model's answer: reasoning envelopes and an outer code
+/// fence removed. `None` when nothing is left, or when an unclosed reasoning
+/// marker remains, so private reasoning is never stored.
+pub fn visible_answer(raw: &str) -> Option<String> {
+    let visible = REASONING.as_ref().map_or_else(
+        || raw.to_owned(),
+        |envelope| envelope.replace_all(raw, "").into_owned(),
+    );
+    let trimmed = visible.trim();
+    let unfenced = trimmed
+        .strip_prefix("```markdown")
+        .or_else(|| trimmed.strip_prefix("```"))
+        .and_then(|inner| inner.strip_suffix("```"))
+        .map_or(trimmed, str::trim);
+    let leaked = unfenced.to_ascii_lowercase().contains("<think") || unfenced.contains("</think");
+    (!unfenced.is_empty() && !leaked).then(|| unfenced.to_owned())
+}
+
 /// `text` cut to `limit` characters, marked with `…` when cut.
 fn cut(text: &str, limit: usize) -> String {
     let mut chars = text.chars();
@@ -194,6 +219,16 @@ mod tests {
         );
         assert!(prompt.system.unwrap().contains("one person the user meets"));
         assert_eq!(prompt.max_tokens, Some(ANSWER_TOKENS));
+    }
+
+    #[test]
+    fn answers_lose_reasoning_and_fences_and_leaked_reasoning_is_refused() {
+        assert_eq!(
+            visible_answer("<think>plan</think>\n```markdown\nOwns the queue.\n```").as_deref(),
+            Some("Owns the queue.")
+        );
+        assert_eq!(visible_answer("Visible\n<think>private"), None);
+        assert_eq!(visible_answer("<thinking>only</thinking>  "), None);
     }
 
     #[test]

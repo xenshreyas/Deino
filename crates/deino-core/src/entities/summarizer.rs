@@ -3,8 +3,8 @@
 //!
 //! The briefing is stored in `summary_md` with `summary_updated_at`, by a
 //! single-field write, so notes the user is typing are never overwritten.
-//! The model's answer is cleaned like a meeting summary: reasoning
-//! envelopes and an outer fence are removed, and an answer that is only
+//! Reasoning envelopes a local model writes inline and an outer fence are
+//! removed from the answer ([`visible_answer`]); an answer that is only
 //! reasoning (or nothing) is not stored.
 
 use std::sync::Arc;
@@ -13,11 +13,12 @@ use deino_domain::{ActionItemStatus, CompanyId, PersonId};
 use deino_llm::{Gateway, Route};
 
 use super::person_service::entity_item;
-use super::summary_prompt::{SUMMARY_MEETINGS, Subject, SubjectKind, summary_prompt};
+use super::summary_prompt::{
+    SUMMARY_MEETINGS, Subject, SubjectKind, summary_prompt, visible_answer,
+};
 use super::{EntityActionItem, EntityError, EntityPorts};
 use crate::companies::Company;
 use crate::people::Person;
-use crate::summaries::{clean_markdown, contains_reasoning_marker};
 
 /// People named in a company's briefing details, at most.
 const MAX_NAMED_PEOPLE: usize = 12;
@@ -125,10 +126,9 @@ impl EntitySummarizer {
 
     /// Cleans `answer` and saves it as the summary of `target`, stamped now.
     async fn store(&self, target: Target, answer: &str) -> Result<SummaryOutcome, EntityError> {
-        let summary = clean_markdown(answer).markdown;
-        if summary.is_empty() || contains_reasoning_marker(&summary) {
+        let Some(summary) = visible_answer(answer) else {
             return Ok(SummaryOutcome::EmptyAnswer);
-        }
+        };
         let now = self.ports.clock.now();
         let writes = &self.ports.writes;
         match target {

@@ -68,7 +68,8 @@ pub use stages::{
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::{
-    FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer, RecordedEntityUpdates,
-    RecordedIdentifications, RecordedIndexing, RecordedTitler, ScriptedAutoExporter,
+    FixedAutomaticNotes, RecordedAutoFiling, RecordedAutoTags, RecordedEnhancer,
+    RecordedEntityUpdates, RecordedIdentifications, RecordedIndexing, RecordedTitler,
+    ScriptedAutoExporter,
 };
 pub use trigger::PipelineTrigger;
