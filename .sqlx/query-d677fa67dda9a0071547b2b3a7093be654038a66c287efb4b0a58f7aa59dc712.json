@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE speakers SET person_id = ?1 WHERE id = ?2 AND person_id IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d677fa67dda9a0071547b2b3a7093be654038a66c287efb4b0a58f7aa59dc712"
+}

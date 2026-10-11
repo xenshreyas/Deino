@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO voiceprints (id, person_id, embedding, embedding_model, source_meeting_id, quality, created_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "7b40bae0448d490674c6d4efc8f85efbd86c4f5be46d39dfbf080ee32c15755b"
+}

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The exemplars of person ?1 beyond the best ?2: lowest quality first to go,\n-- the oldest among equals. idx_voiceprints_person_id serves it.\nSELECT id AS \"id: VoiceprintId\"\nFROM voiceprints\nWHERE person_id = ?1\nORDER BY quality DESC, created_at DESC, id DESC\nLIMIT -1 OFFSET ?2\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: VoiceprintId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "59ca5d16f886617f8a8f4fdc3b4088d92bf30b8e8caab9df7224dd9ab00c106a"
+}

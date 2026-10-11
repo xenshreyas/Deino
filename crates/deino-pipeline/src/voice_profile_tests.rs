@@ -127,8 +127,9 @@ fn heard(fixture: &FixtureMeeting, voices: Vec<(Option<&str>, Vec<f32>)>) -> Tra
     TrackDiarization { turns, voices }
 }
 
-/// Runs `diarize` and `identify_speakers` for `meeting` over the database.
-async fn process(database: &Database, meeting: &str, engine: TrackDiarization) {
+/// The stages' ports over the database, the scripted engine and the real
+/// identifier.
+fn ports(database: &Database, engine: TrackDiarization) -> StagePorts {
     let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     let people = Arc::new(SqlitePeopleRepo::new(database.clone()));
     let prints = Arc::new(SqliteVoiceprintRepo::new(database.clone()));
@@ -139,7 +140,7 @@ async fn process(database: &Database, meeting: &str, engine: TrackDiarization) {
         me: people.clone(),
         exemplars: prints.clone(),
     };
-    let ports = StagePorts {
+    StagePorts {
         segments: segments.clone(),
         segment_writer: segments.clone(),
         speakers: segments,
@@ -155,7 +156,12 @@ async fn process(database: &Database, meeting: &str, engine: TrackDiarization) {
         participants: naming,
         clock: clock(),
         ..StagePorts::fakes()
-    };
+    }
+}
+
+/// Runs `diarize` and `identify_speakers` for `meeting` over the database.
+async fn process(database: &Database, meeting: &str, engine: TrackDiarization) {
+    let ports = ports(database, engine);
     let stages: [Arc<dyn PipelineStage>; 2] = [
         Arc::new(DiarizeStage::new(&ports)),
         Arc::new(IdentifySpeakersStage::new(&ports)),
@@ -200,19 +206,21 @@ fn name(participant: &Participant) -> Option<&str> {
         .map(|person| person.name.as_str())
 }
 
-#[tokio::test]
-async fn a_voice_named_once_is_named_in_the_next_meeting() {
-    let (database, fixtures) = world().await;
-    let maya = "maya@deino.dev";
+const MAYA: &str = "maya@deino.dev";
+
+/// Processes the one-on-one, then names its remote voice Maya for all
+/// segments, as the user would; whether her voice was enrolled.
+async fn name_maya_in_the_one_on_one(database: &Database, fixtures: &Fixtures) -> bool {
+    let maya = MAYA;
     let one_on_one = fixtures.meeting(MeetingKind::OneOnOne).unwrap();
     let first_voice = unit(&[(0, 0.95), (10, 0.31)]);
     process(
-        &database,
+        database,
         one_on_one.id.as_str(),
         heard(one_on_one, vec![(Some(maya), first_voice)]),
     )
     .await;
-    let service = speakers(&database);
+    let service = speakers(database);
     let first = service.participants(&one_on_one.id).await.unwrap();
     let remote = first.iter().find(|p| !p.is_me).unwrap();
 
@@ -227,19 +235,36 @@ async fn a_voice_named_once_is_named_in_the_next_meeting() {
         })
         .await
         .unwrap();
-    assert!(renamed.enrolled, "a confirmed rename enrols the voice");
+    renamed.enrolled
+}
 
-    let standup = fixtures.meeting(MeetingKind::Standup).unwrap();
-    let voices = vec![
-        (Some(maya), unit(&[(0, 0.97), (11, 0.243)])),
+/// The standup's remote voices: Maya again, three strangers, and a phantom
+/// half Maya, half Tom (0.81 against Maya's voiceprint).
+fn standup_voices() -> Vec<(Option<&'static str>, Vec<f32>)> {
+    vec![
+        (Some(MAYA), unit(&[(0, 0.97), (11, 0.243)])),
         (Some("diego@deino.dev"), unit(&[(1, 1.0)])),
         (Some("priya@deino.dev"), unit(&[(2, 1.0)])),
         (Some("tom@deino.dev"), unit(&[(3, 1.0)])),
-        // Half Maya, half Tom: 0.81 against Maya's voiceprint.
         (None, unit(&[(0, 0.853), (3, 0.522)])),
-    ];
-    process(&database, standup.id.as_str(), heard(standup, voices)).await;
+    ]
+}
 
+#[tokio::test]
+async fn a_voice_named_once_is_named_in_the_next_meeting() {
+    let (database, fixtures) = world().await;
+    let enrolled = name_maya_in_the_one_on_one(&database, &fixtures).await;
+    assert!(enrolled, "a confirmed rename enrols the voice");
+
+    let standup = fixtures.meeting(MeetingKind::Standup).unwrap();
+    process(
+        &database,
+        standup.id.as_str(),
+        heard(standup, standup_voices()),
+    )
+    .await;
+
+    let service = speakers(&database);
     let panel = service.participants(&standup.id).await.unwrap();
     let named: Vec<Option<&str>> = panel.iter().filter(|p| !p.is_me).map(name).collect();
     assert_eq!(

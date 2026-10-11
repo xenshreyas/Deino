@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every exemplar made by the embedding model ?1 of a person not merged into\n-- another, by person, best first. A person keeps at most five, so the scan\n-- is small; idx_voiceprints_person_id orders it.\nSELECT\n    v.person_id AS \"person_id: PersonId\",\n    p.is_me AS \"is_me: bool\",\n    v.embedding\nFROM voiceprints AS v\nJOIN people AS p ON p.id = v.person_id\nWHERE v.embedding_model = ?1 AND p.merged_into IS NULL\nORDER BY v.person_id, v.quality DESC, v.created_at DESC, v.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "person_id: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me: bool",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "embedding",
+        "ordinal": 2,
+        "type_info": "Blob"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b4ec4c3b27085d9932aca6a9c6a7dddc3d794e84791b05e9983799f3fe4a8d47"
+}

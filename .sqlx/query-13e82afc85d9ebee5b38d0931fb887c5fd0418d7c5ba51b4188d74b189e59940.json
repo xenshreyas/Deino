@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO speaker_suggestions (speaker_id, person_id, score) VALUES (?1, ?2, ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "13e82afc85d9ebee5b38d0931fb887c5fd0418d7c5ba51b4188d74b189e59940"
+}

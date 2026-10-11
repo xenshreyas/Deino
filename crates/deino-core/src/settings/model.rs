@@ -6,8 +6,7 @@ use super::{
     AiSettings, AudioSettings, BetaSettings, CalendarSettings, DetectionSettings, ExportSettings,
     NetworkSettings, NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings,
     ProfileSettings, RecordingSettings, SettingsError, SpeakerSettings, TemplateSettings,
-    TranscriptionSettings,
-    UiSettings,
+    TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to

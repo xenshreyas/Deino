@@ -113,7 +113,9 @@ mod tests {
                 .is_empty()
         );
         assert!(speakers.voiceprints.profiles().await.unwrap().is_empty());
-        let identified = identifier(&database, Arc::new(Off)).identify(&meeting).await;
+        let identified = identifier(&database, Arc::new(Off))
+            .identify(&meeting)
+            .await;
         assert_eq!(identified.unwrap(), Identified::Disabled);
     }
 }

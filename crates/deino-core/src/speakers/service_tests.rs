@@ -190,6 +190,23 @@ impl World {
         self.service.rename(&rename).await.unwrap()
     }
 
+    /// Leaves "Is this …?" suggestions, as `identify_speakers` would.
+    async fn suggest(&self, pairs: &[(SpeakerId, PersonId)]) {
+        let suggested = pairs
+            .iter()
+            .map(|&(speaker_id, person_id)| SuggestedName {
+                speaker_id,
+                person_id,
+                score: 0.64,
+            })
+            .collect();
+        let decided = Identification {
+            named: Vec::new(),
+            suggested,
+        };
+        self.naming.apply(&meeting(), &decided).await.unwrap();
+    }
+
     async fn panel(&self) -> Vec<Participant> {
         self.service.participants(&meeting()).await.unwrap()
     }
@@ -465,16 +482,7 @@ async fn a_suggestion_can_be_confirmed_or_dismissed() {
         world.person("Alex", None).await,
         world.person("Maya", None).await,
     );
-    let suggest = |speaker_id, person_id| SuggestedName {
-        speaker_id,
-        person_id,
-        score: 0.64,
-    };
-    let decided = Identification {
-        named: Vec::new(),
-        suggested: vec![suggest(yes, alex), suggest(no, maya)],
-    };
-    world.naming.apply(&meeting(), &decided).await.unwrap();
+    world.suggest(&[(yes, alex), (no, maya)]).await;
     let suggested = world.panel().await;
     assert!(suggested.iter().all(|row| row.suggestion.is_some()));
 

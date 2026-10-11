@@ -9,7 +9,7 @@
 //! safeguards together rejected it (`docs/references/spike-diarization.md`).
 //!
 //! CAP-03 shipped these in `deino-diarize`; CAP-04 moved them here, beside
-//! the `identify_speakers` rules that use them (ADR 0028). The engine's
+//! the `identify_speakers` rules that use them (ADR 0029). The engine's
 //! known-speaker merge imports them from here.
 
 use std::collections::BTreeMap;

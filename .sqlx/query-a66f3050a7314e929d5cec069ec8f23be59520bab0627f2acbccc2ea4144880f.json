@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM speaker_suggestions WHERE speaker_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "a66f3050a7314e929d5cec069ec8f23be59520bab0627f2acbccc2ea4144880f"
+}

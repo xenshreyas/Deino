@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) speakers with the person each is, how long each spoke\n-- (its visible segments; idx_transcript_segments_speaker_id) and any pending\n-- suggestion; most speech first. Speakers come from the UNIQUE\n-- (meeting_id, label) index.\nSELECT\n    s.id AS \"id: SpeakerId\",\n    s.meeting_id AS \"meeting_id: MeetingId\",\n    s.label,\n    s.person_id AS \"person_id: PersonId\",\n    s.is_me AS \"is_me: bool\",\n    s.color AS \"color: PaletteColor\",\n    p.name AS \"person_name?\",\n    g.person_id AS \"suggested_id?: PersonId\",\n    gp.name AS \"suggested_name?\",\n    g.score AS \"suggested_score?\",\n    (\n        SELECT coalesce(sum(t.end_ms - t.start_ms), 0)\n        FROM transcript_segments AS t\n        WHERE t.speaker_id = s.id AND t.is_deleted = 0\n    ) AS \"speech!: Millis\"\nFROM speakers AS s\nLEFT JOIN people AS p ON p.id = s.person_id\nLEFT JOIN speaker_suggestions AS g ON g.speaker_id = s.id\nLEFT JOIN people AS gp ON gp.id = g.person_id\nWHERE s.meeting_id = ?1\nORDER BY 11 DESC, s.label\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: SpeakerId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "label",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id: PersonId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "color: PaletteColor",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "person_name?",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "suggested_id?: PersonId",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "suggested_name?",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "suggested_score?",
+        "ordinal": 9,
+        "type_info": "Float"
+      },
+      {
+        "name": "speech!: Millis",
+        "ordinal": 10,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "b4bf75cb620966eced6948ef06471bfff1be294ce1745002d14b6264764a49a6"
+}
