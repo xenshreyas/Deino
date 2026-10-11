@@ -21,8 +21,8 @@ pub mod db;
 pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
-pub mod folders;
 pub mod export;
+pub mod folders;
 pub mod llm;
 /// The feature plugins and their commands (shared with `build.rs`, so it has no `//!` docs).
 pub mod manifest;

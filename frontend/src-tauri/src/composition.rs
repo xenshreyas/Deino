@@ -39,9 +39,9 @@ pub(crate) use detection::attach_detection;
 use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use organize::Organize;
-use pipeline::{StageAdapters, attach_pipeline};
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
+use pipeline::{StageAdapters, attach_pipeline};
 pub(crate) use stt::attach_stt;
 
 use deino_core::meetings::{MeetingService, SqliteMeetingRepo};

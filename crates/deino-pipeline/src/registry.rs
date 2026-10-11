@@ -7,8 +7,8 @@
 use std::sync::Arc;
 
 use deino_core::diarization::TrackDiarizer;
-use deino_core::folders::AutoFiler;
 use deino_core::export::AutoExporter;
+use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
@@ -163,7 +163,14 @@ mod tests {
         assert_eq!(Registry::new(stages.clone()).stages().len(), stages.len());
         assert_eq!(
             Registry::new(stages).ids(),
-            ["diarize", "legacy_summary", "auto_tag", "auto_folder", "auto_export"].map(StageId::new)
+            [
+                "diarize",
+                "legacy_summary",
+                "auto_tag",
+                "auto_folder",
+                "auto_export"
+            ]
+            .map(StageId::new)
         );
     }
 
