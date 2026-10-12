@@ -27,7 +27,7 @@ export const panelEvents = {
 const MICROPHONES: Generated.Microphone[] = [
   { name: 'MacBook Pro Microphone', isDefault: true, bluetooth: false },
   { name: 'AirPods Pro', isDefault: false, bluetooth: true },
-  { name: 'Shure MV7', isDefault: false, bluetooth: false },
+  { name: 'USB Studio Mic', isDefault: false, bluetooth: false },
 ];
 
 let autoStop: Generated.AutoStopState = { ending: null, split: null };
