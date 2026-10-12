@@ -51,7 +51,7 @@ test('the results page shows meetings, moments and people with highlighted snipp
   });
 });
 
-test('Settings → Search index downloads the model', async ({ page }) => {
+test('Settings → Advanced → Search downloads the model', async ({ page }) => {
   await page.goto('/settings?section=search');
 
   await expect(page.getByText('Not downloaded. Search finds exact words only.')).toBeVisible();
