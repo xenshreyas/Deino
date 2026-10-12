@@ -29,14 +29,16 @@
 mod controls;
 pub(crate) mod meeting;
 mod playhead;
+mod request;
 mod resume;
 
 pub use playhead::Playhead;
+pub use request::StartRequest;
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use chrono::{DateTime, Utc};
-use deino_core::meetings::{MeetingLink, MeetingTitle};
+use deino_core::meetings::MeetingTitle;
 use deino_domain::{MeetingId, SpeakerId};
 use tokio::runtime::Handle;
 
@@ -47,23 +49,6 @@ use crate::lane::PerLane;
 use crate::observer::{NoStartObserver, StartObserver};
 use crate::session::{self, Plan, Session, Take};
 use crate::state::StateCell;
-
-/// What a new recording is for.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct StartRequest {
-    /// The meeting's title; a default when missing or blank.
-    pub title: Option<String>,
-    /// The calendar event (and series) the meeting is recorded for, if any:
-    /// a detected call's event, a split to the next event, a menu-bar Record.
-    pub link: Option<MeetingLink>,
-}
-
-impl StartRequest {
-    /// A recording titled `title`, for no particular event.
-    pub fn titled(title: Option<String>) -> Self {
-        Self { title, link: None }
-    }
-}
 
 /// What the service holds between calls.
 enum Slot {
@@ -115,10 +100,7 @@ impl RecordingService {
     /// Starts recording a new meeting; returns its ID.
     pub async fn start(&self, request: StartRequest) -> Result<MeetingId, RecordingError> {
         self.claim()?;
-        let titled = request
-            .title
-            .as_deref()
-            .is_some_and(|title| !title.trim().is_empty());
+        let titled = request.is_titled();
         let started = self.begin(request).await;
         let meeting = self.settle(started)?;
         self.announce_start(&meeting, titled).await;
