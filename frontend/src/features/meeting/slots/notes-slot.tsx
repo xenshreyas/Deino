@@ -1,5 +1,6 @@
 /**
  * The Notes tab: the pre-meeting brief of its calendar event (NOT-08), the
+ * suggested follow-up email's "View draft" banner (NOT-07), the
  * meeting's template (NOT-04), its action items (AI-05),
  * then the enhanced notes (NOT-02) and "My notes" (NOT-01) behind a
  * segmented pill (ui.md §3 Tabs, "Notes sub-switch"); ⌘E switches between
@@ -12,6 +13,7 @@ import { useState } from 'react';
 import { MeetingActionItems } from '@/features/action-items';
 import { CommentLayer } from '@/features/comments';
 import { MeetingBrief } from '@/features/briefs';
+import { MeetingFollowUp } from '@/features/followups';
 import {
   EnhancedNotes,
   notesCopy,
@@ -65,6 +67,16 @@ function ViewSwitch({ view, onChange }: { view: NotesView; onChange: (view: Note
   );
 }
 
+/** What comes before the notes: the brief (NOT-08) and the follow-up banner (NOT-07). */
+function Preface({ meetingId }: MeetingSlotProps) {
+  return (
+    <>
+      <MeetingBrief meetingId={meetingId} />
+      <MeetingFollowUp meetingId={meetingId} />
+    </>
+  );
+}
+
 /** Notes: the enhanced notes or the user's own. */
 export function NotesSlot({ meetingId }: MeetingSlotProps) {
   const enhanced = useEnhancedNotes(meetingId);
@@ -86,7 +98,7 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
   const toggle = <ViewSwitch view={view} onChange={choose} />;
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <MeetingBrief meetingId={meetingId} />
+      <Preface meetingId={meetingId} />
       <MeetingTemplatePicker
         meetingId={meetingId}
         onRegenerate={hasNotes && regenerate.blocked === null ? regenerate.run : null}

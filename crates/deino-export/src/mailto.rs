@@ -1,5 +1,6 @@
-//! An email draft of the notes as a `mailto:` URL (RFC 6068), which the
-//! user's mail app opens addressed to the other attendees.
+//! Email drafts as `mailto:` URLs (RFC 6068), which the user's mail app
+//! opens: the notes addressed to the other attendees ([`url`]), and any
+//! composed message with To, CC and BCC ([`compose`], NOT-07's follow-ups).
 
 use crate::{MeetingExport, RenderOptions, text};
 
@@ -25,6 +26,50 @@ pub fn url(export: &MeetingExport, options: &RenderOptions) -> String {
         encode(&export.title),
         encode(&body)
     )
+}
+
+/// A composed email: recipients, subject and plain-text body.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Compose<'a> {
+    /// The To addresses.
+    pub to: &'a [&'a str],
+    /// The CC addresses.
+    pub cc: &'a [&'a str],
+    /// The BCC addresses.
+    pub bcc: &'a [&'a str],
+    /// The subject line.
+    pub subject: &'a str,
+    /// The body; line breaks become CRLF, as RFC 6068 asks.
+    pub body: &'a str,
+}
+
+/// The `mailto:` URL of `draft`. Every address and field is percent-encoded
+/// on its own, so a `?`, `&`, `,` or line break in any of them cannot add a
+/// header or a recipient. Empty fields are left out.
+pub fn compose(draft: &Compose<'_>) -> String {
+    let body = draft.body.replace("\r\n", "\n").replace('\n', "\r\n");
+    let fields = [
+        ("cc", addresses(draft.cc)),
+        ("bcc", addresses(draft.bcc)),
+        ("subject", encode(draft.subject)),
+        ("body", encode(&body)),
+    ];
+    let query: Vec<String> = fields
+        .iter()
+        .filter(|(_, value)| !value.is_empty())
+        .map(|(name, value)| format!("{name}={value}"))
+        .collect();
+    let to = addresses(draft.to);
+    if query.is_empty() {
+        return format!("mailto:{to}");
+    }
+    format!("mailto:{to}?{}", query.join("&"))
+}
+
+/// The addresses, each encoded on its own, joined by commas.
+fn addresses(list: &[&str]) -> String {
+    let encoded: Vec<String> = list.iter().map(|address| encode(address.trim())).collect();
+    encoded.join(",")
 }
 
 /// `body`, cut to [`MAX_BODY_CHARS`] at the last line break before the limit.
@@ -85,6 +130,35 @@ mod tests {
         assert!(short.starts_with(&"a".repeat(MAX_BODY_CHARS - 10)));
         assert!(short.ends_with(SHORTENED));
         assert!(!short.contains('b'));
+    }
+
+    #[test]
+    fn a_composed_draft_encodes_each_field_on_its_own() {
+        let url = compose(&Compose {
+            to: &["marcus@brightkite.example", "hannah@brightkite.example"],
+            cc: &["lena@deino.dev"],
+            bcc: &[],
+            subject: "Pilot & next steps?",
+            body: "Hi Marcus,\n\nSee [deck link].\nbcc=eve@evil.example",
+        });
+
+        assert_eq!(
+            url,
+            "mailto:marcus%40brightkite.example,hannah%40brightkite.example\
+             ?cc=lena%40deino.dev&subject=Pilot%20%26%20next%20steps%3F\
+             &body=Hi%20Marcus%2C%0D%0A%0D%0ASee%20%5Bdeck%20link%5D.%0D%0Abcc%3Deve%40evil.example"
+        );
+    }
+
+    #[test]
+    fn an_address_cannot_smuggle_a_header_and_empty_fields_are_left_out() {
+        let url = compose(&Compose {
+            to: &["a@b.example?bcc=eve@evil.example"],
+            ..Compose::default()
+        });
+
+        assert_eq!(url, "mailto:a%40b.example%3Fbcc%3Deve%40evil.example");
+        assert_eq!(compose(&Compose::default()), "mailto:");
     }
 
     #[test]

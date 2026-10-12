@@ -34,6 +34,7 @@ mod enhance;
 mod entities;
 mod example;
 mod export;
+mod followups;
 pub(crate) mod import;
 mod insights;
 mod integrations;
@@ -202,6 +203,7 @@ fn attach_stage_services(
         action_items: action_items::attach_action_items(app, database, wiring),
         insights,
         automations,
+        follow_ups: followups::attach_followups(app, database, wiring),
         identifier: speakers::identifier(database, wiring.settings.clone()),
         search,
         entities: entities::attach_entities(app, database, wiring.gateway.clone(), &wiring.clock),

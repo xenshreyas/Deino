@@ -21,6 +21,7 @@ use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::AutoFiler;
+use deino_core::followups::FollowUpDrafter;
 use deino_core::insights::InsightGenerator;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
@@ -64,6 +65,8 @@ pub struct StagePorts {
     pub insights: Arc<dyn InsightGenerator>,
     /// The user's automations (AUT-01).
     pub automations: Arc<dyn AutomationRunner>,
+    /// Suggested follow-up emails over the LLM gateway (NOT-07).
+    pub follow_ups: Arc<dyn FollowUpDrafter>,
     /// Voice exemplars the engine merges known voices with (CAP-04).
     pub voiceprints: Arc<dyn ExemplarReader>,
     /// Names speakers from voice profiles and the calendar (CAP-04).
@@ -117,6 +120,7 @@ impl StagePorts {
             action_items: Arc::new(FakeActionItemExtractor::default()),
             insights: Arc::new(crate::stages::RecordedInsights::default()),
             automations: Arc::new(crate::stages::RecordedAutomations::default()),
+            follow_ups: Arc::new(crate::stages::RecordedFollowUps::default()),
             voiceprints: Arc::new(FakeVoiceprintRepo::default()),
             identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
@@ -251,6 +255,7 @@ mod tests {
                 "insights",
                 "update_entities",
                 "automations",
+                "follow_up_draft",
                 "auto_export"
             ]
             .map(StageId::new)

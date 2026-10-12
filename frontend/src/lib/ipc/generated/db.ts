@@ -250,7 +250,14 @@ export type Table =
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
-"example_notes"
+"example_notes" | 
+/**
+ * One suggested follow-up email per meeting (NOT-07): `ready` with a subject
+ * and body, `quiet` when the model decided no follow-up was needed (and
+ * why), or `dismissed`, which is permanent: the stage never drafts for the
+ * meeting again and the text is cleared.
+ */
+"follow_up_drafts"
 
 /** tauri-specta globals **/
 

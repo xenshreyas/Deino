@@ -17,6 +17,7 @@
 //! | 85 | [`InsightsStage`] (`insights`) | AI-06 |
 //! | 90 | [`UpdateEntitiesStage`] (`update_entities`) | ORG-04 |
 //! | 95 | [`AutomationsStage`] (`automations`) | AUT-01 |
+//! | 98 | [`FollowUpDraftStage`] (`follow_up_draft`) | NOT-07 |
 //! | 99 | [`AutoExportStage`] (`auto_export`) | EXP-02 |
 //!
 //! PARITY_PLAN §4.2 lists the orders the later cards' stages take.
@@ -33,6 +34,7 @@ mod enhance_notes;
 mod extract_action_items;
 mod final_transcription;
 mod finalize_audio;
+mod follow_up_draft;
 mod identify_speakers;
 mod index;
 mod insights;
@@ -65,6 +67,9 @@ pub use extract_action_items::ExtractActionItemsStage;
 pub use final_transcription::FixedRepass;
 pub use final_transcription::{FinalTranscriptionStage, RepassSetting};
 pub use finalize_audio::FinalizeAudioStage;
+pub use follow_up_draft::FollowUpDraftStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use follow_up_draft::RecordedFollowUps;
 pub use identify_speakers::IdentifySpeakersStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use identify_speakers::RecordedIdentifications;

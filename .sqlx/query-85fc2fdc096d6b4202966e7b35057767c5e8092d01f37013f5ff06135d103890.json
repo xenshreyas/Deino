@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                f.meeting_id AS \"meeting_id!: MeetingId\",\n                m.title AS \"meeting_title!\",\n                f.subject AS \"subject!\",\n                f.generated_at AS \"generated_at!: DateTime<Utc>\"\n            FROM follow_up_drafts AS f\n            JOIN meetings AS m ON m.id = f.meeting_id\n            WHERE f.status = 'ready' AND f.generated_at >= ?1 AND m.deleted_at IS NULL\n            ORDER BY f.generated_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_title!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "subject!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "85fc2fdc096d6b4202966e7b35057767c5e8092d01f37013f5ff06135d103890"
+}
