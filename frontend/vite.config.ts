@@ -34,19 +34,23 @@ const fixturesDir = fileURLToPath(new URL('../fixtures', import.meta.url));
  * `vite --mode mock` (`pnpm dev:mock`): every generated binding module
  * `@/lib/ipc/generated/<feature>` resolves to `src/dev/mock-ipc/<feature>.ts`,
  * which serves fixture data and `satisfies` the generated types. `shared.ts`
- * holds only types and constants, so it stays real. A generated module
+ * and `settings-defaults.ts` hold only types and constants, so they stay
+ * real (the mock settings start from the real defaults). A generated module
  * without a mock fails here, so each feature card adds its mock.
  */
 function mockIpcAliases(): Alias[] {
   const features = readdirSync(generatedDir)
     .map((file) => basename(file, '.ts'))
-    .filter((feature) => feature !== 'shared');
+    .filter((feature) => feature !== 'shared' && feature !== 'settings-defaults');
   const missing = features.filter((feature) => !existsSync(`${mockIpcDir}/${feature}.ts`));
   if (missing.length > 0) {
     throw new Error(`dev:mock: no src/dev/mock-ipc/ mock for ${missing.join(', ')}`);
   }
   return [
-    { find: /^@\/lib\/ipc\/generated\/(?!shared$)([\w-]+)$/, replacement: `${mockIpcDir}/$1.ts` },
+    {
+      find: /^@\/lib\/ipc\/generated\/(?!shared$|settings-defaults$)([\w-]+)$/,
+      replacement: `${mockIpcDir}/$1.ts`,
+    },
   ];
 }
 

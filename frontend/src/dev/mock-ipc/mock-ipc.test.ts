@@ -38,7 +38,8 @@ describe('mock IPC modules', () => {
   it('mock every generated feature module with the same exports and commands', () => {
     const mocked = byFeature(mocks);
     for (const [feature, real] of byFeature(generated)) {
-      if (feature === 'shared') continue;
+      // Types and constants only: they stay real in dev:mock (vite.config.ts).
+      if (feature === 'shared' || feature === 'settings-defaults') continue;
       const mock = mocked.get(feature);
       expect(mock, `src/dev/mock-ipc/${feature}.ts`).toBeDefined();
       expect(Object.keys(mock ?? {}).sort()).toEqual(Object.keys(real).sort());

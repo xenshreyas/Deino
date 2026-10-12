@@ -5,7 +5,7 @@
  *
  * | Export | Where |
  * |---|---|
- * | {@link HotkeySettings} | Settings → Shortcuts (`features/settings/sections.tsx`) |
+ * | {@link HotkeySettings} | Settings → Shortcuts (`./settings-page.ts`) |
  */
 export { formatAccelerator } from './accelerator';
 export { HotkeySettings } from './components/hotkey-settings';

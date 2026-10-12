@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "ai": {
+    "provider": "claude",
+    "model": "claude-sonnet-4-5",
+    "providerModels": {
+      "claude": "claude-sonnet-4-5"
+    },
+    "ollamaEndpoint": "http://localhost:11434",
+    "customOpenai": null,
+    "autoSummary": true,
+    "routes": {}
+  },
+  "audio": {
+    "preferredMicDevice": "MacBook Pro Microphone",
+    "preferredSystemDevice": null,
+    "usesHeadphones": true
+  },
+  "recording": {
+    "autoSave": false,
+    "showRecordingNotice": true,
+    "showPanel": false,
+    "panelPosition": null,
+    "autoStop": {
+      "enabled": true,
+      "afterCalendarEnd": true,
+      "offerNextMeeting": true
+    }
+  },
+  "transcription": {
+    "engine": "parakeet_unified",
+    "model": "",
+    "liveTranscription": false,
+    "highAccuracyRepass": true
+  },
+  "notifications": {
+    "recordingNotifications": true,
+    "timeBasedReminders": true,
+    "meetingReminders": true,
+    "respectDoNotDisturb": true,
+    "notificationSound": true,
+    "systemPermissionGranted": true,
+    "consentGiven": true,
+    "manualDndMode": false,
+    "preferences": {
+      "showRecordingStarted": false,
+      "showRecordingStopped": false,
+      "showRecordingPaused": true,
+      "showRecordingResumed": true,
+      "showTranscriptionComplete": true,
+      "showMeetingReminders": true,
+      "showSystemErrors": true,
+      "meetingReminderMinutes": [
+        10
+      ],
+      "showActionItemReminders": true
+    }
+  },
+  "detection": {
+    "enabled": true,
+    "ignoredApps": [
+      {
+        "bundleId": "com.apple.FaceTime",
+        "name": "FaceTime"
+      }
+    ],
+    "autoStart": {
+      "enabled": true,
+      "countdownSeconds": 5
+    }
+  },
+  "speakers": {
+    "autoIdentify": false,
+    "thresholds": {
+      "autoAssign": 0.72,
+      "autoAssignNonAttendee": 0.77,
+      "margin": 0.08,
+      "suggest": 0.55
+    }
+  },
+  "consent": {
+    "chatMessage": {
+      "zoom": true,
+      "teams": false,
+      "meet": false,
+      "message": "Hi all, I'm transcribing this call with Deino for my own notes. It runs on my Mac and nothing is shared. Let me know if you'd rather I didn't."
+    },
+    "reminder": false
+  },
+  "privacy": {
+    "redactSensitive": true,
+    "encryptDatabase": false,
+    "appLock": {
+      "enabled": false,
+      "idleMinutes": 5,
+      "lockOnWake": true
+    },
+    "retention": {
+      "audio": "days30",
+      "transcript": "never",
+      "everything": "never"
+    },
+    "pauseTipSeen": true
+  },
+  "network": {
+    "offlineMode": true,
+    "services": {}
+  },
+  "profile": {
+    "name": "Ada",
+    "emails": [
+      "ada@example.com"
+    ],
+    "role": "CTO",
+    "company": "Deino",
+    "focusAreas": [
+      "Hiring"
+    ],
+    "writingStyle": "",
+    "context": ""
+  },
+  "templates": {
+    "defaultTemplate": null
+  },
+  "organize": {
+    "autoTag": false
+  },
+  "export": {
+    "autoExport": true,
+    "folder": "/Users/ada/Notes",
+    "fileName": "{date} {title}.md",
+    "subfolder": "{yyyy}/{mm}",
+    "sections": {
+      "notes": true,
+      "myNotes": true,
+      "actionItems": true,
+      "insights": true,
+      "transcript": false,
+      "attendees": true
+    },
+    "overwrite": true,
+    "transcriptSidecar": false,
+    "obsidian": true
+  },
+  "calendar": {
+    "syncEnabled": true,
+    "hiddenCalendars": [
+      "0192f1a4-7c3e-7b10-8a2e-5b9c3d4e6f70"
+    ],
+    "google": {
+      "clientId": ""
+    },
+    "microsoft": {
+      "clientId": ""
+    },
+    "autoRecord": {
+      "internal": false,
+      "external": false,
+      "organizedByOthers": true,
+      "notAccepted": false
+    },
+    "reminders": {
+      "enabled": true,
+      "quietCalendars": []
+    }
+  },
+  "briefs": {
+    "enabled": false,
+    "audience": "external"
+  },
+  "screen": {
+    "detectedMeetings": true,
+    "video": true,
+    "videoFps": 2,
+    "snapshots": true
+  },
+  "integrations": {
+    "apps": {}
+  },
+  "automations": {
+    "shellScripts": true
+  },
+  "shortcuts": {
+    "record": "Ctrl+Alt+Cmd+R",
+    "quickNote": "Ctrl+Alt+Cmd+N",
+    "ask": "Ctrl+Alt+Cmd+K"
+  },
+  "ui": {
+    "theme": "dark",
+    "showConfidenceIndicator": true,
+    "transcriptPaneRatio": 0.4,
+    "meetingsList": {
+      "view": null,
+      "filter": {
+        "dateRange": null,
+        "people": [],
+        "companies": [],
+        "tags": [],
+        "folders": [],
+        "hasActionItems": false,
+        "audience": null
+      }
+    }
+  },
+  "beta": {
+    "importAndRetranscribe": false
+  },
+  "api": {
+    "enabled": true,
+    "port": 47811
+  },
+  "onboarding": {
+    "completed": true,
+    "step": "profile",
+    "outcomes": {}
+  }
+}

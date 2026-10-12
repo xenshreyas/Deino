@@ -10,18 +10,7 @@ import { ICON_PROPS } from '@/ui/icons';
 
 import { settingsCopy } from './copy';
 import type { SettingsSectionId } from './search';
-import { SETTINGS_SECTIONS, type SettingsGroup } from './sections';
-
-/** Nav groups, in order. */
-const GROUPS: readonly SettingsGroup[] = [
-  'app',
-  'capture',
-  'ai',
-  'workspace',
-  'privacy',
-  'data',
-  'more',
-];
+import { SETTINGS_GROUPS, settingsSections } from './sections';
 
 /** The section nav: grouped links, the open one highlighted. */
 function SettingsNav({ active }: { active: SettingsSectionId }) {
@@ -31,29 +20,31 @@ function SettingsNav({ active }: { active: SettingsSectionId }) {
       className="flex w-[200px] shrink-0 flex-col gap-px overflow-y-auto px-2 pb-6"
     >
       <h1 className="px-2 pt-2 pb-1 text-base font-semibold text-fg">{settingsCopy.title}</h1>
-      {GROUPS.map((group) => (
+      {SETTINGS_GROUPS.map((group) => (
         <div key={group} className="flex flex-col gap-px">
           <h2 className="mt-3 flex h-6 items-center px-2 text-xs font-semibold text-fg-muted">
             {settingsCopy.groups[group]}
           </h2>
-          {SETTINGS_SECTIONS.filter((section) => section.group === group).map((section) => {
-            const SectionIcon = section.icon;
-            return (
-              <Link
-                key={section.id}
-                to="/settings"
-                search={{ section: section.id }}
-                aria-current={section.id === active ? 'page' : undefined}
-                className={cn(
-                  'flex h-[30px] items-center gap-2 rounded-sm px-2 text-sm text-fg-muted transition-colors duration-(--dur-fast)',
-                  'hover:bg-bg-muted hover:text-fg aria-[current=page]:bg-bg-muted aria-[current=page]:text-fg',
-                )}
-              >
-                <SectionIcon {...ICON_PROPS} />
-                {settingsCopy.sections[section.id].label}
-              </Link>
-            );
-          })}
+          {settingsSections()
+            .filter((section) => section.group === group)
+            .map((section) => {
+              const SectionIcon = section.icon;
+              return (
+                <Link
+                  key={section.id}
+                  to="/settings"
+                  search={{ section: section.id }}
+                  aria-current={section.id === active ? 'page' : undefined}
+                  className={cn(
+                    'flex h-[30px] items-center gap-2 rounded-sm px-2 text-sm text-fg-muted transition-colors duration-(--dur-fast)',
+                    'hover:bg-bg-muted hover:text-fg aria-[current=page]:bg-bg-muted aria-[current=page]:text-fg',
+                  )}
+                >
+                  <SectionIcon {...ICON_PROPS} />
+                  {section.label}
+                </Link>
+              );
+            })}
         </div>
       ))}
     </nav>
@@ -67,11 +58,10 @@ export interface SettingsScreenProps {
 
 /** The settings screen with one page open. */
 export function SettingsScreen({ section }: SettingsScreenProps) {
-  const page =
-    SETTINGS_SECTIONS.find((candidate) => candidate.id === section) ?? SETTINGS_SECTIONS[0];
+  const pages = settingsSections();
+  const page = pages.find((candidate) => candidate.id === section) ?? pages[0];
   if (page === undefined) return null;
-  const { label, description } = settingsCopy.sections[page.id];
-  const PageComponent = page.Component;
+  const { label, description, Component: PageComponent } = page;
   return (
     <div className="flex h-full">
       <SettingsNav active={page.id} />

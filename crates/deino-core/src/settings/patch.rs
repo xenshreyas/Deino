@@ -9,16 +9,8 @@
 
 use serde_json::{Map, Value};
 
+use super::model::DIALOG_ONLY;
 use super::{Settings, SettingsError};
-
-/// Settings the UI may clear but never set, as (section, field, path):
-/// paths Deino writes to come only from dialogs Rust opens (EXP-02), and
-/// the API server's switch and port only from the `api` plugin (DEV-03).
-const DIALOG_ONLY: &[(&str, &str, &str)] = &[
-    ("export", "folder", "export.folder"),
-    ("api", "enabled", "api.enabled"),
-    ("api", "port", "api.port"),
-];
 
 /// A merge patch for [`Settings`]: a JSON object that does not touch
 /// `version` and sets no [`DIALOG_ONLY`] setting.

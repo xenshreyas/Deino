@@ -35,7 +35,7 @@ forbid() {
 # a `mod` declaration (the module files that may only declare modules).
 only_mod_lines() {
     local file="$1" hits
-    hits="$(grep -nvE '^\s*$|^\s*//|^#\[cfg\(test\)\]$|^(pub(\(crate\))? )?mod [a-z_]+;$' "$file" || true)"
+    hits="$(grep -nvE '^\s*$|^\s*//|^#\[cfg\(test\)\]$|^(pub(\(crate\))? )?mod [a-z_]+;$|^include!\(concat!\(env!\("OUT_DIR"\), "/[a-z_]+\.rs"\)\);$' "$file" || true)"
     if [[ -n "$hits" ]]; then
         fail "$file may only declare modules; register a feature from its own file"
         echo "$hits" >&2
@@ -92,6 +92,27 @@ forbid crates/deino-pipeline/src/registry.rs 'Stage::new\(ports\)' "lists a stag
 
 # deino-domain: IDs are re-exported by a glob.
 forbid crates/deino-domain/src/deino_domain.rs 'pub use id::\{' "lists ID types; \`pub use id::*\` re-exports them"
+
+# REG-02: settings sections, settings pages and ID files register from their
+# own files (docs/adr/2026-10-12-settings-self-registration.md).
+readonly SETTINGS=crates/deino-core/src/settings
+forbid "$SETTINGS/model.rs" '^\s+pub [a-z_]+: [A-Z][A-Za-z]*Settings,$|[A-Z][A-Za-z]*Settings::default\(\)|self\.[a-z_]+\.validate\(\)' \
+    "lists settings sections; register_section! in the section's own file generates them"
+forbid "$SETTINGS/patch.rs" 'const DIALOG_ONLY' "lists dialog-only settings; declare dialog_only in register_section!"
+only_mod_lines "$SETTINGS/sections.rs"
+for section in "$SETTINGS"/sections/*.rs; do
+    module="$(basename "$section" .rs)"
+    forbid "$SETTINGS.rs" "^(pub )?(mod|use) $module(;|::)" "names the section module $module; sections.rs declares it and build.rs exports it"
+done
+forbid crates/deino-domain/src/id.rs '^pub use [a-z_]+::' "re-exports an ID file; build.rs re-exports every file in id/"
+readonly SETTINGS_UI=frontend/src/features/settings
+forbid "$SETTINGS_UI/sections.ts" "from '@/features/|id: '" "lists settings pages; a feature registers its page in its own settings-page.tsx"
+forbid "$SETTINGS_UI/search.ts" 'z\.enum\(' "lists settings page ids; each settings-page.tsx declares its id in SettingsPageIds"
+forbid "$SETTINGS_UI/copy.ts" '^  sections: \{' "lists settings page copy; each page carries its label and description"
+for fixture in "$SETTINGS_UI/settings-fixture.ts" frontend/src/dev/mock-ipc/settings-store.ts; do
+    forbid "$fixture" '^\s+version: [0-9]+,' "copies the default settings; start from the generated DEFAULT_SETTINGS"
+    grep -q 'DEFAULT_SETTINGS' "$fixture" || fail "$fixture does not start from the generated DEFAULT_SETTINGS"
+done
 
 if ((failures > 0)); then
     echo "check-feature-isolation: $failures problem(s); see docs/adr/2026-10-12-feature-self-registration.md" >&2

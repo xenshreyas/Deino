@@ -17,6 +17,7 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
+use deino_core::settings::Settings;
 use deino_db::Table;
 use deino_domain::{AppError, ErrorCode};
 use specta_typescript::{BigIntExportBehavior, Typescript};
@@ -77,6 +78,20 @@ fn shared_bindings() -> String {
     )
 }
 
+/// `settings-defaults.ts`: `Settings::default()` as a typed constant, which
+/// the UI's settings fixtures start from, so no one copies the defaults
+/// by hand (REG-02).
+fn settings_defaults() -> String {
+    let defaults =
+        serde_json::to_string_pretty(&Settings::default()).expect("the default settings serialize");
+    format!(
+        "{HEADER}\n\n\
+         import type {{ Settings }} from \"./settings\";\n\n\
+         /** `Settings::default()`: what Rust reads from an empty settings file. */\n\
+         export const DEFAULT_SETTINGS: Settings = {defaults};\n"
+    )
+}
+
 /// Writes `contents` to `<name>.ts`, leaving an unchanged file untouched so
 /// the Vite dev server does not reload for nothing.
 fn write_binding(name: &str, contents: &str) {
@@ -115,6 +130,7 @@ fn export_bindings() {
         write_binding(name, &brand_ids(&source));
     }
     write_binding("shared", &brand_ids(&shared_bindings()));
+    write_binding("settings-defaults", &settings_defaults());
 }
 
 /// The generated ACL (`build/features.rs`, from each `collect_commands!`)

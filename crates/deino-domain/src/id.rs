@@ -6,10 +6,12 @@
 //! is exported to TypeScript as a branded string type by the app's bindings
 //! test, so the UI cannot mix them up either.
 //!
-//! New entities get UUIDv7 IDs declared with `uuid_id!` in this file; their
-//! time-ordered prefix keeps B-tree inserts local and sorts by creation time.
-//! The crate root re-exports every ID with `pub use id::*`, so a new one is
-//! declared here and nowhere else.
+//! New entities get UUIDv7 IDs declared with `uuid_id!`; their time-ordered
+//! prefix keeps B-tree inserts local and sorts by creation time. A feature
+//! declares its IDs in its own file, `id/<area>.rs` (plus one alphabetical
+//! `mod <area>;` line here): `build.rs` re-exports every file in `id/` and
+//! the crate root re-exports every ID with `pub use id::*`, so there is no
+//! list to edit (REG-02).
 
 use std::fmt;
 use std::str::FromStr;
@@ -248,15 +250,15 @@ uuid_id!(
     DeliveryId
 );
 
-mod webhook;
-pub use webhook::{WebhookDeliveryId, WebhookId};
-
+// One file per area's IDs, each declared with `uuid_id!`; build.rs re-exports
+// every file in `id/` (`pub use <module>::*`), so its `mod` line is all a new
+// file adds here.
 mod api;
 mod chat;
 mod features;
-pub use api::ApiKeyId;
-pub use chat::*;
-pub use features::*;
+mod webhook;
+
+include!(concat!(env!("OUT_DIR"), "/id_exports.rs"));
 
 #[cfg(test)]
 mod tests {

@@ -4,39 +4,31 @@
  */
 import { z } from 'zod';
 
-/** Every settings page. */
-export const settingsSectionSchema = z.enum([
-  'general',
-  'appearance',
-  'shortcuts',
-  'setup',
-  'recording',
-  'detection',
-  'transcription',
-  'vocabulary',
-  'watched-folders',
-  'people',
-  'speaker-tags',
-  'consent',
-  'screen',
-  'ai',
-  'models',
-  'templates',
-  'profile',
-  'search',
-  'calendar',
-  'integrations',
-  'security',
-  'network',
-  'import',
-  'export',
-  'beta',
-  'about',
-  'developer',
-]);
+import { isSettingsSectionId } from './sections';
+
+/**
+ * Every settings page's id, as keys. Each page adds its own from its
+ * feature's `settings-page.tsx` (REG-02), so links to a page are checked:
+ *
+ * ```ts
+ * declare module '@/features/settings/search' {
+ *   interface SettingsPageIds {
+ *     screen: true;
+ *   }
+ * }
+ * ```
+ *
+ * `general` is declared here: the page that opens when none is named.
+ */
+export interface SettingsPageIds {
+  general: true;
+}
 
 /** One settings page. */
-export type SettingsSectionId = z.infer<typeof settingsSectionSchema>;
+export type SettingsSectionId = keyof SettingsPageIds;
+
+/** A registered page's id. */
+export const settingsSectionSchema = z.custom<SettingsSectionId>(isSettingsSectionId);
 
 /**
  * `/settings?section=appearance`. `template` opens a template in the
