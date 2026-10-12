@@ -26,6 +26,9 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
 - `fmp4::truncate_to_playable`, `recovery::recover_recording`,
   `finalize::finalize_recording`, and `decode::read_mono` (a finished
   track as mono PCM at any rate, priming trimmed; diarization reads 16 kHz).
+- `clip::cut_clip` (TRN-04, ADR 0048): a range of a finished file copied
+  into a new `.m4a`/`.mp4` by an `AVAssetExportSession` Passthrough export
+  with a `timeRange` (no re-encode, no FFmpeg; a stub off macOS).
 - `HealthEvent` (`Stalled`, `Resumed`, `FramesDropped`, `DiskLow`,
   `StorageFailed`, and from capture `Recovering`, `Recovered`, `DeviceLost`,
   `BluetoothCallMode`, `SystemAudioUnavailable`, `Asleep`, `Awake`) on a
@@ -70,7 +73,8 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
 
 `cargo test -p deino-audio` runs the unit tests (fakes, no hardware) and, on
 macOS, `tests/finalize_round_trip.rs` (real encoder, alignment within 50 ms,
-fixture audio). The real-time acceptance harnesses are ignored by default:
+fixture audio) and `tests/clip_timing.rs` (a clip's start and duration
+within ±250 ms of the range, on fixture audio). The real-time acceptance harnesses are ignored by default:
 
 ```bash
 cargo test -p deino-audio --test kill_harness -- --ignored --nocapture --test-threads=1

@@ -9,7 +9,7 @@ import type { MeetingTabId } from './search';
 export type { MeetingTabId } from './search';
 
 /** The right panel's sections. */
-export type MeetingPanelId = 'chat' | 'participants' | 'details';
+export type MeetingPanelId = 'chat' | 'comments' | 'participants' | 'details';
 
 /** A moment a link asked to show (`?t=` or `?segment=`). */
 export interface MeetingMoment {

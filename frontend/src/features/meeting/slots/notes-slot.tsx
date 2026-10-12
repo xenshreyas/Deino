@@ -9,6 +9,7 @@
 import { useState } from 'react';
 
 import { MeetingActionItems } from '@/features/action-items';
+import { CommentLayer } from '@/features/comments';
 import {
   EnhancedNotes,
   notesCopy,
@@ -88,11 +89,18 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
         onRegenerate={hasNotes ? regenerate.run : null}
       />
       <MeetingActionItems meetingId={meetingId} />
-      {view === 'mine' ? (
-        <Notepad meetingId={meetingId} toolbar={toggle} />
-      ) : (
-        <EnhancedNotes meetingId={meetingId} toolbar={toggle} />
-      )}
+      <CommentLayer
+        key={view}
+        meetingId={meetingId}
+        target={view === 'mine' ? 'notes' : 'enhanced'}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        {view === 'mine' ? (
+          <Notepad meetingId={meetingId} toolbar={toggle} />
+        ) : (
+          <EnhancedNotes meetingId={meetingId} toolbar={toggle} />
+        )}
+      </CommentLayer>
     </div>
   );
 }

@@ -29,6 +29,7 @@ export { TranscriptPanel, type TranscriptPanelProps } from './components/transcr
 export { TranscriptView, type TranscriptViewProps } from './components/transcript-view';
 export { transcriptCopy } from './copy';
 export { useSpeakerBands } from './hooks/use-speaker-bands';
+export { timedWords } from './model/word-ranges';
 export { transcriptKeys, transcriptQuery } from './queries';
 export type {
   SpeakerView,

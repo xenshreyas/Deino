@@ -11,13 +11,15 @@
  * | Play from here | seeks the player there and plays (saved lines, with a recording) | TRN-03 |
  * | Copy | the line's text to the clipboard (⌘C on a focused line) | TRN-01 |
  * | Edit | the text in place (↵ on a focused line; or double-click) | TRN-02 |
- * | Clip | hidden | TRN-04 |
- * | Comment | hidden | TRN-06 |
+ * | Clip | names a clip of the line (saved lines, with a recording); a selection's own menu clips the selected words | TRN-04 |
+ * | Comment | comments on the whole line (saved lines); a selection's own menu comments on the selected words | TRN-06 |
  * | Delete | soft delete with Undo (⌘⌫ on a focused line) | TRN-02 |
  */
 import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { clipSpan } from '@/features/clips';
+import { screenRect, SEGMENT_ATTRIBUTE, startComment } from '@/features/comments';
 import { playerActions } from '@/features/player';
 import { Copy, type Icon, MessageCircle, Pencil, Play, Scissors, Trash2 } from '@/ui/icons';
 
@@ -63,15 +65,26 @@ export interface TranscriptAction {
   run: (context: TranscriptActionContext) => void | Promise<void>;
 }
 
-/** Hidden until its card lands. */
-const hidden = (): TranscriptActionState => 'hidden';
-
-/** Nothing to do yet. */
-const noop = (): void => undefined;
-
 /** Only saved lines can be played from, edited or deleted. */
 const whenSaved = ({ line }: TranscriptActionContext): TranscriptActionState =>
   line.open ? 'hidden' : 'enabled';
+
+/** Opens the comment composer on the whole line, beside its bubble. */
+function commentOnLine({ meetingId, line }: TranscriptActionContext): void {
+  const bubble = document.querySelector(`[${SEGMENT_ATTRIBUTE}="${line.id}"]`);
+  if (bubble === null || line.text.trim() === '') return;
+  startComment({
+    meetingId,
+    anchor: {
+      target: 'transcript',
+      segmentId: line.id,
+      start: 0,
+      end: line.text.length,
+      quote: line.text,
+    },
+    rect: screenRect(bubble.getBoundingClientRect()),
+  });
+}
 
 /** Copies the line's text; a line still being spoken copies what is said so far. */
 async function copyLine({ line }: TranscriptActionContext): Promise<void> {
@@ -113,14 +126,23 @@ export const TRANSCRIPT_ACTIONS: readonly TranscriptAction[] = [
       startEditing(line.id);
     },
   },
-  { id: 'clip', label: transcriptCopy.clip, icon: Scissors, rare: true, state: hidden, run: noop },
+  {
+    id: 'clip',
+    label: transcriptCopy.clip,
+    icon: Scissors,
+    rare: true,
+    state: (context) => (context.playable ? whenSaved(context) : 'hidden'),
+    run: ({ meetingId, line }) => {
+      clipSpan(meetingId, { start: line.start, end: line.end, text: line.text });
+    },
+  },
   {
     id: 'comment',
     label: transcriptCopy.comment,
     icon: MessageCircle,
     rare: true,
-    state: hidden,
-    run: noop,
+    state: whenSaved,
+    run: commentOnLine,
   },
   {
     id: 'delete',

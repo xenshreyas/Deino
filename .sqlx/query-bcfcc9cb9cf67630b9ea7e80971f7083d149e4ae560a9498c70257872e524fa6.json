@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO clips (id, meeting_id, name, start_ms, end_ms, media, path, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "bcfcc9cb9cf67630b9ea7e80971f7083d149e4ae560a9498c70257872e524fa6"
+}

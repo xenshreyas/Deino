@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE clips SET name = ?2, path = ?3, updated_at = ?4 WHERE id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "b02e26132240b727109d0e31a2211edbef2210184a3e38f07923e10c9aad976a"
+}

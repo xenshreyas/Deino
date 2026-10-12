@@ -44,6 +44,7 @@
 //! writer logic) builds and is tested on every platform.
 
 pub mod capture;
+pub mod clip;
 pub mod clock;
 pub mod decode;
 pub mod durability;

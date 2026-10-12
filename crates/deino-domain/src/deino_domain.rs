@@ -63,10 +63,10 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
-    ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId,
-    PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId,
-    VoiceprintId,
+    ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, ClipId,
+    CommentId, CommentThreadId, CompanyId, ConnectionId, DeliveryId, FolderId, FolderRuleId,
+    IdError, InsightId, LlmCallId, MeetingId, PersonId, SegmentId, SeriesId, SpeakerId, StageId,
+    TagId, TemplateId, VocabTermId, VoiceprintId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

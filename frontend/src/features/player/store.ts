@@ -101,4 +101,40 @@ export const playerActions = {
     playerActions.seek(meetingId, ms);
     controllerOf(meetingId)?.play();
   },
+  /** Plays `start`–`end` (a clip, TRN-04) and pauses at `end`. */
+  playRange: (meetingId: MeetingId, start: number, end: number): void => {
+    stopRange?.();
+    playerActions.playFrom(meetingId, start);
+    stopRange = pauseAtEnd(meetingId, { start, end });
+  },
 };
+
+/** How far outside a range the position may be before the user counts as having moved it. */
+const RANGE_SLACK_MS = 500;
+
+/** Stops following the range being played, if one is. */
+let stopRange: (() => void) | null = null;
+
+/**
+ * Pauses `meetingId`'s player when it reaches `range.end`. Once playback is
+ * inside the range, a pause by the user or a seek out of it ends the watch
+ * without pausing. Returns the unsubscribe.
+ */
+function pauseAtEnd(meetingId: MeetingId, range: { start: number; end: number }): () => void {
+  let inside = false;
+  const unsubscribe = usePlaybackStore.subscribe((state) => {
+    const here =
+      state.time >= range.start - RANGE_SLACK_MS && state.time <= range.end + RANGE_SLACK_MS;
+    if (state.meetingId !== meetingId) {
+      unsubscribe();
+      return;
+    }
+    if (!inside) {
+      inside = here && state.playing;
+      return;
+    }
+    if (state.time >= range.end) state.controller?.pause();
+    if (state.time >= range.end || !state.playing || !here) unsubscribe();
+  });
+  return unsubscribe;
+}

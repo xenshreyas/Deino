@@ -1,0 +1,26 @@
+/** Every user-facing string of comments. */
+export const commentsCopy = {
+  panel: 'Comments',
+  comment: 'Comment',
+  placeholder: 'Add a comment',
+  replyPlaceholder: 'Reply',
+  send: 'Comment',
+  reply: 'Reply',
+  cancel: 'Cancel',
+  resolve: 'Resolve',
+  reopen: 'Reopen',
+  resolved: 'Resolved',
+  delete: 'Delete comment',
+  detached: 'Detached',
+  detachedHint: 'The text this comment was on has changed or was removed.',
+  emptyTitle: 'No comments',
+  emptyBody:
+    'Select words in the transcript or the notes and choose Comment. Comments stay on this Mac.',
+  showResolved: (count: number) => `Show ${String(count)} resolved`,
+  hideResolved: 'Hide resolved',
+  failed: 'Something went wrong with the comment',
+  selectionMenu: 'Selection actions',
+  inTranscript: 'Transcript',
+  inNotes: 'My notes',
+  inEnhanced: 'Notes',
+} as const;

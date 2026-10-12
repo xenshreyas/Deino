@@ -63,6 +63,8 @@ pub mod _example;
 pub mod action_items;
 pub mod calendar;
 pub mod cli_setup;
+pub mod clips;
+pub mod comments;
 pub mod companies;
 pub mod diarization;
 pub mod enhance;

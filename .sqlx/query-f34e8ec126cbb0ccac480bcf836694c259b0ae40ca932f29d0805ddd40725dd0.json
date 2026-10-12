@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM comments WHERE id = ?1 RETURNING thread_id AS \"thread_id: CommentThreadId\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "thread_id: CommentThreadId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f34e8ec126cbb0ccac480bcf836694c259b0ae40ca932f29d0805ddd40725dd0"
+}

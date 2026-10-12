@@ -89,6 +89,12 @@ pub enum Table {
     InsightDefs,
     /// Each insight's latest run on each meeting, with its answers (AI-06).
     InsightResults,
+    /// Named ranges of meetings' recordings, cut into files (TRN-04).
+    Clips,
+    /// Comment threads anchored to transcript or notes spans (TRN-06).
+    CommentThreads,
+    /// The comments of each thread (TRN-06).
+    Comments,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -96,7 +102,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 38] = [
+    pub const ALL: [Self; 41] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -134,6 +140,9 @@ impl Table {
         Self::VocabCorrections,
         Self::InsightDefs,
         Self::InsightResults,
+        Self::Clips,
+        Self::CommentThreads,
+        Self::Comments,
         Self::ExampleNotes,
     ];
 
@@ -192,6 +201,9 @@ impl Table {
             "vocab_corrections" => Self::VocabCorrections,
             "insight_defs" => Self::InsightDefs,
             "insight_results" => Self::InsightResults,
+            "clips" => Self::Clips,
+            "comment_threads" => Self::CommentThreads,
+            "comments" => Self::Comments,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

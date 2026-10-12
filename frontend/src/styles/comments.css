@@ -1,0 +1,13 @@
+/*
+ * Commented words (TRN-06): painted with the CSS Custom Highlight API by
+ * `features/comments/components/highlight-painter.tsx`, one highlight per
+ * surface. A soft warm wash with a hairline underline, in both themes.
+ */
+::highlight(deino-comment-transcript),
+::highlight(deino-comment-notes),
+::highlight(deino-comment-enhanced) {
+  background-color: var(--warning-soft);
+  text-decoration-line: underline;
+  text-decoration-color: var(--warning);
+  text-decoration-thickness: 1px;
+}
