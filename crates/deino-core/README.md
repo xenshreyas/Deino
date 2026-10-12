@@ -200,6 +200,12 @@ the SQLite adapters behind those ports.
   (the `final_transcription` stage's rules: transcribe a record-only
   meeting's tracks, or re-transcribe with the high-accuracy re-pass) over
   the `TrackTranscriber` port, and `carried_speaker`. Fake: `ScriptedTracks`.
+- `redaction` (NOT-09, ADR 0038): pure detectors, one per `SecretKind`, over
+  typed and spoken text; `Redactor` with the optional `SpanCheck`
+  (`LocalModelCheck`: the built-in model only, may only reject); the
+  `TextRedactor` port used by `MaterialSources` and `ExportPorts`, and
+  `SettingRedactor` over `privacy.redactSensitive`. No storage: secrets
+  are redacted on the way out; the transcript keeps them.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

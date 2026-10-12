@@ -19,6 +19,9 @@
 //! - [`Vault`] ([`FsVault`]) is the file system: atomic writes, and the
 //!   head of a file to tell whose it is.
 //!
+//! With Settings → Privacy → "Hide sensitive information" on, the assembler
+//! redacts secrets (NOT-09, [`ExportPorts::with_redactor`]).
+//!
 //! Rendering itself is `deino-export`; the dialogs, clipboard and opener
 //! are app adapters.
 
@@ -32,6 +35,7 @@ mod full;
 mod model;
 mod notes;
 mod platform;
+mod redacted;
 mod service;
 #[cfg(test)]
 mod testing;
@@ -50,5 +54,6 @@ pub use model::{
 };
 pub use notes::{DocNoteRenderer, MeetingNotes, NoteRenderer};
 pub use platform::{Clipboard, ClipboardContent, FolderDialog, SaveDialog, SaveRequest, UrlOpener};
+pub use redacted::RedactedNotes;
 pub use service::{ExportService, ExportServiceDeps};
 pub use vault::{FsVault, HEAD_BYTES, Vault};

@@ -16,6 +16,7 @@ use crate::enhance::{EnhancedNotesReader, SqliteEnhancedNotesRepo};
 use crate::export::ExportPorts;
 use crate::folders::{FolderPorts, FolderRepo, FolderService, SqliteFolderRepo};
 use crate::people::SqlitePeopleRepo;
+use crate::redaction::TextRedactor;
 use crate::search::semantic::Embedder;
 use crate::tags::{MeetingTagRepo, SqliteTagRepo, TagRepo};
 
@@ -57,6 +58,9 @@ pub struct ReadContext {
     /// The local embedding model, for semantic search; `None` searches by
     /// keyword only.
     pub embedder: Option<Arc<dyn Embedder>>,
+    /// Hides secrets in what the library hands out (NOT-09): notes,
+    /// transcripts and action items of a meeting.
+    pub redactor: Arc<dyn TextRedactor>,
 }
 
 impl ReadPorts {
@@ -66,12 +70,13 @@ impl ReadPorts {
             zone,
             clock,
             embedder,
+            redactor,
         } = context.clone();
         let tags = Arc::new(SqliteTagRepo::new(database.clone()));
         let folders = Arc::new(SqliteFolderRepo::new(database.clone()));
         let companies = Arc::new(SqliteCompanyRepo::new(database.clone()));
         Self {
-            meeting: ExportPorts::sqlite(database, zone.clone()),
+            meeting: ExportPorts::sqlite(database, zone.clone()).with_redactor(redactor),
             enhanced: Arc::new(SqliteEnhancedNotesRepo::new(database.clone())),
             tags: tags.clone(),
             tagging: tags.clone(),

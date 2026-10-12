@@ -1,7 +1,9 @@
 //! [`MaterialSources`]: gathers the [`Material`] through the existing
 //! repositories: titles and timing, the calendar event, attendees, the
 //! transcript with each speaker named, the user's notes, the series'
-//! previous notes and the vocabulary.
+//! previous notes and the vocabulary. With redaction on (NOT-09), secrets in
+//! the transcript are `[redacted]` in the material; the stored transcript
+//! keeps them.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,6 +18,7 @@ use crate::calendar::{CalendarEvent, CalendarEventRepo, SqliteCalendarRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, MeetingState, SqliteMeetingRepo};
 use crate::notes::{NotesRepo, SqliteNotesRepo};
 use crate::people::{AttendeeRepo, MeRepo, Person, PersonRepo, SqlitePeopleRepo};
+use crate::redaction::{NoRedaction, TextRedactor};
 use crate::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 use crate::vocabulary::{PromptVocabulary, SqliteVocabRepo};
 
@@ -51,11 +54,13 @@ pub struct MaterialSources {
     pub history: Arc<dyn EnhancedNotesReader>,
     /// Custom vocabulary.
     pub vocabulary: Arc<dyn Vocabulary>,
+    /// Hides secrets in the transcript lines (NOT-09).
+    pub redactor: Arc<dyn TextRedactor>,
 }
 
 impl MaterialSources {
     /// Every source over Deino's SQLite database, the user's vocabulary
-    /// (TRN-05) included.
+    /// (TRN-05) included, without redaction ([`Self::with_redactor`]).
     pub fn sqlite(database: &Database) -> Self {
         let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
         let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
@@ -74,7 +79,14 @@ impl MaterialSources {
             vocabulary: Arc::new(PromptVocabulary::new(Arc::new(SqliteVocabRepo::new(
                 database.clone(),
             )))),
+            redactor: Arc::new(NoRedaction),
         }
+    }
+
+    /// These sources, with `redactor` hiding secrets in the transcript.
+    #[must_use]
+    pub fn with_redactor(self, redactor: Arc<dyn TextRedactor>) -> Self {
+        Self { redactor, ..self }
     }
 
     /// The material of `meeting`, or `None` when it does not exist.
@@ -99,8 +111,9 @@ impl MaterialSources {
             attendees,
             series_id: state.series_id.clone(),
         };
+        let transcript = self.transcript(meeting, &segments).await?;
         Ok(Some(Material {
-            transcript: self.transcript(meeting, &segments).await?,
+            transcript: self.redacted(transcript).await,
             transcript_edited_at: segments.iter().filter_map(|s| s.edited_at).max(),
             notes: self.notes(meeting).await?,
             previous: self.previous(&info).await?,
@@ -114,6 +127,18 @@ impl MaterialSources {
     pub async fn transcript_of(&self, meeting: &MeetingId) -> Result<Vec<TranscriptLine>, DbError> {
         let segments = self.segments.list(meeting, Page::ALL).await?;
         self.transcript(meeting, &segments).await
+    }
+
+    /// `lines` with their secrets `[redacted]`, one batch per meeting so
+    /// the optional check runs once.
+    async fn redacted(&self, lines: Vec<TranscriptLine>) -> Vec<TranscriptLine> {
+        let texts = lines.iter().map(|line| line.text.clone()).collect();
+        let texts = self.redactor.redact(texts).await;
+        lines
+            .into_iter()
+            .zip(texts)
+            .map(|(line, text)| TranscriptLine { text, ..line })
+            .collect()
     }
 
     async fn event(&self, state: &MeetingState) -> Result<Option<CalendarEvent>, DbError> {
