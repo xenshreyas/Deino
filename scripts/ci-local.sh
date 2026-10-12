@@ -126,12 +126,33 @@ run_tests() {
 }
 
 # Through nextest (one process per test) when it is available.
+# Crates whose test binaries link the macOS media and ML frameworks. Starting
+# such a binary costs 1-5 s, so nextest's process per test makes each of their
+# tests that slow; libtest runs them as threads in one process, about 7x faster.
+# Every other crate stays on nextest, which is faster for many small tests.
+HEAVY_TEST_CRATES=(deino deino-audio deino-pipeline deino-diarize deino-detect deino-recording deino-speaker-tags)
+
 run_unit_tests() {
-    if ensure_nextest; then
-        cargo nextest run --locked "$@"
-    else
+    if ! ensure_nextest; then
         cargo test --locked "$@"
+    elif [[ "$*" == "--workspace" ]]; then
+        run_split_tests
+    else
+        cargo nextest run --locked "$@"
     fi
+}
+
+# The whole workspace: the rest through nextest, then the heavy crates
+# in-process. One after the other, so the two never compete for the target
+# directory or the CPU.
+run_split_tests() {
+    local heavy=() exclude=() crate
+    for crate in "${HEAVY_TEST_CRATES[@]}"; do
+        heavy+=(-p "$crate")
+        exclude+=(--exclude "$crate")
+    done
+    cargo nextest run --locked --workspace "${exclude[@]}"
+    cargo test --locked --no-fail-fast "${heavy[@]}" --lib --tests --bins
 }
 
 ensure_nextest() {
