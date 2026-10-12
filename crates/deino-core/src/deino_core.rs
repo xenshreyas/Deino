@@ -114,3 +114,4 @@ pub mod transcript;
 pub mod vocabulary;
 pub mod voiceprints;
 pub mod watch;
+pub mod webhooks;

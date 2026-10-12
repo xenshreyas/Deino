@@ -20,6 +20,9 @@ test-support = [
 
 [dependencies]
 async-trait.workspace = true
+# Webhook signatures (DEV-01): the `whsec_` secret and the Standard Webhooks
+# signature; the version already in the tree (deino-integrations).
+base64 = "0.22.1"
 chrono.workspace = true
 deino-db.workspace = true
 deino-doc.workspace = true
@@ -28,6 +31,10 @@ deino-domain.workspace = true
 deino-export.workspace = true
 deino-llm.workspace = true
 futures-util.workspace = true
+# A webhook signing secret's random bytes (DEV-01); deino-db's version.
+getrandom = "0.3.4"
+# HMAC-SHA256 webhook signatures (DEV-01); already in the tree.
+hmac = "0.12.1"
 # Company logos: the favicon fetch over the `favicons` service (ORG-04).
 deino-net.workspace = true
 deino-secrets.workspace = true

@@ -2022,6 +2022,7 @@ name = "deino-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base64 0.22.1",
  "chrono",
  "deino-db",
  "deino-doc",
@@ -2033,6 +2034,8 @@ dependencies = [
  "deino-speaker-tags",
  "deino-testkit",
  "futures-util",
+ "getrandom 0.3.4",
+ "hmac",
  "insta",
  "json-patch",
  "log",

@@ -4,7 +4,7 @@
 use chrono::{DateTime, Utc};
 use deino_domain::{
     AutomationId, AutomationRunId, AutomationRunStatus, AutomationStepStatus, AutomationTrigger,
-    FolderId, InsightId, MeetingId, TagId,
+    FolderId, InsightId, MeetingId, TagId, WebhookDeliveryId,
 };
 use serde::{Deserialize, Serialize};
 
@@ -95,6 +95,14 @@ pub enum StepOutput {
     Script {
         /// The last lines it printed, at most a few hundred characters.
         output: String,
+    },
+    /// A webhook delivery was made or queued (DEV-01).
+    Webhook {
+        /// The delivery, in the endpoint's log.
+        #[serde(rename = "deliveryId")]
+        delivery_id: WebhookDeliveryId,
+        /// True when the endpoint accepted it; false while it is retried.
+        delivered: bool,
     },
 }
 

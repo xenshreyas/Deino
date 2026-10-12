@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE webhooks SET failure_streak = failure_streak + 1,\n                   failing_since = coalesce(failing_since, ?1), updated_at = ?1\n               WHERE id = ?2\n               RETURNING failure_streak, failing_since AS \"since!: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "failure_streak",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "since!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "74e2c3c31023abee1bd9e7acf23314de91599a675a76957ec12e37b98c70cf4a"
+}

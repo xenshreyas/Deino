@@ -248,6 +248,9 @@ uuid_id!(
     DeliveryId
 );
 
+mod webhook;
+pub use webhook::{WebhookDeliveryId, WebhookId};
+
 uuid_id!(
     /// Identifies a custom vocabulary term or replacement rule (TRN-05).
     VocabTermId
