@@ -135,23 +135,27 @@ async fn a_failure_that_may_pass_retries_the_stage_and_resumes_after_the_done_st
     assert_eq!(run.steps[1].failure, Some(StepFailure::Storage));
 }
 
-#[tokio::test]
-async fn an_armed_run_runs_while_it_matches_and_is_dropped_once_it_does_not() {
+/// A harness with "Tagged", an automation that waits for the sales tag.
+async fn tagged_harness() -> Harness {
     let harness = Harness::new(vec![], vec![]).await;
     let tagged = ConditionGroups(vec![vec![Condition::HasTag {
         tag_id: sales_tag(),
     }]]);
     harness.add("Tagged", tagged, vec![notify()]).await;
+    harness
+}
+
+#[tokio::test]
+async fn an_armed_run_runs_once_its_meeting_is_processed() {
+    let harness = tagged_harness().await;
     harness.set_status(STANDUP, "scheduled").await;
     harness.tag_meeting(STANDUP).await;
-    let service = harness.service();
-    assert_eq!(
-        service
-            .tag_applied(&meeting(STANDUP), &sales_tag())
-            .await
-            .unwrap(),
-        1
-    );
+    let armed = harness
+        .service()
+        .tag_applied(&meeting(STANDUP), &sales_tag())
+        .await
+        .unwrap();
+    assert_eq!(armed, 1);
     assert!(
         harness.scheduler.scheduled().is_empty(),
         "an upcoming meeting is armed, not run"
@@ -166,16 +170,17 @@ async fn an_armed_run_runs_while_it_matches_and_is_dropped_once_it_does_not() {
 
     assert_eq!(outcome, EngineOutcome::Ran { runs: 1, failed: 0 });
     let run = &harness.repo.for_meeting(&meeting(STANDUP)).await.unwrap()[0];
-    assert_eq!(
-        run.trigger,
-        Trigger::TagApplied {
-            tag_id: sales_tag()
-        }
-    );
+    let tag_id = sales_tag();
+    assert_eq!(run.trigger, Trigger::TagApplied { tag_id });
+}
 
+#[tokio::test]
+async fn an_armed_run_is_dropped_once_its_conditions_stop_matching() {
+    let harness = tagged_harness().await;
     harness.tag_meeting(SALES).await;
     harness.set_status(SALES, "processing").await;
-    service
+    harness
+        .service()
         .tag_applied(&meeting(SALES), &sales_tag())
         .await
         .unwrap();
@@ -184,18 +189,14 @@ async fn an_armed_run_runs_while_it_matches_and_is_dropped_once_it_does_not() {
         .execute(harness.database.writer())
         .await
         .unwrap();
+
     let dropped = harness
         .engine()
         .run_meeting(&meeting(SALES), false)
         .await
         .unwrap();
+
     assert_eq!(dropped, EngineOutcome::NothingToRun);
-    assert!(
-        harness
-            .repo
-            .for_meeting(&meeting(SALES))
-            .await
-            .unwrap()
-            .is_empty()
-    );
+    let runs = harness.repo.for_meeting(&meeting(SALES)).await.unwrap();
+    assert!(runs.is_empty());
 }

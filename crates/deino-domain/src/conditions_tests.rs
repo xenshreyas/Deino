@@ -199,51 +199,59 @@ fn count(comparison: Comparison, count: u32) -> Condition {
     Condition::InviteeCount { comparison, count }
 }
 
-/// AUT-01's conditions, tabled against the discovery call: two invitees
-/// (acme.com, deino.dev), Alice taking part, 45 minutes, the Work calendar.
-#[test]
-fn every_automation_condition_tests_its_own_fact() {
+fn lacks_tag(id: &str) -> Condition {
+    Condition::LacksTag { tag_id: tag(id) }
+}
+
+fn has_person(id: &str) -> Condition {
+    Condition::HasParticipant {
+        person_id: person(id),
+    }
+}
+
+fn lacks_person(id: &str) -> Condition {
+    Condition::LacksParticipant {
+        person_id: person(id),
+    }
+}
+
+fn invitee(address: &str) -> Condition {
+    Condition::InviteeEmail {
+        email: email(address),
+    }
+}
+
+fn all_from(names: &[&str]) -> Condition {
+    Condition::DomainsAreAll {
+        domains: domains(names),
+    }
+}
+
+fn not_all_from(names: &[&str]) -> Condition {
+    Condition::DomainsNotAll {
+        domains: domains(names),
+    }
+}
+
+fn on_calendar(id: &str) -> Condition {
+    Condition::CalendarIs {
+        calendar_id: calendar(id),
+    }
+}
+
+/// Tags, participants and titles: each condition once true, once false.
+fn tag_person_and_title_cases() -> Vec<(Condition, bool)> {
     let is = |text: &str| text_condition(|text| Condition::TitleIs { text }, text);
     let is_not = |text: &str| text_condition(|text| Condition::TitleIsNot { text }, text);
     let lacks = |text: &str| text_condition(|text| Condition::TitleLacks { text }, text);
     let matches = |text: &str| text_condition(|pattern| Condition::TitleMatches { pattern }, text);
-    let cases: [(Condition, bool); 30] = [
-        (
-            Condition::LacksTag {
-                tag_id: tag(OTHER_TAG),
-            },
-            true,
-        ),
-        (
-            Condition::LacksTag {
-                tag_id: tag(SALES_TAG),
-            },
-            false,
-        ),
-        (
-            Condition::HasParticipant {
-                person_id: person(ALICE),
-            },
-            true,
-        ),
-        (
-            Condition::HasParticipant {
-                person_id: person(BOB),
-            },
-            false,
-        ),
-        (
-            Condition::LacksParticipant {
-                person_id: person(BOB),
-            },
-            true,
-        ),
-        (
-            Condition::LacksParticipant {
-                person_id: person(ALICE),
-            },
-            false,
-        ),
+    vec![
+        (lacks_tag(OTHER_TAG), true),
+        (lacks_tag(SALES_TAG), false),
+        (has_person(ALICE), true),
+        (has_person(BOB), false),
+        (lacks_person(BOB), true),
+        (lacks_person(ALICE), false),
         (is("acme DISCOVERY call"), true),
         (is("Acme discovery"), false),
         (is_not("Weekly sync"), true),
@@ -252,42 +260,18 @@ fn every_automation_condition_tests_its_own_fact() {
         (lacks("acme"), false),
         (matches(r"^acme\s+\w+ call$"), true),
         (matches(r"^\d{4}-"), false),
-        (
-            Condition::InviteeEmail {
-                email: email("wile@acme.com"),
-            },
-            true,
-        ),
-        (
-            Condition::InviteeEmail {
-                email: email("road@acme.com"),
-            },
-            false,
-        ),
-        (
-            Condition::DomainsAreAll {
-                domains: domains(&["acme.com", "deino.dev"]),
-            },
-            true,
-        ),
-        (
-            Condition::DomainsAreAll {
-                domains: domains(&["deino.dev"]),
-            },
-            false,
-        ),
-        (
-            Condition::DomainsNotAll {
-                domains: domains(&["deino.dev"]),
-            },
-            true,
-        ),
-        (
-            Condition::DomainsNotAll {
-                domains: domains(&["acme.com", "deino.dev"]),
-            },
-            false,
-        ),
+    ]
+}
+
+/// Invitees, their domains and count, duration and calendar.
+fn invitee_duration_and_calendar_cases() -> Vec<(Condition, bool)> {
+    vec![
+        (invitee("wile@acme.com"), true),
+        (invitee("road@acme.com"), false),
+        (all_from(&["acme.com", "deino.dev"]), true),
+        (all_from(&["deino.dev"]), false),
+        (not_all_from(&["deino.dev"]), true),
+        (not_all_from(&["acme.com", "deino.dev"]), false),
         (count(Comparison::Equal, 2), true),
         (count(Comparison::Equal, 3), false),
         (count(Comparison::Greater, 1), true),
@@ -296,20 +280,19 @@ fn every_automation_condition_tests_its_own_fact() {
         (count(Comparison::Less, 2), false),
         (Condition::DurationOver { minutes: 30 }, true),
         (Condition::DurationOver { minutes: 45 }, false),
-        (
-            Condition::CalendarIs {
-                calendar_id: calendar(WORK),
-            },
-            true,
-        ),
-        (
-            Condition::CalendarIs {
-                calendar_id: calendar(CUSTOMERS),
-            },
-            false,
-        ),
-    ];
+        (on_calendar(WORK), true),
+        (on_calendar(CUSTOMERS), false),
+    ]
+}
 
+/// AUT-01's conditions, tabled against the discovery call: two invitees
+/// (acme.com, deino.dev), Alice taking part, 45 minutes, the Work calendar.
+#[test]
+fn every_automation_condition_tests_its_own_fact() {
+    let mut cases = tag_person_and_title_cases();
+    cases.extend(invitee_duration_and_calendar_cases());
+
+    assert_eq!(cases.len(), 30);
     for (condition, expected) in cases {
         assert_eq!(condition.holds(&discovery()), expected, "{condition:?}");
     }
