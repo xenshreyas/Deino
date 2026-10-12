@@ -176,6 +176,12 @@ arboard = { version = "=3.6.1", default-features = false }
 tauri-plugin-notification = "2.3.1"
 tauri-plugin-updater = "2.3.0"
 tauri-plugin-process = "2.3.0"
+# The `deino://` URL scheme (DEV-05): links from exports, the CLI, MCP,
+# Raycast and Shortcuts. Pinned; MIT/Apache-2.0.
+tauri-plugin-deep-link = "=2.4.10"
+# System-wide hotkeys that work while Deino is in the background (DEV-05).
+# Pinned; MIT/Apache-2.0.
+tauri-plugin-global-shortcut = "=2.3.2"
 
 # Desktop-only single instance guard
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]

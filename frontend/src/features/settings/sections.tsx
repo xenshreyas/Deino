@@ -18,6 +18,7 @@ import { BriefSettingsSection } from '@/features/briefs';
 import { CalendarSettings } from '@/features/calendar';
 import { DeveloperSettings } from '@/features/developer';
 import { ExportSettingsPage } from '@/features/export';
+import { HotkeySettings } from '@/features/hotkeys';
 import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
@@ -40,6 +41,7 @@ import {
   FolderInput,
   type Icon,
   Info,
+  Keyboard,
   LayoutTemplate,
   Lock,
   Mic,
@@ -149,6 +151,7 @@ function IntegrationsSection() {
 export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'general', group: 'app', icon: Settings, Component: PreferenceSettings },
   { id: 'appearance', group: 'app', icon: Palette, Component: AppearanceSection },
+  { id: 'shortcuts', group: 'app', icon: Keyboard, Component: HotkeySettings },
   { id: 'setup', group: 'app', icon: Rocket, Component: ResumeSetup },
   { id: 'recording', group: 'capture', icon: Mic, Component: RecordingSection },
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },

@@ -38,6 +38,7 @@ mod personal;
 mod profile;
 mod retention;
 mod service;
+mod shortcuts;
 mod speakers;
 mod store;
 mod templates;
@@ -80,6 +81,9 @@ pub use profile::{
 };
 pub use retention::{RetentionPeriod, RetentionSettings};
 pub use service::SettingsService;
+pub use shortcuts::{
+    DEFAULT_ASK_HOTKEY, DEFAULT_QUICK_NOTE_HOTKEY, DEFAULT_RECORD_HOTKEY, ShortcutSettings,
+};
 pub use speakers::{IdentifyThresholds, SpeakerSettings};
 pub use store::{JsonFileSettingsStore, SettingsStore};
 pub use templates::TemplateSettings;

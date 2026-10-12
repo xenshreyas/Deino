@@ -1,8 +1,7 @@
 /**
  * Moments (TRN-04): a link to a time of a meeting's recording,
- * `deino://meeting/<id>?t=<ms>`, the shape the `deino` CLI and MCP tools
- * already print and DEV-05 will open (exports still write
- * `deino://meetings/<id>`; PARITY_PLAN §7.2).
+ * `deino://meeting/<id>?t=<ms>`, the shape the `deino` CLI, MCP tools and
+ * exports print and Deino opens (DEV-05).
  */
 import { toast } from 'sonner';
 

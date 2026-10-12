@@ -42,7 +42,7 @@ Fields you did not tick under "Payload includes" are left out.
     "tags": ["Sales"],
     "folders": ["Customers"]
   },
-  "link": "deino://meetings/meeting-…",
+  "link": "deino://meeting/meeting-…",
   "notes": "## Summary\n…",
   "actionItems": [
     { "title": "Send pricing", "description": "", "assignee": "Me", "due": "2026-10-10", "done": false }

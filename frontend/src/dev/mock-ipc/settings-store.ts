@@ -117,6 +117,7 @@ let settings: Generated.Settings = {
   },
   integrations: { apps: {} },
   automations: { shellScripts: false },
+  shortcuts: { record: 'Ctrl+Alt+Cmd+R', quickNote: 'Ctrl+Alt+Cmd+N', ask: 'Ctrl+Alt+Cmd+J' },
   ui: {
     theme: 'system',
     showConfidenceIndicator: true,

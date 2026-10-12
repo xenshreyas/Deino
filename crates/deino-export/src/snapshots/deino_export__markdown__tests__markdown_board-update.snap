@@ -15,7 +15,7 @@ tags:
   - "BoardUpdate"
 folders:
   - "Meetings"
-link: "deino://meetings/meeting-fixture-board-update"
+link: "deino://meeting/meeting-fixture-board-update"
 deino-id: "meeting-fixture-board-update"
 ---
 
