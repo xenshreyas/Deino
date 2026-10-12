@@ -93,7 +93,6 @@ let recipes: Recipe[] = LIBRARY.map(([slug, name, description, multi], index) =>
   updatedAt: AT,
 }));
 
-
 function slugify(name: string): string {
   const slug = name
     .toLowerCase()
