@@ -42,7 +42,7 @@ function LoadMore({ onVisible }: { onVisible: () => void }) {
     };
   });
   return (
-    <div ref={sentinel} role="status" className="h-10 px-3 py-3 text-xs text-fg-subtle">
+    <div ref={sentinel} role="status" className="h-10 py-3 pr-3 pl-9 text-xs text-fg-subtle">
       {copy.loadMore}
     </div>
   );
@@ -52,10 +52,12 @@ function LoadMore({ onVisible }: { onVisible: () => void }) {
 export function MeetingList({ meetings, selected, onSelect, onLoadMore }: MeetingListProps) {
   const selecting = selected.size > 0;
   return (
-    <>
+    // The bottom padding keeps the last rows clear of the floating bulk bar.
+    <div className="pb-20">
       {groupByDay(meetings, new Date()).map((group) => (
         <section key={group.key} aria-label={group.label}>
-          <h2 className="sticky top-0 z-(--z-sticky) flex h-8 items-center bg-bg px-3 text-xs font-semibold text-fg-muted">
+          {/* pl-9 lines the label up with the titles, past the checkbox column. */}
+          <h2 className="sticky top-0 z-(--z-sticky) flex h-8 items-center bg-bg pr-3 pl-9 text-xs font-semibold text-fg-muted">
             {group.label}
           </h2>
           <ul className="flex flex-col">
@@ -74,6 +76,6 @@ export function MeetingList({ meetings, selected, onSelect, onLoadMore }: Meetin
         </section>
       ))}
       {onLoadMore === null ? null : <LoadMore key={meetings.length} onVisible={onLoadMore} />}
-    </>
+    </div>
   );
 }

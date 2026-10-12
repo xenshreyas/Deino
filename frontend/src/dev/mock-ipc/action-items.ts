@@ -20,6 +20,7 @@ import {
 } from './mock-action-items';
 import { failure, ok } from './mock-database';
 import { mockEvent } from './mock-event';
+import { mockFolders, mockTags } from './organizer';
 
 type Item = Generated.ActionItemView;
 type View = Generated.SavedView;
@@ -188,7 +189,18 @@ export const commands = {
   },
   async filterOptions() {
     await latency();
-    return ok({ people, companies: fixtureCompanies(fixtureMeetings), tags: [], folders: [] });
+    return ok({
+      people,
+      companies: fixtureCompanies(fixtureMeetings),
+      tags: mockTags.list().map(({ id, name, color }) => ({ id, name, color })),
+      folders: mockFolders
+        .tree()
+        .entries.map(({ folder }) => ({
+          id: folder.id,
+          name: folder.name,
+          parentId: folder.parentId,
+        })),
+    });
   },
   async views() {
     await latency();

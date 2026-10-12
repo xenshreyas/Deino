@@ -30,6 +30,8 @@ import { RowCheckbox } from './row-checkbox';
 const SHOWN_TAGS = 2;
 /** Avatars shown before the rest fold into "+n". */
 const SHOWN_PEOPLE = 3;
+/** The avatars' stacking, first on top, so its initials are never covered. */
+const AVATAR_STACK = ['z-3', 'z-2', 'z-1'] as const;
 
 /** Props of {@link MeetingListRow}. */
 export interface MeetingListRowProps {
@@ -71,14 +73,18 @@ function RowPeople({ people }: { people: readonly ListedAttendee[] }) {
       className="hidden shrink-0 items-center sm:flex"
       aria-label={others.map((p) => p.name).join(', ')}
     >
-      {others.slice(0, SHOWN_PEOPLE).map((person) => (
+      {others.slice(0, SHOWN_PEOPLE).map((person, index) => (
         <EntityAvatar
           key={person.personId}
           id={person.personId}
           name={person.name}
           kind="person"
           size={20}
-          className="-ml-1 ring-2 ring-bg first:ml-0"
+          // The ring takes the row's own background in every state.
+          className={cn(
+            'relative -ml-0.5 ring-[1.5px] ring-(--row-bg) first:ml-0',
+            AVATAR_STACK[index],
+          )}
         />
       ))}
       {rest > 0 ? (
@@ -124,8 +130,9 @@ export function MeetingListRow({ meeting, selected, selecting, onSelect }: Meeti
       {...meetingDragSource(meeting)}
       aria-selected={selected}
       className={cn(
-        'group relative flex h-10 items-center rounded-md transition-colors duration-(--dur-fast) hover:bg-bg-muted has-[a:focus-visible]:bg-bg-muted',
-        selected && 'bg-accent-soft hover:bg-accent-soft',
+        // --row-bg is the row's background; the avatars' rings follow it.
+        'group relative flex h-10 items-center rounded-md bg-(--row-bg) transition-colors duration-(--dur-fast) [--row-bg:var(--bg)] hover:[--row-bg:var(--bg-muted)] has-[a:focus-visible]:[--row-bg:var(--bg-muted)]',
+        selected && '[--row-bg:var(--bg-muted)]',
       )}
     >
       <RowCheckbox

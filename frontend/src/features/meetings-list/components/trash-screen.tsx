@@ -3,7 +3,7 @@
  * deletion first, each with Restore and Delete forever, and how long it has
  * left before the purge deletes it and its recordings.
  */
-import { differenceInCalendarDays } from 'date-fns';
+import { differenceInCalendarDays, format } from 'date-fns';
 import { useState } from 'react';
 
 import { Button } from '@/ui/button';
@@ -30,7 +30,10 @@ function TrashRow({
   return (
     <li className="group flex h-10 items-center gap-3 rounded-md px-3 hover:bg-bg-muted">
       <span className="min-w-0 flex-1 truncate text-sm text-fg">{meeting.title}</span>
-      <span className="shrink-0 text-xs text-fg-subtle tabular-nums">
+      <span className="hidden shrink-0 text-xs text-fg-muted tabular-nums sm:inline">
+        {format(new Date(meeting.createdAt), 'MMM d')}
+      </span>
+      <span className="w-28 shrink-0 text-right text-xs text-fg-subtle tabular-nums">
         {copy.trash.purgesIn(days)}
       </span>
       <Button variant="ghost" size="sm" onClick={() => void restoreMeetings([meeting.id])}>
@@ -38,8 +41,10 @@ function TrashRow({
         {copy.trash.restore}
       </Button>
       <Button
-        variant="danger"
+        variant="ghost"
         size="sm"
+        // Quiet until asked for: the destructive colour arrives on hover.
+        className="text-fg-muted hover:text-danger focus-visible:text-danger"
         onClick={() => {
           onDelete(meeting.id);
         }}
