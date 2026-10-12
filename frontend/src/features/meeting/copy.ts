@@ -20,6 +20,4 @@ export const meetingCopy = {
   chatBody: 'Chat with your meeting’s notes and transcript is coming soon.',
   created: 'Created',
   updated: 'Last edited',
-  playerLabel: 'Recording',
-  playerSoon: 'Playback is coming soon',
 } as const;

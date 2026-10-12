@@ -17,7 +17,7 @@ import { PlaybackController } from '../model/playback-controller';
 import { useMedia } from '../queries';
 import { loadPlayer, storeSink, unloadPlayer, usePlaybackStore } from '../store';
 import type { AudioSource, MediaFile, MeetingId, SpeakerBand } from '../types';
-import { PlayerDock, type PlayerDockState, SKIP_MS } from './player-dock';
+import { PlayerDock, type PlayerDockIntents, type PlayerDockState, SKIP_MS } from './player-dock';
 import { VideoPanel } from './video-panel';
 
 /** Props of {@link MeetingPlayer}. */
@@ -74,7 +74,17 @@ function useController(meetingId: MeetingId, files: readonly MediaFile[]) {
       unloadPlayer(meetingId);
     };
   });
-  usePlayerKeys({ toggle: () => controller.toggle(), skip: (ms) => controller.skip(ms) }, SKIP_MS);
+  usePlayerKeys(
+    {
+      toggle: () => {
+        controller.toggle();
+      },
+      skip: (ms) => {
+        controller.skip(ms);
+      },
+    },
+    SKIP_MS,
+  );
   // Stable refs: React calls a new ref function on every render.
   const attachAudio = useCallback(
     (element: HTMLAudioElement | null) => {
@@ -120,6 +130,33 @@ function useDockState(
   };
 }
 
+/** What the dock's controls do to `controller`. */
+function dockIntents(
+  controller: PlaybackController,
+  files: readonly MediaFile[],
+  toggleVideo: () => void,
+): PlayerDockIntents {
+  return {
+    onToggle: () => {
+      controller.toggle();
+    },
+    onSkip: (ms) => {
+      controller.skip(ms);
+    },
+    onSeek: (ms) => {
+      controller.seek(ms);
+    },
+    onRate: (rate) => {
+      controller.setRate(rate);
+    },
+    onSource: (next) => {
+      usePlaybackStore.setState({ source: next });
+      controller.load(urlOf(files, next));
+    },
+    onToggleVideo: toggleVideo,
+  };
+}
+
 /** The player over known files; remounted when they change. */
 function LoadedPlayer(props: MeetingPlayerProps & { files: readonly MediaFile[] }) {
   const { meetingId, files } = props;
@@ -127,6 +164,9 @@ function LoadedPlayer(props: MeetingPlayerProps & { files: readonly MediaFile[] 
   const [videoShown, setVideoShown] = useState(true);
   const state = useDockState(files, props.bands, videoShown);
   const video = files.find((file) => file.source === 'video');
+  const intents = dockIntents(controller, files, () => {
+    setVideoShown((shown) => !shown);
+  });
   return (
     <div className="relative shrink-0">
       <audio ref={attachAudio} preload="metadata" className="hidden" />
@@ -136,21 +176,7 @@ function LoadedPlayer(props: MeetingPlayerProps & { files: readonly MediaFile[] 
       {props.seekTo === undefined ? null : (
         <SeekToMoment key={props.seekTo} controller={controller} at={props.seekTo} />
       )}
-      <PlayerDock
-        meetingId={meetingId}
-        state={state}
-        onToggle={() => controller.toggle()}
-        onSkip={(ms) => controller.skip(ms)}
-        onSeek={(ms) => controller.seek(ms)}
-        onRate={(rate) => controller.setRate(rate)}
-        onSource={(next) => {
-          usePlaybackStore.setState({ source: next });
-          controller.load(urlOf(files, next));
-        }}
-        onToggleVideo={() => {
-          setVideoShown((shown) => !shown);
-        }}
-      />
+      <PlayerDock meetingId={meetingId} state={state} {...intents} />
     </div>
   );
 }

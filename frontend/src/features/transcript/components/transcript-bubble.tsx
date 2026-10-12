@@ -80,6 +80,27 @@ function seekOnClick(props: TranscriptBubbleProps, event: MouseEvent<HTMLDivElem
   playerActions.seek(props.meetingId, clickedWordStart(event.target) ?? line.start);
 }
 
+/** The bubble's events: focus and keys for the list, click to seek, double-click to edit. */
+function bubbleHandlers(props: TranscriptBubbleProps, editing: boolean) {
+  const { index, row } = props;
+  return {
+    onFocus: () => {
+      props.onFocusRow(index);
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      props.onKeyDown(event, index);
+    },
+    onClick: (event: MouseEvent<HTMLDivElement>) => {
+      if (!editing) seekOnClick(props, event);
+    },
+    onDoubleClick: () => {
+      if (row.line.open || editing) return;
+      window.getSelection()?.removeAllRanges();
+      startEditing(row.line.id);
+    },
+  };
+}
+
 /** The bubble itself: the line's text (or its editor), and a caret while it is spoken. */
 function BubbleBody(props: TranscriptBubbleProps) {
   const { row, index } = props;
@@ -92,20 +113,7 @@ function BubbleBody(props: TranscriptBubbleProps) {
       tabIndex={-1}
       aria-busy={line.open || undefined}
       aria-current={props.marked ? 'location' : undefined}
-      onFocus={() => {
-        props.onFocusRow(index);
-      }}
-      onKeyDown={(event) => {
-        props.onKeyDown(event, index);
-      }}
-      onClick={(event) => {
-        if (!editing) seekOnClick(props, event);
-      }}
-      onDoubleClick={() => {
-        if (line.open || editing) return;
-        window.getSelection()?.removeAllRanges();
-        startEditing(line.id);
-      }}
+      {...bubbleHandlers(props, editing)}
       className={cn(
         'rounded-lg px-2.5 py-1.5 text-sm text-pretty break-words whitespace-pre-wrap',
         'transition-colors duration-(--dur-slow) ease-out',

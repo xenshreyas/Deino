@@ -128,8 +128,7 @@ export const TRANSCRIPT_ACTIONS: readonly TranscriptAction[] = [
     icon: Trash2,
     shortcut: { key: 'backspace', meta: true, display: '⌘⌫' },
     state: whenSaved,
-    run: ({ client, meetingId, line }) =>
-      deleteLine({ client, meetingId, segmentId: line.id }),
+    run: ({ client, meetingId, line }) => deleteLine({ client, meetingId, segmentId: line.id }),
   },
 ];
 

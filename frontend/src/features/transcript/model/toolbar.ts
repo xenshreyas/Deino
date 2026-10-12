@@ -38,7 +38,10 @@ export interface ToolbarLayout {
 export function layoutToolbar(shown: readonly TranscriptAction[], slots: number): ToolbarLayout {
   if (shown.length <= slots) return { inline: [...shown], overflow: [] };
   const room = Math.max(1, slots - 1);
-  const byPriority = [...shown.filter((one) => one.rare !== true), ...shown.filter((one) => one.rare === true)];
+  const byPriority = [
+    ...shown.filter((one) => one.rare !== true),
+    ...shown.filter((one) => one.rare === true),
+  ];
   const kept = new Set(byPriority.slice(0, room));
   return {
     inline: shown.filter((one) => kept.has(one)),

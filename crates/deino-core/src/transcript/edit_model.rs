@@ -6,15 +6,12 @@ use serde::{Deserialize, Serialize};
 
 /// Where find and replace looks.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
-#[serde(
-    tag = "kind",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase"
-)]
+#[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ReplaceScope {
     /// One meeting's transcript.
     Meeting {
         /// The meeting.
+        #[serde(rename = "meetingId")]
         meeting_id: MeetingId,
     },
     /// Every meeting outside the trash.

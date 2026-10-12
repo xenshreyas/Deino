@@ -34,14 +34,12 @@ function useAutofocus() {
   }, []);
 }
 
-/** The field. */
-export function LineEditor({ meetingId, line }: LineEditorProps) {
+/** Ends the edit once, saving `text` when asked and changed. */
+function useFinish({ meetingId, line }: LineEditorProps, text: string) {
   const client = useQueryClient();
-  const [text, setText] = useState(line.text);
-  const ref = useAutofocus();
   // Enter ends the edit and unmounts the field, which can also blur it.
   const done = useRef(false);
-  const finish = (save: boolean) => {
+  return (save: boolean) => {
     if (done.current) return;
     done.current = true;
     stopEditing(line.id);
@@ -49,6 +47,13 @@ export function LineEditor({ meetingId, line }: LineEditorProps) {
       void saveLineText({ client, meetingId, segmentId: line.id }, text);
     }
   };
+}
+
+/** The field. */
+export function LineEditor(props: LineEditorProps) {
+  const [text, setText] = useState(props.line.text);
+  const ref = useAutofocus();
+  const finish = useFinish(props, text);
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     event.stopPropagation();
     if (event.key === 'Enter' && !event.shiftKey) {

@@ -48,9 +48,18 @@ export function playerKeyAction(
 ): ((actions: PlayerKeyActions) => void) | undefined {
   if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return undefined;
   if (event.shiftKey || ownsKeys(event.target)) return undefined;
-  if (event.key === ' ') return (actions) => actions.toggle();
-  if (event.key === 'ArrowLeft') return (actions) => actions.skip(-skipMs);
-  if (event.key === 'ArrowRight') return (actions) => actions.skip(skipMs);
+  if (event.key === ' ')
+    return (actions) => {
+      actions.toggle();
+    };
+  if (event.key === 'ArrowLeft')
+    return (actions) => {
+      actions.skip(-skipMs);
+    };
+  if (event.key === 'ArrowRight')
+    return (actions) => {
+      actions.skip(skipMs);
+    };
   return undefined;
 }
 

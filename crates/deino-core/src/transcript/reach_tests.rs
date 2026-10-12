@@ -1,8 +1,8 @@
 //! TRN-02's acceptance over the real schema: a deleted line, and the words
 //! an edit replaced, never reach the transcript view, the notes engine's
-//! input, an export in any text format, or the line store the `deino` CLI
-//! and MCP server read. (Search, keyword and semantic, is checked in
-//! `search::transcript_edit_tests`.)
+//! input, an export in any text format, the keyword index, or the `deino`
+//! CLI and MCP server's read layer (`query::Library`: transcripts and
+//! search). Semantic search is checked in `search::transcript_edit_tests`.
 
 use std::sync::Arc;
 
@@ -14,6 +14,7 @@ use deino_testkit::{at, seed};
 use super::*;
 use crate::enhance::MaterialSources;
 use crate::export::{ExportAssembler, ExportPorts, FixedZone};
+use crate::query::{Library, ReadContext, SearchQuery, TranscriptWindow};
 use crate::segments::{NewSegment, Page, SegmentReader, SegmentWriter, SqliteSegmentRepo};
 
 const MEETING: &str = "meeting-standup";
@@ -141,5 +142,43 @@ async fn keyword_search_documents_follow_the_edits() {
     assert_eq!(documents.len(), 2);
     for body in &documents {
         assert_clean(body, "the keyword index");
+    }
+}
+
+#[tokio::test]
+async fn the_cli_and_mcp_read_layer_never_returns_them() {
+    let database = edited_standup().await;
+    let library = Library::sqlite(
+        &database,
+        &ReadContext {
+            zone: Arc::new(FixedZone::utc()),
+            clock: Arc::new(FakeClock::new(at("2026-10-09T09:00:00Z"))),
+            embedder: None,
+        },
+    );
+    let meeting = MeetingId::new(MEETING);
+
+    let page = library
+        .transcripts
+        .page(&meeting, TranscriptWindow::default())
+        .await
+        .unwrap();
+    let mut found = Vec::new();
+    for words in [SECRET, REPLACED, "door code", "ship"] {
+        let query = SearchQuery {
+            text: words.into(),
+            meeting: None,
+            limit: 0,
+        };
+        found.extend(library.search.search(&query).await.unwrap().hits);
+    }
+
+    assert_eq!(page.lines.len(), 2);
+    for line in &page.lines {
+        assert_clean(&line.text, "the CLI transcript");
+    }
+    assert!(!found.is_empty(), "the edited line is still found");
+    for hit in &found {
+        assert_clean(&hit.snippet, "a CLI search hit");
     }
 }

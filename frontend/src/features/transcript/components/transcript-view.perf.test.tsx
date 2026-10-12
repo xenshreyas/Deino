@@ -4,6 +4,7 @@
  * searches a two-hour meeting fast, and keyboard moves stay on the lines.
  * happy-dom has no layout, so the scroll area and rows get fixed sizes.
  */
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +14,7 @@ import {
   longTranscript,
   PHRASE,
 } from '@/dev/mock-ipc/long-meeting';
+import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import { mergeLines } from '../model/lines';
@@ -21,6 +23,10 @@ import { SpeakerDirectory } from '../model/speakers';
 import { TranscriptView } from './transcript-view';
 
 vi.mock('@/lib/ipc/generated/recording', () => ({ commands: {}, events: {} }));
+// The "Transcript changed" banner reads the notes: none here.
+vi.mock('@/lib/ipc/generated/enhance', () => ({
+  commands: { get: () => Promise.resolve({ status: 'ok', data: null }) },
+}));
 
 const SEGMENTS = 5_000;
 /** Generous for happy-dom on a busy CI machine; a real browser is far faster. */
@@ -47,14 +53,16 @@ afterAll(() => {
 
 function renderView(live: boolean) {
   return render(
-    <TooltipProvider>
-      <TranscriptView
-        meetingId={LONG_MEETING_ID}
-        rows={rows}
-        speakers={directory.all}
-        live={live}
-      />
-    </TooltipProvider>,
+    <QueryClientProvider client={createQueryClient()}>
+      <TooltipProvider>
+        <TranscriptView
+          meetingId={LONG_MEETING_ID}
+          rows={rows}
+          speakers={directory.all}
+          live={live}
+        />
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
 }
 

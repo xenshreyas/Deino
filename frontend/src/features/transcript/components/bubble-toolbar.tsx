@@ -63,6 +63,30 @@ function ActionButton({
   );
 }
 
+/** One action in the ⋯ menu, with its shortcut. */
+function OverflowItem({
+  action,
+  context,
+}: {
+  action: TranscriptAction;
+  context: TranscriptActionContext;
+}) {
+  const ActionIcon = action.icon;
+  return (
+    <DropdownMenuItem
+      destructive={action.id === 'delete'}
+      disabled={action.state(context) === 'disabled'}
+      onSelect={() => void action.run(context)}
+    >
+      <ActionIcon {...ICON_PROPS} />
+      {action.label}
+      {action.shortcut === undefined ? null : (
+        <DropdownMenuShortcut>{action.shortcut.display}</DropdownMenuShortcut>
+      )}
+    </DropdownMenuItem>
+  );
+}
+
 /** ⋯ and the actions that did not fit. */
 function OverflowMenu({
   actions,
@@ -85,23 +109,9 @@ function OverflowMenu({
         </DropdownMenuTrigger>
       </Hint>
       <DropdownMenuContent align={context.speaker.isMe ? 'end' : 'start'} className="min-w-[180px]">
-        {actions.map((action) => {
-          const ActionIcon = action.icon;
-          return (
-            <DropdownMenuItem
-              key={action.id}
-              destructive={action.id === 'delete'}
-              disabled={action.state(context) === 'disabled'}
-              onSelect={() => void action.run(context)}
-            >
-              <ActionIcon {...ICON_PROPS} />
-              {action.label}
-              {action.shortcut === undefined ? null : (
-                <DropdownMenuShortcut>{action.shortcut.display}</DropdownMenuShortcut>
-              )}
-            </DropdownMenuItem>
-          );
-        })}
+        {actions.map((action) => (
+          <OverflowItem key={action.id} action={action} context={context} />
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -30,11 +30,20 @@ function find(id: Generated.SegmentId): Generated.Segment | undefined {
 /** `transcript|edit`. */
 export function editLine(id: Generated.SegmentId, raw: string) {
   const text = raw.trim();
-  if (text === '') return failure<Generated.Segment>({ code: 'invalid', message: 'a line cannot be empty; delete it instead' });
+  if (text === '')
+    return failure<Generated.Segment>({
+      code: 'invalid',
+      message: 'a line cannot be empty; delete it instead',
+    });
   const segment = find(id);
   if (segment === undefined || segment.isDeleted) return notFound();
   if (segment.text === text) return ok(segment);
-  const edited = { ...segment, text, editedAt: new Date().toISOString(), originalText: segment.originalText ?? segment.text };
+  const edited = {
+    ...segment,
+    text,
+    editedAt: new Date().toISOString(),
+    originalText: segment.originalText ?? segment.text,
+  };
   mockTranscripts.update(edited);
   changed();
   return ok(edited);
@@ -53,11 +62,16 @@ export function setDeleted(id: Generated.SegmentId, isDeleted: boolean) {
 
 /** Where `find` occurs in `text`, not overlapping, as the Rust `Pattern` matches. */
 function occurrences(text: string, find: string, matchCase: boolean): number[] {
-  const fold = (value: string) => (matchCase ? value : value.replace(/[A-Z]/g, (c) => c.toLowerCase()));
+  const fold = (value: string) =>
+    matchCase ? value : value.replace(/[A-Z]/g, (c) => c.toLowerCase());
   const haystack = fold(text);
   const needle = fold(find);
   const found: number[] = [];
-  for (let at = haystack.indexOf(needle); at >= 0; at = haystack.indexOf(needle, at + needle.length)) {
+  for (
+    let at = haystack.indexOf(needle);
+    at >= 0;
+    at = haystack.indexOf(needle, at + needle.length)
+  ) {
     found.push(at);
   }
   return found;
@@ -96,13 +110,15 @@ function plan(request: Generated.ReplaceRequest, by: string) {
 
 /** `transcript|preview_replace`. */
 export function previewReplace(request: Generated.ReplaceRequest) {
-  if (request.find.trim() === '') return failure<Generated.ReplacePreview>({ code: 'invalid', message: 'type the text to find' });
+  if (request.find.trim() === '')
+    return failure<Generated.ReplacePreview>({ code: 'invalid', message: 'type the text to find' });
   const preview: Generated.ReplacePreview = { matches: 0, segments: 0, meetings: [] };
   for (const { segment, title, count } of plan(request, '')) {
     preview.matches += count;
     preview.segments += 1;
     const meeting = preview.meetings.find((one) => one.meetingId === segment.meetingId);
-    if (meeting === undefined) preview.meetings.push({ meetingId: segment.meetingId, title, matches: count });
+    if (meeting === undefined)
+      preview.meetings.push({ meetingId: segment.meetingId, title, matches: count });
     else meeting.matches += count;
   }
   return ok(preview);
@@ -114,7 +130,12 @@ export function replaceAll(request: Generated.ReplaceRequest, by: string) {
   if (preview.status === 'error') return preview;
   const now = new Date().toISOString();
   for (const { segment, text } of plan(request, by)) {
-    mockTranscripts.update({ ...segment, text, editedAt: now, originalText: segment.originalText ?? segment.text });
+    mockTranscripts.update({
+      ...segment,
+      text,
+      editedAt: now,
+      originalText: segment.originalText ?? segment.text,
+    });
   }
   if (preview.data.segments > 0) changed();
   const { matches, segments, meetings } = preview.data;

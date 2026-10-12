@@ -23,7 +23,15 @@ export interface SpokenTextProps {
 }
 
 /** The words as spans, the one at `current` marked. */
-function Words({ text, words, current }: { text: string; words: readonly TimedWord[]; current: number }) {
+function Words({
+  text,
+  words,
+  current,
+}: {
+  text: string;
+  words: readonly TimedWord[];
+  current: number;
+}) {
   const parts: ReactNode[] = [];
   let cursor = 0;
   for (const [index, word] of words.entries()) {

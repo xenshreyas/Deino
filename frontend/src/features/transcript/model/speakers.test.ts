@@ -12,6 +12,8 @@ function line(extra: Partial<TranscriptLine>): TranscriptLine {
     start: 0,
     end: 0,
     text: 'hi',
+    words: [],
+    editedAt: null,
     open: false,
     ...extra,
   };

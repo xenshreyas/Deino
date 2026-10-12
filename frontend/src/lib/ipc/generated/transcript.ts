@@ -246,7 +246,7 @@ export type ReplaceScope =
 /**
  * One meeting's transcript.
  */
-{ kind: "meeting"; meeting_id: MeetingId } | 
+{ kind: "meeting"; meetingId: MeetingId } | 
 /**
  * Every meeting outside the trash.
  */

@@ -69,8 +69,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: mode === 'mock' ? MOCK_PORT : DEV_PORT,
     strictPort: true,
-    // The mock IPC imports `fixtures/` from outside `frontend/`.
-    fs: mode === 'mock' ? { allow: [searchForWorkspaceRoot(process.cwd()), fixturesDir] } : {},
+    // The mock IPC imports `fixtures/` from outside `frontend/` (its audio by
+    // URL, which Vite checks against this list), in dev:mock and in Vitest.
+    fs:
+      mode === 'mock' || mode === 'test'
+        ? { allow: [searchForWorkspaceRoot(process.cwd()), fixturesDir] }
+        : {},
     host: tauriDevHost ?? false,
     hmr: tauriDevHost ? { protocol: 'ws', host: tauriDevHost, port: DEV_PORT + 1 } : undefined,
     watch: { ignored: ['**/src-tauri/**'] },

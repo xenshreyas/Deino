@@ -65,7 +65,11 @@ function useRowKeys({ rows, list, actions, meetingId }: TranscriptListProps, pla
       const row = rows[index];
       const action = actionForKey(actions, event);
       const context = row && { meetingId, line: row.line, speaker: row.speaker, client, playable };
-      if (context && action?.state(context) === 'enabled' && window.getSelection()?.isCollapsed !== false) {
+      if (
+        context &&
+        action?.state(context) === 'enabled' &&
+        window.getSelection()?.isCollapsed !== false
+      ) {
         event.preventDefault();
         void action.run(context);
         return;

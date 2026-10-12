@@ -42,7 +42,7 @@ export const notesCopy = {
   sourcesLoading: 'Finding the moment…',
   sourcesGone: 'This part of the transcript was deleted.',
   play: 'Play from here',
-  playSoon: 'Playback arrives with the player',
+  noRecording: 'No recording to play',
   showInTranscript: 'Show in transcript',
   saveFailed: 'Your edit was not saved yet; retrying',
 } as const;

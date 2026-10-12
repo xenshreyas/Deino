@@ -64,7 +64,9 @@ export class MockTranscripts {
     const saved = this.segments.get(segment.meetingId) ?? [];
     const index = saved.findIndex((one) => one.id === segment.id);
     if (index < 0) return false;
-    this.segments.set(segment.meetingId, saved.with(index, segment));
+    const next = [...saved];
+    next[index] = segment;
+    this.segments.set(segment.meetingId, next);
     return true;
   }
 

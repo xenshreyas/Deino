@@ -51,62 +51,102 @@ function MatchCase({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   );
 }
 
+/** Props of {@link ReplaceField}. */
+interface ReplaceFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  matchCase: boolean;
+  onMatchCase: () => void;
+  /** Enter in the field: open the confirmation. */
+  onSubmit: () => void;
+}
+
+/** "Replace with" and the match-case toggle, in one field frame. */
+function ReplaceField({ value, onChange, matchCase, onMatchCase, onSubmit }: ReplaceFieldProps) {
+  const onKey = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    onSubmit();
+  };
+  return (
+    <label className="flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-border bg-surface pr-1 pl-2.5 transition-[border-color,box-shadow] duration-(--dur-fast) ease-out focus-within:border-accent focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)] hover:border-border-strong">
+      <Replace {...ICON_PROPS} className="shrink-0 text-fg-subtle" />
+      <input
+        value={value}
+        placeholder={transcriptCopy.replacePlaceholder}
+        aria-label={transcriptCopy.replaceLabel}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+        onKeyDown={onKey}
+        className="h-full min-w-16 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-subtle"
+      />
+      <MatchCase on={matchCase} onToggle={onMatchCase} />
+    </label>
+  );
+}
+
+/** "Replace all": opens the confirmation once there is something to find. */
+function ReplaceAllButton({ ready, onClick }: { ready: boolean; onClick: () => void }) {
+  return (
+    <PopoverAnchor asChild>
+      <Button
+        variant="secondary"
+        size="sm"
+        disabled={!ready}
+        title={ready ? undefined : transcriptCopy.replaceFindFirst}
+        onClick={onClick}
+      >
+        {transcriptCopy.replaceAll}
+      </Button>
+    </PopoverAnchor>
+  );
+}
+
+/** Whether the confirmation is open; it opens only with something to find. */
+function useConfirming(find: string) {
+  const [confirming, setConfirming] = useState(false);
+  const ready = find.trim() !== '';
+  const confirm = () => {
+    setConfirming(ready);
+  };
+  return { ready, confirming, setConfirming, confirm };
+}
+
 /** The row. */
 export function ReplaceBar({ meetingId, find }: ReplaceBarProps) {
   const [replacement, setReplacement] = useState('');
   const [reach, setReach] = useState<ReplaceReach>('meeting');
   const [matchCase, setMatchCase] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const ready = find.trim() !== '';
-  const request = replaceRequest(meetingId, find, { reach, matchCase });
-  const onKey = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && ready) {
-      event.preventDefault();
-      setConfirming(true);
-    }
-  };
+  const { ready, confirming, setConfirming, confirm } = useConfirming(find);
   return (
     <Popover open={confirming && ready} onOpenChange={setConfirming}>
       <div className="flex shrink-0 items-center gap-1 pb-2">
-        <label className="flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-border bg-surface pr-1 pl-2.5 transition-[border-color,box-shadow] duration-(--dur-fast) ease-out focus-within:border-accent focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)] hover:border-border-strong">
-          <Replace {...ICON_PROPS} className="shrink-0 text-fg-subtle" />
-          <input
-            value={replacement}
-            placeholder={transcriptCopy.replacePlaceholder}
-            aria-label={transcriptCopy.replaceLabel}
-            onChange={(event) => {
-              setReplacement(event.target.value);
-            }}
-            onKeyDown={onKey}
-            className="h-full min-w-16 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-subtle"
-          />
-          <MatchCase on={matchCase} onToggle={() => setMatchCase((on) => !on)} />
-        </label>
-        <SegmentedControl label={transcriptCopy.replace} segments={REACH} value={reach} onValueChange={setReach} />
-        <PopoverAnchor asChild>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={!ready}
-            title={ready ? undefined : transcriptCopy.replaceFindFirst}
-            onClick={() => {
-              setConfirming(true);
-            }}
-          >
-            {transcriptCopy.replaceAll}
-          </Button>
-        </PopoverAnchor>
+        <ReplaceField
+          value={replacement}
+          onChange={setReplacement}
+          matchCase={matchCase}
+          onMatchCase={() => {
+            setMatchCase((on) => !on);
+          }}
+          onSubmit={confirm}
+        />
+        <SegmentedControl
+          label={transcriptCopy.replace}
+          segments={REACH}
+          value={reach}
+          onValueChange={setReach}
+        />
+        <ReplaceAllButton ready={ready} onClick={confirm} />
       </div>
       <PopoverContent align="end" className="w-80">
-        {confirming && ready ? (
-          <ReplaceConfirm
-            request={request}
-            replacement={replacement}
-            onClose={() => {
-              setConfirming(false);
-            }}
-          />
-        ) : null}
+        <ReplaceConfirm
+          request={replaceRequest(meetingId, find, { reach, matchCase })}
+          replacement={replacement}
+          onClose={() => {
+            setConfirming(false);
+          }}
+        />
       </PopoverContent>
     </Popover>
   );

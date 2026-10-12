@@ -15,7 +15,7 @@
  * | Chat panel | empty state | AI-02 |
  * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
  * | Details panel | created and edited dates, calendar event, related meetings (ORG-03) | |
- * | Player | resting bar | TRN-03 |
+ * | Player | the docked player (`features/player`), seeking to `?t=` | |
  */
 import type { ComponentType } from 'react';
 
@@ -26,7 +26,7 @@ import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { NotesSlot } from './slots/notes-slot';
 import { ChatPanelSlot, ClipsSlot } from './slots/placeholder-slots';
-import { PlayerPlaceholder } from './slots/player-slot';
+import { PlayerSlot } from './slots/player-slot';
 import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
 
@@ -46,4 +46,4 @@ export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
 ];
 
 /** The bottom player. */
-export const MEETING_PLAYER: ComponentType<MeetingSlotProps> = PlayerPlaceholder;
+export const MEETING_PLAYER: ComponentType<MeetingSlotProps> = PlayerSlot;
