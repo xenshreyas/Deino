@@ -40,7 +40,7 @@ const commands = vi.hoisted(
 );
 vi.mock('@/lib/ipc/generated/meetings', () => ({ commands }));
 vi.mock('@/contexts/ConfigContext', () => ({
-  useConfig: () => ({ betaFeatures: { importAndRetranscribe: false } }),
+  useConfig: () => ({}),
 }));
 vi.mock('@/contexts/ImportDialogContext', () => ({
   useImportDialog: () => ({ openImportDialog: vi.fn() }),

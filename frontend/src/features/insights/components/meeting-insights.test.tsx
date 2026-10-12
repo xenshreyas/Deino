@@ -61,7 +61,7 @@ function entry(stale: boolean): MeetingInsight {
   };
 }
 
-/** The tab on the meeting route, so attribution links can navigate. */
+/** The section on the meeting route, so attribution links can navigate. */
 function renderTab() {
   const root = createRootRoute();
   const meeting = createRoute({
@@ -81,7 +81,7 @@ function renderTab() {
   return router;
 }
 
-describe("a meeting's Insights tab", () => {
+describe("a meeting's insights, at the end of its notes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -99,6 +99,16 @@ describe("a meeting's Insights tab", () => {
     await waitFor(() => {
       expect(router.state.location.search).toMatchObject({ tab: 'transcript', t: 271_000 });
     });
+  });
+
+  it('shows nothing until an insight has run here', async () => {
+    commands.forMeeting.mockResolvedValue({ status: 'ok', data: { entries: [], others: [] } });
+    renderTab();
+
+    await waitFor(() => {
+      expect(commands.forMeeting).toHaveBeenCalledWith(MEETING);
+    });
+    expect(screen.queryByRole('region', { name: 'Insights' })).toBeNull();
   });
 
   it('offers to run a stale insight again on this meeting', async () => {

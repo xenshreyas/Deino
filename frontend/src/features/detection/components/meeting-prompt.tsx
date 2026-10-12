@@ -1,7 +1,8 @@
 /**
  * The meeting prompt card (presentational): what was detected, in which app,
- * the calendar event it belongs to, the auto-start countdown, and the three
- * answers. Props in, events out; `DetectionPrompt` wires it to Rust.
+ * the calendar event it belongs to, the auto-start countdown, and the two
+ * everyday answers, with "Always ignore this app" in Ignore's menu (UX-30).
+ * Props in, events out; `DetectionPrompt` wires it to Rust.
  *
  * The card floats in its own transparent, non-activating window, so it
  * carries the floating-layer recipe (raised surface, r12, popover shadow)
@@ -9,7 +10,13 @@
  */
 import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
-import { Headphones, type Icon, ICON_PROPS, Phone, Video } from '@/ui/icons';
+import { ChevronDown, Headphones, type Icon, ICON_PROPS, Phone, Video } from '@/ui/icons';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/menu';
 
 import { detectionCopy } from '../copy';
 import type { Detection, MeetingKind } from '../types';
@@ -70,25 +77,45 @@ function Heading({ detection, secondsLeft }: { detection: Detection; secondsLeft
   );
 }
 
-/** The three answers: the quiet permanent one apart, the two everyday ones together. */
-function Actions({ props }: { props: MeetingPromptProps }) {
+/**
+ * Ignore, with the permanent "Always ignore this app" one step away in its
+ * menu (UX-30). The menu opens upward, inside the prompt's small window.
+ */
+function IgnoreButton({ props }: { props: MeetingPromptProps }) {
   const { busy } = props;
   return (
-    <footer className="flex items-center gap-1 border-t border-border px-2 py-2">
+    <span className="flex items-center">
       <Button
         variant="ghost"
         size="sm"
-        className="px-2 text-xs"
+        className="pr-1.5"
         disabled={busy}
-        onClick={props.onAlwaysIgnore}
+        onClick={props.onDismiss}
       >
-        {detectionCopy.alwaysIgnore}
-      </Button>
-      <span className="flex-1" />
-      <Button variant="ghost" size="sm" disabled={busy} onClick={props.onDismiss}>
         {props.secondsLeft === null ? detectionCopy.ignore : detectionCopy.dontRecord}
       </Button>
-      <Button variant="primary" size="sm" disabled={busy} onClick={props.onTakeNotes}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={busy}>
+          <Button variant="ghost" size="icon" aria-label={detectionCopy.moreIgnore}>
+            <ChevronDown {...ICON_PROPS} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="end">
+          <DropdownMenuItem onSelect={props.onAlwaysIgnore}>
+            {detectionCopy.alwaysIgnore}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
+  );
+}
+
+/** Two answers: Ignore (with its menu) and Take notes. */
+function Actions({ props }: { props: MeetingPromptProps }) {
+  return (
+    <footer className="flex items-center justify-end gap-1 border-t border-border px-2 py-2">
+      <IgnoreButton props={props} />
+      <Button variant="primary" size="sm" disabled={props.busy} onClick={props.onTakeNotes}>
         {detectionCopy.takeNotes}
       </Button>
     </footer>

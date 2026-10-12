@@ -2,7 +2,8 @@
  * The Notes tab's Enhanced view (NOT-02b): the status row (version
  * history, the quiet "Saved", Edit with AI, copy, and the page's Enhanced /
  * My notes switch), the edit bar while it is open (NOT-06), then the notes, or the state they are in: loading, being
- * written, not written yet, or failed.
+ * written, not written yet, or failed. The page's `footer` (insight
+ * answers, screen images) follows the notes, inside their scroll.
  */
 import { type ReactNode, useState } from 'react';
 
@@ -26,10 +27,12 @@ export interface EnhancedNotesProps {
   meetingId: MeetingId;
   /** Controls for the status row's right side (the view switch). */
   toolbar?: ReactNode;
+  /** What follows the notes, scrolling with them. */
+  footer?: ReactNode;
 }
 
 /** The Enhanced view. */
-export function EnhancedNotes({ meetingId, toolbar }: EnhancedNotesProps) {
+export function EnhancedNotes({ meetingId, toolbar, footer }: EnhancedNotesProps) {
   const [version, setVersion] = useState<number | null>(null);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const notes = useEnhancedNotes(meetingId, version);
@@ -53,7 +56,28 @@ export function EnhancedNotes({ meetingId, toolbar }: EnhancedNotesProps) {
       {view?.isLatest === true && !busy ? (
         <EditBar meetingId={meetingId} version={view.version.version} />
       ) : null}
-      <NotesBody meetingId={meetingId} query={notes} onVersion={setVersion} onStatus={setStatus} />
+      <NotesBody
+        meetingId={meetingId}
+        query={notes}
+        footer={footer}
+        onVersion={setVersion}
+        onStatus={setStatus}
+      />
+    </div>
+  );
+}
+
+/** No notes yet: being written, or the Enhance offer; then the page's footer. */
+function NoNotes(props: { busy: boolean; action: EnhanceAction; footer: ReactNode }) {
+  const { action } = props;
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {props.busy ? (
+        <WritingNotes />
+      ) : (
+        <NoNotesYet onEnhance={action.run} blocked={action.blocked} error={action.error} />
+      )}
+      {props.footer}
     </div>
   );
 }
@@ -62,11 +86,13 @@ export function EnhancedNotes({ meetingId, toolbar }: EnhancedNotesProps) {
 function NotesBody({
   meetingId,
   query,
+  footer,
   onVersion,
   onStatus,
 }: {
   meetingId: MeetingId;
   query: ReturnType<typeof useEnhancedNotes>;
+  footer: ReactNode;
   onVersion: (version: number | null) => void;
   onStatus: (status: SaveStatus) => void;
 }) {
@@ -74,19 +100,14 @@ function NotesBody({
   const action = useEnhanceAction(meetingId);
   if (query.isPending) return <NotesSkeleton />;
   if (query.isError) return <LoadFailed onRetry={() => void query.refetch()} />;
-  if (query.data === null) {
-    return busy ? (
-      <WritingNotes />
-    ) : (
-      <NoNotesYet onEnhance={action.run} blocked={action.blocked} error={action.error} />
-    );
-  }
+  if (query.data === null) return <NoNotes busy={busy} action={action} footer={footer} />;
   return (
     <LoadedNotes
       meetingId={meetingId}
       view={query.data}
       busy={busy}
       action={action}
+      footer={footer}
       onVersion={onVersion}
       onStatus={onStatus}
     />
@@ -99,6 +120,7 @@ function LoadedNotes(props: {
   view: EnhancedNotesView;
   busy: boolean;
   action: EnhanceAction;
+  footer: ReactNode;
   onVersion: (version: number | null) => void;
   onStatus: (status: SaveStatus) => void;
 }) {
@@ -113,6 +135,7 @@ function LoadedNotes(props: {
         view={props.view}
         versions={versions}
         busy={props.busy}
+        footer={props.footer}
         onRegenerate={action.blocked === null ? action.run : null}
         onRestore={() => {
           restore.mutate(props.view.version.version, {

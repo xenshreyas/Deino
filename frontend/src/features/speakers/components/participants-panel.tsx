@@ -1,6 +1,6 @@
 /**
- * The meeting's Participants panel (CAP-04, ui.md §4.2 right panel): every
- * speaker with their colour, name, talk time and share, most speech first.
+ * The meeting's participants, first in its Details panel (CAP-04, UX-04):
+ * every speaker with their colour, name, talk time and share, most speech first.
  * Naming, merging and answering "Is this …?" happen here; after a change
  * that reaches the notes, the panel offers to regenerate them.
  */
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 
 import { NOTES_STAGE, useRerunStage } from '@/features/pipeline';
 import { Button } from '@/ui/button';
-import { ICON_PROPS_LARGE, Users } from '@/ui/icons';
 import { Skeleton } from '@/ui/skeleton';
 
 import { announceRename } from '../announce';
@@ -31,7 +30,7 @@ export interface ParticipantsPanelProps {
 
 function PanelSkeleton() {
   return (
-    <div role="status" aria-label="Loading" className="flex flex-col gap-1 px-2 py-3">
+    <div role="status" aria-label="Loading" className="-mx-2 flex flex-col gap-1">
       {Array.from({ length: 3 }, (_, index) => (
         <div key={index} className="flex items-start gap-3 px-2 py-2.5">
           <Skeleton className="size-6 rounded-full" />
@@ -46,20 +45,12 @@ function PanelSkeleton() {
 }
 
 function PanelEmpty() {
-  return (
-    <div className="flex flex-col items-start gap-2 px-4 py-6">
-      <div className="flex size-9 items-center justify-center rounded-lg bg-bg-muted text-fg-muted">
-        <Users {...ICON_PROPS_LARGE} size={18} />
-      </div>
-      <h3 className="pt-1 text-sm font-semibold text-fg">{speakersCopy.emptyTitle}</h3>
-      <p className="text-sm text-pretty text-fg-muted">{speakersCopy.emptyBody}</p>
-    </div>
-  );
+  return <p className="text-sm text-pretty text-fg-muted">{speakersCopy.emptyBody}</p>;
 }
 
 function PanelError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="flex flex-col items-start gap-2 px-4 py-6">
+    <div className="flex flex-col items-start gap-2">
       <p className="text-sm text-danger">{speakersCopy.loadError}</p>
       <Button size="sm" variant="secondary" onClick={onRetry}>
         {speakersCopy.retry}
@@ -136,7 +127,7 @@ function ParticipantList({
   const notes = useStaleNotes(meetingId);
   const actions = usePanelActions(meetingId, notes.markStale);
   return (
-    <div className="flex flex-col py-3">
+    <div className="flex flex-col gap-1">
       {notes.stale ? (
         <NotesStaleNotice
           regenerating={notes.regenerating}
@@ -144,7 +135,7 @@ function ParticipantList({
           onDismiss={notes.dismiss}
         />
       ) : null}
-      <ul aria-label={speakersCopy.panelLabel} className="flex flex-col px-2">
+      <ul aria-label={speakersCopy.panelLabel} className="-mx-2 flex flex-col">
         {participants.map((participant) => (
           <ParticipantRow
             key={participant.speakerId}
@@ -159,7 +150,7 @@ function ParticipantList({
   );
 }
 
-/** The Participants panel of a meeting. */
+/** A meeting's participants. */
 export function ParticipantsPanel({ meetingId }: ParticipantsPanelProps) {
   const participants = useParticipants(meetingId);
   if (participants.isPending) return <PanelSkeleton />;

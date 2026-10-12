@@ -56,6 +56,13 @@ describe('route URLs', () => {
     expect(search).toEqual({ source: undefined, tab: 'transcript' });
   });
 
+  test('old Insights and Clips tab links open Notes, where both now live (UX-03)', async () => {
+    for (const old of ['insights', 'clips']) {
+      const { search } = await resolve(`/meetings/meeting-123?tab=${old}`);
+      expect(search).toEqual({ source: undefined, tab: 'notes' });
+    }
+  });
+
   test('an unknown tab falls back to the default instead of failing the route', async () => {
     const { search } = await resolve('/meetings/meeting-123?tab=nope');
     expect(search).toEqual({ source: undefined, tab: undefined });

@@ -1,7 +1,9 @@
 /**
  * The consent reminder under the recording pill (CAP-13): shown once per
  * recorded meeting while `consent.reminder` is on, until "Got it" or "Don't
- * show again". The record panel renders it with the meeting being recorded.
+ * show again". {@link useConsentReminder} is its state, so the record panel
+ * can fold the screen capture reminder into the same card (UX-28);
+ * {@link ConsentReminder} is the card on its own.
  */
 import { useState } from 'react';
 
@@ -18,6 +20,39 @@ export function shouldRemind(
   return reminder === true && meetingId !== null && meetingId !== dismissedFor;
 }
 
+/** A reminder card's state and answers. */
+export interface ReminderState {
+  shown: boolean;
+  /** "Don't show again" is being saved. */
+  busy: boolean;
+  /** "Got it": hides it for this meeting. */
+  dismiss: () => void;
+  /** "Don't show again": turns it off. */
+  never: () => void;
+}
+
+/** The consent reminder's state for the recording of `meetingId` (`null`: nothing records). */
+export function useConsentReminder(meetingId: string | null): ReminderState {
+  const reminder = useReminder(meetingId);
+  const stop = useStopReminding();
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+  return {
+    shown: shouldRemind(reminder.data, meetingId, dismissedFor),
+    busy: stop.isPending,
+    dismiss: () => {
+      setDismissedFor(meetingId);
+    },
+    never: () => {
+      setDismissedFor(meetingId);
+      stop.mutate(undefined, {
+        onError: (error) => {
+          console.error('[consent] Could not turn the reminder off', error);
+        },
+      });
+    },
+  };
+}
+
 /** Props of {@link ConsentReminder}. */
 export interface ConsentReminderProps {
   /** The meeting being recorded; `null` while nothing records. */
@@ -26,24 +61,7 @@ export interface ConsentReminderProps {
 
 /** The reminder for the recording of `meetingId`, while it is wanted. */
 export function ConsentReminder({ meetingId }: ConsentReminderProps) {
-  const reminder = useReminder(meetingId);
-  const stop = useStopReminding();
-  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
-  if (meetingId === null || !shouldRemind(reminder.data, meetingId, dismissedFor)) return null;
-  return (
-    <ConsentCard
-      busy={stop.isPending}
-      onDismiss={() => {
-        setDismissedFor(meetingId);
-      }}
-      onNever={() => {
-        setDismissedFor(meetingId);
-        stop.mutate(undefined, {
-          onError: (error) => {
-            console.error('[consent] Could not turn the reminder off', error);
-          },
-        });
-      }}
-    />
-  );
+  const reminder = useConsentReminder(meetingId);
+  if (!reminder.shown) return null;
+  return <ConsentCard busy={reminder.busy} onDismiss={reminder.dismiss} onNever={reminder.never} />;
 }

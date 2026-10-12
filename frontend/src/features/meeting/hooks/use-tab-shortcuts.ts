@@ -9,7 +9,7 @@ export function tabForDigit(key: string): MeetingTabId | undefined {
   return Number.isInteger(index) ? MEETING_TABS[index]?.id : undefined;
 }
 
-/** Binds ⌘1…⌘4 to the meeting tabs while the meeting page is mounted. */
+/** Binds ⌘1 and ⌘2 to the meeting tabs while the meeting page is mounted. */
 export function useTabShortcuts(onSelect: (tab: MeetingTabId) => void): void {
   useMountEffect(() => {
     const listener = (event: KeyboardEvent) => {

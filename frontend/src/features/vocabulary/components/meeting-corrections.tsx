@@ -1,10 +1,11 @@
 /**
- * A meeting's vocabulary corrections, for its Details panel: what changed
- * ("Sreyas" → "Shreyas"), each with Undo, and Undo all. Renders nothing
- * when the vocabulary changed nothing.
+ * A meeting's vocabulary corrections, last in its Details panel and
+ * collapsed (UX-04): what changed ("Sreyas" → "Shreyas"), each with Undo,
+ * and Undo all. Renders nothing when the vocabulary changed nothing.
  */
 import { toast } from 'sonner';
 
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/ui/accordion';
 import { Button } from '@/ui/button';
 import { IconButton } from '@/ui/icon-button';
 import { ArrowRight, ICON_PROPS, Undo2 } from '@/ui/icons';
@@ -62,33 +63,37 @@ export function MeetingCorrections({ meetingId }: MeetingCorrectionsProps) {
   const list = corrections.data ?? [];
   if (list.length === 0) return null;
   return (
-    <section aria-label={copy.correctionsTitle} className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs text-fg-muted">
+    <Accordion type="single" collapsible>
+      <AccordionItem value="corrections" aria-label={copy.correctionsTitle}>
+        <AccordionTrigger className="py-1 text-xs font-normal text-fg-muted">
           {copy.correctionsTitle} · {copy.correctionsCount(list.length)}
-        </h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!list.some((c) => c.undoable)}
-          onClick={() => {
-            undo(null);
-          }}
-        >
-          {copy.undoAll}
-        </Button>
-      </div>
-      <ul className="flex flex-col">
-        {list.map((correction) => (
-          <CorrectionLine
-            key={correction.segmentId}
-            correction={correction}
-            onUndo={() => {
-              undo(correction.segmentId);
-            }}
-          />
-        ))}
-      </ul>
-    </section>
+        </AccordionTrigger>
+        <AccordionContent className="pb-0">
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!list.some((c) => c.undoable)}
+              onClick={() => {
+                undo(null);
+              }}
+            >
+              {copy.undoAll}
+            </Button>
+          </div>
+          <ul className="flex flex-col">
+            {list.map((correction) => (
+              <CorrectionLine
+                key={correction.segmentId}
+                correction={correction}
+                onUndo={() => {
+                  undo(correction.segmentId);
+                }}
+              />
+            ))}
+          </ul>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }

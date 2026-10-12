@@ -2,7 +2,6 @@
 export const speakersCopy = {
   // Participants panel.
   panelLabel: 'Speakers',
-  emptyTitle: 'No speakers yet',
   emptyBody: 'Once the recording is processed, each voice is listed here with how long it spoke.',
   loadError: 'Could not load the speakers.',
   retry: 'Try again',

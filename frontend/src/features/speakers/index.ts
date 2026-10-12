@@ -1,5 +1,5 @@
 /**
- * The speakers feature (CAP-04): the meeting's Participants panel (names,
+ * The speakers feature (CAP-04): the meeting's participants, in Details (names,
  * talk time, "Is this …?", rename and merge), the "Who is …?" popover that
  * TRN-01's transcript chips open for one segment, and the voice profiles
  * that Settings → People lists today and ORG-04's person page can embed.

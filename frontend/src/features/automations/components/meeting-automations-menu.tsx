@@ -1,21 +1,16 @@
 /**
- * A meeting's ⋯ → Automations menu (Circleback §10.1): every automation,
- * matching ones first, with its run status on this meeting and Run or
- * Rerun. Disabled and manual automations are listed too, for manual runs.
+ * A meeting's ⋯ → "Run automation" submenu (Circleback §10.1, UX-05):
+ * every automation, matching ones first, with its run status on this
+ * meeting and Run or Rerun. Disabled and manual automations are listed
+ * too, for manual runs. The meeting page owns the ⋯ menu itself.
  */
-import { useState } from 'react';
-
-import { Button } from '@/ui/button';
-import { Ellipsis, ICON_PROPS, Play, RotateCcw, Workflow } from '@/ui/icons';
+import { ICON_PROPS, Play, RotateCcw, Workflow } from '@/ui/icons';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
 } from '@/ui/menu';
 
 import { runCopy } from '../copy';
@@ -23,39 +18,29 @@ import { useMeetingAutomations, useRunAutomation } from '../queries';
 import type { MeetingAutomation, MeetingId } from '../types';
 import { RunBadge } from './run-status';
 
-/** Props of {@link MeetingAutomationsMenu}. */
-export interface MeetingAutomationsMenuProps {
+/** Props of {@link MeetingAutomationsSubmenu}. */
+export interface MeetingAutomationsSubmenuProps {
   meetingId: MeetingId;
 }
 
-/** The ⋯ button and its Automations submenu. */
-export function MeetingAutomationsMenu({ meetingId }: MeetingAutomationsMenuProps) {
-  const [open, setOpen] = useState(false);
-  const menu = useMeetingAutomations(meetingId, open);
+/** "Run automation ›" and its list; it loads once the ⋯ menu opens. */
+export function MeetingAutomationsSubmenu({ meetingId }: MeetingAutomationsSubmenuProps) {
+  const menu = useMeetingAutomations(meetingId);
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={runCopy.more}>
-          <Ellipsis {...ICON_PROPS} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Workflow {...ICON_PROPS} />
-            {runCopy.menu}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-80">
-            {menu.data?.length === 0 ? (
-              <DropdownMenuLabel>{runCopy.menuEmpty}</DropdownMenuLabel>
-            ) : null}
-            {(menu.data ?? []).map((entry) => (
-              <AutomationItem key={entry.automation.id} meetingId={meetingId} entry={entry} />
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <Workflow {...ICON_PROPS} />
+        {runCopy.menu}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="w-80">
+        {menu.data?.length === 0 ? (
+          <DropdownMenuLabel>{runCopy.menuEmpty}</DropdownMenuLabel>
+        ) : null}
+        {(menu.data ?? []).map((entry) => (
+          <AutomationItem key={entry.automation.id} meetingId={meetingId} entry={entry} />
+        ))}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }
 

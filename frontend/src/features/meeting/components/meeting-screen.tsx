@@ -1,9 +1,9 @@
 /**
  * The meeting page skeleton (PARITY_PLAN §4.6, ui.md §4.2): a 720px column
- * with the header and the Notes / Transcript / Insights / Clips tabs, the
- * right panel (Chat / Participants / Details) and the bottom player. Every
- * region is a slot in `slots.ts`; the legacy session publishes the Notes and
- * Transcript panels until their cards rebuild them.
+ * with the header and the Notes / Transcript tabs, the right panel (Chat /
+ * Details) and the bottom player (UX-03, UX-04). Every region is a slot in
+ * `slots.ts`; the legacy session publishes the recording folder for the ⋯
+ * menu until CAP-08/CAP-11 port re-transcription.
  */
 import { Link } from '@tanstack/react-router';
 

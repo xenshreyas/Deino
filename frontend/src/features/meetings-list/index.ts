@@ -4,6 +4,7 @@
  * delete, and the Trash. Routes import their URL contract from `./search`;
  * other code imports from here only.
  */
+export { trashMeetings } from './actions';
 export { meetingsListApi } from './api';
 export {
   MeetingsListScreen,

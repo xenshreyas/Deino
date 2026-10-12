@@ -30,7 +30,6 @@ export interface PillView {
   warning: string | null;
   /** Auto-stop's countdown, if one runs. */
   ending: { seconds: number; reason: string } | null;
-  systemAudio: boolean;
 }
 
 /** Props of {@link Pill}. */
@@ -105,13 +104,7 @@ function Reveal({ view, actions }: { view: PillView; actions: PillActions }) {
       )}
     >
       <span className="min-w-0 overflow-hidden">
-        {open ? (
-          <PillControls
-            paused={view.phase === 'paused'}
-            systemAudio={view.systemAudio}
-            actions={actions}
-          />
-        ) : null}
+        {open ? <PillControls paused={view.phase === 'paused'} actions={actions} /> : null}
       </span>
     </span>
   );

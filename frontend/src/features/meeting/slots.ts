@@ -4,30 +4,24 @@
  * Feature cards fill the meeting page by editing this file only: replace a
  * placeholder's `Component`, or add a tab or panel section. The page renders
  * the tabs in order, the right-panel sections as its tabs, and the player at
- * the bottom.
+ * the bottom. UX-03 and UX-04 cut it to two tabs and two panel sections;
+ * add to a slot before adding a new one.
  *
  * | Slot | Today | Filled by |
  * |---|---|---|
- * | Notes tab | Enhanced (NOT-02, NOT-03) and My notes (NOT-01) | |
- * | Transcript tab | transcript view (`features/transcript`), with the inherited folder and re-transcribe tools | TRN-01 |
- * | Insights tab | each insight's answers, attributed (AI-06) | |
- * | Clips tab | the meeting's clips (`features/clips`): play, rename, Finder, delete | TRN-04 |
+ * | Notes tab | action items, then Enhanced (NOT-02, NOT-03) or My notes (NOT-01) with the template menu; insight answers (AI-06) and screen images (CAP-09) after the notes when there are any | |
+ * | Transcript tab | transcript view (`features/transcript`) | TRN-01 |
  * | Chat panel | "Ask about this meeting" (`features/ask`): questions and `/` recipes, cited, a thread per meeting | AI-02-lite, AI-04 (D13); AI-02 for cross-meeting |
- * | Comments panel | every comment thread (`features/comments`), detached ones marked | TRN-06 |
- * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
- * | Details panel | created and edited dates, calendar event, related meetings (ORG-03) | |
+ * | Details panel | participants (CAP-04), comments (TRN-06) and clips (TRN-04) when there are any, calendar event and related meetings (ORG-03), corrections (TRN-05) collapsed | |
  * | Player | the docked player (`features/player`), seeking to `?t=` | |
  */
 import type { ComponentType } from 'react';
 
 import { AskPanel } from '@/features/ask';
-import { MeetingInsights } from '@/features/insights';
-import { ParticipantsPanel } from '@/features/speakers';
 
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { NotesSlot } from './slots/notes-slot';
-import { ClipsSlot, CommentsPanelSlot } from './slots/annotation-slots';
 import { PlayerSlot } from './slots/player-slot';
 import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
@@ -36,15 +30,11 @@ import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types
 export const MEETING_TABS: readonly MeetingTabSlot[] = [
   { id: 'notes', label: meetingCopy.notes, shortcut: '⌘1', Component: NotesSlot },
   { id: 'transcript', label: meetingCopy.transcript, shortcut: '⌘2', Component: TranscriptSlot },
-  { id: 'insights', label: meetingCopy.insights, shortcut: '⌘3', Component: MeetingInsights },
-  { id: 'clips', label: meetingCopy.clips, shortcut: '⌘4', Component: ClipsSlot },
 ];
 
 /** The right panel's sections, in order. */
 export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
   { id: 'chat', label: meetingCopy.chat, Component: AskPanel },
-  { id: 'comments', label: meetingCopy.comments, Component: CommentsPanelSlot },
-  { id: 'participants', label: meetingCopy.participants, Component: ParticipantsPanel },
   { id: 'details', label: meetingCopy.details, Component: DetailsPanelSlot },
 ];
 

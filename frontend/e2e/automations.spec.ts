@@ -102,18 +102,18 @@ test('an automation with conditions and two steps saves, duplicates, runs and re
   await rerunFromMeeting(page);
 });
 
-/** On the sales meeting: ⋯ → Automations shows each run's status, and Rerun runs it again. */
+/** On the sales meeting: ⋯ → Run automation shows each run's status, and Rerun runs it again. */
 async function rerunFromMeeting(page: Page) {
   await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery/);
   await expect(page.getByRole('heading', { name: SALES.title, level: 1 })).toBeVisible();
   // The header settles as the meeting's queries land; open the menu once it holds.
   await expect(async () => {
     await page.getByRole('button', { name: 'More actions' }).click();
-    await expect(page.getByRole('menuitem', { name: 'Automations' })).toBeVisible({
+    await expect(page.getByRole('menuitem', { name: 'Run automation' })).toBeVisible({
       timeout: 1_000,
     });
   }).toPass();
-  await page.getByRole('menuitem', { name: 'Automations' }).click();
+  await page.getByRole('menuitem', { name: 'Run automation' }).click();
   const rerun = page.getByRole('menuitem').filter({ hasText: 'Rerun' });
   await expect(rerun).toContainText('Discovery recap');
   await expect(rerun).toContainText('Done');

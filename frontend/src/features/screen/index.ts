@@ -5,9 +5,13 @@
  * consent reminder shown the first three times a capture runs.
  */
 export { screenApi, snapshotSrc } from './api';
-export { sameSource, showCaptureMenu } from './capture-menu';
+export { captureMenuItems, sameSource } from './capture-menu';
 export { ImagesStripView, MeetingImages, snapshotTime } from './components/images-strip';
-export { ScreenReminder, capturedMeeting } from './components/screen-reminder';
+export {
+  capturedMeeting,
+  type ScreenReminderState,
+  useScreenReminder,
+} from './components/screen-reminder';
 export { ScreenCaptureSettings } from './components/screen-settings';
 export { screenCopy } from './copy';
 export {

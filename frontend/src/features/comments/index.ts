@@ -11,7 +11,7 @@
  * |---|---|
  * | {@link CommentLayer} | wraps the Transcript tab and the notes views |
  * | {@link CommentPopovers} | the meeting page, once: the composer and an opened thread |
- * | {@link CommentsPanel} | the meeting page's right panel |
+ * | {@link CommentsPanel} | the meeting's Details panel, when it has comments |
  * | {@link startComment}, {@link transcriptSurface} | the transcript's Comment action (a whole line) |
  */
 export { CommentLayer, type CommentLayerProps } from './components/comment-layer';
