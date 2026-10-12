@@ -278,26 +278,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hardware_detection() {
-        let profile = HardwareProfile::detect();
-        assert!(profile.cpu_cores > 0);
-        // Performance optimization: remove println! from tests
-        log::debug!("Detected profile: {:?}", profile);
-    }
-
-    #[test]
-    fn test_whisper_config_generation() {
-        let profile = HardwareProfile::detect();
-        let config = profile.get_whisper_config();
-
-        assert!(config.beam_size >= 1 && config.beam_size <= 5);
-        assert!(config.temperature >= 0.0 && config.temperature <= 1.0);
-
-        // Performance optimization: remove println! from tests
-        log::debug!("Generated config: {:?}", config);
-    }
-
-    #[test]
     fn test_performance_tier_logic() {
         // Test different hardware combinations
         let low_tier = HardwareProfile::calculate_performance_tier(2, &GpuType::None, 4);

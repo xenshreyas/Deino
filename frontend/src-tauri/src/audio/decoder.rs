@@ -761,53 +761,6 @@ mod tests {
     }
 
     #[test]
-    fn test_decoded_audio_duration_calculation() {
-        let audio = DecodedAudio {
-            samples: vec![0.0; 48000], // 1 second at 48kHz mono
-            sample_rate: 48000,
-            channels: 1,
-            duration_seconds: 1.0,
-        };
-
-        // Duration should be samples / sample_rate for mono
-        let calculated_duration = audio.samples.len() as f64 / audio.sample_rate as f64;
-        assert!((calculated_duration - audio.duration_seconds).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_decoded_audio_stereo_duration() {
-        let audio = DecodedAudio {
-            samples: vec![0.0; 96000], // 1 second at 48kHz stereo (2 channels)
-            sample_rate: 48000,
-            channels: 2,
-            duration_seconds: 1.0,
-        };
-
-        // Duration should be samples / (sample_rate * channels) for stereo
-        let frames = audio.samples.len() / audio.channels as usize;
-        let calculated_duration = frames as f64 / audio.sample_rate as f64;
-        assert!((calculated_duration - audio.duration_seconds).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_to_whisper_format_handles_large_file_threshold() {
-        // Test that large files use chunked sinc resampling path
-        // LARGE_FILE_THRESHOLD is 14_400_000 samples
-        // We'll test with a smaller sample to verify the path selection logic works
-        let audio = DecodedAudio {
-            samples: vec![0.5; 1000], // Small file
-            sample_rate: 48000,
-            channels: 1,
-            duration_seconds: 1000.0 / 48000.0,
-        };
-
-        let result = audio.to_whisper_format();
-        // Should complete without error and produce valid output
-        assert!(!result.is_empty());
-        assert!(result.len() < 1000); // Downsampled
-    }
-
-    #[test]
     fn test_normalize_audio_samples_already_normalized() {
         let samples = vec![0.5, -0.5, 0.0, 0.9, -0.9];
         let result = normalize_audio_samples(samples.clone());

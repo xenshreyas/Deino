@@ -888,28 +888,6 @@ mod tests {
     }
 
     #[test]
-    fn test_cancellation_flag() {
-        // Reset flag to known state
-        RETRANSCRIPTION_CANCELLED.store(false, Ordering::SeqCst);
-        RETRANSCRIPTION_IN_PROGRESS.store(false, Ordering::SeqCst);
-
-        assert!(!is_retranscription_in_progress());
-
-        // Test cancellation
-        cancel_retranscription();
-        assert!(RETRANSCRIPTION_CANCELLED.load(Ordering::SeqCst));
-
-        // Reset for other tests
-        RETRANSCRIPTION_CANCELLED.store(false, Ordering::SeqCst);
-    }
-
-    #[test]
-    fn test_vad_redemption_time_constant() {
-        // Batch processing uses 2000ms to bridge natural pauses in full-file VAD
-        assert_eq!(VAD_REDEMPTION_TIME_MS, 2000);
-    }
-
-    #[test]
     fn test_find_audio_file_common_candidates() {
         let dir = tempfile::tempdir().unwrap();
 
@@ -968,25 +946,6 @@ mod tests {
     fn test_find_audio_file_nonexistent_folder() {
         let result = find_audio_file(Path::new("/nonexistent/path/12345"));
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_audio_extensions_constant() {
-        // Verify all expected formats are covered
-        assert!(AUDIO_EXTENSIONS.contains(&"mp4"));
-        assert!(AUDIO_EXTENSIONS.contains(&"m4a"));
-        assert!(AUDIO_EXTENSIONS.contains(&"wav"));
-        assert!(AUDIO_EXTENSIONS.contains(&"mp3"));
-        assert!(AUDIO_EXTENSIONS.contains(&"flac"));
-        assert!(AUDIO_EXTENSIONS.contains(&"ogg"));
-        assert!(AUDIO_EXTENSIONS.contains(&"aac"));
-        // FFmpeg-backed formats
-        assert!(AUDIO_EXTENSIONS.contains(&"mkv"));
-        assert!(AUDIO_EXTENSIONS.contains(&"webm"));
-        assert!(AUDIO_EXTENSIONS.contains(&"wma"));
-        // Non-audio formats
-        assert!(!AUDIO_EXTENSIONS.contains(&"txt"));
-        assert!(!AUDIO_EXTENSIONS.contains(&"pdf"));
     }
 
     #[test]

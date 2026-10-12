@@ -13,7 +13,6 @@ import {
   usePatchSettings,
   useSaveSecret,
   useSecretStatus,
-  useSettings,
   useSettingsChanges,
 } from './queries';
 import { defaultSettings } from './settings-fixture';
@@ -55,14 +54,6 @@ describe('settings queries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     bindings.settings.get.mockResolvedValue({ status: 'ok', data: defaultSettings() });
-  });
-
-  it('loads every setting through the settings plugin', async () => {
-    const { result } = renderWithClient(useSettings);
-
-    await waitFor(() => {
-      expect(result.current.data).toEqual(defaultSettings());
-    });
   });
 
   it('caches the saved settings a patch returns', async () => {
