@@ -100,6 +100,7 @@ pub struct RecordingSummary {
 #[derive(Debug)]
 pub struct Recorder {
     dir: PathBuf,
+    epoch: HostTime,
     writers: Vec<TrackWriter>,
     persister: PersisterThread,
     host_clock: Arc<dyn HostClock>,
@@ -111,6 +112,7 @@ impl Recorder {
     pub fn start(dir: &Path, deps: &RecorderDeps) -> Result<(Self, RecordingInputs), RecordError> {
         std::fs::create_dir_all(dir.join(AUDIO_DIR))?;
         let manifest = RecordingManifest::start(deps.host_clock.now(), deps.wall_clock.now());
+        let epoch = manifest.epoch;
         ManifestStore::new(dir).write(&manifest)?;
         let (health, events) = health_channel();
         let context = WriterContext {
@@ -133,6 +135,7 @@ impl Recorder {
         )?;
         let recorder = Self {
             dir: dir.to_owned(),
+            epoch,
             writers: vec![mic.writer, system.writer],
             persister,
             host_clock: Arc::clone(&deps.host_clock),
@@ -153,6 +156,12 @@ impl Recorder {
     /// The recording directory.
     pub fn dir(&self) -> &Path {
         &self.dir
+    }
+
+    /// The recording epoch (`t0`): the host time both tracks start at, so
+    /// a recording's offsets are measured from it.
+    pub fn epoch(&self) -> HostTime {
+        self.epoch
     }
 
     /// Frames each track has handed to its encoder so far.

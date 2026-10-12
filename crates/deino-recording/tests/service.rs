@@ -23,10 +23,10 @@ use chrono::TimeDelta;
 use deino_audio::TestSignal;
 use deino_audio::capture::OutputRoute;
 use deino_core::meetings::{MeetingTitle, NewMeeting};
-use deino_domain::{Clock, MeetingId, MeetingSource, MeetingStatus};
+use deino_domain::{Clock, MeetingId, MeetingSource, MeetingStatus, Millis};
 use deino_recording::engine::{EngineError, LaneTranscriber};
 use deino_recording::{
-    Lane, LaneEngines, RecordingDeps, RecordingError, RecordingPhase, recover_interrupted,
+    Lane, LaneEngines, Playhead, RecordingDeps, RecordingError, RecordingPhase, recover_interrupted,
 };
 use deino_stt::SessionSink;
 use rig::{FastClock, FixtureCapture, Rig, rig, rig_with};
@@ -121,6 +121,37 @@ async fn pause_time_is_counted_and_stop_hands_the_meeting_to_processing() {
             RecordingPhase::Idle,
         ]
     );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_playhead_follows_the_recording_and_stands_still_while_paused() {
+    let rig = rig(voices()).await;
+    assert_eq!(rig.service.playhead(), Playhead::Idle);
+    let meeting = rig.service.start(None).await.unwrap();
+    record_for(&rig, Duration::from_secs(2)).await;
+
+    let Playhead::Recording { meeting: first, at } = rig.service.playhead() else {
+        panic!("recording");
+    };
+    rig.service.pause().unwrap();
+    let paused = rig.service.playhead();
+    rig.service.resume().unwrap();
+    record_for(&rig, Duration::from_secs(1)).await;
+    let Playhead::Recording { at: later, .. } = rig.service.playhead() else {
+        panic!("recording again");
+    };
+    rig.service.stop().await.unwrap();
+
+    assert_eq!(first, meeting);
+    assert!(at >= Millis(2_000), "{at}");
+    assert!(later >= Millis(at.0 + 1_000), "{at} then {later}");
+    assert_eq!(
+        paused,
+        Playhead::Paused {
+            meeting: meeting.clone()
+        }
+    );
+    assert_eq!(rig.service.playhead(), Playhead::Idle);
 }
 
 /// Engines whose model is missing.
