@@ -32,12 +32,12 @@ export const vocabularyCopy = {
   removeFailed: 'Could not remove that entry',
   loadError: 'Your vocabulary could not be loaded.',
 
-  correctionsTitle: 'Vocabulary',
+  correctionsTitle: 'Corrections',
   correctionsCount: (count: number) =>
     count === 1 ? '1 line corrected' : `${count.toString()} lines corrected`,
   undo: 'Undo',
   undoAll: 'Undo all',
   undoLine: (from: string, to: string) => `Undo ${from} to ${to}`,
   edited: 'Edited since',
-  undoFailed: 'Could not undo the correction',
+  undoFailed: 'Couldn’t undo the correction',
 } as const;

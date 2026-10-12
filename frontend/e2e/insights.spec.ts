@@ -55,9 +55,9 @@ test('an insight from a template answers on a meeting, fills its table and expor
   await expect(page.getByRole('status')).toHaveCount(0, { timeout: 15_000 });
   await shoot(page, 'insights-table');
 
-  // The meeting's Insights tab shows the same answer, attributed.
+  // The meeting's notes end with the same answer, attributed.
   await salesRow.click();
-  await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery\?tab=insights/);
+  await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery\?tab=notes/);
   const section = page.getByRole('region', { name: 'Discovery scorecard' });
   await expect(section).toBeVisible();
   await expect(section.getByRole('link', { name: /where Marcus Webb said this/ })).toBeVisible();

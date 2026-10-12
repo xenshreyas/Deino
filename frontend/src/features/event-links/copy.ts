@@ -18,10 +18,8 @@ export const eventLinksCopy = {
   eventSection: 'Calendar event',
   guests: 'Guests',
   moreGuests: (count: number) => `and ${count} more`,
-  previousChip: 'Previous',
   previousInSeries: 'Previous in series',
   relatedSection: 'Related meetings',
-  openPrevious: (title: string) => `Open the previous meeting, ${title}`,
   by: {
     series: 'Same series',
     titleAndPeople: 'Same title and people',

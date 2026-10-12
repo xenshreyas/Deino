@@ -38,11 +38,12 @@ test('a new template can be created, then picked for a meeting', async ({ page }
   await expect(page).toHaveURL(`/meetings/${oneOnOne.id}`);
   const picker = page.getByRole('button', { name: 'Note template' });
   await expect(picker).toHaveText(/1:1/);
-  await expect(page.getByText('Matched rule: 1:1 in the title')).toBeVisible();
+  // The reason is not on the page, only in the menu's header (UX-06).
+  await expect(page.getByText('Matched rule: 1:1 in the title')).toHaveCount(0);
   await picker.click();
+  await expect(page.getByRole('menu').getByText('Matched rule: 1:1 in the title')).toBeVisible();
   await page.getByRole('menuitem', { name: 'Board prep' }).click();
   await expect(picker).toHaveText(/Board prep/);
-  await expect(page.getByText('Chosen for this meeting')).toBeVisible();
   await shoot(page, 'meeting-template-picker');
 });
 

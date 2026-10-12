@@ -1,20 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-import { engineOf, providerOf } from './engine';
+import { providerOf } from './engine';
 
-describe('engine bridge', () => {
-  it('maps every settings engine to its legacy provider and back', () => {
-    for (const engine of ['parakeet_unified', 'parakeet', 'whisper'] as const) {
-      expect(engineOf(providerOf(engine))).toBe(engine);
-    }
-  });
-
-  it('names Parakeet Unified the way the backend expects', () => {
+describe('the legacy provider names', () => {
+  test('each engine has its own legacy name', () => {
     expect(providerOf('parakeet_unified')).toBe('parakeetUnified');
+    expect(providerOf('parakeet')).toBe('parakeet');
     expect(providerOf('whisper')).toBe('localWhisper');
-  });
-
-  it('falls back to the default engine for unknown providers', () => {
-    expect(engineOf('somethingElse')).toBe('parakeet_unified');
   });
 });

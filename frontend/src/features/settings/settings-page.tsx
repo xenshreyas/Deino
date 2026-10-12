@@ -4,19 +4,15 @@
  * pages register from their feature's `settings-page.tsx`.
  */
 import { About } from '@/components/About';
-import { BetaSettings } from '@/components/BetaSettings';
 import { PreferenceSettings } from '@/components/PreferenceSettings';
 import { RecordingSettings } from '@/components/RecordingSettings';
 import { SummaryModelSettings } from '@/components/SummaryModelSettings';
-import { TranscriptSettings } from '@/components/TranscriptSettings';
-import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { IntegrationsSettings } from '@/features/integrations';
 import { NetworkSettings } from '@/features/network';
 import {
   AudioLines,
   Cpu,
-  FlaskConical,
   Info,
   Mic,
   Palette,
@@ -27,6 +23,7 @@ import {
 } from '@/ui/icons';
 
 import { CaptureModeSettings } from './components/capture-mode-settings';
+import { EngineSettings } from './components/engine-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
 import { RecordingBehaviour } from './components/recording-behaviour';
 import { RedactionSettings } from './components/redaction-settings';
@@ -59,17 +56,13 @@ function RecordingSection() {
   );
 }
 
-/** Transcription: live or after the meeting (CAP-08), then the inherited
- * engine picker over the config context. */
+/** Transcription: live or after the meeting (CAP-08), then the engine and
+ * its model, read from and saved to the settings the recorder uses. */
 function TranscriptionSection() {
-  const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
   return (
     <div className="flex flex-col gap-8">
       <CaptureModeSettings />
-      <TranscriptSettings
-        transcriptModelConfig={transcriptModelConfig}
-        setTranscriptModelConfig={setTranscriptModelConfig}
-      />
+      <EngineSettings />
     </div>
   );
 }
@@ -171,15 +164,6 @@ export const settingsPages = [
     Component: NetworkSection,
   },
   {
-    id: 'beta',
-    group: 'more',
-    order: 10,
-    icon: FlaskConical,
-    label: 'Beta',
-    description: 'Features that are still being finished.',
-    Component: BetaSettings,
-  },
-  {
     id: 'about',
     group: 'more',
     order: 20,
@@ -199,7 +183,6 @@ declare module '@/features/settings/search' {
     models: true;
     integrations: true;
     network: true;
-    beta: true;
     about: true;
   }
 }

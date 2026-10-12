@@ -1,6 +1,6 @@
 /**
- * The meeting page: header, tabs (Notes, Transcript, Insights, Clips), right
- * panel (Chat, Participants, Details) and player, each a slot in `slots.ts`.
+ * The meeting page: header and its ⋯ menu, tabs (Notes, Transcript), right
+ * panel (Chat, Details) and player, each a slot in `slots.ts`.
  * Routes import its URL contract from `./search`.
  */
 export { MeetingScreen, type MeetingScreenProps } from './components/meeting-screen';

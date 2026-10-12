@@ -1,17 +1,17 @@
 /**
  * The record panel's page (CAP-10): the pill, wired to the recorder, and
- * auto-stop's offer and the consent reminders under it (CAP-07, CAP-13,
- * CAP-09's screen capture). The window is transparent and a
+ * auto-stop's offer and at most one consent reminder under it (CAP-07,
+ * CAP-13 with CAP-09's screen capture folded in, UX-28). The window is transparent and a
  * little larger than the pill; the pill hugs the screen edge the panel is
  * snapped to and grows away from it. During the first recording, PRV-01's
  * "Pause for sensitive discussions" tip sits under the pill once.
  */
 import { useQueryClient } from '@tanstack/react-query';
+import { isTauri } from '@tauri-apps/api/core';
 import { useRef, type MutableRefObject } from 'react';
 
 import { PauseTipSlot } from '@/features/retention';
-import { ConsentReminder } from '@/features/consent';
-import { ScreenReminder, showCaptureMenu, type CaptureSource } from '@/features/screen';
+import { captureMenuItems, type CaptureSource } from '@/features/screen';
 import { useIpcEvent } from '@/lib/ipc';
 import { events } from '@/lib/ipc/generated/recording';
 import { cn } from '@/ui/cn';
@@ -30,11 +30,12 @@ import {
   usePressOrDrag,
   useSecondsUntil,
 } from '../../hooks/use-record-panel';
-import { showMicrophoneMenu } from '../../panel-window';
+import { showPillMenu } from '../../panel-window';
 import { recordingKeys, useRecordingActions, useRecordingState } from '../../queries';
 import type { AutoStopState, RecordingSnapshot } from '../../types';
 import { Pill, type PillView } from './pill';
 import type { PillActions } from './pill-controls';
+import { RecordingReminder } from './reminder';
 import { SplitCard } from './split-card';
 
 /** Keeps the cached recorder state current (the panel has no `RecordingSync`). */
@@ -53,11 +54,33 @@ function openNotes(): void {
   });
 }
 
-/** Pops up the screen picker for the recording, remembering the pick. */
-function pickScreen(snapshot: RecordingSnapshot, picked: MutableRefObject<CaptureSource | null>) {
-  if (snapshot.phase === 'idle' || snapshot.meetingId === null) return;
-  void showCaptureMenu(snapshot.meetingId, picked.current, (source) => {
-    picked.current = source;
+/**
+ * Pops up the pill's ⋯ menu (UX-29): the microphone, the screen to
+ * capture (remembering the pick) and whether the call's audio is recorded.
+ */
+async function openMoreMenu(
+  snapshot: RecordingSnapshot,
+  picked: MutableRefObject<CaptureSource | null>,
+  devices: ReturnType<typeof useDeviceControls>,
+): Promise<void> {
+  if (!isTauri() || snapshot.phase === 'idle' || snapshot.meetingId === null) return;
+  const [microphones, screens] = await Promise.all([
+    recordingApi.microphones(),
+    captureMenuItems(snapshot.meetingId, picked.current, (source) => {
+      picked.current = source;
+    }),
+  ]);
+  await showPillMenu({
+    microphones,
+    microphone: snapshot.microphone,
+    onMicrophone: (name) => {
+      devices.microphone.mutate(name);
+    },
+    screens,
+    systemAudio: snapshot.systemAudio,
+    onSystemAudio: () => {
+      devices.systemAudio.mutate(!snapshot.systemAudio);
+    },
   });
 }
 
@@ -77,18 +100,10 @@ function usePillActions(snapshot: RecordingSnapshot): PillActions {
     onStop: () => {
       recorder.stop.mutate();
     },
-    onMicrophone: () => {
-      void recordingApi.microphones().then((microphones) =>
-        showMicrophoneMenu(microphones, snapshot.microphone, (name) => {
-          devices.microphone.mutate(name);
-        }),
-      );
-    },
-    onScreen: () => {
-      pickScreen(snapshot, picked);
-    },
-    onSystemAudio: () => {
-      devices.systemAudio.mutate(!snapshot.systemAudio);
+    onMore: () => {
+      openMoreMenu(snapshot, picked, devices).catch((error: unknown) => {
+        console.error('[recording] Could not open the pill menu', error);
+      });
     },
     onOpenNotes: openNotes,
     onKeep: () => {
@@ -117,7 +132,6 @@ function usePillView(
       autoStop.ending === null || endingIn === null
         ? null
         : { seconds: endingIn, reason: endingReason[autoStop.ending.reason] },
-    systemAudio: snapshot.systemAudio,
   };
 }
 
@@ -168,8 +182,7 @@ export function RecordPanel() {
         )}
         <NextMeetingOffer autoStop={autoStop} />
         {snapshot.phase === 'recording' && autoStop.split === null ? <PauseTipSlot /> : null}
-        <ConsentReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
-        <ScreenReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
+        <RecordingReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
       </div>
     </main>
   );

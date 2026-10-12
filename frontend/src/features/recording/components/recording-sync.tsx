@@ -3,7 +3,6 @@
  * started or stopped (record screen, sidebar, menu bar, ⌘⇧R, detection):
  *
  * - each `recording-state` event becomes the cached state;
- * - when a recording starts, the "tell participants" notice shows (if on);
  * - when a recording finishes saving while the record screen shows, its
  *   meeting page opens;
  * - the record panel's "Open notes" (`open-live-meeting`) opens the record
@@ -21,7 +20,6 @@ import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
 import { useIpcEvent } from '@/lib/ipc';
 import { events } from '@/lib/ipc/generated/recording';
-import { showRecordingNotification } from '@/lib/recordingNotification';
 
 import { recordingApi } from '../api';
 import { endingReason, panelCopy, recordingCopy } from '../copy';
@@ -75,9 +73,6 @@ export function RecordingSync() {
   const last = useRef<RecordingSnapshot | undefined>(undefined);
   useIpcEvent(events.recordingState, ({ snapshot }) => {
     const meetingId = finished(last.current, snapshot);
-    if (last.current?.phase === 'starting' && snapshot.phase === 'recording') {
-      void showRecordingNotification();
-    }
     last.current = snapshot;
     client.setQueryData(recordingKeys.state(), snapshot);
     if (meetingId === null || router.state.location.pathname !== RECORD_PATH) return;

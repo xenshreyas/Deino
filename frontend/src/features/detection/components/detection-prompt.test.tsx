@@ -117,7 +117,14 @@ describe('DetectionPrompt', () => {
       expect(screen.queryByRole('heading')).toBeNull();
     });
     deliver('meetingDetected', { detection: detection({ id: 9 }) });
-    fireEvent.click(await screen.findByRole('button', { name: 'Always ignore this app' }));
+    // Two buttons on the card; the permanent answer is in Ignore's menu (UX-30).
+    expect(await screen.findByRole('button', { name: 'Ignore' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Always ignore this app' })).toBeNull();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'More ways to ignore' }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Always ignore this app' }));
 
     await waitFor(() => {
       expect(bindings.commands.ignoreApp).toHaveBeenCalledWith(9);
@@ -171,7 +178,7 @@ describe('DetectionPrompt', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Take notes' }));
 
-    expect((await screen.findByRole('alert')).textContent).toContain('That did not work');
+    expect((await screen.findByRole('alert')).textContent).toContain('That didn’t work');
     expect(screen.getByRole('heading', { name: 'Meeting detected' })).toBeTruthy();
   });
 });

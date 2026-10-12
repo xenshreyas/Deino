@@ -1,6 +1,8 @@
 /**
- * The bridge between the typed settings engine and the provider names the
- * legacy transcription screens still use, until FND-11 ports them.
+ * The provider names the legacy retranscribe dialog still uses, for a
+ * settings engine. One way only: Settings → Transcription reads and writes
+ * `settings.transcription` itself, so no legacy name is ever turned back
+ * into an engine (and no unknown name can turn into a default).
  */
 import type { TranscriptionEngine } from '@/features/settings';
 
@@ -18,11 +20,4 @@ export type TranscriptProviderName = (typeof PROVIDERS)[TranscriptionEngine];
 /** The legacy provider name of a settings `engine`. */
 export function providerOf(engine: TranscriptionEngine): TranscriptProviderName {
   return PROVIDERS[engine];
-}
-
-/** The settings engine for a legacy provider name; unknown names get the default. */
-export function engineOf(provider: string): TranscriptionEngine {
-  if (provider === PROVIDERS.whisper) return 'whisper';
-  if (provider === PROVIDERS.parakeet) return 'parakeet';
-  return 'parakeet_unified';
 }

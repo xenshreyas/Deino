@@ -26,6 +26,8 @@ export interface NotepadProps {
   meetingId: MeetingId;
   /** Controls for the status row's right side. */
   toolbar?: ReactNode;
+  /** What follows the notes, scrolling with them. */
+  footer?: ReactNode;
 }
 
 /** The notes' loading shape: a few lines of a document. */
@@ -40,16 +42,24 @@ function NotesSkeleton({ toolbar }: { toolbar?: ReactNode }) {
 }
 
 /** The editor over notes that have loaded. */
-function LoadedNotepad({ notes, toolbar }: { notes: MeetingNotes; toolbar?: ReactNode }) {
+function LoadedNotepad({
+  notes,
+  toolbar,
+  footer,
+}: {
+  notes: MeetingNotes;
+  toolbar?: ReactNode;
+  footer?: ReactNode;
+}) {
   const [target] = useState(() => meetingTarget(notes));
   const blank = notes.updatedAt === null;
   const handle = useNoteEditor({ target, initialDoc: notes.doc, autoFocus: blank });
   useNativeImageDrop(handle.editor, target);
-  return <NoteSurface handle={handle} toolbar={toolbar} />;
+  return <NoteSurface handle={handle} toolbar={toolbar} footer={footer} />;
 }
 
 /** A meeting's notepad, or its loading or error state. */
-export function Notepad({ meetingId, toolbar }: NotepadProps) {
+export function Notepad({ meetingId, toolbar, footer }: NotepadProps) {
   const notes = useMeetingNotes(meetingId);
   if (notes.isPending) return <NotesSkeleton toolbar={toolbar} />;
   if (notes.isError) {
@@ -65,5 +75,5 @@ export function Notepad({ meetingId, toolbar }: NotepadProps) {
       </Alert>
     );
   }
-  return <LoadedNotepad key={meetingId} notes={notes.data} toolbar={toolbar} />;
+  return <LoadedNotepad key={meetingId} notes={notes.data} toolbar={toolbar} footer={footer} />;
 }

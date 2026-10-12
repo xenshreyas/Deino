@@ -13,10 +13,19 @@ export const meetingSourceSchema = z.literal('recording');
 export type MeetingSource = z.infer<typeof meetingSourceSchema>;
 
 /** The meeting page's tabs, in order (the slots registry renders them). */
-export const meetingTabSchema = z.enum(['notes', 'transcript', 'insights', 'clips']);
+export const meetingTabSchema = z.enum(['notes', 'transcript']);
 
 /** One of the meeting page's tabs. */
 export type MeetingTabId = z.infer<typeof meetingTabSchema>;
+
+/**
+ * `?tab=` as links write it: the tabs, plus the Insights and Clips tabs
+ * that were folded away (UX-03). Insight answers now end the Notes tab and
+ * clips are in Details, so old links open Notes.
+ */
+const tabParamSchema = z
+  .enum([...meetingTabSchema.options, 'insights', 'clips'])
+  .transform((tab): MeetingTabId => (tab === 'insights' || tab === 'clips' ? 'notes' : tab));
 
 /** A moment of the recording, in milliseconds from its start (TRN-01 deep links). */
 export const momentSchema = z.coerce.number().int().nonnegative();
@@ -31,7 +40,7 @@ export const momentSchema = z.coerce.number().int().nonnegative();
  */
 export const meetingSearchSchema = z.object({
   source: meetingSourceSchema.optional().catch(undefined),
-  tab: meetingTabSchema.optional().catch(undefined),
+  tab: tabParamSchema.optional().catch(undefined),
   t: momentSchema.optional().catch(undefined),
   segment: z.string().uuid().optional().catch(undefined),
 });

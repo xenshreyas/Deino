@@ -8,9 +8,10 @@ import { useRecordingState } from '@/features/recording';
 import { type SettingsPatch, usePatchSettings, useSettings } from '@/features/settings';
 
 /**
- * The Recordings tab of Settings: keep audio, the "tell participants"
- * notice and the default devices, all stored in the typed settings
- * (FND-06). Each switch saves at once.
+ * The Recordings tab of Settings: keep audio and the default devices, all
+ * stored in the typed settings (FND-06). Each switch saves at once. The
+ * "tell participants" reminder is Consent's card under the recording pill
+ * (UX-28); `recording.showRecordingNotice` stays in the schema, unused.
  */
 export function RecordingSettings() {
   const { data: settings } = useSettings();
@@ -53,7 +54,7 @@ export function RecordingSettings() {
     );
   }
 
-  const { autoSave, showRecordingNotice } = settings.recording;
+  const { autoSave } = settings.recording;
 
   return (
     <div className="space-y-6">
@@ -112,20 +113,6 @@ export function RecordingSettings() {
           </div>
         </div>
       )}
-
-      {/* Recording Notification Toggle */}
-      <div className="flex items-center justify-between p-4 border rounded-lg">
-        <div className="flex-1">
-          <div className="font-medium">Recording Start Notification</div>
-          <div className="text-sm text-fg-muted">
-            Show reminder to inform participants when recording starts
-          </div>
-        </div>
-        <Switch
-          checked={showRecordingNotice}
-          onCheckedChange={(enabled) => save({ recording: { showRecordingNotice: enabled } })}
-        />
-      </div>
 
       {/* Headphones: the microphone never hears the call (CAP-02) */}
       <div className="flex items-center justify-between p-4 border rounded-lg">

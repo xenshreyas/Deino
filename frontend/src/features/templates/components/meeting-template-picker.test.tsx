@@ -7,7 +7,7 @@ import type * as Generated from '@/lib/ipc/generated/templates';
 import { createQueryClient } from '@/lib/ipc';
 
 import type { Template, TemplateChoice, TemplateId } from '../types';
-import { MeetingTemplatePicker } from './meeting-template-picker';
+import { MeetingTemplateMenu } from './meeting-template-picker';
 
 const commands = vi.hoisted(
   () =>
@@ -45,12 +45,17 @@ const byRule: TemplateChoice = {
 };
 const MEETING = asMeetingId('meeting-fixture-sales-discovery');
 
-function renderPicker(onRegenerate: (() => void) | null) {
+function renderMenu(onSwitched: (name: string) => void = vi.fn()) {
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <MeetingTemplatePicker meetingId={MEETING} onRegenerate={onRegenerate} />
+      <MeetingTemplateMenu meetingId={MEETING} onSwitched={onSwitched} />
     </QueryClientProvider>,
   );
+}
+
+/** Opens a Radix menu the way a pointer does. */
+function open(trigger: HTMLElement) {
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
 }
 
 describe('the meeting template picker', () => {
@@ -64,27 +69,28 @@ describe('the meeting template picker', () => {
     });
   });
 
-  test('names the template and the rule that chose it', async () => {
-    renderPicker(null);
-
-    expect(await screen.findByRole('button', { name: 'Note template' })).toBeDefined();
-    expect(screen.getByText('Sales discovery')).toBeDefined();
-    expect(screen.getByText('Matched rule: external discovery call')).toBeDefined();
-  });
-
-  test('switching saves the choice and offers to regenerate existing notes', async () => {
-    const onRegenerate = vi.fn<() => void>();
-    renderPicker(onRegenerate);
+  test('names the template quietly; why it was chosen is the menu header (UX-06)', async () => {
+    renderMenu();
 
     const trigger = await screen.findByRole('button', { name: 'Note template' });
-    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+    expect(trigger.textContent).toBe('Sales discovery');
+    expect(screen.queryByText('Matched rule: external discovery call')).toBeNull();
+    open(trigger);
+    expect(await screen.findByText('Matched rule: external discovery call')).toBeDefined();
+  });
+
+  test('switching saves the choice and reports the new template', async () => {
+    const onSwitched = vi.fn<(name: string) => void>();
+    renderMenu(onSwitched);
+
+    open(await screen.findByRole('button', { name: 'Note template' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: /Circleback style/ }));
 
     await waitFor(() => {
       expect(commands.setMeetingTemplate).toHaveBeenCalledWith(MEETING, 'circleback_style');
     });
-    fireEvent.click(await screen.findByRole('button', { name: 'Regenerate notes' }));
-    expect(onRegenerate).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('Chosen for this meeting')).toBeDefined();
+    await waitFor(() => {
+      expect(onSwitched).toHaveBeenCalledWith('Circleback style');
+    });
   });
 });

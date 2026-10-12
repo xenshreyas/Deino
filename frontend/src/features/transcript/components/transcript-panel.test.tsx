@@ -174,7 +174,10 @@ describe('TranscriptPanel', () => {
     renderPanel({ moment: { kind: 'time', at: 3_500 }, onMomentShown });
 
     const moment = await screen.findByText('Then the budget is approved.');
-    expect(moment.closest('[role="listitem"]')?.getAttribute('aria-current')).toBe('location');
+    // The mark lands in an effect a commit after the text; wait for it.
+    await waitFor(() => {
+      expect(moment.closest('[role="listitem"]')?.getAttribute('aria-current')).toBe('location');
+    });
     act(() => {
       vi.advanceTimersByTime(2_000);
     });
