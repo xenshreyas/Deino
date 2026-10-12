@@ -30,6 +30,7 @@ pub mod developer;
 pub mod enhance;
 pub mod export;
 pub mod folders;
+pub mod import;
 pub mod insights;
 pub mod integrations;
 pub mod llm;
@@ -95,6 +96,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (vocabulary::NAME, vocabulary::specta()),
         (speaker_tags::NAME, speaker_tags::specta()),
         (player::NAME, player::specta()),
+        (import::NAME, import::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

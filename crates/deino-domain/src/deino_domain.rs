@@ -56,8 +56,8 @@ pub use conditions::{Condition, ConditionGroups, InvalidCondition, MeetingFacts}
 pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
-    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, InsightApplyMode, InsightStatus,
-    MeetingSource, Rsvp, SectionFormat, TagSource, VocabKind,
+    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, ImportFailure, InsightApplyMode,
+    InsightStatus, MeetingSource, Rsvp, SectionFormat, TagSource, VocabKind,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
@@ -66,7 +66,7 @@ pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
     ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId,
     PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId,
-    VoiceprintId,
+    VoiceprintId, WatchedFileId, WatchedFolderId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

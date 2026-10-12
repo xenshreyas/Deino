@@ -34,6 +34,7 @@ mod diarize;
 mod enhance;
 mod entities;
 mod export;
+pub(crate) mod import;
 mod insights;
 mod integrations;
 mod llm;

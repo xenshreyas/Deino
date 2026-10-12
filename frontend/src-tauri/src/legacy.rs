@@ -123,15 +123,10 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         database::commands::open_database_folder,
         // macOS System Settings deep links
         utils::open_system_settings,
-        // Retranscription and audio import
+        // Retranscription (imports are the `import` plugin, CAP-11)
         audio::retranscription::start_retranscription_command,
         audio::retranscription::cancel_retranscription_command,
         audio::retranscription::is_retranscription_in_progress_command,
-        audio::import::select_and_validate_audio_command,
-        audio::import::validate_audio_file_command,
-        audio::import::start_import_audio_command,
-        audio::import::cancel_import_command,
-        audio::import::is_import_in_progress_command,
         // ── FND-01 updater ──
         updater::updates_enabled,
     ]

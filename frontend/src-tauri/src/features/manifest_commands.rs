@@ -12,3 +12,17 @@ pub const ONBOARDING_COMMANDS: &[&str] = &[
     "open_permission_settings",
     "import_sample",
 ];
+
+/// The `import` plugin's commands: imports and watched folders (CAP-11).
+pub const IMPORT_COMMANDS: &[&str] = &[
+    "pick_file",
+    "check",
+    "start",
+    "watched_folders",
+    "add_watched_folder",
+    "remove_watched_folder",
+    "set_move_to_processed",
+    "watch_failures",
+    "retry_failure",
+    "dismiss_failure",
+];

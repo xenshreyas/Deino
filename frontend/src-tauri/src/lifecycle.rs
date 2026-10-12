@@ -12,6 +12,7 @@ use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
 use crate::composition::CalendarSchedule;
+use crate::composition::import::WatchSchedule;
 use crate::features::notes::DroppedFiles;
 use crate::{state::AppState, summary};
 
@@ -90,6 +91,9 @@ async fn cleanup(app: &AppHandle) {
 async fn stop_background(app: &AppHandle) {
     if let Some(calendar) = app.try_state::<CalendarSchedule>() {
         calendar.stop();
+    }
+    if let Some(watch) = app.try_state::<WatchSchedule>() {
+        watch.stop();
     }
     if let Some(backfill) = app.try_state::<Arc<Backfill>>() {
         backfill.shutdown().await;

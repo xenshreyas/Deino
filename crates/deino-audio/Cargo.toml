@@ -28,6 +28,11 @@ rtrb = "=0.4.0"
 rubato = "=0.15.0"
 serde.workspace = true
 serde_json.workspace = true
+# Imported files (CAP-11): every container and codec symphonia reads, demuxed
+# and decoded in Rust, no FFmpeg (spike §4). MPL-2.0, as already used by the app.
+symphonia = { version = "=0.5.5", default-features = false, features = ["all", "opt-simd"] }
+# Opus for symphonia 0.5 through libopus, built from source (BSD-3-Clause). MIT/Apache-2.0.
+symphonia-adapter-libopus = "=0.2.9"
 thiserror.workspace = true
 
 [target.'cfg(unix)'.dependencies]

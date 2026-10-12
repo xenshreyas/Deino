@@ -177,6 +177,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "start_backfill",
         ],
     ),
+    // ── CAP-11 imports and watched folders (features/import.rs) ──
+    ("import", IMPORT_COMMANDS),
     // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──
     (
         "vocabulary",
