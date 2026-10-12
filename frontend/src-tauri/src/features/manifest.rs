@@ -170,6 +170,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     ("recording", RECORDING_COMMANDS), // FND-05b, CAP-02, CAP-07, CAP-10 (recording_manifest.rs)
+    // ── ORG-01/02/03 calendar sync, rules, linking (features/calendar.rs) ──
+    ("calendar", CALENDAR_COMMANDS),
     // ── DEV-02/04 Settings → Developer: the CLI and Claude setup ──
     ("developer", &["cli_status", "install_cli"]),
     // ── CAP-04 speaker naming and voice profiles ──

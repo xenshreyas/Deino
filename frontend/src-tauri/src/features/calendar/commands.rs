@@ -39,6 +39,9 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         link_event,
         unlink_event,
         related_meetings,
+        super::rules_commands::record_plan,
+        super::rules_commands::choose_record,
+        super::rules_commands::join,
     ]
 }
 

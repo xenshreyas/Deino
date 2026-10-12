@@ -131,6 +131,30 @@ preferredSystemDevice: string | null;
  */
 usesHeadphones: boolean }
 /**
+ * Which calendar events record on their own (ORG-02, Circleback's
+ * "joining preferences"). An event records when it passes every switch;
+ * the user's per-event and per-series choices win over all of them
+ * ([`crate::calendar::rules`]). Off by default: nothing records until the
+ * user picks an audience.
+ */
+export type AutoRecordSettings = { 
+/**
+ * Record meetings with only people from the user's own domains.
+ */
+internal: boolean; 
+/**
+ * Record meetings with someone from outside them.
+ */
+external: boolean; 
+/**
+ * Also record meetings someone else organised.
+ */
+organizedByOthers: boolean; 
+/**
+ * Also record meetings the user has not accepted (tentative or no answer).
+ */
+notAccepted: boolean }
+/**
  * "Auto-start after N-second countdown" (off by default).
  */
 export type AutoStartSettings = { 
@@ -204,7 +228,15 @@ google: ConnectorSettings;
 /**
  * The Microsoft Graph connector's app registration.
  */
-microsoft: ConnectorSettings }
+microsoft: ConnectorSettings; 
+/**
+ * Which events record on their own (ORG-02).
+ */
+autoRecord: AutoRecordSettings; 
+/**
+ * The "starting in 1 minute" window before meetings (ORG-02).
+ */
+reminders: ReminderSettings }
 /**
  * Identifies a company.
  */
@@ -892,6 +924,18 @@ panelPosition: PanelPosition | null;
  * When a recording ends on its own (CAP-07).
  */
 autoStop: AutoStopOptions }
+/**
+ * The reminder window shown a minute before a meeting, with Join & record.
+ */
+export type ReminderSettings = { 
+/**
+ * Show the window at all.
+ */
+enabled: boolean; 
+/**
+ * Calendars whose events never show it.
+ */
+quietCalendars: CalendarId[] }
 /**
  * What an LLM call is for. Serialized as the dotted names of §4.3.
  */

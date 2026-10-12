@@ -32,6 +32,9 @@ export function calendarBindings() {
     linkEvent: vi.fn<typeof Generated.commands.linkEvent>(),
     unlinkEvent: vi.fn<typeof Generated.commands.unlinkEvent>(),
     relatedMeetings: vi.fn<typeof Generated.commands.relatedMeetings>(),
+    recordPlan: vi.fn<typeof Generated.commands.recordPlan>(),
+    chooseRecord: vi.fn<typeof Generated.commands.chooseRecord>(),
+    join: vi.fn<typeof Generated.commands.join>(),
   } satisfies typeof Generated.commands;
   const listen = vi.fn<(handler: EventCallback<Generated.CalendarChanged>) => Promise<() => void>>(
     () => Promise.resolve(vi.fn()),

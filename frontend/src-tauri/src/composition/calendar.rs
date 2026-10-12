@@ -10,6 +10,7 @@ use deino_connect::calendar::{
     CalendarApi, ConnectorParts, ConnectorSource, Credentials, GoogleCalendar, MicrosoftCalendar,
     SettingsCredentials,
 };
+use deino_core::calendar::join::JoinService;
 use deino_core::calendar::linking::{
     EventAttendance, EventLinkDeps, EventLinkService, RelatedService, SqliteRelatedRepo,
 };
@@ -17,6 +18,7 @@ use deino_core::calendar::{
     AttendeeDirectory, CalendarDeps, CalendarService, CalendarSource, CalendarStore,
     SqliteCalendarRepo, SyncScheduler,
 };
+use deino_core::calendar::rules::{AutoRecordDeps, AutoRecordService};
 use deino_core::companies::SqliteCompanyRepo;
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_core::people::SqlitePeopleRepo;
@@ -31,7 +33,7 @@ use tokio_util::sync::CancellationToken;
 
 use super::browser::SystemBrowser;
 use super::network::SettingsServicePolicy;
-use crate::features::calendar::TauriCalendarEvents;
+use crate::features::calendar::{LiveRecorder, SystemCallOpener, TauriCalendarEvents};
 
 /// Stops the calendar sync scheduler at exit.
 pub(crate) struct CalendarSchedule(CancellationToken);
@@ -119,6 +121,7 @@ pub(crate) fn attach_calendar(app: &AppHandle, database: &Database, clock: &Arc<
         clock: Arc::clone(clock),
     }));
     attach_linking(app, database, &service, clock);
+    attach_rules(app, &repo, &service, clock);
     let (scheduler, triggers, cancel) = SyncScheduler::new(Arc::clone(&service));
     source.watch(triggers);
     // Owned for the app's lifetime; `CalendarSchedule::stop` ends it at exit.
@@ -169,4 +172,32 @@ fn attach_linking(
     })));
     let related = SqliteRelatedRepo::new(database.clone());
     app.manage(Arc::new(RelatedService::new(Arc::new(related), people)));
+}
+
+/// Manages `Arc<AutoRecordService>` (ORG-02's rules over the visible
+/// events) and `Arc<JoinService>` (Join & record over the live recorder).
+fn attach_rules(
+    app: &AppHandle,
+    repo: &Arc<SqliteCalendarRepo>,
+    calendar: &Arc<CalendarService>,
+    clock: &Arc<dyn Clock>,
+) {
+    let Some(settings) = app
+        .try_state::<Arc<SettingsService>>()
+        .map(|s| Arc::clone(&s))
+    else {
+        return log::error!(target: "calendar", "settings are not loaded; auto-record is off");
+    };
+    app.manage(Arc::new(AutoRecordService::new(AutoRecordDeps {
+        calendar: Arc::clone(calendar),
+        events: repo.clone(),
+        series: repo.clone(),
+        settings,
+        clock: Arc::clone(clock),
+    })));
+    app.manage(Arc::new(JoinService::new(
+        calendar.clone(),
+        Arc::new(SystemCallOpener),
+        Arc::new(LiveRecorder::new(app.clone())),
+    )));
 }

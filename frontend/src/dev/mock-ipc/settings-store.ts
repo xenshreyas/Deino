@@ -105,6 +105,8 @@ let settings: Generated.Settings = {
     hiddenCalendars: [],
     google: { clientId: '' },
     microsoft: { clientId: '' },
+    autoRecord: { internal: false, external: true, organizedByOthers: true, notAccepted: false },
+    reminders: { enabled: true, quietCalendars: [] },
   },
   integrations: { apps: {} },
   ui: {
