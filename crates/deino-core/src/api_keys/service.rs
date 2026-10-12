@@ -114,7 +114,9 @@ impl ApiKeyService {
 
     async fn touch(&self, key: &ApiKey) -> Result<(), ApiKeyError> {
         let now = self.deps.clock.now();
-        let stale = key.last_used_at.is_none_or(|used| now - used >= TOUCH_EVERY);
+        let stale = key
+            .last_used_at
+            .is_none_or(|used| now - used >= TOUCH_EVERY);
         if stale {
             self.deps.repo.touch(&key.id, now).await?;
         }

@@ -80,13 +80,7 @@ pub async fn delete(State(state): State<ApiState>, Id(id): Id<TagId>) -> ApiResu
 
 /// The tag as `GET /v1/tags` lists it.
 async fn view(state: &ApiState, tag: Tag) -> ApiResult<TagView> {
-    let tags = state
-        .services
-        .library
-        .directory
-        .tags()
-        .await
-        .map_err(app)?;
+    let tags = state.services.library.directory.tags().await.map_err(app)?;
     tags.into_iter()
         .find(|view| view.id == tag.id)
         .ok_or_else(|| ApiError::not_found(format!("tag {} was not found", tag.id)))

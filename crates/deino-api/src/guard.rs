@@ -115,7 +115,12 @@ mod tests {
         for ok in ["127.0.0.1:4000", "localhost:4000", "[::1]:4000"] {
             assert!(loopback_host(&host(ok), Some(4000)), "{ok}");
         }
-        for refused in ["evil.example:4000", "127.0.0.1:5000", "127.0.0.1", "10.0.0.2:4000"] {
+        for refused in [
+            "evil.example:4000",
+            "127.0.0.1:5000",
+            "127.0.0.1",
+            "10.0.0.2:4000",
+        ] {
             assert!(!loopback_host(&host(refused), Some(4000)), "{refused}");
         }
         assert!(!loopback_host(&HeaderMap::new(), Some(4000)));

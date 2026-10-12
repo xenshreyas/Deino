@@ -70,7 +70,10 @@ impl ApiKeyRepo for SqliteApiKeyRepo {
         let rows = sqlx::query_file_as!(Row, "src/api_keys/queries/list.sql")
             .fetch_all(self.database.reader())
             .await?;
-        Ok(rows.into_iter().map(|row| StoredApiKey::from(row).key).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| StoredApiKey::from(row).key)
+            .collect())
     }
 
     async fn find(&self, id: &ApiKeyId) -> Result<Option<StoredApiKey>, DbError> {
@@ -115,9 +118,13 @@ impl ApiKeyRepo for SqliteApiKeyRepo {
     }
 
     async fn touch(&self, id: &ApiKeyId, at: DateTime<Utc>) -> Result<(), DbError> {
-        sqlx::query!("UPDATE api_keys SET last_used_at = ?2 WHERE id = ?1", id, at)
-            .execute(self.database.writer())
-            .await?;
+        sqlx::query!(
+            "UPDATE api_keys SET last_used_at = ?2 WHERE id = ?1",
+            id,
+            at
+        )
+        .execute(self.database.writer())
+        .await?;
         Ok(())
     }
 }

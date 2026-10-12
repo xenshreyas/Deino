@@ -9,10 +9,10 @@ use deino_core::query::{
 };
 use serde::Deserialize;
 
+use crate::ApiState;
 use crate::error::{ApiResult, app};
 use crate::extract::Params;
 use crate::page::{self, Paged};
-use crate::ApiState;
 
 /// Paging alone.
 #[derive(Debug, Default, Deserialize, Hash)]
@@ -105,13 +105,7 @@ pub async fn tags(
     uri: Uri,
     Params(params): Params<PageParams>,
 ) -> ApiResult<Paged<TagView>> {
-    let tags = state
-        .services
-        .library
-        .directory
-        .tags()
-        .await
-        .map_err(app)?;
+    let tags = state.services.library.directory.tags().await.map_err(app)?;
     paged(tags, uri, &params, &"tags")
 }
 

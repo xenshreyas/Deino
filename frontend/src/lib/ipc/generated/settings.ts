@@ -83,6 +83,19 @@ autoSummary: boolean;
  */
 routes: Partial<{ [key in Route]: Target }> }
 /**
+ * The API section of `Settings`. Changed only through the `api` plugin,
+ * which starts and stops the server to match (a plain patch is refused).
+ */
+export type ApiSettings = { 
+/**
+ * Serve the API. Off by default.
+ */
+enabled: boolean; 
+/**
+ * The loopback port it listens on.
+ */
+port: number }
+/**
  * The only error type that crosses IPC.
  * 
  * `message` is short, user-safe English that the UI may show as is. It never
@@ -1255,6 +1268,10 @@ ui: UiSettings;
  * Opt-in beta features.
  */
 beta: BetaSettings; 
+/**
+ * The local REST API (DEV-03).
+ */
+api: ApiSettings; 
 /**
  * First-run setup progress.
  */

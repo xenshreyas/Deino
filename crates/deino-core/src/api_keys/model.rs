@@ -97,7 +97,11 @@ pub struct KeyToken {
 impl KeyToken {
     /// The token's text: `deino_<id, 32 hex>_<secret>`.
     pub fn render(&self) -> String {
-        format!("{TOKEN_PREFIX}{}_{}", self.id.as_uuid().simple(), self.secret)
+        format!(
+            "{TOKEN_PREFIX}{}_{}",
+            self.id.as_uuid().simple(),
+            self.secret
+        )
     }
 
     /// Reads a token; `None` when it does not have the token's shape.

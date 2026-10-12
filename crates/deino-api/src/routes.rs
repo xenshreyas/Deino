@@ -35,7 +35,10 @@ const MAX_BODY_BYTES: usize = 32 * 1024 * 1024;
 pub fn router(state: ApiState) -> Router {
     Router::new()
         .route("/v1/auth/test", get(auth_test))
-        .route("/v1/meetings", get(meetings::list).post(meeting_writes::create))
+        .route(
+            "/v1/meetings",
+            get(meetings::list).post(meeting_writes::create),
+        )
         .route(
             "/v1/meetings/{id}",
             get(meetings::read)

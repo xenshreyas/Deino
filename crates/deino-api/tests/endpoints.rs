@@ -65,7 +65,13 @@ async fn the_directory_lists_people_companies_folders_and_events() {
     let shreyas = api.get("/v1/people?q=shreyas", &token).await;
     assert_eq!(shreyas.body["data"][0]["isMe"], true);
     let folders = api.get("/v1/folders", &token).await;
-    assert!(folders.body["data"].as_array().unwrap().iter().any(|f| f["name"] == "Brightkite"));
+    assert!(
+        folders.body["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|f| f["name"] == "Brightkite")
+    );
 }
 
 #[tokio::test]
@@ -74,17 +80,41 @@ async fn tags_are_created_renamed_and_deleted() {
     let token = api.writer().await;
 
     let created = api
-        .call(Method::POST, "/v1/tags", Some(&token), Some(json!({ "name": "Board" })))
+        .call(
+            Method::POST,
+            "/v1/tags",
+            Some(&token),
+            Some(json!({ "name": "Board" })),
+        )
         .await;
     let duplicate = api
-        .call(Method::POST, "/v1/tags", Some(&token), Some(json!({ "name": "board" })))
+        .call(
+            Method::POST,
+            "/v1/tags",
+            Some(&token),
+            Some(json!({ "name": "board" })),
+        )
         .await;
     let id = created.body["id"].as_str().unwrap().to_owned();
     let renamed = api
-        .call(Method::PUT, &format!("/v1/tags/{id}"), Some(&token), Some(json!({ "name": "Board meetings" })))
+        .call(
+            Method::PUT,
+            &format!("/v1/tags/{id}"),
+            Some(&token),
+            Some(json!({ "name": "Board meetings" })),
+        )
         .await;
-    let deleted = api.call(Method::DELETE, &format!("/v1/tags/{id}"), Some(&token), None).await;
-    let bad_id = api.call(Method::DELETE, "/v1/tags/not-an-id", Some(&token), None).await;
+    let deleted = api
+        .call(
+            Method::DELETE,
+            &format!("/v1/tags/{id}"),
+            Some(&token),
+            None,
+        )
+        .await;
+    let bad_id = api
+        .call(Method::DELETE, "/v1/tags/not-an-id", Some(&token), None)
+        .await;
     let listed = api.get("/v1/tags", &token).await;
 
     assert_eq!(created.status, StatusCode::CREATED);
@@ -105,7 +135,9 @@ async fn tags_are_created_renamed_and_deleted() {
 async fn action_items_are_listed_created_changed_and_deleted() {
     let api = Harness::new().await;
     let token = api.writer().await;
-    let open = api.get("/v1/action-items?status=any&limit=100", &token).await;
+    let open = api
+        .get("/v1/action-items?status=any&limit=100", &token)
+        .await;
     let before = open.body["data"].as_array().unwrap().len();
 
     let created = api
@@ -118,14 +150,40 @@ async fn action_items_are_listed_created_changed_and_deleted() {
         .await;
     let id = created.body["id"].as_str().unwrap().to_owned();
     let done = api
-        .call(Method::PUT, &format!("/v1/action-items/{id}"), Some(&token), Some(json!({ "status": "done" })))
+        .call(
+            Method::PUT,
+            &format!("/v1/action-items/{id}"),
+            Some(&token),
+            Some(json!({ "status": "done" })),
+        )
         .await;
     let empty = api
-        .call(Method::PUT, &format!("/v1/action-items/{id}"), Some(&token), Some(json!({})))
+        .call(
+            Method::PUT,
+            &format!("/v1/action-items/{id}"),
+            Some(&token),
+            Some(json!({})),
+        )
         .await;
-    let after = api.get("/v1/action-items?status=any&limit=100", &token).await;
-    let deleted = api.call(Method::DELETE, &format!("/v1/action-items/{id}"), Some(&token), None).await;
-    let gone = api.call(Method::DELETE, &format!("/v1/action-items/{id}"), Some(&token), None).await;
+    let after = api
+        .get("/v1/action-items?status=any&limit=100", &token)
+        .await;
+    let deleted = api
+        .call(
+            Method::DELETE,
+            &format!("/v1/action-items/{id}"),
+            Some(&token),
+            None,
+        )
+        .await;
+    let gone = api
+        .call(
+            Method::DELETE,
+            &format!("/v1/action-items/{id}"),
+            Some(&token),
+            None,
+        )
+        .await;
 
     assert_eq!(created.status, StatusCode::CREATED, "{}", created.body);
     assert_eq!(created.body["due"], "2026-10-12");
@@ -141,9 +199,14 @@ async fn action_items_filter_by_assignee_and_meeting() {
     let api = Harness::new().await;
     let token = api.writer().await;
 
-    let mine = api.get("/v1/action-items?assignee=me&status=any&limit=100", &token).await;
+    let mine = api
+        .get("/v1/action-items?assignee=me&status=any&limit=100", &token)
+        .await;
     let standup = api
-        .get("/v1/action-items?meetingId=meeting-fixture-standup&status=any", &token)
+        .get(
+            "/v1/action-items?meetingId=meeting-fixture-standup&status=any",
+            &token,
+        )
         .await;
 
     assert_eq!(mine.status, StatusCode::OK);
@@ -151,5 +214,9 @@ async fn action_items_filter_by_assignee_and_meeting() {
     assert!(!mine.is_empty());
     assert!(mine.iter().all(|item| item["assigneeIsMe"] == true));
     let standup = standup.body["data"].as_array().unwrap();
-    assert!(standup.iter().all(|item| item["meetingId"] == "meeting-fixture-standup"));
+    assert!(
+        standup
+            .iter()
+            .all(|item| item["meetingId"] == "meeting-fixture-standup")
+    );
 }

@@ -127,6 +127,8 @@ ffmpeg-sidecar = { git = "https://github.com/nathanbabcock/ffmpeg-sidecar", bran
 sqlx = { workspace = true, features = ["json"] }
 
 # The Tauri-free core (crates/) and typed IPC through tauri-specta (ADR 0007).
+# The local REST API on 127.0.0.1 (DEV-03).
+deino-api.workspace = true
 # Live recording (FND-05b, CAP-02): capture, the crash-safe tracks, and the
 # two-lane Me/Them pipeline that saves the transcript as it is spoken.
 deino-audio.workspace = true

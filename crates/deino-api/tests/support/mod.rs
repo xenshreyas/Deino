@@ -1,7 +1,10 @@
 //! The API over the seeded sample library, run in-process: the real
 //! SQLite repositories and services, argon2 keys, UTC and a fixed "now".
 
-#![allow(dead_code, reason = "each test binary uses a different part of the harness")]
+#![allow(
+    dead_code,
+    reason = "each test binary uses a different part of the harness"
+)]
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -17,16 +20,18 @@ use deino_core::api_keys::{
     ApiKeyDeps, ApiKeyScope, ApiKeyService, Argon2Hasher, NewApiKey, OsTokens, SqliteApiKeyRepo,
 };
 use deino_core::companies::SqliteCompanyRepo;
+use deino_core::enhance::SqliteEnhancedNotesRepo;
 use deino_core::folders::SqliteFolderRepo;
 use deino_core::meetings::{
     DiskMeetingFiles, MeetingService, NoMeetingWork, SqliteMeetingRepo, TrashDeps, TrashService,
 };
-use deino_core::notes::{MemoryNoteImages, NotePorts, NoteService, RecordedNotesEvents, SqliteNotesRepo};
+use deino_core::notes::{
+    MemoryNoteImages, NotePorts, NoteService, RecordedNotesEvents, SqliteNotesRepo,
+};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::query::{Library, ReadContext, SAMPLE_NOW, seed_sample_library};
 use deino_core::redaction::{NoRedaction, TextRedactor};
 use deino_core::segments::SqliteSegmentRepo;
-use deino_core::enhance::SqliteEnhancedNotesRepo;
 use deino_core::tags::{RecordedTagEvents, SqliteTagRepo, TagPorts, TagService};
 use deino_core::transcript_import::{TranscriptImportPorts, TranscriptImporter};
 use deino_db::Database;
@@ -114,7 +119,13 @@ impl Harness {
     }
 
     /// Sends one request through the router.
-    pub async fn call(&self, method: Method, uri: &str, token: Option<&str>, body: Option<Value>) -> Reply {
+    pub async fn call(
+        &self,
+        method: Method,
+        uri: &str,
+        token: Option<&str>,
+        body: Option<Value>,
+    ) -> Reply {
         let mut request = Request::builder()
             .method(method)
             .uri(uri)
@@ -129,12 +140,21 @@ impl Harness {
             }
             None => Body::empty(),
         };
-        let response = self.app.clone().oneshot(request.body(body).unwrap()).await.unwrap();
+        let response = self
+            .app
+            .clone()
+            .oneshot(request.body(body).unwrap())
+            .await
+            .unwrap();
         let status = response.status();
         let headers = response.headers().clone();
         let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         let body = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
-        Reply { status, headers, body }
+        Reply {
+            status,
+            headers,
+            body,
+        }
     }
 
     /// `GET uri` with `token`.
@@ -166,7 +186,10 @@ fn writes(database: &Database, zone: &Arc<dyn LocalZone>, clock: &Arc<dyn Clock>
         meetings: Arc::new(MeetingService::new(meetings.clone(), clock.clone())),
         trash: Arc::new(TrashService::new(TrashDeps {
             bin: meetings.clone(),
-            files: Arc::new(DiskMeetingFiles::new("/nonexistent/recordings".into(), "/nonexistent/notes".into())),
+            files: Arc::new(DiskMeetingFiles::new(
+                "/nonexistent/recordings".into(),
+                "/nonexistent/notes".into(),
+            )),
             clock: clock.clone(),
             work: Arc::new(NoMeetingWork),
         })),

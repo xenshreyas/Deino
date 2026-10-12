@@ -62,7 +62,7 @@ pub(crate) fn attach_meetings(
 
 /// [`MeetingWork`] over the post-meeting pipeline. It looks the pipeline up
 /// when called, because the pipeline is attached after these services.
-struct PipelineWork(AppHandle);
+pub(super) struct PipelineWork(pub(super) AppHandle);
 
 impl PipelineWork {
     fn pipeline(&self) -> Option<Arc<PipelineService>> {

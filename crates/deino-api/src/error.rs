@@ -135,7 +135,10 @@ mod tests {
 
     #[test]
     fn app_errors_keep_their_code_and_get_a_status() {
-        let error = ApiError::from(AppError::new(ErrorCode::NotFound, "meeting m was not found"));
+        let error = ApiError::from(AppError::new(
+            ErrorCode::NotFound,
+            "meeting m was not found",
+        ));
         assert_eq!(error.status, StatusCode::NOT_FOUND);
         assert_eq!(error.code, "not_found");
         let conflict = ApiError::from(AppError::new(ErrorCode::Conflict, "taken"));

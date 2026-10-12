@@ -58,7 +58,10 @@ impl TranscriptImporter {
 
     /// Writes `import` as a new `ready` meeting and returns its ID. A
     /// failed import removes what it wrote.
-    pub async fn import(&self, import: &TranscriptImport) -> Result<MeetingId, TranscriptImportError> {
+    pub async fn import(
+        &self,
+        import: &TranscriptImport,
+    ) -> Result<MeetingId, TranscriptImportError> {
         let title = MeetingTitle::parse(&import.name)?;
         let lines = lines(import)?;
         let at = import.created_at.unwrap_or_else(|| self.ports.clock.now());
@@ -221,16 +224,25 @@ impl TranscriptImporter {
 /// The import's utterances as lines, checked.
 fn lines(import: &TranscriptImport) -> Result<Vec<Line>, TranscriptImportError> {
     if import.transcript.len() > MAX_UTTERANCES {
-        return Err(TranscriptImportError::Invalid("the transcript has too many utterances"));
+        return Err(TranscriptImportError::Invalid(
+            "the transcript has too many utterances",
+        ));
     }
     let mut lines = Vec::with_capacity(import.transcript.len());
     for utterance in &import.transcript {
         let line = utterance.line().map_err(TranscriptImportError::Invalid)?;
         if line.speaker.is_empty() || line.text.is_empty() {
-            return Err(TranscriptImportError::Invalid("an utterance has no speaker or text"));
+            return Err(TranscriptImportError::Invalid(
+                "an utterance has no speaker or text",
+            ));
         }
-        if lines.last().is_some_and(|last: &Line| line.start < last.start) {
-            return Err(TranscriptImportError::Invalid("utterances are not in time order"));
+        if lines
+            .last()
+            .is_some_and(|last: &Line| line.start < last.start)
+        {
+            return Err(TranscriptImportError::Invalid(
+                "utterances are not in time order",
+            ));
         }
         lines.push(line);
     }
@@ -247,7 +259,11 @@ fn end_of(line: &Line, next: Option<&Line>) -> Millis {
         return next.start.max(line.start);
     }
     let words = u32::try_from(line.text.split_whitespace().count()).unwrap_or(u32::MAX);
-    Millis(line.start.get().saturating_add(words.saturating_mul(MS_PER_WORD).max(1_000)))
+    Millis(
+        line.start
+            .get()
+            .saturating_add(words.saturating_mul(MS_PER_WORD).max(1_000)),
+    )
 }
 
 #[cfg(test)]

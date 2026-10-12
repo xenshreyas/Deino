@@ -135,10 +135,12 @@ impl ItemChange {
             self.description
                 .map(|description| ActionItemEdit::Description { description }),
             self.status.map(|status| ActionItemEdit::Status { status }),
-            self.due.map(|date| ActionItemEdit::Due { date: Some(date) }),
-            self.assignee_person_id.map(|person| ActionItemEdit::Assignee {
-                person_id: Some(person),
-            }),
+            self.due
+                .map(|date| ActionItemEdit::Due { date: Some(date) }),
+            self.assignee_person_id
+                .map(|person| ActionItemEdit::Assignee {
+                    person_id: Some(person),
+                }),
         ];
         edits.into_iter().flatten().collect()
     }
@@ -176,7 +178,9 @@ pub async fn delete(
         .await
         .map_err(app)?;
     if deleted == 0 {
-        return Err(ApiError::not_found(format!("action item {id} was not found")));
+        return Err(ApiError::not_found(format!(
+            "action item {id} was not found"
+        )));
     }
     Ok(StatusCode::NO_CONTENT)
 }

@@ -46,16 +46,26 @@ async fn a_read_only_key_reads_but_every_write_is_403() {
 
     let writes = [
         (Method::POST, "/v1/tags", Some(json!({ "name": "New" }))),
-        (Method::PUT, "/v1/meetings/meeting-fixture-standup", Some(json!({ "title": "x" }))),
+        (
+            Method::PUT,
+            "/v1/meetings/meeting-fixture-standup",
+            Some(json!({ "title": "x" })),
+        ),
         (Method::DELETE, "/v1/meetings/meeting-fixture-standup", None),
-        (Method::POST, "/v1/action-items", Some(json!({ "title": "x" }))),
+        (
+            Method::POST,
+            "/v1/action-items",
+            Some(json!({ "title": "x" })),
+        ),
     ];
     for (method, uri, body) in writes {
         let reply = api.call(method.clone(), uri, Some(&token), body).await;
         assert_eq!(reply.status, StatusCode::FORBIDDEN, "{method} {uri}");
         assert_eq!(reply.body["error"]["code"], "read_only_key");
     }
-    let still_there = api.get("/v1/meetings/meeting-fixture-standup", &token).await;
+    let still_there = api
+        .get("/v1/meetings/meeting-fixture-standup", &token)
+        .await;
     assert_eq!(still_there.status, StatusCode::OK);
 }
 

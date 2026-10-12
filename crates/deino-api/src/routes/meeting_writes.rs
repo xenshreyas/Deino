@@ -69,7 +69,9 @@ pub async fn update(
     if let Some(tags) = &update.tag_ids {
         replace_tags(&state, &id, tags).await?;
     }
-    Ok(Json(services.library.meetings.read(&id).await.map_err(app)?))
+    Ok(Json(
+        services.library.meetings.read(&id).await.map_err(app)?,
+    ))
 }
 
 /// Leaves exactly `wanted` on the meeting.

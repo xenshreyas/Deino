@@ -33,7 +33,10 @@ async fn all_pages(api: &Harness, token: &str, uri: &str) -> (Vec<Value>, usize)
 }
 
 fn ids(items: &[Value]) -> Vec<String> {
-    items.iter().map(|item| item["id"].as_str().unwrap().to_owned()).collect()
+    items
+        .iter()
+        .map(|item| item["id"].as_str().unwrap().to_owned())
+        .collect()
 }
 
 #[tokio::test]
@@ -57,14 +60,24 @@ async fn a_meeting_added_between_pages_shifts_nothing() {
     let cursor = first.body["nextCursor"].as_str().unwrap().to_owned();
     let import = json!({ "name": "Late arrival", "createdAt": "2026-10-09T15:00:00Z",
         "transcript": [{ "speaker": "A", "text": "Hi", "timestamp": 0 }] });
-    let created = api.call(Method::POST, "/v1/meetings", Some(&token), Some(import)).await;
+    let created = api
+        .call(Method::POST, "/v1/meetings", Some(&token), Some(import))
+        .await;
     assert_eq!(created.status, StatusCode::CREATED);
 
-    let (rest, _) = all_pages(&api, &token, &format!("/v1/meetings?limit=3&cursor={cursor}")).await;
+    let (rest, _) = all_pages(
+        &api,
+        &token,
+        &format!("/v1/meetings?limit=3&cursor={cursor}"),
+    )
+    .await;
 
     let seen: Vec<String> = ids(first.body["data"].as_array().unwrap());
     let rest = ids(&rest);
-    assert!(rest.iter().all(|id| !seen.contains(id)), "a page repeated a meeting");
+    assert!(
+        rest.iter().all(|id| !seen.contains(id)),
+        "a page repeated a meeting"
+    );
     assert!(!rest.contains(&created.body["id"].as_str().unwrap().to_owned()));
 }
 
@@ -77,7 +90,12 @@ async fn filters_narrow_and_a_cursor_from_other_filters_is_refused() {
 
     let first = api.get("/v1/meetings?limit=2", &token).await;
     let cursor = first.body["nextCursor"].as_str().unwrap();
-    let mixed = api.get(&format!("/v1/meetings?limit=2&tag=Hiring&cursor={cursor}"), &token).await;
+    let mixed = api
+        .get(
+            &format!("/v1/meetings?limit=2&tag=Hiring&cursor={cursor}"),
+            &token,
+        )
+        .await;
     let unknown = api.get("/v1/meetings?colour=red", &token).await;
 
     assert_eq!(mixed.status, StatusCode::BAD_REQUEST);
@@ -91,16 +109,26 @@ async fn a_meeting_reads_in_full_with_its_transcript_on_request() {
     let token = api.writer().await;
 
     let plain = api.get(&format!("/v1/meetings/{STANDUP}"), &token).await;
-    let full = api.get(&format!("/v1/meetings/{STANDUP}?include=transcript"), &token).await;
+    let full = api
+        .get(
+            &format!("/v1/meetings/{STANDUP}?include=transcript"),
+            &token,
+        )
+        .await;
     let missing = api.get("/v1/meetings/meeting-nope", &token).await;
-    let odd = api.get(&format!("/v1/meetings/{STANDUP}?include=audio"), &token).await;
+    let odd = api
+        .get(&format!("/v1/meetings/{STANDUP}?include=audio"), &token)
+        .await;
 
     assert_eq!(plain.status, StatusCode::OK);
     assert_eq!(plain.body["id"], STANDUP);
     assert!(plain.body["aiNotes"].is_string());
     assert!(plain.body.get("transcript").is_none());
     let lines = full.body["transcript"].as_array().unwrap();
-    assert_eq!(lines.len() as u64, full.body["transcriptSegments"].as_u64().unwrap());
+    assert_eq!(
+        lines.len() as u64,
+        full.body["transcriptSegments"].as_u64().unwrap()
+    );
     assert_eq!(missing.status, StatusCode::NOT_FOUND);
     assert_eq!(odd.status, StatusCode::BAD_REQUEST);
 }
@@ -109,7 +137,12 @@ async fn a_meeting_reads_in_full_with_its_transcript_on_request() {
 async fn a_transcript_pages_by_cursor() {
     let api = Harness::new().await;
     let token = api.writer().await;
-    let whole = api.get(&format!("/v1/meetings/{STANDUP}?include=transcript"), &token).await;
+    let whole = api
+        .get(
+            &format!("/v1/meetings/{STANDUP}?include=transcript"),
+            &token,
+        )
+        .await;
 
     let uri = format!("/v1/meetings/{STANDUP}/transcript?limit=4");
     let (paged, pages) = all_pages(&api, &token, &uri).await;
@@ -134,16 +167,28 @@ async fn an_imported_transcript_becomes_a_meeting() {
         ]
     });
 
-    let created = api.call(Method::POST, "/v1/meetings", Some(&token), Some(body)).await;
+    let created = api
+        .call(Method::POST, "/v1/meetings", Some(&token), Some(body))
+        .await;
     let bad = api
-        .call(Method::POST, "/v1/meetings", Some(&token), Some(json!({ "name": "x" })))
+        .call(
+            Method::POST,
+            "/v1/meetings",
+            Some(&token),
+            Some(json!({ "name": "x" })),
+        )
         .await;
 
     assert_eq!(created.status, StatusCode::CREATED, "{}", created.body);
     assert_eq!(created.body["title"], "Vendor call");
     assert_eq!(created.body["tags"], json!(["Customer"]));
     assert_eq!(created.body["transcriptSegments"], 2);
-    assert!(created.body["aiNotes"].as_str().unwrap().contains("Ship Friday"));
+    assert!(
+        created.body["aiNotes"]
+            .as_str()
+            .unwrap()
+            .contains("Ship Friday")
+    );
     assert_eq!(bad.status, StatusCode::BAD_REQUEST);
 }
 
@@ -163,12 +208,22 @@ async fn an_edit_replaces_title_notes_and_tags_and_tells_the_ui() {
     let edit = json!({ "title": "Daily standup", "myNotes": "- ask about CI", "tagIds": [hiring] });
 
     let reply = api
-        .call(Method::PUT, &format!("/v1/meetings/{STANDUP}"), Some(&token), Some(edit))
+        .call(
+            Method::PUT,
+            &format!("/v1/meetings/{STANDUP}"),
+            Some(&token),
+            Some(edit),
+        )
         .await;
 
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["title"], "Daily standup");
-    assert!(reply.body["myNotes"].as_str().unwrap().contains("ask about CI"));
+    assert!(
+        reply.body["myNotes"]
+            .as_str()
+            .unwrap()
+            .contains("ask about CI")
+    );
     assert_eq!(reply.body["tags"], json!(["Hiring"]));
     let changed = changes.recv().await.unwrap();
     assert!(changed.tables.contains(&Table::Meetings), "{changed:?}");
@@ -187,10 +242,11 @@ async fn delete_moves_a_meeting_to_the_trash() {
     assert_eq!(deleted.status, StatusCode::NO_CONTENT);
     assert_eq!(again.status, StatusCode::NOT_FOUND);
     assert!(!ids(list.body["data"].as_array().unwrap()).contains(&STANDUP.to_owned()));
-    let trashed: Option<String> = sqlx::query_scalar("SELECT deleted_at FROM meetings WHERE id = ?")
-        .bind(STANDUP)
-        .fetch_one(api.database.reader())
-        .await
-        .unwrap();
+    let trashed: Option<String> =
+        sqlx::query_scalar("SELECT deleted_at FROM meetings WHERE id = ?")
+            .bind(STANDUP)
+            .fetch_one(api.database.reader())
+            .await
+            .unwrap();
     assert!(trashed.is_some(), "the row stays, in the trash");
 }

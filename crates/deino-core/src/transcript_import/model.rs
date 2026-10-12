@@ -166,11 +166,18 @@ mod tests {
         }))
         .unwrap();
 
-        let lines: Vec<Line> = import.transcript.iter().map(|u| u.line().unwrap()).collect();
+        let lines: Vec<Line> = import
+            .transcript
+            .iter()
+            .map(|u| u.line().unwrap())
+            .collect();
         assert_eq!(lines[0].text, "Hello");
         assert_eq!(lines[0].start, Millis(1_500));
         assert_eq!(lines[1].text, "Hi there");
-        assert_eq!((lines[1].start, lines[1].end), (Millis(3_000), Some(Millis(3_600))));
+        assert_eq!(
+            (lines[1].start, lines[1].end),
+            (Millis(3_000), Some(Millis(3_600)))
+        );
     }
 
     #[test]

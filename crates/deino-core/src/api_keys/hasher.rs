@@ -2,9 +2,9 @@
 //! kept ([`SecretHasher`]): argon2id with the crate's defaults (19 MiB, two
 //! passes), a fresh salt per key, stored as a PHC string.
 
+use argon2::Argon2;
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
-use argon2::Argon2;
 
 /// How many random bytes a secret has (256 bits).
 pub const SECRET_BYTES: usize = 32;

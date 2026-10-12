@@ -155,7 +155,9 @@ mod tests {
 
     #[test]
     fn the_next_link_keeps_the_filters_and_replaces_the_cursor() {
-        let uri: Uri = "/v1/meetings?tag=Customer&cursor=old&limit=5".parse().unwrap();
+        let uri: Uri = "/v1/meetings?tag=Customer&cursor=old&limit=5"
+            .parse()
+            .unwrap();
         assert_eq!(
             next_link(&uri, "new"),
             "/v1/meetings?tag=Customer&limit=5&cursor=new"

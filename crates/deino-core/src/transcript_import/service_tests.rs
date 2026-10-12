@@ -80,10 +80,16 @@ async fn an_import_becomes_a_ready_meeting_with_speakers_notes_and_tags() {
     assert_eq!(state.status, MeetingStatus::Ready);
     assert_eq!(state.started_at, Some(at("2026-10-01T15:00:00Z")));
     let segments = SqliteSegmentRepo::new(database.clone());
-    let lines = segments.list(&id, crate::segments::Page::ALL).await.unwrap();
+    let lines = segments
+        .list(&id, crate::segments::Page::ALL)
+        .await
+        .unwrap();
     assert_eq!(lines.len(), 2);
     assert_eq!((lines[0].start.get(), lines[0].end.get()), (0, 4_200));
-    let notes = SqliteEnhancedNotesRepo::new(database).latest(&id).await.unwrap();
+    let notes = SqliteEnhancedNotesRepo::new(database)
+        .latest(&id)
+        .await
+        .unwrap();
     assert!(notes.unwrap().markdown.contains("Ship Friday"));
     let applied = tags.tags_of(&id).await.unwrap();
     assert_eq!(applied.len(), 1);

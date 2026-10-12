@@ -3,10 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, ApiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
-    DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
-    OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
-    SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
+    AiSettings, ApiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings,
+    CalendarSettings, DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings,
+    NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
+    RecordingSettings, SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings,
+    UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to

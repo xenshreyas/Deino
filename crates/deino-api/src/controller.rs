@@ -55,7 +55,9 @@ impl ApiController {
 
     /// Saves `wanted` as the setting and brings the server in line.
     pub async fn configure(&self, wanted: ApiSettings) -> Result<ApiStatus, SettingsError> {
-        self.settings.update(|settings| settings.api = wanted).await?;
+        self.settings
+            .update(|settings| settings.api = wanted)
+            .await?;
         Ok(self.reconcile().await)
     }
 

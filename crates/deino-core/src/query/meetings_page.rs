@@ -105,7 +105,11 @@ mod tests {
         let mut joined = Vec::new();
         let mut after = None;
         loop {
-            let page = library.meetings.page(&filter, after.as_ref()).await.unwrap();
+            let page = library
+                .meetings
+                .page(&filter, after.as_ref())
+                .await
+                .unwrap();
             assert!(page.meetings.len() <= 3);
             joined.extend(page.meetings);
             match page.next {

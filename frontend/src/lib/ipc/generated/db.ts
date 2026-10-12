@@ -250,7 +250,11 @@ export type Table =
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
-"example_notes"
+"example_notes" | 
+/**
+ * Keys for the local REST API: a name, read or read-write, and only an argon2 hash of the secret.
+ */
+"api_keys"
 
 /** tauri-specta globals **/
 
