@@ -28,6 +28,7 @@ export const eventLinksCopy = {
   by: {
     series: 'Same series',
     titleAndPeople: 'Same title and people',
+    people: 'Same people',
   },
 } as const;
 

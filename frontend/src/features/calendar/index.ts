@@ -6,9 +6,12 @@
  *   `agendaDays`, `eventTime`, `startsIn` are shared with Home);
  * - ORG-02: `useRecordPlan` (each event's auto-record decision),
  *   `useChooseRecord` (the record toggle) and `useJoin` (Join & record);
+ *   `MeetingReminder` (the reminder window's page), `OpenNoteReporter`
+ *   (the meeting page tells Rust which event's note is open),
+ *   `useLastMeeting` and `useOpenInCalendar` (Coming up's menu);
  * - `CalendarSettings`: Settings → Calendar (sync switch, macOS access,
  *   the optional Google and Microsoft direct connections, calendars with
- *   colour dots and visibility, refresh).
+ *   colour dots and visibility, refresh, then auto-record and reminders).
  */
 export {
   type AgendaDay,
@@ -33,6 +36,9 @@ export {
 } from './plan';
 export { CalendarSettings } from './components/calendar-settings';
 export { ComingUp } from './components/coming-up';
+export { MeetingReminder } from './components/meeting-reminder';
+export { OpenNoteReporter } from './components/open-note-reporter';
+export { type RelatedMeeting, remindersApi, useLastMeeting, useOpenInCalendar } from './reminders';
 export {
   calendarKeys,
   calendarsQuery,

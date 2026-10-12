@@ -28,6 +28,11 @@ export function linkBindings() {
     recordPlan: vi.fn<typeof Generated.commands.recordPlan>(),
     chooseRecord: vi.fn<typeof Generated.commands.chooseRecord>(),
     join: vi.fn<typeof Generated.commands.join>(),
+    reminder: vi.fn<typeof Generated.commands.reminder>(),
+    dismissReminder: vi.fn<typeof Generated.commands.dismissReminder>(),
+    setOpenNote: vi.fn<typeof Generated.commands.setOpenNote>(),
+    lastMeeting: vi.fn<typeof Generated.commands.lastMeeting>(),
+    openInCalendar: vi.fn<typeof Generated.commands.openInCalendar>(),
   } satisfies typeof Generated.commands;
   return { commands, events: {} };
 }

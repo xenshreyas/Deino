@@ -1,7 +1,8 @@
 //! The app's implementations of `deino-detect`'s output ports.
 //!
 //! - [`TauriDetectionSink`]: emits the plugin's events and shows or hides
-//!   the prompt window.
+//!   the prompt window; a call whose event auto-records skips the prompt
+//!   and records (`auto_record`, ORG-02).
 //! - the recording ports are in [`super::recorder`] (the live recorder).
 //! - [`SettingsDetection`]: the `detection` section of the typed settings.
 
@@ -18,7 +19,7 @@ use tauri::{AppHandle, Wry};
 use tauri_specta::Event;
 
 use super::events::{MeetingDetected, MeetingEnded, PromptClosed};
-use super::prompt;
+use super::{auto_record, prompt};
 
 /// Publishes detection events to the UI and drives the prompt window.
 pub struct TauriDetectionSink {
@@ -37,8 +38,15 @@ impl DetectionSink for TauriDetectionSink {
         log::info!(target: "detect", "prompt {}: {}", event.id().0, label(&event));
         let emitted = match event {
             DetectionEvent::MeetingDetected(detection) => {
-                let emitted = MeetingDetected { detection }.emit(&self.app);
-                prompt::show(&self.app);
+                let emitted = MeetingDetected {
+                    detection: detection.clone(),
+                }
+                .emit(&self.app);
+                if auto_record::records_on_its_own(&self.app, &detection) {
+                    auto_record::record_now(&self.app, &detection);
+                } else {
+                    prompt::show(&self.app);
+                }
                 emitted
             }
             DetectionEvent::MeetingEnded(id) => {

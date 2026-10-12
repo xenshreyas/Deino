@@ -9,7 +9,7 @@ use deino_domain::{CalendarEventId, Clock, SeriesId};
 use serde::{Deserialize, Serialize};
 
 use super::choice_repo::SeriesChoiceRepo;
-use super::policy::{Choices, EventFacts, RecordDecision, decide};
+use super::policy::{Choices, EventFacts, RecordDecision, StartTrigger, decide, starts_recording};
 use crate::calendar::{
     CalendarError, CalendarEvent, CalendarEventRepo, CalendarService, TimeRange,
 };
@@ -108,6 +108,18 @@ impl AutoRecordService {
     /// Whether `event` records on its own.
     pub async fn decision(&self, event: &CalendarEvent) -> Result<RecordDecision, CalendarError> {
         Ok(self.context().await?.decide(event))
+    }
+
+    /// True when `trigger` should start recording event `id`: the meeting
+    /// app took the microphone (CAP-06), or its start time came while its
+    /// note is open (the meeting ticker).
+    pub async fn starts_on(
+        &self,
+        id: CalendarEventId,
+        trigger: StartTrigger,
+    ) -> Result<bool, CalendarError> {
+        let event = self.deps.calendar.event(id).await?;
+        Ok(starts_recording(self.decision(&event).await?, trigger))
     }
 
     /// Applies the user's toggle on `id` and returns its new decision.

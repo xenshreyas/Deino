@@ -35,11 +35,22 @@ export function calendarBindings() {
     recordPlan: vi.fn<typeof Generated.commands.recordPlan>(),
     chooseRecord: vi.fn<typeof Generated.commands.chooseRecord>(),
     join: vi.fn<typeof Generated.commands.join>(),
+    reminder: vi.fn<typeof Generated.commands.reminder>(),
+    dismissReminder: vi.fn<typeof Generated.commands.dismissReminder>(),
+    setOpenNote: vi.fn<typeof Generated.commands.setOpenNote>(),
+    lastMeeting: vi.fn<typeof Generated.commands.lastMeeting>(),
+    openInCalendar: vi.fn<typeof Generated.commands.openInCalendar>(),
   } satisfies typeof Generated.commands;
   const listen = vi.fn<(handler: EventCallback<Generated.CalendarChanged>) => Promise<() => void>>(
     () => Promise.resolve(vi.fn()),
   );
-  return { commands, events: { calendarChanged: { listen } } };
+  const listenReminder = vi.fn<
+    (handler: EventCallback<Generated.ReminderShown>) => Promise<() => void>
+  >(() => Promise.resolve(vi.fn()));
+  return {
+    commands,
+    events: { calendarChanged: { listen }, reminderShown: { listen: listenReminder } },
+  };
 }
 
 /** A status: sync on with access by default, and no direct connectors. */

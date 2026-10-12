@@ -42,6 +42,11 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         super::rules_commands::record_plan,
         super::rules_commands::choose_record,
         super::rules_commands::join,
+        super::reminder_commands::reminder,
+        super::reminder_commands::dismiss_reminder,
+        super::reminder_commands::set_open_note,
+        super::reminder_commands::last_meeting,
+        super::reminder_commands::open_in_calendar,
     ]
 }
 

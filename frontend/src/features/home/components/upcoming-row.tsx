@@ -1,8 +1,10 @@
 /**
  * One Coming up row (ui.md §4.1): time, calendar colour, title, people,
- * then the countdown, Join, the record toggle and the ⋯ menu. Join opens
- * the call and starts recording in one Rust call (ORG-02).
+ * then the countdown, Join, the record toggle and the ⋯ menu, which a
+ * right-click anywhere on the row opens too. Join opens the call and
+ * starts recording in one Rust call (ORG-02).
  */
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -71,8 +73,15 @@ function Countdown({ event, now }: { event: CalendarEvent; now: Date }) {
 
 /** One upcoming event with its controls. */
 export function UpcomingRow({ event, decision, now, color }: UpcomingRowProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <li className="group flex h-10 items-center gap-3 rounded-md px-3 hover:bg-bg-muted">
+    <li
+      className="group flex h-10 items-center gap-3 rounded-md px-3 hover:bg-bg-muted"
+      onContextMenu={(click) => {
+        click.preventDefault();
+        setMenuOpen(true);
+      }}
+    >
       <span className="w-14 shrink-0 text-xs text-fg-muted tabular-nums">{eventTime(event)}</span>
       <span
         aria-hidden
@@ -85,7 +94,7 @@ export function UpcomingRow({ event, decision, now, color }: UpcomingRowProps) {
       <Countdown event={event} now={now} />
       <JoinButton event={event} />
       <RecordToggle event={event} decision={decision} />
-      <EventMenu event={event} />
+      <EventMenu event={event} open={menuOpen} onOpenChange={setMenuOpen} />
     </li>
   );
 }

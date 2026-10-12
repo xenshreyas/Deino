@@ -115,6 +115,30 @@ fn take_notes_closes_the_prompt_and_starts_recording_with_the_notes_open() {
 }
 
 #[test]
+fn record_now_closes_the_prompt_and_records_without_opening_the_notes() {
+    let harness = Harness::new(Some(TimeDelta::seconds(5)));
+    let detection = harness.detect(&in_call(ZOOM));
+
+    harness.service.record_now(detection.id).unwrap();
+
+    assert_eq!(
+        harness.events().last(),
+        Some(&DetectionEvent::PromptClosed(detection.id))
+    );
+    assert_eq!(
+        harness.recorder.requests.get(),
+        vec![RecordingRequest {
+            detection: detection.clone(),
+            open_notes: false
+        }]
+    );
+    assert!(matches!(
+        harness.service.record_now(detection.id),
+        Err(DetectError::PromptClosed)
+    ));
+}
+
+#[test]
 fn dismiss_closes_the_prompt_without_recording() {
     let harness = Harness::new(None);
     let detection = harness.detect(&in_call(ZOOM));

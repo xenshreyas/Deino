@@ -20,7 +20,14 @@
 //!   this event or all occurrences) and `join` (Join & record, Join, Record
 //!   only) over `AutoRecordService` and `JoinService`;
 //! - `join_adapters.rs`: [`SystemCallOpener`] and [`LiveRecorder`], Join's
-//!   ports.
+//!   ports, and [`RecorderPhase`], the meeting ticker's "is it recording";
+//! - `reminder.rs` (ORG-02): [`ReminderCard`] and [`TauriReminderWindow`],
+//!   the always-on-top "starting in 1 minute" card
+//!   (`meeting-reminder.html`) the meeting ticker shows, announced by
+//!   [`ReminderShown`];
+//! - `reminder_commands.rs` (ORG-02): `reminder` and `dismiss_reminder`
+//!   (the card), `set_open_note` (the note on screen, for the start-time
+//!   trigger), `last_meeting` and `open_in_calendar` (Coming up's menu).
 //!
 //! The service, the `EventKit` source, the Google and Microsoft connectors
 //! and the sync scheduler are wired in `composition/calendar.rs`.
@@ -33,12 +40,17 @@ mod join_adapters;
 #[cfg(test)]
 mod linking_contract_tests;
 mod lookup;
+mod reminder;
+mod reminder_commands;
 mod rules_commands;
+#[cfg(test)]
+mod rules_contract_tests;
 mod start_link;
 
-pub use events::{CalendarChanged, TauriCalendarEvents};
-pub use join_adapters::{LiveRecorder, SystemCallOpener};
+pub use events::{CalendarChanged, ReminderShown, TauriCalendarEvents};
+pub use join_adapters::{LiveRecorder, RecorderPhase, SystemCallOpener};
 pub use lookup::SyncedCalendar;
+pub use reminder::{ReminderCard, TauriReminderWindow};
 pub use start_link::LinkOnStart;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
@@ -54,7 +66,10 @@ pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
     tauri_specta::Builder::new()
         .plugin_name(NAME)
         .commands(commands::collect())
-        .events(tauri_specta::collect_events![CalendarChanged])
+        .events(tauri_specta::collect_events![
+            CalendarChanged,
+            ReminderShown
+        ])
         .error_handling(tauri_specta::ErrorHandlingMode::Result)
 }
 
