@@ -10,6 +10,7 @@
 # the generated files are skipped and listed, so their agent can rebase. On a
 # conflict in generated bindings or `.sqlx/`, it keeps the batch's version and
 # regenerates both after the last merge. rerere replays known resolutions.
+# Written for macOS's bash 3.2: no mapfile, associative arrays or ${x,,}.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 readonly ROOT="$PWD"
@@ -51,10 +52,11 @@ merge_one() {
         echo "skip $branch: conflicts in $(grep -vE "$GENERATED" <<<"$conflicted" | tr '\n' ' ')"
         return 1
     fi
-    local files=()
-    mapfile -t files <<<"$conflicted"
-    git -C "$TREE" checkout -q --ours -- "${files[@]}"
-    git -C "$TREE" add -- "${files[@]}"
+    local file
+    while IFS= read -r file; do
+        git -C "$TREE" checkout -q --ours -- "$file"
+        git -C "$TREE" add -- "$file"
+    done <<<"$conflicted"
     git -C "$TREE" commit -q --no-edit
 }
 
