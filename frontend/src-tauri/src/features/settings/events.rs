@@ -35,7 +35,7 @@ impl<R: Runtime> SettingsEvents for TauriSettingsEvents<R> {
     fn changed(&self, settings: &Settings) {
         // The app lock follows its settings at once (PRV-02).
         if let Some(lock) = self.app.try_state::<Arc<LockService>>() {
-            lock.apply(settings.privacy.app_lock);
+            lock.apply(crate::app_lock::supported(settings.privacy.app_lock));
         }
         let event = SettingsChanged {
             settings: settings.clone(),

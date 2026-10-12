@@ -1,6 +1,6 @@
 # 0041. Encrypt the database with SQLCipher and a random Keychain key
 
-- **Status:** Accepted (backend; the app wiring and app lock follow, see `docs/handoff/PRV-02.md`)
+- **Status:** Accepted (the app wiring and the app lock: ADR 0050)
 - **Date:** 2026-10-11
 - **Card:** PRV-02 (encryption at rest and app lock)
 

@@ -240,6 +240,16 @@ the SQLite adapters behind those ports.
   `TextRedactor` port used by `MaterialSources` and `ExportPorts`, and
   `SettingRedactor` over `privacy.redactSensitive`. No storage: secrets
   are redacted on the way out; the transcript keeps them.
+- `privacy` (PRV-02, ADR 0041, ADR 0050): `StartupConversion` brings the
+  closed database file in line with `privacy.encryptDatabase` over the
+  `DatabaseFile` port (`OnDiskDatabase`) and `DatabaseKeyStore`: recover,
+  save the key before encrypting, forget it only after a verified decrypt;
+  a failed conversion opens the file unchanged. `FakeDatabaseFile` and
+  `JournalKeyStore` record the order of every step.
+- `lock` (PRV-02, ADR 0050): `LockService`, the app lock's state machine
+  (`LockState`): idle time on the `Clock`, wake, `unlock` through the
+  `Authenticator` port (`FakeAuthenticator` in tests). Synchronous reads, for
+  the app's IPC guard.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

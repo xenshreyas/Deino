@@ -26,6 +26,8 @@ use objc2_foundation::{
 #[link(name = "LocalAuthentication", kind = "framework")]
 extern "C" {}
 
+/// `LocalAuthentication` can ask for Touch ID or the password.
+pub(super) const CAN_AUTHENTICATE: bool = true;
 /// The `LAContext` class.
 const LA_CONTEXT: &CStr = c"LAContext";
 /// `LAPolicyDeviceOwnerAuthentication`: Touch ID, Apple Watch or the

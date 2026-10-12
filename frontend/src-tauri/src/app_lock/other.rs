@@ -5,6 +5,9 @@ use std::sync::Arc;
 
 use deino_core::lock::{AuthError, LockService};
 
+/// There is no system prompt to unlock with.
+pub(super) const CAN_AUTHENTICATE: bool = false;
+
 /// Nothing is observed.
 pub(super) struct Observers;
 

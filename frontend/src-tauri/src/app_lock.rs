@@ -15,6 +15,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::lock::{AuthError, Authenticator, LockService};
+use deino_core::settings::AppLockSettings;
 #[cfg(target_os = "macos")]
 use macos as platform;
 #[cfg(not(target_os = "macos"))]
@@ -33,6 +34,15 @@ impl Authenticator for DeviceOwnerAuthenticator {
         tauri::async_runtime::spawn_blocking(move || platform::authenticate(&reason))
             .await
             .unwrap_or(Err(AuthError::Failed))
+    }
+}
+
+/// `policy` as this platform can honour it: without a way to unlock (off
+/// macOS) the lock never engages, so it can never shut the owner out.
+pub(crate) fn supported(policy: AppLockSettings) -> AppLockSettings {
+    AppLockSettings {
+        enabled: policy.enabled && platform::CAN_AUTHENTICATE,
+        ..policy
     }
 }
 

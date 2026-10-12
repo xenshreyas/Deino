@@ -15,7 +15,7 @@ use deino_core::settings::{AppLockSettings, SettingsService};
 use deino_domain::SystemClock;
 use tauri::{AppHandle, Manager};
 
-use crate::app_lock::{DeviceOwnerAuthenticator, observe_wake};
+use crate::app_lock::{DeviceOwnerAuthenticator, observe_wake, supported};
 use crate::database::manager::EncryptionReport;
 use crate::features::privacy::library::{LibraryStatus, LibraryStatusCell};
 
@@ -24,7 +24,7 @@ use crate::features::privacy::library::{LibraryStatus, LibraryStatusCell};
 pub(crate) async fn attach_privacy(app: &AppHandle) {
     app.manage(Arc::new(LibraryStatusCell::default()));
     let policy = match app.try_state::<Arc<SettingsService>>() {
-        Some(settings) => settings.get().await.privacy.app_lock,
+        Some(settings) => supported(settings.get().await.privacy.app_lock),
         None => AppLockSettings::default(),
     };
     let lock = Arc::new(LockService::new(
