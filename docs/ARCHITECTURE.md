@@ -1058,7 +1058,7 @@ tables are omitted from the diagram's attributes.
   day filters are computed in Rust and passed as UTC bounds.
   `action_item_views` keeps the saved views (migration `20261011150000`),
   each filter a typed JSON column SQL never reads by field.
-- **Insights** (AI-06, ADR 0037, migration `20261011202500`):
+- **Insights** (AI-06, ADR 0037, migration `20261012001552`):
   `insight_defs` keeps each definition whole (fields and conditions as typed
   JSON documents) with a `revision` that edits of what it asks bump;
   `insight_results` keeps one row per insight and meeting: the latest run's

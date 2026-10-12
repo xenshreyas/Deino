@@ -1,4 +1,4 @@
-# 0034. Answer insights with a run-time schema, type every value in Rust, and run them as pipeline requests
+# 0036. Answer insights with a run-time schema, type every value in Rust, and run them as pipeline requests
 
 - **Status:** Accepted
 - **Date:** 2026-10-11

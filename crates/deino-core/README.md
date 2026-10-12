@@ -99,7 +99,7 @@ the SQLite adapters behind those ports.
     `extract.action_items`, and the pure `resolve_due`, `Roster` and
     `Transcript` that turn the model's phrases, names and citations into
     days, people and segments). Fakes: `FakeActionItemExtractor`.
-  - `insights` (AI-06, ADR 0034): `InsightRepo`, `InsightResultRepo`,
+  - `insights` (AI-06, ADR 0036): `InsightRepo`, `InsightResultRepo`,
     `SpeakerNames`, `MeetingRecords` and `InsightExports`, all on
     `SqliteInsightRepo` (`insight_defs`, `insight_results`); `InsightService`
     (definitions with revisions, the 12-template `gallery`, a meeting's tab,
