@@ -80,7 +80,8 @@ main() {
     # shellcheck source=scripts/dev-env.sh
     (cd "$TREE" && source scripts/dev-env.sh && regenerate)
     echo "batch: ${merged[*]}"
-    if (cd "$TREE" && MOCK_PORT="${MOCK_PORT:-3400}" scripts/ci-local.sh); then
+    # The batch is the critical path: give its gate most of the machine.
+    if (cd "$TREE" && DEINO_GATE_JOBS="${DEINO_GATE_JOBS:-12}" MOCK_PORT="${MOCK_PORT:-3400}" scripts/ci-local.sh); then
         echo "GATE PASSED: run scripts/merge-batch.sh --land"
     else
         echo "GATE FAILED: bisect by re-running with half the branches"
