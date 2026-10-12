@@ -19,8 +19,29 @@
 pub const FEATURES: &[(&str, &[&str])] = &[
     // ── FND-02 system ──
     ("system", &["app_version"]),
-    // ── FND-13 meetings ──
-    ("meetings", &["list", "get", "rename"]),
+    // ── FND-13 meetings; ORG-07 the list, views, trash, bulk actions, merge ──
+    (
+        "meetings",
+        &[
+            "list",
+            "get",
+            "rename",
+            "page",
+            "matching_ids",
+            "views",
+            "create_view",
+            "update_view",
+            "delete_view",
+            "trash",
+            "restore",
+            "trashed",
+            "delete_forever",
+            "tag_many",
+            "untag_many",
+            "file_many",
+            "merge",
+        ],
+    ),
     // ── NOT-01 notepad and @mention search ──
     (
         "notes",

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_merge_parts (meeting_id, position, source_meeting_id, title, held_at,\n             offset_ms, duration_ms, audio_path, audio_mic_path, audio_system_path, video_path, merged_at)\n         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 12
+    },
+    "nullable": []
+  },
+  "hash": "e995247303d54fb650dfa8fbd656ec567b339c09b5caaae3d832a703cdb0368f"
+}

@@ -18,7 +18,10 @@ pub trait MeetingRepo: Send + Sync {
     /// Every meeting outside the trash, newest first.
     async fn list(&self) -> Result<Vec<Meeting>, DbError>;
 
-    /// The meeting with `id`, if it exists.
+    /// The meeting with `id`, if it exists outside the trash. Every reader
+    /// that opens one meeting (the meeting page, exports, the CLI, the
+    /// pipeline's stages) goes through here, so a trashed meeting is gone
+    /// for all of them until it is restored (ORG-07).
     async fn find(&self, id: &MeetingId) -> Result<Option<Meeting>, DbError>;
 
     /// Sets the meeting's title and stamps `updated_at` with `at`.
@@ -65,7 +68,7 @@ impl MeetingRepo for SqliteMeetingRepo {
                 created_at AS "created_at: DateTime<Utc>",
                 updated_at AS "updated_at: DateTime<Utc>"
             FROM meetings
-            WHERE id = ?1"#,
+            WHERE id = ?1 AND deleted_at IS NULL"#,
             id,
         )
         .fetch_optional(self.database.reader())

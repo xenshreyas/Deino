@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Meetings trashed before ?1, oldest first: what the 30-day purge deletes.\n-- `deleted_at` is written only by the trash, in the same encoding as ?1, so\n-- the text comparison is a range search on idx_meetings_trashed_deleted_at.\nSELECT id AS \"id!: MeetingId\"\nFROM meetings\nWHERE deleted_at IS NOT NULL AND deleted_at < ?1\nORDER BY deleted_at, id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "110bb3cb1fd21baae5ed0b039a6419dbea939b6c298d752b6f2d5507af47c107"
+}

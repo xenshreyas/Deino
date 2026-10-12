@@ -50,6 +50,10 @@ pub enum Table {
     ActionItems,
     /// Saved views (filters) of the Action Items page (AI-05).
     ActionItemViews,
+    /// Saved views of the Meetings page (ORG-07).
+    MeetingViews,
+    /// The meetings a merged meeting was made from, with their recordings (ORG-07).
+    MeetingMergeParts,
     /// One row per LLM provider call: usage, never content.
     LlmCalls,
     /// Post-meeting pipeline jobs: one row per meeting and stage (FND-08).
@@ -96,7 +100,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 38] = [
+    pub const ALL: [Self; 40] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -115,6 +119,8 @@ impl Table {
         Self::MeetingTags,
         Self::ActionItems,
         Self::ActionItemViews,
+        Self::MeetingViews,
+        Self::MeetingMergeParts,
         Self::LlmCalls,
         Self::Jobs,
         Self::JobRuns,
@@ -192,6 +198,8 @@ impl Table {
             "vocab_corrections" => Self::VocabCorrections,
             "insight_defs" => Self::InsightDefs,
             "insight_results" => Self::InsightResults,
+            "meeting_views" => Self::MeetingViews,
+            "meeting_merge_parts" => Self::MeetingMergeParts,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

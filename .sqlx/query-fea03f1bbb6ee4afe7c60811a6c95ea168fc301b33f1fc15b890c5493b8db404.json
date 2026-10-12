@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The tag chips of a page's meetings (?1, a JSON array of meeting IDs), by\n-- name. One lookup per meeting through the meeting_tags primary key.\nSELECT\n    mt.meeting_id AS \"meeting_id!: MeetingId\",\n    t.id AS \"id!: TagId\",\n    t.name AS \"name!\",\n    t.color AS \"color!: PaletteColor\"\nFROM json_each(?1) AS page\nJOIN meeting_tags AS mt ON mt.meeting_id = page.value\nJOIN tags AS t ON t.id = mt.tag_id\nORDER BY mt.meeting_id, t.name COLLATE NOCASE, t.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id!: TagId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "color!: PaletteColor",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fea03f1bbb6ee4afe7c60811a6c95ea168fc301b33f1fc15b890c5493b8db404"
+}

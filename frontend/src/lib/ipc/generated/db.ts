@@ -118,6 +118,14 @@ export type Table =
  */
 "action_item_views" | 
 /**
+ * Saved views of the Meetings page (ORG-07).
+ */
+"meeting_views" | 
+/**
+ * The meetings a merged meeting was made from, with their recordings (ORG-07).
+ */
+"meeting_merge_parts" | 
+/**
  * One row per LLM provider call: usage, never content.
  */
 "llm_calls" | 

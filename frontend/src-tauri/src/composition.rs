@@ -36,6 +36,7 @@ mod export;
 mod insights;
 mod integrations;
 mod llm;
+mod meetings;
 mod network;
 mod notepad;
 mod notes;
@@ -58,6 +59,7 @@ pub(crate) use detection::attach_detection;
 pub(crate) use developer::attach_developer;
 use enhance::NotesAi;
 use export::ExportServices;
+pub(crate) use meetings::TrashPurge;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use onboarding::attach_permissions;
 pub(crate) use organize::Organize;
@@ -172,6 +174,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         log::error!(target: "startup", "settings were not wired before the database; AI, templates and the profile are unavailable");
         return;
     };
+    meetings::attach_meetings(app, &database, &clock, (&organize, &settings));
     let (gateway, search) = search::attach_gateway_and_search(app, &database, &settings, &clock);
     let wiring = ActionItemWiring {
         gateway: gateway.clone(),

@@ -99,6 +99,20 @@ code: ErrorCode;
  */
 message: string }
 /**
+ * Who a meeting is with, from the user's side: only colleagues, or
+ * someone from outside. Template auto rules match on it (NOT-04);
+ * briefs, follow-up emails and calendar sync use it later.
+ */
+export type Audience = 
+/**
+ * Everyone else shares one of the user's work email domains.
+ */
+"internal" | 
+/**
+ * At least one attendee is from another domain.
+ */
+"external"
+/**
  * The audio section of `Settings`.
  */
 export type AudioSettings = { 
@@ -172,6 +186,10 @@ google: ConnectorSettings;
  */
 microsoft: ConnectorSettings }
 /**
+ * Identifies a company.
+ */
+export type CompanyId = string & { readonly __brand: "CompanyId" }
+/**
  * A direct calendar connector's app registration.
  */
 export type ConnectorSettings = { 
@@ -205,6 +223,19 @@ temperature: number | null;
  * Nucleus sampling, 0 to 1.
  */
 topP: number | null }
+/**
+ * Inclusive local days the item's meeting took place in (its creation day
+ * for a standalone item). Either end may be open.
+ */
+export type DateRange = { 
+/**
+ * The first day, if bounded.
+ */
+from: string | null; 
+/**
+ * The last day, if bounded.
+ */
+to: string | null }
 /**
  * The detection section of `Settings`.
  */
@@ -341,6 +372,10 @@ transcriptSidecar: boolean;
  * as `#tags`.
  */
 obsidian: boolean }
+/**
+ * Identifies a folder.
+ */
+export type FolderId = string & { readonly __brand: "FolderId" }
 /**
  * Cosine similarities between a speaker's voice and a person's best
  * exemplar that decide what `identify_speakers` does.
@@ -493,6 +528,56 @@ export type LlmProvider =
  * Any OpenAI-compatible endpoint the user configures.
  */
 "custom-openai"
+/**
+ * One Meetings filter. Every condition narrows the list and an absent or
+ * empty one does not filter. Within a list any value matches (meetings
+ * with Maya *or* Lee); the conditions combine (with Maya, *and* tagged).
+ */
+export type MeetingFilter = { 
+/**
+ * Only meetings held on these local days.
+ */
+dateRange: DateRange | null; 
+/**
+ * Only meetings one of these people attended or spoke in.
+ */
+people: PersonId[]; 
+/**
+ * Only meetings someone from one of these companies attended.
+ */
+companies: CompanyId[]; 
+/**
+ * Only meetings with one of these tags.
+ */
+tags: TagId[]; 
+/**
+ * Only meetings in one of these folders or a folder inside one.
+ */
+folders: FolderId[]; 
+/**
+ * Only meetings with at least one action item.
+ */
+hasActionItems: boolean; 
+/**
+ * Only meetings with colleagues only, or with someone from outside.
+ */
+audience: Audience | null }
+/**
+ * Identifies a saved view of the Meetings page (ORG-07).
+ */
+export type MeetingViewId = string & { readonly __brand: "MeetingViewId" }
+/**
+ * The Meetings page as the user left it (ORG-07: "filters persist").
+ */
+export type MeetingsListPrefs = { 
+/**
+ * The open saved view; `None` for "All meetings".
+ */
+view: MeetingViewId | null; 
+/**
+ * The filter on screen, which may differ from the view's own.
+ */
+filter: MeetingFilter }
 /**
  * The network section of `Settings`.
  */
@@ -655,6 +740,10 @@ export type OrganizeSettings = {
  * meetings the user tagged by hand. On by default, as in Circleback.
  */
 autoTag: boolean }
+/**
+ * Identifies a person.
+ */
+export type PersonId = string & { readonly __brand: "PersonId" }
 /**
  * The privacy section of `Settings`.
  */
@@ -1029,6 +1118,10 @@ export type StepOutcome =
  */
 "skipped"
 /**
+ * Identifies a tag.
+ */
+export type TagId = string & { readonly __brand: "TagId" }
+/**
  * A provider and model, chosen by a route or pinned by the caller.
  */
 export type Target = { 
@@ -1136,7 +1229,11 @@ showConfidenceIndicator: boolean;
 /**
  * The transcript pane's share of the meeting page's width.
  */
-transcriptPaneRatio: number }
+transcriptPaneRatio: number; 
+/**
+ * The Meetings page's filter and open tab, kept across launches.
+ */
+meetingsList: MeetingsListPrefs }
 
 /** tauri-specta globals **/
 

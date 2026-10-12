@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use deino_core::folders::{FilingService, FolderPorts, FolderService, SqliteFolderRepo};
+use deino_core::meetings::MeetingBulkService;
 use deino_core::settings::SettingsService;
 use deino_core::tags::{
     AutoTagPorts, AutoTagService, AutoTagger, NoModelAutoTagger, SqliteTagRepo, TagEvents,
@@ -68,6 +69,12 @@ impl Organize {
             switch: settings,
             gateway,
         }))
+    }
+
+    /// The Meetings page's bulk actions over these tag and folder services
+    /// (ORG-07), so bulk tagging follows the same rules as tagging one.
+    pub(crate) fn bulk(&self) -> MeetingBulkService {
+        MeetingBulkService::new(Arc::clone(&self.tags), Arc::clone(&self.filing))
     }
 
     /// Registers each service as Tauri state, where commands find it.

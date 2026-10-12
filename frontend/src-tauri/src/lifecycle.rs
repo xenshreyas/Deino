@@ -10,7 +10,7 @@ use deino_core::search::semantic::Backfill;
 use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
-use crate::composition::CalendarSchedule;
+use crate::composition::{CalendarSchedule, TrashPurge};
 use crate::features::notes::DroppedFiles;
 use crate::{state::AppState, summary};
 
@@ -75,6 +75,9 @@ async fn cleanup(app: &AppHandle) {
     }
     if let Some(calendar) = app.try_state::<CalendarSchedule>() {
         calendar.stop();
+    }
+    if let Some(purge) = app.try_state::<TrashPurge>() {
+        purge.stop();
     }
     if let Some(backfill) = app.try_state::<Arc<Backfill>>() {
         backfill.shutdown().await;

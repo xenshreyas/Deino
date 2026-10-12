@@ -43,6 +43,16 @@ impl InternalDomains {
         }
     }
 
+    /// The user's own addresses, in order.
+    pub fn own(&self) -> impl Iterator<Item = &Email> {
+        self.own.iter()
+    }
+
+    /// The work domains that make an address internal, in order.
+    pub fn domains(&self) -> impl Iterator<Item = &str> {
+        self.domains.iter().map(String::as_str)
+    }
+
     /// True when `email` is one of the user's own addresses.
     pub fn is_own(&self, email: &Email) -> bool {
         self.own.contains(email)

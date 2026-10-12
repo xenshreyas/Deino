@@ -1,7 +1,9 @@
 //! `meetings` feature: the IPC surface of `deino_core::meetings`, exposed as
-//! the inline plugin `plugin:meetings|<command>`.
+//! the inline plugin `plugin:meetings|<command>`: opening and renaming a
+//! meeting, and the Meetings page's list, views, trash, bulk actions and
+//! merge (ORG-07).
 //!
-//! The commands are thin: they take the `MeetingService` from Tauri state
+//! The commands are thin: they take the services from Tauri state
 //! (wired in `composition.rs`), call one method and map errors with
 //! `into_ipc`. Changes reach the UI through `DbChanged` (`features/db.rs`),
 //! so this plugin declares no events of its own.
@@ -9,6 +11,8 @@
 mod commands;
 #[cfg(test)]
 mod contract_tests;
+#[cfg(test)]
+mod list_contract_tests;
 
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};

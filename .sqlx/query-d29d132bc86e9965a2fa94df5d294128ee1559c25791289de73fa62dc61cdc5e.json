@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Moves meeting ?2's attendance into ?1. Someone at both keeps the stronger\n-- role (organizer > invitee > speaker_only) and the first known RSVP; the\n-- person merge's rule (ADR 0036, `entities/merge_repo.rs`) generalised.\nINSERT INTO meeting_attendees (meeting_id, person_id, role, rsvp)\nSELECT ?1, person_id, role, rsvp FROM meeting_attendees WHERE meeting_id = ?2\nON CONFLICT (meeting_id, person_id) DO UPDATE SET\n    role = CASE\n        WHEN (CASE excluded.role WHEN 'organizer' THEN 3 WHEN 'invitee' THEN 2 ELSE 1 END)\n            > (CASE meeting_attendees.role WHEN 'organizer' THEN 3 WHEN 'invitee' THEN 2 ELSE 1 END)\n        THEN excluded.role\n        ELSE meeting_attendees.role\n    END,\n    rsvp = coalesce(meeting_attendees.rsvp, excluded.rsvp)\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d29d132bc86e9965a2fa94df5d294128ee1559c25791289de73fa62dc61cdc5e"
+}

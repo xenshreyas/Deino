@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE action_items SET meeting_id = ?1 WHERE meeting_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "9dcaf6de96146a557430db81eb18ffcd012c73a65033bac636f5ab61963496b9"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Moves meeting ?2's transcript into ?1, shifted by ?3 milliseconds (each\n-- word's timing too). A line whose speaker stayed behind (the user, or a\n-- person ?1 already has a speaker for) joins ?1's speaker; the others'\n-- speakers have already moved. Search triggers refresh each line.\nUPDATE transcript_segments AS g\nSET\n    meeting_id = ?1,\n    start_ms = g.start_ms + ?3,\n    end_ms = g.end_ms + ?3,\n    speaker_id = coalesce(\n        (\n            SELECT t.id\n            FROM speakers AS s\n            JOIN speakers AS t ON t.meeting_id = ?1\n                AND ((t.is_me = 1 AND s.is_me = 1) OR t.person_id = s.person_id)\n            WHERE s.id = g.speaker_id AND s.meeting_id = ?2\n            ORDER BY t.id\n            LIMIT 1\n        ),\n        g.speaker_id\n    ),\n    words_json = (\n        SELECT coalesce(\n            json_group_array(\n                json_set(\n                    word.value,\n                    '$.start', json_extract(word.value, '$.start') + ?3,\n                    '$.end', json_extract(word.value, '$.end') + ?3\n                )\n            ),\n            '[]'\n        )\n        FROM json_each(g.words_json) AS word\n    )\nWHERE g.meeting_id = ?2\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "e5e60edd6d816219895520a21afdbc1ab15f4926dc31cbd07c77d2342fcae696"
+}
