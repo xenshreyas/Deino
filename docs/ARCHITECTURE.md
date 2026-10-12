@@ -1013,7 +1013,7 @@ tables are omitted from the diagram's attributes.
   chunk (`ref_kind`, `ref_id`, `meeting_id`, `chunk_ix`, `ts_ms`/`end_ms`,
   the chunk text, the model, an `f32` BLOB); written only by
   `SqliteEmbeddingStore::replace`, one transaction per meeting.
-- **People and companies** (ORG-04, ADR 0036, migration `20261011203751`):
+- **People and companies** (ORG-04, ADR 0036, migration `20261012000140`):
   `companies` gains `merged_into` (like `people.merged_into`: a merged row
   stays as an alias so its domain still resolves), `summary_updated_at` and
   `logo_checked_at`; lists read `idx_companies_listed_name` (unmerged rows

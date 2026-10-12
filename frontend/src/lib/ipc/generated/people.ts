@@ -498,7 +498,7 @@ actionItems: EntityActionItem[];
 upcoming: UpcomingEvent[] }
 /**
  * A row of the People list: who, where they work, and when the user last
- * met them. The aggregates are computed on read (ADR 0034).
+ * met them. The aggregates are computed on read (ADR 0036).
  */
 export type PersonRow = { 
 /**
