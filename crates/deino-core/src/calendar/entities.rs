@@ -103,7 +103,11 @@ impl AttendeeDirectory {
             email: Some(email.clone()),
             name,
         };
-        Ok(self.entities.upsert_person(&seed).await?.map(|upserted| upserted.id))
+        Ok(self
+            .entities
+            .upsert_person(&seed)
+            .await?
+            .map(|upserted| upserted.id))
     }
 }
 
