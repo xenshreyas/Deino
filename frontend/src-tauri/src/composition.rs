@@ -183,8 +183,8 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         clock: Arc::clone(&clock),
     };
     // Templates are seeded before the pipeline starts: its notes stage reads them.
-    let templates = attach_notes(app, &database, deps).await;
-    let notes_ai = NotesAi::build(&database, gateway, templates, &clock);
+    let templates = attach_notes(app, &database, deps.clone()).await;
+    let notes_ai = NotesAi::build(&database, &deps, templates);
     notes_ai.manage(app);
     let ai = StageServices {
         enhancer: notes_ai.enhancer(),

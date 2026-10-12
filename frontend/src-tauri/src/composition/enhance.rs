@@ -1,7 +1,9 @@
 //! Wiring for enhanced notes (NOT-02): the `EnhanceService` behind the
 //! `enhance` plugin and the `enhance_notes` stage, and the `AutoTitler`
 //! behind `auto_title`, over the SQLite repositories, the LLM gateway and
-//! the meeting's template choice (NOT-04).
+//! the meeting's template choice (NOT-04). The notes' material is redacted
+//! when the user asks (NOT-09): patterns, then the built-in local model's
+//! check (ADR 0038).
 
 use std::sync::Arc;
 
@@ -10,11 +12,15 @@ use deino_core::enhance::{
     AutoTitler, EnhanceError, EnhancePorts, EnhanceService, MaterialSources, PipelineRun,
     SqliteEnhancedNotesRepo, TemplateSource, TitleRun,
 };
+use deino_core::redaction::{LocalModelCheck, Redactor, SettingRedactor, TextRedactor};
+use deino_core::settings::SettingsService;
 use deino_db::Database;
-use deino_domain::{Clock, MeetingId};
+use deino_domain::MeetingId;
 use deino_llm::Gateway;
 use deino_pipeline::{MeetingTitler, NotesEnhancer};
 use tauri::{Manager, Runtime};
+
+use super::notes::NoteDeps;
 
 /// Why the notes stages skip when the gateway could not be wired.
 const AI_UNAVAILABLE: &str = "AI is unavailable: the Keychain or the network could not start.";
@@ -28,15 +34,15 @@ pub(crate) struct NotesAi {
 }
 
 impl NotesAi {
-    /// Builds the services over `database`, asking `gateway` and choosing
-    /// templates through `templates`.
+    /// Builds the services over `database`, asking the gateway of `deps`
+    /// and choosing templates through `templates`.
     pub(crate) fn build(
         database: &Database,
-        gateway: Option<Arc<Gateway>>,
+        deps: &NoteDeps,
         templates: Arc<dyn TemplateSource>,
-        clock: &Arc<dyn Clock>,
     ) -> Self {
-        let Some(gateway) = gateway else {
+        let clock = &deps.clock;
+        let Some(gateway) = deps.gateway.clone() else {
             return Self {
                 service: None,
                 enhancer: Arc::new(Unwired),
@@ -44,7 +50,8 @@ impl NotesAi {
             };
         };
         let repo = Arc::new(SqliteEnhancedNotesRepo::new(database.clone()));
-        let sources = MaterialSources::sqlite(database);
+        let sources = MaterialSources::sqlite(database)
+            .with_redactor(notes_redactor(&deps.settings, &gateway));
         let titler = AutoTitler::new(
             sources.clone(),
             repo.clone(),
@@ -83,6 +90,19 @@ impl NotesAi {
             app.manage(Arc::clone(service));
         }
     }
+}
+
+/// Redaction of the notes' material, switched by Settings → Privacy, with
+/// the likely spans checked by the built-in local model when one serves.
+fn notes_redactor(
+    settings: &Arc<SettingsService>,
+    gateway: &Arc<Gateway>,
+) -> Arc<dyn TextRedactor> {
+    let check = Arc::new(LocalModelCheck::new(Arc::clone(gateway)));
+    Arc::new(SettingRedactor::new(
+        settings.clone(),
+        Arc::new(Redactor::with_check(check)),
+    ))
 }
 
 /// The notes stages without a gateway: they skip, saying why.

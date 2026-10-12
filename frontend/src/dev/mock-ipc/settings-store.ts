@@ -64,7 +64,7 @@ let settings: Generated.Settings = {
     autoIdentify: true,
     thresholds: { autoAssign: 0.72, autoAssignNonAttendee: 0.77, margin: 0.08, suggest: 0.55 },
   },
-  privacy: {},
+  privacy: { redactSensitive: false },
   network: { offlineMode: false, services: {} },
   profile: {
     name: 'Shreyas',

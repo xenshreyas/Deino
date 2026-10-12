@@ -11,6 +11,16 @@ export const settingsCopy = {
   title: 'Settings',
   navLabel: 'Settings sections',
 
+  /** Settings → Network: secrets hidden from notes and exports (NOT-09). */
+  redaction: {
+    title: 'Sensitive information',
+    description: 'Secrets said in a meeting, kept out of what Deino writes and shares.',
+    switchTitle: 'Hide sensitive information',
+    on: 'Passwords, API keys, card numbers, Social Security numbers and one-time codes become [redacted] before notes are written, and in every export and the deino command. The transcript keeps them until you delete them there.',
+    off: 'Notes and exports include everything that was said.',
+    saveFailed: 'Could not save the privacy setting',
+  },
+
   /** Settings → Transcription: when the transcript is written (CAP-08). */
   captureModes: {
     title: 'While you record',
@@ -88,7 +98,7 @@ export const settingsCopy = {
     },
     network: {
       label: 'Network',
-      description: 'What may leave this Mac, and a log of everything that did.',
+      description: 'What may leave this Mac, what is hidden first, and a log of what left.',
     },
     export: {
       label: 'Export',

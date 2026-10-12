@@ -24,6 +24,7 @@ use deino_llm::Gateway;
 use tauri::{Manager, Runtime};
 
 /// What the note services need besides the database.
+#[derive(Clone)]
 pub(crate) struct NoteDeps {
     /// The settings (default template, profile).
     pub settings: Arc<SettingsService>,
