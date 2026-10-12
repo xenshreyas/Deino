@@ -183,6 +183,14 @@ export type Table =
  */
 "vocab_corrections" | 
 /**
+ * Insights the user defined: what to extract from meetings (AI-06).
+ */
+"insight_defs" | 
+/**
+ * Each insight's latest run on each meeting, with its answers (AI-06).
+ */
+"insight_results" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
