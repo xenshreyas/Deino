@@ -7,6 +7,7 @@ import { calendarPermission, missingRequired } from '../../permission-actions';
 import { useOpenPermissionSettings, usePermissions, useRequestPermission } from '../../queries';
 import type { PermissionKind, PermissionStatus } from '../../types';
 import { PermissionRow } from '../permission-row';
+import { SetupList } from '../setup-row';
 import { StepFrame, type StepProps } from '../step-frame';
 
 /** Each permission's icon. */
@@ -35,12 +36,12 @@ export function PermissionsStep({ dispatch }: StepProps) {
       {statuses === undefined ? (
         <SkeletonText lines={5} />
       ) : (
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
+        <SetupList label={permissionsCopy.title}>
           {statuses.map((status) => (
             <SystemPermission key={status.kind} status={status} />
           ))}
           <CalendarPermission />
-        </ul>
+        </SetupList>
       )}
       {statuses !== undefined && missingRequired(statuses) ? (
         <p className="text-sm text-fg-muted">{permissionsCopy.missingRequired}</p>

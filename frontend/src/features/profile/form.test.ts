@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toForm, toInput } from './form';
+import { isDirty, toForm, toInput } from './form';
 
 describe('the profile form', () => {
   it('edits lists as text and sends them back as lists', () => {
@@ -22,5 +22,21 @@ describe('the profile form', () => {
       '',
     ]);
     expect(toInput(form).focusAreas).toEqual(['Hiring', 'Reliability']);
+  });
+
+  it('is dirty once any field differs from the saved form', () => {
+    const saved = toForm({
+      name: 'Shreyas',
+      emails: [],
+      role: '',
+      company: '',
+      focusAreas: [],
+      writingStyle: '',
+      context: '',
+    });
+
+    expect(isDirty({ ...saved }, saved)).toBe(false);
+    expect(isDirty({ ...saved, company: 'Deino' }, saved)).toBe(true);
+    expect(isDirty({ ...saved, context: 'FSM' }, saved)).toBe(true);
   });
 });

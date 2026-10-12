@@ -100,13 +100,17 @@ function CalendarsSection() {
   );
 }
 
-/** The Calendar settings page. */
-export function CalendarSettings() {
+/**
+ * The Calendar settings page. Onboarding hides the direct Google and
+ * Microsoft connections (`connectors={false}`): they need an app
+ * registration, which is no first-run task.
+ */
+export function CalendarSettings({ connectors = true }: { connectors?: boolean }) {
   useCalendarChanges();
   return (
     <div className="flex flex-col gap-8">
       <SyncSection />
-      <ConnectorsSection />
+      {connectors ? <ConnectorsSection /> : null}
       <CalendarsSection />
     </div>
   );

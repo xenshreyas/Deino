@@ -90,27 +90,39 @@ export const calendarCopy = {
   title: 'Calendar',
   description:
     'Connect a calendar so meetings arrive with their titles and attendees, and Deino can remind you before they start.',
+  more: 'A Google or Microsoft account that is not on this Mac can be connected later in Settings → Calendar.',
 };
 
 export const profileCopy = {
   title: 'About you',
   description: 'A few words about you help the AI write notes that sound like you.',
+  saving: 'Saving…',
+  saveFailed: 'Your profile could not be saved.',
+  more: 'Writing style and a glossary can be added later in Settings → Profile.',
 };
 
 export const tryItCopy = {
   title: 'Try it',
-  description:
-    'Record a short test. Play a video or talk for a moment, and Deino will transcribe it here on your Mac.',
-  start: 'Record a 20-second test',
+  description: 'Record a short test, or open a sample meeting to see what Deino makes of a call.',
+  testName: 'Record a 20-second test',
+  testWhy: 'Play a video or talk for a moment. It is transcribed here on your Mac.',
+  start: 'Record',
+  retry: 'Try again',
   stop: 'Stop now',
-  remaining: (seconds: number) => `${String(seconds)}s left`,
-  recording: 'Recording',
+  remaining: (seconds: number) => `Recording · ${String(seconds)}s left`,
+  recording: 'Starting…',
   saving: 'Finishing the transcript…',
-  done: 'Your test recording is ready.',
+  done: 'Saved as a meeting. Notes are on the way.',
+  ready: 'Ready',
   open: 'Open it',
   finish: 'Finish',
   failed: 'The test could not start.',
   testTitle: 'Test recording',
+  sampleName: 'Open the sample meeting',
+  sampleWhy: 'A short standup with notes, a transcript and action items. Delete it any time.',
+  sampleOpen: 'Open',
+  sampleOpening: 'Opening…',
+  sampleFailed: 'The sample could not be added.',
 };
 
 export const resumeCopy = {

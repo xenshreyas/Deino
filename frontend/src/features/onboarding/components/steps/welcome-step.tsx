@@ -11,6 +11,7 @@ export function WelcomeStep({ dispatch }: StepProps) {
       title={welcomeCopy.title}
       description={welcomeCopy.description}
       dispatch={dispatch}
+      mark={<AppIcon />}
       primary={{
         label: welcomeCopy.start,
         onClick: () => {
@@ -34,4 +35,9 @@ export function WelcomeStep({ dispatch }: StepProps) {
       </ul>
     </StepFrame>
   );
+}
+
+/** The app icon, from `public/` (decorative: the title names the app). */
+function AppIcon() {
+  return <img src="/icon_128x128.png" alt="" width={56} height={56} className="-ml-1 size-14" />;
 }

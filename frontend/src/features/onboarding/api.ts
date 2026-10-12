@@ -1,9 +1,9 @@
 /**
  * Typed calls to the `onboarding` plugin: the macOS permissions setup asks
- * for. Progress is a settings section (`settingsApi`), and every other step
+ * for, and the bundled sample meeting. Progress is a settings section (`settingsApi`), and every other step
  * calls the feature that owns it.
  */
-import { commands } from '@/lib/ipc/generated/onboarding';
+import { commands, type MeetingId } from '@/lib/ipc/generated/onboarding';
 import { unwrap } from '@/lib/ipc/result';
 
 import type { PermissionKind, PermissionStatus } from './types';
@@ -17,4 +17,6 @@ export const onboardingApi = {
   /** Opens the System Settings page where `kind` is granted. */
   openPermissionSettings: (kind: PermissionKind): Promise<null> =>
     unwrap(commands.openPermissionSettings(kind)),
+  /** Adds the bundled sample meeting, or finds the one already there; its ID. */
+  importSample: (): Promise<MeetingId> => unwrap(commands.importSample()),
 };

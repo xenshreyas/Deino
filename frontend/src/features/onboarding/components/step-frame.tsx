@@ -4,6 +4,7 @@ import { Button } from '@/ui/button';
 
 import { flowCopy } from '../copy';
 import { type OnboardingAction, STEPS, stepIndex } from '../machine';
+import { useProgressSaving } from '../queries';
 import type { OnboardingStep } from '../types';
 import { StepProgress } from './step-progress';
 
@@ -28,6 +29,8 @@ export interface StepFrameProps extends StepProps {
   primary?: PrimaryAction;
   /** The quiet action beside the main button; "Skip" by default. */
   secondary?: PrimaryAction;
+  /** Shown above the title; only the welcome step has one (the app icon). */
+  mark?: ReactNode;
   children?: ReactNode;
 }
 
@@ -37,16 +40,18 @@ export interface StepFrameProps extends StepProps {
  * a footer with Back, Skip and the main action. Calm by design (§3B): one
  * column, hairline footer, no cards.
  */
-export function StepFrame({ step, title, description, children, ...actions }: StepFrameProps) {
+export function StepFrame(props: StepFrameProps) {
+  const { step, title, description, mark, children, ...actions } = props;
   return (
     <div className="flex h-screen w-screen flex-col bg-bg text-fg">
       <div data-tauri-drag-region className="h-11 shrink-0" />
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[36rem] flex-col gap-8 px-6 pt-6 pb-12">
+        <div className="mx-auto flex w-full max-w-[36rem] flex-col gap-8 px-6 pt-[max(1.5rem,6vh)] pb-12">
           <StepProgress step={step} />
           <header className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-fg">{title}</h1>
-            <p className="text-sm leading-6 text-fg-muted">{description}</p>
+            {mark === undefined ? null : <div className="mb-4">{mark}</div>}
+            <h1 className="text-xl font-semibold text-balance text-fg">{title}</h1>
+            <p className="text-sm leading-6 text-pretty text-fg-muted">{description}</p>
           </header>
           {children}
         </div>
@@ -73,12 +78,14 @@ function StepFooter({ step, dispatch, primary, secondary }: StepFooterProps) {
     },
   };
   const first = stepIndex(step) === 0;
+  const saving = useProgressSaving();
   return (
     <footer className="shrink-0 border-t border-border">
       <div className="mx-auto flex w-full max-w-[36rem] items-center gap-2 px-6 py-4">
         {first ? null : (
           <Button
             variant="ghost"
+            disabled={saving}
             onClick={() => {
               dispatch({ type: 'back' });
             }}
@@ -87,10 +94,10 @@ function StepFooter({ step, dispatch, primary, secondary }: StepFooterProps) {
           </Button>
         )}
         <span className="flex-1" />
-        <Button variant="ghost" disabled={quiet.disabled} onClick={quiet.onClick}>
+        <Button variant="ghost" disabled={saving || quiet.disabled} onClick={quiet.onClick}>
           {quiet.label}
         </Button>
-        <Button size="lg" disabled={main.disabled} onClick={main.onClick}>
+        <Button size="lg" disabled={saving || main.disabled} onClick={main.onClick}>
           {main.label}
         </Button>
       </div>

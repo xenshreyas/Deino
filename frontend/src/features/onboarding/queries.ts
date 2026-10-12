@@ -1,8 +1,15 @@
 /**
  * TanStack Query hooks for onboarding: the saved progress (a slice of the
- * settings document) with its step machine, and the live permissions.
+ * settings document) with its step machine, the live permissions and the
+ * sample meeting.
  */
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { type Settings, settingsApi, settingsKeys, useSettings } from '@/features/settings';
@@ -15,6 +22,8 @@ import type { OnboardingSettings, PermissionStatus } from './types';
 export const onboardingKeys = {
   all: ['onboarding'] as const,
   permissions: () => [...onboardingKeys.all, 'permissions'] as const,
+  /** The mutation that saves the progress; one runs at a time. */
+  progress: () => [...onboardingKeys.all, 'progress'] as const,
 };
 
 /**
@@ -60,6 +69,14 @@ export function useOpenPermissionSettings() {
   return useMutation({ mutationFn: onboardingApi.openPermissionSettings });
 }
 
+/**
+ * Adds the sample meeting (only once, however often it is called) and
+ * resolves to its ID; `DbChanged` refreshes the meeting lists.
+ */
+export function useImportSample() {
+  return useMutation({ mutationFn: onboardingApi.importSample });
+}
+
 /** The saved onboarding progress; `undefined` until the settings load. */
 export function useOnboardingProgress(): OnboardingSettings | undefined {
   return useSettings().data?.onboarding;
@@ -69,6 +86,7 @@ export function useOnboardingProgress(): OnboardingSettings | undefined {
 function useSaveProgress() {
   const client = useQueryClient();
   return useMutation({
+    mutationKey: onboardingKeys.progress(),
     mutationFn: (onboarding: OnboardingSettings) => settingsApi.patch({ onboarding }),
     onMutate: (onboarding) => {
       const before = client.getQueryData<Settings>(settingsKeys.document());
@@ -85,8 +103,18 @@ function useSaveProgress() {
 }
 
 /**
+ * True while a move is being saved. The step's buttons wait for it: a second
+ * move sent before the first lands could be overwritten by the first one's
+ * answer (and its `SettingsChanged`), sending the flow back a step.
+ */
+export function useProgressSaving(): boolean {
+  return useIsMutating({ mutationKey: onboardingKeys.progress() }) > 0;
+}
+
+/**
  * Moves the flow: applies `action` to the cached progress with the step
- * machine and saves the result. Does nothing before the settings load.
+ * machine and saves the result. Does nothing before the settings load, or
+ * while the previous move is still being saved (see {@link useProgressSaving}).
  */
 export function useOnboardingDispatch(): (action: OnboardingAction) => void {
   const client = useQueryClient();
@@ -94,7 +122,8 @@ export function useOnboardingDispatch(): (action: OnboardingAction) => void {
   return useCallback(
     (action: OnboardingAction) => {
       const settings = client.getQueryData<Settings>(settingsKeys.document());
-      if (settings) mutate(transition(settings.onboarding, action));
+      const saving = client.isMutating({ mutationKey: onboardingKeys.progress() }) > 0;
+      if (settings && !saving) mutate(transition(settings.onboarding, action));
     },
     [client, mutate],
   );
