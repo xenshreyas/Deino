@@ -54,7 +54,6 @@ mod stats;
 mod stt;
 mod transcript;
 mod vocabulary;
-
 use std::sync::Arc;
 
 use action_items::ActionItemWiring;
@@ -94,7 +93,8 @@ use crate::state::AppState;
 
 /// The root HTTP client, for tests that talk to a loopback server.
 #[cfg(test)]
-pub(crate) use network::{attach_network, model_downloads, root_client};
+pub(crate) use network::root_client;
+pub(crate) use network::{attach_network, model_downloads};
 
 /// Loads the settings, moves the legacy JSON stores into them, opens the
 /// Keychain, and manages `Arc<SettingsService>` and `Arc<dyn SecretStore>`.
