@@ -165,7 +165,9 @@ export const DEFAULT_SETTINGS: Settings = {
     "detectedMeetings": false,
     "video": true,
     "videoFps": 1,
-    "snapshots": true
+    "snapshots": true,
+    "describeSnapshots": false,
+    "consentRemindersShown": 0
   },
   "integrations": {
     "apps": {}
