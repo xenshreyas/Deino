@@ -125,7 +125,7 @@ async fn dropping_the_legacy_settings_leaves_no_key_bytes_in_the_file() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("deino.sqlite");
     let location = DbLocation::File(path.clone());
-    let legacy = Database::connect(&location).await.unwrap();
+    let legacy = Database::connect(&location, None).await.unwrap();
     legacy
         .migrate_before(&MIGRATOR, DROP_LEGACY_SETTINGS)
         .await

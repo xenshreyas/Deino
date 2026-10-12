@@ -15,8 +15,9 @@ use std::path::{Path, PathBuf};
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
 
+use crate::cipher::{FileFormat, keyed, open_error};
 use crate::database::{BUSY_TIMEOUT, READ_POOL_SIZE};
-use crate::{ChangeNotifier, Database, DbError};
+use crate::{ChangeNotifier, Database, DbError, DbKey};
 
 /// The table sqlx records applied migrations in.
 const APPLIED_VERSIONS: &str = "SELECT version FROM _sqlx_migrations WHERE success = 1";
@@ -73,10 +74,25 @@ impl Database {
     /// [`Database::writer`] and [`Database::reader`] are the same read-only
     /// pool, so a write through either fails with `SQLITE_READONLY`.
     pub async fn open_read_only(path: &Path, migrator: &Migrator) -> Result<Self, DbError> {
+        Self::open_read_only_keyed(path, None, migrator).await
+    }
+
+    /// Opens the database read-only like [`Database::open_read_only`],
+    /// with `key` when the file is encrypted (PRV-02, ADR 0038).
+    ///
+    /// An encrypted file without a key fails with [`DbError::KeyRequired`],
+    /// a wrong key with [`DbError::WrongKey`], and a key for a plaintext file
+    /// with [`DbError::NotEncrypted`].
+    pub async fn open_read_only_keyed(
+        path: &Path,
+        key: Option<&DbKey>,
+        migrator: &Migrator,
+    ) -> Result<Self, DbError> {
         if !path.is_file() {
             return Err(DbError::Missing(path.to_path_buf()));
         }
-        let pool = read_only_pool(path.to_path_buf()).await?;
+        FileFormat::detect(path)?.check_key(key)?;
+        let pool = read_only_pool(path.to_path_buf(), key).await?;
         let applied = applied_versions(&pool).await?;
         SchemaCheck::compare(&applied, &known_versions(migrator)).map_err(DbError::Schema)?;
         Ok(Self::from_read_only(pool, ChangeNotifier::new()))
@@ -84,7 +100,7 @@ impl Database {
 }
 
 /// A pool of `mode=ro`, `query_only` connections in WAL mode.
-async fn read_only_pool(path: PathBuf) -> Result<SqlitePool, DbError> {
+async fn read_only_pool(path: PathBuf, key: Option<&DbKey>) -> Result<SqlitePool, DbError> {
     let options = SqliteConnectOptions::new()
         .filename(path)
         .read_only(true)
@@ -95,9 +111,9 @@ async fn read_only_pool(path: PathBuf) -> Result<SqlitePool, DbError> {
         .pragma("query_only", "ON");
     SqlitePoolOptions::new()
         .max_connections(READ_POOL_SIZE)
-        .connect_with(options)
+        .connect_with(keyed(options, key))
         .await
-        .map_err(DbError::Open)
+        .map_err(|error| open_error(error, key))
 }
 
 /// The versions the database has applied; a file without sqlx's table is

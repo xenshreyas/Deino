@@ -10,6 +10,11 @@
 //! - [`Database::open_read_only`] opens the app's file from another process
 //!   (the `deino` CLI and MCP server) without ever writing it, after a
 //!   [`SchemaCheck`] against the embedded migrations.
+//! - Encryption at rest (PRV-02, ADR 0038): SQLCipher is linked in place
+//!   of SQLite, so [`Database::open_keyed`] opens a file encrypted with a
+//!   [`DbKey`] and the plain constructors open plaintext ones;
+//!   [`convert`] encrypts or decrypts a closed file in place, verified by
+//!   [`Fingerprint`], and [`recover`] finishes one a crash interrupted.
 //! - `test_db()` (feature `test-support`) gives repository tests an in-memory
 //!   database with every migration applied.
 //!
@@ -17,16 +22,24 @@
 //! connections, the schema history and change signals (see README.md).
 
 mod change_notifier;
+mod cipher;
+mod convert;
 mod data_migration;
 mod database;
 mod error;
+mod fingerprint;
+mod key;
 mod read_only;
 mod table;
 
 pub use change_notifier::{ChangeNotifier, TableChanges};
+pub use cipher::{FileFormat, cipher_available};
+pub use convert::{Conversion, Recovery, convert, recover};
 pub use data_migration::{DataMigration, DataMigrationError};
 pub use database::{Database, DbLocation};
 pub use error::DbError;
+pub use fingerprint::{Fingerprint, SCHEMA_ENTRY, TableDigest};
+pub use key::{DB_KEY_BYTES, DbKey, KeyError};
 pub use read_only::SchemaCheck;
 pub use table::Table;
 

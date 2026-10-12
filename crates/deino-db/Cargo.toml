@@ -22,6 +22,22 @@ specta.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+# Fills a new database key from the OS random source (already in the tree).
+getrandom = "0.3.4"
+# Streams rows while fingerprinting a table (already in the tree).
+futures-util.workspace = true
+# Fingerprints every table to verify an encryption migration (already in the tree).
+sha2 = "0.10.9"
+# Wipes key material from memory when it is dropped (already in the tree).
+zeroize = "1.8.2"
+
+# SQLCipher in place of plain SQLite (PRV-02, ADR 0038): the same
+# libsqlite3-sys sqlx already links, built from its bundled SQLCipher
+# amalgamation. Without a key it is plain SQLite, so one binary opens both.
+# On Apple targets it uses CommonCrypto (Security.framework), never OpenSSL;
+# on Linux it links the system libcrypto. Windows keeps plain SQLite.
+[target.'cfg(unix)'.dependencies]
+libsqlite3-sys = { version = "=0.30.1", default-features = false, features = ["bundled-sqlcipher"] }
 
 [dev-dependencies]
 serde_json.workspace = true
