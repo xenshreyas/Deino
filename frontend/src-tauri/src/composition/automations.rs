@@ -1,8 +1,9 @@
 //! Wiring for automations (AUT-01): the service the `automations` plugin
 //! calls and the engine behind the pipeline's `automations` stage, with the
 //! local steps over the insights generator, the tag and folder services,
-//! the export assembler, the file system, system notifications, the
-//! settings (shell scripts) and the recordings folder.
+//! the export assembler (redacted like every export, NOT-09), the file
+//! system, system notifications, the settings (shell scripts) and the
+//! recordings folder.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -12,7 +13,7 @@ use deino_core::automations::{
     AssembledMeetings, AutomationEngine, AutomationPorts, AutomationRunner, AutomationService,
     EngineDeps, FactsSource, LocalStepPorts, SqliteAutomationRepo, StepRegistry,
 };
-use deino_core::export::{ExportAssembler, ExportPorts, FsVault, SystemZone};
+use deino_core::export::FsVault;
 use deino_core::insights::{InsightGenerator, SqliteInsightRepo};
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_db::Database;
@@ -20,6 +21,7 @@ use tauri::{AppHandle, Manager};
 
 use super::Organize;
 use super::action_items::ActionItemWiring;
+use super::export::redacting_assembler;
 use crate::features::action_items::SystemNotifier;
 use crate::features::automations::PipelineScheduler;
 use crate::paths::AppPaths;
@@ -71,10 +73,7 @@ fn local_steps(
         tags: organize.tags(),
         filer: organize.filing(),
         meetings: Arc::new(AssembledMeetings::new(
-            Arc::new(ExportAssembler::new(ExportPorts::sqlite(
-                database,
-                Arc::new(SystemZone),
-            ))),
+            redacting_assembler(database, wiring.settings.clone()),
             meetings,
         )),
         records: insights,
