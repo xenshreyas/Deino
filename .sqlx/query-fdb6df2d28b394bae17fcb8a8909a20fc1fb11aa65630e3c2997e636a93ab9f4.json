@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: i64\", at_ms AS \"at: Millis\", file_name,\n                      width AS \"width: u32\", height AS \"height: u32\", ocr_text AS text\n               FROM snapshots WHERE meeting_id = ?1 AND ocr_text IS NULL\n               ORDER BY at_ms, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "at: Millis",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "file_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "width: u32",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "height: u32",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "text",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "fdb6df2d28b394bae17fcb8a8909a20fc1fb11aa65630e3c2997e636a93ab9f4"
+}

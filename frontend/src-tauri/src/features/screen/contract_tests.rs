@@ -62,7 +62,12 @@ fn a_meeting_turned_off_stays_off_and_has_no_snapshots() {
     let app = mock_app(mock_builder().plugin(super::init()));
     let repo = Arc::new(FakeScreenRepo::default());
     let clock = Arc::new(FakeClock::new(at("2026-10-12T09:00:00Z")));
-    app.manage(Arc::new(ScreenService::new(repo, Arc::new(Idle), clock)));
+    app.manage(Arc::new(ScreenService::new(
+        repo,
+        Arc::new(Idle),
+        clock,
+        std::path::PathBuf::from("no-recordings"),
+    )));
     let window = main_window(&app);
     let meeting = json!({ "meetingId": "meeting-a" });
 

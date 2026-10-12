@@ -50,6 +50,75 @@ async snapshots(meetingId: MeetingId) : Promise<Result<Snapshot[], AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * The folder holding the meeting's snapshot PNGs (inside the recordings
+ * folder, which the asset protocol may read), for the Images strip.
+ */
+async snapshotFolder(meetingId: MeetingId) : Promise<Result<string, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|snapshot_folder", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes one snapshot, its row and its PNG; false when it was gone.
+ */
+async deleteSnapshot(meetingId: MeetingId, snapshotId: number) : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|delete_snapshot", { meetingId, snapshotId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The record panel's picker: the displays and the other apps' windows.
+ */
+async captureChoices() : Promise<Result<TargetChoice[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|capture_choices") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Captures `source` for the recording of `meeting_id` from now on; false
+ * when Settings keeps neither video nor snapshots.
+ */
+async captureSource(meetingId: MeetingId, source: Source) : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|capture_source", { meetingId, source }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Whether the capture of `meeting_id` shows the consent reminder (the
+ * first three captures).
+ */
+async consentReminder(meetingId: MeetingId) : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|consent_reminder", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Don't show again" on the screen capture reminder.
+ */
+async stopConsentReminders() : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:screen|stop_consent_reminders") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -216,7 +285,35 @@ width: number;
 /**
  * Its size in pixels.
  */
-height: number }
+height: number; 
+/**
+ * The text read in it (`screen_context`); `None` until it was read.
+ */
+text: string | null }
+/**
+ * A window or a whole display.
+ */
+export type Source = 
+/**
+ * One window (`CGWindowID`).
+ */
+{ kind: "window"; id: number } | 
+/**
+ * One whole display (`CGDirectDisplayID`).
+ */
+{ kind: "display"; id: number }
+/**
+ * One entry of the picker.
+ */
+export type TargetChoice = { 
+/**
+ * What it captures.
+ */
+source: Source; 
+/**
+ * "Entire screen", or the app and the window's title.
+ */
+label: string }
 
 /** tauri-specta globals **/
 

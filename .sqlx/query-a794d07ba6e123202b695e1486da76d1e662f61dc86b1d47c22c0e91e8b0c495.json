@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM snapshots WHERE meeting_id = ?1 AND id = ?2 RETURNING file_name",
+  "describe": {
+    "columns": [
+      {
+        "name": "file_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a794d07ba6e123202b695e1486da76d1e662f61dc86b1d47c22c0e91e8b0c495"
+}

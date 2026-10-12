@@ -269,3 +269,36 @@ async fn completion_events_arrive_in_order() {
         ]
     );
 }
+
+#[tokio::test]
+async fn a_picture_goes_as_a_base64_image_block() {
+    let (provider, http) = provider(FakeHttp::new());
+    let mut described = request(OutputFormat::Text);
+    described.route = Route::VisionDescribe;
+    described.messages = vec![Message {
+        role: crate::Role::User,
+        parts: vec![
+            Part::Image(crate::ImagePart {
+                media_type: "image/png".to_owned(),
+                base64: "iVBORw==".to_owned(),
+            }),
+            Part::Text("Describe this shared screen.".to_owned()),
+        ],
+    }];
+
+    assert!(
+        provider.stream(described).await.is_err(),
+        "no reply is scripted"
+    );
+
+    assert_eq!(
+        http.json_body(0)["messages"][0]["content"],
+        json!([
+            {
+                "type": "image",
+                "source": { "type": "base64", "media_type": "image/png", "data": "iVBORw==" }
+            },
+            { "type": "text", "text": "Describe this shared screen." }
+        ])
+    );
+}

@@ -38,6 +38,7 @@ objc2-foundation = { version = "=0.3.2", default-features = false, features = ["
 
 [dev-dependencies]
 deino-screen = { path = ".", features = ["test-support"] }
+serde_json.workspace = true
 
 [lints]
 workspace = true

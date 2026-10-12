@@ -31,6 +31,10 @@ pub struct WindowInfo {
     pub layer: i64,
     /// Whether it is on screen now (not minimised, its app not hidden).
     pub on_screen: bool,
+    /// Its title, for the picker only (never logged).
+    pub title: Option<String>,
+    /// Its app's name, for the picker.
+    pub app_name: Option<String>,
 }
 
 impl WindowInfo {
@@ -101,6 +105,8 @@ mod tests {
             height: size.1,
             layer,
             on_screen,
+            title: None,
+            app_name: None,
         }
     }
 

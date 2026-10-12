@@ -24,7 +24,8 @@ use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::{
     AutomaticNotes, ClockSleeper, MeetingTitler, NotesEnhancer, PipelineDeps, PipelineService,
-    PipelineTrigger, ProgressSink, RepassSetting, SqliteJobRepo, StagePorts, VocabFixer, registry,
+    PipelineTrigger, ProgressSink, RepassSetting, ScreenContextReader, SqliteJobRepo, StagePorts, VocabFixer,
+    registry,
 };
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -43,6 +44,8 @@ pub(crate) struct PipelineAdapters {
     pub(crate) transcript: TranscriptStages,
     /// Every live recording's folder lives here (`AppPaths::recordings`).
     pub(crate) recordings: PathBuf,
+    /// The shared screen's text (`screen_context`, CAP-09).
+    pub(crate) screen_context: Arc<dyn ScreenContextReader>,
 }
 
 /// The services behind `final_transcription` (CAP-08) and `vocab_fixups`
@@ -128,6 +131,7 @@ fn stage_ports(
         transcriber: adapters.transcript.transcriber,
         repass: adapters.transcript.repass,
         vocab_fixer: adapters.transcript.vocab_fixer,
+        screen_context: adapters.screen_context,
     }
 }
 
@@ -201,6 +205,7 @@ pub(super) fn attach_pipeline(
         return log::error!(target: "pipeline", "settings or the vocabulary are not ready; the pipeline is off");
     };
     let adapters = PipelineAdapters {
+        screen_context: super::screen::context_reader(app, database, &recordings),
         diarizer,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         ai,

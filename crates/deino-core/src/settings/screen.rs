@@ -9,6 +9,10 @@ const DEFAULT_FPS: u8 = 1;
 /// The screen section of `Settings`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "independent switches the user toggles one by one in Settings → Screen capture"
+)]
 pub struct ScreenSettings {
     /// Capture the meeting window when a detected meeting is recorded.
     /// Off by default: it needs Screen Recording and the other side's

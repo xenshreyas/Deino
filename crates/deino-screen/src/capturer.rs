@@ -18,7 +18,8 @@ use crate::frame::FrameRate;
 use crate::plan::CapturePlan;
 use crate::ports::{FrameFeed, Platform, RecordingClock, SnapshotStore};
 use crate::status::StatusCell;
-use crate::target::{pick_window, stream_size};
+use crate::pick::{Source, resolve};
+use crate::target::stream_size;
 
 /// The longest wait for a frame before the capture checks the clock.
 pub const POLL: Duration = Duration::from_millis(500);
@@ -98,22 +99,27 @@ fn run(start: &Start, stopped: &Receiver<()>) {
     }
 }
 
-/// Finds the meeting window and opens its frames.
+/// Finds the target (the meeting window, or the user's pick) and opens
+/// its frames.
 fn open(start: &Start) -> Result<(Capture, Box<dyn FrameFeed>), ScreenError> {
     let platform = &start.platform;
     let windows = platform.windows.list()?;
-    let window = pick_window(&windows, &start.plan.app).ok_or(ScreenError::WindowGone)?;
-    let size = stream_size(
-        window.width,
-        window.height,
-        platform.windows.scale(window.id),
-    );
+    let displays = platform.windows.displays()?;
+    let target = resolve(&start.plan.target, &windows, &displays).ok_or(ScreenError::WindowGone)?;
+    let scale = match target.source {
+        Source::Window(id) => platform.windows.scale(id),
+        Source::Display(id) => displays.iter().find(|d| d.id == id).map_or(2.0, |d| d.scale),
+    };
+    let size = stream_size(target.size.0, target.size.1, scale);
     // Snapshots alone need a frame every 10 s; one a second is plenty.
     let rate = start.plan.video.unwrap_or(FrameRate::DEFAULT);
-    let feed = platform.source.open(window.id, size, rate)?;
+    let feed = match target.source {
+        Source::Window(id) => platform.source.open(id, size, rate)?,
+        Source::Display(id) => platform.source.open_display(id, size, rate)?,
+    };
     let capture = Capture::new(CaptureParts {
         plan: start.plan.clone(),
-        window: window.id,
+        window: target.window,
         clock: Arc::clone(&start.clock),
         windows: Arc::clone(&platform.windows),
         encoders: Arc::clone(&platform.encoders),

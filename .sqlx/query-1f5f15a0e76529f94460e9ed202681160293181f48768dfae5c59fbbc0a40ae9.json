@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT at_ms AS \"at: Millis\", ocr_text AS \"text!: String\", description\n               FROM snapshots\n               WHERE meeting_id = ?1 AND ocr_text IS NOT NULL\n                 AND (trim(ocr_text) <> '' OR description IS NOT NULL)\n               ORDER BY at_ms, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "at: Millis",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "text!: String",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "1f5f15a0e76529f94460e9ed202681160293181f48768dfae5c59fbbc0a40ae9"
+}

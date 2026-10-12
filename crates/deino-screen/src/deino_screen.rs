@@ -38,6 +38,7 @@ pub mod frame;
 #[cfg(target_os = "macos")]
 mod macos;
 pub mod phash;
+pub mod pick;
 pub mod plan;
 pub mod ports;
 pub mod sampler;
@@ -45,11 +46,12 @@ pub mod service;
 pub mod status;
 pub mod target;
 
-pub use capture::{SNAPSHOTS, VIDEO_FILE, VIDEO_PART, snapshot_name};
+pub use capture::{SNAPSHOTS, VIDEO_FILE, VIDEO_PART, has_video, snapshot_name};
 pub use error::ScreenError;
 pub use frame::{Frame, FrameRate};
 pub use phash::PHash;
-pub use plan::{CapturePlan, CaptureSettings, PlanInput, Skip, decide};
+pub use pick::{CaptureTarget, DisplayInfo, OWN_BUNDLE, Resolved, Source, TargetChoice, choices, resolve};
+pub use plan::{CapturePlan, CaptureSettings, PickInput, PlanInput, Skip, decide, picked};
 pub use ports::{
     FrameFeed, Platform, Position, RecordingClock, ScreenPermission, ScreenSource, SnapshotRecord,
     SnapshotStore, VideoEncoder, VideoEncoders, Windows,

@@ -50,6 +50,12 @@ impl ScreenService {
         Ok(self.control.turn_off(meeting))
     }
 
+    /// The user picked a window or screen for `meeting` in the record
+    /// panel: capture is on for it again, even after "Turn off".
+    pub async fn turn_on(&self, meeting: &MeetingId) -> Result<(), DbError> {
+        self.repo.set_capture(meeting, true, self.clock.now()).await
+    }
+
     /// Whether the user turned capture off for `meeting`. A read failure
     /// counts as off: capturing against the user's choice is worse than
     /// missing a capture.
@@ -68,6 +74,16 @@ impl ScreenService {
         self.repo.snapshots(meeting).await
     }
 
+    /// The recording folder of `meeting`.
+    pub fn recording_folder(&self, meeting: &MeetingId) -> PathBuf {
+        self.recordings.join(meeting.as_str())
+    }
+
+    /// The folder holding the PNGs of `meeting`'s snapshots.
+    pub fn snapshot_folder(&self, meeting: &MeetingId) -> PathBuf {
+        self.recording_folder(meeting).join(SNAPSHOTS_DIR)
+    }
+
     /// Deletes snapshot `id` of `meeting`: its row, then its PNG. False
     /// when there was no such snapshot. A PNG that cannot be removed is
     /// logged; the row is gone either way, so the picture is no longer shown.
@@ -75,11 +91,7 @@ impl ScreenService {
         let Some(name) = self.repo.delete_snapshot(meeting, id).await? else {
             return Ok(false);
         };
-        let path = self
-            .recordings
-            .join(meeting.as_str())
-            .join(SNAPSHOTS_DIR)
-            .join(name);
+        let path = self.snapshot_folder(meeting).join(name);
         match tokio::fs::remove_file(&path).await {
             Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
                 log::warn!(target: "screen", "could not remove snapshot {id} of {meeting}: {error}");

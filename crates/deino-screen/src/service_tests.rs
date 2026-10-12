@@ -11,6 +11,7 @@ use crate::frame::{Frame, FrameRate};
 use crate::ports::Position;
 use crate::sampler::SnapshotPolicy;
 use crate::status::CaptureState;
+use crate::pick::CaptureTarget;
 use crate::target::WindowInfo;
 
 fn zoom_window() -> WindowInfo {
@@ -21,6 +22,8 @@ fn zoom_window() -> WindowInfo {
         height: 900.0,
         layer: 0,
         on_screen: true,
+        title: None,
+        app_name: None,
     }
 }
 
@@ -28,7 +31,7 @@ fn plan(folder: PathBuf) -> CapturePlan {
     CapturePlan {
         meeting: MeetingId::new("meeting"),
         folder,
-        app: BundleId::try_from("us.zoom.xos").unwrap(),
+        target: CaptureTarget::MeetingApp(BundleId::try_from("us.zoom.xos").unwrap()),
         video: Some(FrameRate::DEFAULT),
         snapshots: Some(SnapshotPolicy::default()),
     }

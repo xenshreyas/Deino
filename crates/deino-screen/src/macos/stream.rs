@@ -22,12 +22,13 @@ use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::time::Duration;
 
 use cidre::sc::StreamOutput as _;
-use cidre::{arc, cm, cv, define_obj_type, dispatch, objc, sc};
+use cidre::{arc, cm, cv, define_obj_type, dispatch, ns, objc, sc};
 
 use super::native::pixels;
 use super::windows::with_content;
 use crate::error::ScreenError;
 use crate::frame::{Frame, FrameRate};
+use crate::pick::{OWN_BUNDLE, Source};
 use crate::ports::{FrameFeed, ScreenSource};
 
 /// How long starting the stream may take.
@@ -44,16 +45,66 @@ impl ScreenSource for MacSource {
         size: (u32, u32),
         rate: FrameRate,
     ) -> Result<Box<dyn FrameFeed>, ScreenError> {
-        let (frames, received) = sync_channel(2);
-        let request = Request { id, size, rate };
-        let stream = with_content(move |content| build(content, request, frames.clone()))?
-            .ok_or(ScreenError::WindowGone)?;
-        start(&stream.stream)?;
-        Ok(Box::new(MacFeed {
-            native: stream,
-            frames: received,
-        }))
+        open_source(Request {
+            source: Source::Window(id),
+            size,
+            rate,
+        })
     }
+
+    fn open_display(
+        &self,
+        id: u32,
+        size: (u32, u32),
+        rate: FrameRate,
+    ) -> Result<Box<dyn FrameFeed>, ScreenError> {
+        open_source(Request {
+            source: Source::Display(id),
+            size,
+            rate,
+        })
+    }
+}
+
+/// Starts the stream of `request`'s window or display.
+fn open_source(request: Request) -> Result<Box<dyn FrameFeed>, ScreenError> {
+    let (frames, received) = sync_channel(2);
+    let stream = with_content(move |content| build(content, request, frames.clone()))?
+        .ok_or(ScreenError::WindowGone)?;
+    start(&stream.stream)?;
+    Ok(Box::new(MacFeed {
+        native: stream,
+        frames: received,
+    }))
+}
+
+/// The filter of a window alone, or of a display without Deino's own
+/// windows; `None` when it is gone.
+fn filter(content: &sc::ShareableContent, source: Source) -> Option<arc::R<sc::ContentFilter>> {
+    match source {
+        Source::Window(id) => {
+            let windows = content.windows();
+            let window = windows.iter().find(|window| window.id() == id)?;
+            Some(sc::ContentFilter::with_desktop_independent_window(window))
+        }
+        Source::Display(id) => {
+            let displays = content.displays();
+            let display = displays.iter().find(|shown| shown.display_id().0 == id)?;
+            let windows = content.windows();
+            let own: Vec<&sc::Window> = windows.iter().filter(|w| is_own(w)).collect();
+            let own = ns::Array::from_slice(&own);
+            Some(sc::ContentFilter::with_display_excluding_windows(
+                display, &own,
+            ))
+        }
+    }
+}
+
+/// Whether `window` is one of Deino's own.
+fn is_own(window: &sc::Window) -> bool {
+    window
+        .owning_app()
+        .is_some_and(|app| app.bundle_id().to_string() == OWN_BUNDLE)
 }
 
 /// The stream and its output, kept alive together.
@@ -89,10 +140,10 @@ impl Drop for MacFeed {
     }
 }
 
-/// Which window to stream, at what size and rate.
+/// Which window or display to stream, at what size and rate.
 #[derive(Clone, Copy, Debug)]
 struct Request {
-    id: u32,
+    source: Source,
     size: (u32, u32),
     rate: FrameRate,
 }
@@ -105,13 +156,11 @@ fn build(
     frames: SyncSender<Frame>,
 ) -> Option<Native> {
     let Request {
-        id,
+        source,
         size: (width, height),
         rate,
     } = request;
-    let windows = content.windows();
-    let window = windows.iter().find(|window| window.id() == id)?;
-    let filter = sc::ContentFilter::with_desktop_independent_window(window);
+    let filter = filter(content, source)?;
     let mut cfg = sc::StreamCfg::new();
     cfg.set_width(width as usize);
     cfg.set_height(height as usize);
