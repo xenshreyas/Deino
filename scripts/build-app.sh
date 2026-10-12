@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the release Deino.app with its real sidecars and signs it ad hoc.
+# Builds the release Deino.app with its real sidecars and signs it locally.
 #
 #   scripts/build-app.sh             # build into dist-app/Deino.app
 #   scripts/build-app.sh --install   # ...then replace /Applications/Deino.app
@@ -20,6 +20,12 @@ readonly BUNDLE="target/release/bundle/macos/Deino.app"
 readonly ENTITLEMENTS="frontend/src-tauri/entitlements.plist"
 TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
 readonly TRIPLE
+# A stable identity keeps macOS permissions (Accessibility, Screen Recording)
+# across rebuilds; ad hoc ("-") signatures change every build, so each rebuild
+# silently loses them. Create it once with scripts/make-signing-cert.sh.
+SIGN_ID="${DEINO_SIGN_IDENTITY:-Deino Local Signing}"
+security find-certificate -c "$SIGN_ID" >/dev/null 2>&1 || SIGN_ID="-"
+readonly SIGN_ID
 
 # The local LLM and the `deino` CLI, built for real (not the gate's placeholders).
 stage_sidecars() {
@@ -41,9 +47,9 @@ sign_copy() {
     local helper
     for helper in "$OUT"/Deino.app/Contents/MacOS/*; do
         [[ "$(basename "$helper")" == deino ]] && continue
-        codesign --force --options runtime --sign - "$helper" 2>/dev/null
+        codesign --force --options runtime --sign "$SIGN_ID" "$helper" 2>/dev/null
     done
-    codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign - "$OUT/Deino.app" 2>/dev/null
+    codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign "$SIGN_ID" "$OUT/Deino.app" 2>/dev/null
     codesign --verify --deep --strict "$OUT/Deino.app"
 }
 
@@ -62,7 +68,8 @@ main() {
     stage_sidecars
     build_bundle
     sign_copy
-    echo "Built and signed $OUT/Deino.app"
+    echo "Built and signed $OUT/Deino.app (identity: $SIGN_ID)"
+    [[ "$SIGN_ID" == - ]] && echo "Note: ad hoc signature; macOS permissions reset on every rebuild (scripts/make-signing-cert.sh)."
     [[ "${1:-}" == --install ]] && install_app
     return 0
 }
