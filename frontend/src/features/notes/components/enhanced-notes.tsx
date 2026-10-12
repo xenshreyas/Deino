@@ -1,7 +1,7 @@
 /**
  * The Notes tab's Enhanced view (NOT-02b): the status row (version
- * history, the quiet "Saved", copy, and the page's Enhanced / My notes
- * switch), then the notes, or the state they are in: loading, being
+ * history, the quiet "Saved", Edit with AI, copy, and the page's Enhanced /
+ * My notes switch), the edit bar while it is open (NOT-06), then the notes, or the state they are in: loading, being
  * written, not written yet, or failed.
  */
 import { type ReactNode, useState } from 'react';
@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/ui/alert';
 import { Button } from '@/ui/button';
 
 import { notesCopy } from '../copy';
+import { EditBar, EditWithAiButton } from '../edit';
 import { type EnhanceAction, useEnhanceAction } from '../hooks/use-enhance-action';
 import { useEnhancedNotes, useIsEnhancing, useNoteVersions, useRestoreVersion } from '../queries';
 import type { EnhancedNotesView } from '../types';
@@ -32,6 +33,7 @@ export function EnhancedNotes({ meetingId, toolbar }: EnhancedNotesProps) {
   const [version, setVersion] = useState<number | null>(null);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const notes = useEnhancedNotes(meetingId, version);
+  const busy = useIsEnhancing(meetingId);
   const view = notes.data ?? null;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -43,10 +45,14 @@ export function EnhancedNotes({ meetingId, toolbar }: EnhancedNotesProps) {
           <SavedIndicator status={status} />
         </div>
         <div className="flex items-center gap-1">
+          {view?.isLatest === true ? <EditWithAiButton disabled={busy} /> : null}
           {view === null ? null : <CopyMenu meetingId={meetingId} />}
           {toolbar}
         </div>
       </div>
+      {view?.isLatest === true && !busy ? (
+        <EditBar meetingId={meetingId} version={view.version.version} />
+      ) : null}
       <NotesBody meetingId={meetingId} query={notes} onVersion={setVersion} onStatus={setStatus} />
     </div>
   );

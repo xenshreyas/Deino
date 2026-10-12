@@ -42,6 +42,7 @@ mod meetings;
 mod network;
 mod notepad;
 mod notes;
+mod notes_edit;
 pub(crate) mod onboarding;
 mod organize;
 mod pipeline;

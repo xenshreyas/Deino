@@ -121,6 +121,16 @@ export class MockEnhanced {
     return this.push(meetingId, source.doc, { at: now, fixture, edited: source.info.isUserEdited });
   }
 
+  /**
+   * Stores an accepted edit of `base` as the newest version, marked edited
+   * (NOT-06); its number, or `null` once `base` is not the newest.
+   */
+  writeEdit(meetingId: MeetingId, base: number, doc: NoteDoc, now: Date): number | null {
+    if (this.state[meetingId]?.at(-1)?.info.version !== base) return null;
+    const fixture = this.fixtures.find((candidate) => candidate.id === meetingId);
+    return this.push(meetingId, doc, { at: now, fixture, edited: true });
+  }
+
   /** Back to the fixtures, like a reseed. */
   reseed(): void {
     this.state = this.seeded();
