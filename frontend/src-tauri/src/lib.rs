@@ -27,6 +27,7 @@ mod paths;
 mod permissions;
 mod setup;
 pub mod stt;
+mod system_open;
 pub mod updater;
 
 legacy_modules! {
