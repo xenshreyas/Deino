@@ -16,7 +16,7 @@ tags:
   - "Standup"
 folders:
   - "Meetings"
-link: "deino://meetings/meeting-fixture-standup"
+link: "deino://meeting/meeting-fixture-standup"
 deino-id: "meeting-fixture-standup"
 ---
 

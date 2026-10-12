@@ -47,6 +47,10 @@ export const settingsCopy = {
   sections: {
     general: { label: 'General', description: 'Notifications, storage and how Deino starts.' },
     appearance: { label: 'Appearance', description: 'Theme for every Deino window.' },
+    shortcuts: {
+      label: 'Shortcuts',
+      description: 'Hotkeys that work in every app, and deino:// links.',
+    },
     setup: {
       label: 'Setup',
       description: 'Go back through first-run setup: permissions, AI, calendar and profile.',

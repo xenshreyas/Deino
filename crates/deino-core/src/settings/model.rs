@@ -6,7 +6,8 @@ use super::{
     AiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
     DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
     OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
-    SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
+    SettingsError, ShortcutSettings, SpeakerSettings, TemplateSettings, TranscriptionSettings,
+    UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -56,6 +57,8 @@ pub struct Settings {
     pub integrations: IntegrationSettings,
     /// What automations may do on the Mac (AUT-01).
     pub automations: AutomationSettings,
+    /// System-wide hotkeys (DEV-05).
+    pub shortcuts: ShortcutSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -85,6 +88,7 @@ impl Default for Settings {
             automations: AutomationSettings::default(),
             briefs: BriefSettings::default(),
             integrations: IntegrationSettings::default(),
+            shortcuts: ShortcutSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
             onboarding: OnboardingSettings::default(),

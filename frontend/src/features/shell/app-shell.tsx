@@ -2,8 +2,9 @@
  * The app shell around every route (PARITY_PLAN §4.6): providers, the
  * first-run onboarding gate, the sidebar and title bar, the ⌘K palette, the
  * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the
- * meeting-detection listener that opens the record screen, and the app lock
- * (PRV-02) around the main layout.
+ * meeting-detection listener that opens the record screen, the app lock
+ * (PRV-02) around the main layout, and `deino://` links and hotkeys (DEV-05)
+ * inside it, so they wait for the unlock.
  */
 import { type ReactNode, Suspense } from 'react';
 
@@ -22,6 +23,7 @@ import { TitleBar } from './components/title-bar';
 import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
 import { useImportDialogState } from './hooks/use-import-dialog-state';
+import { useLinks } from './hooks/use-links';
 import { useProductionContextMenuGuard } from './hooks/use-production-context-menu-guard';
 import { Sidebar } from './sidebar/sidebar';
 
@@ -33,6 +35,7 @@ interface MainLayoutProps {
 /** Sidebar, title bar and the current route, plus the global overlays. */
 function MainLayout({ onAudioFile, children }: MainLayoutProps) {
   useGlobalShortcuts();
+  useLinks();
   const focusMode = useFocusMode();
   return (
     <div

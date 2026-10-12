@@ -1248,6 +1248,10 @@ integrations: IntegrationSettings;
  */
 automations: AutomationSettings; 
 /**
+ * System-wide hotkeys (DEV-05).
+ */
+shortcuts: ShortcutSettings; 
+/**
  * Appearance and layout.
  */
 ui: UiSettings; 
@@ -1267,6 +1271,22 @@ export type SettingsChanged = {
  * Every setting, as now saved.
  */
 settings: Settings }
+/**
+ * The shortcuts section of `Settings`.
+ */
+export type ShortcutSettings = { 
+/**
+ * Starts a recording, or stops the one running.
+ */
+record: string | null; 
+/**
+ * Opens a new note.
+ */
+quickNote: string | null; 
+/**
+ * Opens the meeting's Ask panel, or Deino.
+ */
+ask: string | null }
 /**
  * The speakers section of `Settings`.
  */

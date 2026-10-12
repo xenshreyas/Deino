@@ -5,7 +5,7 @@ expression: json
 {
   "format": "deino.meeting",
   "version": 1,
-  "link": "deino://meetings/meeting-fixture-standup",
+  "link": "deino://meeting/meeting-fixture-standup",
   "meeting": {
     "id": "meeting-fixture-standup",
     "title": "Eng standup",

@@ -6,8 +6,10 @@ use serde::Serialize;
 
 use crate::{ExportSections, InsightExport, Section};
 
-/// The scheme of the links that open a meeting in Deino (DEV-05 registers it).
-pub(crate) const LINK_PREFIX: &str = "deino://meetings/";
+/// The links that open a meeting in Deino: `deino://meeting/<id>`, the shape
+/// the CLI, MCP and transcript moments use (DEV-05). Deino still opens the
+/// plural `deino://meeting/<id>` that earlier exports wrote.
+pub(crate) const LINK_PREFIX: &str = "deino://meeting/";
 
 /// One meeting, as every export format sees it.
 ///

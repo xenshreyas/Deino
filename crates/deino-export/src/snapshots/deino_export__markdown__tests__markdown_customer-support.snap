@@ -14,7 +14,7 @@ tags:
   - "CustomerSupport"
 folders:
   - "Meetings"
-link: "deino://meetings/meeting-fixture-customer-support"
+link: "deino://meeting/meeting-fixture-customer-support"
 deino-id: "meeting-fixture-customer-support"
 ---
 

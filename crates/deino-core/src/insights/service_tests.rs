@@ -348,7 +348,7 @@ async fn the_table_exports_as_csv_where_the_user_saves_it() {
     assert_eq!(
         csv,
         "Meeting,Date,Budget,Speaker,Time,Link\r\n\
-         Acme discovery,2026-10-08T09:00:00,40000,Speaker 2,04:31,deino://meetings/meeting-acme\r\n"
+         Acme discovery,2026-10-08T09:00:00,40000,Speaker 2,04:31,deino://meeting/meeting-acme\r\n"
     );
 }
 

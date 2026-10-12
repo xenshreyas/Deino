@@ -13,7 +13,7 @@ tags:
   - "OneOnOne"
 folders:
   - "Meetings"
-link: "deino://meetings/meeting-fixture-one-on-one"
+link: "deino://meeting/meeting-fixture-one-on-one"
 deino-id: "meeting-fixture-one-on-one"
 ---
 

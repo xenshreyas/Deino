@@ -155,7 +155,7 @@ async fn the_script_reads_the_payload_on_stdin_in_the_meeting_folder() {
     assert_eq!(json["meeting"]["title"], "Acme sync");
     assert_eq!(json["notes"], "## Summary");
     assert_eq!(json["actionItems"][0]["title"], "Send the quote");
-    assert_eq!(json["link"], "deino://meetings/meeting-shell");
+    assert_eq!(json["link"], "deino://meeting/meeting-shell");
     assert!(
         json.get("transcript").is_none(),
         "unselected fields are left out"

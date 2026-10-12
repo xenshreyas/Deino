@@ -51,7 +51,7 @@ mod tests {
 
         assert_eq!(json["format"], "deino.meeting");
         assert_eq!(json["version"], 1);
-        assert_eq!(json["link"], "deino://meetings/meeting-fixture-one-on-one");
+        assert_eq!(json["link"], "deino://meeting/meeting-fixture-one-on-one");
         assert_eq!(json["meeting"]["startedAt"], "2026-10-07T09:01:38-07:00");
     }
 }

@@ -3,11 +3,11 @@ source: crates/deino-export/src/csv.rs
 expression: meetings(&exports)
 ---
 id,title,date,duration_minutes,attendees,tags,folders,link
-meeting-fixture-board-update,Deino Q3 board update,2026-09-29T11:01:40,36,Aisha Rahman; Shreyas; Daniel Koh; Ruth Abernathy,BoardUpdate,Meetings,deino://meetings/meeting-fixture-board-update
-meeting-fixture-brainstorm,Onboarding revamp brainstorm,2026-10-01T11:02:05,29,Noor Haddad; Shreyas; Tom Becker; Priya Nair,Brainstorm,Meetings,deino://meetings/meeting-fixture-brainstorm
-meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,2026-10-05T09:02:15,16,Tom Becker; Shreyas; Owen Price,CustomerSupport,Meetings,deino://meetings/meeting-fixture-customer-support
-meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),2026-10-02T10:01:38,30,Shreyas; Jordan Ellis; Priya Nair,Interview,Meetings,deino://meetings/meeting-fixture-interview
-meeting-fixture-one-on-one,Shreyas / Maya 1:1,2026-10-07T09:01:38,18,Shreyas; Maya Chen,OneOnOne,Meetings,deino://meetings/meeting-fixture-one-on-one
-meeting-fixture-planning,Q4 planning,2026-09-28T10:01:38,82,Aisha Rahman; Shreyas; Maya Chen; Diego Alvarez; Priya Nair; Tom Becker; Noor Haddad; Lena Okafor,Planning,Meetings,deino://meetings/meeting-fixture-planning
-meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,2026-09-30T08:01:24,25,Lena Okafor; Shreyas; Marcus Webb; Hannah Pike,SalesDiscovery,Meetings,deino://meetings/meeting-fixture-sales-discovery
-meeting-fixture-standup,Eng standup,2026-10-08T08:31:04,7,Shreyas; Maya Chen; Diego Alvarez; Priya Nair; Tom Becker,Standup,Meetings,deino://meetings/meeting-fixture-standup
+meeting-fixture-board-update,Deino Q3 board update,2026-09-29T11:01:40,36,Aisha Rahman; Shreyas; Daniel Koh; Ruth Abernathy,BoardUpdate,Meetings,deino://meeting/meeting-fixture-board-update
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,2026-10-01T11:02:05,29,Noor Haddad; Shreyas; Tom Becker; Priya Nair,Brainstorm,Meetings,deino://meeting/meeting-fixture-brainstorm
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,2026-10-05T09:02:15,16,Tom Becker; Shreyas; Owen Price,CustomerSupport,Meetings,deino://meeting/meeting-fixture-customer-support
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),2026-10-02T10:01:38,30,Shreyas; Jordan Ellis; Priya Nair,Interview,Meetings,deino://meeting/meeting-fixture-interview
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,2026-10-07T09:01:38,18,Shreyas; Maya Chen,OneOnOne,Meetings,deino://meeting/meeting-fixture-one-on-one
+meeting-fixture-planning,Q4 planning,2026-09-28T10:01:38,82,Aisha Rahman; Shreyas; Maya Chen; Diego Alvarez; Priya Nair; Tom Becker; Noor Haddad; Lena Okafor,Planning,Meetings,deino://meeting/meeting-fixture-planning
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,2026-09-30T08:01:24,25,Lena Okafor; Shreyas; Marcus Webb; Hannah Pike,SalesDiscovery,Meetings,deino://meeting/meeting-fixture-sales-discovery
+meeting-fixture-standup,Eng standup,2026-10-08T08:31:04,7,Shreyas; Maya Chen; Diego Alvarez; Priya Nair; Tom Becker,Standup,Meetings,deino://meeting/meeting-fixture-standup

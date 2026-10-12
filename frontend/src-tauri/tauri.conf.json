@@ -78,5 +78,10 @@
         "windows": {
             "signCommand": "powershell -ExecutionPolicy Bypass -File scripts/sign-windows.ps1 -FilePath %1"
         }
+    },
+    "plugins": {
+        "deep-link": {
+            "desktop": { "schemes": ["deino"] }
+        }
     }
 }

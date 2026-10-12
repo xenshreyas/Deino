@@ -8,6 +8,7 @@ import { z } from 'zod';
 export const settingsSectionSchema = z.enum([
   'general',
   'appearance',
+  'shortcuts',
   'setup',
   'recording',
   'detection',
