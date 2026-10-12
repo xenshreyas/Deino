@@ -15,6 +15,7 @@
 //! ([`db_path`]). Everything it reads comes from `deino_core::query`.
 
 mod cli;
+mod db_key;
 pub mod db_path;
 pub mod embedder;
 mod error;

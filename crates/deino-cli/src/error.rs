@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use deino_db::DbError;
 use deino_domain::{ErrorClass, ErrorCode};
 use deino_export::RenderError;
+use deino_secrets::SecretError;
 use serde::Serialize;
 
 use deino_core::export::ExportError;
@@ -48,6 +49,9 @@ pub enum CliError {
     /// The MCP connection could not start or broke.
     #[error("the MCP connection failed: {0}")]
     Mcp(String),
+    /// The Keychain refused or failed to hand over the database key.
+    #[error("could not read the database key from the Keychain: {0}")]
+    Keychain(#[source] SecretError),
     /// The async runtime could not start.
     #[error("could not start")]
     Start(#[source] std::io::Error),
@@ -66,7 +70,7 @@ impl CliError {
     /// The stable code of this failure.
     pub fn code(&self) -> ErrorCode {
         match self {
-            Self::NoDataDir | Self::Database(_) => ErrorCode::Unavailable,
+            Self::NoDataDir | Self::Database(_) | Self::Keychain(_) => ErrorCode::Unavailable,
             Self::Query(error) => error.code(),
             Self::Export(error) => error.code(),
             Self::Invalid(_) => ErrorCode::Invalid,
@@ -105,6 +109,12 @@ fn database_message(error: &DbError) -> String {
             "no Deino database at {}; open the Deino app once, or pass --db <path> or set DEINO_DB",
             path.display()
         ),
+        DbError::KeyRequired => "the Deino database is encrypted and its key is not in this \
+             user's Keychain; run deino as the Mac user who runs the app"
+            .to_owned(),
+        DbError::WrongKey => "the database key in the Keychain does not open the Deino \
+             database; open the Deino app once to repair it"
+            .to_owned(),
         other => other.to_string(),
     }
 }
