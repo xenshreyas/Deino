@@ -197,6 +197,23 @@ db_enum! {
 }
 
 db_enum! {
+    /// Where an imported meeting came from (CAP-12). Stored in
+    /// `imported_meetings.source`, the de-duplication ledger.
+    ImportSource {
+        /// Granola's public API.
+        Granola = "granola",
+        /// Circleback's API.
+        Circleback = "circleback",
+        /// Fireflies' GraphQL API.
+        Fireflies = "fireflies",
+        /// Fathom's API.
+        Fathom = "fathom",
+        /// A folder of JSON or Markdown files on this Mac.
+        Folder = "folder",
+    }
+}
+
+db_enum! {
     /// Why a file could not be imported (CAP-11). Stored in
     /// `watched_files.failure`; shown in Settings → Watched folders.
     ImportFailure {
@@ -248,6 +265,7 @@ mod tests {
         assert_names_agree(VocabKind::ALL, VocabKind::as_str);
         assert_names_agree(InsightStatus::ALL, InsightStatus::as_str);
         assert_names_agree(InsightApplyMode::ALL, InsightApplyMode::as_str);
+        assert_names_agree(ImportSource::ALL, ImportSource::as_str);
     }
 
     #[test]

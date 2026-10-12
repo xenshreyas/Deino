@@ -61,6 +61,10 @@ export const networkCopy = {
     web_search: 'Web search',
     webhooks: 'Webhooks',
     favicons: 'Company logos',
+    granola: 'Granola import',
+    circleback: 'Circleback import',
+    fireflies: 'Fireflies import',
+    fathom: 'Fathom import',
   } satisfies Record<ServiceId, string>,
   noHosts: 'Set up in Settings first',
 } as const;

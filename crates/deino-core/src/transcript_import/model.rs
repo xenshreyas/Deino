@@ -1,6 +1,8 @@
 //! A meeting sent as JSON (DEV-03's `POST /v1/meetings`), in Circleback's
 //! import shape (C §12.1): a name, tags, notes and a transcript of
 //! utterances, each either timed (`timestamp`, seconds) or word by word.
+//! CAP-12's importers map other note-takers' meetings into the same shape,
+//! adding attendees, action items and utterance end times.
 
 use chrono::{DateTime, Utc};
 use deino_domain::Millis;
@@ -26,6 +28,47 @@ pub struct TranscriptImport {
     pub notes: Option<String>,
     /// What was said, in order.
     pub transcript: Vec<ImportUtterance>,
+    /// Who attended; each becomes a person (ORG-04's rules) on the meeting.
+    #[serde(default)]
+    pub attendees: Vec<ImportAttendee>,
+    /// What was agreed (an extension of Circleback's shape, CAP-12).
+    #[serde(default)]
+    pub action_items: Vec<ImportActionItem>,
+}
+
+/// Someone in the imported meeting, in Circleback's shape.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ImportAttendee {
+    /// Their name, if the source knows it.
+    #[serde(default)]
+    pub name: Option<String>,
+    /// Their address, if the source knows it; the person's key.
+    #[serde(default)]
+    pub email: Option<String>,
+    /// True for the calendar event's organiser.
+    #[serde(default)]
+    pub is_calendar_event_organizer: bool,
+    /// True when the calendar event invited them.
+    #[serde(default)]
+    pub is_calendar_invitee: bool,
+}
+
+/// A commitment made in the imported meeting.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ImportActionItem {
+    /// What to do.
+    pub title: String,
+    /// Context; may be empty.
+    #[serde(default)]
+    pub description: String,
+    /// True when it was already done in the source.
+    #[serde(default)]
+    pub done: bool,
+    /// Who should do it, matched or added as a person.
+    #[serde(default)]
+    pub assignee: Option<ImportAttendee>,
 }
 
 /// A tag to put on the imported meeting.
@@ -59,6 +102,10 @@ pub struct TimedUtterance {
     pub text: String,
     /// Seconds from the start of the meeting.
     pub timestamp: f64,
+    /// Where it ends, in seconds, when the source says; else where the
+    /// next utterance starts.
+    #[serde(default)]
+    pub end_timestamp: Option<f64>,
     /// Ignored: Deino is English only.
     #[serde(default)]
     pub language: Option<String>,
@@ -100,16 +147,23 @@ impl ImportUtterance {
     /// The utterance as a line, or why it cannot be one.
     pub(super) fn line(&self) -> Result<Line, &'static str> {
         match self {
-            Self::Timed(timed) => Ok(Line {
-                speaker: timed.speaker.trim().to_owned(),
-                text: timed.text.trim().to_owned(),
-                start: millis(timed.timestamp)?,
-                end: None,
-                words: Vec::new(),
-            }),
+            Self::Timed(timed) => timed_line(timed),
             Self::Words(spoken) => words_line(spoken),
         }
     }
+}
+
+fn timed_line(timed: &TimedUtterance) -> Result<Line, &'static str> {
+    let start = millis(timed.timestamp)?;
+    let end = timed.end_timestamp.map(millis).transpose()?;
+    Ok(Line {
+        speaker: timed.speaker.trim().to_owned(),
+        text: timed.text.trim().to_owned(),
+        start,
+        // An end before the start is a source glitch: guess it instead.
+        end: end.filter(|end| *end >= start),
+        words: Vec::new(),
+    })
 }
 
 fn words_line(spoken: &WordUtterance) -> Result<Line, &'static str> {

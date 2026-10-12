@@ -58,7 +58,7 @@ pub use conditions::{Comparison, Condition, ConditionGroups, InvalidCondition, M
 pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
-    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, ImportFailure, InsightApplyMode,
+    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, ImportFailure, ImportSource, InsightApplyMode,
     InsightStatus, MeetingSource, Rsvp, SectionFormat, TagSource, VocabKind,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};

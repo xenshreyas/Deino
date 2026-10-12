@@ -88,6 +88,7 @@ pub mod final_transcription;
 mod fixture_tests;
 pub mod folders;
 pub mod import;
+pub mod importers;
 pub mod insights;
 pub mod lock;
 pub mod meetings;

@@ -39,11 +39,23 @@ pub enum SecretName {
     /// account (ORG-01).
     #[serde(rename = "microsoft_calendar_refresh_token")]
     MicrosoftCalendarRefreshToken,
+    /// A Granola personal API key, for importing notes (CAP-12).
+    #[serde(rename = "granola_api_key")]
+    GranolaApiKey,
+    /// A Circleback API key, for importing meetings (CAP-12).
+    #[serde(rename = "circleback_api_key")]
+    CirclebackApiKey,
+    /// A Fireflies API key, for importing transcripts (CAP-12).
+    #[serde(rename = "fireflies_api_key")]
+    FirefliesApiKey,
+    /// A Fathom API key, for importing meetings (CAP-12).
+    #[serde(rename = "fathom_api_key")]
+    FathomApiKey,
 }
 
 impl SecretName {
     /// Every secret, in declaration order.
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 13] = [
         Self::OpenAiApiKey,
         Self::AnthropicApiKey,
         Self::GroqApiKey,
@@ -53,6 +65,10 @@ impl SecretName {
         Self::GoogleOAuthClientSecret,
         Self::GoogleCalendarRefreshToken,
         Self::MicrosoftCalendarRefreshToken,
+        Self::GranolaApiKey,
+        Self::CirclebackApiKey,
+        Self::FirefliesApiKey,
+        Self::FathomApiKey,
     ];
 
     /// The keychain account the secret is stored under; equal to its serialized name.
@@ -67,6 +83,10 @@ impl SecretName {
             Self::GoogleOAuthClientSecret => "google_oauth_client_secret",
             Self::GoogleCalendarRefreshToken => "google_calendar_refresh_token",
             Self::MicrosoftCalendarRefreshToken => "microsoft_calendar_refresh_token",
+            Self::GranolaApiKey => "granola_api_key",
+            Self::CirclebackApiKey => "circleback_api_key",
+            Self::FirefliesApiKey => "fireflies_api_key",
+            Self::FathomApiKey => "fathom_api_key",
         }
     }
 
@@ -82,6 +102,10 @@ impl SecretName {
             Self::GoogleOAuthClientSecret => "Google client secret",
             Self::GoogleCalendarRefreshToken => "Google Calendar sign-in",
             Self::MicrosoftCalendarRefreshToken => "Microsoft calendar sign-in",
+            Self::GranolaApiKey => "Granola API key",
+            Self::CirclebackApiKey => "Circleback API key",
+            Self::FirefliesApiKey => "Fireflies API key",
+            Self::FathomApiKey => "Fathom API key",
         }
     }
 }

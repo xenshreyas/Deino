@@ -72,6 +72,10 @@ const fn integration(service: ServiceId) -> ServiceSpec {
         ServiceId::ZohoCrm => hosts::ZOHO,
         ServiceId::WebSearch => hosts::WEB_SEARCH,
         ServiceId::Favicons => hosts::ANY_PUBLIC_NAME,
+        ServiceId::Granola => hosts::GRANOLA,
+        ServiceId::Circleback => hosts::CIRCLEBACK,
+        ServiceId::Fireflies => hosts::FIREFLIES,
+        ServiceId::Fathom => hosts::FATHOM,
         _ => &[],
     };
     ServiceSpec {
@@ -165,6 +169,11 @@ mod hosts {
     ];
     pub(super) const WEB_SEARCH: &[HostPattern] =
         &[exact("api.search.brave.com"), exact("api.tavily.com")];
+    /// Note-taker imports (CAP-12): each provider's API host only.
+    pub(super) const GRANOLA: &[HostPattern] = &[exact("public-api.granola.ai")];
+    pub(super) const CIRCLEBACK: &[HostPattern] = &[exact("circleback.ai")];
+    pub(super) const FIREFLIES: &[HostPattern] = &[exact("api.fireflies.ai")];
+    pub(super) const FATHOM: &[HostPattern] = &[exact("api.fathom.ai")];
     /// Company logos come from each company's own website, whichever it is.
     pub(super) const ANY_PUBLIC_NAME: &[HostPattern] = &[HostPattern::AnyPublicName];
 
