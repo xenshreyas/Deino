@@ -259,7 +259,7 @@ fn judge(
 ) -> Result<(), Failed> {
     let runtime = tokio::runtime::Runtime::new().map_err(|e| Failed::from(e.to_string()))?;
     let mut decide = case.decide.clone();
-    decide.target = target.clone();
+    decide.target.clone_from(&target);
     let decision: FollowUpDecision = runtime
         .block_on(gateway.structured(ROUTE, decide))
         .map_err(|error| Failed::from(error.to_string()))?;

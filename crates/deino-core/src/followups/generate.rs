@@ -110,7 +110,7 @@ impl FollowUpGenerator {
             return Ok(Ok(quiet(row, reason)));
         }
         let answer = self.deps.model.draft(inputs.draft_prompt()).await?;
-        let Some((subject, body)) = cleaned(answer) else {
+        let Some((subject, body)) = cleaned(&answer) else {
             return Ok(Ok(quiet(row, QuietReason::NothingToFollowUp)));
         };
         row.subject = subject;
@@ -183,7 +183,7 @@ fn quiet(row: StoredFollowUp, reason: QuietReason) -> StoredFollowUp {
 
 /// The answer's subject and body, trimmed and cut to size; `None` when the
 /// body is empty.
-fn cleaned(answer: FollowUpDraftAnswer) -> Option<(String, String)> {
+fn cleaned(answer: &FollowUpDraftAnswer) -> Option<(String, String)> {
     let body: String = answer.body.trim().chars().take(MAX_BODY_CHARS).collect();
     if body.is_empty() {
         return None;
