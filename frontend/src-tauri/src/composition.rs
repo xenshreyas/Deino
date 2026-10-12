@@ -36,6 +36,7 @@ mod entities;
 mod example;
 mod export;
 pub(crate) mod import;
+mod importers;
 mod insights;
 mod integrations;
 mod llm;

@@ -254,7 +254,11 @@ export type Table =
 /**
  * Keys for the local REST API: a name, read or read-write, and only an argon2 hash of the secret.
  */
-"api_keys"
+"api_keys" | 
+/**
+ * Meetings imported from another note-taker or a folder, by their ID there: the de-duplication ledger, so importing twice adds nothing.
+ */
+"imported_meetings"
 
 /** tauri-specta globals **/
 

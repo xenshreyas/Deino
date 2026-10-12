@@ -305,7 +305,23 @@ export type ServiceId =
  * Company logos: `https://<domain>/favicon.ico`, fetched once per
  * company (ORG-04).
  */
-"favicons"
+"favicons" | 
+/**
+ * Granola's public API, for importing notes (CAP-12).
+ */
+"granola" | 
+/**
+ * Circleback's API, for importing meetings (CAP-12).
+ */
+"circleback" | 
+/**
+ * Fireflies' GraphQL API, for importing transcripts (CAP-12).
+ */
+"fireflies" | 
+/**
+ * Fathom's API, for importing meetings (CAP-12).
+ */
+"fathom"
 /**
  * What kind of service a [`ServiceId`] is, for grouping in the UI.
  */

@@ -78,6 +78,22 @@ impl ImportSources {
         self.switch_service(service, false).await
     }
 
+    /// The adapter for `source`: a provider with its saved key, or the
+    /// folder at `folder`.
+    pub async fn importer(
+        &self,
+        source: ImportSource,
+        folder: Option<PathBuf>,
+    ) -> Result<Arc<dyn Importer>, ImporterError> {
+        match (source, folder) {
+            (ImportSource::Folder, Some(path)) => self.folder(path).await,
+            (ImportSource::Folder, None) => Err(ImporterError::Folder(std::io::Error::other(
+                "no folder was chosen",
+            ))),
+            (source, _) => self.provider(source).await,
+        }
+    }
+
     /// The adapter for `source` with its saved key; a folder source needs
     /// [`ImportSources::folder`].
     pub async fn provider(&self, source: ImportSource) -> Result<Arc<dyn Importer>, ImporterError> {

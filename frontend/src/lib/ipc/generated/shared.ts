@@ -279,10 +279,14 @@ export type Table =
 /**
  * Keys for the local REST API: a name, read or read-write, and only an argon2 hash of the secret.
  */
-"api_keys"
+"api_keys" | 
+/**
+ * Meetings imported from another note-taker or a folder, by their ID there: the de-duplication ledger, so importing twice adds nothing.
+ */
+"imported_meetings"
 
 /** Every `ErrorCode`, for validating errors that arrive over IPC. */
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","api_keys"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","api_keys","imported_meetings"] as const satisfies readonly Table[]

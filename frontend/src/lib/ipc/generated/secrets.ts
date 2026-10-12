@@ -153,7 +153,23 @@ export type SecretName =
  * The refresh token of the connected Microsoft (Outlook) calendar
  * account (ORG-01).
  */
-"microsoft_calendar_refresh_token"
+"microsoft_calendar_refresh_token" | 
+/**
+ * A Granola personal API key, for importing notes (CAP-12).
+ */
+"granola_api_key" | 
+/**
+ * A Circleback API key, for importing meetings (CAP-12).
+ */
+"circleback_api_key" | 
+/**
+ * A Fireflies API key, for importing transcripts (CAP-12).
+ */
+"fireflies_api_key" | 
+/**
+ * A Fathom API key, for importing meetings (CAP-12).
+ */
+"fathom_api_key"
 /**
  * Whether a secret is saved, as far as the UI may know.
  */

@@ -35,6 +35,7 @@ pub mod enhance;
 pub mod export;
 pub mod folders;
 pub mod import;
+pub mod importers;
 pub mod insights;
 pub mod integrations;
 pub mod llm;

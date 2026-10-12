@@ -1945,6 +1945,7 @@ dependencies = [
  "deino-domain",
  "deino-eventkit",
  "deino-export",
+ "deino-importers",
  "deino-integrations",
  "deino-llm",
  "deino-net",

@@ -146,6 +146,8 @@ deino-domain.workspace = true
 deino-export.workspace = true
 # macOS Calendar through EventKit, the default calendar source (ORG-01).
 deino-eventkit.workspace = true
+# Importers from other note-takers and folders (CAP-12).
+deino-importers.workspace = true
 deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.
 deino-net.workspace = true
