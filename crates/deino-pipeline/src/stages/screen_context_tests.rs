@@ -60,7 +60,7 @@ async fn read_snapshots_are_done_and_nothing_new_is_skipped() {
     let outcome = stage(read.clone()).run(&ctx(), meeting.clone()).await;
 
     assert_eq!(outcome, Ok(StageOutcome::Done));
-    assert_eq!(read.asked(), [meeting.clone()]);
+    assert_eq!(read.asked(), std::slice::from_ref(&meeting));
     let nothing = stage(Arc::new(RecordedScreenContext::default()));
     assert_eq!(
         nothing.run(&ctx(), meeting).await,

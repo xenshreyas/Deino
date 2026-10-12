@@ -79,7 +79,7 @@ impl ScreenService {
         self.recordings.join(meeting.as_str())
     }
 
-    /// The folder holding the PNGs of `meeting`'s snapshots.
+    /// The folder holding the PNG files of `meeting`'s snapshots.
     pub fn snapshot_folder(&self, meeting: &MeetingId) -> PathBuf {
         self.recording_folder(meeting).join(SNAPSHOTS_DIR)
     }

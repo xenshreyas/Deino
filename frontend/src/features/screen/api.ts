@@ -19,7 +19,7 @@ export const screenApi = {
     unwrap(commands.turnOffForMeeting(meetingId)),
   /** The meeting's kept snapshots, in time order. */
   snapshots: (meetingId: MeetingId): Promise<Snapshot[]> => unwrap(commands.snapshots(meetingId)),
-  /** The folder of the meeting's snapshot PNGs. */
+  /** The folder of the meeting's snapshot PNG files. */
   snapshotFolder: (meetingId: MeetingId): Promise<string> =>
     unwrap(commands.snapshotFolder(meetingId)),
   /** Deletes one snapshot and its picture; false when it was gone. */

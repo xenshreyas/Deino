@@ -67,7 +67,7 @@ export function useSnapshots(meetingId: MeetingId) {
   return useQuery(snapshotsQuery(meetingId));
 }
 
-/** The folder of a meeting's snapshot PNGs (fixed for the meeting). */
+/** The folder of a meeting's snapshot PNG files (fixed for the meeting). */
 export function useSnapshotFolder(meetingId: MeetingId) {
   return useQuery({
     queryKey: screenKeys.folder(meetingId),

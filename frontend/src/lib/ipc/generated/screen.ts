@@ -52,7 +52,7 @@ async snapshots(meetingId: MeetingId) : Promise<Result<Snapshot[], AppError>> {
 }
 },
 /**
- * The folder holding the meeting's snapshot PNGs (inside the recordings
+ * The folder holding the meeting's snapshot PNG files (inside the recordings
  * folder, which the asset protocol may read), for the Images strip.
  */
 async snapshotFolder(meetingId: MeetingId) : Promise<Result<string, AppError>> {

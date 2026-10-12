@@ -86,7 +86,7 @@ async fn snapshots(
     screen.snapshots(&meeting_id).await.into_ipc()
 }
 
-/// The folder holding the meeting's snapshot PNGs (inside the recordings
+/// The folder holding the meeting's snapshot PNG files (inside the recordings
 /// folder, which the asset protocol may read), for the Images strip.
 #[tauri::command]
 #[specta::specta]
