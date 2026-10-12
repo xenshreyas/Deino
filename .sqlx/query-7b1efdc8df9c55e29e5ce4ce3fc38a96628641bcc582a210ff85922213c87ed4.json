@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                event_id AS \"event_id!: CalendarEventId\",\n                status AS \"status!: BriefStatus\",\n                inputs_hash AS \"inputs_hash!\",\n                bullets_json AS \"bullets!: Json<Vec<BriefBullet>>\",\n                generated_at AS \"generated_at!: DateTime<Utc>\",\n                read_at AS \"read_at: DateTime<Utc>\",\n                feedback AS \"feedback: BriefFeedback\"\n            FROM briefs WHERE event_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "event_id!: CalendarEventId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "status!: BriefStatus",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "inputs_hash!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "bullets!: Json<Vec<BriefBullet>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at!: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "read_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "feedback: BriefFeedback",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "7b1efdc8df9c55e29e5ce4ce3fc38a96628641bcc582a210ff85922213c87ed4"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE briefs SET read_at = ?2 WHERE event_id = ?1 AND read_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ff59e07a2896e9444e9594de5586e1d96a87ff38f701fd2b01b97f67d7bbf1b7"
+}

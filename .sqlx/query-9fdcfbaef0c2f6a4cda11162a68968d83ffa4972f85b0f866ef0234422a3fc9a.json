@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO briefs (event_id, status, inputs_hash, bullets_json, generated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5)\n             ON CONFLICT (event_id) DO UPDATE SET\n                 status = excluded.status, inputs_hash = excluded.inputs_hash,\n                 bullets_json = excluded.bullets_json, generated_at = excluded.generated_at,\n                 read_at = NULL, feedback = NULL, feedback_at = NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "9fdcfbaef0c2f6a4cda11162a68968d83ffa4972f85b0f866ef0234422a3fc9a"
+}
