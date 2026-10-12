@@ -89,47 +89,58 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
 /// Every feature plugin: one line per entry in `features/manifest.rs`
 /// and `features/organize_manifest.rs`.
 fn feature_plugins() -> Vec<TauriPlugin<Wry>> {
-    #[allow(unused_mut, reason = "release builds add no debug-only plugins")]
-    let mut plugins = vec![
+    let mut plugins = platform_plugins();
+    plugins.extend(library_plugins());
+    #[cfg(debug_assertions)]
+    plugins.extend([features::_example::init(), features::dev::init()]);
+    plugins
+}
+
+/// The app's own plumbing: the database, settings, models, capture and privacy.
+fn platform_plugins() -> Vec<TauriPlugin<Wry>> {
+    vec![
         features::db::init(),
         features::detection::init(),
         features::developer::init(),
         features::onboarding::init(),
-        features::export::init(),
-        features::action_items::init(),
-        features::calendar::init(),
-        features::enhance::init(),
-        features::companies::init(),
-        features::meetings::init(),
         features::network::init(),
         features::pipeline::init(),
-        features::profile::init(),
-        features::search::init(),
-        features::notes::init(),
-        features::people::init(),
         features::recording::init(),
         features::secrets::init(),
         features::llm::init(),
         features::settings::init(),
         features::transcription::init(),
         features::system::init(),
+        features::integrations::init(),
+        features::import::init(),
+        features::speaker_tags::init(),
+        features::privacy::init(),
+    ]
+}
+
+/// The meeting library: meetings, notes, transcripts and everything organizing them.
+fn library_plugins() -> Vec<TauriPlugin<Wry>> {
+    vec![
+        features::export::init(),
+        features::action_items::init(),
+        features::calendar::init(),
+        features::enhance::init(),
+        features::companies::init(),
+        features::meetings::init(),
+        features::profile::init(),
+        features::search::init(),
+        features::notes::init(),
+        features::people::init(),
         features::templates::init(),
         features::folders::init(),
-        features::integrations::init(),
         features::insights::init(),
-        features::import::init(),
         features::tags::init(),
         features::speakers::init(),
         features::transcript::init(),
         features::vocabulary::init(),
-        features::speaker_tags::init(),
         features::player::init(),
         features::stats::init(),
-        features::privacy::init(),
-    ];
-    #[cfg(debug_assertions)]
-    plugins.extend([features::_example::init(), features::dev::init()]);
-    plugins
+    ]
 }
 
 /// Registers the third-party Tauri plugins the app depends on.
