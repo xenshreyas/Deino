@@ -29,6 +29,27 @@ export const screenCopy = {
     videoHint: 'The meeting window beside the audio, with its sound, for playback and clips.',
     frameRate: 'Frame rate',
     rates: { 1: '1 fps', 2: '2 fps', 5: '5 fps' },
+    describe: 'Describe snapshots with Claude',
+    describeHint:
+      'Sends each snapshot to Claude after the meeting so the notes can say what a chart or design showed. Off: only text read on this Mac reaches the notes.',
+  },
+  images: {
+    title: 'Images',
+    open: (time: string) => `Snapshot at ${time}`,
+    delete: 'Delete snapshot',
+    deleteFailed: 'Could not delete the snapshot.',
+  },
+  reminder: {
+    label: 'Screen capture reminder',
+    title: 'Deino is capturing the shared screen',
+    body: 'Let everyone know their shared screen is being saved.',
+    dismiss: 'Got it',
+    never: "Don't show again",
+  },
+  picker: {
+    label: 'Screen to capture',
+    none: 'Nothing to capture: allow Screen Recording in Settings.',
+    failed: 'Could not capture that window.',
   },
   saveFailed: 'Could not save the screen capture setting.',
   loadFailed: 'Could not read the screen capture status.',

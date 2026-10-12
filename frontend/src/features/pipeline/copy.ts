@@ -26,6 +26,7 @@ const stageLabels: Partial<Record<string, string>> = {
   diarize: 'Speakers',
   identify_speakers: 'Names',
   vocab_fixups: 'Vocabulary',
+  screen_context: 'Screen text',
   enhance_notes: 'Notes',
   extract_action_items: 'Action items',
   auto_title: 'Title',

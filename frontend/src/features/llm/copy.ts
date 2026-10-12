@@ -38,6 +38,7 @@ export const llmCopy = {
     brief: 'Pre-meeting briefs',
     'followup.email': 'Follow-up emails',
     recap: 'Year in review',
+    'vision.describe': 'Screen snapshots',
     embed: 'Search embeddings',
   } satisfies Record<Route, string>,
 

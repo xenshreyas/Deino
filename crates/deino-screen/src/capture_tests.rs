@@ -4,6 +4,7 @@ use deino_domain::{BundleId, MeetingId};
 
 use super::*;
 use crate::fake::{FakeEncoders, FakeScreen, MemoryStore, ScriptedClock};
+use crate::pick::CaptureTarget;
 use crate::sampler::SnapshotPolicy;
 use crate::status::CaptureStatus;
 use crate::target::WindowInfo;
@@ -23,6 +24,8 @@ fn window(on_screen: bool) -> WindowInfo {
         height: 800.0,
         layer: 0,
         on_screen,
+        title: None,
+        app_name: None,
     }
 }
 
@@ -49,13 +52,13 @@ impl Rig {
         let plan = CapturePlan {
             meeting: MeetingId::new("meeting"),
             folder: self.folder.clone(),
-            app: BundleId::try_from("us.zoom.xos").unwrap(),
+            target: CaptureTarget::MeetingApp(BundleId::try_from("us.zoom.xos").unwrap()),
             video: video.then_some(FrameRate::DEFAULT),
             snapshots: Some(SnapshotPolicy::default()),
         };
         Capture::new(CaptureParts {
             plan,
-            window: 7,
+            window: Some(7),
             clock: ScriptedClock::new(positions),
             windows: self.screen.clone(),
             encoders: self.encoders.clone(),

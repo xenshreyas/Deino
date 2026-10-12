@@ -7,6 +7,8 @@ use std::sync::{Arc, Mutex, PoisonError};
 use deino_domain::MeetingId;
 
 use crate::capturer::{Capturer, Start};
+use crate::error::ScreenError;
+use crate::pick::{TargetChoice, choices};
 use crate::plan::CapturePlan;
 use crate::ports::{Platform, RecordingClock, SnapshotStore};
 use crate::status::{CaptureStatus, StatusCell};
@@ -106,6 +108,24 @@ impl ScreenCapture {
         drop(current);
         self.status.end(meeting);
         true
+    }
+
+    /// The picker's entries: the displays and the other apps' windows.
+    /// Fails without the permission rather than touching
+    /// `ScreenCaptureKit`, which would make macOS ask.
+    pub fn choices(&self) -> Result<Vec<TargetChoice>, ScreenError> {
+        let platform = self
+            .parts
+            .platform
+            .as_ref()
+            .ok_or(ScreenError::Unsupported)?;
+        if !platform.permission.granted() {
+            return Err(ScreenError::NotPermitted);
+        }
+        Ok(choices(
+            &platform.windows.list()?,
+            &platform.windows.displays()?,
+        ))
     }
 
     /// What the capture is doing now.

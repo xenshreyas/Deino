@@ -6,7 +6,14 @@ import type { ScreenSettings } from '../types';
 import { CaptureCard } from './capture-card';
 import { PermissionCard } from './permission-card';
 
-const OFF: ScreenSettings = { detectedMeetings: false, video: true, videoFps: 1, snapshots: true };
+const OFF: ScreenSettings = {
+  detectedMeetings: false,
+  video: true,
+  videoFps: 1,
+  snapshots: true,
+  describeSnapshots: false,
+  consentRemindersShown: 0,
+};
 
 describe('PermissionCard', () => {
   it('offers System Settings only while Screen Recording is missing', () => {

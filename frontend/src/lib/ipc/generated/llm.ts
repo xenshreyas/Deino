@@ -351,6 +351,11 @@ export type Route =
  */
 "recap" | 
 /**
+ * A shared-screen snapshot described in words (CAP-09); a picture
+ * goes with the prompt, so only Claude serves it.
+ */
+"vision.describe" | 
+/**
  * Embeddings for semantic search (AI-01); always local (§8 D3).
  */
 "embed"

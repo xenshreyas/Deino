@@ -211,7 +211,7 @@ fn convert(message: &Message) -> Vec<ChatMessage<'_>> {
                     arguments: call.input.to_string(),
                 },
             }),
-            Part::Text(_) | Part::ToolResult(_) => None,
+            Part::Text(_) | Part::ToolResult(_) | Part::Image(_) => None,
         })
         .collect();
     let role = match message.role {
@@ -234,7 +234,7 @@ fn convert(message: &Message) -> Vec<ChatMessage<'_>> {
             tool_calls: Vec::new(),
             tool_call_id: Some(&result.call_id),
         }),
-        Part::Text(_) | Part::ToolUse(_) => None,
+        Part::Text(_) | Part::ToolUse(_) | Part::Image(_) => None,
     }));
     wire
 }

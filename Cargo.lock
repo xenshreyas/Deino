@@ -2489,6 +2489,7 @@ dependencies = [
  "objc2-foundation",
  "png 0.18.1",
  "serde",
+ "serde_json",
  "specta",
  "thiserror 2.0.18",
 ]

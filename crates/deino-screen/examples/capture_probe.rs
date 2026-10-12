@@ -20,8 +20,8 @@ use std::time::Duration;
 use deino_domain::{BundleId, MeetingId, Millis};
 use deino_screen::fake::MemoryStore;
 use deino_screen::{
-    CapturePlan, FrameRate, Platform, Position, RecordingClock, ScreenCapture, ScreenCaptureParts,
-    SnapshotPolicy, VIDEO_FILE,
+    CapturePlan, CaptureTarget, FrameRate, Platform, Position, RecordingClock, ScreenCapture,
+    ScreenCaptureParts, SnapshotPolicy, VIDEO_FILE,
 };
 
 /// A clock that advances 500 ms per read and ends after `limit` reads.
@@ -94,7 +94,7 @@ fn capture(platform: Platform, app: BundleId) {
     capture.start(CapturePlan {
         meeting: MeetingId::new("probe"),
         folder: folder.clone(),
-        app,
+        target: CaptureTarget::MeetingApp(app),
         video: Some(FrameRate::new(2)),
         snapshots: Some(SnapshotPolicy {
             every: Millis(2_000),

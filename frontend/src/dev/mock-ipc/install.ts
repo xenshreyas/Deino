@@ -11,6 +11,7 @@ import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 
 import { mockNotes } from './database';
 import { MockMedia } from './mock-media';
+import { snapshotUrl } from './mock-snapshots';
 import { handleLegacyInvoke } from './legacy';
 
 /** What `@tauri-apps/plugin-os` reads synchronously: a Mac on Apple Silicon. */
@@ -34,7 +35,7 @@ export function installMockIpc(): void {
 
 /**
  * `convertFileSrc`: note images are data URLs, recordings are the fixtures'
- * audio served by Vite.
+ * audio and snapshots the fixture slides, served by Vite.
  */
 function mockAssetProtocol(): void {
   const internals: unknown = Reflect.get(window, '__TAURI_INTERNALS__');
@@ -42,6 +43,6 @@ function mockAssetProtocol(): void {
   Reflect.set(
     internals,
     'convertFileSrc',
-    (path: string) => MockMedia.url(path) ?? mockNotes.imageUrl(path) ?? '',
+    (path: string) => MockMedia.url(path) ?? snapshotUrl(path) ?? mockNotes.imageUrl(path) ?? '',
   );
 }

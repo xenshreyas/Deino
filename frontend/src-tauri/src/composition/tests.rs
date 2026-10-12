@@ -99,6 +99,7 @@ fn recorded_adapters() -> (PipelineAdapters, Recorded) {
             vocab_fixer: Arc::new(deino_pipeline::RecordedFixer::default()),
         },
         recordings: std::path::PathBuf::from("no-recordings"),
+        screen_context: Arc::new(deino_pipeline::RecordedScreenContext::default()),
     };
     (adapters, recorded)
 }

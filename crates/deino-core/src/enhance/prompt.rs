@@ -10,7 +10,8 @@ use deino_llm::prompts::{
 
 use super::citations::SegmentIndex;
 use super::material::{Material, MeetingInfo, PreviousNotes};
-use super::transcript::{TranscriptLine, clock, render_lines};
+use super::screen::{ScreenLine, render_with_screen, screen_lines, within};
+use super::transcript::{TranscriptLine, clock};
 use super::wire::{BlockKind, EnhancedDoc};
 use crate::templates::{Template, template_prompt};
 
@@ -35,6 +36,7 @@ pub struct PromptInputs {
     previous: Option<String>,
     vocabulary: Option<String>,
     notes: Option<String>,
+    screen: Vec<ScreenLine>,
 }
 
 impl PromptInputs {
@@ -55,12 +57,13 @@ impl PromptInputs {
                 .notes
                 .as_ref()
                 .map(|notes| cut(notes.markdown.trim(), MAX_NOTES_CHARS)),
+            screen: screen_lines(&material.screen),
         }
     }
 
     /// One pass over the whole transcript.
     pub fn single(&self, lines: &[TranscriptLine]) -> Prompt {
-        let transcript = transcript_or_none(lines);
+        let transcript = transcript_or_none(lines, &self.screen);
         let user = EnhanceUser {
             meeting: &self.meeting,
             template: &self.template,
@@ -84,7 +87,10 @@ impl PromptInputs {
             part: number,
             parts: count,
             span: &span_label(lines),
-            transcript: &render_lines(lines),
+            transcript: &render_with_screen(
+                lines,
+                &within(&self.screen, lines, (number == 1, number == count)),
+            ),
         };
         finish(
             Prompt::new(user.text()).system(EnhancePartSystem.text()),
@@ -124,11 +130,13 @@ fn finish(prompt: Prompt, max_tokens: u32) -> Prompt {
     prompt.max_tokens(max_tokens)
 }
 
-fn transcript_or_none(lines: &[TranscriptLine]) -> String {
-    if lines.is_empty() {
+/// The transcript with the shared screen placed by time, or a note that
+/// there is neither.
+fn transcript_or_none(lines: &[TranscriptLine], screen: &[ScreenLine]) -> String {
+    if lines.is_empty() && screen.is_empty() {
         "The meeting has no transcript: write the notes from the user's notes alone.".to_owned()
     } else {
-        render_lines(lines)
+        render_with_screen(lines, screen)
     }
 }
 

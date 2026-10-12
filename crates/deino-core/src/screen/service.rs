@@ -1,12 +1,13 @@
 //! [`ScreenService`]: the per-meeting off switch and the snapshot list,
 //! over the rows and the running capture.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_db::DbError;
 use deino_domain::{Clock, MeetingId};
 
-use super::{ScreenRepo, Snapshot};
+use super::{SNAPSHOTS_DIR, ScreenRepo, Snapshot};
 
 /// The running screen capture (the app's `deino_screen::ScreenCapture`).
 pub trait CaptureControl: Send + Sync {
@@ -19,19 +20,23 @@ pub struct ScreenService {
     repo: Arc<dyn ScreenRepo>,
     control: Arc<dyn CaptureControl>,
     clock: Arc<dyn Clock>,
+    recordings: PathBuf,
 }
 
 impl ScreenService {
-    /// The service over the rows, the running capture and the clock.
+    /// The service over the rows, the running capture, the clock and the
+    /// folder holding every meeting's recording folder.
     pub fn new(
         repo: Arc<dyn ScreenRepo>,
         control: Arc<dyn CaptureControl>,
         clock: Arc<dyn Clock>,
+        recordings: PathBuf,
     ) -> Self {
         Self {
             repo,
             control,
             clock,
+            recordings,
         }
     }
 
@@ -43,6 +48,12 @@ impl ScreenService {
             .set_capture(meeting, false, self.clock.now())
             .await?;
         Ok(self.control.turn_off(meeting))
+    }
+
+    /// The user picked a window or screen for `meeting` in the record
+    /// panel: capture is on for it again, even after "Turn off".
+    pub async fn turn_on(&self, meeting: &MeetingId) -> Result<(), DbError> {
+        self.repo.set_capture(meeting, true, self.clock.now()).await
     }
 
     /// Whether the user turned capture off for `meeting`. A read failure
@@ -61,6 +72,33 @@ impl ScreenService {
     /// The snapshots of `meeting`, in time order.
     pub async fn snapshots(&self, meeting: &MeetingId) -> Result<Vec<Snapshot>, DbError> {
         self.repo.snapshots(meeting).await
+    }
+
+    /// The recording folder of `meeting`.
+    pub fn recording_folder(&self, meeting: &MeetingId) -> PathBuf {
+        self.recordings.join(meeting.as_str())
+    }
+
+    /// The folder holding the PNG files of `meeting`'s snapshots.
+    pub fn snapshot_folder(&self, meeting: &MeetingId) -> PathBuf {
+        self.recording_folder(meeting).join(SNAPSHOTS_DIR)
+    }
+
+    /// Deletes snapshot `id` of `meeting`: its row, then its PNG. False
+    /// when there was no such snapshot. A PNG that cannot be removed is
+    /// logged; the row is gone either way, so the picture is no longer shown.
+    pub async fn delete_snapshot(&self, meeting: &MeetingId, id: i64) -> Result<bool, DbError> {
+        let Some(name) = self.repo.delete_snapshot(meeting, id).await? else {
+            return Ok(false);
+        };
+        let path = self.snapshot_folder(meeting).join(name);
+        match tokio::fs::remove_file(&path).await {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+                log::warn!(target: "screen", "could not remove snapshot {id} of {meeting}: {error}");
+            }
+            Ok(()) | Err(_) => {}
+        }
+        Ok(true)
     }
 }
 
@@ -95,6 +133,7 @@ mod tests {
             Arc::new(FakeScreenRepo::default()),
             Arc::new(control),
             Arc::new(FakeClock::new(at("2026-10-12T09:00:00Z"))),
+            PathBuf::from("no-recordings"),
         )
     }
 

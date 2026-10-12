@@ -7,6 +7,7 @@
 //! `ScreenCaptureKit` (which would prompt) once that says yes.
 
 mod native;
+mod ocr;
 mod stream;
 mod windows;
 mod writer;
@@ -42,6 +43,11 @@ pub(crate) fn open_settings() -> Result<(), ScreenError> {
     } else {
         Err(ScreenError::SettingsUnavailable)
     }
+}
+
+/// The text Apple Vision reads in the image at `path`.
+pub(crate) fn recognize_text(path: &std::path::Path) -> Result<String, ScreenError> {
+    ocr::recognize_text(path)
 }
 
 /// Asks macOS for Screen Recording; true when granted.

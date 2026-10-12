@@ -1,15 +1,17 @@
 /**
  * The record panel's page (CAP-10): the pill, wired to the recorder, and
- * auto-stop's offer and the consent reminder under it (CAP-07, CAP-13). The window is transparent and a
+ * auto-stop's offer and the consent reminders under it (CAP-07, CAP-13,
+ * CAP-09's screen capture). The window is transparent and a
  * little larger than the pill; the pill hugs the screen edge the panel is
  * snapped to and grows away from it. During the first recording, PRV-01's
  * "Pause for sensitive discussions" tip sits under the pill once.
  */
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useRef, type MutableRefObject } from 'react';
 
 import { PauseTipSlot } from '@/features/retention';
 import { ConsentReminder } from '@/features/consent';
+import { ScreenReminder, showCaptureMenu, type CaptureSource } from '@/features/screen';
 import { useIpcEvent } from '@/lib/ipc';
 import { events } from '@/lib/ipc/generated/recording';
 import { cn } from '@/ui/cn';
@@ -51,9 +53,18 @@ function openNotes(): void {
   });
 }
 
+/** Pops up the screen picker for the recording, remembering the pick. */
+function pickScreen(snapshot: RecordingSnapshot, picked: MutableRefObject<CaptureSource | null>) {
+  if (snapshot.phase === 'idle' || snapshot.meetingId === null) return;
+  void showCaptureMenu(snapshot.meetingId, picked.current, (source) => {
+    picked.current = source;
+  });
+}
+
 /** The pill's actions over the recorder, the devices and auto-stop. */
 function usePillActions(snapshot: RecordingSnapshot): PillActions {
   const recorder = useRecordingActions();
+  const picked = useRef<CaptureSource | null>(null);
   const devices = useDeviceControls();
   const answers = useAutoStopAnswers();
   return {
@@ -72,6 +83,9 @@ function usePillActions(snapshot: RecordingSnapshot): PillActions {
           devices.microphone.mutate(name);
         }),
       );
+    },
+    onScreen: () => {
+      pickScreen(snapshot, picked);
     },
     onSystemAudio: () => {
       devices.systemAudio.mutate(!snapshot.systemAudio);
@@ -155,6 +169,7 @@ export function RecordPanel() {
         <NextMeetingOffer autoStop={autoStop} />
         {snapshot.phase === 'recording' && autoStop.split === null ? <PauseTipSlot /> : null}
         <ConsentReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
+        <ScreenReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
       </div>
     </main>
   );

@@ -1,6 +1,7 @@
 /**
  * The Notes tab: the pre-meeting brief of its calendar event (NOT-08), the
- * suggested follow-up email's "View draft" banner (NOT-07), the
+ * suggested follow-up email's "View draft" banner (NOT-07), the Images
+ * strip of the shared screen's snapshots (CAP-09), the
  * meeting's template (NOT-04), its action items (AI-05),
  * then the enhanced notes (NOT-02) and "My notes" (NOT-01) behind a
  * segmented pill (ui.md §3 Tabs, "Notes sub-switch"); ⌘E switches between
@@ -22,6 +23,7 @@ import {
   useIsEnhancing,
 } from '@/features/notes';
 import { Notepad, notepadCopy } from '@/features/notepad';
+import { MeetingImages } from '@/features/screen';
 import { MeetingTemplatePicker } from '@/features/templates';
 import { useMountEffect } from '@/hooks/useMountEffect';
 import { SegmentedControl } from '@/ui/segmented-control';
@@ -73,6 +75,7 @@ function Preface({ meetingId }: MeetingSlotProps) {
     <>
       <MeetingBrief meetingId={meetingId} />
       <MeetingFollowUp meetingId={meetingId} />
+      <MeetingImages meetingId={meetingId} />
     </>
   );
 }

@@ -34,4 +34,18 @@ pub struct Snapshot {
     pub width: u32,
     /// Its size in pixels.
     pub height: u32,
+    /// The text read in it (`screen_context`); `None` until it was read.
+    pub text: Option<String>,
+}
+
+/// What the shared screen showed at one moment, for the notes (NOT-02):
+/// a read snapshot's text and its optional description.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ScreenText {
+    /// Where on the recording's timeline the snapshot was taken.
+    pub at: Millis,
+    /// What Apple Vision read in it; may be empty when it was described.
+    pub text: String,
+    /// The `vision.describe` answer, when snapshots are described.
+    pub description: Option<String>,
 }

@@ -1142,6 +1142,11 @@ export type Route =
  */
 "recap" | 
 /**
+ * A shared-screen snapshot described in words (CAP-09); a picture
+ * goes with the prompt, so only Claude serves it.
+ */
+"vision.describe" | 
+/**
  * Embeddings for semantic search (AI-01); always local (§8 D3).
  */
 "embed"
@@ -1166,7 +1171,18 @@ videoFps: number;
 /**
  * Keep a snapshot when the shared screen changes (every 10 s at most).
  */
-snapshots: boolean }
+snapshots: boolean; 
+/**
+ * Describe each snapshot with Claude (`vision.describe`), sending the
+ * picture. Off by default: only text read on this Mac reaches the
+ * notes otherwise.
+ */
+describeSnapshots: boolean; 
+/**
+ * How many times the screen capture consent reminder has shown; it
+ * shows the first [`CONSENT_REMINDERS`] times a capture runs.
+ */
+consentRemindersShown: number }
 /**
  * An outside service. Stored in `egress_log.service`; keys the
  * `network.services` switches in the settings.

@@ -19,6 +19,7 @@ use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, MeetingState, SqliteMee
 use crate::notes::{NotesRepo, SqliteNotesRepo};
 use crate::people::{AttendeeRepo, MeRepo, Person, PersonRepo, SqlitePeopleRepo};
 use crate::redaction::{NoRedaction, TextRedactor};
+use crate::screen::{ScreenText, ScreenTexts, SqliteScreenRepo};
 use crate::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 use crate::vocabulary::{PromptVocabulary, SqliteVocabRepo};
 
@@ -54,7 +55,9 @@ pub struct MaterialSources {
     pub history: Arc<dyn EnhancedNotesReader>,
     /// Custom vocabulary.
     pub vocabulary: Arc<dyn Vocabulary>,
-    /// Hides secrets in the transcript lines (NOT-09).
+    /// What the shared screen showed (CAP-09).
+    pub screen: Arc<dyn ScreenTexts>,
+    /// Hides secrets in the transcript and screen lines (NOT-09).
     pub redactor: Arc<dyn TextRedactor>,
 }
 
@@ -79,6 +82,7 @@ impl MaterialSources {
             vocabulary: Arc::new(PromptVocabulary::new(Arc::new(SqliteVocabRepo::new(
                 database.clone(),
             )))),
+            screen: Arc::new(SqliteScreenRepo::new(database.clone())),
             redactor: Arc::new(NoRedaction),
         }
     }
@@ -119,6 +123,7 @@ impl MaterialSources {
             notes: self.notes(meeting).await?,
             previous: self.previous(&info).await?,
             vocabulary: self.vocabulary.terms(meeting).await?,
+            screen: self.screen(meeting).await?,
             meeting: info,
             attendee_ids,
         }))
@@ -140,6 +145,24 @@ impl MaterialSources {
             .zip(texts)
             .map(|(line, text)| TranscriptLine { text, ..line })
             .collect()
+    }
+
+    /// What the shared screen showed, its text and descriptions redacted.
+    async fn screen(&self, meeting: &MeetingId) -> Result<Vec<ScreenText>, DbError> {
+        let shown = self.screen.screen_texts(meeting).await?;
+        let texts = shown
+            .iter()
+            .flat_map(|s| [s.text.clone(), s.description.clone().unwrap_or_default()])
+            .collect();
+        let mut redacted = self.redactor.redact(texts).await.into_iter();
+        Ok(shown
+            .into_iter()
+            .map(|shown| ScreenText {
+                text: redacted.next().unwrap_or_default(),
+                description: redacted.next().filter(|_| shown.description.is_some()),
+                at: shown.at,
+            })
+            .collect())
     }
 
     async fn event(&self, state: &MeetingState) -> Result<Option<CalendarEvent>, DbError> {

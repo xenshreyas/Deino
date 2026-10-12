@@ -9,11 +9,12 @@
 use std::sync::mpsc::sync_channel;
 use std::time::Duration;
 
-use cidre::sc;
+use cidre::{ns, sc};
 use deino_domain::BundleId;
 
 use super::native::connect_window_server;
 use crate::error::ScreenError;
+use crate::pick::DisplayInfo;
 use crate::ports::Windows;
 use crate::target::WindowInfo;
 
@@ -42,6 +43,10 @@ impl Windows for MacWindows {
         .flatten()
         .unwrap_or(2.0)
     }
+
+    fn displays(&self) -> Result<Vec<DisplayInfo>, ScreenError> {
+        with_content(|content| content.displays().iter().map(display_info).collect())
+    }
 }
 
 /// Runs `read` over the current shareable content and returns its result.
@@ -62,6 +67,18 @@ pub(super) fn with_content<T: Send + 'static>(
         })
 }
 
+/// A display as plain data, with its backing scale.
+fn display_info(display: &sc::Display) -> DisplayInfo {
+    let filter = sc::ContentFilter::with_display_excluding_windows(display, &ns::Array::new());
+    let points = |side: isize| f64::from(i32::try_from(side).unwrap_or(0));
+    DisplayInfo {
+        id: display.display_id().0,
+        width: points(display.width()),
+        height: points(display.height()),
+        scale: f64::from(sc::ShareableContent::info_for_filter(&filter).point_pixel_scale()),
+    }
+}
+
 /// A window as plain data.
 fn info(window: &sc::Window) -> WindowInfo {
     let frame = window.frame();
@@ -75,5 +92,7 @@ fn info(window: &sc::Window) -> WindowInfo {
         height: frame.size.height,
         layer: i64::try_from(window.window_layer()).unwrap_or(i64::MAX),
         on_screen: window.is_on_screen(),
+        title: window.title().map(|title| title.to_string()),
+        app_name: window.owning_app().map(|app| app.app_name().to_string()),
     }
 }

@@ -8,7 +8,12 @@
 //!   Security → Screen Recording. Deino never changes the setting;
 //! - `turn_off_for_meeting`: "Turn off for this meeting": stops the
 //!   meeting's capture and keeps it off;
-//! - `snapshots`: a meeting's kept snapshots, in time order;
+//! - `snapshots`, `snapshot_folder`, `delete_snapshot`: the meeting's
+//!   kept snapshots (the Images strip);
+//! - `capture_choices`, `capture_source`: the record panel's window or
+//!   screen picker ([`ScreenPicker`]);
+//! - `consent_reminder`, `stop_consent_reminders`: the reminder shown the
+//!   first three times a capture runs;
 //! - [`CaptureOnStart`]: the recorder's start observer that starts a
 //!   capture when the settings, the detected meeting app and the
 //!   permission allow it.
@@ -20,8 +25,10 @@
 mod commands;
 #[cfg(test)]
 mod contract_tests;
+mod pick;
 mod start_capture;
 
+pub use pick::ScreenPicker;
 pub use start_capture::CaptureOnStart;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};

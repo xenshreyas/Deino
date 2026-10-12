@@ -66,6 +66,7 @@ pub(super) fn material(notes: Option<&str>, lines: Vec<TranscriptLine>) -> Mater
         attendee_ids: Vec::new(),
         previous: None,
         vocabulary: Vec::new(),
+        screen: Vec::new(),
     }
 }
 

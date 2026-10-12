@@ -44,8 +44,9 @@ const TARGET: &str = "deino_screen";
 pub struct CaptureParts {
     /// What to capture.
     pub plan: CapturePlan,
-    /// The meeting window.
-    pub window: u32,
+    /// The captured window, watched for visibility; `None` for a whole
+    /// display, which is always on screen.
+    pub window: Option<u32>,
     /// The recorder's clock.
     pub clock: Arc<dyn RecordingClock>,
     /// The shareable windows, for the visibility check.
@@ -152,6 +153,9 @@ impl Capture {
 
     /// Whether the window is on screen, re-checked every [`VISIBILITY_EVERY`].
     fn window_visible(&mut self, at: Millis) -> bool {
+        let Some(window) = self.parts.window else {
+            return true;
+        };
         let due = self.checked_at.is_none_or(|checked| {
             at.0 >= checked.0.saturating_add(VISIBILITY_EVERY.0) || at < checked
         });
@@ -160,14 +164,14 @@ impl Capture {
         }
         self.checked_at = Some(at);
         let visible = match self.parts.windows.list() {
-            Ok(windows) => is_visible(&windows, self.parts.window),
+            Ok(windows) => is_visible(&windows, window),
             Err(error) => {
                 log::debug!(target: TARGET, "could not list windows: {error}");
                 self.visible
             }
         };
         if visible != self.visible {
-            log::info!(target: TARGET, "meeting window {}: capture {}", self.parts.window, if visible { "resumed" } else { "paused" });
+            log::info!(target: TARGET, "meeting window {window}: capture {}", if visible { "resumed" } else { "paused" });
         }
         self.visible = visible;
         visible
@@ -244,6 +248,12 @@ impl Capture {
     fn path(&self, name: impl AsRef<Path>) -> PathBuf {
         self.parts.plan.folder.join(name)
     }
+}
+
+/// Whether `folder` already holds a video of this recording (finished, or
+/// still being written): a second capture must not replace it.
+pub fn has_video(folder: &Path) -> bool {
+    folder.join(VIDEO_FILE).exists() || folder.join(VIDEO_PART).exists()
 }
 
 /// A snapshot's file name: its time, zero-padded so names sort in order.

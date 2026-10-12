@@ -44,6 +44,7 @@ export const panelCopy = {
   resume: 'Resume recording',
   stop: 'Stop recording',
   microphone: 'Microphone',
+  screen: 'Screen to capture',
   systemDefault: 'System default',
   systemAudioOn: 'Recording the call’s audio — click to stop',
   systemAudioOff: 'Not recording the call’s audio — click to record it',

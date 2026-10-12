@@ -27,6 +27,7 @@ function actions(): PillActions {
     onResume: vi.fn(),
     onStop: vi.fn(),
     onMicrophone: vi.fn(),
+    onScreen: vi.fn(),
     onSystemAudio: vi.fn(),
     onOpenNotes: vi.fn(),
     onKeep: vi.fn(),
@@ -56,12 +57,14 @@ describe('Pill', () => {
     fireEvent.click(screen.getByRole('button', { name: panelCopy.pause }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.stop }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.microphone }));
+    fireEvent.click(screen.getByRole('button', { name: panelCopy.screen }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.systemAudioOn }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.openNotes }));
 
     expect(handlers.onPause).toHaveBeenCalledOnce();
     expect(handlers.onStop).toHaveBeenCalledOnce();
     expect(handlers.onMicrophone).toHaveBeenCalledOnce();
+    expect(handlers.onScreen).toHaveBeenCalledOnce();
     expect(handlers.onSystemAudio).toHaveBeenCalledOnce();
     expect(handlers.onOpenNotes).toHaveBeenCalledOnce();
   });

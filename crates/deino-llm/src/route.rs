@@ -69,6 +69,11 @@ pub enum Route {
     #[serde(rename = "recap")]
     #[sqlx(rename = "recap")]
     Recap,
+    /// A shared-screen snapshot described in words (CAP-09); a picture
+    /// goes with the prompt, so only Claude serves it.
+    #[serde(rename = "vision.describe")]
+    #[sqlx(rename = "vision.describe")]
+    VisionDescribe,
     /// Embeddings for semantic search (AI-01); always local (§8 D3).
     #[serde(rename = "embed")]
     #[sqlx(rename = "embed")]
@@ -89,7 +94,7 @@ pub enum RouteTier {
 
 impl Route {
     /// Every route, in the order Settings → AI lists them.
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::NotesEnhance,
         Self::NotesEdit,
         Self::Chat,
@@ -101,6 +106,7 @@ impl Route {
         Self::Brief,
         Self::FollowupEmail,
         Self::Recap,
+        Self::VisionDescribe,
         Self::Embed,
     ];
 
@@ -118,6 +124,7 @@ impl Route {
             Self::Brief => "brief",
             Self::FollowupEmail => "followup.email",
             Self::Recap => "recap",
+            Self::VisionDescribe => "vision.describe",
             Self::Embed => "embed",
         }
     }
@@ -135,7 +142,8 @@ impl Route {
             | Self::ExtractInsights
             | Self::Tagging
             | Self::Title
-            | Self::EntitySummary => RouteTier::Fast,
+            | Self::EntitySummary
+            | Self::VisionDescribe => RouteTier::Fast,
             Self::Embed => RouteTier::Embedding,
         }
     }
@@ -191,7 +199,8 @@ mod tests {
                 "extract.insights",
                 "tagging",
                 "title",
-                "entity.summary"
+                "entity.summary",
+                "vision.describe"
             ]
         );
         assert_eq!(Route::Embed.tier(), RouteTier::Embedding);

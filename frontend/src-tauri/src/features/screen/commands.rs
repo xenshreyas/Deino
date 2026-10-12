@@ -8,11 +8,13 @@
 
 use std::sync::Arc;
 
-use deino_core::screen::{ScreenService, Snapshot};
+use deino_core::screen::{ConsentReminders, ScreenService, Snapshot};
 use deino_domain::{AppError, MeetingId};
-use deino_screen::{CaptureStatus, ScreenCapture};
+use deino_screen::{CaptureStatus, ScreenCapture, Source, TargetChoice};
 use serde::Serialize;
 use tauri::{Runtime, State};
+
+use super::ScreenPicker;
 
 use crate::error::IntoIpc;
 
@@ -22,7 +24,13 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         status,
         open_screen_recording_settings,
         turn_off_for_meeting,
-        snapshots
+        snapshots,
+        snapshot_folder,
+        delete_snapshot,
+        capture_choices,
+        capture_source,
+        consent_reminder,
+        stop_consent_reminders
     ]
 }
 
@@ -76,4 +84,73 @@ async fn snapshots(
     meeting_id: MeetingId,
 ) -> Result<Vec<Snapshot>, AppError> {
     screen.snapshots(&meeting_id).await.into_ipc()
+}
+
+/// The folder holding the meeting's snapshot PNG files (inside the recordings
+/// folder, which the asset protocol may read), for the Images strip.
+#[tauri::command]
+#[specta::specta]
+async fn snapshot_folder(
+    screen: State<'_, Arc<ScreenService>>,
+    meeting_id: MeetingId,
+) -> Result<String, AppError> {
+    Ok(screen
+        .snapshot_folder(&meeting_id)
+        .to_string_lossy()
+        .into_owned())
+}
+
+/// Deletes one snapshot, its row and its PNG; false when it was gone.
+#[tauri::command]
+#[specta::specta]
+async fn delete_snapshot(
+    screen: State<'_, Arc<ScreenService>>,
+    meeting_id: MeetingId,
+    snapshot_id: i64,
+) -> Result<bool, AppError> {
+    screen
+        .delete_snapshot(&meeting_id, snapshot_id)
+        .await
+        .into_ipc()
+}
+
+/// The record panel's picker: the displays and the other apps' windows.
+#[tauri::command]
+#[specta::specta]
+async fn capture_choices(
+    capture: State<'_, Arc<ScreenCapture>>,
+) -> Result<Vec<TargetChoice>, AppError> {
+    capture.choices().into_ipc()
+}
+
+/// Captures `source` for the recording of `meeting_id` from now on; false
+/// when Settings keeps neither video nor snapshots.
+#[tauri::command]
+#[specta::specta]
+async fn capture_source(
+    picker: State<'_, Arc<ScreenPicker>>,
+    meeting_id: MeetingId,
+    source: Source,
+) -> Result<bool, AppError> {
+    picker.pick(&meeting_id, source).await
+}
+
+/// Whether the capture of `meeting_id` shows the consent reminder (the
+/// first three captures).
+#[tauri::command]
+#[specta::specta]
+async fn consent_reminder(
+    reminders: State<'_, Arc<ConsentReminders>>,
+    meeting_id: MeetingId,
+) -> Result<bool, AppError> {
+    Ok(reminders.remind(&meeting_id).await)
+}
+
+/// "Don't show again" on the screen capture reminder.
+#[tauri::command]
+#[specta::specta]
+async fn stop_consent_reminders(
+    reminders: State<'_, Arc<ConsentReminders>>,
+) -> Result<(), AppError> {
+    reminders.stop().await.into_ipc()
 }

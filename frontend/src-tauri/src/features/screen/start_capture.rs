@@ -44,16 +44,21 @@ impl<R: Runtime> CaptureOnStart<R> {
         Some(PlanInput {
             meeting: meeting.clone(),
             folder: deino_audio::recording_dir(&recordings, meeting),
-            settings: CaptureSettings {
-                detected_meetings: settings.detected_meetings,
-                video: settings.video,
-                frame_rate: FrameRate::new(settings.video_fps),
-                snapshots: settings.snapshots,
-            },
+            settings: capture_settings(settings),
             meeting_app,
             turned_off: screen.turned_off(meeting).await,
             permitted: capture.permitted(),
         })
+    }
+}
+
+/// The settings as `deino-screen` reads them.
+pub(super) fn capture_settings(settings: deino_core::settings::ScreenSettings) -> CaptureSettings {
+    CaptureSettings {
+        detected_meetings: settings.detected_meetings,
+        video: settings.video,
+        frame_rate: FrameRate::new(settings.video_fps),
+        snapshots: settings.snapshots,
     }
 }
 

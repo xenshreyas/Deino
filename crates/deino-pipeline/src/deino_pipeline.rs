@@ -65,12 +65,12 @@ pub use stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes,
     AutomationsStage, DiarizeStage, EnhanceNotesStage, FinalTranscriptionStage,
     IdentifySpeakersStage, IndexStage, MeetingTitler, NotesEnhancer, RepassSetting,
-    UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
+    ScreenContextReader, ScreenContextStage, UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use stages::{
     FixedAutomaticNotes, FixedRepass, RecordedAutoFiling, RecordedAutoTags, RecordedAutomations,
     RecordedEnhancer, RecordedEntityUpdates, RecordedFixer, RecordedIdentifications,
-    RecordedIndexing, RecordedTitler, ScriptedAutoExporter,
+    RecordedIndexing, RecordedScreenContext, RecordedTitler, ScriptedAutoExporter,
 };
 pub use trigger::PipelineTrigger;

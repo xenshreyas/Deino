@@ -32,7 +32,9 @@ use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
 use linkme::distributed_slice;
 
-use crate::stages::{AutomaticNotes, MeetingTitler, NotesEnhancer, RepassSetting, VocabFixer};
+use crate::stages::{
+    AutomaticNotes, MeetingTitler, NotesEnhancer, RepassSetting, ScreenContextReader, VocabFixer,
+};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -89,6 +91,8 @@ pub struct StagePorts {
     pub repass: Arc<dyn RepassSetting>,
     /// Corrects transcripts with the vocabulary (TRN-05, `vocab_fixups`).
     pub vocab_fixer: Arc<dyn VocabFixer>,
+    /// Reads the shared screen's snapshots before the notes (CAP-09).
+    pub screen_context: Arc<dyn ScreenContextReader>,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -132,6 +136,7 @@ impl StagePorts {
             transcriber: Arc::new(ScriptedTracks::default()),
             repass: Arc::new(crate::stages::FixedRepass(false)),
             vocab_fixer: Arc::new(crate::stages::RecordedFixer::default()),
+            screen_context: Arc::new(crate::stages::RecordedScreenContext::default()),
         }
     }
 }
@@ -247,6 +252,7 @@ mod tests {
                 "diarize",
                 "identify_speakers",
                 "vocab_fixups",
+                "screen_context",
                 "enhance_notes",
                 "extract_action_items",
                 "auto_title",

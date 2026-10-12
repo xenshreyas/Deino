@@ -39,6 +39,7 @@ mod prompt;
 mod repo;
 #[cfg(test)]
 mod repo_tests;
+mod screen;
 mod service;
 #[cfg(test)]
 mod service_tests;

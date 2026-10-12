@@ -13,6 +13,7 @@ use deino_domain::{MeetingId, Millis};
 use crate::error::ScreenError;
 use crate::frame::{Frame, FrameRate};
 use crate::phash::PHash;
+use crate::pick::DisplayInfo;
 use crate::target::WindowInfo;
 
 /// Where a recording is.
@@ -46,6 +47,11 @@ pub trait Windows: Send + Sync {
     /// The backing scale (pixels per point) of the display showing window
     /// `id`; 2.0 on Retina displays.
     fn scale(&self, id: u32) -> f64;
+
+    /// Every display macOS shares, with its scale. None by default.
+    fn displays(&self) -> Result<Vec<DisplayInfo>, ScreenError> {
+        Ok(Vec::new())
+    }
 }
 
 /// Opens a stream of one window's frames.
@@ -58,6 +64,17 @@ pub trait ScreenSource: Send + Sync {
         size: (u32, u32),
         rate: FrameRate,
     ) -> Result<Box<dyn FrameFeed>, ScreenError>;
+
+    /// Starts capturing the whole display `id` (Deino's own windows
+    /// left out); unsupported by default.
+    fn open_display(
+        &self,
+        _id: u32,
+        _size: (u32, u32),
+        _rate: FrameRate,
+    ) -> Result<Box<dyn FrameFeed>, ScreenError> {
+        Err(ScreenError::Unsupported)
+    }
 }
 
 /// A running window capture.

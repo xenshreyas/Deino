@@ -5,7 +5,7 @@
  */
 export { consentApi } from './api';
 export { ChatMessageCard, messageError } from './components/chat-message-settings';
-export { ConsentCard } from './components/consent-card';
+export { ConsentCard, type ReminderCopy } from './components/consent-card';
 export { ConsentReminder, shouldRemind } from './components/consent-reminder';
 export { ConsentSettings } from './components/consent-settings';
 export { consentCopy } from './copy';

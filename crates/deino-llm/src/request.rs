@@ -37,6 +37,18 @@ pub enum Part {
     ToolUse(ToolCall),
     /// The answer to a tool call (user messages only).
     ToolResult(ToolResult),
+    /// A picture (user messages only; Anthropic only: other providers
+    /// refuse or drop it, so callers check the route's provider first).
+    Image(ImagePart),
+}
+
+/// A picture sent to a multimodal model (CAP-09's `vision.describe`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ImagePart {
+    /// Its media type, such as `image/png`.
+    pub media_type: String,
+    /// Its bytes, base64-encoded (standard alphabet, padded).
+    pub base64: String,
 }
 
 /// A tool call the model asked for.
@@ -84,7 +96,7 @@ impl Message {
             .iter()
             .filter_map(|part| match part {
                 Part::Text(text) => Some(text.as_str()),
-                Part::ToolUse(_) | Part::ToolResult(_) => None,
+                Part::ToolUse(_) | Part::ToolResult(_) | Part::Image(_) => None,
             })
             .collect()
     }

@@ -15,6 +15,12 @@ AI feature's evals (notes, action items, insights, chat).
 | `one-on-one.json` | weekly 1:1 | Wed 7 Oct | 19 min | mic + system | yes | first 54 s |
 | `standup.json` | daily standup, 5 people | Thu 8 Oct | 7 min | mic + system | no | first 53 s |
 
+`screen/slide-1.png` and `screen/slide-2.png` are two 960 × 540 slides
+(a Q3 review, a launch plan) rendered with Pillow: CAP-09's shared-screen
+snapshots, read by Vision in `deino-screen`'s OCR test and by a fake OCR in
+`deino-core`'s slide-deck acceptance test, and shown in `pnpm dev:mock`'s
+Images strip (`?screen=allowed`).
+
 The user is always **Shreyas** (`shreyas@deino.dev`), CTO of Deino, a
 fictional field-service scheduling startup. Every person, company, domain and
 number is invented; the meetings share one world (the same Q3 figures, the
