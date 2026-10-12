@@ -9,12 +9,14 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { filterOptionsQuery } from '@/features/action-items';
+import { useAutomations } from '@/features/automations';
 import { ExportDialog } from '@/features/export';
 
 import {
   exportMeetings,
   fileMeetings,
   mergeMeetings,
+  runAutomation,
   tagMeetings,
   trashSelection,
 } from '../actions';
@@ -115,6 +117,7 @@ function SelectionActions({ options }: { options: FilterOptions }) {
   const page = usePageStore();
   const ids = [...page.selection.ids];
   const exportOne = useExportOne(ids);
+  const automations = useAutomations().data ?? [];
   return (
     <>
       <BulkBar
@@ -126,6 +129,11 @@ function SelectionActions({ options }: { options: FilterOptions }) {
         onExportMany={(format) => void exportMeetings(ids, format)}
         onMerge={() => {
           page.askMerge(ids);
+        }}
+        automations={automations}
+        onRunAutomation={(id) => {
+          const automation = automations.find((candidate) => candidate.id === id);
+          if (automation !== undefined) void runAutomation(ids, automation);
         }}
         onDelete={trashSelection}
         onClear={page.clearSelection}

@@ -1,11 +1,12 @@
 /**
  * The bulk action bar (Circleback §14 "Bulk actions"): floats at the bottom
  * of the page while meetings are selected, with tag, add to folder, export,
- * merge, run automation (WIP until AUT-01) and delete. A floating layer, so
+ * merge, run automation (AUT-01) and delete. A floating layer, so
  * it carries the chat bar's shadow (ui.md §3 Chat bar).
  */
 import type { ReactNode } from 'react';
 
+import type { AutomationId } from '@/features/automations';
 import { Button } from '@/ui/button';
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/ui/command';
 import { Combine, FolderInput, ICON_PROPS, Tag, Trash2, Workflow, X } from '@/ui/icons';
@@ -23,6 +24,9 @@ export interface BulkBarProps extends ExportButtonProps {
   onTag: (tagId: FilterOptions['tags'][number]['id']) => void;
   onFile: (folderId: FilterOptions['folders'][number]['id']) => void;
   onMerge: () => void;
+  /** The automations "Run automation" offers. */
+  automations: readonly { id: AutomationId; name: string }[];
+  onRunAutomation: (id: AutomationId) => void;
   onDelete: () => void;
   onClear: () => void;
 }
@@ -33,11 +37,14 @@ function PickerButton<Id extends string>(props: {
   label: string;
   items: readonly { id: Id; name: string }[];
   onPick: (id: Id) => void;
+  /** What the list says when it has no items. */
+  empty?: string;
+  className?: string;
 }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className={props.className}>
           {props.icon}
           {props.label}
         </Button>
@@ -46,7 +53,7 @@ function PickerButton<Id extends string>(props: {
         <Command>
           <CommandInput placeholder={props.label} aria-label={props.label} />
           <CommandList className="max-h-64">
-            <CommandEmpty>{copy.filter.nothing}</CommandEmpty>
+            <CommandEmpty>{props.empty ?? copy.filter.nothing}</CommandEmpty>
             {props.items.map((item) => (
               <CommandItem
                 key={item.id}
@@ -65,23 +72,21 @@ function PickerButton<Id extends string>(props: {
   );
 }
 
-/** "Run automation": shown, but disabled with a WIP badge until AUT-01 (D12). */
-function AutomationButton() {
+/** "Run automation": runs the picked automation on the selection (AUT-01). */
+function AutomationButton({
+  automations,
+  onRunAutomation,
+}: Pick<BulkBarProps, 'automations' | 'onRunAutomation'>) {
   return (
-    // Hidden on narrow windows, where the bar must fit the actions that work.
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled
-      aria-disabled="true"
+    // Hidden on narrow windows, where the bar must fit the more common actions.
+    <PickerButton
+      icon={<Workflow {...ICON_PROPS} />}
+      label={copy.bulk.automation}
+      items={automations}
+      onPick={onRunAutomation}
+      empty={copy.bulk.noAutomations}
       className="hidden xl:inline-flex"
-    >
-      <Workflow {...ICON_PROPS} />
-      {copy.bulk.automation}
-      <span className="rounded-full border border-border px-1.5 text-[11px] leading-4 text-fg-muted">
-        {copy.bulk.wip}
-      </span>
-    </Button>
+    />
   );
 }
 
@@ -141,7 +146,7 @@ export function BulkBar(props: BulkBarProps) {
       </span>
       <PickerButtons {...props} />
       <MeetingButtons {...props} />
-      <AutomationButton />
+      <AutomationButton {...props} />
       <Button variant="danger" size="sm" onClick={props.onDelete}>
         <Trash2 {...ICON_PROPS} />
         {copy.bulk.delete}
