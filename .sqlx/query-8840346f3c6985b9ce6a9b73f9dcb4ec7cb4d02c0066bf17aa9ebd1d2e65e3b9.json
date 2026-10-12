@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Every API key, newest first (Settings → Developer).\nSELECT\n    id AS \"id: ApiKeyId\",\n    name,\n    scope AS \"scope: ApiKeyScope\",\n    secret_hash,\n    created_at AS \"created_at: DateTime<Utc>\",\n    last_used_at AS \"last_used_at: DateTime<Utc>\",\n    revoked_at AS \"revoked_at: DateTime<Utc>\"\nFROM api_keys\nORDER BY created_at DESC, id DESC\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ApiKeyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "scope: ApiKeyScope",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "secret_hash",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_used_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "revoked_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "8840346f3c6985b9ce6a9b73f9dcb4ec7cb4d02c0066bf17aa9ebd1d2e65e3b9"
+}

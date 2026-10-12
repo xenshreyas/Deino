@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- One API key and its hash, for authentication.\nSELECT\n    id AS \"id: ApiKeyId\",\n    name,\n    scope AS \"scope: ApiKeyScope\",\n    secret_hash,\n    created_at AS \"created_at: DateTime<Utc>\",\n    last_used_at AS \"last_used_at: DateTime<Utc>\",\n    revoked_at AS \"revoked_at: DateTime<Utc>\"\nFROM api_keys\nWHERE id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ApiKeyId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "scope: ApiKeyScope",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "secret_hash",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_used_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "revoked_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "462676bd2c8eeebc522b227531fd861a524fd2d8267c0bb5923a5e33456db57d"
+}

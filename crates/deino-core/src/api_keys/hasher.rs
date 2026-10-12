@@ -33,7 +33,13 @@ impl TokenSource for OsTokens {
         OsRng
             .try_fill_bytes(&mut bytes)
             .map_err(|error| error.to_string())?;
-        Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
+        let mut hex = String::with_capacity(SECRET_BYTES * 2);
+        for byte in bytes {
+            for nibble in [byte >> 4, byte & 0x0f] {
+                hex.push(char::from_digit(u32::from(nibble), 16).unwrap_or('0'));
+            }
+        }
+        Ok(hex)
     }
 }
 

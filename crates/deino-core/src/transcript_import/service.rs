@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use chrono::{DateTime, TimeDelta, Utc};
+use chrono::TimeDelta;
 use deino_doc::Flavor;
 use deino_domain::{
     Channel, Clock, MeetingId, MeetingSource, MeetingStatus, Millis, PaletteColor, Seconds,
@@ -61,13 +61,21 @@ impl TranscriptImporter {
     pub async fn import(&self, import: &TranscriptImport) -> Result<MeetingId, TranscriptImportError> {
         let title = MeetingTitle::parse(&import.name)?;
         let lines = lines(import)?;
-        let now = self.ports.clock.now();
+        let at = import.created_at.unwrap_or_else(|| self.ports.clock.now());
         let id = MeetingId::new(format!(
             "meeting-{}",
             SegmentId::generate(self.ports.clock.as_ref())
         ));
-        let at = import.created_at.unwrap_or(now);
-        if let Err(error) = self.write(&id, (title, at), import, &lines).await {
+        let meeting = NewMeeting {
+            id: id.clone(),
+            title,
+            status: MeetingStatus::Ready,
+            source: MeetingSource::Import,
+            created_at: at,
+            started_at: Some(at),
+            folder_path: None,
+        };
+        if let Err(error) = self.write(&meeting, import, &lines).await {
             if let Err(cleanup) = self.ports.trash.delete(&id).await {
                 log::warn!(target: "api", "could not remove a half-imported meeting: {cleanup}");
             }
@@ -80,12 +88,12 @@ impl TranscriptImporter {
 
     async fn write(
         &self,
-        id: &MeetingId,
-        (title, at): (MeetingTitle, DateTime<Utc>),
+        meeting: &NewMeeting,
         import: &TranscriptImport,
         lines: &[Line],
     ) -> Result<(), TranscriptImportError> {
-        self.create_meeting(id, title, at, lines).await?;
+        let id = &meeting.id;
+        self.create_meeting(meeting, lines).await?;
         let speakers = self.add_speakers(id, lines).await?;
         self.add_segments(id, lines, &speakers).await?;
         if let Some(doc) = import.notes.as_deref().and_then(ai_doc) {
@@ -104,30 +112,24 @@ impl TranscriptImporter {
         self.apply_tags(id, import).await
     }
 
+    /// The meeting, finished, as long as its transcript.
     async fn create_meeting(
         &self,
-        id: &MeetingId,
-        title: MeetingTitle,
-        at: DateTime<Utc>,
+        meeting: &NewMeeting,
         lines: &[Line],
     ) -> Result<(), TranscriptImportError> {
         let length = lines.last().map_or(0, |line| end_of(line, None).get());
-        let meeting = NewMeeting {
-            id: id.clone(),
-            title,
-            status: MeetingStatus::Ready,
-            source: MeetingSource::Import,
-            created_at: at,
-            started_at: Some(at),
-            folder_path: None,
-        };
-        self.ports.meetings.create(&meeting).await?;
+        let at = meeting.created_at;
+        self.ports.meetings.create(meeting).await?;
         let timing = MeetingTiming {
             started_at: Some(at),
             ended_at: Some(at + TimeDelta::milliseconds(i64::from(length))),
             duration: Some(Seconds(length / 1_000)),
         };
-        self.ports.meetings.set_timing(id, &timing, at).await?;
+        self.ports
+            .meetings
+            .set_timing(&meeting.id, &timing, at)
+            .await?;
         Ok(())
     }
 
@@ -200,16 +202,15 @@ impl TranscriptImporter {
             let found = existing
                 .iter()
                 .find(|tag| tag.name.eq_ignore_ascii_case(wanted.name.trim()));
-            let tag = match found {
-                Some(tag) => tag.id,
-                None => {
-                    let new = NewTag {
-                        name: wanted.name.clone(),
-                        color: None,
-                        description: wanted.description.clone(),
-                    };
-                    self.ports.tags.create(&new).await?.id
-                }
+            let tag = if let Some(tag) = found {
+                tag.id
+            } else {
+                let new = NewTag {
+                    name: wanted.name.clone(),
+                    color: None,
+                    description: wanted.description.clone(),
+                };
+                self.ports.tags.create(&new).await?.id
             };
             self.ports.tags.apply(id, &tag, TagSource::User).await?;
         }
