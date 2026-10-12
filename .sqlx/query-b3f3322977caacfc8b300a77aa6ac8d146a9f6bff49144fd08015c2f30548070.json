@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id: ClipId\", c.meeting_id AS \"meeting_id: MeetingId\",\n                m.title AS meeting_title, c.name, c.start_ms AS \"start: Millis\",\n                c.end_ms AS \"end: Millis\", c.media AS \"media: ClipMedia\", c.path,\n                c.created_at AS \"created_at: DateTime<Utc>\"\n            FROM clips c JOIN meetings m ON m.id = c.meeting_id\n            WHERE m.deleted_at IS NULL\n            ORDER BY c.created_at DESC, c.id DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: ClipId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "start: Millis",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end: Millis",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "media: ClipMedia",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "path",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b3f3322977caacfc8b300a77aa6ac8d146a9f6bff49144fd08015c2f30548070"
+}

@@ -21,6 +21,8 @@ pub mod _example;
 pub mod action_items;
 pub mod automations;
 pub mod calendar;
+pub mod clips;
+pub mod comments;
 pub mod companies;
 pub mod db;
 pub mod detection;
@@ -104,6 +106,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (player::NAME, player::specta()),
         (import::NAME, import::specta()),
         (privacy::NAME, privacy::specta()),
+        (clips::NAME, clips::specta()),
+        (comments::NAME, comments::specta()),
     ];
     builders.extend(dev_builders());
     builders

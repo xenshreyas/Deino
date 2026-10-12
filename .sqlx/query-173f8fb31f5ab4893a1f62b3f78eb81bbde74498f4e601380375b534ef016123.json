@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) AS \"count: i64\" FROM comment_threads t JOIN meetings m ON m.id = t.meeting_id\n            WHERE t.id = ?1 AND m.deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "count: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "173f8fb31f5ab4893a1f62b3f78eb81bbde74498f4e601380375b534ef016123"
+}

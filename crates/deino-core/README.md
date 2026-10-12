@@ -204,6 +204,15 @@ the SQLite adapters behind those ports.
 - `player` (TRN-03, ADR 0040): `PlayerService` lists a meeting's playable
   recording files inside the recordings folder (`MediaFiles`,
   `FsMediaFiles`) and downloads one through the export's `SaveDialog`.
+- `clips` (TRN-04, ADR 0048): `ClipService` cuts a named range of a
+  meeting's recording into `<recording folder>/clips/<name>.<ext>` through
+  the `ClipCutter` port (`ClipSources` is `PlayerService`), with safe file
+  names unique in the folder (`naming`), and lists, renames, deletes and
+  reveals (only inside the recordings folder) them; the `clips` table.
+- `comments` (TRN-06, ADR 0048): `CommentService` and the
+  `comment_threads`/`comments` tables: threads anchored by target, segment
+  ID, UTF-16 offsets and quote; replies, edits, resolve, delete. A
+  re-transcription detaches a thread (`segment_id` NULL), never deletes it.
 - `query` (DEV-02/04, ADR 0035): the read side the `deino` CLI and its MCP
   server answer from. `Library` bundles `MeetingQueries` (list by date, tag,
   folder, person and company; read one with its notes, the newest enhanced

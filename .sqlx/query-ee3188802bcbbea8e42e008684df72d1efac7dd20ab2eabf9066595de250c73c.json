@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT t.id AS \"id: CommentThreadId\", t.meeting_id AS \"meeting_id: MeetingId\",\n                t.target AS \"target: CommentTarget\", t.segment_id AS \"segment_id: SegmentId\",\n                t.start_offset AS \"start: u32\", t.end_offset AS \"end: u32\", t.quote,\n                t.resolved_at AS \"resolved_at: DateTime<Utc>\",\n                t.created_at AS \"created_at: DateTime<Utc>\"\n            FROM comment_threads t JOIN meetings m ON m.id = t.meeting_id\n            WHERE t.meeting_id = ?1 AND m.deleted_at IS NULL\n            ORDER BY t.created_at, t.rowid",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CommentThreadId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "target: CommentTarget",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "segment_id: SegmentId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "start: u32",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end: u32",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "quote",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "resolved_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "ee3188802bcbbea8e42e008684df72d1efac7dd20ab2eabf9066595de250c73c"
+}

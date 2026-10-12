@@ -193,11 +193,13 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "deliveries",
         ],
     ),
-    // ── TRN-01/02 transcript view and edits, TRN-03 player (features/{transcript,player}.rs) ──
+    // ── TRN-01/02 transcript, TRN-03 player, TRN-04 clips, TRN-06 comments ──
     ("transcript", TRANSCRIPT_COMMANDS),
     ("player", &["media", "download"]),
     // ── PRV-02 app lock and the library status (features/privacy.rs) ──
     ("privacy", &["state", "touch", "lock", "unlock", "library"]),
+    ("clips", CLIPS_COMMANDS),
+    ("comments", COMMENTS_COMMANDS),
     // ── FND-11 onboarding: the permissions it asks for ──
     ("onboarding", ONBOARDING_COMMANDS),
     // ── CAP-05 speaker tags (features/speaker_tags.rs) ──

@@ -11,8 +11,9 @@
  * | Notes tab | Enhanced (NOT-02, NOT-03) and My notes (NOT-01) | |
  * | Transcript tab | transcript view (`features/transcript`), with the inherited folder and re-transcribe tools | TRN-01 |
  * | Insights tab | each insight's answers, attributed (AI-06) | |
- * | Clips tab | empty state | TRN-04 |
+ * | Clips tab | the meeting's clips (`features/clips`): play, rename, Finder, delete | TRN-04 |
  * | Chat panel | empty state | AI-02 |
+ * | Comments panel | every comment thread (`features/comments`), detached ones marked | TRN-06 |
  * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
  * | Details panel | created and edited dates, calendar event, related meetings (ORG-03) | |
  * | Player | the docked player (`features/player`), seeking to `?t=` | |
@@ -25,7 +26,8 @@ import { ParticipantsPanel } from '@/features/speakers';
 import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { NotesSlot } from './slots/notes-slot';
-import { ChatPanelSlot, ClipsSlot } from './slots/placeholder-slots';
+import { ClipsSlot, CommentsPanelSlot } from './slots/annotation-slots';
+import { ChatPanelSlot } from './slots/placeholder-slots';
 import { PlayerSlot } from './slots/player-slot';
 import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
@@ -41,6 +43,7 @@ export const MEETING_TABS: readonly MeetingTabSlot[] = [
 /** The right panel's sections, in order. */
 export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
   { id: 'chat', label: meetingCopy.chat, Component: ChatPanelSlot },
+  { id: 'comments', label: meetingCopy.comments, Component: CommentsPanelSlot },
   { id: 'participants', label: meetingCopy.participants, Component: ParticipantsPanel },
   { id: 'details', label: meetingCopy.details, Component: DetailsPanelSlot },
 ];

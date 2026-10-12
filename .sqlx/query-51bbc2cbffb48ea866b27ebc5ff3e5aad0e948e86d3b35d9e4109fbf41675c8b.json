@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id: CommentId\", c.thread_id AS \"thread_id: CommentThreadId\", c.body,\n                c.created_at AS \"created_at: DateTime<Utc>\", c.updated_at AS \"updated_at: DateTime<Utc>\"\n            FROM comments c JOIN comment_threads t ON t.id = c.thread_id\n            WHERE t.meeting_id = ?1\n            ORDER BY c.created_at, c.rowid",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: CommentId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "thread_id: CommentThreadId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "body",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "51bbc2cbffb48ea866b27ebc5ff3e5aad0e948e86d3b35d9e4109fbf41675c8b"
+}

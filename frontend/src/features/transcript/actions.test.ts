@@ -57,12 +57,19 @@ describe('TRANSCRIPT_ACTIONS', () => {
     ]);
   });
 
-  it('offers Play only with a recording, and only Copy on a line still being spoken', () => {
+  it('offers Play and Clip only with a recording, and only Copy on a line still being spoken', () => {
     const saved = context();
     const live = context({ line: { ...saved.line, open: true }, playable: true });
 
-    expect(shown(saved)).toEqual(['copy', 'edit', 'delete']);
-    expect(shown(context({ playable: true }))).toEqual(['play', 'copy', 'edit', 'delete']);
+    expect(shown(saved)).toEqual(['copy', 'edit', 'comment', 'delete']);
+    expect(shown(context({ playable: true }))).toEqual([
+      'play',
+      'copy',
+      'edit',
+      'clip',
+      'comment',
+      'delete',
+    ]);
     expect(shown(live)).toEqual(['copy']);
   });
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO comment_threads (id, meeting_id, target, segment_id, start_offset, end_offset, quote, created_at)\n             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8\n             WHERE ?4 IS NULL\n                OR EXISTS (SELECT 1 FROM transcript_segments WHERE id = ?4 AND meeting_id = ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "7ad585a1c73d0678bcf728f5238e319335fbd59417fb828a7898ce545aed12cf"
+}

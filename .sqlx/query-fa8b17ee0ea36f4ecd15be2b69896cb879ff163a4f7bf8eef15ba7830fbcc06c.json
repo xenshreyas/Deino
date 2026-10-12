@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE comment_threads SET resolved_at = ?2 WHERE id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fa8b17ee0ea36f4ecd15be2b69896cb879ff163a4f7bf8eef15ba7830fbcc06c"
+}

@@ -1,17 +1,11 @@
 /**
  * Resting states for the meeting slots whose feature cards have not shipped:
- * Clips (TRN-04) and Chat (AI-02).
+ * Chat (AI-02).
  * Each card replaces its entry in `slots.ts`.
  */
-import { EmptyState } from '@/ui/empty-state';
-import { type Icon, ICON_PROPS_LARGE, MessageCircle, Play } from '@/ui/icons';
+import { type Icon, ICON_PROPS_LARGE, MessageCircle } from '@/ui/icons';
 
 import { meetingCopy } from '../copy';
-
-/** A tab-sized empty state. */
-function TabPlaceholder({ icon, title, body }: { icon: Icon; title: string; body: string }) {
-  return <EmptyState className="pt-[12vh]" icon={icon} title={title} description={body} />;
-}
 
 /** A compact empty state for the right panel. */
 function PanelPlaceholder({
@@ -32,11 +26,6 @@ function PanelPlaceholder({
       <p className="text-sm text-pretty text-fg-muted">{body}</p>
     </div>
   );
-}
-
-/** Clips tab. */
-export function ClipsSlot() {
-  return <TabPlaceholder icon={Play} title={meetingCopy.clipsTitle} body={meetingCopy.clipsBody} />;
 }
 
 /** Chat panel. */

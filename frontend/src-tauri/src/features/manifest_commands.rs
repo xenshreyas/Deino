@@ -58,3 +58,8 @@ pub const AUTOMATIONS_COMMANDS: &[&str] = &[
     "test_latest",
     "choose_folder",
 ];
+/// The `clips` plugin's commands (TRN-04).
+pub const CLIPS_COMMANDS: &[&str] = &["create", "list", "list_all", "rename", "delete", "reveal"];
+
+/// The `comments` plugin's commands (TRN-06).
+pub const COMMENTS_COMMANDS: &[&str] = &["list", "start", "reply", "edit", "set_resolved", "delete"];

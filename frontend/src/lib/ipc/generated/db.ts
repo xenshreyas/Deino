@@ -231,6 +231,18 @@ export type Table =
  */
 "automation_run_steps" | 
 /**
+ * Named ranges of meetings' recordings, cut into files (TRN-04).
+ */
+"clips" | 
+/**
+ * Comment threads anchored to transcript or notes spans (TRN-06).
+ */
+"comment_threads" | 
+/**
+ * The comments of each thread (TRN-06).
+ */
+"comments" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

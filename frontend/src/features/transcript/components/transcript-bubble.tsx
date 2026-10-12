@@ -110,6 +110,7 @@ function BubbleBody(props: TranscriptBubbleProps) {
     <div
       role="listitem"
       data-bubble={index}
+      data-segment-id={line.open ? undefined : line.id}
       tabIndex={-1}
       aria-busy={line.open || undefined}
       aria-current={props.marked ? 'location' : undefined}

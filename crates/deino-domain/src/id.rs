@@ -277,6 +277,22 @@ uuid_id!(
     AutomationRunId
 );
 
+uuid_id!(
+    /// Identifies a clip: a named range of a meeting's recording (TRN-04).
+    ClipId
+);
+
+uuid_id!(
+    /// Identifies a comment thread anchored to a transcript or notes span
+    /// (TRN-06).
+    CommentThreadId
+);
+
+uuid_id!(
+    /// Identifies one comment of a thread (TRN-06).
+    CommentId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

@@ -66,10 +66,10 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, AutomationId, AutomationRunId, CalendarAccountId,
-    CalendarEventId, CalendarId, CompanyId, ConnectionId, DeliveryId, FolderId, FolderRuleId,
-    IdError, InsightId, LlmCallId, MeetingId, MeetingViewId, PersonId, SegmentId, SeriesId,
-    SpeakerId, StageId, TagId, TemplateId, VocabTermId, VoiceprintId, WatchedFileId,
-    WatchedFolderId,
+    CalendarEventId, CalendarId, ClipId, CommentId, CommentThreadId, CompanyId, ConnectionId,
+    DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId, MeetingViewId,
+    PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId,
+    VoiceprintId, WatchedFileId, WatchedFolderId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

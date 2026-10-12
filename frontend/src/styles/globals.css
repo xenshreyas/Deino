@@ -13,6 +13,7 @@
 @import 'tw-animate-css';
 @import './tokens.css';
 @import './notes.css';
+@import './comments.css';
 
 /* Rendered Markdown in summaries (react-markdown `prose` blocks). */
 @plugin '@tailwindcss/typography';

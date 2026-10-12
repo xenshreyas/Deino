@@ -141,6 +141,8 @@ fn library_plugins() -> Vec<TauriPlugin<Wry>> {
         features::vocabulary::init(),
         features::player::init(),
         features::stats::init(),
+        features::clips::init(),
+        features::comments::init(),
     ]
 }
 

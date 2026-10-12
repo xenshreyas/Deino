@@ -107,6 +107,12 @@ pub enum Table {
     AutomationRuns,
     /// The steps of each automation run, with their results (AUT-01).
     AutomationRunSteps,
+    /// Named ranges of meetings' recordings, cut into files (TRN-04).
+    Clips,
+    /// Comment threads anchored to transcript or notes spans (TRN-06).
+    CommentThreads,
+    /// The comments of each thread (TRN-06).
+    Comments,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -114,7 +120,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 47] = [
+    pub const ALL: [Self; 50] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -161,6 +167,9 @@ impl Table {
         Self::Automations,
         Self::AutomationRuns,
         Self::AutomationRunSteps,
+        Self::Clips,
+        Self::CommentThreads,
+        Self::Comments,
         Self::ExampleNotes,
     ];
 
@@ -228,6 +237,9 @@ impl Table {
             "automations" => Self::Automations,
             "automation_runs" => Self::AutomationRuns,
             "automation_run_steps" => Self::AutomationRunSteps,
+            "clips" => Self::Clips,
+            "comment_threads" => Self::CommentThreads,
+            "comments" => Self::Comments,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

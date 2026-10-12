@@ -64,6 +64,7 @@ export {
   Keyboard,
   LayoutTemplate,
   Lightbulb,
+  Link,
   ListChecks,
   ListFilter,
   LoaderCircle,
