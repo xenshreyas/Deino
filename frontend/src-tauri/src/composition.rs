@@ -38,8 +38,8 @@ mod llm;
 mod network;
 mod notepad;
 mod notes;
+pub(crate) mod onboarding;
 mod organize;
-mod permissions;
 mod pipeline;
 mod recording;
 mod search;
@@ -57,8 +57,8 @@ pub(crate) use developer::attach_developer;
 use enhance::NotesAi;
 use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
+pub(crate) use onboarding::attach_permissions;
 pub(crate) use organize::Organize;
-pub(crate) use permissions::attach_permissions;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
 use pipeline::{StageAdapters, StageServices, attach_pipeline};
@@ -197,10 +197,10 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 }
 
 /// Wires the services that need only the database: [`Services`], folders and
-/// tags, speakers (CAP-04), the vocabulary (TRN-05), the notepad, the egress
-/// log, the fixture seeder (debug builds) and the `DbChanged` bridge. Returns
-/// folders and tags, whose auto-tagger the pipeline needs once the gateway
-/// is up.
+/// tags, speakers (CAP-04), the vocabulary (TRN-05), the notepad, the sample
+/// meeting (FND-11), the egress log, the fixture seeder (debug builds) and the
+/// `DbChanged` bridge. Returns folders and tags, whose auto-tagger the
+/// pipeline needs once the gateway is up.
 fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
     Services::build(database, clock).manage(app);
     let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
@@ -209,6 +209,7 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     Speakers::build(database, clock).manage(app);
     Vocabulary::build(database, clock).manage(app);
     notepad::attach_notepad(app, database, clock);
+    onboarding::attach_sample(app, database, clock);
     network::attach_network_log(app, database);
     #[cfg(debug_assertions)]
     attach_fixture_seeder(app, database);

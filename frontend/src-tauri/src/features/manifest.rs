@@ -275,6 +275,7 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "permissions",
             "request_permission",
             "open_permission_settings",
+            "import_sample",
         ],
     ),
 ];

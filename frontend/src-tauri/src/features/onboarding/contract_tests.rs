@@ -1,11 +1,14 @@
-//! Contract tests: the JSON the onboarding permissions step sends and
-//! receives.
+//! Contract tests: the JSON the onboarding permissions step and the sample
+//! meeting send and receive.
 
 use std::sync::Arc;
 
 use deino_core::permissions::{
     FakePermissionGate, PermissionKind, PermissionService, PermissionState,
 };
+use deino_core::sample::SAMPLE_MEETING_ID;
+use deino_domain::Clock;
+use deino_testkit::{FakeClock, at, test_db};
 use serde_json::{Value, json};
 use tauri::WebviewWindow;
 use tauri::test::{MockRuntime, mock_builder};
@@ -92,4 +95,23 @@ fn an_unknown_kind_is_rejected() {
     );
 
     assert!(error.is_err());
+}
+
+#[test]
+fn import_sample_returns_the_same_meeting_every_time() {
+    let database = tauri::async_runtime::block_on(test_db());
+    let clock: Arc<dyn Clock> = Arc::new(FakeClock::new(at("2026-10-11T09:00:00Z")));
+    let importer = crate::composition::onboarding::sample_importer(&database, &clock);
+    let app = mock_app(
+        mock_builder()
+            .plugin(super::init())
+            .manage(Arc::new(importer)),
+    );
+    let window = main_window(&app);
+
+    let first = invoke(&window, "plugin:onboarding|import_sample", json!({})).unwrap();
+    let again = invoke(&window, "plugin:onboarding|import_sample", json!({})).unwrap();
+
+    assert_eq!(first, json!(SAMPLE_MEETING_ID));
+    assert_eq!(again, first);
 }

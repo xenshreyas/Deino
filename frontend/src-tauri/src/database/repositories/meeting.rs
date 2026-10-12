@@ -145,11 +145,49 @@ async fn delete_meeting_with_transaction(
         .execute(&mut *transaction)
         .await?;
 
-    // 2. Finally, delete the meeting
+    // 2. The sample meeting's action items are demo data and go with it
+    // (FND-11); a real meeting's items outlive it (`ON DELETE SET NULL`).
+    if meeting_id == deino_core::sample::SAMPLE_MEETING_ID {
+        sqlx::query("DELETE FROM action_items WHERE meeting_id = ?")
+            .bind(meeting_id)
+            .execute(&mut *transaction)
+            .await?;
+    }
+
+    // 3. Finally, delete the meeting
     let result = sqlx::query("DELETE FROM meetings WHERE id = ?")
         .bind(meeting_id)
         .execute(&mut *transaction)
         .await?;
 
     Ok(result.rows_affected() > 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use deino_domain::Clock;
+    use deino_testkit::{FakeClock, at, test_db};
+
+    use super::MeetingsRepository;
+
+    #[test]
+    fn deleting_the_sample_meeting_also_deletes_its_action_items() {
+        tauri::async_runtime::block_on(async {
+            let database = test_db().await;
+            let clock: Arc<dyn Clock> = Arc::new(FakeClock::new(at("2026-10-11T09:00:00Z")));
+            let importer = crate::composition::onboarding::sample_importer(&database, &clock);
+            let id = importer.import().await.unwrap();
+
+            let deleted = MeetingsRepository::delete_meeting(database.writer(), id.as_str()).await;
+
+            assert!(deleted.unwrap());
+            let left: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM action_items")
+                .fetch_one(database.reader())
+                .await
+                .unwrap();
+            assert_eq!(left, 0);
+        });
+    }
 }

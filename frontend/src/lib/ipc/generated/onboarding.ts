@@ -38,6 +38,18 @@ async openPermissionSettings(kind: PermissionKind) : Promise<Result<null, AppErr
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Adds the sample meeting (or finds the one already there) and returns
+ * its ID, for "Open the sample meeting".
+ */
+async importSample() : Promise<Result<MeetingId, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:onboarding|import_sample") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -108,6 +120,15 @@ export type ErrorCode =
  * A bug or an unexpected failure; the details are in the log.
  */
 "internal"
+/**
+ * Identifies a meeting.
+ * 
+ * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
+ * the legacy recording and import paths still create IDs in that format.
+ * FND-07 keeps the ID opaque text so every existing meeting still opens;
+ * new meetings may use any unique text, including `meeting-<UUIDv7>`.
+ */
+export type MeetingId = string & { readonly __brand: "MeetingId" }
 /**
  * A permission Deino asks macOS for.
  */

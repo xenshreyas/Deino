@@ -1,5 +1,6 @@
 //! `onboarding` feature (FND-11): the permissions first-run setup asks for,
-//! through `deino_core::permissions::PermissionService`, exposed as the
+//! through `deino_core::permissions::PermissionService`, and the bundled
+//! sample meeting (`deino_core::sample::SampleImporter`), exposed as the
 //! inline plugin `plugin:onboarding|<command>`.
 //!
 //! The flow itself is UI (`frontend/src/features/onboarding/`): its step

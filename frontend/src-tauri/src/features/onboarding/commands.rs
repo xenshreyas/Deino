@@ -10,14 +10,20 @@
 use std::sync::Arc;
 
 use deino_core::permissions::{PermissionKind, PermissionService, PermissionStatus};
-use deino_domain::AppError;
+use deino_core::sample::SampleImporter;
+use deino_domain::{AppError, MeetingId};
 use tauri::{Runtime, State};
 
 use crate::error::IntoIpc;
 
 /// The plugin's commands, collected here so they can stay private.
 pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
-    tauri_specta::collect_commands![permissions, request_permission, open_permission_settings]
+    tauri_specta::collect_commands![
+        permissions,
+        request_permission,
+        open_permission_settings,
+        import_sample
+    ]
 }
 
 /// Every permission onboarding asks for, read without prompting.
@@ -48,4 +54,12 @@ async fn open_permission_settings(
     kind: PermissionKind,
 ) -> Result<(), AppError> {
     permissions.open_settings(kind).into_ipc()
+}
+
+/// Adds the sample meeting (or finds the one already there) and returns
+/// its ID, for "Open the sample meeting".
+#[tauri::command]
+#[specta::specta]
+async fn import_sample(sample: State<'_, Arc<SampleImporter>>) -> Result<MeetingId, AppError> {
+    sample.import().await.into_ipc()
 }
