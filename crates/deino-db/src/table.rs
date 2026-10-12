@@ -1,252 +1,59 @@
 //! The tables whose changes the UI can subscribe to.
+//!
+//! [`Table`] is generated: `build.rs` replays every migration's `CREATE
+//! TABLE`, `DROP TABLE` and `RENAME TO` and hands the tables that remain to
+//! the `tables!` macro below, so a card that creates a table registers it
+//! with its migration alone. A new table's doc is the `--` comment block
+//! directly above its `CREATE TABLE`.
 
 use serde::{Deserialize, Serialize};
 
-/// A table in Deino's database, as named in SQL.
-///
-/// The UI tags each query with the tables it reads, and a `DbChanged` event
-/// invalidates the queries whose tables changed. A card that creates a table
-/// adds its variant here in the same PR.
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, specta::Type,
-)]
-#[serde(rename_all = "snake_case")]
-pub enum Table {
-    /// Meeting rows: title, status, timing and links.
-    Meetings,
-    /// Transcript segments, one row per utterance. Legacy code still
-    /// reaches them through the `transcripts` compatibility view (ADR 0012),
-    /// whose writes are reported as this table.
-    TranscriptSegments,
-    /// The speakers of each meeting's transcript.
-    Speakers,
-    /// The user's own notes for a meeting.
-    MeetingNotes,
-    /// The AI's enhanced notes for a meeting, one row per version (NOT-02).
-    EnhancedNotes,
-    /// People the user meets.
-    People,
-    /// Companies people work at.
-    Companies,
-    /// Who attended which meeting.
-    MeetingAttendees,
-    /// Connected calendar accounts.
-    CalendarAccounts,
-    /// Events synced from calendar accounts.
-    CalendarEvents,
-    /// The calendars inside each calendar account (ORG-01).
-    Calendars,
-    /// The user's auto-record choice per recurring series (ORG-02).
-    CalendarSeriesChoices,
-    /// Folders, nested through `parent_id`.
-    Folders,
-    /// Which meetings sit in which folders.
-    MeetingFolders,
-    /// Folders' auto-add rules (ORG-05).
-    FolderRules,
-    /// Tags.
-    Tags,
-    /// Which tags are applied to which meetings.
-    MeetingTags,
-    /// Action items, from meetings or standalone.
-    ActionItems,
-    /// Saved views (filters) of the Action Items page (AI-05).
-    ActionItemViews,
-    /// Saved views of the Meetings page (ORG-07).
-    MeetingViews,
-    /// The meetings a merged meeting was made from, with their recordings (ORG-07).
-    MeetingMergeParts,
-    /// One row per LLM provider call: usage, never content.
-    LlmCalls,
-    /// Post-meeting pipeline jobs: one row per meeting and stage (FND-08).
-    Jobs,
-    /// The attempts of each pipeline job.
-    JobRuns,
-    /// One row per outgoing HTTP request: service, host, size, never content.
-    EgressLog,
-    /// Note templates, built-in and the user's own (NOT-04).
-    Templates,
-    /// The ordered sections of each template.
-    TemplateSections,
-    /// Confirmed exemplars of people's voices (CAP-04).
-    Voiceprints,
-    /// "Is this Alex?" suggestions for unnamed speakers (CAP-04).
-    SpeakerSuggestions,
-    /// Who the meeting app showed as the active speaker, and when (CAP-05).
-    SpeakerTagSpans,
-    /// Connected integration accounts, without their tokens (INT-00).
-    IntegrationConnections,
-    /// The scopes each integration connection was granted.
-    IntegrationConnectionScopes,
-    /// The delivery log: what Deino sent to which integration (INT-00).
-    IntegrationDeliveries,
-    /// The keyword search index's documents (ORG-08), kept in step with
-    /// their sources by triggers; its FTS5 shadow tables are not tracked.
-    SearchDocuments,
-    /// Embedded chunks of meetings for semantic search (AI-01).
-    Embeddings,
-    /// The user's vocabulary terms and replacement rules (TRN-05).
-    VocabTerms,
-    /// What each vocabulary term sounds like when misheard (TRN-05).
-    VocabVariants,
-    /// The originals of segments the vocabulary corrected (TRN-05).
-    VocabCorrections,
-    /// Insights the user defined: what to extract from meetings (AI-06).
-    InsightDefs,
-    /// Each insight's latest run on each meeting, with its answers (AI-06).
-    InsightResults,
-    /// Cached year-in-review recaps, one per year (ORG-09).
-    YearRecaps,
-    /// Folders watched for recordings to import (CAP-11).
-    WatchedFolders,
-    /// Files watched folders imported or failed to import (CAP-11).
-    WatchedFiles,
-    /// Automations: conditions and the steps to run (AUT-01).
-    Automations,
-    /// Each automation's latest run on each meeting (AUT-01).
-    AutomationRuns,
-    /// The steps of each automation run, with their results (AUT-01).
-    AutomationRunSteps,
-    /// Named ranges of meetings' recordings, cut into files (TRN-04).
-    Clips,
-    /// Comment threads anchored to transcript or notes spans (TRN-06).
-    CommentThreads,
-    /// The comments of each thread (TRN-06).
-    Comments,
-    /// Pre-meeting briefs, one per upcoming calendar event (NOT-08).
-    Briefs,
-    /// Notes of the `_example` reference feature, which lives in an in-memory
-    /// database in debug builds only.
-    ExampleNotes,
+/// Declares [`Table`] with [`Table::ALL`] and its by-name index from the list
+/// `build.rs` generates: the variants in order with their SQL names, then the
+/// same pairs sorted by name for [`Table::from_name`].
+macro_rules! tables {
+    (
+        count: $count:literal;
+        tables: [$($(#[doc = $doc:literal])* $variant:ident = $name:literal,)*]
+        by_name: [$($sorted_name:literal => $sorted_variant:ident,)*]
+    ) => {
+        /// A table in Deino's database, as named in SQL.
+        ///
+        /// The UI tags each query with the tables it reads, and a `DbChanged` event
+        /// invalidates the queries whose tables changed. The variants are generated
+        /// from the migrations' `CREATE TABLE` statements (`deino-db/build.rs`).
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+            specta::Type,
+        )]
+        #[serde(rename_all = "snake_case")]
+        pub enum Table {
+            $($(#[doc = $doc])* $variant,)*
+        }
+
+        impl Table {
+            /// Every table, for consumers that must assume everything changed.
+            pub const ALL: [Self; $count] = [$(Self::$variant,)*];
+
+            /// Every table by its SQL name, sorted by name for [`Table::from_name`].
+            const BY_NAME: [(&'static str, Self); $count] =
+                [$(($sorted_name, Self::$sorted_variant),)*];
+        }
+    };
 }
 
-impl Table {
-    /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 51] = [
-        Self::Meetings,
-        Self::TranscriptSegments,
-        Self::Speakers,
-        Self::MeetingNotes,
-        Self::EnhancedNotes,
-        Self::People,
-        Self::Companies,
-        Self::MeetingAttendees,
-        Self::CalendarAccounts,
-        Self::CalendarEvents,
-        Self::Calendars,
-        Self::CalendarSeriesChoices,
-        Self::Folders,
-        Self::MeetingFolders,
-        Self::FolderRules,
-        Self::Tags,
-        Self::MeetingTags,
-        Self::ActionItems,
-        Self::ActionItemViews,
-        Self::MeetingViews,
-        Self::MeetingMergeParts,
-        Self::LlmCalls,
-        Self::Jobs,
-        Self::JobRuns,
-        Self::EgressLog,
-        Self::Templates,
-        Self::TemplateSections,
-        Self::Voiceprints,
-        Self::SpeakerSuggestions,
-        Self::SpeakerTagSpans,
-        Self::IntegrationConnections,
-        Self::IntegrationConnectionScopes,
-        Self::IntegrationDeliveries,
-        Self::SearchDocuments,
-        Self::Embeddings,
-        Self::VocabTerms,
-        Self::VocabVariants,
-        Self::VocabCorrections,
-        Self::InsightDefs,
-        Self::InsightResults,
-        Self::YearRecaps,
-        Self::WatchedFolders,
-        Self::WatchedFiles,
-        Self::Automations,
-        Self::AutomationRuns,
-        Self::AutomationRunSteps,
-        Self::Clips,
-        Self::CommentThreads,
-        Self::Comments,
-        Self::Briefs,
-        Self::ExampleNotes,
-    ];
+include!(concat!(env!("OUT_DIR"), "/tables.rs"));
 
+impl Table {
     /// The table with this SQL name, if the UI tracks it.
     ///
     /// Runs inside SQLite's update hook for every changed row, so it neither
     /// allocates nor logs.
     pub fn from_name(name: &str) -> Option<Self> {
-        Self::core_table(name).or_else(|| Self::feature_table(name))
-    }
-
-    /// A table of the core schema (FND-07, FND-08, FND-09, FND-12).
-    fn core_table(name: &str) -> Option<Self> {
-        Some(match name {
-            "meetings" => Self::Meetings,
-            "transcript_segments" => Self::TranscriptSegments,
-            "speakers" => Self::Speakers,
-            "meeting_notes" => Self::MeetingNotes,
-            "enhanced_notes" => Self::EnhancedNotes,
-            "people" => Self::People,
-            "companies" => Self::Companies,
-            "meeting_attendees" => Self::MeetingAttendees,
-            "calendar_accounts" => Self::CalendarAccounts,
-            "calendar_events" => Self::CalendarEvents,
-            "calendars" => Self::Calendars,
-            "calendar_series_choices" => Self::CalendarSeriesChoices,
-            "folders" => Self::Folders,
-            "meeting_folders" => Self::MeetingFolders,
-            "folder_rules" => Self::FolderRules,
-            "tags" => Self::Tags,
-            "meeting_tags" => Self::MeetingTags,
-            "action_items" => Self::ActionItems,
-            "action_item_views" => Self::ActionItemViews,
-            "llm_calls" => Self::LlmCalls,
-            "jobs" => Self::Jobs,
-            "job_runs" => Self::JobRuns,
-            "egress_log" => Self::EgressLog,
-            _ => return None,
-        })
-    }
-
-    /// A table a feature card added (NOT-04 onwards).
-    fn feature_table(name: &str) -> Option<Self> {
-        Some(match name {
-            "templates" => Self::Templates,
-            "template_sections" => Self::TemplateSections,
-            "voiceprints" => Self::Voiceprints,
-            "speaker_suggestions" => Self::SpeakerSuggestions,
-            "speaker_tag_spans" => Self::SpeakerTagSpans,
-            "integration_connections" => Self::IntegrationConnections,
-            "integration_connection_scopes" => Self::IntegrationConnectionScopes,
-            "integration_deliveries" => Self::IntegrationDeliveries,
-            "search_documents" => Self::SearchDocuments,
-            "embeddings" => Self::Embeddings,
-            "vocab_terms" => Self::VocabTerms,
-            "vocab_variants" => Self::VocabVariants,
-            "vocab_corrections" => Self::VocabCorrections,
-            "insight_defs" => Self::InsightDefs,
-            "insight_results" => Self::InsightResults,
-            "year_recaps" => Self::YearRecaps,
-            "meeting_views" => Self::MeetingViews,
-            "meeting_merge_parts" => Self::MeetingMergeParts,
-            "watched_folders" => Self::WatchedFolders,
-            "watched_files" => Self::WatchedFiles,
-            "automations" => Self::Automations,
-            "automation_runs" => Self::AutomationRuns,
-            "automation_run_steps" => Self::AutomationRunSteps,
-            "clips" => Self::Clips,
-            "comment_threads" => Self::CommentThreads,
-            "comments" => Self::Comments,
-            "briefs" => Self::Briefs,
-            "example_notes" => Self::ExampleNotes,
-            _ => return None,
-        })
+        let index = Self::BY_NAME
+            .binary_search_by(|(table, _)| (*table).cmp(name))
+            .ok()?;
+        Self::BY_NAME.get(index).map(|(_, table)| *table)
     }
 }
 
@@ -271,5 +78,9 @@ mod tests {
         assert_eq!(Table::from_name("transcripts"), None);
         // FTS5 keeps its index in shadow tables; `search_documents` reports it.
         assert_eq!(Table::from_name("search_fts_data"), None);
+        assert_eq!(Table::from_name("search_fts"), None);
+        // Tables a later migration dropped or renamed away.
+        assert_eq!(Table::from_name("licensing"), None);
+        assert_eq!(Table::from_name("egress_log_next"), None);
     }
 }

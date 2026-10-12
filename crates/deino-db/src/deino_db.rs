@@ -78,4 +78,6 @@ mod migration_tests;
 #[cfg(test)]
 mod org01_migration_tests;
 #[cfg(test)]
+mod schema_scan_tests;
+#[cfg(test)]
 mod templates_migration_tests;

@@ -54,7 +54,9 @@ commit-time change signals (ADR 0005).
 - Migrations are append-only; never edit an applied file. Name new ones
   `<UTC YYYYMMDDHHMMSS>_<card>_<desc>.sql`, then run `scripts/sqlx-prepare.sh`.
 - Every write goes through `writer()`, so it passes the change hooks.
-- A new table gets a `Table` variant in the same PR.
+- `Table` is generated from the migrations (`build.rs`): a new table needs
+  only its migration, with a `--` comment directly above its `CREATE TABLE`
+  (the variant's doc). `build/legacy_tables.rs` is frozen; never add to it.
 - Hook callbacks stay cheap: no allocation for untracked tables, no I/O, no
   async work. Signals are emitted on commit and dropped on rollback.
 - The update hook cannot see `DELETE` without `WHERE` or `REPLACE` conflicts,

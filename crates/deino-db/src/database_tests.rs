@@ -43,6 +43,32 @@ async fn every_migration_applies_to_an_empty_database() {
     );
 }
 
+/// The generated `Table` list (`build.rs`) matches the schema the migrations
+/// build: every table but SQLite's own, sqlx's and the FTS5 index's is a variant.
+#[tokio::test]
+async fn every_table_of_the_schema_is_a_table_variant() {
+    let database = test_db().await;
+    let virtual_tables: Vec<String> = sqlx::query_scalar(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'",
+    )
+    .fetch_all(database.reader())
+    .await
+    .unwrap();
+
+    for name in table_names(&database).await {
+        let internal = name.starts_with("sqlite_") || name == "_sqlx_migrations";
+        let index = virtual_tables
+            .iter()
+            .any(|fts| name == *fts || name.starts_with(&format!("{fts}_")));
+        if !internal && !index {
+            assert!(
+                Table::from_name(&name).is_some(),
+                "no Table variant for {name}"
+            );
+        }
+    }
+}
+
 #[tokio::test]
 async fn foreign_keys_are_enforced() {
     let database = test_db().await;
