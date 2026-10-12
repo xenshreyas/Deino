@@ -37,6 +37,8 @@ impl ExtractActionItemsStage {
     }
 }
 
+crate::registry::register_stage!(ExtractActionItemsStage);
+
 #[async_trait]
 impl PipelineStage for ExtractActionItemsStage {
     fn id(&self) -> StageId {

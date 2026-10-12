@@ -51,6 +51,8 @@ impl DiarizeStage {
     }
 }
 
+crate::registry::register_stage!(DiarizeStage);
+
 #[async_trait]
 impl PipelineStage for DiarizeStage {
     fn id(&self) -> StageId {

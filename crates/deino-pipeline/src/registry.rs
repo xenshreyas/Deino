@@ -1,8 +1,15 @@
-//! The one list of pipeline stages.
+//! The pipeline's stages: each registers itself in [`STAGES`] from its own
+//! file, and [`stages`] builds them all, sorted by their order.
 //!
-//! **Adding a stage is one line in [`stages`]**, plus a field in
-//! [`StagePorts`] if it needs a port no stage has asked for yet. The runner
-//! never names a stage: it runs whatever this list holds, in order.
+//! **Adding a stage touches only its own file** (plus its `mod` line in
+//! `stages.rs`, and a field in [`StagePorts`] if it needs a port no stage
+//! has asked for yet):
+//!
+//! ```ignore
+//! crate::registry::register_stage!(MyStage); // in stages/my_stage.rs
+//! ```
+//!
+//! The runner never names a stage: it runs whatever registered, in order.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -22,13 +29,9 @@ use deino_core::segments::{SegmentReader, SegmentWriter, SpeakerRepo};
 use deino_core::tags::AutoTagger;
 use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
+use linkme::distributed_slice;
 
-use crate::stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes,
-    AutomationsStage, DiarizeStage, EnhanceNotesStage, ExtractActionItemsStage,
-    FinalTranscriptionStage, FinalizeAudioStage, IdentifySpeakersStage, IndexStage, InsightsStage,
-    MeetingTitler, NotesEnhancer, RepassSetting, UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
-};
+use crate::stages::{AutomaticNotes, MeetingTitler, NotesEnhancer, RepassSetting, VocabFixer};
 use crate::{Job, PipelineStage};
 
 /// The ports the registered stages are built with. The composition root
@@ -129,40 +132,37 @@ impl StagePorts {
     }
 }
 
+/// Builds one stage from the ports.
+pub(crate) type StageFactory = fn(&StagePorts) -> Arc<dyn PipelineStage>;
+
+/// Every stage's factory. Each stage adds itself from its own file under
+/// `stages/` with [`register_stage!`]; its `PipelineStage::order` places
+/// it, so this slice has no order of its own.
+#[allow(
+    unsafe_code,
+    reason = "linkme declares the slice over a linker section; no unsafe code of ours"
+)]
+#[distributed_slice]
+pub(crate) static STAGES: [StageFactory];
+
+/// Adds `$stage` (built by `$stage::new(&StagePorts)`) to [`STAGES`].
+macro_rules! register_stage {
+    ($stage:ident) => {
+        /// Registers the stage with the pipeline (`registry.rs`).
+        #[allow(
+            unsafe_code,
+            reason = "linkme places the entry in a linker section; no unsafe code of ours"
+        )]
+        #[linkme::distributed_slice($crate::registry::STAGES)]
+        static REGISTER: $crate::registry::StageFactory =
+            |ports| std::sync::Arc::new($stage::new(ports));
+    };
+}
+pub(crate) use register_stage;
+
 /// Every stage of the post-meeting pipeline, sorted by order.
 pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
-    sorted(vec![
-        // 10 · FND-05b: the recording's mic, system and mixed files.
-        Arc::new(FinalizeAudioStage::new(ports)),
-        // 20 · CAP-08: the transcript of a record-only meeting, or the re-pass.
-        Arc::new(FinalTranscriptionStage::new(ports)),
-        // 30 · CAP-03: speakers from the recording.
-        Arc::new(DiarizeStage::new(ports)),
-        // 35 · CAP-04: their names, from voice profiles and the calendar.
-        Arc::new(IdentifySpeakersStage::new(ports)),
-        // 40 · TRN-05: the transcript corrected with the vocabulary.
-        Arc::new(VocabFixupsStage::new(ports)),
-        // 50 · NOT-02: the enhanced notes.
-        Arc::new(EnhanceNotesStage::new(ports)),
-        // 60 · AI-05: commitments, owners and due days.
-        Arc::new(ExtractActionItemsStage::new(ports)),
-        // 65 · NOT-02: a title for meetings that have none.
-        Arc::new(AutoTitleStage::new(ports)),
-        // 70 · ORG-06.
-        Arc::new(AutoTagStage::new(ports)),
-        // 75 · ORG-05.
-        Arc::new(AutoFolderStage::new(ports)),
-        // 80 · ORG-08 / AI-01: keyword documents and embeddings.
-        Arc::new(IndexStage::new(ports)),
-        // 85 · AI-06: the user's insights, once tags and folders are settled.
-        Arc::new(InsightsStage::new(ports)),
-        // 90 · ORG-04: people and company summaries, logos.
-        Arc::new(UpdateEntitiesStage::new(ports)),
-        // 95 · AUT-01: the user's automations, once the meeting is settled.
-        Arc::new(AutomationsStage::new(ports)),
-        // 99 · EXP-02: the notes into the user's folder, last.
-        Arc::new(AutoExportStage::new(ports)),
-    ])
+    sorted(STAGES.iter().map(|build| build(ports)).collect())
 }
 
 /// Stages sorted by order, then by ID so equal orders run predictably.

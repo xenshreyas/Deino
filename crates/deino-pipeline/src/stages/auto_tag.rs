@@ -33,6 +33,8 @@ impl AutoTagStage {
     }
 }
 
+crate::registry::register_stage!(AutoTagStage);
+
 #[async_trait]
 impl PipelineStage for AutoTagStage {
     fn id(&self) -> StageId {

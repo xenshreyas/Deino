@@ -34,6 +34,8 @@ impl AutoExportStage {
     }
 }
 
+crate::registry::register_stage!(AutoExportStage);
+
 #[async_trait]
 impl PipelineStage for AutoExportStage {
     fn id(&self) -> StageId {

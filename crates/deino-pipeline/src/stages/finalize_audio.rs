@@ -73,6 +73,8 @@ impl FinalizeAudioStage {
     }
 }
 
+crate::registry::register_stage!(FinalizeAudioStage);
+
 #[async_trait]
 impl PipelineStage for FinalizeAudioStage {
     fn id(&self) -> StageId {

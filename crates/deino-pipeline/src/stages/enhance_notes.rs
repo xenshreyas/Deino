@@ -69,6 +69,8 @@ impl EnhanceNotesStage {
     }
 }
 
+crate::registry::register_stage!(EnhanceNotesStage);
+
 #[async_trait]
 impl PipelineStage for EnhanceNotesStage {
     fn id(&self) -> StageId {

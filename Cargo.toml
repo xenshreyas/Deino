@@ -23,6 +23,10 @@ anyhow = "1.0"
 async-trait = "0.1.89"
 chrono = { version = "0.4.44", features = ["serde"] }
 futures-util = "0.3.32"
+# Self-registration (REG-01): each feature, pipeline stage and attach hook adds
+# itself to a distributed slice from its own file, so no shared list grows.
+# Linker sections on Mach-O, ELF and PE; MIT OR Apache-2.0.
+linkme = "=0.3.37"
 log = "0.4.29"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"

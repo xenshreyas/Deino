@@ -43,6 +43,7 @@ reqwest = { version = "0.11", features = ["blocking", "multipart", "json", "stre
 which = "6.0.1"
 zip = "2.2"           # Archive extraction for the FFmpeg and ONNX Runtime downloads
 sha2 = "0.10"         # SHA-256 pins for build-time downloads
+serde_json = "1.0"    # The generated feature capabilities (build/features.rs)
 
 
 [dependencies]
@@ -164,6 +165,8 @@ deino-speaker-tags.workspace = true
 # `serde_json` types the settings merge patch (`plugin:settings|patch`).
 specta = { workspace = true, features = ["serde_json"] }
 tauri-specta.workspace = true
+# Features, attach hooks and stages register themselves from their own files (REG-01).
+linkme.workspace = true
 
 # Common Tauri configuration
 tauri = { version = "2.6.2", features = [ "macos-private-api", "protocol-asset", "tray-icon"] }

@@ -12,8 +12,9 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   `StageCtx` (attempt, `CancellationToken`, clock, progress sink),
   `StageOutcome` (`Done`, `Skipped`) and `StageError` (`is_retryable`).
   Modelled on spacedrive's job contract (Apache-2.0).
-- The registry (`registry.rs`): `stages(&StagePorts)`, the one list of
-  stages. **Adding a stage is one line there.**
+- The registry (`registry.rs`): `stages(&StagePorts)` builds every stage in
+  `STAGES`, sorted by order. **A stage registers itself** with
+  `crate::registry::register_stage!(MyStage)` in its own file (REG-01).
 - The stages (`stages/`): `finalize_audio` (order 10, FND-05b) over
   `deino_audio::{recover_recording, finalize_recording}` on a blocking
   thread, storing the mic, system and mixed paths with `set_audio` (skipped

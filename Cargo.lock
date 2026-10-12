@@ -1890,6 +1890,7 @@ dependencies = [
  "futures-util",
  "infer 0.15.0",
  "lazy_static",
+ "linkme",
  "log",
  "memory-stats",
  "ndarray",
@@ -2277,6 +2278,7 @@ dependencies = [
  "deino-domain",
  "deino-llm",
  "deino-testkit",
+ "linkme",
  "log",
  "serde",
  "specta",
@@ -4851,6 +4853,26 @@ name = "linked-hash-map"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
+
+[[package]]
+name = "linkme"
+version = "0.3.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3045e122bd98aef8ec3ad58ce84f0791f64e70163d1a02710af4aa11a4d54cc5"
+dependencies = [
+ "linkme-impl",
+]
+
+[[package]]
+name = "linkme-impl"
+version = "0.3.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77060ebe535362c3da75682cd17b0431017b6e7c5661e714fc69a7ad017d1301"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.6",
+]
 
 [[package]]
 name = "linux-keyutils"

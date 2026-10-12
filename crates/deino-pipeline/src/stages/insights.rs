@@ -41,6 +41,8 @@ impl InsightsStage {
     }
 }
 
+crate::registry::register_stage!(InsightsStage);
+
 #[async_trait]
 impl PipelineStage for InsightsStage {
     fn id(&self) -> StageId {

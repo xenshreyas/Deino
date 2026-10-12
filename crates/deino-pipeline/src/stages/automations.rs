@@ -38,6 +38,8 @@ impl AutomationsStage {
     }
 }
 
+crate::registry::register_stage!(AutomationsStage);
+
 #[async_trait]
 impl PipelineStage for AutomationsStage {
     fn id(&self) -> StageId {

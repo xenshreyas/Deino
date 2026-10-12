@@ -72,6 +72,8 @@ impl FinalTranscriptionStage {
     }
 }
 
+crate::registry::register_stage!(FinalTranscriptionStage);
+
 #[async_trait]
 impl PipelineStage for FinalTranscriptionStage {
     fn id(&self) -> StageId {

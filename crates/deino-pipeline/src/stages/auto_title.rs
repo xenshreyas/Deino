@@ -49,6 +49,8 @@ impl AutoTitleStage {
     }
 }
 
+crate::registry::register_stage!(AutoTitleStage);
+
 #[async_trait]
 impl PipelineStage for AutoTitleStage {
     fn id(&self) -> StageId {

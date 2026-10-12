@@ -35,6 +35,8 @@ impl UpdateEntitiesStage {
     }
 }
 
+crate::registry::register_stage!(UpdateEntitiesStage);
+
 #[async_trait]
 impl PipelineStage for UpdateEntitiesStage {
     fn id(&self) -> StageId {

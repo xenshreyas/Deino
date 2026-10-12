@@ -38,6 +38,8 @@ impl IndexStage {
     }
 }
 
+crate::registry::register_stage!(IndexStage);
+
 #[async_trait]
 impl PipelineStage for IndexStage {
     fn id(&self) -> StageId {

@@ -40,6 +40,8 @@ impl IdentifySpeakersStage {
     }
 }
 
+crate::registry::register_stage!(IdentifySpeakersStage);
+
 #[async_trait]
 impl PipelineStage for IdentifySpeakersStage {
     fn id(&self) -> StageId {

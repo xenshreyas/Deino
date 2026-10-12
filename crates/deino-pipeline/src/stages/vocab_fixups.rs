@@ -50,6 +50,8 @@ impl VocabFixupsStage {
     }
 }
 
+crate::registry::register_stage!(VocabFixupsStage);
+
 #[async_trait]
 impl PipelineStage for VocabFixupsStage {
     fn id(&self) -> StageId {

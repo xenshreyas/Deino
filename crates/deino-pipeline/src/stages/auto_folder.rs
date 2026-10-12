@@ -38,6 +38,8 @@ impl AutoFolderStage {
     }
 }
 
+crate::registry::register_stage!(AutoFolderStage);
+
 #[async_trait]
 impl PipelineStage for AutoFolderStage {
     fn id(&self) -> StageId {
