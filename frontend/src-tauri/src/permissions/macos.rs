@@ -86,9 +86,11 @@ pub(super) fn request_screen_recording() -> PermissionState {
 pub(super) fn open_settings(kind: PermissionKind) -> bool {
     let page = match kind {
         PermissionKind::Microphone => format!("{PRIVACY}Privacy_Microphone"),
-        PermissionKind::SystemAudio => format!("{PRIVACY}Privacy_ScreenCapture"),
+        // Both live on "Screen & System Audio Recording".
+        PermissionKind::SystemAudio | PermissionKind::ScreenRecording => {
+            format!("{PRIVACY}Privacy_ScreenCapture")
+        }
         PermissionKind::Accessibility => format!("{PRIVACY}Privacy_Accessibility"),
-        PermissionKind::ScreenRecording => format!("{PRIVACY}Privacy_ScreenCapture"),
         PermissionKind::Notifications => NOTIFICATIONS_PAGE.to_owned(),
     };
     let Some(url) = NSURL::URLWithString(&NSString::from_str(&page)) else {
