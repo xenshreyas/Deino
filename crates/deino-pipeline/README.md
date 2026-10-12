@@ -41,7 +41,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   no insight applies; the last attempt stores failures on the runs);
   `update_entities`
   (order 90, ORG-04) over `deino_core::entities::EntityUpdater` (links named
-  speakers, refreshes attendees' and companies' briefings); `auto_export`
+  speakers, refreshes attendees' and companies' briefings); `automations`
+  (order 95, AUT-01, ADR 0042) over `deino_core::automations::AutomationRunner`
+  (matching automations and waiting runs; a retryable step fails the stage
+  so it retries, done steps are not run again); `auto_export`
   (order 99, EXP-02) over `deino_core::export::AutoExporter`.
 - The queue: the `jobs` and `job_runs` tables (migration
   `20261009071429_fnd08_pipeline_jobs.sql` in `deino-db`), behind the
