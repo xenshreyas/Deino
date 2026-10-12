@@ -193,13 +193,11 @@ export const commands = {
       people,
       companies: fixtureCompanies(fixtureMeetings),
       tags: mockTags.list().map(({ id, name, color }) => ({ id, name, color })),
-      folders: mockFolders
-        .tree()
-        .entries.map(({ folder }) => ({
-          id: folder.id,
-          name: folder.name,
-          parentId: folder.parentId,
-        })),
+      folders: mockFolders.tree().entries.map(({ folder }) => ({
+        id: folder.id,
+        name: folder.name,
+        parentId: folder.parentId,
+      })),
     });
   },
   async views() {
