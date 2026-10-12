@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE jobs SET status = 'running', attempts = attempts + 1, not_before = NULL, updated_at = ?3\n               WHERE meeting_id = ?1 AND stage = ?2 AND status = 'pending'\n               RETURNING attempts AS \"attempts: u32\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "attempts: u32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "41446f7a53a96c90a1577d106858ec03f6bb4c53558395f43fde64289eb42e87"
+}
