@@ -25,6 +25,7 @@
 //! [`Services::build`] and one in [`Services::manage`].
 
 mod action_items;
+mod background;
 mod browser;
 mod calendar;
 mod detection;
@@ -198,7 +199,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         adapters: stage_adapters,
     };
     attach_pipeline(app, &database, &clock, ai);
-    attach_background(app, &database, &clock);
+    background::attach_background(app, &database, &clock);
 }
 
 /// Wires the services that need only the database: [`Services`], folders and
@@ -221,18 +222,6 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     developer::attach_fixture_seeder(app, database);
     features::db::forward_changes(app, database.changes());
     organize
-}
-
-/// Wires the services that run on their own once the pipeline is up: speaker
-/// tags (CAP-05), the live recorder, the transcript edits (their re-index
-/// queue is search's), calendar sync (its scheduler starts here) and the
-/// integrations service.
-fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
-    speaker_tags::attach_speaker_tags(app, database);
-    recording::attach_recording(app, database);
-    transcript::attach_transcript_edits(app, database, clock);
-    calendar::attach_calendar(app, database, clock);
-    integrations::attach_integrations(app, database, clock);
 }
 
 /// Builds and manages the services behind the pipeline's AI and export
