@@ -143,7 +143,7 @@ impl Capture {
             match encoder.finish(self.last_at) {
                 Ok(()) => self.publish_video(),
                 Err(error) => {
-                    log::warn!(target: TARGET, "the screen recording could not be closed: {error}")
+                    log::warn!(target: TARGET, "the screen recording could not be closed: {error}");
                 }
             }
         }

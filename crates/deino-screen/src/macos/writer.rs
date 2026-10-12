@@ -211,8 +211,8 @@ fn pixel_buffer(frame: &Frame) -> Result<arc::R<cv::PixelBuf>, ScreenError> {
             // SAFETY: row `row` of the locked buffer starts at `base + row ×
             // stride` and holds at least `width × 4` bytes, which `line` is.
             unsafe {
-                std::ptr::copy_nonoverlapping(line.as_ptr(), base.add(row * stride), line.len())
-            };
+                std::ptr::copy_nonoverlapping(line.as_ptr(), base.add(row * stride), line.len());
+            }
         }
     }
     // SAFETY: the matching unlock.
