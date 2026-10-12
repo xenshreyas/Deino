@@ -24,6 +24,8 @@ pub mod db;
 pub mod detection;
 #[cfg(debug_assertions)]
 pub mod dev;
+/// The debug-only feature plugins (shared with `build.rs`, so it has no `//!` docs).
+pub mod dev_manifest;
 pub mod developer;
 pub mod enhance;
 pub mod export;
@@ -97,7 +99,8 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
 
 #[cfg(test)]
 mod tests {
-    use super::manifest::{DEV_FEATURES, FEATURES};
+    use super::dev_manifest::DEV_FEATURES;
+    use super::manifest::FEATURES;
 
     /// The capability files that grant feature plugins.
     const CAPABILITIES: [&str; 4] = [

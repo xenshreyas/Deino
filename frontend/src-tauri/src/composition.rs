@@ -213,7 +213,7 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     onboarding::attach_sample(app, database, clock);
     network::attach_network_log(app, database);
     #[cfg(debug_assertions)]
-    attach_fixture_seeder(app, database);
+    developer::attach_fixture_seeder(app, database);
     features::db::forward_changes(app, database.changes());
     organize
 }
@@ -272,14 +272,6 @@ async fn attach_notes(
     let templates = notes.template_source();
     notes.manage(app);
     templates
-}
-
-/// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
-/// meetings into the app's database (Settings → Developer).
-#[cfg(debug_assertions)]
-fn attach_fixture_seeder(app: &AppHandle, database: &Database) {
-    let seeder = deino_testkit::FixtureSeeder::new(database.clone());
-    app.manage(Arc::new(seeder));
 }
 
 /// Wires the debug-only reference feature over its private in-memory database.
