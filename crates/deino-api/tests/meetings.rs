@@ -1,6 +1,12 @@
 //! `/v1/meetings`: lists, cursors, reads, transcripts, import, edits and
 //! the trash, over the seeded sample.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    reason = "test helpers fail loudly, like the tests they serve"
+)]
+
 mod support;
 
 use axum::http::{Method, StatusCode, header};
@@ -28,7 +34,7 @@ async fn all_pages(api: &Harness, token: &str, uri: &str) -> (Vec<Value>, usize)
         let link = reply.headers[header::LINK].to_str().unwrap();
         assert!(link.ends_with("; rel=\"next\""), "{link}");
         assert!(link.contains(&format!("cursor={cursor}")), "{link}");
-        next = link[1..link.find('>').unwrap()].to_owned();
+        link[1..link.find('>').unwrap()].clone_into(&mut next);
     }
 }
 
@@ -46,10 +52,10 @@ async fn pages_are_stable_and_join_into_the_whole_list() {
     let whole = api.get("/v1/meetings?limit=100", &token).await;
     let whole = ids(whole.body["data"].as_array().unwrap());
 
-    let (paged, pages) = all_pages(&api, &token, "/v1/meetings?limit=3").await;
+    let (paged, page_count) = all_pages(&api, &token, "/v1/meetings?limit=3").await;
 
     assert_eq!(ids(&paged), whole);
-    assert!(pages >= 3, "{pages} pages");
+    assert!(page_count >= 3, "{page_count} pages");
 }
 
 #[tokio::test]
@@ -61,7 +67,7 @@ async fn a_meeting_added_between_pages_shifts_nothing() {
     let import = json!({ "name": "Late arrival", "createdAt": "2026-10-09T15:00:00Z",
         "transcript": [{ "speaker": "A", "text": "Hi", "timestamp": 0 }] });
     let created = api
-        .call(Method::POST, "/v1/meetings", Some(&token), Some(import))
+        .call((Method::POST, "/v1/meetings"), Some(&token), Some(import))
         .await;
     assert_eq!(created.status, StatusCode::CREATED);
 
@@ -145,10 +151,10 @@ async fn a_transcript_pages_by_cursor() {
         .await;
 
     let uri = format!("/v1/meetings/{STANDUP}/transcript?limit=4");
-    let (paged, pages) = all_pages(&api, &token, &uri).await;
+    let (paged, page_count) = all_pages(&api, &token, &uri).await;
 
     assert_eq!(&paged, whole.body["transcript"].as_array().unwrap());
-    assert!(pages > 1);
+    assert!(page_count > 1);
 }
 
 #[tokio::test]
@@ -168,12 +174,11 @@ async fn an_imported_transcript_becomes_a_meeting() {
     });
 
     let created = api
-        .call(Method::POST, "/v1/meetings", Some(&token), Some(body))
+        .call((Method::POST, "/v1/meetings"), Some(&token), Some(body))
         .await;
     let bad = api
         .call(
-            Method::POST,
-            "/v1/meetings",
+            (Method::POST, "/v1/meetings"),
             Some(&token),
             Some(json!({ "name": "x" })),
         )
@@ -204,13 +209,12 @@ async fn an_edit_replaces_title_notes_and_tags_and_tells_the_ui() {
         .find(|tag| tag["name"] == "Hiring")
         .unwrap()["id"]
         .clone();
-    let mut changes = api.database.changes().subscribe();
+    let mut notices = api.database.changes().subscribe();
     let edit = json!({ "title": "Daily standup", "myNotes": "- ask about CI", "tagIds": [hiring] });
 
     let reply = api
         .call(
-            Method::PUT,
-            &format!("/v1/meetings/{STANDUP}"),
+            (Method::PUT, &format!("/v1/meetings/{STANDUP}")),
             Some(&token),
             Some(edit),
         )
@@ -225,7 +229,7 @@ async fn an_edit_replaces_title_notes_and_tags_and_tells_the_ui() {
             .contains("ask about CI")
     );
     assert_eq!(reply.body["tags"], json!(["Hiring"]));
-    let changed = changes.recv().await.unwrap();
+    let changed = notices.recv().await.unwrap();
     assert!(changed.tables.contains(&Table::Meetings), "{changed:?}");
 }
 
@@ -235,8 +239,8 @@ async fn delete_moves_a_meeting_to_the_trash() {
     let token = api.writer().await;
     let uri = format!("/v1/meetings/{STANDUP}");
 
-    let deleted = api.call(Method::DELETE, &uri, Some(&token), None).await;
-    let again = api.call(Method::DELETE, &uri, Some(&token), None).await;
+    let deleted = api.call((Method::DELETE, &uri), Some(&token), None).await;
+    let again = api.call((Method::DELETE, &uri), Some(&token), None).await;
     let list = api.get("/v1/meetings?limit=100", &token).await;
 
     assert_eq!(deleted.status, StatusCode::NO_CONTENT);

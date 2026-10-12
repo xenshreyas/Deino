@@ -1,5 +1,11 @@
 //! Search, the directory, tags and action items, over the seeded sample.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    reason = "test helpers fail loudly, like the tests they serve"
+)]
+
 mod support;
 
 use std::sync::Arc;
@@ -75,50 +81,54 @@ async fn the_directory_lists_people_companies_folders_and_events() {
 }
 
 #[tokio::test]
-async fn tags_are_created_renamed_and_deleted() {
+async fn tags_are_created_and_duplicates_conflict() {
     let api = Harness::new().await;
     let token = api.writer().await;
 
     let created = api
-        .call(
-            Method::POST,
-            "/v1/tags",
-            Some(&token),
-            Some(json!({ "name": "Board" })),
+        .send(
+            (Method::POST, "/v1/tags"),
+            &token,
+            json!({ "name": "Board" }),
         )
         .await;
     let duplicate = api
-        .call(
-            Method::POST,
-            "/v1/tags",
-            Some(&token),
-            Some(json!({ "name": "board" })),
+        .send(
+            (Method::POST, "/v1/tags"),
+            &token,
+            json!({ "name": "board" }),
         )
         .await;
-    let id = created.body["id"].as_str().unwrap().to_owned();
-    let renamed = api
-        .call(
-            Method::PUT,
-            &format!("/v1/tags/{id}"),
-            Some(&token),
-            Some(json!({ "name": "Board meetings" })),
-        )
-        .await;
-    let deleted = api
-        .call(
-            Method::DELETE,
-            &format!("/v1/tags/{id}"),
-            Some(&token),
-            None,
-        )
-        .await;
-    let bad_id = api
-        .call(Method::DELETE, "/v1/tags/not-an-id", Some(&token), None)
-        .await;
-    let listed = api.get("/v1/tags", &token).await;
 
     assert_eq!(created.status, StatusCode::CREATED);
+    assert_eq!(created.body["name"], "Board");
     assert_eq!(duplicate.status, StatusCode::CONFLICT);
+}
+
+#[tokio::test]
+async fn tags_are_renamed_and_deleted() {
+    let api = Harness::new().await;
+    let token = api.writer().await;
+    let created = api
+        .send(
+            (Method::POST, "/v1/tags"),
+            &token,
+            json!({ "name": "Board" }),
+        )
+        .await;
+    let uri = format!("/v1/tags/{}", created.body["id"].as_str().unwrap());
+
+    let renamed = api
+        .send(
+            (Method::PUT, &uri),
+            &token,
+            json!({ "name": "Board meetings" }),
+        )
+        .await;
+    let deleted = api.delete(&uri, &token).await;
+    let bad_id = api.delete("/v1/tags/not-an-id", &token).await;
+    let listed = api.get("/v1/tags", &token).await;
+
     assert_eq!(renamed.body["name"], "Board meetings");
     assert_eq!(deleted.status, StatusCode::NO_CONTENT);
     assert_eq!(bad_id.status, StatusCode::NOT_FOUND);
@@ -131,65 +141,47 @@ async fn tags_are_created_renamed_and_deleted() {
     assert_eq!(names, vec!["Customer", "Hiring"]);
 }
 
+const ALL_ITEMS: &str = "/v1/action-items?status=any&limit=100";
+
 #[tokio::test]
-async fn action_items_are_listed_created_changed_and_deleted() {
+async fn an_action_item_is_created_and_listed() {
     let api = Harness::new().await;
     let token = api.writer().await;
-    let open = api
-        .get("/v1/action-items?status=any&limit=100", &token)
-        .await;
-    let before = open.body["data"].as_array().unwrap().len();
+    let before = api.get(ALL_ITEMS, &token).await.body["data"]
+        .as_array()
+        .unwrap()
+        .len();
+    let item = json!({ "title": "Send the deck", "due": "2026-10-12" });
 
     let created = api
-        .call(
-            Method::POST,
-            "/v1/action-items",
-            Some(&token),
-            Some(json!({ "title": "Send the deck", "due": "2026-10-12" })),
-        )
+        .send((Method::POST, "/v1/action-items"), &token, item)
         .await;
-    let id = created.body["id"].as_str().unwrap().to_owned();
-    let done = api
-        .call(
-            Method::PUT,
-            &format!("/v1/action-items/{id}"),
-            Some(&token),
-            Some(json!({ "status": "done" })),
-        )
-        .await;
-    let empty = api
-        .call(
-            Method::PUT,
-            &format!("/v1/action-items/{id}"),
-            Some(&token),
-            Some(json!({})),
-        )
-        .await;
-    let after = api
-        .get("/v1/action-items?status=any&limit=100", &token)
-        .await;
-    let deleted = api
-        .call(
-            Method::DELETE,
-            &format!("/v1/action-items/{id}"),
-            Some(&token),
-            None,
-        )
-        .await;
-    let gone = api
-        .call(
-            Method::DELETE,
-            &format!("/v1/action-items/{id}"),
-            Some(&token),
-            None,
-        )
-        .await;
+    let after = api.get(ALL_ITEMS, &token).await;
 
     assert_eq!(created.status, StatusCode::CREATED, "{}", created.body);
     assert_eq!(created.body["due"], "2026-10-12");
+    assert_eq!(after.body["data"].as_array().unwrap().len(), before + 1);
+}
+
+#[tokio::test]
+async fn an_action_item_is_changed_and_deleted() {
+    let api = Harness::new().await;
+    let token = api.writer().await;
+    let item = json!({ "title": "Send the deck" });
+    let created = api
+        .send((Method::POST, "/v1/action-items"), &token, item)
+        .await;
+    let uri = format!("/v1/action-items/{}", created.body["id"].as_str().unwrap());
+
+    let done = api
+        .send((Method::PUT, &uri), &token, json!({ "status": "done" }))
+        .await;
+    let empty = api.send((Method::PUT, &uri), &token, json!({})).await;
+    let deleted = api.delete(&uri, &token).await;
+    let gone = api.delete(&uri, &token).await;
+
     assert_eq!(done.body["status"], "done");
     assert_eq!(empty.status, StatusCode::BAD_REQUEST);
-    assert_eq!(after.body["data"].as_array().unwrap().len(), before + 1);
     assert_eq!(deleted.status, StatusCode::NO_CONTENT);
     assert_eq!(gone.status, StatusCode::NOT_FOUND);
 }

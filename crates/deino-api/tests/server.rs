@@ -1,6 +1,12 @@
 //! The real server: it binds loopback only, answers over TCP, and starts
 //! and stops with its setting.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    reason = "test helpers fail loudly, like the tests they serve"
+)]
+
 mod support;
 
 use std::net::TcpListener as StdListener;

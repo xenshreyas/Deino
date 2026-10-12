@@ -1,5 +1,11 @@
 //! The guard: keys, scopes, the app lock and the `Host` check.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    reason = "test helpers fail loudly, like the tests they serve"
+)]
+
 mod support;
 
 use std::sync::atomic::Ordering;
@@ -15,7 +21,7 @@ use tower::ServiceExt;
 async fn a_missing_or_malformed_key_is_401_with_the_error_envelope() {
     let api = Harness::new().await;
 
-    let missing = api.call(Method::GET, "/v1/meetings", None, None).await;
+    let missing = api.call((Method::GET, "/v1/meetings"), None, None).await;
     let garbage = api.get("/v1/meetings", "deino_not_a_key").await;
 
     for reply in [missing, garbage] {
@@ -59,7 +65,7 @@ async fn a_read_only_key_reads_but_every_write_is_403() {
         ),
     ];
     for (method, uri, body) in writes {
-        let reply = api.call(method.clone(), uri, Some(&token), body).await;
+        let reply = api.call((method.clone(), uri), Some(&token), body).await;
         assert_eq!(reply.status, StatusCode::FORBIDDEN, "{method} {uri}");
         assert_eq!(reply.body["error"]["code"], "read_only_key");
     }

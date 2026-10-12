@@ -118,11 +118,10 @@ impl Harness {
         self.token(ApiKeyScope::ReadWrite).await
     }
 
-    /// Sends one request through the router.
+    /// Sends `method uri` through the router, with `token` and a JSON `body`.
     pub async fn call(
         &self,
-        method: Method,
-        uri: &str,
+        (method, uri): (Method, &str),
         token: Option<&str>,
         body: Option<Value>,
     ) -> Reply {
@@ -157,9 +156,19 @@ impl Harness {
         }
     }
 
+    /// `method uri` with `token` and a JSON `body`.
+    pub async fn send(&self, (method, uri): (Method, &str), token: &str, body: Value) -> Reply {
+        self.call((method, uri), Some(token), Some(body)).await
+    }
+
+    /// `DELETE uri` with `token`.
+    pub async fn delete(&self, uri: &str, token: &str) -> Reply {
+        self.call((Method::DELETE, uri), Some(token), None).await
+    }
+
     /// `GET uri` with `token`.
     pub async fn get(&self, uri: &str, token: &str) -> Reply {
-        self.call(Method::GET, uri, Some(token), None).await
+        self.call((Method::GET, uri), Some(token), None).await
     }
 }
 
@@ -181,38 +190,25 @@ fn writes(database: &Database, zone: &Arc<dyn LocalZone>, clock: &Arc<dyn Clock>
         events: Arc::new(RecordedTagEvents::default()),
         clock: clock.clone(),
     }));
-    let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     WriteServices {
         meetings: Arc::new(MeetingService::new(meetings.clone(), clock.clone())),
         trash: Arc::new(TrashService::new(TrashDeps {
             bin: meetings.clone(),
-            files: Arc::new(DiskMeetingFiles::new(
-                "/nonexistent/recordings".into(),
-                "/nonexistent/notes".into(),
-            )),
+            files: Arc::new(DiskMeetingFiles::new("/none".into(), "/none".into())),
             clock: clock.clone(),
             work: Arc::new(NoMeetingWork),
         })),
         notes: Arc::new(NoteService::new(
             NotePorts {
                 notes: Arc::new(SqliteNotesRepo::new(database.clone())),
-                meetings: meetings.clone(),
+                meetings,
                 images: Arc::new(MemoryNoteImages::default()),
                 events: Arc::new(RecordedNotesEvents::default()),
             },
             clock.clone(),
         )),
         action_items: Arc::new(action_items(database, (tag_repo, zone), clock)),
-        importer: Arc::new(TranscriptImporter::new(TranscriptImportPorts {
-            meetings: meetings.clone(),
-            trash: meetings,
-            speakers: segments.clone(),
-            segments,
-            notes: Arc::new(SqliteEnhancedNotesRepo::new(database.clone())),
-            tags: tags.clone(),
-            work: Arc::new(NoMeetingWork),
-            clock: clock.clone(),
-        })),
+        importer: Arc::new(importer(database, &tags, clock)),
         tags,
     }
 }
@@ -238,5 +234,24 @@ fn action_items(
         events: Arc::new(NoActionItemEvents),
         clock: clock.clone(),
         zone: zone.clone(),
+    })
+}
+
+fn importer(
+    database: &Database,
+    tags: &Arc<TagService>,
+    clock: &Arc<dyn Clock>,
+) -> TranscriptImporter {
+    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
+    let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
+    TranscriptImporter::new(TranscriptImportPorts {
+        meetings: meetings.clone(),
+        trash: meetings,
+        speakers: segments.clone(),
+        segments,
+        notes: Arc::new(SqliteEnhancedNotesRepo::new(database.clone())),
+        tags: tags.clone(),
+        work: Arc::new(NoMeetingWork),
+        clock: clock.clone(),
     })
 }
