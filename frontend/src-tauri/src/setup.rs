@@ -20,7 +20,7 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     let handle = app.handle();
     let paths = AppPaths::resolve(handle)?;
     tauri::async_runtime::block_on(composition::attach_settings(handle, &paths))?;
-    tauri::async_runtime::block_on(composition::attach_privacy(handle));
+    tauri::async_runtime::block_on(composition::privacy::attach_privacy(handle));
     composition::attach_network(handle)?;
     composition::attach_developer(handle);
     composition::attach_permissions(handle);

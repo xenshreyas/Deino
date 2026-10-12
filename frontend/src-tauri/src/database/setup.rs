@@ -61,7 +61,9 @@ async fn open_library(app: &AppHandle) -> Result<(), String> {
         }
     };
 
+    let encryption = db_manager.encryption();
     composition::attach_database(app, db_manager).await;
+    composition::privacy::library_ready(app, encryption);
     info!("Database initialized successfully");
     Ok(())
 }

@@ -6,7 +6,8 @@
 //!   authenticator and the current `privacy.appLock` settings, plus the
 //!   wake and screen-lock observers. The settings events keep the service
 //!   in step with later changes (`features/settings/events.rs`).
-//! - [`library_ready`] runs once the database is open.
+//! - [`library_ready`] runs once the database is open and wired
+//!   (`database/setup.rs`, and `initialize_fresh_database` on a first launch).
 
 use std::sync::Arc;
 
