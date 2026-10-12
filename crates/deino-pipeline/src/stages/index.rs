@@ -15,8 +15,10 @@ use deino_domain::{ErrorClass, MeetingId, StageId};
 
 use crate::{PipelineStage, StageCtx, StageError, StageOutcome, StagePorts};
 
+/// The stage's stored name; the meeting merge re-runs it (ORG-07).
+pub const INDEX_STAGE: &str = "index";
 /// The stage's stored name.
-const ID: &str = "index";
+const ID: &str = INDEX_STAGE;
 /// Where it runs: after notes, tags and folders (PARITY_PLAN §4.2).
 const ORDER: u16 = 80;
 /// Shown when only keyword search covers the meeting.

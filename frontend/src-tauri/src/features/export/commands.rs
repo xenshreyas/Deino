@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use deino_core::export::{
     AutoExportService, CopyKind, ExportPreview, ExportService, FolderDialog, FullExportService,
-    FullExportStatus, SaveDialog, SavedExport,
+    FullExportStatus, SaveDialog, SavedExport, SavedExports,
 };
 use deino_domain::{AppError, MeetingId};
 use deino_export::{ExportFormat, ExportSections};
@@ -23,6 +23,7 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
     tauri_specta::collect_commands![
         preview,
         save,
+        save_many,
         copy,
         email,
         choose_folder,
@@ -58,6 +59,23 @@ async fn save(
     sections: ExportSections,
 ) -> Result<Option<SavedExport>, AppError> {
     exports.save(&meeting_id, format, sections).await.into_ipc()
+}
+
+/// Asks for a folder and writes every meeting in `meeting_ids` there as
+/// `format` (the Meetings page's bulk export); `null` when the user
+/// cancelled.
+#[tauri::command]
+#[specta::specta]
+async fn save_many(
+    exports: State<'_, Arc<ExportService>>,
+    dialog: State<'_, Arc<dyn FolderDialog>>,
+    meeting_ids: Vec<MeetingId>,
+    format: ExportFormat,
+) -> Result<Option<SavedExports>, AppError> {
+    exports
+        .save_many(&meeting_ids, format, dialog.as_ref())
+        .await
+        .into_ipc()
 }
 
 /// Copies the meeting as rich text, Markdown or its transcript.

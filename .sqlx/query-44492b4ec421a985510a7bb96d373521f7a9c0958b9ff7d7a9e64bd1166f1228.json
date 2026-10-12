@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE speakers AS s\n         SET meeting_id = ?1,\n             label = CASE WHEN EXISTS (\n                 SELECT 1 FROM speakers AS t WHERE t.meeting_id = ?1 AND t.label = s.label\n             ) THEN s.label || ?3 ELSE s.label END\n         WHERE s.meeting_id = ?2 AND NOT EXISTS (\n             SELECT 1 FROM speakers AS t\n             WHERE t.meeting_id = ?1 AND ((t.is_me = 1 AND s.is_me = 1) OR t.person_id = s.person_id)\n         )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "44492b4ec421a985510a7bb96d373521f7a9c0958b9ff7d7a9e64bd1166f1228"
+}

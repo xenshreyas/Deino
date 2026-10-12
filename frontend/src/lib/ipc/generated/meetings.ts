@@ -38,6 +38,161 @@ async rename(id: MeetingId, title: string) : Promise<Result<Meeting, AppError>> 
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Up to `size` meetings `filter` matches, newest first, after `after`;
+ * `invalid` for the audience filter without the user's address.
+ */
+async page(filter: MeetingFilter, after: MeetingCursor | null, size: number) : Promise<Result<MeetingPage, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|page", { filter, after, size }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Every meeting `filter` matches, newest first (⌘A).
+ */
+async matchingIds(filter: MeetingFilter) : Promise<Result<MeetingId[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|matching_ids", { filter }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The saved views, in tab order.
+ */
+async views() : Promise<Result<MeetingView[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|views") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Saves a view after the last tab; `conflict` for a taken name.
+ */
+async createView(view: MeetingViewInput) : Promise<Result<MeetingView, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|create_view", { view }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Renames a view or replaces its filter.
+ */
+async updateView(id: MeetingViewId, view: MeetingViewInput) : Promise<Result<MeetingView, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|update_view", { id, view }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes a view.
+ */
+async deleteView(id: MeetingViewId) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|delete_view", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Moves meetings to the trash.
+ */
+async trash(ids: MeetingId[]) : Promise<Result<TrashOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|trash", { ids }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Takes meetings out of the trash, whole.
+ */
+async restore(ids: MeetingId[]) : Promise<Result<TrashOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|restore", { ids }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The trash, most recently trashed first.
+ */
+async trashed() : Promise<Result<TrashedMeeting[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|trashed") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes trashed meetings for good, with their recordings.
+ */
+async deleteForever(ids: MeetingId[]) : Promise<Result<TrashOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|delete_forever", { ids }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Puts a tag on every meeting in `ids`.
+ */
+async tagMany(ids: MeetingId[], tag: TagId) : Promise<Result<BulkOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|tag_many", { ids, tag }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Takes a tag off every meeting in `ids`.
+ */
+async untagMany(ids: MeetingId[], tag: TagId) : Promise<Result<BulkOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|untag_many", { ids, tag }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Files every meeting in `ids` into a folder.
+ */
+async fileMany(ids: MeetingId[], folder: FolderId) : Promise<Result<BulkOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|file_many", { ids, folder }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Merges two or more meetings into the earliest of them.
+ */
+async merge(ids: MeetingId[]) : Promise<Result<MergeOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:meetings|merge", { ids }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -67,6 +222,45 @@ code: ErrorCode;
  * A user-safe description of the failure.
  */
 message: string }
+/**
+ * Who a meeting is with, from the user's side: only colleagues, or
+ * someone from outside. Template auto rules match on it (NOT-04);
+ * briefs, follow-up emails and calendar sync use it later.
+ */
+export type Audience = 
+/**
+ * Everyone else shares one of the user's work email domains.
+ */
+"internal" | 
+/**
+ * At least one attendee is from another domain.
+ */
+"external"
+/**
+ * What a bulk action changed.
+ */
+export type BulkOutcome = { 
+/**
+ * How many meetings changed; the others already were that way.
+ */
+changed: number }
+/**
+ * Identifies a company.
+ */
+export type CompanyId = string & { readonly __brand: "CompanyId" }
+/**
+ * Inclusive local days the item's meeting took place in (its creation day
+ * for a standalone item). Either end may be open.
+ */
+export type DateRange = { 
+/**
+ * The first day, if bounded.
+ */
+from: string | null; 
+/**
+ * The last day, if bounded.
+ */
+to: string | null }
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
  * in the `last_error_code` and `error_code` columns of the integration tables.
@@ -109,6 +303,83 @@ export type ErrorCode =
  */
 "internal"
 /**
+ * Identifies a folder.
+ */
+export type FolderId = string & { readonly __brand: "FolderId" }
+/**
+ * An attendee's avatar on a list row.
+ */
+export type ListedAttendee = { 
+/**
+ * The person.
+ */
+personId: PersonId; 
+/**
+ * Their name, for initials and the tooltip.
+ */
+name: string; 
+/**
+ * Their cached avatar, if any.
+ */
+avatarPath: string | null; 
+/**
+ * True for the user.
+ */
+isMe: boolean }
+/**
+ * A meeting as its list row shows it: title, time, length, who was there
+ * and its tags (Circleback §14: invitee avatars and colour-coded tags).
+ */
+export type ListedMeeting = { 
+/**
+ * The meeting's ID.
+ */
+id: MeetingId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * When it was saved; the list's order and the day it is grouped under.
+ */
+createdAt: string; 
+/**
+ * When the recording started, if known.
+ */
+startedAt: string | null; 
+/**
+ * The recorded length, if known.
+ */
+duration: Seconds | null; 
+/**
+ * Where it is in its lifecycle.
+ */
+status: MeetingStatus; 
+/**
+ * Who attended, the user last.
+ */
+attendees: ListedAttendee[]; 
+/**
+ * Its tags, by name.
+ */
+tags: ListedTag[] }
+/**
+ * A tag chip on a list row.
+ */
+export type ListedTag = { 
+/**
+ * The tag.
+ */
+id: TagId; 
+/**
+ * Its name.
+ */
+name: string; 
+/**
+ * Its palette colour.
+ */
+color: PaletteColor }
+/**
  * A meeting, as the list and the meeting page show it.
  */
 export type Meeting = { 
@@ -129,6 +400,53 @@ createdAt: string;
  */
 updatedAt: string }
 /**
+ * Where a page of the list starts: just after this row.
+ */
+export type MeetingCursor = { 
+/**
+ * The row's `created_at` exactly as stored, so the keyset comparison
+ * matches the index order.
+ */
+at: string; 
+/**
+ * The row's ID, which breaks ties.
+ */
+id: MeetingId }
+/**
+ * One Meetings filter. Every condition narrows the list and an absent or
+ * empty one does not filter. Within a list any value matches (meetings
+ * with Maya *or* Lee); the conditions combine (with Maya, *and* tagged).
+ */
+export type MeetingFilter = { 
+/**
+ * Only meetings held on these local days.
+ */
+dateRange: DateRange | null; 
+/**
+ * Only meetings one of these people attended or spoke in.
+ */
+people: PersonId[]; 
+/**
+ * Only meetings someone from one of these companies attended.
+ */
+companies: CompanyId[]; 
+/**
+ * Only meetings with one of these tags.
+ */
+tags: TagId[]; 
+/**
+ * Only meetings in one of these folders or a folder inside one.
+ */
+folders: FolderId[]; 
+/**
+ * Only meetings with at least one action item.
+ */
+hasActionItems: boolean; 
+/**
+ * Only meetings with colleagues only, or with someone from outside.
+ */
+audience: Audience | null }
+/**
  * Identifies a meeting.
  * 
  * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
@@ -137,6 +455,151 @@ updatedAt: string }
  * new meetings may use any unique text, including `meeting-<UUIDv7>`.
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
+/**
+ * One page of the list.
+ */
+export type MeetingPage = { 
+/**
+ * The rows, newest first.
+ */
+meetings: ListedMeeting[]; 
+/**
+ * Where the next page starts; `None` on the last page.
+ */
+next: MeetingCursor | null }
+/**
+ * Where a meeting is in its lifecycle. Stored in `meetings.status`.
+ */
+export type MeetingStatus = 
+/**
+ * Created ahead of time from a calendar event; nothing recorded yet.
+ */
+"scheduled" | 
+/**
+ * Audio is being captured and transcribed.
+ */
+"recording" | 
+/**
+ * Recording stopped; the post-meeting pipeline is running.
+ */
+"processing" | 
+/**
+ * The pipeline finished; notes are available.
+ */
+"ready" | 
+/**
+ * The pipeline or the recording failed; the meeting can be reprocessed.
+ */
+"failed"
+/**
+ * A named filter, shown as a tab.
+ */
+export type MeetingView = { 
+/**
+ * The view's ID.
+ */
+id: MeetingViewId; 
+/**
+ * Its tab label; unique, ignoring case.
+ */
+name: string; 
+/**
+ * What it shows.
+ */
+filter: MeetingFilter; 
+/**
+ * Its place among the tabs, from 0.
+ */
+position: number; 
+/**
+ * When it was first saved.
+ */
+createdAt: string; 
+/**
+ * When it last changed.
+ */
+updatedAt: string }
+/**
+ * Identifies a saved view of the Meetings page (ORG-07).
+ */
+export type MeetingViewId = string & { readonly __brand: "MeetingViewId" }
+/**
+ * What the user saves: a name and the filter on screen.
+ */
+export type MeetingViewInput = { 
+/**
+ * The tab label.
+ */
+name: string; 
+/**
+ * The filter.
+ */
+filter: MeetingFilter }
+/**
+ * What a merge did.
+ */
+export type MergeOutcome = { 
+/**
+ * The merged meeting (the earliest of those chosen). Its AI notes now
+ * lag the transcript, so the meeting page offers to regenerate them
+ * with NOT-02's reasons.
+ */
+meetingId: MeetingId; 
+/**
+ * The meetings it absorbed, now deleted.
+ */
+absorbed: MeetingId[] }
+/**
+ * A colour from the `--speaker-1` … `--speaker-6` palette
+ * (`docs/references/ui.md`), used by speakers and tags. Stored as the slot
+ * number, which the schema checks is between 1 and 6, so the database never
+ * holds a hard-coded colour and both themes stay in charge of the shade.
+ */
+export type PaletteColor = number
+/**
+ * Identifies a person.
+ */
+export type PersonId = string & { readonly __brand: "PersonId" }
+/**
+ * A count of whole seconds, for example a meeting's recorded length.
+ */
+export type Seconds = number
+/**
+ * Identifies a tag.
+ */
+export type TagId = string & { readonly __brand: "TagId" }
+/**
+ * What the trash did to the meetings it was asked about.
+ */
+export type TrashOutcome = { 
+/**
+ * The meetings that changed; the others were missing or already there.
+ */
+changed: MeetingId[] }
+/**
+ * A meeting in the trash.
+ */
+export type TrashedMeeting = { 
+/**
+ * The meeting's ID.
+ */
+id: MeetingId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * When it was saved.
+ */
+createdAt: string; 
+/**
+ * When it was moved to the trash.
+ */
+deletedAt: string; 
+/**
+ * When the purge deletes it for good.
+ */
+purgesAt: string }
 
 /** tauri-specta globals **/
 

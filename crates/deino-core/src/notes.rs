@@ -42,5 +42,6 @@ pub use model::{
     IMAGES_FOLDER, ImageKind, ImageName, MAX_DOC_BYTES, MAX_IMAGE_BYTES, MeetingNotes, NoteImage,
     SavedNotes, StoredNotes,
 };
+pub(crate) use repo::upsert as upsert_notes;
 pub use repo::{NotesRepo, SqliteNotesRepo};
 pub use service::{NotePorts, NoteService};

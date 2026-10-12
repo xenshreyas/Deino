@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE voiceprints SET source_meeting_id = ?1 WHERE source_meeting_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "5d60b3ce16930a17a4534e90ed3b911eaf17b139074b356fcccbe8dfc3921e1b"
+}

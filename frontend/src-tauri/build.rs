@@ -24,6 +24,8 @@ use downloads::{ffmpeg, onnxruntime};
 
 // `FEATURES`: the inline feature plugins and their commands (ADR 0002).
 include!("src/features/manifest.rs");
+// `ORGANIZE_FEATURES`: the organization feature plugins (the ORG cards).
+include!("src/features/organize_manifest.rs");
 // `DEV_FEATURES`: the feature plugins of debug builds.
 include!("src/features/dev_manifest.rs");
 
@@ -56,29 +58,35 @@ fn main() {
 /// feature plugins) is left out, because its plugins do not exist there.
 const RELEASE_CAPABILITIES: &str = "./capabilities/*.json";
 
-/// Registers every feature in `src/features/manifest.rs` (and, in debug
-/// builds, `dev_manifest.rs`) as an inline plugin,
+/// Registers every feature in `src/features/manifest.rs` and
+/// `organize_manifest.rs` (and, in debug builds, `dev_manifest.rs`) as an
+/// inline plugin,
 /// so tauri-build generates its `allow-*`/`deny-*` permissions and a
 /// `<name>:default` set that allows all of its commands. `DEV_FEATURES` and
 /// their capabilities are only registered when debug assertions are on.
 fn tauri_attributes() -> tauri_build::Attributes {
     println!("cargo:rerun-if-changed=src/features/manifest.rs");
     println!("cargo:rerun-if-changed=src/features/manifest_commands.rs");
+    println!("cargo:rerun-if-changed=src/features/organize_manifest.rs");
     println!("cargo:rerun-if-changed=src/features/dev_manifest.rs");
     println!("cargo:rerun-if-changed=src/features/recording_manifest.rs");
     let debug = std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_some();
     let dev_features: &[(&str, &[&str])] = if debug { DEV_FEATURES } else { &[] };
-    let attributes = FEATURES.iter().chain(dev_features).fold(
-        tauri_build::Attributes::new(),
-        |attributes, &(name, commands)| {
-            attributes.plugin(
-                name,
-                tauri_build::InlinedPlugin::new()
-                    .commands(commands)
-                    .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
-            )
-        },
-    );
+    let attributes = FEATURES
+        .iter()
+        .chain(ORGANIZE_FEATURES)
+        .chain(dev_features)
+        .fold(
+            tauri_build::Attributes::new(),
+            |attributes, &(name, commands)| {
+                attributes.plugin(
+                    name,
+                    tauri_build::InlinedPlugin::new()
+                        .commands(commands)
+                        .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
+                )
+            },
+        );
     if debug {
         attributes
     } else {

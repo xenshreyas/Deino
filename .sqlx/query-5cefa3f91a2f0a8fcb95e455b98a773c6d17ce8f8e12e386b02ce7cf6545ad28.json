@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The recording files of the meetings in ?1 (a JSON array of IDs), and of\n-- every part merged into them, each with the meeting whose folders hold it.\nSELECT\n    m.id AS \"meeting!: MeetingId\",\n    m.id AS \"owner!: MeetingId\",\n    m.audio_path,\n    m.audio_mic_path,\n    m.audio_system_path,\n    m.video_path\nFROM meetings AS m\nWHERE m.id IN (SELECT value FROM json_each(?1))\nUNION ALL\nSELECT\n    p.meeting_id,\n    p.source_meeting_id,\n    p.audio_path,\n    p.audio_mic_path,\n    p.audio_system_path,\n    p.video_path\nFROM meeting_merge_parts AS p\nWHERE p.meeting_id IN (SELECT value FROM json_each(?1))\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "owner!: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_path",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_mic_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_system_path",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_path",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "5cefa3f91a2f0a8fcb95e455b98a773c6d17ce8f8e12e386b02ce7cf6545ad28"
+}

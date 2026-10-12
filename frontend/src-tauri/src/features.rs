@@ -6,8 +6,9 @@
 //! against the capability ACL, so a feature is registered in four places,
 //! one line each:
 //!
-//! 1. [`manifest::FEATURES`]: the plugin name and command names, from which
-//!    `build.rs` generates the plugin's ACL permissions;
+//! 1. [`manifest::FEATURES`] (or [`organize_manifest::ORGANIZE_FEATURES`]):
+//!    the plugin name and command names, from which `build.rs` generates the
+//!    plugin's ACL permissions;
 //! 2. `lib.rs`: `.plugin(features::<feature>::init())`;
 //! 3. `capabilities/default.json`: `"<feature>:default"`;
 //! 4. [`builders`]: its bindings builder, exported to TypeScript.
@@ -39,6 +40,8 @@ pub mod meetings;
 pub mod network;
 pub mod notes;
 pub mod onboarding;
+/// The organization feature plugins (shared with `build.rs`, so it has no `//!` docs).
+pub mod organize_manifest;
 pub mod people;
 pub mod pipeline;
 pub mod player;
@@ -107,6 +110,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
 mod tests {
     use super::dev_manifest::DEV_FEATURES;
     use super::manifest::FEATURES;
+    use super::organize_manifest::ORGANIZE_FEATURES;
 
     /// The capability files that grant feature plugins.
     const CAPABILITIES: [&str; 4] = [
@@ -133,7 +137,7 @@ mod tests {
             .iter()
             .flat_map(|c| granted_permissions(c))
             .collect();
-        for (name, _) in FEATURES.iter().chain(DEV_FEATURES) {
+        for (name, _) in FEATURES.iter().chain(ORGANIZE_FEATURES).chain(DEV_FEATURES) {
             let permission = format!("{name}:default");
             assert!(
                 granted.contains(&permission),
@@ -157,6 +161,7 @@ mod tests {
     fn manifest_names_are_unique_and_list_commands() {
         let mut names: Vec<&str> = FEATURES
             .iter()
+            .chain(ORGANIZE_FEATURES)
             .chain(DEV_FEATURES)
             .map(|(name, _)| *name)
             .collect();
@@ -167,6 +172,7 @@ mod tests {
         assert!(
             FEATURES
                 .iter()
+                .chain(ORGANIZE_FEATURES)
                 .chain(DEV_FEATURES)
                 .all(|(_, commands)| !commands.is_empty())
         );

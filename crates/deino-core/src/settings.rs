@@ -75,5 +75,6 @@ pub use store::{JsonFileSettingsStore, SettingsStore};
 pub use templates::TemplateSettings;
 pub use transcription::{DEFAULT_PARAKEET_MODEL, TranscriptionEngine, TranscriptionSettings};
 pub use ui::{
-    BetaSettings, MAX_TRANSCRIPT_PANE_RATIO, MIN_TRANSCRIPT_PANE_RATIO, Theme, UiSettings,
+    BetaSettings, MAX_TRANSCRIPT_PANE_RATIO, MIN_TRANSCRIPT_PANE_RATIO, MeetingsListPrefs, Theme,
+    UiSettings,
 };

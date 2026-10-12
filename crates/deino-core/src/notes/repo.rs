@@ -52,8 +52,13 @@ impl NotesRepo for SqliteNotesRepo {
     }
 }
 
-/// The one write: insert, or replace everything but `created_at`.
-async fn upsert(connection: &mut SqliteConnection, notes: &StoredNotes) -> Result<(), DbError> {
+/// The one write: insert, or replace everything but `created_at`. Shared
+/// with the meeting merge (ORG-07), which writes the combined notes inside
+/// its own transaction.
+pub(crate) async fn upsert(
+    connection: &mut SqliteConnection,
+    notes: &StoredNotes,
+) -> Result<(), DbError> {
     let json = serde_json::to_string(&notes.doc).map_err(decode_error)?;
     sqlx::query!(
         "INSERT INTO meeting_notes (meeting_id, notes_markdown, notes_json, created_at, updated_at)

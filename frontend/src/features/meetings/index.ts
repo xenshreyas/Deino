@@ -1,14 +1,13 @@
 /**
- * The meetings feature: list, open, rename and delete meetings through the
- * `meetings` plugin, and the Meetings page. Other code imports from here only.
+ * The meetings feature: list, open and rename meetings through the
+ * `meetings` plugin. The Meetings page, its trash and bulk actions are
+ * `features/meetings-list` (ORG-07). Other code imports from here only.
  */
 export { meetingsApi } from './api';
-export { MeetingsScreen, type MeetingsScreenProps } from './components/meetings-screen';
 export {
   meetingKeys,
   meetingListQuery,
   meetingQuery,
-  useDeleteMeeting,
   useMeeting,
   useMeetings,
   useRenameMeeting,

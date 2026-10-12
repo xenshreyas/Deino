@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO meeting_folders (meeting_id, folder_id, added_at)\n         SELECT ?1, folder_id, added_at FROM meeting_folders WHERE meeting_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "a63518dd469d12b960802cc9ec86bd7543cebb17aedcc5cf1add58a34cd4fb4d"
+}

@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The Meetings page: meetings outside the trash that pass every filter,\n-- newest first, starting after the cursor. Walks the partial index\n-- idx_meetings_live_created_at_id in order (asserted in repo_tests.rs), so\n-- a page stops after ?13 matches and never sorts.\n--\n-- Lists are JSON arrays and an empty one does not filter. Within a list any\n-- value matches (OR); the conditions combine with AND.\n--\n-- ?1, ?2  held from (inclusive) and before (exclusive), UTC; NULL: open\n-- ?3      person IDs: one attended, or spoke as a linked speaker\n-- ?4      company IDs: someone from one attended\n-- ?5      tag IDs: one is on the meeting\n-- ?6      folder IDs: the meeting is in one, or in a folder inside one\n-- ?7      1: only meetings with action items\n-- ?8      'internal' or 'external'; NULL does not filter\n-- ?9      the user's own addresses, ?10 their work domains (for ?8)\n-- ?11     the cursor's created_at, as stored; NULL: the first page\n-- ?12     the cursor's meeting ID\n-- ?13     the most rows; -1 for every match\nWITH RECURSIVE folder_tree (id) AS (\n    SELECT value FROM json_each(?6)\n    UNION\n    SELECT child.id FROM folders AS child JOIN folder_tree AS tree ON child.parent_id = tree.id\n),\n-- Meetings someone from outside attended: an address that is neither the\n-- user's nor at one of their work domains (profile::InternalDomains).\noutsiders (meeting_id) AS (\n    SELECT a.meeting_id\n    FROM meeting_attendees AS a\n    JOIN people AS p ON p.id = a.person_id\n    WHERE p.email IS NOT NULL\n        AND p.is_me = 0\n        AND p.email NOT IN (SELECT value FROM json_each(?9))\n        AND NOT EXISTS (\n            SELECT 1 FROM json_each(?10) AS domain\n            WHERE p.email LIKE '%@' || domain.value OR p.email LIKE '%.' || domain.value\n        )\n)\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.title AS \"title!\",\n    m.created_at AS \"cursor_at!: String\",\n    m.created_at AS \"created_at!: DateTime<Utc>\",\n    m.started_at AS \"started_at: DateTime<Utc>\",\n    m.duration_s AS \"duration: Seconds\",\n    m.status AS \"status!: MeetingStatus\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND (?11 IS NULL OR m.created_at < ?11 OR (m.created_at = ?11 AND m.id < ?12))\n    AND (?1 IS NULL OR julianday(m.created_at) >= julianday(?1))\n    AND (?2 IS NULL OR julianday(m.created_at) < julianday(?2))\n    AND (\n        json_array_length(?3) = 0\n        OR EXISTS (\n            SELECT 1 FROM meeting_attendees AS a\n            WHERE a.meeting_id = m.id AND a.person_id IN (SELECT value FROM json_each(?3))\n        )\n        OR EXISTS (\n            SELECT 1 FROM speakers AS s\n            WHERE s.meeting_id = m.id AND s.person_id IN (SELECT value FROM json_each(?3))\n        )\n    )\n    AND (\n        json_array_length(?4) = 0\n        OR EXISTS (\n            SELECT 1 FROM meeting_attendees AS a\n            JOIN people AS p ON p.id = a.person_id\n            WHERE a.meeting_id = m.id AND p.company_id IN (SELECT value FROM json_each(?4))\n        )\n    )\n    AND (\n        json_array_length(?5) = 0\n        OR EXISTS (\n            SELECT 1 FROM meeting_tags AS t\n            WHERE t.meeting_id = m.id AND t.tag_id IN (SELECT value FROM json_each(?5))\n        )\n    )\n    AND (\n        json_array_length(?6) = 0\n        OR EXISTS (\n            SELECT 1 FROM meeting_folders AS f\n            WHERE f.meeting_id = m.id AND f.folder_id IN (SELECT id FROM folder_tree)\n        )\n    )\n    AND (?7 = 0 OR EXISTS (SELECT 1 FROM action_items AS i WHERE i.meeting_id = m.id))\n    AND (\n        ?8 IS NULL\n        OR (?8 = 'external' AND m.id IN (SELECT meeting_id FROM outsiders))\n        OR (\n            ?8 = 'internal'\n            AND m.id NOT IN (SELECT meeting_id FROM outsiders)\n            AND EXISTS (\n                SELECT 1 FROM meeting_attendees AS a\n                JOIN people AS p ON p.id = a.person_id\n                WHERE a.meeting_id = m.id AND p.email IS NOT NULL\n            )\n        )\n    )\nORDER BY m.created_at DESC, m.id DESC\nLIMIT ?13\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "cursor_at!: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "started_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration: Seconds",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "status!: MeetingStatus",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 13
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "756bb04746cb7b13a67d41f6cbcc6e725b479ee71ba4aa2f3ce9c892cf6f8697"
+}

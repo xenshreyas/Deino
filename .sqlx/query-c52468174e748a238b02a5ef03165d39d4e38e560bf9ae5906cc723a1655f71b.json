@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meeting_merge_parts\n         SET meeting_id = ?1, position = position + ?2, offset_ms = offset_ms + ?3\n         WHERE meeting_id = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "c52468174e748a238b02a5ef03165d39d4e38e560bf9ae5906cc723a1655f71b"
+}

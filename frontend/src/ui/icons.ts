@@ -33,6 +33,7 @@ export {
   CircleAlert,
   CircleCheck,
   Clock,
+  Combine,
   Code,
   Contact,
   Copy,

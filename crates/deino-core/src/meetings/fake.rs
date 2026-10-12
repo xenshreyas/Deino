@@ -98,7 +98,7 @@ impl MeetingRepo for FakeMeetingRepo {
         let rows = self.rows();
         Ok(rows
             .iter()
-            .find(|row| row.meeting.id == *id)
+            .find(|row| row.meeting.id == *id && row.state.deleted_at.is_none())
             .map(|row| row.meeting.clone()))
     }
 

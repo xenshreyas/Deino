@@ -152,6 +152,26 @@ fn a_cancelled_save_returns_null() {
 }
 
 #[test]
+fn save_many_writes_every_meeting_into_the_chosen_folder() {
+    let (app, fakes) = export_app(Some("/Users/me/Exports"));
+
+    let saved = call(
+        &app,
+        "save_many",
+        json!({ "meetingIds": [STANDUP, STANDUP], "format": "markdown" }),
+    );
+
+    assert_eq!(saved, Ok(json!({ "count": 2, "folder": "Exports" })));
+    assert_eq!(
+        fakes.vault.paths(),
+        [
+            PathBuf::from("/Users/me/Exports/2026-10-08 Eng standup (2).md"),
+            PathBuf::from("/Users/me/Exports/2026-10-08 Eng standup.md"),
+        ]
+    );
+}
+
+#[test]
 fn copy_and_email_reach_the_clipboard_and_the_mail_app() {
     let (app, fakes) = export_app(None);
 

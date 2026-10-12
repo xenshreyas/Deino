@@ -1,8 +1,10 @@
 //! The UI and beta sections: appearance, layout and opt-in features.
 
+use deino_domain::MeetingViewId;
 use serde::{Deserialize, Serialize};
 
 use super::SettingsError;
+use crate::meetings::MeetingFilter;
 
 /// The narrowest transcript pane on the meeting page, as a share of its width.
 pub const MIN_TRANSCRIPT_PANE_RATIO: f32 = 0.3;
@@ -34,6 +36,18 @@ pub struct UiSettings {
     pub show_confidence_indicator: bool,
     /// The transcript pane's share of the meeting page's width.
     pub transcript_pane_ratio: f32,
+    /// The Meetings page's filter and open tab, kept across launches.
+    pub meetings_list: MeetingsListPrefs,
+}
+
+/// The Meetings page as the user left it (ORG-07: "filters persist").
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct MeetingsListPrefs {
+    /// The open saved view; `None` for "All meetings".
+    pub view: Option<MeetingViewId>,
+    /// The filter on screen, which may differ from the view's own.
+    pub filter: MeetingFilter,
 }
 
 impl Default for UiSettings {
@@ -42,6 +56,7 @@ impl Default for UiSettings {
             theme: Theme::System,
             show_confidence_indicator: true,
             transcript_pane_ratio: MIN_TRANSCRIPT_PANE_RATIO,
+            meetings_list: MeetingsListPrefs::default(),
         }
     }
 }

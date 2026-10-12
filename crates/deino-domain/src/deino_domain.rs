@@ -65,8 +65,8 @@ pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
     ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId,
-    PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId,
-    VoiceprintId,
+    MeetingViewId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
+    VocabTermId, VoiceprintId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

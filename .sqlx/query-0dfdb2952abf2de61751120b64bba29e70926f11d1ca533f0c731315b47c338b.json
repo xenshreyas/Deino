@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO meeting_tags (meeting_id, tag_id, applied_by, applied_at)\n         SELECT ?1, tag_id, applied_by, applied_at FROM meeting_tags WHERE meeting_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "0dfdb2952abf2de61751120b64bba29e70926f11d1ca533f0c731315b47c338b"
+}

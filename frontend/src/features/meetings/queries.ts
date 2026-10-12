@@ -62,17 +62,3 @@ export function useRenameMeeting() {
     },
   });
 }
-
-/** Deletes a meeting and drops it from the cached list at once. */
-export function useDeleteMeeting() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (id: MeetingId) => meetingsApi.delete(id),
-    onSuccess: (_nothing, id) => {
-      client.setQueryData(meetingKeys.list(), (meetings: Meeting[] | undefined) =>
-        meetings?.filter((meeting) => meeting.id !== id),
-      );
-      client.removeQueries({ queryKey: meetingKeys.detail(id) });
-    },
-  });
-}

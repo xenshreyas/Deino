@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The avatars of a page's meetings (?1, a JSON array of meeting IDs): each\n-- attendee, the user last, then by name. One lookup per meeting through\n-- the meeting_attendees primary key.\nSELECT\n    a.meeting_id AS \"meeting_id!: MeetingId\",\n    p.id AS \"person_id!: PersonId\",\n    p.name AS \"name!\",\n    p.avatar_path,\n    p.is_me AS \"is_me!: bool\"\nFROM json_each(?1) AS page\nJOIN meeting_attendees AS a ON a.meeting_id = page.value\nJOIN people AS p ON p.id = a.person_id\nORDER BY a.meeting_id, p.is_me, p.name COLLATE NOCASE, p.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id!: PersonId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "avatar_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me!: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "4168c40ee0fce0943d7c788064f132f748f447ae98d1e1098d3bf5661009c1cd"
+}

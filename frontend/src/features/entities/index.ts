@@ -7,6 +7,7 @@
 export { companiesApi, peopleApi } from './api';
 export { CompaniesScreen } from './components/companies-screen';
 export { CompanyScreen } from './components/company-screen';
+export { EntityAvatar, type EntityAvatarProps } from './components/entity-avatar';
 export { MeetingAttendees, type MeetingAttendeesProps } from './components/meeting-attendees';
 export { MentionHoverZone } from './components/mention-hover-zone';
 export { PeopleScreen } from './components/people-screen';

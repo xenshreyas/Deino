@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM meetings\n            WHERE id IN (SELECT value FROM json_each(?1)) AND deleted_at IS NOT NULL\n            RETURNING id AS \"id!: MeetingId\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1b751682e4d4893fa7eb48daa4a2fa646e76b4819959166f743477886f64bf1c"
+}

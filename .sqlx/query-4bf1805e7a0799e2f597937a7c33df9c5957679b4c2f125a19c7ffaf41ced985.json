@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings\n            WHERE id = ?1 AND deleted_at IS NOT NULL\n              AND id IN (SELECT value FROM json_each(?2)))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4bf1805e7a0799e2f597937a7c33df9c5957679b4c2f125a19c7ffaf41ced985"
+}

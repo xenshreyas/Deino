@@ -37,7 +37,7 @@ pub struct ExportServiceDeps {
 
 /// Exports, copies and emails single meetings.
 pub struct ExportService {
-    deps: ExportServiceDeps,
+    pub(super) deps: ExportServiceDeps,
 }
 
 impl ExportService {
@@ -161,7 +161,7 @@ fn clipboard_content(export: &MeetingExport, kind: CopyKind) -> ClipboardContent
 }
 
 /// Renders on the blocking pool (typesetting is CPU-bound).
-async fn rendered(
+pub(super) async fn rendered(
     format: ExportFormat,
     export: MeetingExport,
     options: RenderOptions,
@@ -174,7 +174,7 @@ async fn rendered(
 }
 
 /// "2026-10-08 Eng standup.pdf".
-fn suggested_name(export: &MeetingExport, format: ExportFormat) -> String {
+pub(super) fn suggested_name(export: &MeetingExport, format: ExportFormat) -> String {
     let stem = NameTemplate::parse(DEFAULT_FILE_NAME).map_or_else(
         |_| deino_export::naming::sanitize(&export.title),
         |template| template.stem(export),
