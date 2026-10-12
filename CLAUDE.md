@@ -23,6 +23,39 @@ Decisions are recorded in [`docs/adr/`](docs/adr/).
 If you implement a card, the card is your scope. Note anything outside it under
 "Follow-ups" instead of doing it.
 
+## Merge workflow (every agent follows this)
+
+The goal: each feature runs the full gate once, not once per rebase.
+
+- **Feature agents never rebase, force-push or merge.** Build on your branch,
+  run `cargo fmt --all`, then the **fast gate once**:
+  `scripts/ci-local.sh fast` (fmt-fix, file-size, clippy, typecheck, vitest,
+  and tests for only the crates you touched). Push and report "ready". Do not
+  catch up with `main` because it moved; the merger rebases only on a real
+  conflict, and will ask you if it needs you.
+- **The merger** (the coordinating session) is the only one who merges:
+  `scripts/merge-batch.sh <branch>...` merges 2–4 ready branches into
+  `merge-batch`, regenerates bindings and `.sqlx`, and runs the **full gate
+  once**. On a pass, `scripts/merge-batch.sh --land` fast-forwards `main`. On
+  a failure, the merger halves the batch to find the branch, sends only that
+  one back, and lands the rest.
+- **Never edit the shared docs** `docs/PARITY_PLAN.md`, `docs/ARCHITECTURE.md`
+  or `CLAUDE.md` from a feature branch. Write `docs/changes/<CARD-ID>.md`
+  instead (see `docs/changes/README.md`); the merger folds it into the shared
+  docs after each batch.
+- **New ADRs are named by date and slug**, `docs/adr/YYYY-MM-DD-<slug>.md`,
+  never by number, so parallel branches cannot collide. Existing numbered ADRs
+  keep their names.
+- **Generated files** (`frontend/src/lib/ipc/generated/*`, `.sqlx/`): on any
+  conflict take `main`'s version and regenerate (`cargo test -p deino --lib
+  bindings`, `scripts/sqlx-prepare.sh`). Never hand-merge them.
+- **Registration is per feature**, never a shared list: a feature registers its
+  plugin, commands, bindings builder, composition, tables and pipeline stages
+  from its own files (see "How to add a feature").
+- **Machine limits:** at most 4–6 feature agents at once; `scripts/dev-env.sh`
+  sets `CARGO_BUILD_JOBS=3`, and full gates use 2 machine-wide slots at 4 jobs.
+  Never kill processes by pattern; stop your own by PID or task ID.
+
 ## What Deino is
 
 A private, local-first AI meeting notepad for one person on macOS. Recording,
@@ -41,8 +74,10 @@ no Deino server, and automatic updates are disabled (§8 D6).
 ## Commands
 
 ```bash
-# The whole gate, exactly as CI runs it; run it before every merge
-scripts/ci-local.sh                  # every step, cheapest first, fails fast; --list for steps
+# Gates: feature agents run `fast` once; the merger runs the full gate per batch
+scripts/ci-local.sh fast             # fmt-fix, file-size, clippy, typecheck, vitest, touched crates' tests
+scripts/ci-local.sh                  # the full gate, cheapest first, fails fast; --list for steps
+scripts/merge-batch.sh A B C         # merger only: batch-merge ready branches, full gate; --land to ship
 scripts/ci-local.sh rust             # or a group (rust, frontend) or single steps (clippy test)
 
 # Rust (repository root; the toolchain comes from rust-toolchain.toml)
@@ -100,11 +135,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
 | `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `stats` (ORG-09: stats computed on read, the year in review; ADR 0049), `_example` (debug builds) |
-| `crates/deino-core` | Features as modules: `meetings` (ORG-07, ADR 0046: the filtered list, saved views, the trash and its 30-day purge, bulk tag and file, merge), `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `_example` (debug builds) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `briefs` (NOT-08: pre-meeting briefs from local data, the 06:00 and hour-before job; ADR 0047), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `stats` (ORG-09: stats computed on read, the year in review; ADR 0049), `_example` (debug builds) |
-| `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014); `capture`: the cpal microphone and the Core Audio process tap, conditioners (native → 48 kHz), the supervisor (device and power listeners, stall watchdog, route probe) (ADR 0026) |
-| `crates/deino-core` | Features as modules: `meetings`, `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `stats` (ORG-09: stats computed on read, the year in review; ADR 0049), `import` and `watch` (CAP-11: recordings imported as meetings the pipeline transcribes; watched folders with a de-duplication ledger; ADR 0044), `_example` (debug builds) |
+| `crates/deino-core` | Features as modules: `meetings` (ORG-07, ADR 0046: the filtered list, saved views, the trash and its 30-day purge, bulk tag and file, merge), `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `stats` (ORG-09: stats computed on read, the year in review; ADR 0049), `import` and `watch` (CAP-11: recordings imported as meetings the pipeline transcribes; watched folders with a de-duplication ledger; ADR 0044), `briefs` (NOT-08: pre-meeting briefs from local data, the 06:00 and hour-before job; ADR 0047), `_example` (debug builds) |
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014); `media` (CAP-11: the `MediaDecoder` trait, symphonia then `AVAssetReader`, `transcode` to AAC); `capture`: the cpal microphone and the Core Audio process tap, conditioners (native → 48 kHz), the supervisor (device and power listeners, stall watchdog, route probe) (ADR 0026) |
 | `crates/deino-recording` | The live recorder (FND-05b, CAP-02, ADR 0026): `RecordingService` (start, stop, pause, resume; creates the meeting, moves it to `processing`), two lanes (Me = microphone, Them = system) each with VAD and a `deino-stt` engine, WebRTC AEC3 (`sonora`) plus the text holdback against echo, the transcript router that saves segments as they are spoken, launch recovery; recording health (`monitor`), mid-recording device switches and Resume (CAP-10, CAP-07, ADR 0039) |
 | `crates/deino-stt` | Speech-to-text: transcribe-cpp worker processes (`deino --transcribe-worker`), `EngineSupervisor`, `LiveSession`, `EnginePool`, `StreamPerf`; no network (ADR 0016) |
@@ -136,13 +167,9 @@ Does Not Own, Invariants); read it before editing the crate.
   `SystemClock`, the settings file, the Keychain, Tauri event adapters) into
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
-- `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `import`, `insights`, `stats`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
-  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `stats`, `developer`, `onboarding`, `db`, `privacy`, and `example`/`dev` in debug builds). `features/manifest.rs`
-  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `stats`, `briefs`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
-  lists them for the ACL.
-  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
-  (and `organize_manifest.rs` for the ORG features) lists them for the ACL.
+- `features.rs`, `features/`: one inline plugin per feature (each lists its
+  commands for the ACL and registers itself; see "Merge workflow" below for
+  how registration works), and `example`/`dev` in debug builds.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
 - `bindings.rs`: the test that writes the TypeScript bindings.

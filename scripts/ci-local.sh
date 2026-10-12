@@ -33,7 +33,11 @@ ALL_STEPS=(fmt file-size deps deny "${FRONTEND_STEPS[@]}" clippy test bindings s
 # these wait for the machine-wide gate lock.
 HEAVY_STEPS=(e2e clippy test bindings sqlx test-app clippy-portable test-portable)
 # Not in the default run: Linux CI's stand-ins for clippy and test.
-EXTRA_STEPS=(check clippy-portable test-portable test-app)
+EXTRA_STEPS=(check clippy-portable test-portable test-app fmt-fix test-touched)
+# The feature agent's gate (CLAUDE.md "Merge workflow"): formats first, then the
+# checks that catch most problems, testing only the crates the branch touched.
+# The full gate runs once per merge batch, on the batch branch.
+FAST_STEPS=(fmt-fix file-size clippy typecheck vitest test-touched)
 
 # ── Steps ────────────────────────────────────────────────────────────────────
 
@@ -75,6 +79,46 @@ step_test() {
 }
 
 step_test_portable() { run_tests "${PORTABLE[@]}"; }
+
+# Formats the workspace instead of checking it, so the fast gate never fails on fmt.
+step_fmt_fix() { cargo fmt --all; }
+
+# Tests only the crates this branch changed since it left origin/main, and the
+# app crate when the frontend's Rust side changed. Skips when no crate changed.
+step_test_touched() {
+    local crates=() packages=() crate
+    read -r -a crates <<<"$(touched_crates)"
+    if ((${#crates[@]} == 0)); then
+        echo "test-touched: no Rust crate changed; skipping"
+        return 0
+    fi
+    stage_sidecar
+    echo "test-touched: ${crates[*]}"
+    for crate in "${crates[@]}"; do packages+=(-p "$crate"); done
+    cargo test --locked --no-fail-fast "${packages[@]}" --lib --tests --bins
+}
+
+# The packages whose directories hold a file changed since the merge base with
+# origin/main (committed or not), as one space-separated line.
+touched_crates() {
+    local base
+    base="$(git merge-base HEAD origin/main 2>/dev/null || git rev-parse HEAD)"
+    { git diff --name-only "$base"; git diff --name-only; git ls-files --others --exclude-standard; } |
+        sort -u | python3 -I -c '
+import json, subprocess, sys
+meta = json.loads(subprocess.run(["cargo", "metadata", "--no-deps", "--format-version", "1"],
+                                 capture_output=True, text=True, check=True).stdout)
+root = meta["workspace_root"] + "/"
+dirs = sorted(((p["manifest_path"][len(root):].rsplit("/", 1)[0] + "/", p["name"])
+               for p in meta["packages"]), key=lambda d: -len(d[0]))
+hit = set()
+for path in sys.stdin.read().split():
+    for prefix, name in dirs:
+        if path.startswith(prefix):
+            hit.add(name)
+            break
+print(" ".join(sorted(hit)))'
+}
 
 # Linux CI: the app's unit tests, from the test binary `bindings` builds anyway.
 step_test_app() {
@@ -223,7 +267,8 @@ usage() {
     echo
     echo "Steps:  ${ALL_STEPS[*]}"
     echo "Extra:  ${EXTRA_STEPS[*]}"
-    echo "Groups: all, rust (${RUST_STEPS[*]}), frontend (${FRONTEND_STEPS[*]})"
+    echo "Groups: all, rust (${RUST_STEPS[*]}), frontend (${FRONTEND_STEPS[*]}),"
+    echo "        fast (${FAST_STEPS[*]})"
 }
 
 # Expands groups and validates step names; prints one step per line.
@@ -234,6 +279,7 @@ resolve() {
             all) printf '%s\n' "${ALL_STEPS[@]}" ;;
             rust) printf '%s\n' "${RUST_STEPS[@]}" ;;
             frontend) printf '%s\n' "${FRONTEND_STEPS[@]}" ;;
+            fast) printf '%s\n' "${FAST_STEPS[@]}" ;;
             *)
                 if ! declare -F "step_${arg//-/_}" >/dev/null; then
                     echo "error: unknown step '$arg' (see --list)" >&2
@@ -261,7 +307,7 @@ summary() {
 # ── Machine-wide gate slots ──────────────────────────────────────────────────
 # Parallel worktrees each running the full gate overloaded the machine (load
 # 100+), and timing-sensitive tests then flaked. So the heavy steps run in one
-# of DEINO_GATE_SLOTS slots (default 3); other gates wait for a free one. A
+# of DEINO_GATE_SLOTS slots (default 2); other gates wait for a free one. A
 # slot whose owner died is reclaimed. DEINO_GATE_NO_LOCK=1 skips this.
 # Slot 0 keeps the original lock path, so older copies of this script share it.
 readonly GATE_LOCK_DIR="${HOME}/.cache/deino"
@@ -282,7 +328,7 @@ try_slot() {
 acquire_gate_lock() {
     [[ "${DEINO_GATE_NO_LOCK:-}" == 1 || -n "$GATE_SLOT" ]] && return 0
     mkdir -p "$GATE_LOCK_DIR"
-    local slots="${DEINO_GATE_SLOTS:-3}" waited=0 slot
+    local slots="${DEINO_GATE_SLOTS:-2}" waited=0 slot
     while true; do
         for ((slot = 0; slot < slots; slot++)); do
             try_slot "$slot" && GATE_SLOT="$slot" && break 2
@@ -295,7 +341,7 @@ acquire_gate_lock() {
     trap release_gate_lock EXIT
     # Gates holding a slot are what the queue waits on, so they get more
     # compile jobs than an ordinary build.
-    export CARGO_BUILD_JOBS="${DEINO_GATE_JOBS:-8}"
+    export CARGO_BUILD_JOBS="${DEINO_GATE_JOBS:-4}"
 }
 
 release_gate_lock() {
