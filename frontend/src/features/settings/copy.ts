@@ -46,12 +46,20 @@ export const settingsCopy = {
   },
 } as const;
 
-/** Settings → Recording: the record panel and auto-stop (CAP-10, CAP-07). */
+/** Settings → Recording: the microphone, the record panel and auto-stop (CAP-10, CAP-07). */
 export const recordingSettingsCopy = {
-  heading: 'While recording',
+  heading: 'Recording',
+  headingDescription: 'Recordings are always saved, and deleted only as Privacy says.',
+  microphoneTitle: 'Microphone',
+  microphoneDescription: 'Your side of the call. The record panel can switch it mid-call.',
+  microphoneLocked: 'Locked while recording. Use the record panel to switch.',
+  microphoneDefault: 'The Mac’s default',
   panelTitle: 'Show the record panel',
   panelDescription:
     'A small pill at the edge of the screen with the time, a level meter and the controls. It never takes focus from your call.',
+  autoStopSection: 'End automatically',
+  autoStopSectionDescription: 'Stop a recording when the call is over, without a click.',
+  autoStopMore: 'More ways to end',
   autoStopTitle: 'End recordings automatically',
   autoStopDescription:
     'When the call app lets go of the microphone, after 15 minutes without speech, or when your Mac sleeps. You get 15 seconds to keep recording.',

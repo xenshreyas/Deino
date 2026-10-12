@@ -6,7 +6,6 @@
 import { About } from '@/components/About';
 import { BetaSettings } from '@/components/BetaSettings';
 import { PreferenceSettings } from '@/components/PreferenceSettings';
-import { RecordingSettings } from '@/components/RecordingSettings';
 import { SummaryModelSettings } from '@/components/SummaryModelSettings';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -28,7 +27,7 @@ import {
 
 import { CaptureModeSettings } from './components/capture-mode-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
-import { RecordingBehaviour } from './components/recording-behaviour';
+import { AutoStopSettings, RecordingBehaviour } from './components/recording-behaviour';
 import { RedactionSettings } from './components/redaction-settings';
 import { useOfflineMode } from './offline-mode';
 import type { SettingsPage } from './sections';
@@ -54,7 +53,7 @@ function RecordingSection() {
   return (
     <div className="flex flex-col gap-8">
       <RecordingBehaviour />
-      <RecordingSettings />
+      <AutoStopSettings />
     </div>
   );
 }
