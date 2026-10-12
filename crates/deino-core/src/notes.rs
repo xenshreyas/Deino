@@ -20,6 +20,7 @@
 //! | `service.rs` | [`NoteService`] |
 //! | `fake.rs` | in-memory ports for tests |
 
+pub mod edit;
 mod error;
 mod events;
 #[cfg(any(test, feature = "test-support"))]

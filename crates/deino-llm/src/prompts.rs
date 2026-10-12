@@ -9,6 +9,7 @@
 mod brief;
 mod enhance;
 mod insights;
+pub mod notes_edit;
 mod recap;
 mod redact;
 

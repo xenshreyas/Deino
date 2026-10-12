@@ -4,6 +4,7 @@
  * extension that marks edited AI text. The newest version autosaves about
  * a second after typing pauses; older versions are read-only. Citations are
  * hidden in the text and surface through the magnifier (`CitedFrame`).
+ * The newest version also scopes "Edit with AI" to its selection (NOT-06).
  */
 import type { Extensions } from '@tiptap/core';
 import { type Editor, EditorContent, useEditor } from '@tiptap/react';
@@ -21,6 +22,7 @@ import { useMountEffect } from '@/hooks/useMountEffect';
 import { enhanceApi } from '../api';
 import { CitedFrame } from '../citations/cited-frame';
 import { notesCopy } from '../copy';
+import { isEditShortcut, openEditBar, registerSelectionReader, selectedTextblocks } from '../edit';
 import { EditedAiText } from '../editor/edited-ai-text';
 import type { EnhancedNotesView } from '../types';
 
@@ -63,7 +65,10 @@ export function EnhancedEditor({ meetingId, view, noteExtensions, onStatus }: En
     editable: view.isLatest,
     immediatelyRender: true,
     shouldRerenderOnTransaction: false,
-    editorProps: { attributes: editorAttributes(view.isLatest) },
+    editorProps: {
+      attributes: editorAttributes(view.isLatest),
+      handleKeyDown: (_view, event) => view.isLatest && askForEdit(event),
+    },
     onUpdate: ({ editor: updated }) => {
       saver.schedule(updated);
     },
@@ -71,11 +76,35 @@ export function EnhancedEditor({ meetingId, view, noteExtensions, onStatus }: En
   useMountEffect(() => () => {
     void saver.flush();
   });
+  useEditSelection(editor, view.isLatest);
   return (
     <CitedFrame meetingId={meetingId} editor={editor}>
       <EditorContent editor={editor} />
     </CitedFrame>
   );
+}
+
+/** While the newest version is open, "Edit with AI" reads its selection. */
+function useEditSelection(editor: Editor, enabled: boolean): void {
+  useMountEffect(() => {
+    if (!enabled) return undefined;
+    return registerSelectionReader(() => {
+      const { from, to } = editor.state.selection;
+      return selectedTextblocks(editor.state.doc, from, to);
+    });
+  });
+}
+
+/**
+ * ⌘⇧E in the notes opens "Edit with AI" on the selection; it stops here so
+ * the page's ⌘⇧E (Enhance) does not also run.
+ */
+function askForEdit(event: KeyboardEvent): boolean {
+  if (!isEditShortcut(event)) return false;
+  event.preventDefault();
+  event.stopPropagation();
+  openEditBar();
+  return true;
 }
 
 function editorAttributes(editable: boolean): Record<string, string> {

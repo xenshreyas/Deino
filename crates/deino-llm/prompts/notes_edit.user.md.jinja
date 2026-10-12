@@ -1,0 +1,19 @@
+<request>
+{{ request }}
+</request>
+{%- if let Some(selection) = selection %}
+
+<selection>
+The user selected {{ selection }}.
+</selection>
+{%- endif %}
+
+<notes>
+{{ notes }}
+</notes>
+
+<transcript>
+{{ transcript }}
+</transcript>
+
+Now answer with the changes to the notes.

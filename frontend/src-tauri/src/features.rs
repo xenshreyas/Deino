@@ -40,6 +40,7 @@ pub mod llm;
 pub mod meetings;
 pub mod network;
 pub mod notes;
+pub mod notes_edit;
 pub mod onboarding;
 pub mod people;
 pub mod pipeline;
