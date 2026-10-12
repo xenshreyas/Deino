@@ -41,7 +41,9 @@ fn service(scratch: &TempDir) -> PlayerService {
         lifecycle: meetings.clone(),
         meetings,
         files: Arc::new(FsMediaFiles::new(recordings)),
-        dialog: Arc::new(ScriptedDialog::answering(Some(scratch.path().join("saved.m4a")))),
+        dialog: Arc::new(ScriptedDialog::answering(Some(
+            scratch.path().join("saved.m4a"),
+        ))),
     })
 }
 
@@ -49,7 +51,11 @@ fn service(scratch: &TempDir) -> PlayerService {
 fn call(scratch: &TempDir, command: &str, args: &Value) -> Result<Value, Value> {
     let app = mock_app(mock_builder().plugin(super::init()));
     app.manage(Arc::new(service(scratch)));
-    invoke(&main_window(&app), &format!("plugin:player|{command}"), args.clone())
+    invoke(
+        &main_window(&app),
+        &format!("plugin:player|{command}"),
+        args.clone(),
+    )
 }
 
 #[test]

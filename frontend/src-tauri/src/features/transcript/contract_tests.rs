@@ -59,7 +59,11 @@ fn calls(steps: &[(&str, Value)]) -> Result<Value, Value> {
     let window = main_window(&app);
     let mut last = Ok(Value::Null);
     for (command, args) in steps {
-        last = invoke(&window, &format!("plugin:transcript|{command}"), args.clone());
+        last = invoke(
+            &window,
+            &format!("plugin:transcript|{command}"),
+            args.clone(),
+        );
     }
     last
 }

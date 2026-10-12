@@ -70,7 +70,11 @@ impl TrackTranscriber for NoTranscription {
 
 /// Manages `Arc<TranscriptEditService>`; logs and skips it when search (and
 /// so the re-index queue) was not wired.
-pub(super) fn attach_transcript_edits(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
+pub(super) fn attach_transcript_edits(
+    app: &AppHandle,
+    database: &Database,
+    clock: &Arc<dyn Clock>,
+) {
     let Some(queue) = app.try_state::<Arc<ReindexQueue>>() else {
         log::error!(target: "startup", "the re-index queue is missing; transcript edits are unavailable");
         return;
