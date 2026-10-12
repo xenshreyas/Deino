@@ -117,7 +117,7 @@ fn check_prompt(case: &BriefCase) -> Result<(), Failed> {
         .prompt
         .messages
         .first()
-        .map(|m| m.text())
+        .map(deino_llm::Message::text)
         .unwrap_or_default();
     if !system.contains("insufficient") || !system.contains("cites") {
         return Err("the rules lost the citation or insufficient instruction".into());

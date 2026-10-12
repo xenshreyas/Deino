@@ -99,10 +99,17 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (player::NAME, player::specta()),
     ];
     #[cfg(debug_assertions)]
-    builders.push((_example::NAME, _example::specta()));
-    #[cfg(debug_assertions)]
-    builders.push((dev::NAME, dev::specta()));
+    builders.extend(debug_builders());
     builders
+}
+
+/// The debug-only features' bindings builders.
+#[cfg(all(test, debug_assertions))]
+fn debug_builders() -> [(&'static str, tauri_specta::Builder<tauri::Wry>); 2] {
+    [
+        (_example::NAME, _example::specta()),
+        (dev::NAME, dev::specta()),
+    ]
 }
 
 #[cfg(test)]
