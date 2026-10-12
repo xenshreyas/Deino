@@ -29,6 +29,9 @@ FRONTEND_STEPS=(pnpm-install typecheck lint format vitest vite-build e2e)
 RUST_STEPS=(fmt file-size deps deny clippy test bindings sqlx)
 # Cheap, compile-free checks first, so a typo fails in seconds, not minutes.
 ALL_STEPS=(fmt file-size deps deny "${FRONTEND_STEPS[@]}" clippy test bindings sqlx)
+# The steps that load the whole machine (or flake when it is loaded). Only
+# these wait for the machine-wide gate lock.
+HEAVY_STEPS=(e2e clippy test bindings sqlx test-app clippy-portable test-portable)
 # Not in the default run: Linux CI's stand-ins for clippy and test.
 EXTRA_STEPS=(check clippy-portable test-portable test-app)
 
@@ -241,7 +244,7 @@ summary() {
 readonly GATE_LOCK="${HOME}/.cache/deino/gate.lock"
 
 acquire_gate_lock() {
-    [[ "${DEINO_GATE_NO_LOCK:-}" == 1 ]] && return 0
+    [[ "${DEINO_GATE_NO_LOCK:-}" == 1 || -n "${GATE_LOCK_HELD:-}" ]] && return 0
     mkdir -p "$(dirname "$GATE_LOCK")"
     local waited=0 owner
     until mkdir "$GATE_LOCK" 2>/dev/null; do
@@ -255,6 +258,7 @@ acquire_gate_lock() {
         waited=$((waited + 5))
     done
     echo $$ >"$GATE_LOCK/pid"
+    GATE_LOCK_HELD=1
     trap release_gate_lock EXIT
     # The lock holder is the only full gate on the machine, and other agents
     # queue behind it, so it gets more compile jobs than an ordinary build.
@@ -277,7 +281,6 @@ main() {
         tools+=("${needed[@]}")
     done
     require_tools "${tools[@]}"
-    acquire_gate_lock
 
     results=()
     started=$SECONDS
@@ -285,6 +288,8 @@ main() {
         echo
         echo "━━ $step ━━"
         began=$SECONDS
+        # Light steps run unlocked; the lock is taken before the first heavy one.
+        [[ " ${HEAVY_STEPS[*]} " == *" $step "* ]] && acquire_gate_lock
         # A subshell outside any `if`, so `set -e` stops a step at its first
         # failing command (bash ignores -e inside a function called from `if`).
         set +e
