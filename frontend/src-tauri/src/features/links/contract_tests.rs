@@ -63,7 +63,7 @@ fn take_returns_each_navigation_as_tagged_json() {
     assert_eq!(
         h.take(),
         Ok(json!([
-            { "kind": "meeting", "meetingId": "meeting-fixture-standup", "atMs": 231259 },
+            { "kind": "meeting", "meetingId": "meeting-fixture-standup", "atMs": 231_259 },
             { "kind": "new_note", "eventId": null },
             { "kind": "search", "query": "release cut" },
             { "kind": "recipe" },

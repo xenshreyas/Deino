@@ -6,6 +6,7 @@
 //! two modifiers, one of them ⌘, ⌃ or ⌥, unless its key is F1–F20; and the
 //! shortcuts macOS keeps for itself are refused too.
 
+use std::collections::BTreeSet;
 use std::fmt;
 use std::str::FromStr;
 
@@ -48,49 +49,55 @@ const RESERVED: [&str; 10] = [
     "Ctrl+Cmd+F",
 ];
 
+/// A modifier key, in the order the canonical text lists them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum Modifier {
+    Ctrl,
+    Alt,
+    Shift,
+    Cmd,
+}
+
+impl Modifier {
+    /// `token` as a modifier (`ctrl`, `option`, `command`, ...), in any case.
+    fn parse(token: &str) -> Option<Self> {
+        match token.to_ascii_lowercase().as_str() {
+            "ctrl" | "control" => Some(Self::Ctrl),
+            "alt" | "option" => Some(Self::Alt),
+            "shift" => Some(Self::Shift),
+            "cmd" | "command" | "super" | "meta" => Some(Self::Cmd),
+            _ => None,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Ctrl => "Ctrl",
+            Self::Alt => "Alt",
+            Self::Shift => "Shift",
+            Self::Cmd => "Cmd",
+        }
+    }
+}
+
 /// One validated hotkey.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Accelerator {
-    ctrl: bool,
-    alt: bool,
-    shift: bool,
-    cmd: bool,
+    modifiers: BTreeSet<Modifier>,
     key: String,
 }
 
 impl Accelerator {
-    fn modifier_count(&self) -> usize {
-        [self.ctrl, self.alt, self.shift, self.cmd]
-            .into_iter()
-            .filter(|on| *on)
-            .count()
-    }
-
-    fn is_function_key(&self) -> bool {
-        function_key(&self.key).is_some()
-    }
-
     fn check(self) -> Result<Self, HotkeyError> {
-        let strong = self.ctrl || self.alt || self.cmd;
-        if !self.is_function_key() && (!strong || self.modifier_count() < 2) {
+        let strong = self.modifiers.iter().any(|m| *m != Modifier::Shift);
+        let function = function_key(&self.key).is_some();
+        if !function && (!strong || self.modifiers.len() < 2) {
             return Err(HotkeyError::TooPlain);
         }
         if RESERVED.contains(&self.to_string().as_str()) {
             return Err(HotkeyError::Reserved);
         }
         Ok(self)
-    }
-
-    fn set_modifier(&mut self, token: &str) -> bool {
-        let flag = match token.to_ascii_lowercase().as_str() {
-            "ctrl" | "control" => &mut self.ctrl,
-            "alt" | "option" => &mut self.alt,
-            "shift" => &mut self.shift,
-            "cmd" | "command" | "super" | "meta" => &mut self.cmd,
-            _ => return false,
-        };
-        *flag = true;
-        true
     }
 }
 
@@ -99,39 +106,26 @@ impl FromStr for Accelerator {
 
     /// Reads `Ctrl+Alt+Cmd+R`, in any case and modifier order.
     fn from_str(text: &str) -> Result<Self, Self::Err> {
-        let mut accelerator = Self {
-            ctrl: false,
-            alt: false,
-            shift: false,
-            cmd: false,
-            key: String::new(),
-        };
+        let mut modifiers = BTreeSet::new();
+        let mut found: Option<String> = None;
         for token in text.split('+').map(str::trim) {
-            if accelerator.set_modifier(token) {
-                continue;
-            }
-            if !accelerator.key.is_empty() {
+            if let Some(modifier) = Modifier::parse(token) {
+                modifiers.insert(modifier);
+            } else if found.is_some() {
                 return Err(HotkeyError::Malformed);
+            } else {
+                found = Some(key(token).ok_or(HotkeyError::Malformed)?);
             }
-            accelerator.key = key(token).ok_or(HotkeyError::Malformed)?;
         }
-        if accelerator.key.is_empty() {
-            return Err(HotkeyError::Malformed);
-        }
-        accelerator.check()
+        let key = found.ok_or(HotkeyError::Malformed)?;
+        Self { modifiers, key }.check()
     }
 }
 
 impl fmt::Display for Accelerator {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let modifiers = [
-            (self.ctrl, "Ctrl+"),
-            (self.alt, "Alt+"),
-            (self.shift, "Shift+"),
-            (self.cmd, "Cmd+"),
-        ];
-        for (_, name) in modifiers.into_iter().filter(|(on, _)| *on) {
-            formatter.write_str(name)?;
+        for modifier in &self.modifiers {
+            write!(formatter, "{}+", modifier.name())?;
         }
         formatter.write_str(&self.key)
     }

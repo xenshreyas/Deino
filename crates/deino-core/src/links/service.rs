@@ -50,10 +50,9 @@ impl LinkService {
     /// navigation and brings the window forward.
     pub async fn perform(&self, intent: Intent) -> Result<(), LinkError> {
         let recorded = match intent {
-            Intent::StartRecording => self.recorder.start().await,
             Intent::StopRecording => self.recorder.stop().await,
             Intent::ToggleRecording if self.recorder.is_recording() => self.recorder.stop().await,
-            Intent::ToggleRecording => self.recorder.start().await,
+            Intent::StartRecording | Intent::ToggleRecording => self.recorder.start().await,
             Intent::Show(navigation) => {
                 self.show(navigation);
                 Ok(())
