@@ -27,6 +27,7 @@ import { ResumeSetup } from '@/features/onboarding';
 import { PrivacySettings } from '@/features/privacy';
 import { ProfilePage } from '@/features/profile';
 import { WatchedFoldersSettings } from '@/features/import';
+import { ImportSettings } from '@/features/importers';
 import { IndexSettings } from '@/features/search';
 import { ScreenCaptureSettings } from '@/features/screen';
 import { SpeakerTagsSettings } from '@/features/speaker-tags';
@@ -42,6 +43,7 @@ import {
   FlaskConical,
   FolderInput,
   type Icon,
+  Inbox,
   Info,
   Keyboard,
   LayoutTemplate,
@@ -180,6 +182,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'integrations', group: 'workspace', icon: Plug, Component: IntegrationsSection },
   { id: 'security', group: 'privacy', icon: Lock, Component: PrivacySettings },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
+  { id: 'import', group: 'data', icon: Inbox, Component: ImportSettings },
   { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },
   { id: 'about', group: 'more', icon: Info, Component: About },

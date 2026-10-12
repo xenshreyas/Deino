@@ -1,0 +1,40 @@
+[package]
+name = "deino-importers"
+version = "0.1.0"
+description = "Deino's importers from other note-takers (CAP-12): Granola, Circleback, Fireflies and Fathom over deino-net, and folders of JSON or Markdown files, each an adapter behind deino-core's Importer port"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_importers.rs"
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+deino-core.workspace = true
+deino-domain.workspace = true
+deino-net.workspace = true
+deino-secrets.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# A folder file's de-duplication key (its SHA-256); deino-core's version.
+sha2 = "0.10.9"
+# Waiting out a provider's `Retry-After`, and reading folder files.
+tokio.workspace = true
+# Provider URLs and their query strings (already in the tree).
+url = "2.5.8"
+
+[dev-dependencies]
+# The fixture client's response bodies (deino-net's version).
+bytes = "1.11.1"
+futures-util.workspace = true
+sqlx.workspace = true
+tokio-util.workspace = true
+deino-core = { workspace = true, features = ["test-support"] }
+deino-net = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true

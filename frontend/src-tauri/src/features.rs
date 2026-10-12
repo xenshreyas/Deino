@@ -39,6 +39,7 @@ pub mod folders;
 pub mod followups;
 pub mod hotkeys;
 pub mod import;
+pub mod importers;
 pub mod insights;
 pub mod integrations;
 pub mod links;

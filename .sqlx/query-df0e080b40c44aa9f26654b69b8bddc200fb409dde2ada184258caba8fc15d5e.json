@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO imported_meetings (source, source_id, meeting_id, imported_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT (source, source_id) DO UPDATE SET meeting_id = excluded.meeting_id, imported_at = excluded.imported_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "df0e080b40c44aa9f26654b69b8bddc200fb409dde2ada184258caba8fc15d5e"
+}

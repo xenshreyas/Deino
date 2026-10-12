@@ -13,6 +13,8 @@ path = "src/deino_core.rs"
 # Fakes of this crate's ports (`FakeMeetingRepo`, ...) for other crates' tests.
 # Also the sample library (`query::seed_sample_library`) over the fixtures.
 test-support = [
+    # `test_db()` behind `importers::ImportWorld` (CAP-12).
+    "deino-db/test-support",
     "deino-domain/test-support",
     "deino-secrets/test-support",
     "dep:deino-testkit",

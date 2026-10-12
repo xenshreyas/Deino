@@ -75,6 +75,14 @@ db_enum! {
         /// Company logos: `https://<domain>/favicon.ico`, fetched once per
         /// company (ORG-04).
         Favicons = "favicons",
+        /// Granola's public API, for importing notes (CAP-12).
+        Granola = "granola",
+        /// Circleback's API, for importing meetings (CAP-12).
+        Circleback = "circleback",
+        /// Fireflies' GraphQL API, for importing transcripts (CAP-12).
+        Fireflies = "fireflies",
+        /// Fathom's API, for importing meetings (CAP-12).
+        Fathom = "fathom",
     }
 }
 

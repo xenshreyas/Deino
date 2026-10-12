@@ -12,6 +12,7 @@ use deino_domain::{
 };
 
 use super::model::Line;
+use super::people::ImportPeoplePorts;
 use super::{MAX_UTTERANCES, TranscriptImport, TranscriptImportError};
 use crate::enhance::{EnhancedNotesWriter, NewVersion, ai_doc};
 use crate::meetings::{
@@ -48,12 +49,23 @@ pub struct TranscriptImportPorts {
 /// Imports transcripts sent as JSON.
 pub struct TranscriptImporter {
     ports: TranscriptImportPorts,
+    people: Option<ImportPeoplePorts>,
 }
 
 impl TranscriptImporter {
     /// The importer over `ports`.
     pub fn new(ports: TranscriptImportPorts) -> Self {
-        Self { ports }
+        Self {
+            ports,
+            people: None,
+        }
+    }
+
+    /// The same importer, also writing attendees and action items (CAP-12).
+    #[must_use]
+    pub fn with_people(mut self, people: ImportPeoplePorts) -> Self {
+        self.people = Some(people);
+        self
     }
 
     /// Writes `import` as a new `ready` meeting and returns its ID. A
@@ -112,7 +124,11 @@ impl TranscriptImporter {
             };
             self.ports.notes.insert(&version).await?;
         }
-        self.apply_tags(id, import).await
+        self.apply_tags(id, import).await?;
+        match &self.people {
+            Some(people) => people.write(id, import, self.ports.clock.as_ref()).await,
+            None => Ok(()),
+        }
     }
 
     /// The meeting, finished, as long as its transcript.

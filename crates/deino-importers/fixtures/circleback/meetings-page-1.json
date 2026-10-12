@@ -1,0 +1,46 @@
+[
+  {
+    "id": "48211",
+    "linkAccess": null,
+    "url": "https://meet.google.com/qkd-xbvn-pre",
+    "createdAt": "2026-09-14T16:00:00.000Z",
+    "updatedAt": "2026-09-14T16:41:12.000Z",
+    "duration": 1812,
+    "name": "Northwind renewal call",
+    "notes": "## Summary\n\nNorthwind wants to renew for two years if the SSO add-on is included.\n\n## Decisions\n\n- Offer SSO at no extra cost for year one",
+    "icalUid": "6v1k2n0q8t@google.com",
+    "recordingUrl": null,
+    "tags": [{ "id": 31, "name": "Customer", "description": "Calls with paying customers" }],
+    "attendees": [
+      { "profileId": 9001, "name": "Priya Raman", "title": "Account Executive", "companyName": "Deino Test Co", "email": "priya@example.com", "isCalendarEventOrganizer": true, "isCalendarInvitee": true },
+      { "profileId": 9002, "name": "Marcus Webb", "title": "IT Director", "companyName": "Northwind Traders", "email": "marcus.webb@northwind.example", "isCalendarEventOrganizer": false, "isCalendarInvitee": true }
+    ],
+    "actionItems": [
+      { "id": 501, "title": "Send the two-year quote with SSO", "description": "Include the year-one SSO credit", "status": "PENDING", "assignee": { "profileId": 9001, "name": "Priya Raman", "title": "Account Executive", "companyName": "Deino Test Co", "email": "priya@example.com" } },
+      { "id": 502, "title": "Share the security questionnaire", "description": "", "status": "DONE", "assignee": null }
+    ],
+    "insights": {},
+    "calendarEvent": { "id": "evt_1", "icalUid": "6v1k2n0q8t@google.com", "description": null, "platform": "GoogleCalendar", "platformId": "6v1k2n0q8t" },
+    "privateNotes": null,
+    "sharedWith": [{ "profileId": 9001, "name": "Priya Raman", "email": "priya@example.com", "access": "Owner" }]
+  },
+  {
+    "id": "48230",
+    "linkAccess": null,
+    "url": null,
+    "createdAt": "2026-09-16T09:30:00.000Z",
+    "updatedAt": "2026-09-16T09:52:40.000Z",
+    "duration": 1310,
+    "name": "Weekly product sync",
+    "notes": "## Highlights\n\n- The onboarding checklist ships next sprint",
+    "icalUid": null,
+    "recordingUrl": null,
+    "tags": [],
+    "attendees": [],
+    "actionItems": [],
+    "insights": {},
+    "calendarEvent": null,
+    "privateNotes": null,
+    "sharedWith": []
+  }
+]

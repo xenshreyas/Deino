@@ -1,0 +1,7 @@
+[
+  { "speaker": "Priya Raman", "text": "Thanks for making the time, Marcus. Where did you land on the renewal?", "timestamp": 2.4 },
+  { "speaker": "Marcus Webb", "text": "We would sign for two years if single sign-on is part of the package.", "timestamp": 9.1 },
+  { "speaker": "Priya Raman", "text": "I can include SSO at no extra cost for the first year.", "timestamp": 17.8 },
+  { "speaker": null, "text": "Sorry, someone joined late.", "timestamp": 25.0 },
+  { "speaker": "Marcus Webb", "text": "Great, send the quote over and I will route it to procurement.", "timestamp": 28.6 }
+]

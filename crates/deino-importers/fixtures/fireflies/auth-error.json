@@ -1,0 +1,9 @@
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Invalid API key",
+      "extensions": { "code": "auth_failed", "status": 401 }
+    }
+  ]
+}

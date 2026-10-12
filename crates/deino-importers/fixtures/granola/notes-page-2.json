@@ -1,0 +1,14 @@
+{
+  "notes": [
+    {
+      "id": "not_Zr4vT9nQ1cHbYe",
+      "object": "note",
+      "title": "All-hands rehearsal",
+      "owner": { "name": "Sam Carter", "email": "sam@example.com" },
+      "created_at": "2026-08-07T16:00:00Z",
+      "updated_at": "2026-08-07T17:31:22Z"
+    }
+  ],
+  "hasMore": false,
+  "cursor": null
+}

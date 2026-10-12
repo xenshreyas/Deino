@@ -1,0 +1,31 @@
+{
+  "limit": 2,
+  "next_cursor": null,
+  "items": [
+    {
+      "title": "Pricing page review",
+      "meeting_title": "Pricing page review",
+      "meeting_type": "internal",
+      "recording_id": 123456801,
+      "url": "https://fathom.video/calls/123456801",
+      "share_url": "https://fathom.video/share/Pq9sT4uVw",
+      "created_at": "2026-09-08T13:40:00Z",
+      "scheduled_start_time": "2026-09-08T13:00:00Z",
+      "scheduled_end_time": "2026-09-08T13:30:00Z",
+      "recording_start_time": "2026-09-08T13:02:00Z",
+      "recording_end_time": "2026-09-08T13:38:00Z",
+      "calendar_invitees_domains_type": "only_internal",
+      "transcript_language": "en",
+      "shared_with": [],
+      "recorded_by": { "name": "Alex Kim", "email": "alex@example.com", "team": null, "email_domain": "example.com" },
+      "calendar_invitees": [
+        { "name": "Alex Kim", "email": "alex@example.com", "email_domain": "example.com", "is_external": false, "matched_speaker_display_name": null }
+      ],
+      "transcript": [
+        { "speaker": { "display_name": "Alex Kim", "matched_calendar_invitee_email": "alex@example.com" }, "text": "The annual toggle should default to yearly billing.", "timestamp": "00:00:30" }
+      ],
+      "default_summary": { "template_name": "general", "markdown_formatted": "- Default the toggle to yearly billing" },
+      "action_items": []
+    }
+  ]
+}

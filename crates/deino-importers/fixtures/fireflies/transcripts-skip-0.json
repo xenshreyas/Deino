@@ -1,0 +1,37 @@
+{
+  "data": {
+    "transcripts": [
+      {
+        "id": "01J8ZK3QW5T2V6N4R7M9P0XABC",
+        "title": "Pipeline review",
+        "date": 1757512800000,
+        "organizer_email": "dana.lee@harbor.example",
+        "meeting_attendees": [
+          { "displayName": "Dana Lee", "email": "dana.lee@harbor.example", "name": "Dana Lee" },
+          { "displayName": "Raj Patel", "email": "raj@harbor.example", "name": null }
+        ],
+        "sentences": [
+          { "speaker_name": "Dana Lee", "text": "Three deals slipped to next quarter.", "start_time": 3.12, "end_time": 5.4 },
+          { "speaker_name": "Raj Patel", "text": "The Contoso deal is waiting on their legal review.", "start_time": 6.02, "end_time": 9.88 },
+          { "speaker_name": "Dana Lee", "text": "Let's book an onsite to unblock it.", "start_time": 10.3, "end_time": 12.1 }
+        ],
+        "summary": {
+          "overview": "Three deals slipped; Contoso is blocked on legal.",
+          "shorthand_bullet": "- Contoso: legal review pending\n- Plan an onsite",
+          "action_items": "**Dana Lee**\nShare the slipped-deal list with finance (00:05)\n\n**Raj Patel**\nBook the Contoso onsite (00:12)\n"
+        }
+      },
+      {
+        "id": "01J8ZM7YB2C4D6F8H0J2K4LDEF",
+        "title": "Customer advisory board prep",
+        "date": 1757599200000,
+        "organizer_email": "raj@harbor.example",
+        "meeting_attendees": [],
+        "sentences": [
+          { "speaker_name": "Raj Patel", "text": "We need five customers confirmed for the advisory board.", "start_time": 0.5, "end_time": 4.0 }
+        ],
+        "summary": { "overview": null, "shorthand_bullet": null, "action_items": null }
+      }
+    ]
+  }
+}

@@ -51,6 +51,10 @@ const REGISTRY: readonly RegistryEntry[] = [
   { id: 'web_search', kind: 'web', hosts: ['api.search.brave.com', 'api.tavily.com'] },
   { id: 'webhooks', kind: 'web', hosts: [] },
   { id: 'favicons', kind: 'web', hosts: ['any public website'] },
+  { id: 'granola', kind: 'integration', hosts: ['public-api.granola.ai'] },
+  { id: 'circleback', kind: 'integration', hosts: ['circleback.ai'] },
+  { id: 'fireflies', kind: 'integration', hosts: ['api.fireflies.ai'] },
+  { id: 'fathom', kind: 'integration', hosts: ['api.fathom.ai'] },
 ];
 
 /** The user's switches; services without one keep the Rust default. */
