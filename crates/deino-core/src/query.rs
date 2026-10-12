@@ -35,12 +35,16 @@ mod search;
 mod testing;
 mod transcript;
 
-pub use action_items::{ActionItemQueries, Assignee, DEFAULT_ITEMS, ItemFilter, MAX_ITEMS};
+pub use action_items::{
+    ActionItemQueries, Assignee, DEFAULT_ITEMS, ItemFilter, MAX_ITEMS, summarize as summarize_item,
+};
 pub use directory::{DEFAULT_PEOPLE, DirectoryQueries, MAX_EVENT_DAYS, MAX_PEOPLE};
 pub use directory_model::{CompanyView, EventView, EventWindow, FolderView, PersonView, TagView};
 pub use error::{EntityKind, QueryError};
 pub use hybrid_search::{EmbedProbe, HybridSearch};
-pub use meetings::{DEFAULT_MEETINGS, MAX_MEETINGS, MeetingFilter, MeetingQueries};
+pub use meetings::{
+    DEFAULT_MEETINGS, MAX_MEETINGS, MeetingCursor, MeetingFilter, MeetingPage, MeetingQueries,
+};
 pub use model::{
     ActionItemSummary, AttendeeView, AudioFiles, CitationLink, MeetingDetail, MeetingSummary,
     TranscriptLine, TranscriptPage,

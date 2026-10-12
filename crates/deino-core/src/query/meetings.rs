@@ -70,29 +70,7 @@ impl MeetingQueries {
 
     /// The meetings `filter` matches, newest first, outside the trash.
     pub async fn list(&self, filter: &MeetingFilter) -> Result<Vec<MeetingSummary>, QueryError> {
-        if filter
-            .from
-            .zip(filter.to)
-            .is_some_and(|(from, to)| from > to)
-        {
-            return Err(QueryError::InvalidRange);
-        }
-        let scope = self.scope(filter).await?;
-        let mut found = Vec::new();
-        for meeting in self.ports.meeting.meetings.list().await? {
-            if found.len() == filter.limit() {
-                break;
-            }
-            if scope.as_ref().is_some_and(|ids| !ids.contains(&meeting.id)) {
-                continue;
-            }
-            let state = self.state(&meeting.id).await?;
-            let summary = self.summary(meeting, &state).await?;
-            if filter.admits(summary.held_at.date_naive()) {
-                found.push(summary);
-            }
-        }
-        Ok(found)
+        Ok(self.page(filter, None).await?.meetings)
     }
 
     /// The meeting with `id`, everything but its transcript.
@@ -254,6 +232,11 @@ fn audio_files(state: &MeetingState) -> AudioFiles {
         system: state.audio.audio_system_path.clone(),
     }
 }
+
+#[path = "meetings_page.rs"]
+mod page;
+
+pub use page::{MeetingCursor, MeetingPage};
 
 #[cfg(test)]
 #[path = "meetings_tests.rs"]

@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
+    AiSettings, ApiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
     DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
     OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
     SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
@@ -60,6 +60,8 @@ pub struct Settings {
     pub ui: UiSettings,
     /// Opt-in beta features.
     pub beta: BetaSettings,
+    /// The local REST API (DEV-03).
+    pub api: ApiSettings,
     /// First-run setup progress.
     pub onboarding: OnboardingSettings,
 }
@@ -87,6 +89,7 @@ impl Default for Settings {
             integrations: IntegrationSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
+            api: ApiSettings::default(),
             onboarding: OnboardingSettings::default(),
         }
     }
@@ -104,6 +107,7 @@ impl Settings {
         self.speakers.validate()?;
         self.integrations.validate()?;
         self.privacy.validate()?;
+        self.api.validate()?;
         self.ui.validate()
     }
 

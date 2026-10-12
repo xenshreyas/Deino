@@ -19,6 +19,8 @@ test-support = [
 ]
 
 [dependencies]
+# API key secrets hashed with argon2id (DEV-03; MIT OR Apache-2.0, RustCrypto).
+argon2 = { version = "=0.5.3", features = ["std"] }
 async-trait.workspace = true
 chrono.workspace = true
 deino-db.workspace = true

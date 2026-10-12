@@ -113,7 +113,7 @@ impl ActionItemQueries {
 
 /// An item as the library shows it: its due day in the user's zone and a
 /// link to the moment it was said.
-pub(super) fn summarize(view: ActionItemView, zone: &dyn LocalZone) -> ActionItemSummary {
+pub fn summarize(view: ActionItemView, zone: &dyn LocalZone) -> ActionItemSummary {
     let link = view
         .meeting_id
         .as_ref()
