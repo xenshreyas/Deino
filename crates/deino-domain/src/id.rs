@@ -295,11 +295,8 @@ uuid_id!(
     CommentId
 );
 
-uuid_id!(
-    /// Identifies a key of the local REST API (DEV-03); also the public
-    /// half of the key's token.
-    ApiKeyId
-);
+mod api;
+pub use api::ApiKeyId;
 
 #[cfg(test)]
 mod tests {
