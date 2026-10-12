@@ -1,5 +1,5 @@
 //! [`DbKey`]: the 256-bit key an encrypted database is opened with (PRV-02,
-//! ADR 0038).
+//! ADR 0041).
 //!
 //! The key is random, lives in the Keychain as 64 hex digits and is handed to
 //! SQLCipher as a raw key (`x'…'`), so no passphrase derivation runs on open.

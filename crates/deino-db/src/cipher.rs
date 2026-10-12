@@ -1,4 +1,4 @@
-//! SQLCipher plumbing (PRV-02, ADR 0038): telling an encrypted file from a
+//! SQLCipher plumbing (PRV-02, ADR 0041): telling an encrypted file from a
 //! plaintext one, keying connections, and naming key failures.
 //!
 //! The app links SQLCipher in place of SQLite (on Unix). Without a key it

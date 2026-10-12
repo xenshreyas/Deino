@@ -1,5 +1,5 @@
 //! [`DatabaseKeyStore`]: the one Keychain item that holds the database
-//! encryption key (PRV-02, ADR 0038).
+//! encryption key (PRV-02, ADR 0041).
 //!
 //! The key is kept as its 64-hex-digit text form in a [`SecretValue`], so it
 //! is never printed and is wiped from memory on drop. This crate does not

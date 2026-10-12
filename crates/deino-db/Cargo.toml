@@ -31,7 +31,7 @@ sha2 = "0.10.9"
 # Wipes key material from memory when it is dropped (already in the tree).
 zeroize = "1.8.2"
 
-# SQLCipher in place of plain SQLite (PRV-02, ADR 0038): the same
+# SQLCipher in place of plain SQLite (PRV-02, ADR 0041): the same
 # libsqlite3-sys sqlx already links, built from its bundled SQLCipher
 # amalgamation. Without a key it is plain SQLite, so one binary opens both.
 # On Apple targets it uses CommonCrypto (Security.framework), never OpenSSL;

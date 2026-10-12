@@ -22,7 +22,7 @@ Deino stores a secret.
   up to `MAX_CREDENTIAL_CHARS`; `KeychainSecretStore` implements both ports,
   `InMemoryCredentialStore` (feature `test-support`) is the fake. Denied
   access is `CredentialDenied` ("connect the integration again").
-- `DatabaseKeyStore` (PRV-02, ADR 0038): the database encryption key as
+- `DatabaseKeyStore` (PRV-02, ADR 0041): the database encryption key as
   its 64-hex-digit text, one item under `DATABASE_KEY_ACCOUNT`
   (`database.encryption-key`); denied access is `DatabaseKeyDenied`.
   `InMemoryDatabaseKeyStore` (feature `test-support`) is the fake. The key's

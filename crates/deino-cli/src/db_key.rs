@@ -1,4 +1,4 @@
-//! The key of an encrypted database (PRV-02, ADR 0038).
+//! The key of an encrypted database (PRV-02, ADR 0041).
 //!
 //! The app keeps the key in one Keychain item under its bundle identifier.
 //! The CLI reads that item only when the file on disk is encrypted, so a

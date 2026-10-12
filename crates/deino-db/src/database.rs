@@ -58,7 +58,7 @@ impl Database {
     }
 
     /// Opens the database like [`Database::open_with`], encrypted with `key`
-    /// when one is given (PRV-02, ADR 0038).
+    /// when one is given (PRV-02, ADR 0041).
     ///
     /// With a key, the file must be encrypted (or missing, and then it is
     /// created encrypted): a plaintext file fails with

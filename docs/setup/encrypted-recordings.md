@@ -1,7 +1,7 @@
 # Keep recordings on an encrypted APFS volume
 
 Deino can encrypt its database (Settings → Privacy & security, PRV-02,
-ADR 0038). Audio files are not encrypted by Deino: they stay plain `.m4a`
+ADR 0041). Audio files are not encrypted by Deino: they stay plain `.m4a`
 and `.mp4` files so playback, export and Finder previews keep working. If
 you want them behind their own password, move the recordings folder to an
 encrypted APFS volume.

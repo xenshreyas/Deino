@@ -1,4 +1,4 @@
-# 0038. Encrypt the database with SQLCipher and a random Keychain key
+# 0041. Encrypt the database with SQLCipher and a random Keychain key
 
 - **Status:** Accepted (backend; the app wiring and app lock follow, see `docs/handoff/PRV-02.md`)
 - **Date:** 2026-10-11

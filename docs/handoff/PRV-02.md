@@ -1,6 +1,6 @@
 # PRV-02 handoff: second half (app wiring, app lock, Settings)
 
-Backend and tests are done (ADR 0038, crate READMEs). Read them and the card.
+Backend and tests are done (ADR 0041, crate READMEs). Read them and the card.
 
 ## Done (do not redo)
 
@@ -14,7 +14,7 @@ Backend and tests are done (ADR 0038, crate READMEs). Read them and the card.
   account `database.encryption-key`) on `KeychainSecretStore`;
   `InMemoryDatabaseKeyStore` fake. Store the key as `DbKey::to_hex()`.
 - `deino-cli`: `db_key::key_for` reads the key only for an encrypted file.
-- Docs: ADR 0038, `docs/setup/encrypted-recordings.md`, ARCHITECTURE, §7.
+- Docs: ADR 0041, `docs/setup/encrypted-recordings.md`, ARCHITECTURE, §7.
 
 ## Left
 

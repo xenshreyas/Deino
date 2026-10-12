@@ -29,7 +29,7 @@ commit-time change signals (ADR 0005).
   busy timeout, for the `deino` CLI; never creates, migrates or writes it, and
   refuses a schema whose applied migrations differ from the binary's
   (`SchemaCheck`: newer or older).
-- Encryption at rest (PRV-02, ADR 0038): SQLCipher linked in place of
+- Encryption at rest (PRV-02, ADR 0041): SQLCipher linked in place of
   SQLite on Unix (CommonCrypto on macOS); `DbKey` (zeroized, never
   printed); `FileFormat::detect`; `Database::open_keyed` and
   `open_read_only_keyed`; `convert` (encrypt or decrypt a closed file in

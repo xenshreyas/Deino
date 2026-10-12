@@ -1,5 +1,5 @@
 //! Encrypting a plaintext database file, or decrypting an encrypted one, in
-//! place and crash-safe (PRV-02, ADR 0038).
+//! place and crash-safe (PRV-02, ADR 0041).
 //!
 //! [`convert`] never edits the original. It exports a copy with
 //! `sqlcipher_export` into `<db>.converting`, fingerprints both

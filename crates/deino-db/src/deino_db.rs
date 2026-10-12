@@ -10,7 +10,7 @@
 //! - [`Database::open_read_only`] opens the app's file from another process
 //!   (the `deino` CLI and MCP server) without ever writing it, after a
 //!   [`SchemaCheck`] against the embedded migrations.
-//! - Encryption at rest (PRV-02, ADR 0038): SQLCipher is linked in place
+//! - Encryption at rest (PRV-02, ADR 0041): SQLCipher is linked in place
 //!   of SQLite, so [`Database::open_keyed`] opens a file encrypted with a
 //!   [`DbKey`] and the plain constructors open plaintext ones;
 //!   [`convert`] encrypts or decrypts a closed file in place, verified by

@@ -78,7 +78,7 @@ impl Database {
     }
 
     /// Opens the database read-only like [`Database::open_read_only`],
-    /// with `key` when the file is encrypted (PRV-02, ADR 0038).
+    /// with `key` when the file is encrypted (PRV-02, ADR 0041).
     ///
     /// An encrypted file without a key fails with [`DbError::KeyRequired`],
     /// a wrong key with [`DbError::WrongKey`], and a key for a plaintext file

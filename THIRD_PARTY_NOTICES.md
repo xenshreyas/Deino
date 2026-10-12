@@ -432,7 +432,7 @@ oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
 
 Deino links SQLCipher 4.5.7 Community Edition (based on SQLite 3.45.3), built
 from the amalgamation bundled in the `libsqlite3-sys` crate (MIT), to encrypt
-its database when the user turns that on (PRV-02, ADR 0038). On macOS it uses
+its database when the user turns that on (PRV-02, ADR 0041). On macOS it uses
 Apple's CommonCrypto; no OpenSSL is bundled. https://www.zetetic.net/sqlcipher/
 
 Copyright (c) 2008-2020 Zetetic LLC

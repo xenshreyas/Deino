@@ -28,49 +28,51 @@ async fn seeded(dir: &Path, key: Option<&DbKey>) -> PathBuf {
     let database = Database::open_keyed(&location, key, &MIGRATOR, &[])
         .await
         .unwrap();
-    let writer = database.writer();
     for (index, title) in ["Standup", "Pipeline review", "1:1 with \"Sam\""]
         .iter()
         .enumerate()
     {
-        let meeting = format!("0199f000-0000-7000-8000-00000000010{index}");
-        sqlx::query(MEETING)
+        seed_meeting(database.writer(), u8::try_from(index).unwrap(), title).await;
+    }
+    sqlx::query(TAG).execute(database.writer()).await.unwrap();
+    database.close().await;
+    path
+}
+
+/// One meeting with 20 transcript lines (the FTS triggers index them) and
+/// one embedding blob.
+async fn seed_meeting(writer: &sqlx::SqlitePool, index: u8, title: &str) {
+    let meeting = format!("0199f000-0000-7000-8000-00000000010{index}");
+    sqlx::query(MEETING)
+        .bind(&meeting)
+        .bind(title)
+        .execute(writer)
+        .await
+        .unwrap();
+    for line in 0..20_i64 {
+        let id = format!("0199f000-0000-7000-8000-0000000{index}{line:04}");
+        let text = format!(
+            "line {line} of {title}: ünïcode, 'quotes', and numbers {}",
+            line * 7
+        );
+        sqlx::query(SEGMENT)
+            .bind(id)
             .bind(&meeting)
-            .bind(title)
-            .execute(writer)
-            .await
-            .unwrap();
-        for line in 0..20_i64 {
-            let id = format!("0199f000-0000-7000-8000-0000000{index}{line:04}");
-            let text = format!(
-                "line {line} of {title}: ünïcode, 'quotes', and numbers {}",
-                line * 7
-            );
-            sqlx::query(SEGMENT)
-                .bind(id)
-                .bind(&meeting)
-                .bind(line * 1000)
-                .bind(text)
-                .execute(writer)
-                .await
-                .unwrap();
-        }
-        let vector: Vec<u8> = (0..64_u8)
-            .map(|byte| {
-                byte.wrapping_mul(31)
-                    .wrapping_add(u8::try_from(index).unwrap())
-            })
-            .collect();
-        sqlx::query(EMBEDDING)
-            .bind(&meeting)
-            .bind(vector)
+            .bind(line * 1000)
+            .bind(text)
             .execute(writer)
             .await
             .unwrap();
     }
-    sqlx::query(TAG).execute(writer).await.unwrap();
-    database.close().await;
-    path
+    let vector: Vec<u8> = (0..64_u8)
+        .map(|byte| byte.wrapping_mul(31).wrapping_add(index))
+        .collect();
+    sqlx::query(EMBEDDING)
+        .bind(&meeting)
+        .bind(vector)
+        .execute(writer)
+        .await
+        .unwrap();
 }
 
 /// One plain connection, with an optional key, outside the crate's checks.
