@@ -5,7 +5,6 @@ import { SETTINGS_GROUPS, settingsSections } from './sections';
 
 // The inherited settings panels pull in Tauri and contexts; only the registry is under test.
 vi.mock('@/components/About', () => ({ About: () => null }));
-vi.mock('@/components/BetaSettings', () => ({ BetaSettings: () => null }));
 vi.mock('@/components/PreferenceSettings', () => ({ PreferenceSettings: () => null }));
 vi.mock('@/components/RecordingSettings', () => ({ RecordingSettings: () => null }));
 vi.mock('@/components/SummaryModelSettings', () => ({ SummaryModelSettings: () => null }));
@@ -31,7 +30,7 @@ const PAGES_BEFORE_REG_02 = [
   ['workspace', 'calendar', 'integrations'],
   ['privacy', 'security', 'network'],
   ['data', 'import', 'export'],
-  ['more', 'beta', 'about', 'developer'],
+  ['more', 'about', 'developer'],
 ] as const;
 
 describe('settings sections', () => {

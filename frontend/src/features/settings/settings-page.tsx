@@ -4,7 +4,6 @@
  * pages register from their feature's `settings-page.tsx`.
  */
 import { About } from '@/components/About';
-import { BetaSettings } from '@/components/BetaSettings';
 import { PreferenceSettings } from '@/components/PreferenceSettings';
 import { RecordingSettings } from '@/components/RecordingSettings';
 import { SummaryModelSettings } from '@/components/SummaryModelSettings';
@@ -14,7 +13,6 @@ import { NetworkSettings } from '@/features/network';
 import {
   AudioLines,
   Cpu,
-  FlaskConical,
   Info,
   Mic,
   Palette,
@@ -166,15 +164,6 @@ export const settingsPages = [
     Component: NetworkSection,
   },
   {
-    id: 'beta',
-    group: 'more',
-    order: 10,
-    icon: FlaskConical,
-    label: 'Beta',
-    description: 'Features that are still being finished.',
-    Component: BetaSettings,
-  },
-  {
     id: 'about',
     group: 'more',
     order: 20,
@@ -194,7 +183,6 @@ declare module '@/features/settings/search' {
     models: true;
     integrations: true;
     network: true;
-    beta: true;
     about: true;
   }
 }

@@ -18,7 +18,6 @@ import { invoke } from '@tauri-apps/api/core';
 import type { ModelConfig } from '@/components/ModelSettingsModal';
 import { legacyOllamaModels } from '@/features/llm';
 import type { SelectedDevices } from '@/components/DeviceSelection';
-import { BetaFeatures, BetaFeatureKey, DEFAULT_BETA_FEATURES } from '@/types/betaFeatures';
 import {
   type AiSettings,
   type ModelSelection,
@@ -70,9 +69,6 @@ interface ConfigContextType {
 
   showConfidenceIndicator: boolean;
   toggleConfidenceIndicator: (checked: boolean) => void;
-
-  betaFeatures: BetaFeatures;
-  toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => void;
 
   models: OllamaModel[];
   modelOptions: Record<ModelConfig['provider'], string[]>;
@@ -209,10 +205,6 @@ function derivedSettings(
     showConfidenceIndicator: settings?.ui.showConfidenceIndicator ?? true,
     toggleConfidenceIndicator: (checked: boolean) => {
       persist({ ui: { showConfidenceIndicator: checked } });
-    },
-    betaFeatures: settings ? { importAndRetranscribe: settings.beta.importAndRetranscribe } : DEFAULT_BETA_FEATURES,
-    toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => {
-      persist({ beta: { [featureKey]: enabled } });
     },
     isAutoSummary: settings?.ai.autoSummary ?? false,
     toggleIsAutoSummary: (checked: boolean) => {

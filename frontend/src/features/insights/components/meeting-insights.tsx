@@ -1,22 +1,21 @@
 /**
- * A meeting's Insights tab (ui.md §4.6 "Tabs: Notes, Transcript, Insights"):
- * each insight that ran here, its answers attributed to the moment they
- * were said, with "Run again" for stale or failed ones and "Run an
- * insight" for the rest. Reads like the notes: a document, not a dashboard.
+ * A meeting's insights (AI-06, UX-03): {@link MeetingInsights} is the
+ * section that ends the Notes tab, each insight that ran here with its
+ * answers attributed to the moment they were said, and "Run again" for a
+ * stale or failed one. It shows nothing until an insight has run here.
+ * {@link MeetingInsightsSubmenu} is the meeting ⋯ menu's "Run insight",
+ * which runs any insight on this meeting.
  */
-import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 
-import { Button, buttonVariants } from '@/ui/button';
-import { EmptyState } from '@/ui/empty-state';
-import { ChevronDown, ICON_PROPS, Lightbulb, Play } from '@/ui/icons';
+import { Lightbulb, ICON_PROPS, Play, RotateCcw } from '@/ui/icons';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/ui/menu';
-import { SkeletonText } from '@/ui/skeleton';
 
 import { insightsCopy } from '../copy';
 import { useMeetingInsights, useRunInsight } from '../queries';
@@ -44,25 +43,15 @@ export function useRunHere(meetingId: MeetingId) {
   };
 }
 
-/** The tab. */
+/** The insights that ran on this meeting, or nothing. */
 export function MeetingInsights({ meetingId }: MeetingInsightsProps) {
   const insights = useMeetingInsights(meetingId);
   const here = useRunHere(meetingId);
-  if (insights.data === undefined) {
-    return (
-      <div className="py-6">
-        <SkeletonText lines={5} />
-      </div>
-    );
-  }
-  const { entries, others } = insights.data;
-  if (entries.length === 0) return <Empty others={others} onRun={here.run} />;
+  const entries = insights.data?.entries ?? [];
+  if (entries.length === 0) return null;
   return (
-    <div className="h-full overflow-y-auto pt-6 pb-16">
-      <div className="mb-4 flex min-h-7 items-center justify-end gap-4">
-        <h2 className="sr-only">{copy.heading}</h2>
-        <RunMenu others={others} onRun={here.run} />
-      </div>
+    <section aria-label={copy.heading} className="flex flex-col gap-4 border-t border-border pt-6">
+      <h2 className="text-lg font-semibold text-fg">{copy.heading}</h2>
       <div className="grid gap-10">
         {entries.map((entry: MeetingInsight) => (
           <MeetingInsightSection
@@ -75,55 +64,49 @@ export function MeetingInsights({ meetingId }: MeetingInsightsProps) {
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-/** Nothing ran here yet: run one, or create one. */
-function Empty({ others, onRun }: { others: InsightDef[]; onRun: (id: InsightId) => void }) {
-  const action =
-    others.length === 0 ? (
-      <Link to="/insights" className={buttonVariants({ variant: 'secondary' })}>
-        {copy.create}
-      </Link>
-    ) : (
-      <RunMenu others={others} onRun={onRun} />
-    );
+/** One insight in the submenu: Run, or Run again when it already ran here. */
+function RunItem(props: { def: InsightDef; ran: boolean; disabled: boolean; onRun: () => void }) {
+  const ItemIcon = props.ran ? RotateCcw : Play;
   return (
-    <EmptyState
-      className="pt-[12vh]"
-      icon={Lightbulb}
-      title={copy.empty}
-      description={copy.emptyBody}
-      action={action}
-    />
+    <DropdownMenuItem disabled={props.disabled} onSelect={props.onRun}>
+      <ItemIcon {...ICON_PROPS} />
+      <span className="truncate">{props.def.name}</span>
+    </DropdownMenuItem>
   );
 }
 
-/** "Run an insight": the insights that have not run here. */
-function RunMenu({ others, onRun }: { others: InsightDef[]; onRun: (id: InsightId) => void }) {
-  if (others.length === 0) return null;
+/** "Run insight ›": every insight, the ones not run here first. */
+export function MeetingInsightsSubmenu({ meetingId }: MeetingInsightsProps) {
+  const insights = useMeetingInsights(meetingId);
+  const here = useRunHere(meetingId);
+  const choices = [
+    ...(insights.data?.others ?? []).map((def) => ({ def, ran: false })),
+    ...(insights.data?.entries ?? []).map(({ def }) => ({ def, ran: true })),
+  ];
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="secondary" size="sm">
-          <Play {...ICON_PROPS} />
-          {copy.runOne}
-          <ChevronDown {...ICON_PROPS} className="text-fg-muted" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {others.map((def) => (
-          <DropdownMenuItem
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <Lightbulb {...ICON_PROPS} />
+        {copy.runOne}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="max-h-[360px] w-64 overflow-y-auto">
+        {choices.length === 0 ? <DropdownMenuLabel>{copy.none}</DropdownMenuLabel> : null}
+        {choices.map(({ def, ran }) => (
+          <RunItem
             key={def.id}
-            onSelect={() => {
-              onRun(def.id);
+            def={def}
+            ran={ran}
+            disabled={here.pending}
+            onRun={() => {
+              here.run(def.id);
             }}
-          >
-            {def.name}
-          </DropdownMenuItem>
+          />
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }

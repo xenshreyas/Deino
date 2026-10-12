@@ -1,5 +1,11 @@
-import { useState } from 'react';
-
+/**
+ * The meeting's template menu (NOT-04, UX-06, UX-07): a quiet button with
+ * the template's name, in the notes' toolbar beside Enhanced / My notes.
+ * Why Deino chose it ("Matched rule: external discovery call") is the
+ * menu's header, not a line on the page. After a switch, the notes page
+ * shows {@link TemplateSwitchedPrompt} to regenerate notes written with
+ * the old template.
+ */
 import type { MeetingId } from '@/features/meetings';
 import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
@@ -12,60 +18,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/ui/menu';
-import { Skeleton } from '@/ui/skeleton';
 
 import { reasonText, templatesCopy } from '../copy';
 import { useMeetingTemplate, useSetMeetingTemplate, useTemplates } from '../queries';
 import type { Template, TemplateChoice, TemplateId } from '../types';
 
-/** Props of {@link MeetingTemplatePicker}. */
-export interface MeetingTemplatePickerProps {
+/** Props of {@link MeetingTemplateMenu}. */
+export interface MeetingTemplateMenuProps {
   meetingId: MeetingId;
-  /**
-   * Regenerates the meeting's notes with its current template, or `null`
-   * when there are no notes yet (switching then needs no prompt).
-   */
-  onRegenerate: (() => void) | null;
+  /** Hears the new template's name once a switch is saved. */
+  onSwitched: (name: string) => void;
 }
 
-/**
- * The Notes tab's template line: which template the meeting uses and why
- * ("Matched rule: external discovery call"), a menu to switch it, and after
- * a switch, a prompt to regenerate notes written with the old one.
- */
-export function MeetingTemplatePicker({ meetingId, onRegenerate }: MeetingTemplatePickerProps) {
+/** The template button and its menu; nothing until the meeting's template has loaded. */
+export function MeetingTemplateMenu({ meetingId, onSwitched }: MeetingTemplateMenuProps) {
   const choice = useMeetingTemplate(meetingId);
   const set = useSetMeetingTemplate(meetingId);
-  const [switched, setSwitched] = useState<string | null>(null);
-  if (choice.data === undefined) return <Skeleton className="mt-4 h-5 w-56" />;
+  if (choice.data === undefined) return null;
   const pick = (template: TemplateId | null) => {
     set.mutate(template, {
       onSuccess: (next) => {
-        setSwitched(next.template.content.name);
+        onSwitched(next.template.content.name);
       },
     });
   };
-  return (
-    <div className="flex flex-col gap-2 pt-4">
-      <div className="flex min-w-0 items-center gap-2 text-xs text-fg-muted">
-        <LayoutTemplate {...ICON_PROPS} className="shrink-0" />
-        <TemplateMenu choice={choice.data} onPick={pick} />
-        <span className="truncate">{reasonText(choice.data.reason)}</span>
-      </div>
-      {switched !== null && onRegenerate !== null ? (
-        <RegeneratePrompt
-          name={switched}
-          onRegenerate={() => {
-            setSwitched(null);
-            onRegenerate();
-          }}
-          onDismiss={() => {
-            setSwitched(null);
-          }}
-        />
-      ) : null}
-    </div>
-  );
+  return <TemplateMenu choice={choice.data} onPick={pick} />;
 }
 
 /** The current template's name, opening every template to choose from. */
@@ -76,33 +53,52 @@ function TemplateMenu({
   choice: TemplateChoice;
   onPick: (id: TemplateId | null) => void;
 }) {
-  const templates = useTemplates();
-  const all = templates.data ?? [];
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={templatesCopy.pickerLabel}
-        className="flex h-6 items-center gap-1 rounded-sm px-1 text-sm text-fg transition-colors duration-(--dur-fast) hover:bg-bg-muted focus-visible:outline-2 focus-visible:outline-focus-ring"
+        className="flex h-7 max-w-48 items-center gap-1.5 rounded-sm px-1.5 text-xs text-fg-muted transition-colors duration-(--dur-fast) hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-focus-ring"
       >
-        {choice.template.content.name}
-        <ChevronDown {...ICON_PROPS} className="text-fg-muted" />
+        <LayoutTemplate {...ICON_PROPS} size={14} className="shrink-0" />
+        <span className="truncate">{choice.template.content.name}</span>
+        <ChevronDown {...ICON_PROPS} size={14} className="shrink-0" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-[360px] overflow-y-auto">
+      <DropdownMenuContent align="end" className="max-h-[360px] w-64 overflow-y-auto">
+        <DropdownMenuLabel className="font-normal text-pretty text-fg-muted">
+          {reasonText(choice.reason)}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
         {choice.reason.kind === 'chosen' ? <BackToAuto onPick={onPick} /> : null}
-        <MenuGroup
-          label={templatesCopy.yours}
-          templates={all.filter((t) => !t.isBuiltin)}
-          current={choice.template.id}
-          onPick={onPick}
-        />
-        <MenuGroup
-          label={templatesCopy.builtIn}
-          templates={all.filter((t) => t.isBuiltin)}
-          current={choice.template.id}
-          onPick={onPick}
-        />
+        <TemplateGroups current={choice.template.id} onPick={onPick} />
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** The user's templates, then the built-in ones. */
+function TemplateGroups({
+  current,
+  onPick,
+}: {
+  current: TemplateId;
+  onPick: (id: TemplateId) => void;
+}) {
+  const all = useTemplates().data ?? [];
+  return (
+    <>
+      <MenuGroup
+        label={templatesCopy.yours}
+        templates={all.filter((t) => !t.isBuiltin)}
+        current={current}
+        onPick={onPick}
+      />
+      <MenuGroup
+        label={templatesCopy.builtIn}
+        templates={all.filter((t) => t.isBuiltin)}
+        current={current}
+        onPick={onPick}
+      />
+    </>
   );
 }
 
@@ -153,20 +149,24 @@ function MenuGroup({
   );
 }
 
-/** "Notes were written before you chose X." with Regenerate and Not now. */
-function RegeneratePrompt({
-  name,
-  onRegenerate,
-  onDismiss,
-}: {
+/** Props of {@link TemplateSwitchedPrompt}. */
+export interface TemplateSwitchedPromptProps {
+  /** The template just chosen. */
   name: string;
   onRegenerate: () => void;
   onDismiss: () => void;
-}) {
+}
+
+/** "Notes were written before you chose X." with Regenerate and Not now. */
+export function TemplateSwitchedPrompt({
+  name,
+  onRegenerate,
+  onDismiss,
+}: TemplateSwitchedPromptProps) {
   return (
     <div
       role="status"
-      className="flex items-center gap-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-fg"
+      className="mb-3 flex items-center gap-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-fg"
     >
       <span className="min-w-0 flex-1">{templatesCopy.regenerateTitle(name)}</span>
       <Button variant="ghost" size="sm" onClick={onDismiss}>

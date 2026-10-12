@@ -9,11 +9,12 @@ export const detectionCopy = {
   } satisfies Record<MeetingKind, string>,
   takeNotes: 'Take notes',
   ignore: 'Ignore',
-  dontRecord: "Don't record",
+  dontRecord: 'Don’t record',
   alwaysIgnore: 'Always ignore this app',
+  moreIgnore: 'More ways to ignore',
   promptLabel: 'Meeting prompt',
   countdown: (seconds: number) => `Recording in ${seconds}s`,
-  failed: 'That did not work. Try again from the main window.',
+  failed: 'That didn’t work. Try again from the main window.',
 
   settings: {
     detectTitle: 'Detect meetings',

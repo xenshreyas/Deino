@@ -75,12 +75,8 @@ export const insightsCopy = {
   },
   meeting: {
     heading: 'Insights',
-    empty: 'No insights on this meeting yet',
-    emptyBody:
-      'Insights you define run after every meeting they apply to. Run one here, or create one.',
-    create: 'Create an insight',
-    runOne: 'Run an insight',
-    run: 'Run',
+    runOne: 'Run insight',
+    none: 'No insights yet. Create one on the Insights page.',
     rerun: 'Run again',
     running: 'Running…',
     nothing: 'Nothing in this meeting answers it.',

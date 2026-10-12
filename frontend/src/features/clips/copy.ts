@@ -1,9 +1,5 @@
 /** Every user-facing string of clips and moments. */
 export const clipsCopy = {
-  tabEmptyTitle: 'No clips yet',
-  tabEmptyBody:
-    'Select part of the transcript and choose Clip to save that stretch of the recording.',
-  noRecordingBody: 'Clips are cut from the recording, and this meeting has none on this Mac.',
   clip: 'Clip',
   copyLink: 'Copy link',
   linkCopied: 'Link copied',

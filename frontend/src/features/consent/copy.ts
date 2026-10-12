@@ -5,6 +5,9 @@ export const consentCopy = {
   reminder: {
     title: 'Let people know',
     body: 'Deino is transcribing. Tell everyone on the call, and stop if anyone would rather you didn’t.',
+    /** The body while the shared screen is captured too (UX-28: one card, not two). */
+    bodyWithScreen:
+      'Deino is transcribing and saving the shared screen. Tell everyone on the call, and stop if anyone would rather you didn’t.',
     label: 'Consent reminder',
     dismiss: 'Got it',
     never: 'Don’t show again',

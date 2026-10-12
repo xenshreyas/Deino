@@ -1,5 +1,5 @@
 /**
- * One clip in the Clips tab: Play (the range in the meeting's player), its
+ * One clip in the meeting's Details panel: Play (the range in the meeting's player), its
  * name (click to rename in place), its range, and ⋯ with Copy link, Show
  * in Finder and Delete.
  */

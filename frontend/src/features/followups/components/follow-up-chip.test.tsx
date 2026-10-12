@@ -8,7 +8,7 @@ import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import type { FollowUpDraft } from '../types';
-import { FollowUpBanner, MeetingFollowUp } from './follow-up-banner';
+import { FollowUpChip, MeetingFollowUp } from './follow-up-chip';
 
 const commands = vi.hoisted(() => ({
   suggested: vi.fn(),
@@ -39,18 +39,24 @@ function wrap(children: ReactNode) {
   );
 }
 
-describe('FollowUpBanner', () => {
-  it('asks once before dismissing for good', () => {
-    const onDismiss = vi.fn();
-    render(wrap(<FollowUpBanner onView={vi.fn()} onDismiss={onDismiss} />));
+/** Opens a Radix menu the way a pointer does. */
+function openMenu(name: string) {
+  fireEvent.pointerDown(screen.getByRole('button', { name }), { button: 0, ctrlKey: false });
+}
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    screen.getByText(/Dismiss for good/);
-    fireEvent.click(screen.getByRole('button', { name: 'Keep' }));
+describe('FollowUpChip', () => {
+  it('views the draft, or dismisses it with an item that says it is for good', async () => {
+    const onView = vi.fn();
+    const onDismiss = vi.fn();
+    render(wrap(<FollowUpChip onView={onView} onDismiss={onDismiss} />));
+
+    openMenu('Follow-up email ready');
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'View draft' }));
+    expect(onView).toHaveBeenCalledOnce();
     expect(onDismiss).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    openMenu('Follow-up email ready');
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Dismiss for good' }));
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 });
@@ -75,7 +81,11 @@ describe('MeetingFollowUp', () => {
     commands.forMeeting.mockResolvedValue({ status: 'ok', data: draft });
     render(wrap(<MeetingFollowUp meetingId={MEETING} />));
 
-    fireEvent.click(await screen.findByRole('button', { name: 'View draft' }));
+    fireEvent.pointerDown(await screen.findByRole('button', { name: 'Follow-up email ready' }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'View draft' }));
     expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('marcus@brightkite.example');
     screen.getByText('1 gap to fill');
     expect(

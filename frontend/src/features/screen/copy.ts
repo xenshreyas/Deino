@@ -44,7 +44,7 @@ export const screenCopy = {
     title: 'Deino is capturing the shared screen',
     body: 'Let everyone know their shared screen is being saved.',
     dismiss: 'Got it',
-    never: "Don't show again",
+    never: 'Don’t show again',
   },
   picker: {
     label: 'Screen to capture',
