@@ -240,7 +240,7 @@ summary() {
 # ── Machine-wide gate slots ──────────────────────────────────────────────────
 # Parallel worktrees each running the full gate overloaded the machine (load
 # 100+), and timing-sensitive tests then flaked. So the heavy steps run in one
-# of DEINO_GATE_SLOTS slots (default 2); other gates wait for a free one. A
+# of DEINO_GATE_SLOTS slots (default 3); other gates wait for a free one. A
 # slot whose owner died is reclaimed. DEINO_GATE_NO_LOCK=1 skips this.
 # Slot 0 keeps the original lock path, so older copies of this script share it.
 readonly GATE_LOCK_DIR="${HOME}/.cache/deino"
@@ -261,7 +261,7 @@ try_slot() {
 acquire_gate_lock() {
     [[ "${DEINO_GATE_NO_LOCK:-}" == 1 || -n "$GATE_SLOT" ]] && return 0
     mkdir -p "$GATE_LOCK_DIR"
-    local slots="${DEINO_GATE_SLOTS:-2}" waited=0 slot
+    local slots="${DEINO_GATE_SLOTS:-3}" waited=0 slot
     while true; do
         for ((slot = 0; slot < slots; slot++)); do
             try_slot "$slot" && GATE_SLOT="$slot" && break 2
