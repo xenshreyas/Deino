@@ -26,6 +26,9 @@ terminal (`deino meetings`, `--json` everywhere) and over MCP for Claude
   overrides the helper), one helper per process on a worker thread, stopped
   and reaped on drop.
 - `export.rs`: `deino export` through `deino-core::export` and `deino-export`.
+- `redaction.rs`: the app's "Hide sensitive information" (NOT-09), read from
+  the `settings.json` beside the database; when on, everything the library
+  and exports return is redacted by patterns (never a model call).
 - `examples/sample_db.rs`: a sample database for trying it out.
 
 ## Does Not Own
