@@ -23,9 +23,8 @@ test('the tag filter narrows the Meetings page to tagged meetings', async ({ pag
   const standup = fixtureMeeting('meeting-fixture-standup');
   await page.goto('/meetings');
 
-  await page.getByRole('button', { name: 'Tag' }).click();
-  await page.getByRole('option', { name: 'Hiring' }).click();
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^Filter/ }).click();
+  await page.getByRole('option', { name: 'Hiring', exact: true }).click();
 
   await expect(page.getByRole('link', { name: interview.title })).toBeVisible();
   await expect(page.getByRole('link', { name: standup.title })).toBeHidden();
