@@ -2033,6 +2033,7 @@ dependencies = [
  "log",
  "proptest",
  "regex",
+ "rustix 1.1.4",
  "schemars 1.2.1",
  "serde",
  "serde_json",
@@ -2132,6 +2133,7 @@ name = "deino-domain"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "regex",
  "serde",
  "serde_json",
  "specta",

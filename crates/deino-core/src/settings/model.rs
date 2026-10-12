@@ -3,10 +3,10 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, BetaSettings, CalendarSettings, DetectionSettings, ExportSettings,
-    IntegrationSettings, NetworkSettings, NotificationSettings, OnboardingSettings,
-    OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings, SettingsError,
-    SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
+    AiSettings, AudioSettings, AutomationSettings, BetaSettings, CalendarSettings,
+    DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
+    OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
+    SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -52,6 +52,8 @@ pub struct Settings {
     pub calendar: CalendarSettings,
     /// The user's own OAuth apps for integrations (INT-00).
     pub integrations: IntegrationSettings,
+    /// What automations may do on the Mac (AUT-01).
+    pub automations: AutomationSettings,
     /// Appearance and layout.
     pub ui: UiSettings,
     /// Opt-in beta features.
@@ -78,6 +80,7 @@ impl Default for Settings {
             organize: OrganizeSettings::default(),
             export: ExportSettings::default(),
             calendar: CalendarSettings::default(),
+            automations: AutomationSettings::default(),
             integrations: IntegrationSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),

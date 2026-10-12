@@ -65,6 +65,11 @@ uuid.workspace = true
 # parameters (already in the tree through deino-net).
 url = "2.5.8"
 
+# AUT-01's shell step kills a timed-out script's whole process group; the
+# version deino-audio already pins, with its safe `process` API.
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "=1.1.4", features = ["process"] }
+
 [dev-dependencies]
 deino-db = { workspace = true, features = ["test-support"] }
 deino-domain = { workspace = true, features = ["test-support"] }

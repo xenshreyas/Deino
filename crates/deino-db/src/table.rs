@@ -95,6 +95,12 @@ pub enum Table {
     InsightResults,
     /// Cached year-in-review recaps, one per year (ORG-09).
     YearRecaps,
+    /// Automations: conditions and the steps to run (AUT-01).
+    Automations,
+    /// Each automation's latest run on each meeting (AUT-01).
+    AutomationRuns,
+    /// The steps of each automation run, with their results (AUT-01).
+    AutomationRunSteps,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -102,7 +108,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 41] = [
+    pub const ALL: [Self; 44] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -143,6 +149,9 @@ impl Table {
         Self::InsightDefs,
         Self::InsightResults,
         Self::YearRecaps,
+        Self::Automations,
+        Self::AutomationRuns,
+        Self::AutomationRunSteps,
         Self::ExampleNotes,
     ];
 
@@ -204,6 +213,9 @@ impl Table {
             "year_recaps" => Self::YearRecaps,
             "meeting_views" => Self::MeetingViews,
             "meeting_merge_parts" => Self::MeetingMergeParts,
+            "automations" => Self::Automations,
+            "automation_runs" => Self::AutomationRuns,
+            "automation_run_steps" => Self::AutomationRunSteps,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

@@ -15,6 +15,8 @@ test-support = []
 
 [dependencies]
 chrono.workspace = true
+# Title patterns in conditions (AUT-01); the version deino-core already pins.
+regex = "1.12.3"
 serde.workspace = true
 specta.workspace = true
 sqlx.workspace = true

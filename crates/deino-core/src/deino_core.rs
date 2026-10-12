@@ -64,6 +64,7 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod action_items;
+pub mod automations;
 pub mod calendar;
 pub mod cli_setup;
 pub mod companies;

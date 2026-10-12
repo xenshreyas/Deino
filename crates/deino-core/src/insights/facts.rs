@@ -10,7 +10,9 @@ use std::collections::BTreeSet;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_db::DbError;
-use deino_domain::{Audience, Email, FolderId, MeetingFacts, MeetingId, TagId, TemplateId};
+use deino_domain::{
+    Audience, CalendarId, Email, FolderId, MeetingFacts, MeetingId, PersonId, TagId, TemplateId,
+};
 use serde::Serialize;
 
 use super::SqliteInsightRepo;
@@ -102,8 +104,14 @@ impl MeetingRecords for SqliteInsightRepo {
                 template_id: row.template_id,
                 tag_ids: tag_ids.into_iter().collect(),
                 folder_ids: folder_ids.into_iter().collect(),
+                participant_ids: self.participants(meeting).await?,
+                invitee_emails: attendee_emails.iter().cloned().collect(),
                 attendee_domains: domains(&attendee_emails),
                 has_external: false,
+                duration_s: row
+                    .duration_s
+                    .and_then(|seconds| u32::try_from(seconds).ok()),
+                calendar_id: row.calendar_id,
             },
             attendee_emails,
         }))
@@ -118,6 +126,21 @@ impl MeetingRecords for SqliteInsightRepo {
 }
 
 impl SqliteInsightRepo {
+    /// Everyone who took part: attendees of any role and named speakers.
+    async fn participants(&self, meeting: &MeetingId) -> Result<BTreeSet<PersonId>, DbError> {
+        let people = sqlx::query_scalar!(
+            r#"SELECT person_id AS "person_id!: PersonId" FROM meeting_attendees
+               WHERE meeting_id = ?1
+               UNION
+               SELECT person_id AS "person_id!: PersonId" FROM speakers
+               WHERE meeting_id = ?1 AND person_id IS NOT NULL"#,
+            meeting,
+        )
+        .fetch_all(self.database.reader())
+        .await?;
+        Ok(people.into_iter().collect())
+    }
+
     async fn attendee_emails(&self, meeting: &MeetingId) -> Result<Vec<Email>, DbError> {
         let emails = sqlx::query_scalar!(
             r#"SELECT p.email AS "email!: Email" FROM meeting_attendees AS a

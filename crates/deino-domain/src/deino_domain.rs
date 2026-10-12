@@ -31,6 +31,7 @@
 #[macro_use]
 mod db_enum;
 
+pub mod automation;
 pub mod bundle_id;
 pub mod clock;
 pub mod color;
@@ -47,12 +48,13 @@ pub mod status;
 pub mod units;
 pub mod zone;
 
+pub use automation::{AutomationRunStatus, AutomationStepStatus, AutomationTrigger};
 pub use bundle_id::{BundleId, InvalidBundleId};
 #[cfg(any(test, feature = "test-support"))]
 pub use clock::FakeClock;
 pub use clock::{Clock, SystemClock};
 pub use color::{InvalidPaletteColor, PaletteColor};
-pub use conditions::{Condition, ConditionGroups, InvalidCondition, MeetingFacts};
+pub use conditions::{Comparison, Condition, ConditionGroups, InvalidCondition, MeetingFacts};
 pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
@@ -63,10 +65,10 @@ pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
-    ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
-    ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId,
-    MeetingViewId, PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId,
-    VocabTermId, VoiceprintId,
+    ActionItemId, ActionItemViewId, AutomationId, AutomationRunId, CalendarAccountId,
+    CalendarEventId, CalendarId, CompanyId, ConnectionId, DeliveryId, FolderId, FolderRuleId,
+    IdError, InsightId, LlmCallId, MeetingId, MeetingViewId, PersonId, SegmentId, SeriesId,
+    SpeakerId, StageId, TagId, TemplateId, VocabTermId, VoiceprintId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,
