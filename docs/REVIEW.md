@@ -38,7 +38,7 @@ in a new ADR, not in review.
 - Multi-row writes run in one transaction on the writer connection.
 - A denormalised column names its source of truth and the one place that
   keeps it in sync.
-- A new table has a `Table` variant, so `DbChanged` covers it.
+- A new table has a `--` doc comment above its `CREATE TABLE`, so its generated `Table` variant (and `DbChanged`) covers it.
 
 **Layering**
 - `commands.rs` only parses, calls one service method and maps the error.
@@ -48,8 +48,9 @@ in a new ADR, not in review.
 - Nothing under `crates/` depends on `tauri`.
 
 **IPC**
-- New commands live in a feature plugin, with the manifest, capability,
-  `features::builders()` and bindings updated; nothing is added to `legacy.rs`.
+- New commands live in a feature plugin that registers itself
+  (`register_plugin!`), with bindings regenerated; no central list is edited
+  (`scripts/check-feature-isolation.sh`) and nothing is added to `legacy.rs`.
 - The UI calls generated bindings through a feature `api.ts` and TanStack
   Query hooks that declare `meta.tables`. No hand-written `invoke`.
 

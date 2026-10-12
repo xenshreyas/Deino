@@ -1,6 +1,6 @@
 # 0002. Register IPC as one inline Tauri plugin per feature
 
-- **Status:** Accepted
+- **Status:** Accepted; registration amended by [2026-10-12 feature self-registration](2026-10-12-feature-self-registration.md)
 - **Date:** 2026-10-08
 - **Card:** FND-02 (decided in PARITY_PLAN §4.0 from `docs/references/architecture.md` §1)
 

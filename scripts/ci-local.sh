@@ -43,7 +43,11 @@ FAST_STEPS=(fmt-fix file-size clippy typecheck vitest test-touched)
 
 step_fmt() { cargo fmt --all --check; }
 step_file_size() { scripts/check-rust-file-size.sh; }
-step_deps() { scripts/check-dependency-rules.sh; }
+# Dependency rules, and REG-01's rule that no central file lists features.
+step_deps() {
+    scripts/check-dependency-rules.sh
+    scripts/check-feature-isolation.sh
+}
 
 step_deny() {
     cargo deny --locked check licenses bans sources

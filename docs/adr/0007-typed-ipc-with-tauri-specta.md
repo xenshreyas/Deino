@@ -1,6 +1,6 @@
 # 0007. Generate typed IPC bindings with tauri-specta
 
-- **Status:** Accepted
+- **Status:** Accepted; registration amended by [2026-10-12 feature self-registration](2026-10-12-feature-self-registration.md)
 - **Date:** 2026-10-08
 - **Card:** FND-13 (`docs/references/architecture.md` §2)
 
