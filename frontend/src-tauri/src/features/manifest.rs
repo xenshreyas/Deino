@@ -8,9 +8,8 @@
 //   that every feature is granted in `capabilities/` and that these command
 //   lists equal the commands in the generated TypeScript bindings.
 //
-// Append-only: adding a feature is one line here, one `.plugin(..)` call in
-// `lib.rs`, one entry in `features::builders()` and one `"<name>:default"`
-// entry in `capabilities/default.json`.
+// Append-only: a feature is one line here, one `.plugin(..)` in `lib.rs`, one entry in
+// `features::builders()` and one `"<name>:default"` in `capabilities/default.json`.
 
 /// Every inline feature plugin as `(plugin name, command names)`.
 ///
@@ -297,4 +296,5 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── CAP-05 speaker tags (features/speaker_tags.rs) ──
     ("speaker-tags", &["status", "open_accessibility_settings"]),
+    ("stats", &["overview", "heatmap", "recap", "write_recap"]), // ORG-09 (features/stats.rs)
 ];

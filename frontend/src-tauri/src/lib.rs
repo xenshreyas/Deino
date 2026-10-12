@@ -103,6 +103,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::insights::init())
         .plugin(features::tags::init())
         .plugin(features::speakers::init())
+        .plugin(features::stats::init())
         .plugin(features::transcript::init())
         .plugin(features::vocabulary::init())
         .plugin(features::speaker_tags::init());

@@ -64,6 +64,7 @@
         "insights:default",
         "tags:default",
         "speakers:default",
+        "stats:default",
         "transcript:default",
         "vocabulary:default",
         "speaker-tags:default"
