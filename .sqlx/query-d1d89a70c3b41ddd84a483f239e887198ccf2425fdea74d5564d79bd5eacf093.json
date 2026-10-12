@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The counted meetings (the stats_meetings view) that started at or after\n-- ?1, or every one when ?1 is NULL. julianday() compares instants, so\n-- legacy rows saved in other timestamp spellings still filter correctly;\n-- the scan is the benchmarked cost of computing on read (stats_bench.rs).\nSELECT\n    m.id AS \"id!: MeetingId\",\n    m.at AS \"at!: DateTime<Utc>\",\n    m.duration_s AS \"duration_s: i64\"\nFROM stats_meetings AS m\nWHERE ?1 IS NULL OR julianday(m.at) >= julianday(?1)\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration_s: i64",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "d1d89a70c3b41ddd84a483f239e887198ccf2425fdea74d5564d79bd5eacf093"
+}

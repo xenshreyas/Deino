@@ -21,6 +21,7 @@ export {
   CaseSensitive,
   Building2,
   Calendar,
+  ChartColumn,
   CalendarCheck,
   CalendarPlus,
   Check,

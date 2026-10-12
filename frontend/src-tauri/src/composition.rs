@@ -47,6 +47,7 @@ mod recording;
 mod search;
 mod speaker_tags;
 mod speakers;
+mod stats;
 mod stt;
 mod transcript;
 mod vocabulary;
@@ -180,6 +181,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         clock: Arc::clone(&clock),
     };
     let stage_adapters = attach_stage_services(app, &database, &wiring, (&organize, search));
+    stats::attach_stats(app, &database, &wiring);
     let deps = NoteDeps {
         settings: Arc::clone(&settings),
         gateway: gateway.clone(),

@@ -8,6 +8,7 @@
 
 mod enhance;
 mod insights;
+mod recap;
 mod redact;
 
 use askama::Template;
@@ -17,6 +18,7 @@ pub use enhance::{
     TitleNotesUser,
 };
 pub use insights::{InsightsSystem, InsightsUser};
+pub use recap::{RecapSystem, RecapUser};
 pub use redact::{RedactCheckSystem, RedactCheckUser};
 
 /// Renders a built-in prompt.

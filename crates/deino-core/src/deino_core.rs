@@ -57,6 +57,9 @@
 //! CAP-05 added [`speaker_tags`]: the names a meeting app's window showed
 //! for its active speaker, stored while recording and used by
 //! `identify_speakers` before voices are matched.
+//!
+//! ORG-09 added [`stats`]: meeting and LLM usage stats computed on read,
+//! and the year in review.
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -89,6 +92,7 @@ pub mod segments;
 pub mod settings;
 pub mod speaker_tags;
 pub mod speakers;
+pub mod stats;
 pub mod tags;
 pub mod templates;
 #[cfg(any(test, feature = "test-support"))]

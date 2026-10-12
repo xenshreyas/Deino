@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "-- LLM calls started at or after ?1 (every call when NULL), summed per\n-- provider and model, most calls first. The gateway writes\n-- `llm_calls.started_at` in one RFC 3339 spelling and ?1 is bound the same\n-- way, so the text comparison is exact and can use idx_llm_calls_started_at.\nSELECT\n    provider AS \"provider!: ProviderId\",\n    model AS \"model!\",\n    count(*) AS \"calls!: u32\",\n    coalesce(sum(outcome = 'error'), 0) AS \"failed!: u32\",\n    coalesce(sum(input_tokens), 0) AS \"input_tokens!: i64\",\n    coalesce(sum(output_tokens), 0) AS \"output_tokens!: i64\"\nFROM llm_calls\nWHERE ?1 IS NULL OR started_at >= ?1\nGROUP BY provider, model\nORDER BY 3 DESC, provider, model\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "provider!: ProviderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "model!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "calls!: u32",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "failed!: u32",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "input_tokens!: i64",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "output_tokens!: i64",
+        "ordinal": 5,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "7cdcd3bd83b87bbd68965552bf0c79094337a2a7290f82e54d4bd9ecdbd30eb3"
+}

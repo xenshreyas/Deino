@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TagsRouteImport } from './routes/tags'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as RecipesRouteImport } from './routes/recipes'
@@ -32,6 +33,11 @@ import { Route as CompaniesCompanyIdRouteImport } from './routes/companies/$comp
 const TagsRoute = TagsRouteImport.update({
   id: '/tags',
   path: '/tags',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/tags': typeof TagsRoute
   '/companies/$companyId': typeof CompaniesCompanyIdRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/tags': typeof TagsRoute
   '/companies/$companyId': typeof CompaniesCompanyIdRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/tags': typeof TagsRoute
   '/companies/$companyId': typeof CompaniesCompanyIdRoute
   '/folders/$folderId': typeof FoldersFolderIdRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/search'
     | '/settings'
+    | '/stats'
     | '/tags'
     | '/companies/$companyId'
     | '/folders/$folderId'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/search'
     | '/settings'
+    | '/stats'
     | '/tags'
     | '/companies/$companyId'
     | '/folders/$folderId'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/search'
     | '/settings'
+    | '/stats'
     | '/tags'
     | '/companies/$companyId'
     | '/folders/$folderId'
@@ -265,6 +277,7 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  StatsRoute: typeof StatsRoute
   TagsRoute: typeof TagsRoute
   CompaniesCompanyIdRoute: typeof CompaniesCompanyIdRoute
   FoldersFolderIdRoute: typeof FoldersFolderIdRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/tags'
       fullPath: '/tags'
       preLoaderRoute: typeof TagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -425,6 +445,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  StatsRoute: StatsRoute,
   TagsRoute: TagsRoute,
   CompaniesCompanyIdRoute: CompaniesCompanyIdRoute,
   FoldersFolderIdRoute: FoldersFolderIdRoute,

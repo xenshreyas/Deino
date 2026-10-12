@@ -791,6 +791,10 @@ export type Route =
  */
 "followup.email" | 
 /**
+ * The year in review, from aggregated stats and meeting titles (ORG-09).
+ */
+"recap" | 
+/**
  * Embeddings for semantic search (AI-01); always local (§8 D3).
  */
 "embed"

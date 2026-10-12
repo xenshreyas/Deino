@@ -291,4 +291,5 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ("onboarding", ONBOARDING_COMMANDS),
     // ── CAP-05 speaker tags (features/speaker_tags.rs) ──
     ("speaker-tags", &["status", "open_accessibility_settings"]),
+    ("stats", &["overview", "heatmap", "recap", "write_recap"]), // ORG-09 (features/stats.rs)
 ];

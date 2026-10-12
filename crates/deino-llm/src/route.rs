@@ -65,6 +65,10 @@ pub enum Route {
     #[serde(rename = "followup.email")]
     #[sqlx(rename = "followup.email")]
     FollowupEmail,
+    /// The year in review, from aggregated stats and meeting titles (ORG-09).
+    #[serde(rename = "recap")]
+    #[sqlx(rename = "recap")]
+    Recap,
     /// Embeddings for semantic search (AI-01); always local (§8 D3).
     #[serde(rename = "embed")]
     #[sqlx(rename = "embed")]
@@ -85,7 +89,7 @@ pub enum RouteTier {
 
 impl Route {
     /// Every route, in the order Settings → AI lists them.
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::NotesEnhance,
         Self::NotesEdit,
         Self::Chat,
@@ -96,6 +100,7 @@ impl Route {
         Self::EntitySummary,
         Self::Brief,
         Self::FollowupEmail,
+        Self::Recap,
         Self::Embed,
     ];
 
@@ -112,6 +117,7 @@ impl Route {
             Self::EntitySummary => "entity.summary",
             Self::Brief => "brief",
             Self::FollowupEmail => "followup.email",
+            Self::Recap => "recap",
             Self::Embed => "embed",
         }
     }
@@ -123,7 +129,8 @@ impl Route {
             | Self::NotesEdit
             | Self::Chat
             | Self::Brief
-            | Self::FollowupEmail => RouteTier::Smart,
+            | Self::FollowupEmail
+            | Self::Recap => RouteTier::Smart,
             Self::ExtractActionItems
             | Self::ExtractInsights
             | Self::Tagging
@@ -173,7 +180,8 @@ mod tests {
                 "notes.edit",
                 "chat",
                 "brief",
-                "followup.email"
+                "followup.email",
+                "recap"
             ]
         );
         assert_eq!(

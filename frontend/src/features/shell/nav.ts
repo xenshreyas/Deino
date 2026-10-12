@@ -12,6 +12,7 @@ import { FolderNavSection } from '@/features/folders';
 import type { FileRoutesByTo } from '@/routeTree.gen';
 import {
   Building2,
+  ChartColumn,
   Folder,
   Home,
   type Icon,
@@ -108,6 +109,14 @@ export const NAV_ITEMS = [
     icon: Tag,
     to: '/tags',
     order: 40,
+    section: 'workspace',
+  },
+  {
+    id: 'stats',
+    label: 'Stats',
+    icon: ChartColumn,
+    to: '/stats',
+    order: 50,
     section: 'workspace',
   },
   {

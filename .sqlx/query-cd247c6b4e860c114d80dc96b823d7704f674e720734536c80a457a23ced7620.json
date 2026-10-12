@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Titles of the counted meetings that started in [?1, ?2), oldest first,\n-- at most ?3: all the year in review reads besides the numbers.\nSELECT\n    m.title AS \"title!\",\n    m.at AS \"at!: DateTime<Utc>\"\nFROM stats_meetings AS m\nWHERE julianday(m.at) >= julianday(?1) AND julianday(m.at) < julianday(?2)\nORDER BY julianday(m.at), m.id\nLIMIT ?3\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "title!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "at!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "cd247c6b4e860c114d80dc96b823d7704f674e720734536c80a457a23ced7620"
+}

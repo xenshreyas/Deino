@@ -408,6 +408,7 @@ FND-07 creates the core schema in one migration so later cards don't collide. Fe
 | `recipes` | AI-04 | |
 | `embeddings` (sqlite-vec virtual table) and `search_fts` (FTS5) | AI-01 / ORG-08 | |
 | `insight_defs`, `insight_results` | AI-06 | |
+| `year_recaps` (and the `stats_meetings` view) | ORG-09 | Stats are computed on read; only the year in review is kept |
 | `automations`, `automation_runs` | AUT-01 | |
 | `integration_connections` (no secrets; tokens live in the Keychain) | INT-00 | |
 | `webhooks`, `webhook_deliveries` | DEV-01 | |
@@ -1563,7 +1564,7 @@ Card format:
   - Stats page: number of meetings, hours, unique people, internal vs external split, a GitHub-style heatmap, top people, busiest days, LLM usage and cost (from `llm_calls`).
   - "Year in review", a generated recap available in December.
 - **Accept:**
-  - [ ] Numbers match the fixture data.
+  - [x] Numbers match the fixture data (`crates/deino-core/src/stats/stats_tests.rs`).
 
 ### 6.5 Phase 4: AI
 
@@ -2102,6 +2103,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | PRV-02 Encryption at rest and app lock | 🚧 first half on branch `feat/PRV-02-encryption-lock` (ADR 0041): SQLCipher 4.5.7 through libsqlite3-sys `bundled-sqlcipher` on Unix, CommonCrypto on macOS (no OpenSSL); `DbKey` (random 256-bit, zeroized, no `Debug`), `FileFormat`, `Database::open_keyed`/`open_read_only_keyed`, `deino_db::convert` (verified copy, atomic swap, backup until verified) and `recover`, `Fingerprint`; `DatabaseKeyStore` in `deino-secrets`; the `deino` CLI reads the Keychain key for an encrypted file; `docs/setup/encrypted-recordings.md`. Tests: a raw open and a wrong key fail; a seeded database round-trips encrypt → decrypt with every table's row count and SHA-256 equal. Left: app wiring, app lock, Settings → Privacy & security (`docs/handoff/PRV-02.md`) | |
 | CAP-05 Speaker names from the meeting app UI (Accessibility) | ☑️ done on branch `feat/CAP-05-speaker-tags` (ADR 0045; crate `deino-speaker-tags`: `SpeakerAdapter` per app (Zoom and Teams over a description scanner, Meet in Chrome over `AXDOMClassList`), unit-tested on 19 fixture AX dumps with a capture tool, the 250 ms `Watcher` thread on the recorder's new `Playhead`, `Timeline` spans; `speaker_tag_spans` table; `deino-core::speaker_tags` (`align` > 50 %, `resolve`, `seats`, `SpeakerTagPriors`) run first in `identify_speakers` and override voice matching, never the user; names never create people (unresolved ones label the speaker); `StartObservers` in `deino-recording`; plugin `speaker-tags` (`status`, `open_accessibility_settings`); Settings → Speaker tags with Enabled / Needs permission / Unsupported per app) | |
 | Fix: webview open commands and slop tests | ☑️ done on branch `fix/open-url-and-slop-tests` (`system_open`: `open_external_url` opens only `https:`/`http:`/`mailto:` parsed with `url`, `open_meeting_folder` only folders inside the app data or recordings folder, `open_system_settings` only plain pane names; 19 low-value tests from the test audit deleted, the `audio/import.rs` and `features/meetings` ones left to their cards) | |
+| ORG-09 Stats and year in review | ☑️ done on branch `feat/ORG-09-stats` (ADR 0049; `deino-core::stats`: `StatsService` computes a period's meetings, hours, people met, internal vs external (`InternalDomains`), top people, local weekdays and hours, the last year's heatmap and LLM usage per provider and model with an estimated cost (`pricing.rs`) on read over the `stats_meetings` view (not trashed, not scheduled, not the sample); `RecapService` writes the year in review on the new `recap` route from numbers and titles only, December or `DEINO_RECAP_ANYTIME=1`, kept in `year_recaps`; plugin `stats`; the Stats page with the heatmap, period control (30 d, 90 d, 12 mo, all time), KPI row, internal/external bar, top people, busiest days and hours, LLM usage; every number asserted over the fixtures in `stats_tests.rs`; 2,000 meetings + 20,000 calls in ~45 ms (release, load ~100) in `stats_bench.rs`) | |
 | Spike: native recording (AVAssetWriter CMAF) | ✅ done | `docs/references/spike-native-recording.md` |
 | Spike: STT streaming (transcribe-cpp) | ✅ done | `docs/references/spike-stt-streaming.md` |
 | Spike: diarization bake-off | ✅ done | `docs/references/spike-diarization.md` |
@@ -2171,7 +2173,7 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | FND-10 | The inherited settings panels (General, Recording, Transcription, Summary models, Beta) are tokenised but keep their own card markup. Rebuild them on settings sections and rows (ui.md §3 Settings layout) as their values move into the settings store. | FND-06 |
 | FND-10 | dev:mock does not answer `api_delete_meeting`, so deleting a meeting fails there (the real app works). Answer it in the legacy shim, or in the typed mock once ported. | ORG-07 |
 | FND-09 | ~~The gateway's HTTP goes through the temporary `ReqwestTransport`.~~ FND-12 gave every provider a `deino-net` scoped client (`llm/http.rs` `NetTransport`). The eval harness keeps its own `reqwest` dev-dependency (`crates/deino-llm/tests/llm_eval/live.rs`); move it onto `deino_net::ReqwestNetClient` with a shared transport when convenient. | ✅ FND-12 (eval harness: next card touching `deino-llm`) |
-| FND-09 | Usage page: list and sum `llm_calls` (per route, provider and model over time; tokens, latency, failures). The table and its indexes exist; add the repository queries and the screen. | Next AI card (AI-02) or a small usage card |
+| FND-09 | Usage page: list and sum `llm_calls` (per route, provider and model over time; tokens, latency, failures). Per provider and model with tokens, failures and an estimated cost: ✅ ORG-09 (Stats → LLM usage). Still open: per route, latency, and usage over time. | ✅ ORG-09 (partly) / a small usage card |
 | FND-09 | The legacy summary's `reasoning_stripped` flag now reflects only `<think>` envelopes removed from text: providers drop structured reasoning (`reasoning_content`, Anthropic thinking blocks) before it reaches the app, so the "reasoning was filtered" toast no longer appears for those. Moot: the legacy summaries, the flag and the toast are gone. | ✅ NOT-02 |
 | FND-09 | Ollama: the legacy `ollama list` CLI fallback (when the HTTP API failed) and the per-pull duplicate guard in Rust were not ported; pulls and deletes use the saved endpoint (the form's unsaved endpoint only applies to model lists). | Next card touching Summary models (FND-11 did not touch them) |
 | FND-09 | ~~The local embedding model has no download yet.~~ AI-01 added it to the catalog (`<models>/embedding/nomic-embed-text-v1.5.Q8_0.gguf`, verified download through the embedding `ModelService`); `SidecarLocalModels` resolves the file through it and starts the sidecar for `embed`. Verified end to end with the real model by `llm::retrieval_eval`. | ✅ AI-01 |
@@ -2385,6 +2387,10 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | TRN-02 | A backfill or `index` stage run that read a transcript before an edit and writes after the re-index can put a stale semantic window back until the meeting is indexed again (ADR 0040). Make `SqliteEmbeddingStore::replace` compare the transcript basis (newest `edited_at`, segment count) inside its transaction. | AI-02 / later cleanup |
 | TRN-02 | `original_text` is stored but no UI shows or restores it; add "Show original" / "Revert" to an edited line's ⋯ menu. Undo exists for deletes only (the toast). | Later polish |
 | TRN-02 | Find and replace across all meetings scans `transcript_segments` (a LIKE pre-filter); fine for a deliberate bulk edit at thousands of meetings, but use the FTS index to pick candidate meetings if it ever shows. | Later, if slow |
+| ORG-09 | Estimated cost covers Anthropic's list prices only (`deino_core::stats::pricing`); OpenAI, Groq and OpenRouter models show as unpriced. Add their prices, or have the gateway record a cost per call. | A small usage card |
+| ORG-09 | The year in review is written once per year and cannot be regenerated or shared; add "Write again" and copy or export. | ORG-09 follow-up |
+| ORG-09 | Each card that adds an LLM route rebuilds `llm_calls` to widen its CHECK (ORG-09 did for `recap`); a lookup table or dropping the CHECK would end the rebuilds. | Next card adding a route |
+| ORG-09 | Hovering the heatmap reads a day out, but its 371 cells are not keyboard stops (each has an accessible label instead); arrow-key navigation over the grid would complete it. | FND-10 polish |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02
