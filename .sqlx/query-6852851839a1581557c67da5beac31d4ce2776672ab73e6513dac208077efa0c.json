@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments SET speaker_id = ?1\n         WHERE id = ?2 AND meeting_id = ?3\n           AND (speaker_id IS NULL OR speaker_id IN (\n                SELECT id FROM speakers\n                WHERE meeting_id = ?3 AND person_id IS NULL AND is_me = 0))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6852851839a1581557c67da5beac31d4ce2776672ab73e6513dac208077efa0c"
+}

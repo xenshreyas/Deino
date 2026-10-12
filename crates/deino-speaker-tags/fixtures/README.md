@@ -3,7 +3,8 @@
 Each file is one moment of a meeting app as Accessibility shows it: a JSON
 array of the app's windows, each an `AxNode` tree (`src/tree.rs`). The
 adapters' tests (`tests/adapters.rs`) and the end-to-end timeline test
-(`tests/timeline.rs`) read them; nothing at runtime does.
+(`deino-core`'s `tests/speaker_tags_fixtures.rs`: dumps through the
+watcher, then aligned with segments) read them; nothing at runtime does.
 
 ```json
 [{ "role": "AXWindow", "title": "Zoom Meeting", "children": [

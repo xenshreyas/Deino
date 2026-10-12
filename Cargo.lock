@@ -2025,6 +2025,7 @@ dependencies = [
  "deino-llm",
  "deino-net",
  "deino-secrets",
+ "deino-speaker-tags",
  "deino-testkit",
  "futures-util",
  "insta",
@@ -2321,7 +2322,6 @@ name = "deino-speaker-tags"
 version = "0.1.0"
 dependencies = [
  "cidre",
- "deino-core",
  "deino-domain",
  "deino-speaker-tags",
  "log",

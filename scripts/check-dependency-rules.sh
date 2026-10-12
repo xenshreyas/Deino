@@ -2,7 +2,7 @@
 # PARITY_PLAN §4.0 dependency rules, checked on the resolved graph:
 #
 #   - no crate under crates/ depends on `tauri` (the core stays Tauri-free);
-#   - `deino-audio`, `deino-detect` and `deino-stt` never depend, even
+#   - `deino-audio`, `deino-detect`, `deino-speaker-tags` and `deino-stt` never depend, even
 #     indirectly, on `deino-net` or an HTTP client (audio, transcripts and
 #     what runs on the Mac never leave it, so those crates cannot reach the
 #     network; FND-12, CAP-06);
@@ -22,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # The crates that must have no route to the network.
-readonly OFFLINE_CRATES=(deino-audio deino-detect deino-stt)
+readonly OFFLINE_CRATES=(deino-audio deino-detect deino-speaker-tags deino-stt)
 # Every HTTP client crate a dependency could bring in.
 readonly HTTP_CLIENTS=(reqwest hyper ureq isahc surf attohttpc curl)
 

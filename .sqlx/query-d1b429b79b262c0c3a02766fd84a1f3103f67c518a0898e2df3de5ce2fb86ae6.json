@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE speakers SET label = ?1\n         WHERE id = ?2 AND meeting_id = ?3 AND person_id IS NULL\n           AND NOT EXISTS (SELECT 1 FROM speakers WHERE meeting_id = ?3 AND label = ?1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d1b429b79b262c0c3a02766fd84a1f3103f67c518a0898e2df3de5ce2fb86ae6"
+}

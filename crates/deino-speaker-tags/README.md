@@ -57,7 +57,8 @@ names for the system track's segments before it matches voices.
 ## Tests
 
 ```bash
-cargo test -p deino-speaker-tags   # unit tests, adapters on fixture dumps, dumps → spans → won segments
+cargo test -p deino-speaker-tags                          # unit tests, every adapter on the fixture dumps
+cargo test -p deino-core --test speaker_tags_fixtures    # dumps → watcher → spans → won segments (> 50 %)
 ```
 
 The capture tool reads a real app and is ignored by default; see

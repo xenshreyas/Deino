@@ -10,9 +10,12 @@
 //!
 //! Each tile's name is a `span.notranslate`, and its voice indicator
 //! carries one of Meet's speaking classes while the participant speaks.
-//! The classes are Meet's generated names, taken from the capture and from
-//! anarlog's Meet worker (`THIRD_PARTY_NOTICES.md`); they change with
-//! Meet's releases, which the adapter reports as an unrecognised layout.
+//! The speaking classes are Meet's generated names as Vexa's Meet speaker
+//! detection lists them (Apache-2.0, `THIRD_PARTY_NOTICES.md`), plus
+//! semantic fallbacks; the indicator classes come from the modelled dumps
+//! and must be confirmed with a real capture (`fixtures/README.md`). They
+//! change with Meet's releases: a call window with neither names nor
+//! indicators is reported as an unrecognised layout.
 
 use deino_domain::CallApp;
 

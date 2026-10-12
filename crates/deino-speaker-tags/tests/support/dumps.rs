@@ -19,10 +19,6 @@ pub fn windows(app: CallApp, case: &str) -> Vec<AxNode> {
 
 /// What the watcher would read from a dump: the first call window that
 /// reads, else the first layout error, else "not in a call".
-#[allow(
-    dead_code,
-    reason = "each test crate includes this module and uses part of it"
-)]
 pub fn read(app: CallApp, case: &str) -> Result<Reading, ReadError> {
     let adapter = adapter_for(app);
     let mut failure = ReadError::NotInCall;

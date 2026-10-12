@@ -1,26 +1,32 @@
-//! From fixture dumps to won segments: a recording polls Zoom's call window
-//! every 250 ms while the active speaker switches (and the indicator goes
-//! missing for a shared screen); the spans it saves are aligned with
-//! system-track segments by the card's rule (more than half wins).
+//! From fixture dumps to won segments (CAP-05): a recording polls Zoom's
+//! call window (`deino-speaker-tags`' fixture dumps) every 250 ms while the
+//! active speaker switches, and the indicator goes missing for a shared
+//! screen; the spans it saves are aligned with system-track segments by the
+//! card's rule, more than half wins (`speaker_tags::align`).
 
 #![allow(
     clippy::unwrap_used,
-    clippy::panic,
     reason = "an integration-test crate: helpers fail the test by panicking"
 )]
 
-#[path = "support/dumps.rs"]
-mod dumps;
-
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::speaker_tags::Timed;
 use deino_core::speaker_tags::align::align;
 use deino_domain::{CallApp, MeetingId, Millis, SegmentId, SystemClock, TagSpan};
 use deino_speaker_tags::fake::{FakeMac, MemorySink, ScriptedClock};
-use deino_speaker_tags::{LayoutHealth, Pid, Position, Step, Watch, WatchParts};
+use deino_speaker_tags::{AxNode, LayoutHealth, Pid, Position, Step, Watch, WatchParts};
 
 const ZOOM: Pid = Pid(4_242);
+
+/// The windows of one of `deino-speaker-tags`' Zoom fixture dumps.
+fn zoom_dump(case: &str) -> Vec<AxNode> {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../deino-speaker-tags/fixtures/zoom")
+        .join(format!("{case}.json"));
+    serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+}
 
 /// Records one poll per dump, 250 ms apart, and returns the saved spans.
 fn record(frames: &[&str]) -> Vec<TagSpan> {
@@ -39,7 +45,7 @@ fn record(frames: &[&str]) -> Vec<TagSpan> {
         health: Arc::new(LayoutHealth::default()),
     });
     for frame in frames {
-        mac.show(ZOOM, Ok(dumps::windows(CallApp::Zoom, frame)));
+        mac.show(ZOOM, Ok(zoom_dump(frame)));
         assert_eq!(watch.tick(), Step::Continue);
     }
     assert_eq!(watch.tick(), Step::Done);
