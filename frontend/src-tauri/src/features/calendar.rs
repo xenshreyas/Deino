@@ -14,7 +14,13 @@
 //! - `start_link.rs`: [`LinkOnStart`], the recorder's start observer that
 //!   links a new recording to the nearest event (ORG-03). The picker's
 //!   commands (`meeting_event`, `event_suggestions`, `link_event`,
-//!   `unlink_event`) and `related_meetings` are in `commands.rs`.
+//!   `unlink_event`) and `related_meetings` are in `commands.rs`;
+//! - `rules_commands.rs` (ORG-02): `record_plan` (Coming up with each
+//!   event's auto-record decision), `choose_record` (the record toggle,
+//!   this event or all occurrences) and `join` (Join & record, Join, Record
+//!   only) over `AutoRecordService` and `JoinService`;
+//! - `join_adapters.rs`: [`SystemCallOpener`] and [`LiveRecorder`], Join's
+//!   ports.
 //!
 //! The service, the `EventKit` source, the Google and Microsoft connectors
 //! and the sync scheduler are wired in `composition/calendar.rs`.
@@ -23,12 +29,15 @@ mod commands;
 #[cfg(test)]
 mod contract_tests;
 mod events;
+mod join_adapters;
 #[cfg(test)]
 mod linking_contract_tests;
 mod lookup;
+mod rules_commands;
 mod start_link;
 
 pub use events::{CalendarChanged, TauriCalendarEvents};
+pub use join_adapters::{LiveRecorder, SystemCallOpener};
 pub use lookup::SyncedCalendar;
 pub use start_link::LinkOnStart;
 use tauri::Runtime;

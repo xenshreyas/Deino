@@ -15,6 +15,7 @@ import type { CommandResult } from '@/lib/ipc/result';
 import { FIXTURE_ACCOUNT, FIXTURE_CALENDAR } from './calendar-fixtures';
 import { failure, ok } from './command-result';
 import { mockCalendarEvents as calendarEvents, mockDatabase, mockEventLinks } from './database';
+import { rulesCommands } from './calendar-rules';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
 import { currentSettings } from './settings-store';
@@ -109,7 +110,7 @@ function agenda(range: Generated.TimeRange): Generated.CalendarEvent[] {
     .map((event) => structuredClone(event));
 }
 
-export const commands = {
+const baseCommands = {
   async status() {
     await latency();
     return ok(snapshot());
@@ -191,4 +192,9 @@ export const commands = {
     const found = mockDatabase.meeting(meetingId);
     return found.status === 'error' ? failure(found.error) : ok(mockEventLinks.related(meetingId));
   },
+} satisfies Omit<typeof Generated.commands, 'recordPlan' | 'chooseRecord' | 'join'>;
+
+export const commands = {
+  ...baseCommands,
+  ...rulesCommands((range) => baseCommands.upcoming(range)),
 } satisfies typeof Generated.commands;

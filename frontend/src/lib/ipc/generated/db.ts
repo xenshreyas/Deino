@@ -90,6 +90,10 @@ export type Table =
  */
 "calendars" | 
 /**
+ * The user's auto-record choice per recurring series (ORG-02).
+ */
+"calendar_series_choices" | 
+/**
  * Folders, nested through `parent_id`.
  */
 "folders" | 

@@ -4,16 +4,14 @@
  * controls. Rust creates the meeting when recording starts, saves both the
  * notes (autosave) and the transcript as they happen, and hands the meeting
  * to the pipeline on stop, when its page opens (`RecordingSync`). While
- * idle it shows what is coming up on the calendar (ORG-01).
+ * idle it is Home (ORG-02): Coming up, Recent notes, action items.
  */
-import { ComingUp } from '@/features/calendar';
 import { MeetingEventChip } from '@/features/event-links';
+import { HomeScreen } from '@/features/home';
 import type { MeetingId } from '@/features/meetings';
 import { Notepad, notepadCopy } from '@/features/notepad';
-import { RecordingControls, recordingCopy, useRecordingState } from '@/features/recording';
+import { RecordingControls, useRecordingState } from '@/features/recording';
 import { TranscriptPanel } from '@/features/transcript';
-import { EmptyState } from '@/ui/empty-state';
-import { Mic } from '@/ui/icons';
 
 /**
  * The notes and transcript of the meeting being recorded; the event chip
@@ -40,19 +38,11 @@ function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
   );
 }
 
-/** Idle: how to start, then the calendar's next meetings. */
+/** Idle: Home. */
 function IdleHome() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <EmptyState
-        icon={Mic}
-        title={recordingCopy.idleTitle}
-        description={recordingCopy.idleBody}
-        className="pt-[12vh]"
-      />
-      <div className="mx-auto w-full max-w-[640px] px-6 pt-10 pb-28">
-        <ComingUp />
-      </div>
+      <HomeScreen />
     </div>
   );
 }

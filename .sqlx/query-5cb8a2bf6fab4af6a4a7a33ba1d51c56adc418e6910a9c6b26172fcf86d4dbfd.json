@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendar_series_choices (series_id, record, updated_at) VALUES (?1, ?2, ?3)\n             ON CONFLICT (series_id) DO UPDATE SET record = excluded.record, updated_at = excluded.updated_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "5cb8a2bf6fab4af6a4a7a33ba1d51c56adc418e6910a9c6b26172fcf86d4dbfd"
+}

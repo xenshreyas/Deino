@@ -88,7 +88,7 @@ pub const ORGANIZE_FEATURES: &[(&str, &[&str])] = &[
             "list", "create", "update", "delete", "tags_of", "links", "apply", "remove",
         ],
     ),
-    // ── ORG-01 calendar sync (features/calendar.rs) ──
+    // ── ORG-01/02/03 calendar sync, rules, linking (features/calendar.rs) ──
     (
         "calendar",
         &[
@@ -109,6 +109,10 @@ pub const ORGANIZE_FEATURES: &[(&str, &[&str])] = &[
             "link_event",
             "unlink_event",
             "related_meetings",
+            // ── ORG-02 auto-record rules and Join ──
+            "record_plan",
+            "choose_record",
+            "join",
         ],
     ),
 ];

@@ -190,6 +190,44 @@ async relatedMeetings(meetingId: MeetingId) : Promise<Result<RelatedMeetings, Ap
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * The visible events overlapping `range`, by start, each with whether it
+ * records on its own and why.
+ */
+async recordPlan(range: TimeRange) : Promise<Result<PlannedEvent[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|record_plan", { range }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The record toggle: always, never, or back to the rules, for this event
+ * or all occurrences of its series. Returns the event's new decision.
+ */
+async chooseRecord(id: CalendarEventId, choice: RecordChoice) : Promise<Result<RecordDecision, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|choose_record", { id, choice }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens the event's call and/or records it, as `mode` says; returns the
+ * meeting being recorded, if one started. Fails with `invalid` when Join
+ * only meets an event without a call link, and `unavailable` when the
+ * recorder cannot start.
+ */
+async join(id: CalendarEventId, mode: JoinMode) : Promise<Result<MeetingId | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|join", { id, mode }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -442,6 +480,18 @@ provider: CalendarProvider;
  */
 visible: boolean }
 /**
+ * How far a choice reaches on a recurring event.
+ */
+export type ChoiceScope = 
+/**
+ * "Just this one".
+ */
+"thisEvent" | 
+/**
+ * "All occurrences"; on a one-off event, the same as `ThisEvent`.
+ */
+"allOccurrences"
+/**
  * The video-call service of a calendar event's conference link. Stored in
  * `calendar_events.platform`.
  */
@@ -582,6 +632,22 @@ attendeesAdded: number;
  */
 attendeesRemoved: number }
 /**
+ * What the user pressed.
+ */
+export type JoinMode = 
+/**
+ * Open the call and record it.
+ */
+"joinAndRecord" | 
+/**
+ * Open the call only.
+ */
+"joinOnly" | 
+/**
+ * Record without opening the call (the user is already in it).
+ */
+"recordOnly"
+/**
  * Identifies a meeting.
  * 
  * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
@@ -590,6 +656,78 @@ attendeesRemoved: number }
  * new meetings may use any unique text, including `meeting-<UUIDv7>`.
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
+/**
+ * An upcoming event and whether it records on its own.
+ */
+export type PlannedEvent = { 
+/**
+ * The event.
+ */
+event: CalendarEvent; 
+/**
+ * The policy's answer for it.
+ */
+decision: RecordDecision }
+/**
+ * The user's record toggle on an event.
+ */
+export type RecordChoice = { 
+/**
+ * `true` always records, `false` never; `None` follows the switches again.
+ */
+record: boolean | null; 
+/**
+ * This event or its whole series.
+ */
+scope: ChoiceScope }
+/**
+ * Whether an event records on its own, and why.
+ */
+export type RecordDecision = { 
+/**
+ * True when it records.
+ */
+record: boolean; 
+/**
+ * The rule that decided it.
+ */
+reason: RecordReason }
+/**
+ * Why an event will or will not record; the UI words it.
+ */
+export type RecordReason = 
+/**
+ * The user's choice for this event.
+ */
+"eventChoice" | 
+/**
+ * The user's choice for its series.
+ */
+"seriesChoice" | 
+/**
+ * The user declined it.
+ */
+"declined" | 
+/**
+ * All day, or nobody else is invited.
+ */
+"notAMeeting" | 
+/**
+ * Recording this audience (internal or external) is off.
+ */
+"audienceOff" | 
+/**
+ * Someone else organised it and those are off.
+ */
+"organizedByOthers" | 
+/**
+ * The user has not accepted it and those are off.
+ */
+"notAccepted" | 
+/**
+ * It passes every switch.
+ */
+"rules"
 /**
  * Why two meetings are related.
  */

@@ -246,7 +246,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `stt.rs`, `stt/` | Parakeet Unified in the app: `SttRuntime` (Tauri state: engine pool, activity), `SttLanes` (the recorder's `LaneEngines`: a streaming lane per Me/Them worker for Parakeet Unified, utterance lanes over the legacy engines otherwise; engine from `Settings::transcription`), the batch `TranscriptionProvider`, `NetByteSource` (the model `ByteSource` over `deino-net`'s model-download client), the worker entry and the `--transcribe-file` benchmark. |
 | `features/detection*`, `composition/detection.rs` | The `detection` plugin (CAP-06): `current`, `take_notes`, `dismiss`, `ignore_app`, `settings`; events `MeetingDetected`, `MeetingEnded`, `PromptClosed`, `RecordingRequested`. `prompt.rs` builds the prompt window (a `tauri-nspanel` panel on macOS, `capabilities/detection-prompt.json`), `adapters.rs` implements the event, window and settings ports; `recorder.rs` starts the live recorder (titled after the linked event or the app) and reports whether it is busy. `attach_detection` starts the detector at launch. |
 | `features/developer*`, `composition/developer.rs` | The `developer` plugin (DEV-02/04): `cli_status`, `install_cli` over `deino_core::cli_setup::CliSetupService` (`FsLinks`, the `cli` sidecar beside the executable, the home folder). `externalBin` `binaries/cli` is staged by `scripts/stage-cli.sh` (a placeholder by `ci-local.sh`). |
-| `features/calendar*`, `composition/calendar.rs`, `composition/browser.rs` | The `calendar` plugin (ORG-01): `status`, `enable`, `disable`, `refresh`, `open_access_settings`, `list_calendars`, `set_calendar_visible`, `upcoming`, `event`, `connect`, `disconnect`, and ORG-03's `meeting_event`, `event_suggestions`, `link_event`, `unlink_event`, `related_meetings`; event `CalendarChanged`. `lookup.rs` is `SyncedCalendar`, detection's `CalendarLookup` (ORG-03's `nearest_event`); `start_link.rs` is `LinkOnStart`, the recorder's `StartObserver` that auto-links each new recording. `attach_linking` manages `EventLinkService` and `RelatedService`. `attach_calendar` builds `CalendarService` over EventKit and the connectors (`ConnectorKit`: `deino-net`, the Keychain, the network switches) and starts `SyncScheduler`; `SystemBrowser` (`deino_integrations::Browser`, shared with integrations) opens sign-in pages with `NSWorkspace`. `Info.plist` carries the Calendars usage descriptions and the entitlements the calendars entitlement. |
+| `features/calendar*`, `composition/calendar.rs`, `composition/browser.rs` | The `calendar` plugin (ORG-01): `status`, `enable`, `disable`, `refresh`, `open_access_settings`, `list_calendars`, `set_calendar_visible`, `upcoming`, `event`, `connect`, `disconnect`, and ORG-03's `meeting_event`, `event_suggestions`, `link_event`, `unlink_event`, `related_meetings`; event `CalendarChanged`. `lookup.rs` is `SyncedCalendar`, detection's `CalendarLookup` (ORG-03's `nearest_event`); `start_link.rs` is `LinkOnStart`, the recorder's `StartObserver` that auto-links each new recording. `attach_linking` manages `EventLinkService` and `RelatedService`. `attach_calendar` builds `CalendarService` over EventKit and the connectors (`ConnectorKit`: `deino-net`, the Keychain, the network switches) and starts `SyncScheduler`; `SystemBrowser` (`deino_integrations::Browser`, shared with integrations) opens sign-in pages with `NSWorkspace`. `Info.plist` carries the Calendars usage descriptions and the entitlements the calendars entitlement. ORG-02 adds `record_plan`, `choose_record` and `join` (`rules_commands.rs`, adapters in `join_adapters.rs`; command list in `organize_manifest.rs`). |
 | `features/speakers*`, `composition/speakers.rs` | The `speakers` plugin (CAP-04): `participants`, `candidates`, `rename`, `merge`, `confirm_suggestion`, `dismiss_suggestion`, `voice_profiles`, `delete_voiceprint`, `forget_voice`; no events (`DbChanged` covers `speakers`, `speaker_suggestions`, `voiceprints`). `Speakers` builds `SpeakerService` and `VoiceprintService`; `speakers::identifier` builds the `identify_speakers` stage's `IdentifyService` with the settings as its policy. |
 | `features/speaker_tags*`, `composition/speaker_tags.rs` | The `speaker-tags` plugin (CAP-05): `status` (Settings → Speaker tags) and `open_accessibility_settings` (opens the page; never changes it); `WatchOnStart`, the recorder's start observer beside ORG-03's `LinkOnStart` (`StartObservers`). `attach_speaker_tags` manages `SpeakerTags` over `deino_speaker_tags::platform()`, `RecorderClock` (the recorder's `Playhead`) and `DatabaseSink` (`speaker_tag_spans`); `tag_priors` gives `speakers::identifier` its `SpeakerTagPriors`. |
 | `features/people*`, `features/companies*`, `composition/entities.rs` | The `people` plugin (ORG-04): `search`, `list`, `page`, `create`, `update`, `set_notes`, `merge`, `from_mention`, `refresh_summary`, `attendees`, `add_attendee`, `remove_attendee`; the `companies` plugin: `list`, `page`, `create`, `update`, `set_notes`, `merge`, `refresh_summary`, `fetch_logo`; no events (`DbChanged` covers `people`, `companies`, `meeting_attendees`). `attach_entities` builds the entity services over SQLite, the gateway and a `favicons` scoped client (logos cached in `AppPaths::logos()`), and returns the `update_entities` stage's `EntityUpdater`. |
@@ -737,6 +737,33 @@ plugin:calendar|related_meetings → SqliteRelatedRepo (series index ∪ title i
   → relate: same series, or same title and same people → { previous, others }
 Detection's SyncedCalendar uses the same nearest_event over events_near.
 ```
+
+### Home and auto-record rules (ORG-02)
+
+- **Policy.** `deino-core::calendar::rules::decide` is a pure function of an
+  event's `EventFacts` (internal or external, who organised it, the user's
+  RSVP, size, all day), the switches in `Settings::calendar.autoRecord` and
+  the user's `Choices`. Precedence: this event's choice
+  (`calendar_events.record_override`) > the series' (`calendar_series_choices`,
+  migration `20261012041156`; choosing for a series clears its events' own
+  choices in one transaction) > declined > not a meeting (< 2 people, all
+  day) > the switches. `starts_recording` says which `StartTrigger` may
+  start a decided event: the mic in use (CAP-06) or the start time with the
+  note open.
+- **Service.** `AutoRecordService::plan` (Coming up with a `RecordDecision`
+  per event) and `choose` (the record toggle, `ChoiceScope::ThisEvent` or
+  `AllOccurrences`).
+- **Join.** `calendar::join::JoinService` runs the recorder and the call
+  opener concurrently (`tokio::join!`) so capture never waits for the
+  browser; ports `EventRecorder` (`LiveRecorder` over `RecordingService`)
+  and `CallOpener` (`SystemCallOpener`, web links only). Home's Join and,
+  later, the reminder window share `calendar|join`.
+- **Reminders.** `calendar::notify::ReminderClock` picks meetings with 2+
+  people starting within a minute, once each, skipping quiet calendars
+  (`calendar.reminders`).
+- **UI.** `features/home` renders Home while nothing records (the record
+  screen's idle state): Coming up from `calendar|record_plan`, Recent notes,
+  `TodayDigest`, and the typed NOT-07/NOT-08 slots in `features/home/slots.ts`.
 
 ### An integration (INT-00, ADR 0031)
 

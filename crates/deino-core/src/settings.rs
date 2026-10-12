@@ -46,7 +46,8 @@ pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
 pub use audio::{AudioSettings, AutoStopOptions, PanelEdge, PanelPosition, RecordingSettings};
 pub use automations::AutomationSettings;
 pub use calendar::{
-    CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS, MAX_HIDDEN_CALENDARS,
+    AutoRecordSettings, CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS,
+    MAX_HIDDEN_CALENDARS, ReminderSettings,
 };
 pub use detection::{
     AutoStartSettings, DetectionSettings, IgnoredApp, MAX_AUTO_START_SECONDS,

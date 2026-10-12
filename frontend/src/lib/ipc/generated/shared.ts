@@ -115,6 +115,10 @@ export type Table =
  */
 "calendars" | 
 /**
+ * The user's auto-record choice per recurring series (ORG-02).
+ */
+"calendar_series_choices" | 
+/**
  * Folders, nested through `parent_id`.
  */
 "folders" | 
@@ -261,4 +265,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","example_notes"] as const satisfies readonly Table[]

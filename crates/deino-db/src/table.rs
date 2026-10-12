@@ -36,6 +36,8 @@ pub enum Table {
     CalendarEvents,
     /// The calendars inside each calendar account (ORG-01).
     Calendars,
+    /// The user's auto-record choice per recurring series (ORG-02).
+    CalendarSeriesChoices,
     /// Folders, nested through `parent_id`.
     Folders,
     /// Which meetings sit in which folders.
@@ -112,7 +114,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 46] = [
+    pub const ALL: [Self; 47] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -124,6 +126,7 @@ impl Table {
         Self::CalendarAccounts,
         Self::CalendarEvents,
         Self::Calendars,
+        Self::CalendarSeriesChoices,
         Self::Folders,
         Self::MeetingFolders,
         Self::FolderRules,
@@ -183,6 +186,7 @@ impl Table {
             "calendar_accounts" => Self::CalendarAccounts,
             "calendar_events" => Self::CalendarEvents,
             "calendars" => Self::Calendars,
+            "calendar_series_choices" => Self::CalendarSeriesChoices,
             "folders" => Self::Folders,
             "meeting_folders" => Self::MeetingFolders,
             "folder_rules" => Self::FolderRules,

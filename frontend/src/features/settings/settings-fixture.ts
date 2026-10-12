@@ -99,6 +99,8 @@ const DEFAULT_SETTINGS: Settings = {
     hiddenCalendars: [],
     google: { clientId: '' },
     microsoft: { clientId: '' },
+    autoRecord: { internal: false, external: false, organizedByOthers: true, notAccepted: false },
+    reminders: { enabled: true, quietCalendars: [] },
   },
   integrations: { apps: {} },
   automations: { shellScripts: false },
