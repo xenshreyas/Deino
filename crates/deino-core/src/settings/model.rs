@@ -3,11 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
-    ConsentSettings, DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings,
-    NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
-    RecordingSettings, SettingsError, ShortcutSettings, SpeakerSettings, TemplateSettings,
-    TranscriptionSettings, UiSettings,
+    AiSettings, ApiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings,
+    CalendarSettings, ConsentSettings, DetectionSettings, ExportSettings, IntegrationSettings,
+    NetworkSettings, NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings,
+    ProfileSettings, RecordingSettings, SettingsError, ShortcutSettings, SpeakerSettings,
+    TemplateSettings, TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -65,6 +65,8 @@ pub struct Settings {
     pub ui: UiSettings,
     /// Opt-in beta features.
     pub beta: BetaSettings,
+    /// The local REST API (DEV-03).
+    pub api: ApiSettings,
     /// First-run setup progress.
     pub onboarding: OnboardingSettings,
 }
@@ -94,6 +96,7 @@ impl Default for Settings {
             shortcuts: ShortcutSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),
+            api: ApiSettings::default(),
             onboarding: OnboardingSettings::default(),
         }
     }
@@ -112,6 +115,7 @@ impl Settings {
         self.consent.validate()?;
         self.integrations.validate()?;
         self.privacy.validate()?;
+        self.api.validate()?;
         self.ui.validate()
     }
 

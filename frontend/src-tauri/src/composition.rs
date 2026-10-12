@@ -22,6 +22,7 @@
 //! needs no line here beyond its `mod` (alphabetical, one per line).
 
 mod action_items;
+mod api;
 mod ask;
 pub(crate) mod attach;
 mod automations;

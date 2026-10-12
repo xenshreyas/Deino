@@ -42,6 +42,8 @@ uuid = { version = "1.23.1", features = ["serde", "v4", "v7"] }
 # Zip archives (EXP-01/02): the version docx-rs already uses, deflate only.
 zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
+# The local REST API (DEV-03).
+deino-api = { path = "crates/deino-api" }
 deino-audio = { path = "crates/deino-audio" }
 deino-core = { path = "crates/deino-core" }
 deino-connect = { path = "crates/deino-connect" }

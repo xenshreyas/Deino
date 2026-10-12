@@ -295,7 +295,9 @@ uuid_id!(
     CommentId
 );
 
+mod api;
 mod chat;
+pub use api::ApiKeyId;
 pub use chat::*;
 
 #[cfg(test)]

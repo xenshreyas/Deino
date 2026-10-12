@@ -70,6 +70,7 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod action_items;
+pub mod api_keys;
 pub mod ask;
 pub mod automations;
 pub mod briefs;
@@ -117,6 +118,7 @@ pub mod templates;
 #[cfg(any(test, feature = "test-support"))]
 mod testing;
 pub mod transcript;
+pub mod transcript_import;
 pub mod vocabulary;
 pub mod voiceprints;
 pub mod watch;

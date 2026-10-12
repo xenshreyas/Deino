@@ -146,6 +146,7 @@ let settings: Generated.Settings = {
     },
   },
   beta: { importAndRetranscribe: true },
+  api: { enabled: false, port: 47810 },
   onboarding: startingOnboarding(),
 };
 

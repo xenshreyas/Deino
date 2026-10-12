@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react';
 
+import { LocalApiSettings } from '@/features/local-api';
+
 import { CliSetup } from './cli-setup';
 
 /** The sample meetings panel, loaded lazily in debug builds only. */
@@ -8,13 +10,14 @@ const SampleMeetings = import.meta.env.DEV
   : null;
 
 /**
- * Settings → Developer: the command-line tool and Claude setup, and in
- * debug builds the sample meetings.
+ * Settings → Developer: the command-line tool and Claude setup, the local
+ * REST API and its keys, and in debug builds the sample meetings.
  */
 export function DeveloperSettings() {
   return (
     <div className="flex flex-col gap-8">
       <CliSetup />
+      <LocalApiSettings />
       {SampleMeetings === null ? null : (
         <Suspense fallback={null}>
           <SampleMeetings />

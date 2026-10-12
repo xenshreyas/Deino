@@ -136,6 +136,7 @@ const DEFAULT_SETTINGS: Settings = {
     },
   },
   beta: { importAndRetranscribe: true },
+  api: { enabled: false, port: 47810 },
   onboarding: { completed: false, step: 'welcome', outcomes: {} },
 };
 
