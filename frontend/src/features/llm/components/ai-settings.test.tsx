@@ -50,12 +50,14 @@ const title: Generated.ResolvedRoute = {
   source: 'default',
 };
 
+/** Renders the section and opens its table, which starts closed. */
 function renderSettings() {
   render(
     <QueryClientProvider client={createQueryClient()}>
       <AiSettings />
     </QueryClientProvider>,
   );
+  fireEvent.click(screen.getByRole('button', { name: llmCopy.showModels }));
 }
 
 describe('AiSettings', () => {

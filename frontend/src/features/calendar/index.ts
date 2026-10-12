@@ -35,6 +35,7 @@ export {
   useRecordPlan,
 } from './plan';
 export { CalendarSettings } from './components/calendar-settings';
+export { ReminderCalendarList } from './components/rules-settings';
 export { ComingUp } from './components/coming-up';
 export { MeetingReminder } from './components/meeting-reminder';
 export { OpenNoteReporter } from './components/open-note-reporter';

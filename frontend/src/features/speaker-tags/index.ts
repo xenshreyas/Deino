@@ -1,7 +1,8 @@
 /**
  * Speaker tags (CAP-05): names from Zoom, Teams and Meet, read from the call
- * window through Accessibility while Deino records. The UI is one Settings
- * page; the names themselves reach the transcript through the speakers.
+ * window through Accessibility while Deino records. The UI is one section
+ * of Settings → Recording; the names themselves reach the transcript
+ * through the speakers.
  */
 export { speakerTagsApi } from './api';
 export { SpeakerTagsSettings } from './components/speaker-tags-settings';

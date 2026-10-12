@@ -1,23 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type ChatMessage, ChatMessageCard, messageError } from './chat-message-settings';
+import { anyAppOn, type ChatMessage, ChatMessageCard, messageError } from './chat-message-settings';
 
 const OFF: ChatMessage = { zoom: false, teams: false, meet: false, message: 'Deino is on.' };
 
-function renderCard(chat: ChatMessage, needsPermission = false) {
+function renderCard(chat: ChatMessage) {
   const onSave = vi.fn();
-  const onOpenSettings = vi.fn();
-  render(
-    <ChatMessageCard
-      chat={chat}
-      busy={false}
-      needsPermission={needsPermission}
-      onSave={onSave}
-      onOpenSettings={onOpenSettings}
-    />,
-  );
-  return { onSave, onOpenSettings };
+  render(<ChatMessageCard chat={chat} busy={false} onSave={onSave} />);
+  return { onSave };
 }
 
 describe('ChatMessageCard', () => {
@@ -44,18 +35,12 @@ describe('ChatMessageCard', () => {
     fireEvent.blur(field);
     expect(onSave).toHaveBeenCalledWith({ message: 'Transcribing for my notes.' });
   });
+});
 
-  it('offers System Settings only when an app is on and permission is missing', () => {
-    renderCard(OFF, true);
-    expect(screen.queryByRole('button', { name: 'Open System Settings' })).toBeNull();
-  });
-
-  it('opens System Settings from the permission hint', () => {
-    const { onOpenSettings } = renderCard({ ...OFF, teams: true }, true);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open System Settings' }));
-
-    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+describe('anyAppOn', () => {
+  it('is true once any app posts the message', () => {
+    expect(anyAppOn(OFF)).toBe(false);
+    expect(anyAppOn({ ...OFF, teams: true })).toBe(true);
   });
 });
 

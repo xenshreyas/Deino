@@ -17,6 +17,8 @@ export const detectionCopy = {
   failed: 'That didn’t work. Try again from the main window.',
 
   settings: {
+    sectionTitle: 'Meeting detection',
+    sectionDescription: 'Offer to take notes when a call starts.',
     detectTitle: 'Detect meetings',
     detectDescription:
       'When another app starts using your microphone, offer to take notes. Nothing is recorded until you choose.',
@@ -30,8 +32,6 @@ export const detectionCopy = {
     ignoredEmptyTitle: 'No ignored apps',
     ignoredEmptyBody: 'Choose “Always ignore this app” on a prompt to add one here.',
     stopIgnoring: (app: string) => `Stop ignoring ${app}`,
-    browserHint:
-      'Allow Deino in System Settings → Privacy & Security → Accessibility to recognise Meet, Zoom and Teams calls in the browser within seconds.',
     unsupported: 'Meeting detection is available on macOS.',
   },
 } as const;

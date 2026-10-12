@@ -1,12 +1,12 @@
 /**
- * Settings → Consent → Automatic chat message (CAP-13): one switch per
- * meeting app (all off by default), the message, and the way to System
- * Settings when Accessibility is missing. Presentational: the page passes
- * the saved settings and how to save them.
+ * Settings → Recording → Tell people → Automatic chat message (CAP-13):
+ * one switch per meeting app (all off by default) and the message.
+ * Presentational: the section passes the saved settings and how to save
+ * them. Accessibility is a row of the Permissions card (UX-10); the section
+ * links there while it is missing.
  */
 import type { Settings } from '@/features/settings';
 import type { CallApp } from '@/features/speaker-tags';
-import { Button } from '@/ui/button';
 import { Switch } from '@/ui/controls';
 import { Textarea } from '@/ui/input';
 import { SettingsCard, SettingsRow } from '@/ui/settings-section';
@@ -28,24 +28,21 @@ export type ChatMessage = Settings['consent']['chatMessage'];
 export interface ChatMessageCardProps {
   chat: ChatMessage;
   busy: boolean;
-  /** Accessibility is missing, so nothing can be posted yet. */
-  needsPermission: boolean;
   onSave: (next: Partial<ChatMessage>) => void;
-  onOpenSettings: () => void;
+}
+
+/** Whether any app is set to post the message. */
+export function anyAppOn(chat: ChatMessage): boolean {
+  return APPS.some((app) => chat[app]);
 }
 
 /** Whether `message` can be saved while `chat`'s switches are as they are. */
 export function messageError(chat: ChatMessage, message: string): string | null {
-  const anyOn = APPS.some((app) => chat[app]);
-  return anyOn && message.trim() === '' ? copy.messageEmpty : null;
+  return anyAppOn(chat) && message.trim() === '' ? copy.messageEmpty : null;
 }
 
 /** The message, saved when the field loses focus. */
-function MessageField({
-  chat,
-  busy,
-  onSave,
-}: Omit<ChatMessageCardProps, 'needsPermission' | 'onOpenSettings'>) {
+function MessageField({ chat, busy, onSave }: ChatMessageCardProps) {
   return (
     <div className="flex flex-col gap-1.5 px-4 py-3">
       <label htmlFor="consent-message" className="text-sm text-fg">
@@ -68,21 +65,8 @@ function MessageField({
   );
 }
 
-/** Accessibility is missing: the hint and the way to System Settings. */
-function PermissionRow({ onOpenSettings }: { onOpenSettings: () => void }) {
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3">
-      <p className="text-xs text-fg-muted">{copy.permissionHint}</p>
-      <Button variant="secondary" size="sm" onClick={onOpenSettings}>
-        {copy.openSettings}
-      </Button>
-    </div>
-  );
-}
-
-/** The switches, the message and, when needed, the permission hint. */
-export function ChatMessageCard(props: ChatMessageCardProps) {
-  const { chat, busy, needsPermission, onSave, onOpenSettings } = props;
+/** The switches and the message. */
+export function ChatMessageCard({ chat, busy, onSave }: ChatMessageCardProps) {
   return (
     <SettingsCard label={copy.chatTitle}>
       {APPS.map((app) => (
@@ -103,9 +87,6 @@ export function ChatMessageCard(props: ChatMessageCardProps) {
         </SettingsRow>
       ))}
       <MessageField chat={chat} busy={busy} onSave={onSave} />
-      {needsPermission && APPS.some((app) => chat[app]) ? (
-        <PermissionRow onOpenSettings={onOpenSettings} />
-      ) : null}
     </SettingsCard>
   );
 }

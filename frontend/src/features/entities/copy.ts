@@ -33,7 +33,7 @@ export const entitiesCopy = {
   aboutRefresh: 'Refresh summary',
   aboutRefreshing: 'Writing…',
   aboutUpdated: (when: string) => `Updated ${when}`,
-  aboutNoModel: 'No AI model is set up. Choose one in Settings → AI.',
+  aboutNoModel: 'No AI model is set up. Choose one in Settings → Notes.',
   aboutNoContent: 'Nothing to summarise yet: no meeting notes or summaries with them.',
   aboutFailed: 'The summary could not be written.',
   meetings: 'Meetings',
@@ -69,7 +69,7 @@ export const entitiesCopy = {
   moreActions: 'More actions',
   fetchLogo: 'Fetch logo',
   refetchLogo: 'Fetch logo again',
-  logoOff: 'Company logos are off. Turn on “Company logos” in Settings → Network.',
+  logoOff: 'Company logos are off. Turn on “Company logos” in Settings → Advanced.',
   logoNone: 'That website has no usable logo.',
   website: 'Website',
   // Forms.

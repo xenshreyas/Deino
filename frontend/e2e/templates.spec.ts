@@ -47,7 +47,7 @@ test('a new template can be created, then picked for a meeting', async ({ page }
   await shoot(page, 'meeting-template-picker');
 });
 
-test('Settings → Profile saves and shows what the AI sees', async ({ page }) => {
+test('Settings → Notes → About you saves and shows what the AI sees', async ({ page }) => {
   await page.goto('/settings?section=profile');
   const role = page.getByRole('textbox', { name: 'Role' });
   await expect(role).toHaveValue('CTO');

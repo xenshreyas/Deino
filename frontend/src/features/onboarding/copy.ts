@@ -67,6 +67,14 @@ export const permissionsCopy = {
   missingRequired: 'Recording needs the microphone and system audio.',
 };
 
+/** Settings → Recording → Permissions (UX-10): the same rows as the step. */
+export const permissionsSettingsCopy = {
+  title: 'Permissions',
+  description:
+    'What macOS lets Deino use. Recording needs the microphone and system audio; the rest turn on features.',
+  loadFailed: 'Couldn’t read the permissions.',
+};
+
 export const aiCopy = {
   title: 'AI setup',
   description:
@@ -100,7 +108,7 @@ export const profileCopy = {
   description: 'A few words about you help the AI write notes that sound like you.',
   saving: 'Saving…',
   saveFailed: 'Your profile could not be saved.',
-  more: 'Writing style and a glossary can be added later in Settings → Profile.',
+  more: 'Writing style and background can be added later in Settings → Notes.',
 };
 
 /** Home's first-run rows (UX-24): a test recording and the sample meeting. */

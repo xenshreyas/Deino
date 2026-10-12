@@ -6,7 +6,9 @@
  * | Export | Used by |
  * |---|---|
  * | {@link OnboardingFlow} (lazy: render it in `Suspense`), {@link useOnboardingGate} | the app shell, which shows the flow until setup is completed |
- * | {@link ResumeSetup} | Settings → Setup |
+ * | {@link ResumeSetup} | Settings → General → Setup |
+ * | {@link PermissionsSettings} | Settings → Recording → Permissions (UX-10) |
+ * | {@link NotesProvider} | Settings → Notes → AI (UX-11) |
  * | {@link TryDeino} | Home, while there are no notes: a test recording and the sample meeting |
  * | {@link PermissionNudge}, {@link askPermissionOnce} | optional permissions asked where they matter |
  *
@@ -17,7 +19,9 @@
 export { onboardingApi } from './api';
 export { askPermissionOnce, type ContextPermission } from './ask-in-context';
 export { LazyOnboardingFlow as OnboardingFlow } from './components/lazy-onboarding-flow';
+export { NotesProvider, type NotesProviderProps } from './components/notes-provider';
 export { PermissionNudge } from './components/permission-nudge';
+export { PermissionsSettings } from './components/permissions-settings';
 export { ResumeSetup } from './components/resume-setup';
 export { TryDeino } from './components/try-deino';
 export { type OnboardingGate, useOnboardingGate } from './hooks/use-onboarding-gate';

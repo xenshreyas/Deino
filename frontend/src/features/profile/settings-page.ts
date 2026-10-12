@@ -1,20 +1,11 @@
-/** Settings → Profile: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { UserRound } from '@/ui/icons';
+/** Settings → Notes → About you: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { ProfilePage } from './components/profile-page';
 
-export const settingsPages = [
-  {
-    id: 'profile',
-    group: 'ai',
-    order: 40,
-    icon: UserRound,
-    label: 'Profile',
-    description: 'Who you are and how you like notes written, for every AI prompt.',
-    Component: ProfilePage,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'profile', page: 'notes', order: 20, Component: ProfilePage },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

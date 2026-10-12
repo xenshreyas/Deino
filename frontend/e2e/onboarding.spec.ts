@@ -122,8 +122,8 @@ test('Settings → Setup resumes at the first step left undone', async ({ page }
 
   await sidebar(page).getByRole('link', { name: 'Settings', exact: true }).click();
   await page
-    .getByRole('navigation', { name: 'Settings sections' })
-    .getByRole('link', { name: 'Setup' })
+    .getByRole('navigation', { name: 'Settings pages' })
+    .getByRole('link', { name: 'General' })
     .click();
   await expect(page.getByText('Not done yet: AI setup.')).toBeVisible();
   await shoot(page, 'settings-setup');

@@ -1,20 +1,11 @@
-/** Settings → Search index: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Search } from '@/ui/icons';
+/** Settings → Advanced → Search: this feature's settings section (REG-02, UX-16, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { IndexSettings } from './components/index-settings';
 
-export const settingsPages = [
-  {
-    id: 'search',
-    group: 'ai',
-    order: 50,
-    icon: Search,
-    label: 'Search index',
-    description: 'Find meetings by meaning with a small model that runs on this Mac.',
-    Component: IndexSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'search', page: 'advanced', order: 30, Component: IndexSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

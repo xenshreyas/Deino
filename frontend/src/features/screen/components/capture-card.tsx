@@ -1,10 +1,12 @@
 /**
  * The capture switches over `settings.screen`: on for detected meetings
- * (off by default), snapshots, video and its frame rate. Presentational:
- * the container saves each change as a merge patch.
+ * (off by default), then under "More options" (UX-15) snapshots, video and
+ * how smooth it is. Presentational: the container saves each change as a
+ * merge patch.
  */
-import { SegmentedControl } from '@/ui/segmented-control';
 import { Switch } from '@/ui/controls';
+import { MoreOptions } from '@/ui/more-options';
+import { SegmentedControl } from '@/ui/segmented-control';
 import { SettingsCard, SettingsRow } from '@/ui/settings-section';
 
 import { screenCopy } from '../copy';
@@ -12,7 +14,7 @@ import type { ScreenSettings } from '../types';
 
 const copy = screenCopy.capture;
 
-/** The frame rates offered: a shared screen rarely needs more than 1. */
+/** The frame rates offered: a shared screen rarely needs more than one a second. */
 const RATES = [
   { value: '1', label: copy.rates[1] },
   { value: '2', label: copy.rates[2] },
@@ -130,10 +132,14 @@ export function CaptureCard({ screen, saving, onChange }: CaptureCardProps) {
             onChange({ detectedMeetings });
           }}
         />
-        <SnapshotRows screen={screen} saving={saving} onChange={onChange} />
-        <VideoRows screen={screen} disabled={saving || !on} onChange={onChange} />
       </SettingsCard>
       {on ? <p className="px-1 text-xs text-fg-muted">{copy.consent}</p> : null}
+      <MoreOptions>
+        <SettingsCard label={copy.more}>
+          <SnapshotRows screen={screen} saving={saving} onChange={onChange} />
+          <VideoRows screen={screen} disabled={saving || !on} onChange={onChange} />
+        </SettingsCard>
+      </MoreOptions>
     </>
   );
 }

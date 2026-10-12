@@ -2,10 +2,8 @@ import { SkeletonText } from '@/ui/skeleton';
 
 import { permissionsCopy } from '../../copy';
 import { missingRequired, upfront } from '../../permission-actions';
-import { PERMISSION_ICONS } from '../../permission-icons';
-import { useOpenPermissionSettings, usePermissions, useRequestPermission } from '../../queries';
-import type { PermissionStatus } from '../../types';
-import { PermissionRow } from '../permission-row';
+import { usePermissions } from '../../queries';
+import { SystemPermission } from '../permission-rows';
 import { SetupList } from '../setup-row';
 import { StepFrame, type StepProps } from '../step-frame';
 
@@ -38,28 +36,5 @@ export function PermissionsStep({ dispatch }: StepProps) {
         <p className="text-sm text-fg-muted">{permissionsCopy.missingRequired}</p>
       ) : null}
     </StepFrame>
-  );
-}
-
-/** A permission the `onboarding` plugin reads and requests. */
-function SystemPermission({ status }: { status: PermissionStatus }) {
-  const request = useRequestPermission();
-  const settings = useOpenPermissionSettings();
-  const copy = permissionsCopy.kinds[status.kind];
-  return (
-    <PermissionRow
-      icon={PERMISSION_ICONS[status.kind]}
-      name={copy.name}
-      why={copy.why}
-      state={status.state}
-      optional={status.optional}
-      pending={request.isPending || settings.isPending}
-      onRequest={() => {
-        request.mutate(status.kind);
-      }}
-      onOpenSettings={() => {
-        settings.mutate(status.kind);
-      }}
-    />
   );
 }

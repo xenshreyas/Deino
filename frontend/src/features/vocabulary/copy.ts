@@ -1,5 +1,6 @@
 /** Every visible string of the vocabulary feature (TRN-05). */
 export const vocabularyCopy = {
+  title: 'Spelling',
   intro:
     'Names of the people and companies you have met are included automatically; add what Deino still mishears.',
   howItWorks:

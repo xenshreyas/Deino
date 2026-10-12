@@ -7,15 +7,28 @@ import { createQueryClient } from '@/lib/ipc';
 
 import { recordingSettingsCopy as copy } from '../copy';
 import { defaultSettings } from '../settings-fixture';
-import { RecordingBehaviour } from './recording-behaviour';
+import { AutoStopSettings, RecordingBehaviour } from './recording-behaviour';
 
 // Typed against the generated bindings: a Rust signature change breaks these mocks.
 const bindings = vi.hoisted(() => ({
+  recording: {
+    microphones: vi.fn(() =>
+      Promise.resolve({
+        status: 'ok' as const,
+        data: [{ name: 'MacBook Pro Microphone', isDefault: true, bluetooth: false }],
+      }),
+    ),
+    state: vi.fn(() => new Promise(() => undefined)),
+  },
   settings: {
     get: vi.fn<typeof Generated.commands.get>(),
     patch: vi.fn<typeof Generated.commands.patch>(),
   } satisfies typeof Generated.commands,
   listen: vi.fn(() => Promise.resolve(vi.fn())),
+}));
+vi.mock('@/lib/ipc/generated/recording', () => ({
+  commands: bindings.recording,
+  events: new Proxy({}, { get: () => ({ listen: bindings.listen }) }),
 }));
 vi.mock('@/lib/ipc/generated/settings', () => ({
   commands: bindings.settings,
@@ -26,11 +39,17 @@ function renderSection() {
   render(
     <QueryClientProvider client={createQueryClient()}>
       <RecordingBehaviour />
+      <AutoStopSettings />
     </QueryClientProvider>,
   );
 }
 
-describe('Settings → Recording, while recording', () => {
+/** Opens "More options" under End automatically. */
+async function openMoreOptions() {
+  fireEvent.click(await screen.findByRole('button', { name: 'More options' }));
+}
+
+describe('Settings → Recording', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const settings = defaultSettings();
@@ -48,8 +67,18 @@ describe('Settings → Recording, while recording', () => {
     });
   });
 
+  it('shows the microphone, the panel and auto-stop, nothing that defeats a default', async () => {
+    renderSection();
+
+    expect(await screen.findByRole('combobox', { name: copy.microphoneTitle })).toBeTruthy();
+    expect(screen.getAllByRole('switch')).toHaveLength(2);
+    expect(screen.queryByText(/headphones/i)).toBeNull();
+    expect(screen.queryByText(/Save audio/i)).toBeNull();
+  });
+
   it('keeps the calendar rule off by default and turns it on alone', async () => {
     renderSection();
+    await openMoreOptions();
     const calendar = await screen.findByRole('switch', { name: copy.calendarTitle });
 
     expect(calendar.getAttribute('aria-checked')).toBe('false');
@@ -72,6 +101,7 @@ describe('Settings → Recording, while recording', () => {
       data: { ...settings, recording: { ...settings.recording, autoStop } },
     });
     renderSection();
+    await openMoreOptions();
 
     const calendar = await screen.findByRole('switch', { name: copy.calendarTitle });
 

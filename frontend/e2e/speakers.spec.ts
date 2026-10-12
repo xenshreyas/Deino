@@ -19,10 +19,10 @@ test('a speaker named from Details offers to regenerate the notes', async ({ pag
   await page.screenshot({ path: test.info().outputPath('participants.png') });
 });
 
-test('Settings → People lists the voice profiles', async ({ page }) => {
+test('the old Settings → People link opens Advanced → Voices', async ({ page }) => {
   await page.goto('/settings?section=people');
 
-  await expect(page.getByRole('switch', { name: 'Recognise speakers by voice' })).toBeChecked();
+  await expect(page.getByRole('heading', { level: 2, name: 'Advanced' })).toBeVisible();
   await page.getByRole('button', { name: /Maya Chen/u }).click();
   await expect(page.getByRole('button', { name: 'Forget Maya Chen’s voice' })).toBeVisible();
 });

@@ -9,7 +9,8 @@ export const settingsCopy = {
     'macOS no longer lets Deino read the saved key, which happens after an app update. Enter the key again to fix it.',
 
   title: 'Settings',
-  navLabel: 'Settings sections',
+  navLabel: 'Settings pages',
+  saveFailed: 'Couldn’t save the setting',
 
   /** Settings → Network: secrets hidden from notes and exports (NOT-09). */
   redaction: {
@@ -18,7 +19,7 @@ export const settingsCopy = {
     switchTitle: 'Hide sensitive information',
     on: 'Passwords, API keys, card numbers, Social Security numbers and one-time codes become [redacted] before notes are written, and in every export and the deino command. The transcript keeps them until you delete them there.',
     off: 'Notes and exports include everything that was said.',
-    saveFailed: 'Could not save the privacy setting',
+    saveFailed: 'Couldn’t save the privacy setting',
   },
 
   /** Settings → Transcription: when the transcript is written (CAP-08). */
@@ -29,7 +30,7 @@ export const settingsCopy = {
     liveOn: 'The transcript appears as people speak.',
     liveOff:
       'Off: only audio is recorded, which keeps the Mac cool on long calls. The transcript is written right after the meeting.',
-    repassTitle: 'High-accuracy re-pass',
+    repassTitle: 'Re-transcribe after the meeting for better accuracy',
     repassOn:
       'After each meeting, the whole recording is transcribed again with full context and replaces the live transcript. Speakers are kept.',
     repassOff: 'Not needed: with live transcription off, every transcript already gets this pass.',
@@ -47,23 +48,22 @@ export const settingsCopy = {
       whisper: 'Whisper',
     },
   },
-  groups: {
-    app: 'App',
-    capture: 'Capture',
-    ai: 'AI',
-    workspace: 'Workspace',
-    privacy: 'Privacy',
-    data: 'Data',
-    more: 'More',
-  },
 } as const;
 
-/** Settings → Recording: the record panel and auto-stop (CAP-10, CAP-07). */
+/** Settings → Recording: the microphone, the record panel and auto-stop (CAP-10, CAP-07). */
 export const recordingSettingsCopy = {
-  heading: 'While recording',
+  heading: 'Recording',
+  headingDescription: 'Recordings are always saved, and deleted only as Privacy says.',
+  microphoneTitle: 'Microphone',
+  microphoneDescription: 'Your side of the call. The record panel can switch it mid-call.',
+  microphoneLocked: 'Locked while recording. Use the record panel to switch.',
+  microphoneDefault: 'The Mac’s default',
   panelTitle: 'Show the record panel',
   panelDescription:
     'A small pill at the edge of the screen with the time, a level meter and the controls. It never takes focus from your call.',
+  autoStopSection: 'End automatically',
+  autoStopSectionDescription: 'Stop a recording when the call is over, without a click.',
+  autoStopMore: 'More ways to end',
   autoStopTitle: 'End recordings automatically',
   autoStopDescription:
     'When the call app lets go of the microphone, after 15 minutes without speech, or when your Mac sleeps. You get 15 seconds to keep recording.',
@@ -73,6 +73,41 @@ export const recordingSettingsCopy = {
   nextMeetingTitle: 'Offer a new note when the next meeting starts',
   nextMeetingDescription:
     'If you are still recording when a meeting with other people begins, ask whether to start a new note for it.',
+} as const;
+
+/** Settings → General → Notifications (UX-17). */
+export const notificationsCopy = {
+  title: 'Notifications',
+  description: 'Each kind of notification Deino sends, in one place.',
+  recordingTitle: 'Recording started and stopped',
+  recordingDescription: 'A notification when a recording starts and when it ends.',
+  remindersTitle: 'Meeting reminders',
+  remindersDescription:
+    'A small window a minute before each meeting with two or more people, with Join and record.',
+  actionItemsTitle: 'Action items due today',
+  actionItemsDescription: 'One notification at 9:00 for what is due that day.',
+  moreLabel: 'Which calendars remind',
+} as const;
+
+/** Settings → Advanced → Notes after meetings (UX-11). */
+export const autoNotesCopy = {
+  title: 'Notes after meetings',
+  description: 'Whether Deino writes notes on its own once a recording stops.',
+  switchTitle: 'Write notes after each meeting',
+  on: 'Notes are written as soon as the transcript is ready.',
+  off: 'Off: notes are written only when you choose Enhance.',
+} as const;
+
+/** Settings → Advanced → Transcription: the section around the inherited panels. */
+export const transcriptionSectionCopy = {
+  title: 'Transcription',
+  description: 'Live or after the meeting, and the speech-to-text engine on this Mac.',
+} as const;
+
+/** The one-line link a feature shows while a permission it needs is missing (UX-10). */
+export const permissionLinkCopy = {
+  needs: (permission: string) => `Needs ${permission}`,
+  accessibility: 'Accessibility',
 } as const;
 
 /** The placeholder for an API key field: a typed key replaces a saved one. */

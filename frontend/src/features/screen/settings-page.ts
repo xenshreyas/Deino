@@ -1,20 +1,11 @@
-/** Settings → Screen capture: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Monitor } from '@/ui/icons';
+/** Settings → Recording → Screen capture: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { ScreenCaptureSettings } from './components/screen-settings';
 
-export const settingsPages = [
-  {
-    id: 'screen',
-    group: 'capture',
-    order: 90,
-    icon: Monitor,
-    label: 'Screen capture',
-    description: 'Snapshots and video of the meeting window, kept on this Mac.',
-    Component: ScreenCaptureSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'screen', page: 'recording', order: 60, Component: ScreenCaptureSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

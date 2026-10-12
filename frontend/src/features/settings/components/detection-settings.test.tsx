@@ -1,13 +1,10 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as Detection from '@/lib/ipc/generated/detection';
 import type * as Generated from '@/lib/ipc/generated/settings';
-import { createQueryClient } from '@/lib/ipc';
-import { TooltipProvider } from '@/ui/tooltip';
-
 import { defaultSettings } from '../settings-fixture';
+import { renderInSettings } from '../test-render';
 import { DetectionSettingsPage } from './detection-settings';
 
 // Typed against the generated bindings: a Rust signature change breaks these mocks.
@@ -42,13 +39,12 @@ function withDiscordIgnored(): Generated.Settings {
 }
 
 function renderPage() {
-  render(
-    <QueryClientProvider client={createQueryClient()}>
-      <TooltipProvider>
-        <DetectionSettingsPage />
-      </TooltipProvider>
-    </QueryClientProvider>,
-  );
+  return renderInSettings(DetectionSettingsPage);
+}
+
+/** Opens the section's "More options". */
+async function openMoreOptions() {
+  fireEvent.click(await screen.findByRole('button', { name: 'More options' }));
 }
 
 describe('Settings → Meeting detection', () => {
@@ -73,8 +69,16 @@ describe('Settings → Meeting detection', () => {
     });
   });
 
+  it('shows only the detection switch until More options is opened', async () => {
+    renderPage();
+
+    expect(await screen.findAllByRole('switch')).toHaveLength(1);
+    expect(screen.queryByText('Discord')).toBeNull();
+  });
+
   it('keeps auto-start off by default and turns it on without changing the countdown', async () => {
     renderPage();
+    await openMoreOptions();
     const autoStart = await screen.findByRole('switch', { name: 'Start recording automatically' });
 
     expect(autoStart.getAttribute('aria-checked')).toBe('false');
@@ -89,6 +93,7 @@ describe('Settings → Meeting detection', () => {
 
   it('lists ignored apps and stops ignoring one', async () => {
     renderPage();
+    await openMoreOptions();
 
     expect(await screen.findByText('Discord')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Stop ignoring Discord' }));
@@ -98,9 +103,13 @@ describe('Settings → Meeting detection', () => {
     });
   });
 
-  it('explains how to recognise browser calls faster without Accessibility', async () => {
-    renderPage();
+  it('links to the Permissions card while Accessibility is missing', async () => {
+    const router = renderPage();
 
-    expect(await screen.findByText(/Privacy & Security → Accessibility/)).toBeTruthy();
+    fireEvent.click(await screen.findByRole('link', { name: 'Needs Accessibility' }));
+
+    await waitFor(() => {
+      expect(router.state.location.search).toEqual({ section: 'permissions' });
+    });
   });
 });

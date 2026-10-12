@@ -1,15 +1,10 @@
-import { useState } from 'react';
-
-import { BuiltInModelManager } from '@/components/BuiltInModelManager';
-import { type Settings, useSaveModelSelection, useSettings } from '@/features/settings';
+import { useSettings } from '@/features/settings';
 import { ModelLicenceNotice } from '@/features/transcription';
-import { SegmentedControl } from '@/ui/segmented-control';
 
-import { initialChoice, isKeyed, type NotesChoice } from '../../ai-choice';
 import { aiCopy } from '../../copy';
 import { useEmbeddingModel, useTranscriptionModel } from '../../hooks/use-local-models';
 import { AutoStart, TranscriptionStatus } from '../model-download-row';
-import { ProviderKeyForm } from '../provider-key-form';
+import { NotesProvider } from '../notes-provider';
 import { StepFrame, type StepProps } from '../step-frame';
 
 /**
@@ -43,46 +38,5 @@ function LocalModels() {
       <AutoStart model={embedding} />
       <ModelLicenceNotice />
     </section>
-  );
-}
-
-/** Who writes the notes, starting from the saved provider. */
-function NotesProvider({ ai }: { ai: Settings['ai'] }) {
-  const [choice, setChoice] = useState<NotesChoice>(() => initialChoice(ai));
-  return (
-    <section aria-label={aiCopy.notesTitle} className="flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-fg-muted">{aiCopy.notesTitle}</h2>
-      <SegmentedControl
-        label={aiCopy.notesTitle}
-        value={choice}
-        onValueChange={setChoice}
-        segments={[
-          { value: 'claude', label: aiCopy.choices.claude },
-          { value: 'openai', label: aiCopy.choices.openai },
-          { value: 'local', label: aiCopy.choices.local },
-        ]}
-      />
-      {isKeyed(choice) ? (
-        <ProviderKeyForm key={choice} choice={choice} />
-      ) : (
-        <LocalNotesModel selected={ai.providerModels['builtin-ai'] ?? ''} />
-      )}
-    </section>
-  );
-}
-
-/** The built-in model, downloaded and chosen with the existing manager. */
-function LocalNotesModel({ selected }: { selected: string }) {
-  const save = useSaveModelSelection();
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-fg-muted">{aiCopy.localWhy}</p>
-      <BuiltInModelManager
-        selectedModel={selected}
-        onModelSelect={(model) => {
-          save.mutate({ provider: 'builtin-ai', model });
-        }}
-      />
-    </div>
   );
 }

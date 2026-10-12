@@ -1,20 +1,11 @@
-/** Settings → Templates: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { LayoutTemplate } from '@/ui/icons';
+/** Settings → Templates: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { TemplatesPage } from './components/templates-page';
 
-export const settingsPages = [
-  {
-    id: 'templates',
-    group: 'ai',
-    order: 30,
-    icon: LayoutTemplate,
-    label: 'Templates',
-    description: 'What your notes contain for each kind of meeting, and when each is used.',
-    Component: TemplatesPage,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'templates', page: 'templates', order: 10, Component: TemplatesPage },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

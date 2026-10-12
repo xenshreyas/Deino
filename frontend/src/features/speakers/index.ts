@@ -8,7 +8,7 @@
 export { speakersApi } from './api';
 export { AssignSpeaker, type AssignSpeakerProps } from './components/assign-speaker';
 export { ParticipantsPanel, type ParticipantsPanelProps } from './components/participants-panel';
-export { PeopleSettings } from './components/people-settings';
+export { SpeakerSettings, VoiceSettings } from './components/speaker-settings';
 export { SpeakerAvatar, type SpeakerAvatarProps } from './components/speaker-avatar';
 export { VoiceProfiles } from './components/voice-profiles';
 export { speakersCopy } from './copy';
