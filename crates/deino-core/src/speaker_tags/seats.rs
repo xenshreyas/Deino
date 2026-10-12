@@ -111,15 +111,15 @@ pub fn elect(ballot: &Ballot<'_>) -> Election {
         .map(|name| standing(ballot, name))
         .collect();
     for index in 0..elected.len() {
-        if elected[index].seat != Seat::New {
-            continue;
-        }
         let taken = seated_speakers(&elected);
+        let Some(entry) = elected.get_mut(index).filter(|e| e.seat == Seat::New) else {
+            continue;
+        };
         let free = |speaker: &Speaker| movable(speaker) && !taken.contains(&speaker.id);
         let candidates: Vec<&Speaker> = ballot.speakers.iter().filter(|s| free(s)).collect();
-        if let Some(speaker) = tally.majority_speaker(&candidates, &elected[index].name) {
-            elected[index].seat = Seat::Speaker(speaker);
-            elected[index].takes_name = true;
+        if let Some(speaker) = tally.majority_speaker(&candidates, &entry.name) {
+            entry.seat = Seat::Speaker(speaker);
+            entry.takes_name = true;
         }
     }
     let election = Election {

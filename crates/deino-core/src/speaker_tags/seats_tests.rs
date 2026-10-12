@@ -79,7 +79,7 @@ fn without_diarization_the_main_name_takes_them_and_others_get_new_speakers() {
     let bea = track.say(&them, 2_000, Some("Bea"));
     track.say(&them, 1_000, None);
 
-    let election = track.elect(&[them.clone()], &[]);
+    let election = track.elect(std::slice::from_ref(&them), &[]);
 
     assert_eq!(seat(&election, "Alex"), Seat::Speaker(them.id));
     assert!(election.elected[0].takes_name);
@@ -161,7 +161,7 @@ fn a_label_from_an_earlier_run_keeps_its_name_and_nothing_moves_again() {
     let mut track = Track::default();
     track.say(&labelled, 3_000, Some("Alex"));
 
-    let election = track.elect(&[labelled.clone()], &[]);
+    let election = track.elect(std::slice::from_ref(&labelled), &[]);
 
     assert_eq!(seat(&election, "Alex"), Seat::Speaker(labelled.id));
     assert!(!election.elected[0].takes_name);
@@ -175,7 +175,7 @@ fn a_labelled_speaker_takes_the_person_once_one_matches() {
     let mut track = Track::default();
     track.say(&labelled, 3_000, Some("Alex"));
 
-    let election = track.elect(&[labelled.clone()], &[(name("Alex"), person)]);
+    let election = track.elect(std::slice::from_ref(&labelled), &[(name("Alex"), person)]);
 
     assert_eq!(seat(&election, "Alex"), Seat::Speaker(labelled.id));
     assert!(election.elected[0].takes_name);

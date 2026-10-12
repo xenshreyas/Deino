@@ -60,7 +60,9 @@ fn winner(spans: &[&TagSpan], longest: u32, segment: &Timed) -> Option<Win> {
     let earliest = Millis(segment.start.0.saturating_sub(longest));
     let first = spans.partition_point(|span| span.start < earliest);
     let mut covered: Vec<(&DisplayName, u32)> = Vec::new();
-    for span in spans[first..]
+    for span in spans
+        .get(first..)
+        .unwrap_or_default()
         .iter()
         .take_while(|span| span.start < segment.end)
     {

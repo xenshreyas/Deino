@@ -112,7 +112,6 @@ impl Recorder {
     pub fn start(dir: &Path, deps: &RecorderDeps) -> Result<(Self, RecordingInputs), RecordError> {
         std::fs::create_dir_all(dir.join(AUDIO_DIR))?;
         let manifest = RecordingManifest::start(deps.host_clock.now(), deps.wall_clock.now());
-        let epoch = manifest.epoch;
         ManifestStore::new(dir).write(&manifest)?;
         let (health, events) = health_channel();
         let context = WriterContext {
@@ -135,7 +134,7 @@ impl Recorder {
         )?;
         let recorder = Self {
             dir: dir.to_owned(),
-            epoch,
+            epoch: context.epoch,
             writers: vec![mic.writer, system.writer],
             persister,
             host_clock: Arc::clone(&deps.host_clock),

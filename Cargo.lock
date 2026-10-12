@@ -2316,6 +2316,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "deino-speaker-tags"
+version = "0.1.0"
+dependencies = [
+ "cidre",
+ "deino-domain",
+ "deino-speaker-tags",
+ "log",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "serde",
+ "serde_json",
+ "specta",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "deino-stt"
 version = "0.1.0"
 dependencies = [

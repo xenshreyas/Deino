@@ -13,10 +13,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_db::DbError;
-use deino_domain::{Channel, Clock, DisplayName, MeetingId};
+use deino_domain::{Channel, Clock, DisplayName, MeetingId, PersonId};
 
 use super::SpeakerTagReader;
-use super::align::{Timed, align};
+use super::align::{Timed, Win, align};
 use super::plan::{TagPlan, Track, plan};
 use super::resolve::{Directory, resolve};
 use super::seats::{Ballot, Seated, elect};
@@ -78,17 +78,7 @@ impl TagPriors for SpeakerTagPriors {
         let segments = system_track(self.ports.segments.list(meeting, Page::ALL).await?);
         let timed: Vec<Timed> = segments.iter().map(timed).collect();
         let wins = align(&spans, &timed);
-        let directory = Directory {
-            attendees: self.ports.attendees.as_ref(),
-            people: self.ports.people.as_ref(),
-        };
-        let names: Vec<DisplayName> = wins
-            .iter()
-            .map(|win| win.name.clone())
-            .collect::<BTreeSet<_>>()
-            .into_iter()
-            .collect();
-        let people = resolve(&directory, meeting, &names).await?;
+        let people = self.people(meeting, &wins).await?;
         let seated: Vec<Seated> = segments.iter().map(seated).collect();
         let ballot = Ballot {
             wins: &wins,
@@ -96,24 +86,43 @@ impl TagPriors for SpeakerTagPriors {
             speakers,
             people: &people,
         };
-        let election = elect(&ballot);
         let track = Track {
             meeting,
             speakers,
             segments: &seated,
         };
-        let tag_plan = plan(&election, &track, self.ports.clock.as_ref());
+        let tag_plan = plan(&elect(&ballot), &track, self.ports.clock.as_ref());
         log::info!(
             target: "deino_core::speaker_tags",
-            "meeting {meeting}: {} spans, {} of {} segments won, {} names ({} known), {} moved",
+            "meeting {meeting}: {} spans, {} of {} segments won, {} moved, {} known people",
             spans.len(),
             wins.len(),
             seated.len(),
-            names.len(),
-            people.len(),
-            tag_plan.seating.moved.len()
+            tag_plan.seating.moved.len(),
+            people.len()
         );
         Ok(tag_plan)
+    }
+}
+
+impl SpeakerTagPriors {
+    /// The winning names that stand for a known person.
+    async fn people(
+        &self,
+        meeting: &MeetingId,
+        wins: &[Win],
+    ) -> Result<Vec<(DisplayName, PersonId)>, DbError> {
+        let names: Vec<DisplayName> = wins
+            .iter()
+            .map(|win| win.name.clone())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let directory = Directory {
+            attendees: self.ports.attendees.as_ref(),
+            people: self.ports.people.as_ref(),
+        };
+        resolve(&directory, meeting, &names).await
     }
 }
 
