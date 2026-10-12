@@ -172,12 +172,12 @@ the SQLite adapters behind those ports.
 - `transcript` (TRN-01, ADR 0033): `TranscriptService::transcript`, one
   meeting's whole `Transcript` (segments in spoken order, each with its
   `speaker_id`) over `SegmentReader`; the view names speakers from
-  `speakers` (CAP-04). No SQL of its own. TRN-02 (ADR 0037):
+  `speakers` (CAP-04). No SQL of its own. TRN-02 (ADR 0038):
   `TranscriptEditService` edits a line (`original_text` keeps the engine's
   text), soft-deletes and restores one, and finds and replaces across one
   meeting or all (a `ReplacePlan` that is both the preview and the edit),
   then queues the meetings on its `TranscriptIndexer` port.
-- `player` (TRN-03, ADR 0037): `PlayerService` lists a meeting's playable
+- `player` (TRN-03, ADR 0038): `PlayerService` lists a meeting's playable
   recording files inside the recordings folder (`MediaFiles`,
   `FsMediaFiles`) and downloads one through the export's `SaveDialog`.
 - `query` (DEV-02/04, ADR 0035): the read side the `deino` CLI and its MCP

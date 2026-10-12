@@ -42,12 +42,12 @@ mod notes;
 pub(crate) mod onboarding;
 mod organize;
 mod pipeline;
+mod player;
 mod recording;
 mod search;
 mod speakers;
 mod stt;
 mod transcript;
-mod player;
 mod vocabulary;
 
 use std::sync::Arc;
