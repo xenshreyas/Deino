@@ -9,6 +9,7 @@
 mod enhance;
 mod insights;
 mod redact;
+mod recap;
 
 use askama::Template;
 
@@ -18,6 +19,7 @@ pub use enhance::{
 };
 pub use insights::{InsightsSystem, InsightsUser};
 pub use redact::{RedactCheckSystem, RedactCheckUser};
+pub use recap::{RecapSystem, RecapUser};
 
 /// Renders a built-in prompt.
 pub trait PromptText {

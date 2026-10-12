@@ -1,0 +1,14 @@
+<numbers>
+Year: {{ year }}
+{%- for line in numbers %}
+{{ line }}
+{%- endfor %}
+</numbers>
+
+<titles>
+{%- for title in titles %}
+- {{ title }}
+{%- endfor %}
+</titles>
+
+Now write the {{ year }} year in review.
