@@ -66,6 +66,9 @@ export const copy = {
     tag: 'Tag',
     file: 'Add to folder',
     export: 'Export',
+    exportAs: 'Export as',
+    exported: (count: number, folder: string) =>
+      `Exported ${plural(count, 'meeting', 'meetings')} to ${folder}`,
     merge: 'Merge',
     automation: 'Run automation',
     wip: 'WIP',

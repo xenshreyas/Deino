@@ -237,6 +237,7 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         &[
             "preview",
             "save",
+            "save_many",
             "copy",
             "email",
             "choose_folder",

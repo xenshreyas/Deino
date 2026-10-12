@@ -1,6 +1,7 @@
 /**
  * Mock of `@/lib/ipc/generated/export`: previews rendered from the fixture
- * meetings (`export-render.ts`), saves that "write" the suggested file, a
+ * meetings (`export-render.ts`), saves that "write" the suggested file (or
+ * many into `Downloads`), a
  * folder dialog that picks `~/Obsidian/Deino` (saved in the mock settings),
  * and an account export that
  * walks through the eight meetings with `FullExportProgress` events.
@@ -18,6 +19,8 @@ import { commands as settings } from './settings';
 
 /** The folder the mock folder dialog answers with. */
 const VAULT = '/Users/shreyas/Obsidian/Deino';
+/** The folder the mock bulk export's dialog answers with (its name only). */
+const BULK_FOLDER = 'Downloads';
 /** How long the mock account export spends per meeting. */
 const STEP_MS = 350;
 
@@ -84,6 +87,13 @@ export const commands = {
     await latency();
     const meeting = mockDatabase.fixture(meetingId);
     return meeting ? ok({ fileName: render.fileName(meeting, format) }) : notFound(meetingId);
+  },
+  async saveMany(meetingIds) {
+    await latency();
+    const missing = meetingIds.find((id) => !mockDatabase.fixture(id));
+    return missing === undefined
+      ? ok({ count: meetingIds.length, folder: BULK_FOLDER })
+      : notFound(missing);
   },
   async copy(meetingId) {
     await latency();

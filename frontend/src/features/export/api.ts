@@ -13,6 +13,7 @@ import type {
   FullExportStatus,
   MeetingId,
   SavedExport,
+  SavedExports,
 } from './types';
 
 export const exportApi = {
@@ -28,6 +29,9 @@ export const exportApi = {
     format: ExportFormat,
     sections: ExportSections,
   ): Promise<SavedExport | null> => unwrap(commands.save(meetingId, format, sections)),
+  /** Opens the folder dialog and writes every meeting there; `null` when cancelled. */
+  saveMany: (meetingIds: MeetingId[], format: ExportFormat): Promise<SavedExports | null> =>
+    unwrap(commands.saveMany(meetingIds, format)),
   /** Puts the meeting on the clipboard. */
   copy: (meetingId: MeetingId, kind: CopyKind): Promise<null> =>
     unwrap(commands.copy(meetingId, kind)),

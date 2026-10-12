@@ -9,7 +9,8 @@
 //!   `deino-doc`, the summary as stored).
 //! - [`ExportService`]: preview, save (through the [`SaveDialog`] port: the
 //!   webview never names a path), copy as rich text or Markdown (the
-//!   [`Clipboard`] port) and email (the [`UrlOpener`] port).
+//!   [`Clipboard`] port) and email (the [`UrlOpener`] port); `save_many`
+//!   writes many meetings into one folder the user picks (ORG-07).
 //! - [`AutoExportService`] is the [`AutoExporter`] behind the pipeline's
 //!   `auto_export` stage: notes into the chosen folder by the settings'
 //!   templates, Obsidian links and people pages, overwriting only its own
@@ -28,6 +29,7 @@
 mod archive;
 mod assemble;
 mod auto;
+mod batch;
 mod error;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
@@ -51,6 +53,7 @@ pub use fake::{FakeVault, RecordedClipboard, RecordedOpener, ScriptedDialog};
 pub use full::{FullExportDeps, FullExportEvents, FullExportService};
 pub use model::{
     CopyKind, ExportPreview, FullExportState, FullExportStatus, PreviewKind, SavedExport,
+    SavedExports,
 };
 pub use notes::{DocNoteRenderer, MeetingNotes, NoteRenderer};
 pub use platform::{Clipboard, ClipboardContent, FolderDialog, SaveDialog, SaveRequest, UrlOpener};

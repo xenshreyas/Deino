@@ -29,6 +29,19 @@ async save(meetingId: MeetingId, format: ExportFormat, sections: ExportSections)
 }
 },
 /**
+ * Asks for a folder and writes every meeting in `meeting_ids` there as
+ * `format` (the Meetings page's bulk export); `null` when the user
+ * cancelled.
+ */
+async saveMany(meetingIds: MeetingId[], format: ExportFormat) : Promise<Result<SavedExports | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:export|save_many", { meetingIds, format }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Copies the meeting as rich text, Markdown or its transcript.
  */
 async copy(meetingId: MeetingId, kind: CopyKind) : Promise<Result<null, AppError>> {
@@ -352,6 +365,18 @@ export type SavedExport = {
  * The file's name (not its folder), for the confirmation.
  */
 fileName: string }
+/**
+ * Meetings the user exported into a folder at once.
+ */
+export type SavedExports = { 
+/**
+ * How many files were written, one per meeting.
+ */
+count: number; 
+/**
+ * The folder's name (not its path), for the confirmation.
+ */
+folder: string }
 
 /** tauri-specta globals **/
 

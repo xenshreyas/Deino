@@ -119,3 +119,13 @@ pub struct SavedExport {
     /// The file's name (not its folder), for the confirmation.
     pub file_name: String,
 }
+
+/// Meetings the user exported into a folder at once.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedExports {
+    /// How many files were written, one per meeting.
+    pub count: u32,
+    /// The folder's name (not its path), for the confirmation.
+    pub folder: String,
+}

@@ -8,21 +8,20 @@ import type { ReactNode } from 'react';
 
 import { Button } from '@/ui/button';
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/ui/command';
-import { Combine, Download, FolderInput, ICON_PROPS, Tag, Trash2, Workflow, X } from '@/ui/icons';
+import { Combine, FolderInput, ICON_PROPS, Tag, Trash2, Workflow, X } from '@/ui/icons';
 import { IconButton } from '@/ui/icon-button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 
 import { copy } from '../copy';
 import type { FilterOptions } from '../types';
+import { ExportButton, type ExportButtonProps } from './export-button';
 
 /** Props of {@link BulkBar}. */
-export interface BulkBarProps {
+export interface BulkBarProps extends ExportButtonProps {
   count: number;
   options: FilterOptions;
   onTag: (tagId: FilterOptions['tags'][number]['id']) => void;
   onFile: (folderId: FilterOptions['folders'][number]['id']) => void;
-  /** Exports the one selected meeting; `null` when several are selected. */
-  onExport: (() => void) | null;
   onMerge: () => void;
   onDelete: () => void;
   onClear: () => void;
@@ -69,7 +68,14 @@ function PickerButton<Id extends string>(props: {
 /** "Run automation": shown, but disabled with a WIP badge until AUT-01 (D12). */
 function AutomationButton() {
   return (
-    <Button variant="ghost" size="sm" disabled aria-disabled="true">
+    // Hidden on narrow windows, where the bar must fit the actions that work.
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled
+      aria-disabled="true"
+      className="hidden xl:inline-flex"
+    >
       <Workflow {...ICON_PROPS} />
       {copy.bulk.automation}
       <span className="rounded-full border border-border px-1.5 text-[11px] leading-4 text-fg-muted">
@@ -103,23 +109,16 @@ function PickerButtons({
   );
 }
 
-/** Export (one meeting at a time) and Merge (two or more). */
+/** Export (a dialog for one meeting, a format menu for many) and Merge (two or more). */
 function MeetingButtons({
   count,
-  onExport,
+  onExportOne,
+  onExportMany,
   onMerge,
-}: Pick<BulkBarProps, 'count' | 'onExport' | 'onMerge'>) {
+}: Pick<BulkBarProps, 'count' | 'onExportOne' | 'onExportMany' | 'onMerge'>) {
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={onExport === null}
-        onClick={onExport ?? undefined}
-      >
-        <Download {...ICON_PROPS} />
-        {copy.bulk.export}
-      </Button>
+      <ExportButton onExportOne={onExportOne} onExportMany={onExportMany} />
       <Button variant="ghost" size="sm" disabled={count < 2} onClick={onMerge}>
         <Combine {...ICON_PROPS} />
         {copy.bulk.merge}

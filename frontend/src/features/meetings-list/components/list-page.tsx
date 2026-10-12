@@ -11,7 +11,13 @@ import { useState } from 'react';
 import { filterOptionsQuery } from '@/features/action-items';
 import { ExportDialog } from '@/features/export';
 
-import { fileMeetings, mergeMeetings, tagMeetings, trashSelection } from '../actions';
+import {
+  exportMeetings,
+  fileMeetings,
+  mergeMeetings,
+  tagMeetings,
+  trashSelection,
+} from '../actions';
 import { copy } from '../copy';
 import { isAllMeetings } from '../filters';
 import { useListShortcuts } from '../hooks/use-list-shortcuts';
@@ -88,12 +94,27 @@ function ExportOne({ id, onClose }: { id: MeetingId | null; onClose: () => void 
   );
 }
 
+/** The meeting the export dialog is open for; it opens only for one selected meeting. */
+function useExportOne(ids: readonly MeetingId[]) {
+  const [exporting, setExporting] = useState<MeetingId | null>(null);
+  const only = ids.length === 1 ? ids[0] : undefined;
+  const open =
+    only === undefined
+      ? null
+      : () => {
+          setExporting(only);
+        };
+  const close = () => {
+    setExporting(null);
+  };
+  return { exporting, open, close };
+}
+
 /** The bulk bar over the selection, with its merge and export dialogs. */
 function SelectionActions({ options }: { options: FilterOptions }) {
   const page = usePageStore();
-  const [exporting, setExporting] = useState<MeetingId | null>(null);
   const ids = [...page.selection.ids];
-  const only = ids.length === 1 ? ids[0] : undefined;
+  const exportOne = useExportOne(ids);
   return (
     <>
       <BulkBar
@@ -101,13 +122,8 @@ function SelectionActions({ options }: { options: FilterOptions }) {
         options={options}
         onTag={(tag) => void tagMeetings(ids, tag)}
         onFile={(folder) => void fileMeetings(ids, folder)}
-        onExport={
-          only === undefined
-            ? null
-            : () => {
-                setExporting(only);
-              }
-        }
+        onExportOne={exportOne.open}
+        onExportMany={(format) => void exportMeetings(ids, format)}
         onMerge={() => {
           page.askMerge(ids);
         }}
@@ -120,12 +136,7 @@ function SelectionActions({ options }: { options: FilterOptions }) {
           page.askMerge([]);
         }}
       />
-      <ExportOne
-        id={exporting}
-        onClose={() => {
-          setExporting(null);
-        }}
-      />
+      <ExportOne id={exportOne.exporting} onClose={exportOne.close} />
     </>
   );
 }

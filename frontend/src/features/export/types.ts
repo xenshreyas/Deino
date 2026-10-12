@@ -11,6 +11,7 @@ export type {
   MeetingId,
   PreviewKind,
   SavedExport,
+  SavedExports,
 } from '@/lib/ipc/generated/export';
 export type { ExportSettings } from '@/lib/ipc/generated/settings';
 

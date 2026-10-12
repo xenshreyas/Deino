@@ -1,12 +1,13 @@
 /**
  * The page's actions on many meetings: trash (with Undo), restore, delete
- * forever, tag, file and merge. Plain functions over the API rather than
+ * forever, tag, file, export and merge. Plain functions over the API rather than
  * mutation hooks, so the keyboard shortcuts (a window listener) can run them
  * too; `DbChanged` refreshes every query they touch, and each reports its
  * outcome as a toast.
  */
 import { toast } from 'sonner';
 
+import { type ExportFormat, exportApi } from '@/features/export';
 import type { FolderId, TagId } from '@/lib/ipc/generated/meetings';
 import { IpcError } from '@/lib/ipc/result';
 
@@ -80,4 +81,10 @@ export async function mergeMeetings(ids: MeetingId[]): Promise<MergeOutcome | nu
   usePageStore.getState().clearSelection();
   toast.success(copy.merge.done);
   return outcome;
+}
+
+/** Writes `ids` as `format` into a folder the user picks (one file each). */
+export async function exportMeetings(ids: MeetingId[], format: ExportFormat): Promise<void> {
+  const saved = await exportApi.saveMany(ids, format).catch(failed);
+  if (saved) toast.success(copy.bulk.exported(saved.count, saved.folder));
 }
