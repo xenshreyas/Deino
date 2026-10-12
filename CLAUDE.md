@@ -51,7 +51,10 @@ The goal: each feature runs the full gate once, not once per rebase.
   bindings`, `scripts/sqlx-prepare.sh`). Never hand-merge them.
 - **Registration is per feature**, never a shared list: a feature registers its
   plugin, commands, bindings builder, composition, tables and pipeline stages
-  from its own files (see "How to add a feature").
+  from its own files (see "How to add a feature" and
+  [the ADR](docs/adr/2026-10-12-feature-self-registration.md));
+  `scripts/check-feature-isolation.sh` fails on a per-feature line in a central
+  file.
 - **Machine limits:** at most 4–6 feature agents at once; `scripts/dev-env.sh`
   sets `CARGO_BUILD_JOBS=3`, and full gates use 2 machine-wide slots at 4 jobs.
   Never kill processes by pattern; stop your own by PID or task ID.
@@ -133,7 +136,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | Crate | Role |
 |---|---|
 | `crates/deino-domain` | Typed IDs, schema enums (`MeetingStatus`, `Channel`, ...), `Millis`/`Email`/`PaletteColor`, `AppError`/`ErrorCode`/`ErrorClass`, the `Clock` port |
-| `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table`, `test_db()` |
+| `crates/deino-db` | `Database` (WAL, one writer, read pool), `MIGRATOR` + `migrations/`, `ChangeNotifier`, `Table` (generated from the migrations), `test_db()` |
 | `crates/deino-secrets` | `SecretStore`: API keys in the Keychain (set, status, delete; `get` for Rust only) |
 | `crates/deino-core` | Features as modules: `meetings` (ORG-07, ADR 0046: the filtered list, saved views, the trash and its 30-day purge, bulk tag and file, merge), `settings`, `templates` (note templates, 30 versioned built-ins, auto selection), `profile` (AI context, the Me person, internal vs external), `models` (STT model catalog and verified downloads), `notes` (the notepad: TipTap documents in `meeting_notes`, images, scheduled meetings), `enhance` (enhanced notes: versions in `enhanced_notes`, the provenance guard, citations, auto titles; ADR 0030), `speakers` and `voiceprints` (CAP-04: naming speakers, voice profiles), the core-schema repositories (`segments`, `people`, `companies`, `calendar`, `folders`, `tags`, `action_items`), `search` (FTS5 keyword and local semantic search, RRF; ADR 0032), `insights` (AI-06: custom insights with typed fields, the `insights` stage's rules; ADR 0038), `entities` (ORG-04: one upsert rule set for people and companies, pages, merges that move every link, briefings, company logos; ADR 0036), `permissions` and `sample` (FND-11: the permissions onboarding asks for; the bundled sample meeting and its importer), `stats` (ORG-09: stats computed on read, the year in review; ADR 0049), `import` and `watch` (CAP-11: recordings imported as meetings the pipeline transcribes; watched folders with a de-duplication ledger; ADR 0044), `briefs` (NOT-08: pre-meeting briefs from local data, the 06:00 and hour-before job; ADR 0047), `_example` (debug builds) |
 | `crates/deino-audio` | Crash-safe two-track recording: `AudioSource`/`MockAudioSource`, rtrb ring, `TrackTimeline`, AVAssetWriter CMAF writer, `recording.json`, recovery, finalize (ADR 0014); `media` (CAP-11: the `MediaDecoder` trait, symphonia then `AVAssetReader`, `transcode` to AAC); `capture`: the cpal microphone and the Core Audio process tap, conditioners (native → 48 kHz), the supervisor (device and power listeners, stall watchdog, route probe) (ADR 0026) |
@@ -142,7 +145,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-doc` | The note document (ADR 0022): TipTap JSON as typed Rust, Markdown in (`from_markdown`) and out (`to_markdown`, `Lossless`/`Readable`), `validate`, `normalize`; ported from anarlog `crates/tiptap` |
 | `crates/deino-export` | Meeting exports as pure renderers (ADR 0025): `MeetingExport` → Markdown (frontmatter, Obsidian links), TXT, JSON, SRT/VTT, rich HTML, DOCX (`docx-rs`), PDF (Typst + bundled Inter), CSV, `mailto`, file-name templates; `deino-core::export` assembles, auto-exports (stage `auto_export`) and zips the account |
 | `crates/deino-llm` | The LLM gateway (ADR 0017): `Gateway` (`stream`, `complete`, `structured::<T>()`, `with_tools`, `embed`), task `Route`s and the `Router`, providers (Anthropic, OpenAI-compatible, Ollama, built-in llama-helper), askama/minijinja prompts, `MockProvider`, the `llm_calls` usage log (no content). Every LLM call goes through it. |
-| `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
+| `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (stages register themselves with `register_stage!`), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
 | `crates/deino-detect` | Meeting detection (ADR 0023): Core Audio process-object, default-input and CoreMediaIO camera listeners, outermost-`.app` attribution, Accessibility browser URLs, the bundle tables, Muesli's resolver, the `Clock`-driven `DetectionPolicy`, `DetectionService` and the `Detector` thread; `autostop` (CAP-07, ADR 0039: when a recording ends on its own, back-to-back meetings); no network |
 | `crates/deino-speaker-tags` | Speaker tags (CAP-05, ADR 0045): the meeting app's active speaker through Accessibility every 250 ms while recording; one `SpeakerAdapter` per app (Zoom, Teams, Meet in Chrome) tested on fixture AX dumps (`fixtures/`), the `Timeline` of spans, the `Watcher` thread, `SpeakerTags`; the spans are priors in `identify_speakers` (`deino-core::speaker_tags`); no network |
@@ -163,13 +166,16 @@ Does Not Own, Invariants); read it before editing the crate.
 
 - `lib.rs`: the builder only. `setup.rs` (startup), `lifecycle.rs` (window
   and exit).
-- `composition.rs`: **the composition root.** Turns adapters (SQLite repos,
-  `SystemClock`, the settings file, the Keychain, Tauri event adapters) into
-  services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
+- `composition.rs`: **the composition root.** The shared services: turns
+  adapters (SQLite repos, `SystemClock`, the settings file, the Keychain, Tauri
+  event adapters) into services and `app.manage`s them. Leaf features wire
+  themselves with attach hooks (`composition/attach.rs`). `paths.rs` (`AppPaths`) resolves every app
   folder once.
-- `features.rs`, `features/`: one inline plugin per feature (each lists its
-  commands for the ACL and registers itself; see "Merge workflow" below for
-  how registration works), and `example`/`dev` in debug builds.
+- `features.rs`, `features/`: one inline plugin per feature, each
+  registering itself (`register_plugin!`); `build.rs` generates their ACL and
+  capability from each `collect_commands!` (see "Merge workflow" below and
+  [the ADR](docs/adr/2026-10-12-feature-self-registration.md)). A debug-only
+  plugin declares `#![cfg(debug_assertions)]`. `example`/`dev` are in `example`/`dev` in debug builds.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).
 - `bindings.rs`: the test that writes the TypeScript bindings.
@@ -221,17 +227,29 @@ src/
 three parts and rename:
 
 1. **Core:** `crates/deino-core/src/_example.rs` + `_example/` →
-   `crates/deino-core/src/<feature>.rs` + `<feature>/{model,error,repo,events,service,fake}.rs`.
-   Put the migration in `crates/deino-db/migrations/<UTC timestamp>_<card>_<desc>.sql`
-   (not next to the feature, which only the example does), add a `Table`
-   variant, run `scripts/sqlx-prepare.sh`. New ID types go in
-   `crates/deino-domain/src/id.rs`.
+   `crates/deino-core/src/<feature>.rs` + `<feature>/{model,error,repo,events,service,fake}.rs`
+   (plus `pub mod <feature>;` in `deino_core.rs`). Put the migration in
+   `crates/deino-db/migrations/<UTC timestamp>_<card>_<desc>.sql` (not next to
+   the feature, which only the example does) with a `--` comment directly above
+   each `CREATE TABLE` (it becomes the `Table` variant's doc; `build.rs`
+   generates the variant), then run `scripts/sqlx-prepare.sh`. New ID types go
+   in `crates/deino-domain/src/id.rs` (re-exported by a glob).
 2. **Plugin:** `frontend/src-tauri/src/features/_example.rs` + `_example/` →
    `features/<feature>.rs` + `<feature>/{commands,events,contract_tests}.rs`.
-   Register it with one line each in `features/manifest.rs`, `lib.rs`
-   (`register_feature_plugins`), `capabilities/default.json`
-   (`"<feature>:default"`) and `features::builders()`, and build its service in
-   `composition.rs`. Then `cargo test -p deino --lib bindings`.
+   In `features/<feature>.rs`, below `NAME`, write
+   `super::registry::register_plugin!(Guarded);` (`Open` only for a plugin
+   that must work while Deino is locked, a privacy decision that updates
+   `privacy::guard`'s test). Add `pub mod <feature>;` to `features.rs` in
+   alphabetical order; that is the only shared line. `build.rs` reads
+   `commands.rs`'s `collect_commands![..]` and generates the plugin's ACL
+   and the `main` window's grant; there is no manifest or capability to
+   edit. A debug-only feature puts `#![cfg(debug_assertions)]` in its own
+   file. Wire services in `composition/<feature>.rs` (plus `mod <feature>;`
+   in `composition.rs`) and register them with
+   `super::attach::attach!("<feature>", <order>, Phase::Local(|cx| ..))`
+   (`ReadModel` for wiring over the LLM gateway, `Background` for services
+   that run on their own, `Startup` for a feature with its own store). Then
+   `cargo test -p deino --lib bindings`.
 3. **UI:** `frontend/src/features/_example/` → `features/<feature>/`: `api.ts`
    calls the generated commands through `unwrap`, `queries.ts` declares
    `meta.tables`, components split into a container and presentational parts.
@@ -295,6 +313,10 @@ PR and makes it pass. Never add new code to a list.
   handler, or `useMountEffect` (`hooks/useMountEffect.ts`) for mount-only sync
   with something outside React. Reset state by remounting with `key`.
 - **Never hand-write `invoke()`.** Call generated bindings through `api.ts`.
+- **Never add a per-feature line to a central file** (`lib.rs`,
+  `features.rs` beyond its `pub mod`, `composition.rs`,
+  `capabilities/default.json`, `bindings.rs`, `table.rs`, `registry.rs`);
+  `scripts/check-feature-isolation.sh` fails on it.
 - **Never edit an applied migration** or `frontend/src/lib/ipc/generated/`.
 - **Commands are private functions** collected in `commands.rs`: a `pub`
   `#[tauri::command]` exports a crate-root macro and collides across features.
@@ -375,4 +397,6 @@ and untyped events still exist until cards port them; never add new ones
 - Dependencies: pinned, permissive licences only (MIT, Apache-2.0, BSD, ISC);
   `cargo deny check licenses` enforces it. Any binary downloaded at build time
   needs a SHA-256 pin.
+- `linkme` (=0.3.37) is the one registration mechanism; its macros'
+  `#[allow(unsafe_code)]` lives only in the three registration macros.
 - Code copied from MIT/Apache projects gets an entry in `THIRD_PARTY_NOTICES.md`.
