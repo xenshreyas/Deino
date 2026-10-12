@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the release Deino.app with its real sidecars and signs it locally.
 #
-#   scripts/build-app.sh             # build into dist-app/Deino.app
+#   scripts/build-app.sh             # build into ~/Library/Caches/deino-build/Deino.app
 #   scripts/build-app.sh --install   # ...then replace /Applications/Deino.app
 #
 # Why not just `pnpm run tauri:build`: this repository lives under
@@ -15,7 +15,9 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/dev-env.sh
 source scripts/dev-env.sh
 
-readonly OUT="dist-app"
+# Outside ~/Documents: iCloud's file provider tags everything there (even
+# *.nosync folders) with attributes that codesign rejects.
+readonly OUT="$HOME/Library/Caches/deino-build"
 readonly BUNDLE="target/release/bundle/macos/Deino.app"
 readonly ENTITLEMENTS="frontend/src-tauri/entitlements.plist"
 TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
