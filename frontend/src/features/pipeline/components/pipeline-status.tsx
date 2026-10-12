@@ -2,8 +2,14 @@
  * The meeting header's processing line (UX-01): silent when every stage
  * worked or was skipped; one quiet line ("Writing notes…") while work runs;
  * and one plain-words row per failed stage, with its reason and Retry.
+ * A transcript step that gave up on ElevenLabs (CAP-14) gets a row too: it
+ * was skipped, not failed (the Mac's transcript was kept and the later steps
+ * ran), and its Retry sends the meeting to ElevenLabs again.
  * Every stage, done or not, is in Processing details (the ⋯ menu).
  */
+import { toast } from 'sonner';
+
+import { isCloudFailure, useRetranscribe } from '@/features/cloud-transcription';
 import { CircleAlert, ICON_PROPS } from '@/ui/icons';
 
 import { copy, stageFailed, stageLabel, stageRunning } from '../copy';
@@ -51,6 +57,28 @@ function FailedRow(props: {
   );
 }
 
+/** The transcript step that gave up on ElevenLabs: its reason, and Retry. */
+function CloudFailedRow({ meetingId, stage }: { meetingId: MeetingId; stage: StageStatus }) {
+  const retranscribe = useRetranscribe(meetingId);
+  return (
+    <li className="flex min-w-0 items-center gap-1.5 text-xs">
+      <CircleAlert {...ICON_PROPS} size={14} className="shrink-0 text-danger" />
+      <span className="min-w-0 truncate text-danger" title={stage.message ?? undefined}>
+        {stage.message}
+      </span>
+      <RetryButton
+        label={stageLabel(stage.stage)}
+        disabled={retranscribe.isPending}
+        onRetry={() => {
+          retranscribe.mutate(undefined, {
+            onError: (error) => toast.error(copy.retryFailed, { description: error.message }),
+          });
+        }}
+      />
+    </li>
+  );
+}
+
 /**
  * Container: the stages come from a query that `PipelineProgress` events
  * refresh, and retrying is a mutation.
@@ -61,12 +89,15 @@ export function PipelineStatus({ meetingId }: PipelineStatusProps) {
   usePipelineProgress(meetingId);
   const stages = status.data ?? [];
   const failed = stages.filter(isStopped);
+  const cloud = stages.find(isCloudFailure);
   const active = activeStage(stages);
-  if (failed.length === 0 && active === undefined && !rerun.isError) return null;
+  const quiet = failed.length === 0 && cloud === undefined;
+  if (quiet && active === undefined && !rerun.isError) return null;
   return (
     <section aria-label={copy.label} className="flex flex-col gap-1">
-      {failed.length > 0 ? (
+      {quiet ? null : (
         <ul className="flex flex-col gap-0.5">
+          {cloud === undefined ? null : <CloudFailedRow meetingId={meetingId} stage={cloud} />}
           {failed.map((stage) => (
             <FailedRow
               key={stage.stage}
@@ -78,7 +109,7 @@ export function PipelineStatus({ meetingId }: PipelineStatusProps) {
             />
           ))}
         </ul>
-      ) : null}
+      )}
       {failed.length === 0 && active !== undefined ? (
         <p role="status" className="animate-pulse-soft text-xs text-fg-muted">
           {stageRunning(active.stage)}

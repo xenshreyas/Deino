@@ -69,7 +69,13 @@ export const networkCopy = {
     circleback: 'Circleback import',
     fireflies: 'Fireflies import',
     fathom: 'Fathom import',
+    elevenlabs: 'ElevenLabs transcription',
   } satisfies Record<ServiceId, string>,
+  /** What a service receives, where the name alone does not say. */
+  serviceNotes: {
+    elevenlabs:
+      'Receives each meeting’s audio after it ends, once you turn on ElevenLabs transcription.',
+  } satisfies Partial<Record<ServiceId, string>>,
   noHosts: 'Set up in Settings first',
 } as const;
 

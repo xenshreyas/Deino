@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT lines AS \"lines: Json<Vec<KeptLine>>\"\n               FROM original_transcripts WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "lines: Json<Vec<KeptLine>>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "677e1298734473a4035d70378ecdcc713158f9cd507f3a9303682ee7bce37610"
+}

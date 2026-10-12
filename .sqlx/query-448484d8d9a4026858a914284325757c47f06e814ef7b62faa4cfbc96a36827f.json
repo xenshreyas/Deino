@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO original_transcripts (meeting_id, lines, replaced_by, replaced_at)\n             VALUES (?1, ?2, 'elevenlabs', ?3)\n             ON CONFLICT (meeting_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "448484d8d9a4026858a914284325757c47f06e814ef7b62faa4cfbc96a36827f"
+}

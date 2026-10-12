@@ -76,6 +76,7 @@ const fn integration(service: ServiceId) -> ServiceSpec {
         ServiceId::Circleback => hosts::CIRCLEBACK,
         ServiceId::Fireflies => hosts::FIREFLIES,
         ServiceId::Fathom => hosts::FATHOM,
+        ServiceId::ElevenLabs => hosts::ELEVENLABS,
         _ => &[],
     };
     ServiceSpec {
@@ -174,6 +175,9 @@ mod hosts {
     pub(super) const CIRCLEBACK: &[HostPattern] = &[exact("circleback.ai")];
     pub(super) const FIREFLIES: &[HostPattern] = &[exact("api.fireflies.ai")];
     pub(super) const FATHOM: &[HostPattern] = &[exact("api.fathom.ai")];
+    /// ElevenLabs speech to text (CAP-14): its default API host only, never
+    /// the regional or data-residency ones.
+    pub(super) const ELEVENLABS: &[HostPattern] = &[exact("api.elevenlabs.io")];
     /// Company logos come from each company's own website, whichever it is.
     pub(super) const ANY_PUBLIC_NAME: &[HostPattern] = &[HostPattern::AnyPublicName];
 

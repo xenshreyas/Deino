@@ -316,7 +316,11 @@ export type Table =
 /**
  * One message to one endpoint, kept across its retries; the delivery log.
  */
-"webhook_deliveries"
+"webhook_deliveries" | 
+/**
+ * The transcript made on this Mac that a cloud transcription replaced (CAP-14): one per meeting, the first one replaced, until the user restores it or retention deletes the transcript.
+ */
+"original_transcripts"
 
 /** tauri-specta globals **/
 

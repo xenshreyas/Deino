@@ -1,0 +1,38 @@
+[package]
+name = "deino-cloud-transcription"
+version = "0.1.0"
+description = "Deino's opt-in cloud transcription after the meeting (CAP-14): ElevenLabs Scribe over deino-net on the user's own Keychain key, behind deino-core's CloudTranscriber and CloudChoice ports"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_cloud_transcription.rs"
+
+[dependencies]
+async-trait.workspace = true
+deino-core.workspace = true
+deino-domain.workspace = true
+deino-net.workspace = true
+deino-secrets.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+# Reading the track and racing the upload against cancellation.
+tokio.workspace = true
+tokio-util.workspace = true
+# A random multipart boundary per upload.
+uuid.workspace = true
+
+[dev-dependencies]
+chrono.workspace = true
+deino-core = { workspace = true, features = ["test-support"] }
+deino-domain = { workspace = true, features = ["test-support"] }
+deino-net = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
+# A scratch folder for the track files the transcriber reads.
+tempfile = "3.3.0"
+
+[lints]
+workspace = true

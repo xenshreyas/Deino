@@ -10,16 +10,24 @@
 //! 4. Replace the transcript in one transaction, each utterance keeping the
 //!    speaker the old segments gave its time ([`carried_speaker`]).
 //!
+//! When the run has a cloud service (CAP-14, [`FinalPass::cloud`]), steps 2
+//! and 3 are the cloud branch's instead (`cloud_run.rs`): the cloud
+//! transcript replaces the live one unless the user edited it, and the
+//! replaced one is kept ([`OriginalTranscripts`]).
+//!
 //! Replacing makes a retry or a re-run safe.
 
 use std::sync::Arc;
 
 use deino_db::DbError;
-use deino_domain::{Channel, Clock, ErrorClass, ErrorCode, MeetingId, SegmentId};
+use deino_domain::{Channel, Clock, ErrorClass, ErrorCode, MeetingId};
 use tokio_util::sync::CancellationToken;
 
+#[cfg(doc)]
+use super::carried_speaker;
 use super::{
-    ChannelSpeakers, HeardSpan, TrackError, TrackRequest, TrackTranscriber, carried_speaker,
+    ChannelSpeakers, CloudError, CloudPass, HeardSpan, OriginalTranscripts, TrackError,
+    TrackRequest, TrackTranscriber, carried_segment,
 };
 use crate::meetings::{MeetingAudio, MeetingLifecycleRepo};
 use crate::segments::{NewSegment, Page, Segment, SegmentReader, SegmentWriter, SpeakerRepo};
@@ -65,6 +73,10 @@ pub enum FinalTranscriptionError {
     /// untouched.
     #[error(transparent)]
     Repass(TrackError),
+    /// The cloud service could not transcribe a track (CAP-14); nothing
+    /// was written, so the transcript in place is untouched.
+    #[error(transparent)]
+    Cloud(CloudError),
     /// The database failed.
     #[error("could not read or save the transcript")]
     Storage(#[from] DbError),
@@ -75,6 +87,7 @@ impl ErrorClass for FinalTranscriptionError {
         match self {
             Self::NotFound(_) => ErrorCode::NotFound,
             Self::Track(error) | Self::Repass(error) => error.code(),
+            Self::Cloud(error) => error.code(),
             Self::Storage(_) => ErrorCode::Internal,
         }
     }
@@ -93,7 +106,9 @@ pub struct FinalTranscriptionDeps {
     pub speakers: Arc<dyn SpeakerRepo>,
     /// The engine.
     pub transcriber: Arc<dyn TrackTranscriber>,
-    /// IDs for the new segments.
+    /// Where a transcript the cloud replaces is kept (CAP-14).
+    pub originals: Arc<dyn OriginalTranscripts>,
+    /// IDs for the new segments, and when a transcript was replaced.
     pub clock: Arc<dyn Clock>,
 }
 
@@ -102,13 +117,16 @@ pub struct FinalTranscriptionDeps {
 pub struct FinalPass {
     /// Settings → Transcription → "High-accuracy re-pass after meeting".
     pub repass: bool,
+    /// The cloud service that transcribes this run instead of the Mac
+    /// (CAP-14), if the user turned one on or asked for it.
+    pub cloud: Option<CloudPass>,
     /// Fires when the stage is cancelled.
     pub cancel: CancellationToken,
 }
 
 /// Transcribes finished meetings.
 pub struct FinalTranscriptionService {
-    deps: FinalTranscriptionDeps,
+    pub(super) deps: FinalTranscriptionDeps,
 }
 
 impl FinalTranscriptionService {
@@ -132,6 +150,11 @@ impl FinalTranscriptionService {
             return Ok(FinalOutcome::Skipped(FinalSkip::NoAudio));
         }
         let old = self.deps.segments.list(meeting, Page::ALL).await?;
+        if let Some(cloud) = &pass.cloud {
+            return self
+                .run_cloud(meeting, (tracks, old), (cloud, &pass.cancel))
+                .await;
+        }
         if let Some(skip) = skip(&old, pass.repass) {
             return Ok(FinalOutcome::Skipped(skip));
         }
@@ -180,25 +203,16 @@ impl FinalTranscriptionService {
     ) -> Result<Vec<NewSegment>, DbError> {
         heard.sort_by_key(|(_, span)| span.start);
         let fallback = ChannelSpeakers::of(&self.deps.speakers.speakers(meeting).await?);
+        let clock = self.deps.clock.as_ref();
         Ok(heard
             .into_iter()
-            .map(|(channel, span)| NewSegment {
-                id: SegmentId::generate(self.deps.clock.as_ref()),
-                meeting_id: meeting.clone(),
-                channel,
-                speaker_id: carried_speaker(channel, (span.start, span.end), old)
-                    .or_else(|| fallback.of_channel(channel)),
-                start: span.start,
-                end: span.end.max(span.start),
-                text: span.text,
-                words: span.words,
-            })
+            .map(|heard| carried_segment(meeting, heard, (old, fallback), clock))
             .collect())
     }
 }
 
 /// The tracks to transcribe: microphone and system audio, else the mix.
-fn tracks(audio: &MeetingAudio) -> Vec<(Channel, String)> {
+pub(super) fn tracks(audio: &MeetingAudio) -> Vec<(Channel, String)> {
     let split: Vec<(Channel, String)> = [
         (Channel::Mic, audio.audio_mic_path.clone()),
         (Channel::System, audio.audio_system_path.clone()),

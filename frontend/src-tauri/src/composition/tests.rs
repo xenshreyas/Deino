@@ -96,6 +96,7 @@ fn recorded_adapters() -> (PipelineAdapters, Recorded) {
         transcript: pipeline::TranscriptStages {
             transcriber: Arc::new(deino_core::final_transcription::ScriptedTracks::default()),
             repass: Arc::new(deino_pipeline::FixedRepass(false)),
+            cloud: Arc::new(deino_core::final_transcription::LocalOnly),
             vocab_fixer: Arc::new(deino_pipeline::RecordedFixer::default()),
         },
         recordings: std::path::PathBuf::from("no-recordings"),

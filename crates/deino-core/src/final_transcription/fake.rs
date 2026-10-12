@@ -1,4 +1,5 @@
-//! [`ScriptedTracks`]: a [`TrackTranscriber`] for tests (behind
+//! [`ScriptedTracks`] and [`ScriptedCloud`]: a [`TrackTranscriber`] and a
+//! [`CloudTranscriber`] for tests (behind
 //! `test-support`), hearing whatever each file was scripted to say.
 
 use std::collections::HashMap;
@@ -7,7 +8,10 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 
-use super::{HeardSpan, TrackError, TrackRequest, TrackTranscriber};
+use super::{
+    CloudError, CloudRequest, CloudSpan, CloudTranscriber, HeardSpan, TrackError, TrackRequest,
+    TrackTranscriber,
+};
 use crate::testing::lock;
 
 /// Hears the spans scripted for each file; an unscripted file is silent.
@@ -47,6 +51,49 @@ impl TrackTranscriber for ScriptedTracks {
             return Err(TrackError::Unavailable(Box::new(missing)));
         }
         lock(&self.heard).push(request.audio.clone());
+        Ok(lock(&self.spans)
+            .get(&request.audio)
+            .cloned()
+            .unwrap_or_default())
+    }
+}
+
+/// A cloud service for tests: hears what each file was scripted to say
+/// (with its voices), or fails every run with the scripted error.
+#[derive(Debug, Default)]
+pub struct ScriptedCloud {
+    spans: Mutex<HashMap<PathBuf, Vec<CloudSpan>>>,
+    failure: Mutex<Option<fn() -> CloudError>>,
+    sent: Mutex<Vec<(PathBuf, bool)>>,
+}
+
+impl ScriptedCloud {
+    /// Scripts what `path` says.
+    pub fn say(&self, path: impl AsRef<Path>, spans: Vec<CloudSpan>) {
+        lock(&self.spans).insert(path.as_ref().to_path_buf(), spans);
+    }
+
+    /// Every following run fails with `error()`.
+    pub fn fail_with(&self, error: fn() -> CloudError) {
+        *lock(&self.failure) = Some(error);
+    }
+
+    /// The files sent so far, each with whether it was to be diarized.
+    pub fn sent(&self) -> Vec<(PathBuf, bool)> {
+        lock(&self.sent).clone()
+    }
+}
+
+#[async_trait]
+impl CloudTranscriber for ScriptedCloud {
+    async fn transcribe(&self, request: CloudRequest) -> Result<Vec<CloudSpan>, CloudError> {
+        if request.cancel.is_cancelled() {
+            return Err(CloudError::Cancelled);
+        }
+        if let Some(error) = *lock(&self.failure) {
+            return Err(error());
+        }
+        lock(&self.sent).push((request.audio.clone(), request.diarize));
         Ok(lock(&self.spans)
             .get(&request.audio)
             .cloned()

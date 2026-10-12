@@ -1,0 +1,31 @@
+{
+  "language_code": "en",
+  "language_probability": 0.99,
+  "text": "Morning everyone. Hey, can you hear me? Yes, loud and clear.",
+  "words": [
+    { "text": "Morning", "type": "word", "logprob": -0.02, "start": 0.42, "end": 0.81, "speaker_id": "speaker_0" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 0.81, "end": 0.84, "speaker_id": "speaker_0" },
+    { "text": "everyone.", "type": "word", "logprob": -0.05, "start": 0.84, "end": 1.36, "speaker_id": "speaker_0" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 1.36, "end": 1.5, "speaker_id": "speaker_0" },
+    { "text": "Hey,", "type": "word", "logprob": -0.11, "start": 1.5, "end": 1.72, "speaker_id": "speaker_1" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 1.72, "end": 1.75, "speaker_id": "speaker_1" },
+    { "text": "can", "type": "word", "logprob": -0.01, "start": 1.75, "end": 1.88, "speaker_id": "speaker_1" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 1.88, "end": 1.9, "speaker_id": "speaker_1" },
+    { "text": "you", "type": "word", "logprob": -0.01, "start": 1.9, "end": 2.01, "speaker_id": "speaker_1" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 2.01, "end": 2.03, "speaker_id": "speaker_1" },
+    { "text": "hear", "type": "word", "logprob": -0.02, "start": 2.03, "end": 2.2, "speaker_id": "speaker_1" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 2.2, "end": 2.22, "speaker_id": "speaker_1" },
+    { "text": "me?", "type": "word", "logprob": -0.03, "start": 2.22, "end": 2.48, "speaker_id": "speaker_1" },
+    { "text": "(laughs)", "type": "audio_event", "logprob": -0.4, "start": 2.5, "end": 2.9, "speaker_id": "speaker_1" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 2.9, "end": 3.1, "speaker_id": "speaker_0" },
+    { "text": "Yes,", "type": "word", "logprob": -0.02, "start": 3.1, "end": 3.32, "speaker_id": "speaker_0" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 3.32, "end": 3.35, "speaker_id": "speaker_0" },
+    { "text": "loud", "type": "word", "logprob": -0.04, "start": 3.35, "end": 3.6, "speaker_id": "speaker_0" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 3.6, "end": 3.62, "speaker_id": "speaker_0" },
+    { "text": "and", "type": "word", "logprob": -0.01, "start": 3.62, "end": 3.74, "speaker_id": "speaker_0" },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 3.74, "end": 3.76, "speaker_id": "speaker_0" },
+    { "text": "clear.", "type": "word", "logprob": -0.02, "start": 3.76, "end": 4.18, "speaker_id": "speaker_0" }
+  ],
+  "transcription_id": "fixture-system-0001",
+  "audio_duration_secs": 4.3
+}

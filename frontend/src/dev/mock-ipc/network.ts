@@ -55,6 +55,7 @@ const REGISTRY: readonly RegistryEntry[] = [
   { id: 'circleback', kind: 'integration', hosts: ['circleback.ai'] },
   { id: 'fireflies', kind: 'integration', hosts: ['api.fireflies.ai'] },
   { id: 'fathom', kind: 'integration', hosts: ['api.fathom.ai'] },
+  { id: 'elevenlabs', kind: 'integration', hosts: ['api.elevenlabs.io'] },
 ];
 
 /** The user's switches; services without one keep the Rust default. */

@@ -9,6 +9,8 @@
  * "Re-transcribe…".
  */
 import { RetranscribeDialog } from '@/components/MeetingDetails/RetranscribeDialog';
+import { CloudTranscriptMenuItems } from '@/features/cloud-transcription';
+import type { MeetingId } from '@/features/meetings';
 import { FolderOpen, ICON_PROPS, RotateCw } from '@/ui/icons';
 import { DropdownMenuItem } from '@/ui/menu';
 
@@ -24,12 +26,20 @@ export function useRecording(): LegacyRecording | null {
 
 /** Props of {@link RecordingMenuItems}. */
 export interface RecordingMenuItemsProps {
+  meetingId: MeetingId;
   recording: LegacyRecording | null;
   onRetranscribe: () => void;
 }
 
-/** "Re-transcribe…" and "Show recording in Finder". */
-export function RecordingMenuItems({ recording, onRetranscribe }: RecordingMenuItemsProps) {
+/**
+ * "Re-transcribe…", CAP-14's "Re-transcribe with ElevenLabs" (and "Restore
+ * local transcript") when they apply, and "Show recording in Finder".
+ */
+export function RecordingMenuItems({
+  meetingId,
+  recording,
+  onRetranscribe,
+}: RecordingMenuItemsProps) {
   const missing = recording === null;
   return (
     <>
@@ -37,6 +47,7 @@ export function RecordingMenuItems({ recording, onRetranscribe }: RecordingMenuI
         <RotateCw {...ICON_PROPS} />
         {meetingCopy.retranscribe}
       </DropdownMenuItem>
+      <CloudTranscriptMenuItems meetingId={meetingId} />
       <DropdownMenuItem
         disabled={missing}
         onSelect={() => {

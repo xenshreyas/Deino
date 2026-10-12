@@ -31,6 +31,7 @@ pub(super) fn stages(app: &AppHandle) -> Option<TranscriptStages> {
     Some(TranscriptStages {
         transcriber: track_transcriber(app, &settings),
         repass: settings,
+        cloud: super::cloud_transcription::cloud_choice(app),
         vocab_fixer: fixups,
     })
 }

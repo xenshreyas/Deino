@@ -6,13 +6,19 @@
 //! tracks; one with a live transcript is re-transcribed only with Settings →
 //! Transcription → "High-accuracy re-pass" on. A re-pass that keeps failing
 //! is skipped on its last attempt, so the live transcript still gets notes.
+//!
+//! With ElevenLabs turned on (CAP-14, the [`CloudChoice`] port), the cloud
+//! transcribes instead. A busy or unreachable service is retried; once the
+//! cloud fails for good, the run falls back to the Mac's rules above and
+//! the stage is skipped with "ElevenLabs transcription failed: …", so the
+//! transcript made on this Mac stays and the later stages still run.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::final_transcription::{
-    FinalOutcome, FinalPass, FinalSkip, FinalTranscriptionDeps, FinalTranscriptionError,
-    FinalTranscriptionService, TrackError,
+    CloudChoice, CloudError, FinalOutcome, FinalPass, FinalSkip, FinalTranscriptionDeps,
+    FinalTranscriptionError, FinalTranscriptionService, TrackError,
 };
 use deino_core::settings::SettingsService;
 use deino_domain::{ErrorClass, MeetingId, StageId};
@@ -52,6 +58,7 @@ impl RepassSetting for SettingsService {
 pub struct FinalTranscriptionStage {
     service: FinalTranscriptionService,
     repass: Arc<dyn RepassSetting>,
+    cloud: Arc<dyn CloudChoice>,
 }
 
 impl FinalTranscriptionStage {
@@ -63,11 +70,53 @@ impl FinalTranscriptionStage {
             writer: Arc::clone(&ports.segment_writer),
             speakers: Arc::clone(&ports.speakers),
             transcriber: Arc::clone(&ports.transcriber),
+            originals: Arc::clone(&ports.originals),
             clock: Arc::clone(&ports.clock),
         });
         Self {
             service,
             repass: Arc::clone(&ports.repass),
+            cloud: Arc::clone(&ports.cloud),
+        }
+    }
+
+    /// Runs the service with `pass`, stopping when the stage is cancelled.
+    async fn transcribe(
+        &self,
+        ctx: &StageCtx,
+        meeting: &MeetingId,
+        pass: &FinalPass,
+    ) -> Result<Result<FinalOutcome, FinalTranscriptionError>, StageError> {
+        tokio::select! {
+            biased;
+            () = ctx.cancel.cancelled() => Err(StageError::Cancelled),
+            outcome = self.service.run(meeting, pass) => Ok(outcome),
+        }
+    }
+
+    /// The cloud failed with `error`: retry while it may pass, else run the
+    /// Mac's rules and report the cloud's failure.
+    async fn cloud_failed(
+        &self,
+        ctx: &StageCtx,
+        meeting: &MeetingId,
+        (pass, error): (FinalPass, &CloudError),
+    ) -> Result<StageOutcome, StageError> {
+        if matches!(error, CloudError::Cancelled) {
+            return Err(StageError::Cancelled);
+        }
+        if error.is_retryable() && RetryPolicy::DEFAULT.allows_retry_after(ctx.attempt) {
+            return Err(StageError::retryable(error.code(), error.status()));
+        }
+        log::warn!(target: "pipeline", "cloud transcription of meeting {meeting} failed; keeping the Mac's transcript: {error}");
+        self.cloud.finished(meeting);
+        let local = FinalPass {
+            cloud: None,
+            ..pass
+        };
+        match self.transcribe(ctx, meeting, &local).await? {
+            Ok(_) => Ok(StageOutcome::Skipped(error.status())),
+            Err(local) => outcome_of(&local, ctx.attempt),
         }
     }
 }
@@ -87,13 +136,16 @@ impl PipelineStage for FinalTranscriptionStage {
     async fn run(&self, ctx: &StageCtx, meeting: MeetingId) -> Result<StageOutcome, StageError> {
         let pass = FinalPass {
             repass: self.repass.enabled().await,
+            cloud: self.cloud.for_meeting(&meeting).await,
             cancel: ctx.cancel.child_token(),
         };
-        let outcome = tokio::select! {
-            biased;
-            () = ctx.cancel.cancelled() => return Err(StageError::Cancelled),
-            outcome = self.service.run(&meeting, &pass) => outcome,
-        };
+        let outcome = self.transcribe(ctx, &meeting, &pass).await?;
+        if let Err(FinalTranscriptionError::Cloud(error)) = &outcome {
+            return self.cloud_failed(ctx, &meeting, (pass, error)).await;
+        }
+        if pass.cloud.is_some() {
+            self.cloud.finished(&meeting);
+        }
         match outcome {
             Ok(FinalOutcome::Written { .. }) => Ok(StageOutcome::Done),
             Ok(FinalOutcome::Skipped(skip)) => Ok(StageOutcome::Skipped(reason(skip))),

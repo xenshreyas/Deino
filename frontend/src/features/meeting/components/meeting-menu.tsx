@@ -48,6 +48,7 @@ function MenuItems(props: {
   return (
     <DropdownMenuContent align="end" className="w-60">
       <RecordingMenuItems
+        meetingId={meetingId}
         recording={props.recording}
         onRetranscribe={() => {
           onOpen('retranscribe');

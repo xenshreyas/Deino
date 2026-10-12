@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as Cloud from '@/lib/ipc/generated/cloud-transcription';
 import type * as Generated from '@/lib/ipc/generated/pipeline';
 import { createQueryClient } from '@/lib/ipc';
 
@@ -30,6 +31,11 @@ vi.mock('@/lib/ipc/generated/pipeline', () => ({
   commands: bindings.commands,
   events: bindings.events,
 }));
+
+const cloud = vi.hoisted(() => ({
+  retranscribe: vi.fn<typeof Cloud.commands.retranscribe>(),
+}));
+vi.mock('@/lib/ipc/generated/cloud-transcription', () => ({ commands: cloud }));
 
 const MEETING = 'meeting-1' as MeetingId;
 const NOTES = 'enhance_notes' as StageId;
@@ -103,6 +109,22 @@ describe('PipelineStatus', () => {
 
     expect(await screen.findByText('Writing notes…')).toBeDefined();
     expect(bindings.commands.rerun).toHaveBeenCalledWith(MEETING, NOTES);
+  });
+
+  it('shows a transcript that gave up on ElevenLabs, and Retry sends it again', async () => {
+    const transcript = 'final_transcription' as StageId;
+    const reason = 'ElevenLabs transcription failed: the API key was refused.';
+    stages([stage('skipped', reason, transcript), stage('succeeded')]);
+    cloud.retranscribe.mockResolvedValue({ status: 'ok', data: [] });
+    wrap(<PipelineStatus meetingId={MEETING} />);
+
+    expect(await screen.findByText(reason)).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: copy.retryStage('Transcript') }));
+
+    await waitFor(() => {
+      expect(cloud.retranscribe).toHaveBeenCalledWith(MEETING);
+    });
+    expect(bindings.commands.rerun).not.toHaveBeenCalled();
   });
 
   it('says so when a retry is refused', async () => {

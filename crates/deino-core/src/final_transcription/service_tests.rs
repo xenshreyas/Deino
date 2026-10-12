@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use deino_domain::{
-    ErrorCode, FakeClock, MeetingSource, MeetingStatus, Millis, PaletteColor, SpeakerId,
+    ErrorCode, FakeClock, MeetingSource, MeetingStatus, Millis, PaletteColor, SegmentId, SpeakerId,
 };
 use deino_testkit::at;
 
@@ -40,6 +40,7 @@ impl World {
             writer: segments.clone(),
             speakers: segments.clone(),
             transcriber: tracks.clone(),
+            originals: Arc::new(crate::final_transcription::FakeOriginalTranscripts::default()),
             clock: clock.clone(),
         });
         Self {
@@ -91,6 +92,7 @@ impl World {
     async fn run(&self, repass: bool) -> Result<FinalOutcome, FinalTranscriptionError> {
         let pass = FinalPass {
             repass,
+            cloud: None,
             cancel: CancellationToken::new(),
         };
         self.service.run(&meeting(), &pass).await
@@ -291,6 +293,7 @@ async fn a_missing_model_is_unavailable_and_a_missing_meeting_not_found() {
     world.tracks.without_model();
     let missing = FinalPass {
         repass: false,
+        cloud: None,
         cancel: CancellationToken::new(),
     };
 

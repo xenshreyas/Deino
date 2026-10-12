@@ -1,0 +1,21 @@
+{
+  "language_code": "en",
+  "language_probability": 0.98,
+  "text": "Let's start with the roadmap.",
+  "words": [
+    { "text": "Let's", "type": "word", "logprob": -0.03, "start": 5.02, "end": 5.3, "speaker_id": "speaker_0", "characters": null },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 5.3, "end": 5.33, "speaker_id": "speaker_0", "characters": null },
+    { "text": "start", "type": "word", "logprob": -0.01, "start": 5.33, "end": 5.61, "speaker_id": "speaker_0", "characters": null },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 5.61, "end": 5.64, "speaker_id": "speaker_0", "characters": null },
+    { "text": "with", "type": "word", "logprob": -0.01, "start": 5.64, "end": 5.8, "speaker_id": "speaker_0", "characters": null },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 5.8, "end": 5.82, "speaker_id": "speaker_0", "characters": null },
+    { "text": "the", "type": "word", "logprob": -0.01, "start": 5.82, "end": 5.92, "speaker_id": "speaker_0", "characters": null },
+    { "text": " ", "type": "spacing", "logprob": 0.0, "start": 5.92, "end": 5.94, "speaker_id": "speaker_0", "characters": null },
+    { "text": "roadmap.", "type": "word", "logprob": -0.06, "start": 5.94, "end": 6.55, "speaker_id": "speaker_0", "characters": null }
+  ],
+  "channel_index": null,
+  "additional_formats": null,
+  "transcription_id": "fixture-mic-0001",
+  "entities": null,
+  "audio_duration_secs": 6.8
+}

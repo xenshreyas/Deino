@@ -148,6 +148,8 @@ deino-export.workspace = true
 deino-eventkit.workspace = true
 # Importers from other note-takers and folders (CAP-12).
 deino-importers.workspace = true
+# Opt-in ElevenLabs transcription after the meeting (CAP-14).
+deino-cloud-transcription.workspace = true
 deino-llm.workspace = true
 # FND-12: every outbound request goes through deino-net's scoped clients.
 deino-net.workspace = true

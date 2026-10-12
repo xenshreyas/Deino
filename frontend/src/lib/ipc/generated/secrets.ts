@@ -169,7 +169,12 @@ export type SecretName =
 /**
  * A Fathom API key, for importing meetings (CAP-12).
  */
-"fathom_api_key"
+"fathom_api_key" | 
+/**
+ * The user's ElevenLabs API key, for transcription after the meeting
+ * (CAP-14).
+ */
+"elevenlabs_api_key"
 /**
  * Whether a secret is saved, as far as the UI may know.
  */

@@ -10,7 +10,7 @@ import { Button } from '@/ui/button';
 /** Short statements about where data lives, shown under the version. */
 const PRIVACY_POINTS: readonly string[] = [
   'Recording, transcription and storage run on this Mac.',
-  'Audio and transcripts never leave your computer.',
+  'Audio and transcripts leave your computer only if you turn on ElevenLabs transcription.',
   'Notes are sent only to the AI provider you choose.',
   'No telemetry, tracking or accounts.',
 ];

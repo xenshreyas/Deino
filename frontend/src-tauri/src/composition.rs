@@ -29,6 +29,7 @@ mod automations;
 mod briefs;
 pub(crate) mod browser;
 mod calendar;
+mod cloud_transcription;
 mod consent;
 mod detection;
 mod developer;

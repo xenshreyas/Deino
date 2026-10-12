@@ -167,6 +167,7 @@ fn final_service(
         writer: segments.clone(),
         speakers: segments.clone(),
         transcriber: Arc::new(OfflineTranscriber::new(engines, Arc::new(NativeDecoder))),
+        originals: Arc::new(deino_core::final_transcription::FakeOriginalTranscripts::default()),
         clock: clock.clone(),
     })
 }
@@ -187,6 +188,7 @@ impl MeetingStatusObserver for Transcribe {
         self.timings.mark();
         let pass = FinalPass {
             repass: false,
+            cloud: None,
             cancel: CancellationToken::new(),
         };
         let outcome = self.service.run(id, &pass).await;

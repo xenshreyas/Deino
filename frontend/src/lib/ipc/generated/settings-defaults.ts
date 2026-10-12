@@ -34,7 +34,9 @@ export const DEFAULT_SETTINGS: Settings = {
     "engine": "parakeet_unified",
     "model": "",
     "liveTranscription": true,
-    "highAccuracyRepass": false
+    "highAccuracyRepass": false,
+    "cloudProvider": "none",
+    "cloudModel": "scribe_v2"
   },
   "notifications": {
     "recordingNotifications": true,

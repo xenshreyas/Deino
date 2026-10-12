@@ -20,7 +20,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   thread, storing the mic, system and mixed paths with `set_audio` (skipped
   for meetings without a live recording folder); `final_transcription`
   (order 20, CAP-08) over `deino_core::final_transcription` and the
-  `TrackTranscriber` port (the re-pass setting through `RepassSetting`);
+  `TrackTranscriber` port (the re-pass setting through `RepassSetting`;
+  ElevenLabs through the `CloudChoice` port when the user opted in, CAP-14,
+  retried on 429/5xx/network, then falling back to the Mac with an
+  "ElevenLabs transcription failed: …" skip);
   `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService` (with the attendees' voiceprints);
   `identify_speakers` (order 35, CAP-04) over
@@ -54,7 +57,8 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   stages at once across meetings, retries with clock-driven backoff
   (`RetryPolicy`, 3 attempts), per-meeting cancellation, and a `TaskTracker`
   that owns every task.
-- `PipelineService`: `enqueue`, `rerun`, `status`, `cancel`, `start`
+- `PipelineService`: `enqueue`, `rerun`, `rerun_from` (a stage and every
+  later one), `status`, `cancel`, `start`
   (startup reconciliation), `shutdown`; and `PipelineTrigger`, the
   `MeetingStatusObserver` that enqueues meetings entering `processing`.
 - `PipelineProgress` and the `ProgressSink` port.

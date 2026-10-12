@@ -10,7 +10,7 @@ use deino_core::automations::AutomationRunner;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
-use deino_core::final_transcription::TrackTranscriber;
+use deino_core::final_transcription::{CloudChoice, SqliteOriginalTranscripts, TrackTranscriber};
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::followups::FollowUpDrafter;
 use deino_core::insights::InsightGenerator;
@@ -55,6 +55,8 @@ pub(crate) struct TranscriptStages {
     pub(crate) transcriber: Arc<dyn TrackTranscriber>,
     /// Settings → Transcription → "High-accuracy re-pass".
     pub(crate) repass: Arc<dyn RepassSetting>,
+    /// ElevenLabs, when the user turned it on or asked for it (CAP-14).
+    pub(crate) cloud: Arc<dyn CloudChoice>,
     /// The vocabulary's `FixupService`.
     pub(crate) vocab_fixer: Arc<dyn VocabFixer>,
 }
@@ -130,6 +132,8 @@ fn stage_ports(
         entities: adapters.ai.adapters.entities,
         transcriber: adapters.transcript.transcriber,
         repass: adapters.transcript.repass,
+        cloud: adapters.transcript.cloud,
+        originals: Arc::new(SqliteOriginalTranscripts::new(database.clone())),
         vocab_fixer: adapters.transcript.vocab_fixer,
         screen_context: adapters.screen_context,
     }

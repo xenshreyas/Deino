@@ -1,0 +1,1 @@
+{"detail":{"type":"authorization_error","code":"insufficient_permissions","message":"The API key you used is missing the permission user_read to execute this operation.","status":"missing_permissions","request_id":"req_fixture_403"}}
