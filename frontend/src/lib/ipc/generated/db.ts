@@ -283,7 +283,16 @@ export type Table =
 /**
  * Keys for the local REST API: a name, read or read-write, and only an argon2 hash of the secret.
  */
-"api_keys"
+"api_keys" | 
+/**
+ * An outbound webhook endpoint: where to POST, for which events, with which
+ * payload fields, and its failure streak (auto-disable).
+ */
+"webhooks" | 
+/**
+ * One message to one endpoint, kept across its retries; the delivery log.
+ */
+"webhook_deliveries"
 
 /** tauri-specta globals **/
 
