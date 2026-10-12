@@ -47,7 +47,7 @@ The ElevenLabs contract was checked against the official docs on
 
 1. **Local by default; ElevenLabs is opt-in and after the meeting only.**
    Live transcription stays Parakeet on the Mac. With a key saved and
-   Settings → Transcription → "Transcribe meetings with ElevenLabs after
+   Settings → Advanced → ElevenLabs → "Transcribe meetings with ElevenLabs after
    they end" on (`transcription.cloudProvider = "elevenlabs"`, model in
    `transcription.cloudModel`, default `scribe_v2`), each meeting is
    re-transcribed by ElevenLabs once it ends, and that transcript replaces

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { actionFor, calendarPermission, missingRequired } from './permission-actions';
+import { actionFor, calendarPermission, missingRequired, upfront } from './permission-actions';
 import type { PermissionStatus } from './types';
 
 describe('the permission row action', () => {
@@ -52,5 +52,15 @@ describe('the permissions recording needs', () => {
         status({ kind: 'accessibility', optional: true, state: 'denied' }),
       ]),
     ).toBe(false);
+  });
+});
+
+describe('the permissions setup asks for (UX-22)', () => {
+  it('are the microphone and system audio, nothing else', () => {
+    const all: PermissionStatus[] = (
+      ['screen_recording', 'system_audio', 'notifications', 'accessibility', 'microphone'] as const
+    ).map((kind) => ({ kind, state: 'unknown', optional: false }));
+
+    expect(upfront(all).map((status) => status.kind)).toEqual(['microphone', 'system_audio']);
   });
 });

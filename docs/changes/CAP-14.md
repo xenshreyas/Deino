@@ -16,19 +16,12 @@ ADR `2026-10-12-cloud-transcription-option`. New crate
 `original_transcripts` + retention trigger). `PipelineService::rerun_from`.
 Plugin `cloud-transcription`: `key_status`, `save_key`, `check_key`,
 `forget_key`, `retranscribe`, `has_original`, `restore_original`. UI:
-Settings → Transcription → "ElevenLabs (optional)"; the meeting ⋯ menu's
-"Re-transcribe with ElevenLabs" and "Restore local transcript"
-(`CloudTranscriptMenuItems`, see the merger note below); Retry beside
-"ElevenLabs transcription failed: …" in the processing strip.
-
-**Merger: one line to wire.** This branch does not see UX-05's
-`frontend/src/features/meeting/components/recording-menu-items.tsx`
-(`feat/UX-meeting-page`). Once both are in, add next to "Re-transcribe…" in
-`RecordingMenuItems`:
-`<CloudTranscriptMenuItems meetingId={meetingId} />` (import from
-`@/features/cloud-transcription`; it takes only the meeting ID and renders
-nothing without a saved key or a kept original). Until then the menu entry
-is not mounted; the Settings card, the automatic run and Retry work.
+Settings → Advanced → "ElevenLabs (optional)" (section `elevenlabs`,
+order 25, registered from `features/cloud-transcription/settings-page.ts`);
+the meeting ⋯ menu's "Re-transcribe with ElevenLabs" and "Restore local
+transcript" (`CloudTranscriptMenuItems`, next to "Re-transcribe…" in
+`recording-menu-items.tsx`); the header's status line shows
+"ElevenLabs transcription failed: …" with Retry (`PipelineStatus`).
 
 ## Follow-ups (PARITY_PLAN §7.2)
 - New card: Scribe v2 Realtime for live captions (out of scope by owner decision).
@@ -39,8 +32,6 @@ is not mounted; the Settings card, the automatic run and Retry work.
 - TRN-05: send the vocabulary as Scribe `keyterms` (20% surcharge; needs a decision).
 - CAP-14: persist one-off "Re-transcribe with ElevenLabs" requests (held in
   memory today; quitting mid-run falls back to the setting).
-- UX-34 / Settings IA: the card sits on Transcription today; the plan's
-  Advanced page may move it.
 
 ## Architecture (ARCHITECTURE.md)
 - Rust workspace table: add `crates/deino-cloud-transcription` — opt-in

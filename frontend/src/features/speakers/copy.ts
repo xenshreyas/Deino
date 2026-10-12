@@ -2,7 +2,6 @@
 export const speakersCopy = {
   // Participants panel.
   panelLabel: 'Speakers',
-  emptyTitle: 'No speakers yet',
   emptyBody: 'Once the recording is processed, each voice is listed here with how long it spoke.',
   loadError: 'Could not load the speakers.',
   retry: 'Try again',
@@ -30,7 +29,6 @@ export const speakersCopy = {
   noMatches: 'Type a name to add someone new.',
   meBadge: 'You',
   // Outcomes.
-  renamed: (name: string) => `Named ${name}`,
   remembered: (name: string) => `Deino will recognise ${name}’s voice next time.`,
   merged: 'Speakers merged',
   renameFailed: 'Could not rename the speaker',
@@ -42,11 +40,13 @@ export const speakersCopy = {
   regenerating: 'Regenerating notes',
   regenerateFailed: 'Could not regenerate the notes',
   dismissNotice: 'Dismiss',
-  // Settings → People.
+  // Settings → Recording → Speakers, and Advanced → Voices.
+  settingsTitle: 'Speakers',
+  settingsBody: 'Who said what, named on this Mac.',
   settingsIdentifyTitle: 'Recognise speakers by voice',
   settingsIdentifyBody:
     'After each meeting, Deino names the voices it knows and asks about the ones it is unsure of. Voices never leave this Mac.',
-  profilesTitle: 'Voice profiles',
+  profilesTitle: 'Voices',
   profilesBody:
     'Saved when you name a speaker for all of their segments. Each person keeps their five clearest samples.',
   profilesEmptyTitle: 'No voice profiles yet',
@@ -64,6 +64,5 @@ export const speakersCopy = {
     'Deino will stop recognising them in new meetings. Names already given to speakers stay.',
   forgetConfirm: 'Forget voice',
   cancel: 'Cancel',
-  forgotten: 'Voice profile deleted',
   deleteFailed: 'Could not delete the voice profile',
 } as const;

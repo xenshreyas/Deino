@@ -1,8 +1,9 @@
 /**
- * Settings → Meeting detection (CAP-06): detection on or off, the
- * auto-start countdown, and the apps that never prompt. Values live in the
- * typed settings (`detection`); the detection feature reports what this Mac
- * supports (Accessibility for browser URLs).
+ * Settings → Recording → Meeting detection (CAP-06): detection on or off,
+ * then under "More options" (UX-15) the auto-start countdown and the apps
+ * that never prompt. Values live in the typed settings (`detection`); the
+ * detection feature reports what this Mac supports (Accessibility for
+ * browser URLs, linked to the Permissions card, UX-10).
  */
 import type { ReactNode } from 'react';
 
@@ -10,11 +11,16 @@ import { detectionCopy, type IgnoredApp, useDetectionOverview } from '@/features
 import { Label, Switch } from '@/ui/controls';
 import { IconButton } from '@/ui/icon-button';
 import { ICON_PROPS, Info, X } from '@/ui/icons';
+import { MoreOptions } from '@/ui/more-options';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
+
+import { permissionLinkCopy } from '../copy';
 
 import { usePatchSettings, useSettings } from '../queries';
 import type { Settings } from '../types';
+import { PermissionLink } from './permission-link';
 
 const copy = detectionCopy.settings;
 
@@ -109,12 +115,17 @@ function AutoStartControls({
   );
 }
 
-/** Detection and auto-start, in one card. */
-function BehaviourCard({ detection }: { detection: Settings['detection'] }) {
+/** Saves a change to the detection section as a merge patch. */
+function useSaveDetection(): SaveDetection {
   const patch = usePatchSettings();
-  const save: SaveDetection = (change) => {
+  return (change) => {
     patch.mutate({ detection: change });
   };
+}
+
+/** The one everyday switch: detection on or off. */
+function DetectCard({ detection }: { detection: Settings['detection'] }) {
+  const save = useSaveDetection();
   return (
     <div className="divide-y divide-border rounded-lg border border-border bg-surface">
       <SettingRow
@@ -131,6 +142,15 @@ function BehaviourCard({ detection }: { detection: Settings['detection'] }) {
           />
         }
       />
+    </div>
+  );
+}
+
+/** Auto-start with its countdown, under "More options". */
+function AutoStartCard({ detection }: { detection: Settings['detection'] }) {
+  const save = useSaveDetection();
+  return (
+    <div className="divide-y divide-border rounded-lg border border-border bg-surface">
       <SettingRow
         id="detection-auto-start"
         label={copy.autoStartTitle}
@@ -176,35 +196,49 @@ function IgnoredApps({ apps }: { apps: readonly IgnoredApp[] }) {
   );
 }
 
-/** A quiet note under the switches: what this Mac can or cannot do. */
-function SupportNote() {
+/**
+ * A quiet line under the switch: "Needs Accessibility" while browser calls
+ * cannot be recognised quickly, or that this Mac cannot detect meetings.
+ */
+function SupportNote({ enabled }: { enabled: boolean }) {
   const { data: overview } = useDetectionOverview();
-  if (overview === undefined || (overview.supported && overview.readsBrowserUrls)) return null;
-  return (
-    <p className="flex items-start gap-2 text-xs text-fg-muted">
-      <Info {...ICON_PROPS} className="mt-px shrink-0" />
-      {overview.supported ? copy.browserHint : copy.unsupported}
-    </p>
+  if (overview === undefined || !enabled) return null;
+  if (!overview.supported) {
+    return (
+      <p className="flex items-start gap-2 px-1 text-xs text-fg-muted">
+        <Info {...ICON_PROPS} className="mt-px shrink-0" />
+        {copy.unsupported}
+      </p>
+    );
+  }
+  return overview.readsBrowserUrls ? null : (
+    <PermissionLink permission={permissionLinkCopy.accessibility} />
   );
 }
 
-/** Settings → Meeting detection. */
+/** Settings → Recording → Meeting detection. */
 export function DetectionSettingsPage() {
   const { data: settings } = useSettings();
-  if (settings === undefined) return <SkeletonText lines={4} />;
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-2">
-        <BehaviourCard detection={settings.detection} />
-        <SupportNote />
-      </section>
-      <section aria-labelledby="detection-ignored" className="flex flex-col gap-2">
-        <h3 id="detection-ignored" className="text-sm font-semibold text-fg">
-          {copy.ignoredTitle}
-        </h3>
-        <p className="text-xs text-fg-muted">{copy.ignoredDescription}</p>
-        <IgnoredApps apps={settings.detection.ignoredApps} />
-      </section>
-    </div>
+    <SettingsSection title={copy.sectionTitle} description={copy.sectionDescription}>
+      {settings === undefined ? (
+        <SkeletonText lines={2} />
+      ) : (
+        <>
+          <DetectCard detection={settings.detection} />
+          <SupportNote enabled={settings.detection.enabled} />
+          <MoreOptions>
+            <AutoStartCard detection={settings.detection} />
+            <section aria-labelledby="detection-ignored" className="flex flex-col gap-2">
+              <h4 id="detection-ignored" className="text-sm font-semibold text-fg">
+                {copy.ignoredTitle}
+              </h4>
+              <p className="text-xs text-fg-muted">{copy.ignoredDescription}</p>
+              <IgnoredApps apps={settings.detection.ignoredApps} />
+            </section>
+          </MoreOptions>
+        </>
+      )}
+    </SettingsSection>
   );
 }

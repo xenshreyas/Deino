@@ -1,20 +1,11 @@
-/** Settings → Vocabulary: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { SpellCheck } from '@/ui/icons';
+/** Settings → Notes → Spelling: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { VocabularySettings } from './components/vocabulary-settings';
 
-export const settingsPages = [
-  {
-    id: 'vocabulary',
-    group: 'capture',
-    order: 40,
-    icon: SpellCheck,
-    label: 'Vocabulary',
-    description: 'Names and terms Deino should spell your way, and replacements.',
-    Component: VocabularySettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'vocabulary', page: 'notes', order: 30, Component: VocabularySettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

@@ -1,20 +1,11 @@
-/** Settings → Export: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Download } from '@/ui/icons';
+/** Settings → Connections → Auto-export and Export everything: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { ExportSettingsPage } from './components/export-settings';
 
-export const settingsPages = [
-  {
-    id: 'export',
-    group: 'data',
-    order: 20,
-    icon: Download,
-    label: 'Export',
-    description: 'Notes into a folder after every meeting, and every meeting at once.',
-    Component: ExportSettingsPage,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'export', page: 'connections', order: 20, Component: ExportSettingsPage },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

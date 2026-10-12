@@ -3,7 +3,6 @@
  * reads, and (when editing) whether Deino may apply it.
  */
 import { type FormEvent, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/ui/button';
 import { Label, Switch } from '@/ui/controls';
@@ -36,16 +35,13 @@ function draftOf(target: Exclude<TagDialogTarget, null>): Draft {
 function useSaveTag(target: Exclude<TagDialogTarget, null>, onDone: () => void) {
   const create = useCreateTag();
   const update = useUpdateTag();
-  const done = (message: string) => () => {
-    toast.success(message);
-    onDone();
-  };
+  // The tag list shows the change (UX-32: no toast).
   const save = (draft: Draft) => {
     if (target.kind === 'new') {
       const tag = { name: draft.name, color: draft.color, description: draft.description };
-      create.mutate(tag, { onSuccess: done(tagsCopy.created) });
+      create.mutate(tag, { onSuccess: onDone });
     } else {
-      update.mutate({ id: target.tag.id, update: draft }, { onSuccess: done(tagsCopy.saved) });
+      update.mutate({ id: target.tag.id, update: draft }, { onSuccess: onDone });
     }
   };
   const pending = target.kind === 'new' ? create : update;

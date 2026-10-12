@@ -1,6 +1,8 @@
 /**
- * The onboarding step machine (FND-11): six steps in a fixed order, each
+ * The onboarding step machine (FND-11): five steps in a fixed order, each
  * finished or skipped, with the progress saved in `Settings.onboarding`.
+ * Setup ends after Profile (UX-24): the test recording and the sample
+ * meeting moved to Home's first-run state.
  *
  * {@link transition} is pure, so every rule is unit-tested here and the
  * components only dispatch {@link OnboardingAction}s. Nothing is ever
@@ -15,11 +17,19 @@ export const STEPS = [
   'ai_setup',
   'calendar',
   'profile',
-  'try_it',
 ] as const satisfies readonly OnboardingStep[];
 
+/** A step the flow shows. */
+export type SetupStep = (typeof STEPS)[number];
+
+/**
+ * Steps Rust still knows (old progress may name them) that the flow no
+ * longer shows: `try_it` moved to Home (UX-24).
+ */
+type RetiredStep = 'try_it';
+
 /** Fails to compile if Rust adds a step that {@link STEPS} does not list. */
-type MissingStep = Exclude<OnboardingStep, (typeof STEPS)[number]>;
+type MissingStep = Exclude<OnboardingStep, SetupStep | RetiredStep>;
 const everyStepListed: MissingStep extends never ? true : never = true;
 void everyStepListed;
 
@@ -32,7 +42,7 @@ export type OnboardingAction =
   /** Went back one step. */
   | { type: 'back' }
   /** Jumped to a step. */
-  | { type: 'open'; step: OnboardingStep }
+  | { type: 'open'; step: SetupStep }
   /** Left setup for the app, skipping whatever is left. */
   | { type: 'finish' }
   /** Reopened setup from Settings. */
@@ -41,18 +51,25 @@ export type OnboardingAction =
 /** Progress before anything happened: a fresh install. */
 export const FRESH: OnboardingSettings = { completed: false, step: 'welcome', outcomes: {} };
 
+/** Whether the flow shows `step`; a retired one (saved by an older version) it does not. */
+export function isSetupStep(step: OnboardingStep): step is SetupStep {
+  return STEPS.some((candidate) => candidate === step);
+}
+
 /** The step's position in {@link STEPS}. */
-export function stepIndex(step: OnboardingStep): number {
+export function stepIndex(step: SetupStep): number {
   return STEPS.indexOf(step);
 }
 
-/** The step after `step`, or `null` after the last one. */
+/** The step after `step`, or `null` after the last one (or a retired step). */
 function nextStep(step: OnboardingStep): OnboardingStep | null {
+  if (!isSetupStep(step)) return null;
   return STEPS[stepIndex(step) + 1] ?? null;
 }
 
 /** The step before `step`, or `step` itself when it is the first. */
 function previousStep(step: OnboardingStep): OnboardingStep {
+  if (!isSetupStep(step)) return step;
   return STEPS[stepIndex(step) - 1] ?? step;
 }
 
@@ -71,13 +88,13 @@ function leave(progress: OnboardingSettings, outcome: StepOutcome): OnboardingSe
  * The first step that still has something to do, ignoring the welcome
  * screen; the permissions step when every step is done.
  */
-export function firstUnfinished(progress: OnboardingSettings): OnboardingStep {
+export function firstUnfinished(progress: OnboardingSettings): SetupStep {
   const pending = STEPS.find((step) => step !== 'welcome' && progress.outcomes[step] !== 'done');
   return pending ?? 'permissions';
 }
 
 /** The steps the user skipped or never reached, welcome excluded. */
-export function unfinishedSteps(progress: OnboardingSettings): OnboardingStep[] {
+export function unfinishedSteps(progress: OnboardingSettings): SetupStep[] {
   return STEPS.filter((step) => step !== 'welcome' && progress.outcomes[step] !== 'done');
 }
 

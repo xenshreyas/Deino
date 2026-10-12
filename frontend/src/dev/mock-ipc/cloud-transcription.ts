@@ -19,7 +19,7 @@ const originals = new Set<MeetingId>();
 const missingKey = () =>
   failure<never>({
     code: 'unavailable',
-    message: 'Save your ElevenLabs API key in Settings → Transcription first.',
+    message: 'Save your ElevenLabs API key in Settings → Advanced → ElevenLabs first.',
   });
 
 export const commands = {

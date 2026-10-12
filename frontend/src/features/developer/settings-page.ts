@@ -1,20 +1,11 @@
-/** Settings → Developer: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Wrench } from '@/ui/icons';
+/** Settings → Advanced → Developer: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { DeveloperSettings } from './components/developer-settings';
 
-export const settingsPages = [
-  {
-    id: 'developer',
-    group: 'more',
-    order: 30,
-    icon: Wrench,
-    label: 'Developer',
-    description: 'The deino command-line tool, and Claude Code access to your meetings.',
-    Component: DeveloperSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'developer', page: 'advanced', order: 70, Component: DeveloperSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

@@ -15,17 +15,19 @@ test('a suggested follow-up goes from Home to the editor, then is dismissed for 
   await shootBothThemes(page, 'followups-home');
 
   await section.getByRole('link', { name: SALES.title }).click();
-  const banner = page.getByRole('region', { name: 'Follow-up email ready' });
-  await expect(banner).toBeVisible();
-  await shootBothThemes(page, 'followups-banner');
+  const chip = page.getByRole('button', { name: 'Follow-up email ready' });
+  await expect(chip).toBeVisible();
+  await shootBothThemes(page, 'followups-chip');
 
-  await banner.getByRole('button', { name: 'View draft' }).click();
+  await chip.click();
+  await page.getByRole('menuitem', { name: 'View draft' }).click();
   const editor = page.getByRole('dialog', { name: 'Follow-up email' });
   await expect(editor.getByLabel('To')).toHaveValue(
     'marcus.webb@brightkite-logistics.com, hannah.pike@brightkite-logistics.com',
   );
   await expect(editor.getByText('3 gaps to fill')).toBeVisible();
-  await expect(editor.getByRole('button', { name: /Send via Gmail or Outlook/ })).toBeDisabled();
+  // UX-27: sending from Deino is hidden until the mail integrations ship.
+  await expect(editor.getByRole('button', { name: /Send via Gmail or Outlook/ })).toHaveCount(0);
   await shootBothThemes(page, 'followups-editor');
 
   await editor.getByRole('button', { name: 'Cc', exact: true }).click();
@@ -34,8 +36,7 @@ test('a suggested follow-up goes from Home to the editor, then is dismissed for 
   await page.keyboard.press('Escape');
   await expect(editor).toBeHidden();
 
-  await banner.getByRole('button', { name: 'Dismiss' }).click();
-  await expect(banner.getByText('Dismiss for good?', { exact: false })).toBeVisible();
-  await banner.getByRole('button', { name: 'Dismiss' }).click();
-  await expect(banner).toBeHidden();
+  await chip.click();
+  await page.getByRole('menuitem', { name: 'Dismiss for good' }).click();
+  await expect(chip).toBeHidden();
 });

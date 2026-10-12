@@ -48,9 +48,8 @@ export function OllamaDownloadProvider({ children }: { children: React.ReactNode
       return;
     }
     setDownloadProgress((previous) => withProgress(previous, model, null));
-    if (status.kind === 'done') {
-      toast.success(`Model ${model} downloaded!`, { description: 'Model is now ready to use', duration: 4000 });
-    } else {
+    // UX-31: a finished download is quiet (the list shows it); only a failure says so.
+    if (status.kind !== 'done') {
       toast.error(`Download failed: ${model}`, { description: status.message, duration: 6000 });
     }
   });

@@ -27,11 +27,9 @@ export const cloudCopy = {
   } satisfies Record<CloudTranscriptionModel, string>,
   switchLabel: 'Transcribe meetings with ElevenLabs after they end',
   switchNeedsKey: 'Save an API key first.',
-  saveFailed: 'Could not save that change.',
+  saveFailed: 'That change couldn’t be saved. Try again.',
   retranscribe: 'Re-transcribe with ElevenLabs',
   restore: 'Restore local transcript',
   retranscribeFailed: 'Could not start ElevenLabs transcription.',
   restoreFailed: 'Could not restore the local transcript.',
-  retry: 'Retry',
-  retryLabel: 'Retry ElevenLabs transcription',
 } as const;

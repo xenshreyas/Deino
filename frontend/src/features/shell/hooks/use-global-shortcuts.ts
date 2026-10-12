@@ -1,9 +1,7 @@
 import { useRouter } from '@tanstack/react-router';
-import { toast } from 'sonner';
 
 import { useMountEffect } from '@/hooks/useMountEffect';
 
-import { shellCopy } from '../copy';
 import { useShellLayout } from '../layout-store';
 import { requestRecordingStart } from '../recording';
 import { findShortcut, isTypingTarget, type ShortcutId } from '../shortcuts';
@@ -21,10 +19,10 @@ function runShortcut(id: ShortcutId, router: Router): void {
     palette: () => {
       layout.setPaletteOpen(!layout.paletteOpen);
     },
-    // D13: Ask Deino (AI-02) is deprioritised; ⌘J says so instead of
-    // opening an empty chat bar.
+    // UX-27: Ask Deino (AI-02) is hidden until it ships; `findShortcut`
+    // never matches ⌘J, so this opens the chat bar once it is turned on.
     chat: () => {
-      toast(shellCopy.chatSoonToast);
+      layout.setChatOpen(true);
     },
     newNote: goHome,
     record: () => {
@@ -48,7 +46,7 @@ function handleKeyDown(event: KeyboardEvent, router: Router): void {
 }
 
 /**
- * Binds the global shortcuts (⌘K, ⌘J, ⌘N, ⌘⇧R, ⌘, and the `[` `]` panel
+ * Binds the global shortcuts (⌘K, ⌘N, ⌘⇧R, ⌘, and the `[` `]` panel
  * toggles) for the lifetime of the shell.
  */
 export function useGlobalShortcuts(): void {

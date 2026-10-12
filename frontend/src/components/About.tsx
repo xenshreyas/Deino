@@ -31,12 +31,14 @@ export function About() {
   }, []);
 
   return (
-    <div className="p-4 space-y-5">
-      <div className="text-center space-y-1">
-        <img src="/icon_128x128.png" alt="Deino" width={64} height={64} className="mx-auto mb-2" />
-        <h1 className="text-lg font-semibold text-fg">Deino</h1>
-        {currentVersion && <p className="text-sm text-fg-muted">Version {currentVersion}</p>}
-        <p className="text-sm text-fg-muted">A private, local-first AI meeting notepad.</p>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-4">
+        <img src="/icon_128x128.png" alt="" width={48} height={48} />
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-sm font-semibold text-fg">Deino</h3>
+          {currentVersion && <p className="text-xs text-fg-muted">Version {currentVersion}</p>}
+          <p className="text-xs text-fg-muted">A private, local-first AI meeting notepad.</p>
+        </div>
       </div>
 
       <ul className="space-y-1.5 text-sm text-fg-muted">
@@ -50,7 +52,7 @@ export function About() {
 
       <ModelLicenceNotice />
 
-      <div className="pt-3 border-t border-border text-center">
+      <div className="pt-4 border-t border-border">
         {updatesEnabled === false && (
           <p className="text-xs text-fg-muted">
             Automatic updates are off in this build. Install new versions manually.
@@ -94,7 +96,7 @@ function UpdateCheck() {
         ) : (
           <CheckCircle2 className="h-3 w-3 mr-2" />
         )}
-        {isChecking ? 'Checking...' : 'Check for Updates'}
+        {isChecking ? 'Checking…' : 'Check for updates'}
       </Button>
       {updateInfo?.available && (
         <p className="mt-2 text-xs text-accent">Update available: v{updateInfo.version}</p>

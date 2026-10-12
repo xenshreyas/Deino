@@ -1,6 +1,7 @@
 /**
- * Settings → Privacy → Network (FND-12): offline mode, which services may
- * send, and what has left the Mac.
+ * Settings → Privacy → Network (FND-12): offline mode and what has left the
+ * Mac. Which services may send is Settings → Advanced (UX-14,
+ * {@link ServicesSection}).
  *
  * Offline mode is a plain setting (`network.offlineMode`), so the settings
  * feature owns its state and passes it in; this feature owns the services
@@ -8,10 +9,10 @@
  */
 import { Switch } from '@/ui/controls';
 
+import { SettingsCard, SettingsSection } from '@/ui/settings-section';
+
 import { networkCopy } from '../copy';
 import { EgressLogSection } from './egress-log';
-import { ServicesSection } from './service-list';
-import { SettingsCard } from '@/ui/settings-section';
 
 /** Props of {@link NetworkSettings}. */
 export interface NetworkSettingsProps {
@@ -42,12 +43,16 @@ function OfflineModeCard({ offlineMode, onOfflineModeChange }: NetworkSettingsPr
   );
 }
 
-/** The Network page. */
+/** Offline mode, then what left this Mac. */
 export function NetworkSettings(props: NetworkSettingsProps) {
   return (
     <div className="flex flex-col gap-8">
-      <OfflineModeCard {...props} />
-      <ServicesSection />
+      <SettingsSection
+        title={networkCopy.offline.sectionTitle}
+        description={networkCopy.offline.sectionDescription}
+      >
+        <OfflineModeCard {...props} />
+      </SettingsSection>
       <EgressLogSection />
     </div>
   );

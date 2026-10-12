@@ -2,7 +2,8 @@
  * How a note looks: a status row (the quiet "Saved", plus whatever the page
  * puts on the right), then the document itself, scrolling, with room below
  * the last line so writing never happens at the window's bottom edge.
- * Clicking the blank space under the text puts the caret at the end.
+ * Clicking the blank space under the text puts the caret at the end. The
+ * page's `footer` (insight answers, screen images) follows the document.
  */
 import { EditorContent } from '@tiptap/react';
 import type { ReactNode } from 'react';
@@ -19,10 +20,12 @@ export interface NoteSurfaceProps {
   handle: NoteEditorHandle;
   /** Controls at the right of the status row (the Enhanced / My notes switch). */
   toolbar?: ReactNode;
+  /** What follows the note inside its scroll. */
+  footer?: ReactNode;
 }
 
 /** The editor and its status row. */
-export function NoteSurface({ handle, toolbar }: NoteSurfaceProps) {
+export function NoteSurface({ handle, toolbar, footer }: NoteSurfaceProps) {
   const { editor, mentions, templates, status } = handle;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -41,6 +44,7 @@ export function NoteSurface({ handle, toolbar }: NoteSurfaceProps) {
         <MentionHoverZone>
           <EditorContent editor={editor} />
         </MentionHoverZone>
+        {footer === undefined ? null : <div className="cursor-auto">{footer}</div>}
       </div>
       <MentionMenu store={mentions} />
       <TemplateMenu store={templates} />

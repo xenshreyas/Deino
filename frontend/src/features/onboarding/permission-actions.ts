@@ -4,7 +4,7 @@
  */
 import type { CalendarAccess } from '@/features/calendar';
 
-import type { PermissionState, PermissionStatus } from './types';
+import type { PermissionKind, PermissionState, PermissionStatus } from './types';
 
 /** The one button a permission row shows. */
 export type RowAction =
@@ -51,4 +51,17 @@ export function calendarPermission(access: CalendarAccess): PermissionState {
 /** Whether a permission recording needs is still refused or unanswered. */
 export function missingRequired(statuses: readonly PermissionStatus[]): boolean {
   return statuses.some((status) => !status.optional && actionFor(status.state) !== 'none');
+}
+
+/**
+ * The permissions setup asks for (UX-22): only what recording needs. The
+ * rest are asked where they matter: Accessibility on the first Zoom, Teams
+ * or Meet call, Notifications beside the first upcoming meeting, Screen
+ * Recording when screen capture is turned on.
+ */
+export const UPFRONT_PERMISSIONS: readonly PermissionKind[] = ['microphone', 'system_audio'];
+
+/** The statuses setup shows, in {@link UPFRONT_PERMISSIONS} order. */
+export function upfront(statuses: readonly PermissionStatus[]): PermissionStatus[] {
+  return UPFRONT_PERMISSIONS.flatMap((kind) => statuses.filter((status) => status.kind === kind));
 }

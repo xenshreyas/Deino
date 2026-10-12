@@ -1,7 +1,8 @@
 /**
  * The ⌘J chat bar, as a placeholder until Ask Deino (AI-02) ships: the
  * floating "Ask anything" pill of ui.md §3 Chat bar, read-only, with a
- * one-line note. Escape or ⌘J closes it.
+ * one-line note. Escape or ⌘J closes it. Not mounted while Ask Deino is
+ * unfinished (UX-27: ship it or hide it); the shell mounts it again with AI-02.
  */
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 

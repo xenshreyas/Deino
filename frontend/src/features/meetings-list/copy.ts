@@ -6,10 +6,11 @@ const plural = (count: number, one: string, many: string) =>
 export const copy = {
   title: 'Meetings',
   newNote: 'New note',
+  tagsNav: 'Tags',
+  importRecording: 'Import',
   loadError: 'Your meetings could not be loaded.',
   retry: 'Try again',
   loadMore: 'Loading more…',
-  saved: 'Saved',
   today: 'Today',
   yesterday: 'Yesterday',
   emptyTitle: 'No meetings yet',
@@ -76,8 +77,6 @@ export const copy = {
       `Running “${name}” on ${plural(count, 'meeting', 'meetings')}`,
     delete: 'Delete',
     clear: 'Clear selection',
-    tagged: (count: number) => `Tagged ${plural(count, 'meeting', 'meetings')}`,
-    filed: (count: number) => `Added ${plural(count, 'meeting', 'meetings')} to the folder`,
     failed: 'That did not work. Try again.',
   },
   trash: {
@@ -89,13 +88,11 @@ export const copy = {
     moved: (count: number) => `Moved ${plural(count, 'meeting', 'meetings')} to the trash`,
     undo: 'Undo',
     restore: 'Restore',
-    restored: (count: number) => `Restored ${plural(count, 'meeting', 'meetings')}`,
     deleteForever: 'Delete forever',
     confirmTitle: (count: number) => `Delete ${plural(count, 'meeting', 'meetings')} forever?`,
     confirmDescription:
       'Their transcripts, notes and recordings will be deleted. This cannot be undone.',
     cancel: 'Cancel',
-    deleted: (count: number) => `Deleted ${plural(count, 'meeting', 'meetings')} forever`,
     purgesIn: (days: number) =>
       days <= 0 ? 'Deleted today' : `Deleted in ${plural(days, 'day', 'days')}`,
   },
@@ -106,7 +103,6 @@ export const copy = {
     regenerate: 'The AI notes will offer to regenerate once you open the merged meeting.',
     confirm: 'Merge',
     cancel: 'Cancel',
-    done: 'Meetings merged',
     open: 'Open',
     needsTwo: 'Select at least two meetings to merge.',
   },

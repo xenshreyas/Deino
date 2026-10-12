@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as Calendar from '@/lib/ipc/generated/calendar';
@@ -136,13 +136,17 @@ describe('OnboardingFlow', () => {
     expect(await screen.findByRole('heading', { name: 'Permissions' })).toBeTruthy();
   });
 
-  it('shows every permission with the button that moves it forward', async () => {
+  it('asks only for what recording needs: the microphone and system audio (UX-21, UX-22)', async () => {
     renderFlow({ ...FRESH, step: 'permissions' });
 
-    expect(await screen.findByText('Titles and attendees for your meetings.')).toBeTruthy();
-    expect(screen.getByText('Not checked yet')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Allow' })).toHaveLength(3);
-    expect(screen.getByRole('button', { name: 'Open System Settings' })).toBeTruthy();
+    expect(await screen.findByText('Not checked yet')).toBeTruthy();
+    const list = screen.getByRole('list', { name: 'Permissions' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Allow' })).toHaveLength(1);
+    for (const name of ['Calendar', 'Notifications', 'Accessibility', 'Screen Recording']) {
+      expect(within(list).queryByText(name)).toBeNull();
+    }
+    expect(screen.queryByRole('button', { name: 'Open System Settings' })).toBeNull();
   });
 
   it('asks for a permission and shows the answer', async () => {
@@ -166,14 +170,15 @@ describe('OnboardingFlow', () => {
     expect(await screen.findByRole('heading', { name: 'Welcome to Deino' })).toBeTruthy();
   });
 
-  it('completes when the last step is skipped', async () => {
-    renderFlow({ ...FRESH, step: 'try_it' });
+  it('completes when the last step, Profile, is skipped (UX-24)', async () => {
+    renderFlow({ ...FRESH, step: 'profile' });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+    expect(await screen.findByRole('list', { name: 'Step 5 of 5' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
 
     await waitFor(() => {
       expect(bindings.settings.patch).toHaveBeenCalledWith({
-        onboarding: { completed: true, step: 'try_it', outcomes: { try_it: 'skipped' } },
+        onboarding: { completed: true, step: 'profile', outcomes: { profile: 'skipped' } },
       });
     });
   });
@@ -189,7 +194,7 @@ describe('OnboardingFlow', () => {
 
     await waitFor(() => {
       expect(bindings.settings.patch).toHaveBeenCalledWith({
-        onboarding: { completed: false, step: 'try_it', outcomes: { profile: 'done' } },
+        onboarding: { completed: true, step: 'profile', outcomes: { profile: 'done' } },
       });
     });
     expect(bindings.profile.update).toHaveBeenCalledWith(
@@ -221,26 +226,6 @@ describe('OnboardingFlow', () => {
 
     expect((await screen.findByRole('alert')).textContent).toContain('disk full');
     expect(bindings.settings.patch).not.toHaveBeenCalled();
-  });
-
-  it('opens the sample meeting and finishes setup', async () => {
-    bindings.onboarding.importSample.mockResolvedValue({
-      status: 'ok',
-      data: 'meeting-sample' as Onboarding.MeetingId,
-    });
-    renderFlow({ ...FRESH, step: 'try_it' });
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
-
-    await waitFor(() => {
-      expect(bindings.navigate).toHaveBeenCalledWith({
-        to: '/meetings/$meetingId',
-        params: { meetingId: 'meeting-sample' },
-      });
-    });
-    expect(bindings.settings.patch).toHaveBeenCalledWith({
-      onboarding: { completed: true, step: 'try_it', outcomes: { try_it: 'done' } },
-    });
   });
 
   it('waits for a move to be saved before taking the next one', async () => {

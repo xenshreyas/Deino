@@ -1,208 +1,182 @@
 /**
- * The settings feature's own pages: the inherited panels FND-06 has not
- * moved yet, and the pages that combine several features' sections. Other
- * pages register from their feature's `settings-page.tsx`.
+ * The settings feature's registrations (REG-02, UX-19): the nine host pages
+ * every feature places its sections on, and the settings feature's own
+ * sections, including the inherited panels FND-06 has not moved yet.
+ * Other sections register from their feature's `settings-page.tsx`.
  */
 import { About } from '@/components/About';
-import { BetaSettings } from '@/components/BetaSettings';
-import { PreferenceSettings } from '@/components/PreferenceSettings';
-import { RecordingSettings } from '@/components/RecordingSettings';
-import { SummaryModelSettings } from '@/components/SummaryModelSettings';
-import { TranscriptSettings } from '@/components/TranscriptSettings';
-import { useConfig } from '@/contexts/ConfigContext';
-import { appearanceCopy, ThemePicker } from '@/features/appearance';
-import { ElevenLabsSettings } from '@/features/cloud-transcription';
+import { RecordingsFolderSettings } from '@/components/RecordingsFolderSettings';
 import { IntegrationsSettings } from '@/features/integrations';
-import { NetworkSettings } from '@/features/network';
+import { NetworkServices, NetworkSettings } from '@/features/network';
 import {
-  AudioLines,
-  Cpu,
-  FlaskConical,
+  Calendar,
   Info,
+  LayoutTemplate,
   Mic,
-  Palette,
+  NotebookPen,
   Plug,
   Settings,
   ShieldCheck,
-  Video,
+  SlidersHorizontal,
 } from '@/ui/icons';
 
+import { SettingsSection } from '@/ui/settings-section';
+
+import { AppearanceSection } from './components/appearance-section';
+import { AutoNotesSettings } from './components/auto-notes-settings';
 import { CaptureModeSettings } from './components/capture-mode-settings';
+import { EngineSettings } from './components/engine-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
-import { RecordingBehaviour } from './components/recording-behaviour';
+import { NotificationsSettings } from './components/notifications-settings';
+import { AutoStopSettings, RecordingBehaviour } from './components/recording-behaviour';
 import { RedactionSettings } from './components/redaction-settings';
+import { transcriptionSectionCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
-import type { SettingsPage } from './sections';
-import { useSaveTheme, useThemePreference } from './theme';
+import type { SettingsPage, SettingsPageSection } from './sections';
 
-/** Appearance: the theme picker. */
-function AppearanceSection() {
-  const preference = useThemePreference();
-  const saveTheme = useSaveTheme();
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-semibold text-fg">{appearanceCopy.themeLabel}</h2>
-      <p className="text-xs text-fg-muted">{appearanceCopy.themeDescription}</p>
-      <div className="pt-2">
-        <ThemePicker value={preference} onChange={saveTheme} />
-      </div>
-    </section>
-  );
-}
-
-/** Recording: the record panel and auto-stop, then the inherited audio settings. */
-function RecordingSection() {
-  return (
-    <div className="flex flex-col gap-8">
-      <RecordingBehaviour />
-      <RecordingSettings />
-    </div>
-  );
-}
-
-/** Transcription: live or after the meeting (CAP-08), then the inherited
- * engine picker over the config context, then the opt-in ElevenLabs
- * re-transcription (CAP-14). */
+/** Transcription: live or after the meeting (CAP-08), then the engine and
+ * its model, read from and saved to the settings the recorder uses. */
 function TranscriptionSection() {
-  const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
   return (
     <div className="flex flex-col gap-8">
       <CaptureModeSettings />
-      <TranscriptSettings
-        transcriptModelConfig={transcriptModelConfig}
-        setTranscriptModelConfig={setTranscriptModelConfig}
-      />
-      <ElevenLabsSettings />
+      <EngineSettings />
     </div>
   );
 }
 
-/** Privacy → Network: secrets kept out of notes and exports (NOT-09), then
- * offline mode, services and the egress log (FND-12). */
+/**
+ * Advanced → Transcription: the transcription panels as one unit under a
+ * heading. A card added to Transcription (another engine) goes inside
+ * {@link TranscriptionSection} or registers as its own section at order 25.
+ */
+function TranscriptionPage() {
+  return (
+    <SettingsSection
+      title={transcriptionSectionCopy.title}
+      description={transcriptionSectionCopy.description}
+    >
+      <TranscriptionSection />
+    </SettingsSection>
+  );
+}
+
+/** Privacy → Network: offline mode and the log of what left this Mac (FND-12). */
 function NetworkSection() {
   const { offlineMode, setOfflineMode } = useOfflineMode();
-  return (
-    <div className="flex flex-col gap-8">
-      <RedactionSettings />
-      <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />
-    </div>
-  );
+  return <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />;
 }
 
-/** Workspace → Integrations: connected apps, planned ones and what was sent (INT-00). */
+/** Connections → Connected apps: what can be sent where, and what was (INT-00). */
 function IntegrationsSection() {
   const { offlineMode } = useOfflineMode();
   return <IntegrationsSettings offlineMode={offlineMode} />;
 }
 
-/** Summary models: the inherited panel, which takes optional props. */
-function SummaryModelsSection() {
-  return <SummaryModelSettings />;
-}
-
+/** The nine host pages, in nav order (UX-19). */
 export const settingsPages = [
   {
     id: 'general',
-    group: 'app',
     order: 10,
     icon: Settings,
     label: 'General',
-    description: 'Notifications, storage and how Deino starts.',
-    Component: PreferenceSettings,
-  },
-  {
-    id: 'appearance',
-    group: 'app',
-    order: 20,
-    icon: Palette,
-    label: 'Appearance',
-    description: 'Theme for every Deino window.',
-    Component: AppearanceSection,
+    description: 'Theme, notifications and where recordings are kept.',
   },
   {
     id: 'recording',
-    group: 'capture',
-    order: 10,
+    order: 20,
     icon: Mic,
     label: 'Recording',
-    description: 'Where recordings are saved and how audio is captured.',
-    Component: RecordingSection,
+    description: 'Permissions, the microphone, and what happens around each call.',
   },
   {
-    id: 'detection',
-    group: 'capture',
-    order: 20,
-    icon: Video,
-    label: 'Meeting detection',
-    description: 'Offer to take notes when a call starts, and which apps to ignore.',
-    Component: DetectionSettingsPage,
-  },
-  {
-    id: 'transcription',
-    group: 'capture',
+    id: 'notes',
     order: 30,
-    icon: AudioLines,
-    label: 'Transcription',
-    description: 'Live or after the meeting, and the local speech-to-text engine and its models.',
-    Component: TranscriptionSection,
+    icon: NotebookPen,
+    label: 'Notes',
+    description: 'Who writes your notes, what they know about you, and how names are spelled.',
   },
   {
-    id: 'models',
-    group: 'ai',
-    order: 20,
-    icon: Cpu,
-    label: 'Summary models',
-    description: 'The language model that writes your notes.',
-    Component: SummaryModelsSection,
+    id: 'templates',
+    order: 40,
+    icon: LayoutTemplate,
+    label: 'Templates',
+    description: 'What your notes contain for each kind of meeting, and when each is used.',
   },
   {
-    id: 'integrations',
-    group: 'workspace',
-    order: 20,
+    id: 'calendar',
+    order: 50,
+    icon: Calendar,
+    label: 'Calendar',
+    description: 'Your calendars, which meetings record on their own, and briefs before them.',
+  },
+  {
+    id: 'connections',
+    order: 60,
     icon: Plug,
-    label: 'Integrations',
-    description: 'Send notes, tasks and messages to the tools you use.',
-    Component: IntegrationsSection,
+    label: 'Connections',
+    description: 'Apps your notes go to, exports, and meetings brought in from elsewhere.',
   },
   {
-    id: 'network',
-    group: 'privacy',
-    order: 20,
+    id: 'privacy',
+    order: 70,
     icon: ShieldCheck,
-    label: 'Network',
-    description: 'What may leave this Mac, what is hidden first, and a log of what left.',
-    Component: NetworkSection,
+    label: 'Privacy',
+    description: 'Lock and encryption, what is deleted when, and what leaves this Mac.',
   },
   {
-    id: 'beta',
-    group: 'more',
-    order: 10,
-    icon: FlaskConical,
-    label: 'Beta',
-    description: 'Features that are still being finished.',
-    Component: BetaSettings,
+    id: 'advanced',
+    order: 80,
+    icon: SlidersHorizontal,
+    label: 'Advanced',
+    description: 'For the few who need them: models, transcription, services and developer tools.',
   },
   {
     id: 'about',
-    group: 'more',
-    order: 20,
+    order: 90,
     icon: Info,
     label: 'About',
-    description: 'Version, privacy and updates.',
-    Component: About,
+    description: 'Version, privacy and licences.',
   },
 ] satisfies readonly SettingsPage[];
 
+/** The settings feature's own sections. */
+export const settingsSections = [
+  { id: 'appearance', page: 'general', order: 10, Component: AppearanceSection },
+  { id: 'notifications', page: 'general', order: 20, Component: NotificationsSettings },
+  { id: 'recordings-folder', page: 'general', order: 30, Component: RecordingsFolderSettings },
+  { id: 'recording', page: 'recording', order: 20, Component: RecordingBehaviour },
+  { id: 'detection', page: 'recording', order: 30, Component: DetectionSettingsPage },
+  { id: 'auto-stop', page: 'recording', order: 40, Component: AutoStopSettings },
+  { id: 'integrations', page: 'connections', order: 10, Component: IntegrationsSection },
+  { id: 'redaction', page: 'privacy', order: 20, Component: RedactionSettings },
+  { id: 'network', page: 'privacy', order: 30, Component: NetworkSection },
+  { id: 'auto-notes', page: 'advanced', order: 5, Component: AutoNotesSettings },
+  { id: 'transcription', page: 'advanced', order: 20, Component: TranscriptionPage },
+  { id: 'network-services', page: 'advanced', order: 60, Component: NetworkServices },
+  { id: 'about', page: 'about', order: 10, Component: About },
+] satisfies readonly SettingsPageSection[];
+
 declare module '@/features/settings/search' {
   interface SettingsPageIds {
-    appearance: true;
     recording: true;
-    detection: true;
-    transcription: true;
-    models: true;
-    integrations: true;
-    network: true;
-    beta: true;
+    notes: true;
+    templates: true;
+    calendar: true;
+    connections: true;
+    privacy: true;
+    advanced: true;
     about: true;
+    appearance: true;
+    notifications: true;
+    'recordings-folder': true;
+    detection: true;
+    'auto-stop': true;
+    integrations: true;
+    redaction: true;
+    network: true;
+    'auto-notes': true;
+    transcription: true;
+    'network-services': true;
   }
 }

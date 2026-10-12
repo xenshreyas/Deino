@@ -16,7 +16,7 @@ export interface MeetingSidePanelProps {
 
 /**
  * The right panel (320px, toggled with `]`): one tab per registered section
- * (Chat, Participants, Details).
+ * (Chat, Details).
  */
 export function MeetingSidePanel({ meetingId, open }: MeetingSidePanelProps) {
   const [section, setSection] = useState<string>(MEETING_PANELS[0]?.id ?? 'details');

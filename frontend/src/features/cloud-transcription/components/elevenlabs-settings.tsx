@@ -1,12 +1,11 @@
 /**
- * Settings → Transcription → ElevenLabs (optional) (CAP-14): one card with
- * the key, the model and the switch. The switch and the model are typed
+ * Settings → Advanced → ElevenLabs (optional) (CAP-14): one card with the
+ * key, the model and the switch. The switch and the model are typed
  * settings (`transcription.cloudProvider`, `transcription.cloudModel`); the
  * `final_transcription` step reads them after every meeting. The switch
- * stays off and disabled until a key is saved.
+ * stays off and disabled until a key is saved. Changes save silently; a
+ * failed save says so under the switch (UX-32: no toasts for settings).
  */
-import { toast } from 'sonner';
-
 import { type Settings, usePatchSettings, useSettings } from '@/features/settings';
 import { Switch } from '@/ui/controls';
 import { type Option, OptionSelect } from '@/ui/option-select';
@@ -31,12 +30,15 @@ type Transcription = Settings['transcription'];
 function useSaveCloudOption() {
   const patch = usePatchSettings();
   const save = (change: Partial<Transcription>) => {
-    patch.mutate(
-      { transcription: change },
-      { onError: (error) => toast.error(cloudCopy.saveFailed, { description: error.message }) },
-    );
+    patch.mutate({ transcription: change });
   };
-  return { save, pending: patch.isPending };
+  return { save, pending: patch.isPending, failed: patch.isError };
+}
+
+/** What the switch row says under its label, if anything. */
+function switchNote(stored: boolean, failed: boolean): { description?: string } {
+  if (failed) return { description: cloudCopy.saveFailed };
+  return stored ? {} : { description: cloudCopy.switchNeedsKey };
 }
 
 /** Props of {@link ElevenLabsCard}. */
@@ -47,9 +49,9 @@ interface ElevenLabsCardProps {
 
 /** The key, the model and the switch. */
 export function ElevenLabsCard({ transcription, keyStatus }: ElevenLabsCardProps) {
-  const { save, pending } = useSaveCloudOption();
+  const { save, pending, failed } = useSaveCloudOption();
   const stored = keyStatus === 'stored';
-  const needsKey = stored ? {} : { description: cloudCopy.switchNeedsKey };
+  const note = switchNote(stored, failed);
   return (
     <SettingsCard label={cloudCopy.card}>
       <KeyRow status={keyStatus} />
@@ -63,7 +65,7 @@ export function ElevenLabsCard({ transcription, keyStatus }: ElevenLabsCardProps
           }}
         />
       </SettingsRow>
-      <SettingsRow label={cloudCopy.switchLabel} htmlFor={SWITCH_ID} {...needsKey}>
+      <SettingsRow label={cloudCopy.switchLabel} htmlFor={SWITCH_ID} {...note}>
         <Switch
           id={SWITCH_ID}
           checked={stored && transcription.cloudProvider === 'elevenlabs'}

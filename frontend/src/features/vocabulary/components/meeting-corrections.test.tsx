@@ -53,18 +53,21 @@ describe("a meeting's vocabulary corrections", () => {
     commands.undo.mockResolvedValue({ status: 'ok', data: { restored: 1, kept: 0 } });
   });
 
-  test('show only the words that changed, and which lines were edited since', async () => {
+  test('stay collapsed, then show only the words that changed and lines edited since', async () => {
     renderCorrections();
 
+    const header = await screen.findByRole('button', { name: 'Corrections · 2 lines corrected' });
+    expect(screen.queryByText('Sreyas,')).toBeNull();
+    fireEvent.click(header);
     expect(await screen.findByText('Sreyas,')).toBeDefined();
     expect(screen.getByText('Shreyas,')).toBeDefined();
     expect(screen.getByText('Edited since')).toBeDefined();
-    expect(screen.getByText('Vocabulary · 2 lines corrected')).toBeDefined();
   });
 
   test('undo one line, or all of them', async () => {
     renderCorrections();
 
+    fireEvent.click(await screen.findByRole('button', { name: /Corrections/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Undo Sreyas, to Shreyas,' }));
     fireEvent.click(screen.getByRole('button', { name: 'Undo all' }));
 

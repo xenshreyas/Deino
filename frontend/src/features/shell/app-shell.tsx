@@ -1,7 +1,7 @@
 /**
  * The app shell around every route (PARITY_PLAN §4.6): providers, the
- * first-run onboarding gate, the sidebar and title bar, the ⌘K palette, the
- * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the
+ * first-run onboarding gate, the sidebar and title bar, the ⌘K palette,
+ * global shortcuts, audio drag-and-drop import, and the
  * meeting-detection listener that opens the record screen, the app lock
  * (PRV-02) around the main layout, and `deino://` links and hotkeys (DEV-05)
  * inside it, so they wait for the unlock.
@@ -18,7 +18,6 @@ import { AppProviders } from './app-providers';
 import { CommandPalette } from './command-palette/command-palette';
 import { DetectionRecordingStart } from './components/detection-recording-start';
 import { AudioDropTarget } from './components/audio-drop-target';
-import { ChatPlaceholder } from './components/chat-placeholder';
 import { TitleBar } from './components/title-bar';
 import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
@@ -48,7 +47,6 @@ function MainLayout({ onAudioFile, children }: MainLayoutProps) {
         <main className="relative min-h-0 flex-1">{children}</main>
       </div>
       <CommandPalette />
-      <ChatPlaceholder />
       <AudioDropTarget onAudioFile={onAudioFile} />
     </div>
   );

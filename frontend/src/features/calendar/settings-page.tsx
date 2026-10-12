@@ -1,7 +1,6 @@
-/** Settings → Calendar: this feature's settings page (REG-02). */
+/** Settings → Calendar: this feature's settings section (REG-02, UX-19). */
 import { BriefSettingsSection } from '@/features/briefs';
-import type { SettingsPage } from '@/features/settings';
-import { Calendar } from '@/ui/icons';
+import type { SettingsPageSection } from '@/features/settings';
 
 import { CalendarSettings } from './components/calendar-settings';
 
@@ -15,17 +14,9 @@ function CalendarSection() {
   );
 }
 
-export const settingsPages = [
-  {
-    id: 'calendar',
-    group: 'workspace',
-    order: 10,
-    icon: Calendar,
-    label: 'Calendar',
-    description: 'Your calendars from macOS Calendar, and which ones Deino shows.',
-    Component: CalendarSection,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'calendar', page: 'calendar', order: 10, Component: CalendarSection },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

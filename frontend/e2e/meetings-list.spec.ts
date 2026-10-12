@@ -98,10 +98,8 @@ test('the selection is tagged and added to a folder in one go', async ({ page })
 
   await bulkBar(page).getByRole('button', { name: 'Tag' }).click();
   await page.getByRole('option', { name: 'Hiring', exact: true }).click();
-  await expect(page.getByText('Tagged 2 meetings')).toBeVisible();
   await bulkBar(page).getByRole('button', { name: 'Add to folder' }).click();
   await page.getByRole('option', { name: 'Customers', exact: true }).click();
-  await expect(page.getByText('Added 2 meetings to the folder')).toBeVisible();
 
   await expect(row(page, standup.title)).toContainText('Hiring');
   await expect(row(page, oneOnOne.title)).toContainText('Hiring');

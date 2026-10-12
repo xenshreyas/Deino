@@ -15,11 +15,11 @@ vi.mock('@/lib/ipc/generated/settings', () => ({
   events: {},
 }));
 
-function gateWith(completed: boolean | 'error') {
+function gateWith(completed: boolean | 'error', step: Generated.OnboardingStep = FRESH.step) {
   if (completed === 'error') {
     get.mockResolvedValue({ status: 'error', error: { code: 'internal', message: 'unreadable' } });
   } else {
-    const onboarding = { ...FRESH, completed };
+    const onboarding = { ...FRESH, completed, step };
     // The gate reads only `onboarding`; a partial document is enough.
     get.mockResolvedValue({ status: 'ok', data: { onboarding } as Generated.Settings });
   }
@@ -46,6 +46,14 @@ describe('useOnboardingGate', () => {
 
   it('never shows onboarding again once it is completed', async () => {
     const gate = gateWith(true);
+
+    await waitFor(() => {
+      expect(gate.current).toBe('app');
+    });
+  });
+
+  it('opens the app for progress an older version left on the retired Try it step', async () => {
+    const gate = gateWith(false, 'try_it');
 
     await waitFor(() => {
       expect(gate.current).toBe('app');

@@ -1,11 +1,13 @@
 /**
- * The network feature (FND-12): Settings → Privacy → Network. It lists the
- * outside services Deino may talk to, switches them on and off through the
- * `network` plugin, and shows the egress log of every request that left
- * the Mac. Other code imports from here only.
+ * The network feature (FND-12): Settings → Privacy → Network (offline mode
+ * and the egress log of every request that left the Mac) and Settings →
+ * Advanced → Network services (the outside services Deino may talk to,
+ * switched on and off through the `network` plugin). Other code imports
+ * from here only.
  */
 export { networkApi } from './api';
 export { NetworkSettings, type NetworkSettingsProps } from './components/network-settings';
+export { ServicesSection as NetworkServices } from './components/service-list';
 export { networkCopy } from './copy';
 export {
   EGRESS_LOG_PAGE,

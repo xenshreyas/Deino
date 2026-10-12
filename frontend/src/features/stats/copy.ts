@@ -5,6 +5,8 @@ import type { ModelUsage, StatsRange } from './types';
 
 export const statsCopy = {
   title: 'Stats',
+  /** Home's link to this page (UX-25). */
+  seeAll: 'See all stats',
   description: 'Your meetings in numbers, counted on this Mac.',
 
   ranges: {
@@ -18,7 +20,7 @@ export const statsCopy = {
   meetings: 'Meetings',
   hours: 'Hours recorded',
   people: 'People met',
-  cost: 'LLM cost (est.)',
+  cost: 'AI cost (est.)',
 
   activity: 'Activity',
   activityHint: 'Meetings per day over the last 12 months',
@@ -31,7 +33,7 @@ export const statsCopy = {
   internal: 'Internal',
   external: 'External',
   unknown: 'Unknown',
-  audienceHint: 'Internal means everyone was from your organisation (Settings → Profile).',
+  audienceHint: 'Internal means everyone was from your organisation (Settings → Notes).',
 
   topPeople: 'Top people',
   noPeople: 'Nobody met in this period.',
@@ -42,12 +44,12 @@ export const statsCopy = {
   barReadout: (label: string, meetings: number) =>
     `${label}: ${String(meetings)} ${meetings === 1 ? 'meeting' : 'meetings'}`,
 
-  llm: 'LLM usage',
+  llm: 'AI usage',
   llmEstimate:
     'Costs are estimates from list prices, without caching discounts; your provider’s bill is what counts.',
   llmUnpriced: (calls: number) =>
     `${String(calls)} ${calls === 1 ? 'call' : 'calls'} to models without a known price are not estimated.`,
-  noLlm: 'No LLM calls in this period.',
+  noLlm: 'No AI calls in this period.',
   model: 'Model',
   calls: 'Calls',
   tokens: 'Tokens in / out',

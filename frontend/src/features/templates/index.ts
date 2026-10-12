@@ -1,13 +1,15 @@
 /**
  * The templates feature (NOT-04): the template library and editor
- * (Settings → Templates), the meeting's template picker on the Notes tab,
+ * (Settings → Templates), the meeting's template menu in the notes' toolbar,
  * and the notepad's `/template` command.
  * Other code imports from here only.
  */
 export { templatesApi } from './api';
 export {
-  MeetingTemplatePicker,
-  type MeetingTemplatePickerProps,
+  MeetingTemplateMenu,
+  type MeetingTemplateMenuProps,
+  TemplateSwitchedPrompt,
+  type TemplateSwitchedPromptProps,
 } from './components/meeting-template-picker';
 export { TemplatesPage } from './components/templates-page';
 export { reasonText, templatesCopy } from './copy';

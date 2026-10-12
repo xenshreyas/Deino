@@ -1,4 +1,4 @@
-//! [`ElevenLabs`]: the Settings → Transcription card's service and the
+//! [`ElevenLabs`]: the Settings → Advanced → ElevenLabs card's service and the
 //! stage's [`CloudChoice`].
 //!
 //! - The key lives in the Keychain (`SecretName::ElevenLabsApiKey`, ADR
@@ -25,7 +25,7 @@ use crate::{ElevenLabsTranscriber, ScribeApi};
 /// The key's Keychain item.
 const KEY: SecretName = SecretName::ElevenLabsApiKey;
 
-/// Settings → Transcription's cloud option.
+/// The transcription settings' cloud option (Settings → Advanced → ElevenLabs).
 #[async_trait]
 pub trait CloudSettings: Send + Sync {
     /// The chosen service and its model.

@@ -6,6 +6,7 @@ import { Button } from '@/ui/button';
 import { Switch } from '@/ui/controls';
 import { FolderOpen, ICON_PROPS } from '@/ui/icons';
 import { Input } from '@/ui/input';
+import { MoreOptions } from '@/ui/more-options';
 import { SettingsCard, SettingsRow, SettingsSection } from '@/ui/settings-section';
 
 import { exportCopy } from '../copy';
@@ -91,17 +92,10 @@ function FolderRow({ folder }: { folder: string | null }) {
   );
 }
 
-/** Where notes go: the switch, the folder and the name templates. */
+/** Where notes go: the name templates. */
 function WhereRows({ settings }: { settings: ExportSettings }) {
   return (
     <>
-      <SwitchRow
-        settings={settings}
-        field="autoExport"
-        label={exportCopy.autoToggle}
-        hint={exportCopy.autoToggleHint}
-      />
-      <FolderRow folder={settings.folder} />
       <TemplateRow
         settings={settings}
         field="fileName"
@@ -155,14 +149,28 @@ function WhatRows({ settings }: { settings: ExportSettings }) {
   );
 }
 
-/** Settings → Export → Auto-export (EXP-02). */
+/**
+ * Settings → Connections → Auto-export (EXP-02): the switch and the folder,
+ * then names and contents under "More options" (UX-15).
+ */
 export function AutoExportSettings({ settings }: { settings: ExportSettings }) {
   return (
     <SettingsSection title={exportCopy.autoTitle} description={exportCopy.autoDescription}>
       <SettingsCard label={exportCopy.autoTitle}>
-        <WhereRows settings={settings} />
-        <WhatRows settings={settings} />
+        <SwitchRow
+          settings={settings}
+          field="autoExport"
+          label={exportCopy.autoToggle}
+          hint={exportCopy.autoToggleHint}
+        />
+        <FolderRow folder={settings.folder} />
       </SettingsCard>
+      <MoreOptions>
+        <SettingsCard label={exportCopy.moreTitle}>
+          <WhereRows settings={settings} />
+          <WhatRows settings={settings} />
+        </SettingsCard>
+      </MoreOptions>
     </SettingsSection>
   );
 }

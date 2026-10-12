@@ -1,5 +1,6 @@
 /** Every visible string of the profile feature. */
 export const profileCopy = {
+  title: 'About you',
   intro:
     'Deino gives this to the AI with every note, chat and summary, so they are written for you. It stays on your Mac except in prompts to the AI provider you chose.',
   you: 'You',
@@ -17,8 +18,9 @@ export const profileCopy = {
   writing: 'How notes should read',
   writingStyle: 'Writing style',
   writingStylePlaceholder: 'Short bullets. British spelling. No filler.',
-  context: 'Context and glossary',
-  contextHint: 'Background, names, products and acronyms the AI should know.',
+  context: 'Background',
+  contextHint:
+    'Products, acronyms and context the AI should know. How names are spelled in transcripts is under Spelling, below.',
   contextPlaceholder: 'FSM = field-service management\nBrightkite is a prospect, not a customer',
   save: 'Save profile',
   saving: 'Saving…',

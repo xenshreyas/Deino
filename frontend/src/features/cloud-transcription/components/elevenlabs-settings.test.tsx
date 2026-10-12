@@ -38,7 +38,7 @@ function renderCard() {
 
 const SWITCH = 'Transcribe meetings with ElevenLabs after they end';
 
-describe('Settings → Transcription → ElevenLabs (optional)', () => {
+describe('Settings → Advanced → ElevenLabs (optional)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settings.get.mockResolvedValue({ status: 'ok', data: defaultSettings() });

@@ -1,20 +1,11 @@
-/** Settings → Shortcuts: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Keyboard } from '@/ui/icons';
+/** Settings → Advanced → Shortcuts and links: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { HotkeySettings } from './components/hotkey-settings';
 
-export const settingsPages = [
-  {
-    id: 'shortcuts',
-    group: 'app',
-    order: 30,
-    icon: Keyboard,
-    label: 'Shortcuts',
-    description: 'Hotkeys that work in every app, and deino:// links.',
-    Component: HotkeySettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'shortcuts', page: 'advanced', order: 50, Component: HotkeySettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

@@ -11,12 +11,12 @@ async function shootBothThemes(page: Page, name: string) {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-/** Opens Settings → Privacy & security. */
+/** Opens Settings → Privacy. */
 async function openPrivacy(page: Page) {
   await page.goto('/settings');
   await page
-    .getByRole('navigation', { name: 'Settings sections' })
-    .getByRole('link', { name: 'Privacy & security' })
+    .getByRole('navigation', { name: 'Settings pages' })
+    .getByRole('link', { name: 'Privacy' })
     .click();
 }
 
@@ -44,11 +44,11 @@ test('the app lock locks the window and a mock Touch ID unlocks it', async ({ pa
 
   await page.getByRole('button', { name: 'Lock now' }).click();
   await expect(page.getByRole('heading', { name: 'Deino is locked' })).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Settings sections' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Settings pages' })).toHaveCount(0);
   await shootBothThemes(page, 'lock-screen');
 
   await page.getByRole('button', { name: 'Unlock with Touch ID' }).click();
-  await expect(page.getByRole('link', { name: 'Privacy & security' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Privacy' })).toBeVisible();
 });
 
 test('the startup screen shows while the library is converted', async ({ page }) => {

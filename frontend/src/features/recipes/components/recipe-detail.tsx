@@ -68,7 +68,6 @@ function BuiltIn({ recipe, onSelect }: Pick<RecipeDetailProps, 'recipe' | 'onSel
             onClick={() => {
               remix.mutate(recipe.id, {
                 onSuccess: (copy) => {
-                  toast.success(recipesCopy.remixed);
                   onSelect(copy.id);
                 },
               });
@@ -95,7 +94,6 @@ function Mine({ recipe, onSelect }: Pick<RecipeDetailProps, 'recipe' | 'onSelect
       onClick={() => {
         remove.mutate(recipe.id, {
           onSuccess: () => {
-            toast.success(recipesCopy.deleted);
             onSelect(undefined);
           },
         });
@@ -110,10 +108,7 @@ function Mine({ recipe, onSelect }: Pick<RecipeDetailProps, 'recipe' | 'onSelect
       initial={{ name: recipe.name, description: recipe.description, prompt: recipe.prompt }}
       saving={update.isPending}
       onSave={(draft) => {
-        update.mutate(
-          { id: recipe.id, draft },
-          { onSuccess: () => toast.success(recipesCopy.saved) },
-        );
+        update.mutate({ id: recipe.id, draft });
       }}
       actions={
         <>

@@ -42,7 +42,9 @@ describe('Settings → Transcription → While you record', () => {
       expect(settings.patch).toHaveBeenCalledWith({ transcription: { liveTranscription: false } });
     });
     expect(await screen.findByText(/only audio is recorded/u)).toBeDefined();
-    const repass = screen.getByRole('switch', { name: 'High-accuracy re-pass' });
+    const repass = screen.getByRole('switch', {
+      name: 'Re-transcribe after the meeting for better accuracy',
+    });
     expect(repass).toHaveProperty('disabled', true);
   });
 
@@ -52,7 +54,11 @@ describe('Settings → Transcription → While you record', () => {
     settings.patch.mockResolvedValue({ status: 'ok', data: on });
     renderModes();
 
-    fireEvent.click(await screen.findByRole('switch', { name: 'High-accuracy re-pass' }));
+    fireEvent.click(
+      await screen.findByRole('switch', {
+        name: 'Re-transcribe after the meeting for better accuracy',
+      }),
+    );
 
     await waitFor(() => {
       expect(settings.patch).toHaveBeenCalledWith({ transcription: { highAccuracyRepass: true } });

@@ -117,12 +117,6 @@ export function ModelManager({
           });
           setModels(modelList);
           progressThrottleRef.current.delete(modelName);
-          toast.info(
-            model.status === 'Available'
-              ? `${getDisplayName(modelName)} download completed before cancellation`
-              : `${getDisplayName(modelName)} download cancelled`,
-            { duration: 3000 }
-          );
           return;
         }
       } catch (err) {
@@ -229,8 +223,6 @@ export function ModelManager({
         'model-download-complete',
         (event) => {
           const { modelName } = event.payload;
-          const model = models.find(m => m.name === modelName);
-          const displayName = getDisplayName(modelName);
 
           clearCancellationReconciliation(modelName);
 
@@ -251,10 +243,6 @@ export function ModelManager({
           // Clean up throttle data
           progressThrottleRef.current.delete(modelName);
 
-          toast.success(`${getModelIcon(model?.accuracy || 'Good')} ${displayName} ready!`, {
-            description: 'Model downloaded and ready to use',
-            duration: 4000
-          });
 
           // Auto-select after download using stable refs
           if (onModelSelectRef.current) {
@@ -328,16 +316,10 @@ export function ModelManager({
   };
 
   const cancelDownload = async (modelName: string) => {
-    const displayName = getDisplayName(modelName);
-
     try {
       const outcome = await WhisperAPI.cancelDownload(modelName);
       if (outcome === 'pending') {
         reconcileCancellation(modelName);
-        toast.info(`Cancelling ${displayName}...`, {
-          description: 'The download is still shutting down. Retry will be available when cleanup completes.',
-          duration: 4000
-        });
         return;
       }
 
@@ -358,8 +340,6 @@ export function ModelManager({
 
     clearCancellationReconciliation(modelName);
 
-    const displayName = getDisplayName(modelName);
-
     try {
       updateDownloadingModels(prev => new Set([...prev, modelName]));
 
@@ -371,10 +351,6 @@ export function ModelManager({
         )
       );
 
-      toast.info(`Downloading ${displayName}...`, {
-        description: 'This may take a few minutes',
-        duration: 5000
-      });
 
       await WhisperAPI.downloadModel(modelName);
     } catch (err) {
@@ -404,11 +380,6 @@ export function ModelManager({
     if (autoSave) {
       await saveModelSelection(modelName);
     }
-
-    const displayName = getDisplayName(modelName);
-    toast.success(`Switched to ${displayName}`, {
-      duration: 3000
-    });
   };
 
   const deleteModel = async (modelName: string) => {
@@ -421,10 +392,6 @@ export function ModelManager({
       const modelList = await WhisperAPI.getAvailableModels();
       setModels(modelList);
 
-      toast.success(`${displayName} deleted`, {
-        description: 'Model removed to free up space',
-        duration: 3000
-      });
 
       // If deleted model was selected, clear selection
       if (selectedModel === modelName && onModelSelect) {

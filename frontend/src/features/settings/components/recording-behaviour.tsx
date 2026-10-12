@@ -1,60 +1,37 @@
 /**
- * Settings → Recording, "While recording": the record panel (CAP-10) and
- * when a recording ends on its own (CAP-07). Values live in the typed
- * settings (`recording.showPanel`, `recording.autoStop`).
+ * Settings → Recording: the microphone Deino records and the record panel
+ * (CAP-10), then when a recording ends on its own (CAP-07), its rarer rules
+ * under "More options". Values live in the typed settings
+ * (`audio.preferredMicDevice`, `recording.showPanel`, `recording.autoStop`).
+ * The inherited switches that duplicated or defeated defaults are gone
+ * (UX-13); their fields stay in the settings document.
  */
-import { Label, Switch } from '@/ui/controls';
+import { MoreOptions } from '@/ui/more-options';
+import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { recordingSettingsCopy as copy } from '../copy';
-import { usePatchSettings, useSettings } from '../queries';
+import { useSettings } from '../queries';
 import type { Settings } from '../types';
+import { MicrophoneRow } from './microphone-row';
+import { useSaveSettings } from './save-settings';
+import { SwitchRow } from './switch-row';
 
-/** One switch with its label and description. */
-function SwitchRow({
-  id,
-  label,
-  description,
-  checked,
-  disabled = false,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  description: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="grid min-h-[52px] grid-cols-[1fr_auto] items-center gap-4 px-4 py-3">
-      <div className="flex flex-col gap-0.5">
-        <Label htmlFor={id}>{label}</Label>
-        <p className="text-xs text-fg-muted">{description}</p>
-      </div>
-      <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onChange} />
-    </div>
-  );
+type AutoStop = Settings['recording']['autoStop'];
+
+/** Saves part of `recording.autoStop`. */
+function useSaveAutoStop(autoStop: AutoStop) {
+  const { save } = useSaveSettings();
+  return (change: Partial<AutoStop>) => {
+    save({ recording: { autoStop: { ...autoStop, ...change } } });
+  };
 }
 
-/** The auto-stop switches; the calendar rule needs auto-stop on. */
-function AutoStopRows({ recording }: { recording: Settings['recording'] }) {
-  const patch = usePatchSettings();
-  const { autoStop } = recording;
-  const save = (change: Partial<Settings['recording']['autoStop']>) => {
-    patch.mutate({ recording: { autoStop: { ...autoStop, ...change } } });
-  };
+/** The calendar rule (needs auto-stop on) and the next-meeting offer. */
+function MoreAutoStopRows({ autoStop }: { autoStop: AutoStop }) {
+  const save = useSaveAutoStop(autoStop);
   return (
-    <>
-      <SwitchRow
-        id="recording-auto-stop"
-        label={copy.autoStopTitle}
-        description={copy.autoStopDescription}
-        checked={autoStop.enabled}
-        onChange={(enabled) => {
-          save({ enabled });
-        }}
-      />
+    <SettingsCard label={copy.autoStopMore}>
       <SwitchRow
         id="recording-auto-stop-calendar"
         label={copy.calendarTitle}
@@ -74,30 +51,69 @@ function AutoStopRows({ recording }: { recording: Settings['recording'] }) {
           save({ offerNextMeeting });
         }}
       />
+    </SettingsCard>
+  );
+}
+
+/** The auto-stop switch, then its rarer rules under "More options". */
+function AutoStopBody({ autoStop }: { autoStop: AutoStop }) {
+  const save = useSaveAutoStop(autoStop);
+  return (
+    <>
+      <SettingsCard label={copy.autoStopSection}>
+        <SwitchRow
+          id="recording-auto-stop"
+          label={copy.autoStopTitle}
+          description={copy.autoStopDescription}
+          checked={autoStop.enabled}
+          onChange={(enabled) => {
+            save({ enabled });
+          }}
+        />
+      </SettingsCard>
+      <MoreOptions>
+        <MoreAutoStopRows autoStop={autoStop} />
+      </MoreOptions>
     </>
   );
 }
 
-/** The record panel and auto-stop, in one card. */
+/** "End automatically", once the settings are loaded. */
+export function AutoStopSettings() {
+  const { data: settings } = useSettings();
+  return (
+    <SettingsSection title={copy.autoStopSection} description={copy.autoStopSectionDescription}>
+      {settings === undefined ? (
+        <SkeletonText lines={2} />
+      ) : (
+        <AutoStopBody autoStop={settings.recording.autoStop} />
+      )}
+    </SettingsSection>
+  );
+}
+
+/** The microphone and the record panel. */
 export function RecordingBehaviour() {
   const { data: settings } = useSettings();
-  const patch = usePatchSettings();
-  if (settings === undefined) return <SkeletonText lines={4} />;
+  const { save } = useSaveSettings();
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-semibold text-fg">{copy.heading}</h2>
-      <div className="divide-y divide-border rounded-lg border border-border bg-surface">
-        <SwitchRow
-          id="recording-panel"
-          label={copy.panelTitle}
-          description={copy.panelDescription}
-          checked={settings.recording.showPanel}
-          onChange={(showPanel) => {
-            patch.mutate({ recording: { showPanel } });
-          }}
-        />
-        <AutoStopRows recording={settings.recording} />
-      </div>
-    </section>
+    <SettingsSection title={copy.heading} description={copy.headingDescription}>
+      {settings === undefined ? (
+        <SkeletonText lines={2} />
+      ) : (
+        <SettingsCard label={copy.heading}>
+          <MicrophoneRow preferred={settings.audio.preferredMicDevice} />
+          <SwitchRow
+            id="recording-panel"
+            label={copy.panelTitle}
+            description={copy.panelDescription}
+            checked={settings.recording.showPanel}
+            onChange={(showPanel) => {
+              save({ recording: { showPanel } });
+            }}
+          />
+        </SettingsCard>
+      )}
+    </SettingsSection>
   );
 }

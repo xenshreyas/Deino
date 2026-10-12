@@ -16,6 +16,7 @@ import { useCompanies } from '../queries';
 import type { CompanyRow, EntitySort } from '../types';
 import { CompanyDialog, type CompanyDialogTarget } from './company-dialog';
 import { EntityAvatar } from './entity-avatar';
+import { EntityTabs } from './entity-tabs';
 import { EntityRowBody, ListSkeleton, ListToolbar, NoMatches, ROW_CLASS } from './entity-list';
 
 /** A company row as the list searches and sorts it. */
@@ -139,6 +140,7 @@ export function CompaniesScreen() {
           </Button>
         }
       />
+      <EntityTabs />
       <CompaniesBody onAdd={add} />
       <CompanyDialog
         target={dialog}

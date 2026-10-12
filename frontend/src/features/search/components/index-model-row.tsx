@@ -1,5 +1,5 @@
 /**
- * The embedding model's row on the Search index page: name and size, where
+ * The search model's row in Settings → Advanced → Search: name and size, where
  * its download stands, and the matching action, with a 2px progress bar
  * while it downloads (ui.md §3 Toast: progress in `--accent`).
  */
@@ -52,7 +52,7 @@ export function ModelRow({ model, downloadedBytes }: ModelRowProps) {
   return (
     <div className="relative flex items-center justify-between gap-4 px-4 py-3">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-sm text-fg">{copy.modelName(model.name, megabytes)}</span>
+        <span className="text-sm text-fg">{copy.modelName(megabytes)}</span>
         <span className="text-xs text-fg-muted tabular-nums">{modelStatus(model, percent)}</span>
       </div>
       <ModelAction model={model} />

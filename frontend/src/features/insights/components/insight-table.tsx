@@ -196,7 +196,7 @@ function Cell({ row, column, open }: { row: Row; column: Column; open: boolean }
         <Link
           to="/meetings/$meetingId"
           params={{ meetingId: row.meetingId }}
-          search={{ tab: 'insights' }}
+          search={{ tab: 'notes' }}
           onClick={(event) => {
             event.stopPropagation();
           }}

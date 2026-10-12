@@ -74,7 +74,6 @@ export function useRenameClip() {
 export function useDeleteClip() {
   return useMutation({
     mutationFn: (id: ClipId) => clipsApi.delete(id),
-    onSuccess: () => toast.success(clipsCopy.deleted),
     onError: toastError,
   });
 }

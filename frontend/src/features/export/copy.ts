@@ -13,7 +13,6 @@ export const exportCopy = {
   copiedRich: 'Notes copied with formatting',
   copiedMarkdown: 'Notes copied as Markdown',
   copiedTranscript: 'Transcript copied',
-  emailOpened: 'Draft opened in Mail',
   saved: (fileName: string) => `Saved ${fileName}`,
 
   dialogTitle: 'Export meeting',
@@ -36,6 +35,7 @@ export const exportCopy = {
     'Write every meeting as a Markdown note into a folder, such as an Obsidian vault, once it is processed.',
   autoToggle: 'Export after every meeting',
   autoToggleHint: 'Runs as the last step of processing.',
+  moreTitle: 'File names and contents',
   folderLabel: 'Folder',
   folderNone: 'No folder chosen',
   folderChoose: 'Choose…',

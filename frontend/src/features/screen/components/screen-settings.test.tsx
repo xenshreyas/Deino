@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { screenCopy } from '../copy';
 import type { ScreenSettings } from '../types';
 import { CaptureCard } from './capture-card';
-import { PermissionCard } from './permission-card';
 
 const OFF: ScreenSettings = {
   detectedMeetings: false,
@@ -15,59 +14,15 @@ const OFF: ScreenSettings = {
   consentRemindersShown: 0,
 };
 
-describe('PermissionCard', () => {
-  it('offers System Settings only while Screen Recording is missing', () => {
-    const onOpenSettings = vi.fn();
-    const { rerender } = render(
-      <PermissionCard
-        supported
-        permitted={false}
-        opening={false}
-        openFailed={false}
-        onOpenSettings={onOpenSettings}
-      />,
-    );
-
-    expect(screen.getByText(screenCopy.permission.missing)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: screenCopy.permission.openSettings }));
-    expect(onOpenSettings).toHaveBeenCalledOnce();
-
-    rerender(
-      <PermissionCard
-        supported
-        permitted
-        opening={false}
-        openFailed={false}
-        onOpenSettings={onOpenSettings}
-      />,
-    );
-    expect(screen.getByText(screenCopy.permission.granted)).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
-  });
-
-  it('says when this computer cannot capture, and when opening failed', () => {
-    render(
-      <PermissionCard
-        supported={false}
-        permitted={false}
-        opening={false}
-        openFailed
-        onOpenSettings={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText(screenCopy.permission.unsupported)).toBeTruthy();
-    expect(screen.getByRole('alert').textContent).toBe(screenCopy.permission.settingsFailed);
-  });
-});
-
 describe('CaptureCard', () => {
-  it('is off by default, with the other switches waiting for it', () => {
+  it('shows one switch, off by default, with the rest under More options', () => {
     const onChange = vi.fn();
     render(<CaptureCard screen={OFF} saving={false} onChange={onChange} />);
 
     const detected = screen.getByRole('switch', { name: screenCopy.capture.detected });
     expect(detected.getAttribute('aria-checked')).toBe('false');
+    expect(screen.getAllByRole('switch')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
     expect(
       screen.getByRole('switch', { name: screenCopy.capture.snapshots }).hasAttribute('disabled'),
     ).toBe(true);
@@ -88,6 +43,7 @@ describe('CaptureCard', () => {
     );
 
     expect(screen.getByText(screenCopy.capture.consent)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
     fireEvent.click(screen.getByRole('switch', { name: screenCopy.capture.video }));
     expect(onChange).toHaveBeenCalledWith({ video: false });
     fireEvent.click(screen.getByRole('radio', { name: screenCopy.capture.rates[5] }));

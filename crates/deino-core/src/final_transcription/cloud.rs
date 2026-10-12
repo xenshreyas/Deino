@@ -46,7 +46,7 @@ pub struct CloudSpan {
 #[non_exhaustive]
 pub enum CloudError {
     /// No key is saved, or macOS refused to hand it over.
-    #[error("Save your ElevenLabs API key in Settings → Transcription first.")]
+    #[error("Save your ElevenLabs API key in Settings → Advanced → ElevenLabs first.")]
     MissingKey,
     /// The service refused the key (401).
     #[error("ElevenLabs refused the API key. Check it and save it again.")]

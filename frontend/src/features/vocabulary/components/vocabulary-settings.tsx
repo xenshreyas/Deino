@@ -1,8 +1,9 @@
 /**
- * Settings → Vocabulary (TRN-05): the words and names Deino should spell
- * the user's way, and plain replacements. People and companies join
- * automatically, so the page lists only what the user added.
+ * Settings → Notes → Spelling (TRN-05): the words and names Deino should
+ * spell the user's way, and plain replacements. People and companies join
+ * automatically, so the section lists only what the user added.
  */
+import { SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { vocabularyCopy as copy } from '../copy';
@@ -10,15 +11,16 @@ import { byKind } from '../entries';
 import { useVocabulary } from '../queries';
 import { EntryList } from './entry-list';
 
-/** Settings → Vocabulary. */
+/** Settings → Notes → Spelling. */
 export function VocabularySettings() {
   const vocabulary = useVocabulary();
   return (
-    <div className="flex flex-col gap-8">
-      <p className="max-w-prose text-sm text-pretty text-fg-muted">{copy.intro}</p>
-      <VocabularyLists vocabulary={vocabulary} />
-      <p className="max-w-prose text-xs text-pretty text-fg-subtle">{copy.howItWorks}</p>
-    </div>
+    <SettingsSection title={copy.title} description={copy.intro}>
+      <div className="flex flex-col gap-6 pt-2">
+        <VocabularyLists vocabulary={vocabulary} />
+        <p className="max-w-prose text-xs text-pretty text-fg-subtle">{copy.howItWorks}</p>
+      </div>
+    </SettingsSection>
   );
 }
 

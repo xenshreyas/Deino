@@ -2,7 +2,7 @@
  * Where chat scoped to one person or company (AI-02) will live: a calm,
  * disabled "Ask about …" bar with a WIP badge (owner decision D13: the Ask
  * Deino agent is deprioritised, not removed). AI-02 replaces it through
- * `slots.ts`.
+ * `slots.ts`. Not shown today (UX-27: ship it or hide it).
  */
 import { ICON_PROPS, MessageCircle } from '@/ui/icons';
 import { Hint } from '@/ui/tooltip';

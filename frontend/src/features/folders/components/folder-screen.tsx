@@ -1,13 +1,13 @@
 /**
  * A folder's page (`/folders/$folderId`, ORG-05): its header, description
- * and auto-add rules, its subfolders and its meetings, and the resting slot
- * where folder chat (AI-02) will live.
+ * and auto-add rules, its subfolders and its meetings. Folder chat (AI-02)
+ * and integrations join it when they ship (UX-27: nothing unfinished shows).
  */
 import { Link } from '@tanstack/react-router';
 
 import { buttonVariants } from '@/ui/button';
 import { EmptyState } from '@/ui/empty-state';
-import { Folder as FolderGlyph, ICON_PROPS, MessageCircle, NotebookText, X } from '@/ui/icons';
+import { Folder as FolderGlyph, ICON_PROPS, NotebookText, X } from '@/ui/icons';
 import { Page } from '@/ui/page-header';
 import { Skeleton } from '@/ui/skeleton';
 import { Hint } from '@/ui/tooltip';
@@ -84,21 +84,6 @@ function Meetings({ folder }: { folder: Folder }) {
   return <FolderMeetingList meetings={meetings.data ?? []} action={removeAction} />;
 }
 
-/** Where folder chat will be: a resting, disabled ask bar (AI-02). */
-function ChatSlot() {
-  return (
-    <Hint label={foldersCopy.chatSoon} side="top">
-      <div
-        tabIndex={0}
-        className="sticky bottom-4 mx-auto mt-6 flex h-11 w-full max-w-[640px] items-center gap-2.5 rounded-full border border-border bg-surface px-4 text-sm text-fg-subtle shadow-chatbar"
-      >
-        <MessageCircle {...ICON_PROPS} />
-        {foldersCopy.chatPlaceholder}
-      </div>
-    </Hint>
-  );
-}
-
 function Loading() {
   return (
     <div aria-busy className="flex flex-col gap-3">
@@ -137,7 +122,6 @@ export function FolderScreen({ folderId }: { folderId: FolderId }) {
             </h2>
             <Meetings folder={folder.data} />
           </section>
-          <ChatSlot />
         </div>
       )}
     </Page>

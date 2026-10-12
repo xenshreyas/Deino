@@ -51,12 +51,12 @@ test('the results page shows meetings, moments and people with highlighted snipp
   });
 });
 
-test('Settings → Search index downloads the model', async ({ page }) => {
+test('Settings → Advanced → Search downloads the model', async ({ page }) => {
   await page.goto('/settings?section=search');
 
   await expect(page.getByText('Not downloaded. Search finds exact words only.')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('search-index-missing.png') });
-  await page.getByRole('button', { name: 'Download' }).click();
+  await page.getByLabel('Search by meaning').getByRole('button', { name: 'Download' }).click();
 
   await expect(page.getByText('Downloaded. Search also finds meetings by meaning.')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('search-index-ready.png') });

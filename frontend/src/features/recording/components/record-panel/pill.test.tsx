@@ -18,7 +18,6 @@ const LIVE: PillView = {
   expanded: false,
   warning: null,
   ending: null,
-  systemAudio: true,
 };
 
 function actions(): PillActions {
@@ -26,9 +25,7 @@ function actions(): PillActions {
     onPause: vi.fn(),
     onResume: vi.fn(),
     onStop: vi.fn(),
-    onMicrophone: vi.fn(),
-    onScreen: vi.fn(),
-    onSystemAudio: vi.fn(),
+    onMore: vi.fn(),
     onOpenNotes: vi.fn(),
     onKeep: vi.fn(),
   };
@@ -51,32 +48,34 @@ describe('Pill', () => {
     expect(screen.queryByRole('button', { name: panelCopy.stop })).toBeNull();
   });
 
-  it('reveals the controls on hover and reports each one', () => {
+  it('reveals pause, stop, open notes and ⋯ on hover, and reports each one', () => {
     const handlers = renderPill({ expanded: true });
 
     fireEvent.click(screen.getByRole('button', { name: panelCopy.pause }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.stop }));
-    fireEvent.click(screen.getByRole('button', { name: panelCopy.microphone }));
-    fireEvent.click(screen.getByRole('button', { name: panelCopy.screen }));
-    fireEvent.click(screen.getByRole('button', { name: panelCopy.systemAudioOn }));
     fireEvent.click(screen.getByRole('button', { name: panelCopy.openNotes }));
+    fireEvent.click(screen.getByRole('button', { name: panelCopy.more }));
 
     expect(handlers.onPause).toHaveBeenCalledOnce();
     expect(handlers.onStop).toHaveBeenCalledOnce();
-    expect(handlers.onMicrophone).toHaveBeenCalledOnce();
-    expect(handlers.onScreen).toHaveBeenCalledOnce();
-    expect(handlers.onSystemAudio).toHaveBeenCalledOnce();
     expect(handlers.onOpenNotes).toHaveBeenCalledOnce();
+    expect(handlers.onMore).toHaveBeenCalledOnce();
   });
 
-  it('offers resume while paused and shows call audio as off', () => {
-    const handlers = renderPill({ phase: 'paused', expanded: true, systemAudio: false });
+  it('keeps the device switches in ⋯, not on the pill (UX-29)', () => {
+    renderPill({ expanded: true });
+
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(screen.queryByRole('button', { name: panelCopy.microphone })).toBeNull();
+    expect(screen.queryByRole('button', { name: panelCopy.screen })).toBeNull();
+  });
+
+  it('offers resume while paused', () => {
+    const handlers = renderPill({ phase: 'paused', expanded: true });
 
     fireEvent.click(screen.getByRole('button', { name: panelCopy.resume }));
 
     expect(handlers.onResume).toHaveBeenCalledOnce();
-    const call = screen.getByRole('button', { name: panelCopy.systemAudioOff });
-    expect(call.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('names a health problem as an alert', () => {

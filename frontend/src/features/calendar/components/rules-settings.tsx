@@ -1,8 +1,9 @@
 /**
- * Settings → Calendar, ORG-02's two sections over the typed settings:
- * "Auto-record" (the four switches of `calendar.autoRecord`) and "Meeting
- * reminders" (`calendar.reminders.enabled`, and per calendar whether it
- * reminds, written as `calendar.reminders.quietCalendars`).
+ * ORG-02's rules over the typed settings: Settings → Calendar →
+ * "Auto-record" (the four switches of `calendar.autoRecord`), and the
+ * per-calendar reminder choices (`calendar.reminders.quietCalendars`) that
+ * Settings → General → Notifications shows under "More options" (UX-17),
+ * beside its reminders switch (`calendar.reminders.enabled`).
  */
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ import {
   useSettings,
 } from '@/features/settings';
 import { Switch } from '@/ui/controls';
+import { MoreOptions } from '@/ui/more-options';
 import { SettingsCard, SettingsRow, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
@@ -78,7 +80,7 @@ function AutoRecordCard({ rules }: { rules: AutoRecord }) {
   );
 }
 
-/** "Auto-record", once the settings are loaded. */
+/** "Auto-record", its four rules under a closed disclosure (UX-15). */
 export function AutoRecordSection() {
   const settings = useSettings();
   const rules = settings.data?.calendar.autoRecord;
@@ -87,7 +89,13 @@ export function AutoRecordSection() {
       title={rulesCopy.autoRecord.title}
       description={rulesCopy.autoRecord.description}
     >
-      {rules === undefined ? <SkeletonText lines={4} /> : <AutoRecordCard rules={rules} />}
+      {rules === undefined ? (
+        <SkeletonText lines={1} />
+      ) : (
+        <MoreOptions label={rulesCopy.autoRecord.choose}>
+          <AutoRecordCard rules={rules} />
+        </MoreOptions>
+      )}
     </SettingsSection>
   );
 }
@@ -133,50 +141,16 @@ function CalendarReminders(props: { calendars: readonly CalendarView[]; reminder
   );
 }
 
-function RemindersCard({ reminders }: { reminders: Reminders }) {
-  const copy = rulesCopy.reminders;
-  const { save, busy } = useSaveCalendar(copy.saveFailed);
-  return (
-    <SettingsCard label={copy.title}>
-      <SettingsRow
-        label={copy.enabled}
-        description={reminders.enabled ? copy.enabledOn : copy.enabledOff}
-        htmlFor="reminders-enabled"
-      >
-        <Switch
-          id="reminders-enabled"
-          checked={reminders.enabled}
-          disabled={busy}
-          onCheckedChange={(enabled) => {
-            save({ reminders: { enabled } });
-          }}
-        />
-      </SettingsRow>
-    </SettingsCard>
-  );
-}
-
-/** "Meeting reminders": the switch, then one per visible calendar. */
-export function RemindersSection() {
+/** Per calendar, whether it reminds, or a line while no calendar is shown. */
+export function ReminderCalendarList() {
   const settings = useSettings();
   const calendars = useCalendars();
   const visible = (calendars.data ?? []).filter((calendar) => calendar.visible);
   const reminders = settings.data?.calendar.reminders;
-  return (
-    <SettingsSection
-      title={rulesCopy.reminders.title}
-      description={rulesCopy.reminders.description}
-    >
-      {reminders === undefined ? (
-        <SkeletonText lines={2} />
-      ) : (
-        <div className="flex flex-col gap-4">
-          <RemindersCard reminders={reminders} />
-          {visible.length === 0 ? null : (
-            <CalendarReminders calendars={visible} reminders={reminders} />
-          )}
-        </div>
-      )}
-    </SettingsSection>
+  if (reminders === undefined) return <SkeletonText lines={2} />;
+  return visible.length === 0 ? (
+    <p className="text-sm text-fg-muted">{calendarCopy.calendars.empty}</p>
+  ) : (
+    <CalendarReminders calendars={visible} reminders={reminders} />
   );
 }

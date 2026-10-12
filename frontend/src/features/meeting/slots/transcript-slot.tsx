@@ -2,8 +2,8 @@
  * The Transcript tab (TRN-01): the meeting's transcript view, live while
  * this meeting is being recorded, opened at a linked moment (`?t=`) or
  * line (`?segment=`). Its
- * tools are "Copy transcript" and, while the inherited session still owns
- * them, the recording folder and re-transcription buttons. Selected words
+ * one tool is "Copy transcript"; re-transcription and the recording folder
+ * are in the meeting's ⋯ menu (UX-05). Selected words
  * can be commented on (TRN-06), clipped or linked to (TRN-04). Once
  * retention deleted the transcript (PRV-01) the tab says so instead.
  */
@@ -15,37 +15,26 @@ import { CommentLayer } from '@/features/comments';
 import { mediaQuery } from '@/features/player';
 import type { MeetingId } from '@/features/meetings';
 import { useShareActions } from '@/features/export';
-import { useRecordingState } from '@/features/recording';
 import { TranscriptGate } from '@/features/retention';
 import { TranscriptPanel, transcriptCopy, transcriptQuery } from '@/features/transcript';
 import { Copy } from '@/ui/icons';
 import { IconButton } from '@/ui/icon-button';
 
-import { useLegacyMeetingPanels } from '../legacy/panels-context';
+import { useIsLive } from '../hooks/use-is-live';
 import type { MeetingSlotProps } from '../types';
 import { selectionActions, selectionSpan } from './transcript-selection';
 
-/** Whether `meetingId` is the meeting being recorded right now. */
-function useIsLive(meetingId: MeetingId): boolean {
-  const { meetingId: recording, phase } = useRecordingState();
-  return recording === meetingId && (phase === 'recording' || phase === 'paused');
-}
-
-/** "Copy transcript" and the inherited tools. */
+/** "Copy transcript". */
 function TranscriptTools({ meetingId }: { meetingId: MeetingId }) {
   const share = useShareActions(meetingId);
-  const legacy = useLegacyMeetingPanels();
   return (
-    <>
-      <IconButton
-        icon={Copy}
-        label={transcriptCopy.copyAll}
-        onClick={() => {
-          share.copy('transcript');
-        }}
-      />
-      {legacy.status === 'ready' ? legacy.transcriptTools : null}
-    </>
+    <IconButton
+      icon={Copy}
+      label={transcriptCopy.copyAll}
+      onClick={() => {
+        share.copy('transcript');
+      }}
+    />
   );
 }
 

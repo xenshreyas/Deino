@@ -1,15 +1,14 @@
 import type { ReactNode } from 'react';
-import { TranscriptButtonGroup } from '@/components/MeetingDetails/TranscriptButtonGroup';
 import { LegacyMeetingPanelsProvider } from './panels-context';
 import { useMeetingOperations } from '@/hooks/meeting-details/useMeetingOperations';
 
-/** The Transcript tab's inherited tools, published to the meeting page (TRN-01 shows them). */
+/** The meeting's recording folder and its actions, published to the ⋯ menu (UX-05). */
 export default function PageContent({
   meeting,
   onRefetchTranscripts,
   children,
 }: {
-  /** The meeting page whose Transcript tab shows these tools. */
+  /** The meeting page whose ⋯ menu offers these actions. */
   children: ReactNode;
   meeting: any;
   onMeetingUpdated?: () => Promise<void>;
@@ -21,14 +20,11 @@ export default function PageContent({
     <LegacyMeetingPanelsProvider
       value={{
         status: 'ready',
-        transcriptTools: (
-          <TranscriptButtonGroup
-            onOpenMeetingFolder={meetingOperations.handleOpenMeetingFolder}
-            meetingId={meeting.id}
-            meetingFolderPath={meeting.folder_path}
-            onRefetchTranscripts={onRefetchTranscripts}
-          />
-        ),
+        recording: {
+          folderPath: meeting.folder_path ?? null,
+          openFolder: meetingOperations.handleOpenMeetingFolder,
+          refetchTranscripts: onRefetchTranscripts ?? (async () => undefined),
+        },
       }}
     >
       {children}

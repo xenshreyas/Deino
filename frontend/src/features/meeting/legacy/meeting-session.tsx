@@ -20,14 +20,14 @@ interface LegacyMeetingSessionProps {
   meetingId: string;
   /** How the user got here; kept for the route contract. */
   source?: MeetingSource | undefined;
-  /** The meeting page; its Transcript tab reads the published tools. */
+  /** The meeting page; its ⋯ menu reads the published recording. */
   children: ReactNode;
 }
 
 /**
  * One meeting's inherited session: loads its untyped metadata (through the
- * legacy transcript pages) and publishes the Transcript tab's inherited
- * tools, the recording folder and re-transcription (`panels-context.tsx`).
+ * legacy transcript pages) and publishes its recording folder, for the ⋯
+ * menu's re-transcription and "Show recording in Finder" (`panels-context.tsx`).
  * The notes (NOT-01, NOT-02) and the transcript (TRN-01) read typed queries;
  * CAP-08/CAP-11 port what is left.
  */

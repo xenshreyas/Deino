@@ -1,6 +1,7 @@
 /**
  * Settings → Integrations (INT-00): the shipped providers with Connect and
- * their accounts, the planned ones as WIP (D12), and what was sent.
+ * their accounts, and what was sent. Planned providers stay hidden until they
+ * ship (UX-27); `PlannedList` shows them once there is a reason to.
  *
  * Offline mode is a plain setting the settings feature owns and passes in;
  * calendars connect in Settings → Calendar, which this page points to.
@@ -16,7 +17,6 @@ import { integrationsCopy } from '../copy';
 import { useDeliveries, useProviders } from '../queries';
 import type { ProviderView } from '../types';
 import { DeliveryLog } from './delivery-log';
-import { PlannedList } from './planned-list';
 import { ProviderCard } from './provider-card';
 
 const copy = integrationsCopy;
@@ -69,7 +69,7 @@ function AvailableSection({ providers, now }: { providers: readonly ProviderView
   );
 }
 
-/** The providers, split into shipped and planned. */
+/** The shipped providers; planned ones are not listed (UX-27). */
 function ProvidersSections({ now }: { now: Date }) {
   const providers = useProviders();
   if (providers.isPending) return <SkeletonText lines={4} />;
@@ -81,17 +81,7 @@ function ProvidersSections({ now }: { now: Date }) {
     );
   }
   const available = providers.data.filter((provider) => provider.available);
-  const planned = providers.data.filter((provider) => !provider.available);
-  return (
-    <>
-      <AvailableSection providers={available} now={now} />
-      {planned.length === 0 ? null : (
-        <SettingsSection title={copy.planned.title} description={copy.planned.description}>
-          <PlannedList providers={planned} />
-        </SettingsSection>
-      )}
-    </>
-  );
+  return <AvailableSection providers={available} now={now} />;
 }
 
 /** The delivery log section. */

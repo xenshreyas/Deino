@@ -4,12 +4,14 @@
  * read (`useSecretStatus`, `useSaveSecret`, `useDeleteSecret`).
  *
  * Mount `SettingsSync` once so the cache follows every saved change, and
- * the saved theme is applied to the app. Also the sectioned settings screen;
- * routes import its URL contract from `./search`. A feature adds a
- * page from its own `settings-page.tsx` (`SettingsPage`, REG-02).
+ * the saved theme is applied to the app. Also the settings screen: nine
+ * host pages (`SettingsPage`) that features place sections on
+ * (`SettingsPageSection`) from their own `settings-page.tsx` (REG-02,
+ * UX-19); routes import its URL contract from `./search`.
  */
 export { secretsApi, settingsApi } from './api';
 export { ApiKeyStatus } from './components/api-key-status';
+export { PermissionLink, type PermissionLinkProps } from './components/permission-link';
 export { SettingsSync } from './components/settings-sync';
 export { apiKeyPlaceholder } from './copy';
 export {
@@ -31,7 +33,7 @@ export {
   useSettingsChanges,
 } from './queries';
 export { SettingsScreen, type SettingsScreenProps } from './settings-screen';
-export type { SettingsGroup, SettingsPage } from './sections';
+export type { SettingsPage, SettingsPageSection } from './sections';
 export { useSaveTheme, useThemePreference } from './theme';
 export type {
   AiSettings,

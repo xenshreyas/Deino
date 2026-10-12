@@ -34,12 +34,15 @@ test('the PDF preview renders the document', async ({ page }) => {
   await page.screenshot({ path: test.info().outputPath('export-pdf-preview.png') });
 });
 
-test('Settings → Export chooses a folder and runs the account export', async ({ page }) => {
+test('Settings → Connections → Export chooses a folder and runs the account export', async ({
+  page,
+}) => {
   await page.goto('/settings?section=export');
-  await expect(page.getByText('No folder chosen')).toBeVisible();
+  const autoExport = page.getByRole('group', { name: 'Auto-export' });
+  await expect(autoExport.getByText('No folder chosen')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Choose…' }).click();
-  await expect(page.getByText('/Users/shreyas/Obsidian/Deino')).toBeVisible();
+  await autoExport.getByRole('button', { name: 'Choose…' }).click();
+  await expect(autoExport.getByText('/Users/shreyas/Obsidian/Deino')).toBeVisible();
 
   await page.getByRole('button', { name: 'Export all meetings…' }).click();
   await expect(page.getByText('Saved Deino export.zip.')).toBeVisible({ timeout: 10_000 });

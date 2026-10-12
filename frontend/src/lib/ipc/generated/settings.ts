@@ -1563,7 +1563,7 @@ export type Theme =
 export type TranscriptionEngine = 
 /**
  * NVIDIA Parakeet Unified EN 0.6B over transcribe.cpp (CAP-01): streams
- * live text while recording. Its `model` is a catalog file name, or empty
+ * live text while recording. Its `model` is a catalog file ID, or empty
  * for the quant this Mac's memory suits.
  */
 "parakeet_unified" | 
@@ -1584,9 +1584,12 @@ export type TranscriptionSettings = {
  */
 engine: TranscriptionEngine; 
 /**
- * The engine's model, for example `parakeet-unified-en-0.6b-Q8_0.gguf`,
- * `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`; empty means the
- * engine's recommended model.
+ * The engine's model; empty means the engine's recommended model.
+ * Parakeet Unified takes a catalog file ID such as
+ * `parakeet-unified-en-0.6b-Q8_0` (the file name without `.gguf`; the
+ * file name itself is accepted too, see `ModelFileId::from_setting`);
+ * Parakeet TDT a model folder such as `parakeet-tdt-0.6b-v3-int8`;
+ * Whisper a model name such as `large-v3-turbo`.
  */
 model: string; 
 /**

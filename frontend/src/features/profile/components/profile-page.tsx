@@ -1,9 +1,9 @@
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
 
 import { useSettings } from '@/features/settings';
 import type { ProfileSettings } from '@/lib/ipc/generated/profile';
 import { Button } from '@/ui/button';
+import { SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { profileCopy } from '../copy';
@@ -12,18 +12,22 @@ import { useProfileContext } from '../queries';
 import { AboutYouFields, WritingFields } from './profile-fields';
 
 /**
- * Settings → Profile (NOT-05): who you are, for every AI prompt, and a
- * preview of exactly what the AI receives.
+ * Settings → Notes → About you (NOT-05): who you are, for every AI prompt,
+ * and a preview of exactly what the AI receives.
  */
 export function ProfilePage() {
   const settings = useSettings();
-  if (settings.data === undefined) return <SkeletonText lines={8} />;
   return (
-    <div className="flex flex-col gap-8">
-      <p className="text-sm text-fg-muted">{profileCopy.intro}</p>
-      <ProfileFields saved={settings.data.profile} />
-      <ContextPreview />
-    </div>
+    <SettingsSection title={profileCopy.title} description={profileCopy.intro}>
+      {settings.data === undefined ? (
+        <SkeletonText lines={8} />
+      ) : (
+        <div className="flex flex-col gap-8 pt-2">
+          <ProfileFields saved={settings.data.profile} />
+          <ContextPreview />
+        </div>
+      )}
+    </SettingsSection>
   );
 }
 
@@ -32,7 +36,8 @@ function ProfileFields({ saved }: { saved: ProfileSettings }) {
   const profile = useProfileForm(saved);
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    profile.save(() => toast.success(profileCopy.saved));
+    // Saved silently (UX-31); a failure shows under the form.
+    profile.save(() => undefined);
   };
   return (
     <form onSubmit={submit} className="flex flex-col gap-8">
@@ -63,9 +68,9 @@ function ContextPreview() {
   const context = useProfileContext();
   return (
     <section aria-labelledby="profile-preview" className="flex flex-col gap-2">
-      <h3 id="profile-preview" className="text-sm font-semibold text-fg">
+      <h4 id="profile-preview" className="text-sm font-semibold text-fg">
         {profileCopy.preview}
-      </h3>
+      </h4>
       <p className="rounded-lg bg-bg-subtle px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-fg">
         {context.data ?? profileCopy.previewEmpty}
       </p>

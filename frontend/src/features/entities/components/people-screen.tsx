@@ -15,6 +15,7 @@ import { relativeDay, visibleRows } from '../format';
 import { usePeople } from '../queries';
 import type { EntitySort, PersonRow } from '../types';
 import { EntityAvatar } from './entity-avatar';
+import { EntityTabs } from './entity-tabs';
 import { EntityRowBody, ListSkeleton, ListToolbar, NoMatches, ROW_CLASS } from './entity-list';
 import { PersonDialog, type PersonDialogTarget } from './person-dialog';
 
@@ -138,6 +139,7 @@ export function PeopleScreen() {
           </Button>
         }
       />
+      <EntityTabs />
       <PeopleBody onAdd={add} />
       <PersonDialog
         target={dialog}

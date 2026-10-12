@@ -20,10 +20,11 @@ export const rulesCopy = {
     enabledOff: 'No reminder windows.',
     calendars: 'Remind for',
     remindFor: (title: string) => `Remind for ${title}`,
-    saveFailed: 'Could not save the reminder settings.',
+    saveFailed: 'Couldn’t save the reminder settings.',
   },
   autoRecord: {
     title: 'Auto-record',
+    choose: 'Choose which meetings',
     description:
       'Which meetings record on their own when the call starts. A choice on an event or series in Coming up wins.',
     internal: 'Internal meetings',

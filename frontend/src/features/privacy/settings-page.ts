@@ -1,20 +1,11 @@
-/** Settings → Privacy & security: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Lock } from '@/ui/icons';
+/** Settings → Privacy → Lock, encryption and retention: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { PrivacySettings } from './components/privacy-settings';
 
-export const settingsPages = [
-  {
-    id: 'security',
-    group: 'privacy',
-    order: 10,
-    icon: Lock,
-    label: 'Privacy & security',
-    description: 'Encrypt the library, lock Deino behind Touch ID, and protect recordings.',
-    Component: PrivacySettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'security', page: 'privacy', order: 10, Component: PrivacySettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

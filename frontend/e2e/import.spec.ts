@@ -10,9 +10,11 @@ async function shoot(page: Page, name: string) {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-test('a recording imports from the sidebar and offers its calendar event', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Import recording' }).click();
+test('a recording imports from the Meetings header and offers its calendar event', async ({
+  page,
+}) => {
+  await page.goto('/meetings');
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('button', { name: 'Choose file…' }).click();
   await expect(dialog.getByText('Customer call.mp4')).toBeVisible();
