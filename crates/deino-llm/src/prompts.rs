@@ -7,6 +7,7 @@
 //! in review. User-editable templates use [`crate::UserTemplate`] instead.
 
 mod enhance;
+mod redact;
 
 use askama::Template;
 
@@ -14,6 +15,7 @@ pub use enhance::{
     EnhanceMergeUser, EnhancePartSystem, EnhancePartUser, EnhanceSystem, EnhanceUser,
     TitleNotesUser,
 };
+pub use redact::{RedactCheckSystem, RedactCheckUser};
 
 /// Renders a built-in prompt.
 pub trait PromptText {
