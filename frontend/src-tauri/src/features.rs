@@ -19,6 +19,7 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod action_items;
+pub mod automations;
 pub mod calendar;
 pub mod companies;
 pub mod db;
@@ -91,6 +92,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (folders::NAME, folders::specta()),
         (integrations::NAME, integrations::specta()),
         (insights::NAME, insights::specta()),
+        (automations::NAME, automations::specta()),
         (tags::NAME, tags::specta()),
         (speakers::NAME, speakers::specta()),
         (stats::NAME, stats::specta()),

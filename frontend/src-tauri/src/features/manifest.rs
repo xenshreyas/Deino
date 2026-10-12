@@ -147,6 +147,23 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "export_csv",
         ],
     ),
+    // ── AUT-01 automations (features/automations.rs) ──
+    (
+        "automations",
+        &[
+            "catalog",
+            "list",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "duplicate",
+            "for_meeting",
+            "matching",
+            "run",
+            "test_latest",
+        ],
+    ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──
