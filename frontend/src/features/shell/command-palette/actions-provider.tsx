@@ -1,6 +1,5 @@
 import { useRouter } from '@tanstack/react-router';
 
-import { useConfig } from '@/contexts/ConfigContext';
 import { useImportDialog } from '@/contexts/ImportDialogContext';
 import { appearanceCopy, type ThemePreference } from '@/features/appearance';
 import { useSaveTheme } from '@/features/settings';
@@ -136,17 +135,13 @@ function ActionItem({
   );
 }
 
-/** "Actions": new note, recording, chat, panels, import (beta) and theme. */
+/** "Actions": new note, recording, chat, panels, import and theme. */
 export function ActionsProvider({ close }: PaletteProviderProps) {
   const runners = useActionRunners();
   const saveTheme = useSaveTheme();
-  const { betaFeatures } = useConfig();
-  const visible = ACTIONS.filter(
-    (action) => action.id !== 'import' || betaFeatures.importAndRetranscribe,
-  );
   return (
     <CommandGroup heading={paletteCopy.actions}>
-      {visible.map((view) => (
+      {ACTIONS.map((view) => (
         <ActionItem
           key={view.id}
           view={view}

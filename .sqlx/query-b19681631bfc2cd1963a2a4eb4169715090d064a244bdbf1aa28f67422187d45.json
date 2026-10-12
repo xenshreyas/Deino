@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: WatchedFileId\", folder_id AS \"folder_id: WatchedFolderId\", path,\n                      failure AS \"failure!: ImportFailure\",\n                      handled_at AS \"failed_at: DateTime<Utc>\"\n               FROM watched_files\n               WHERE failure IS NOT NULL AND dismissed_at IS NULL\n               ORDER BY handled_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: WatchedFileId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "folder_id: WatchedFolderId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "path",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "failure!: ImportFailure",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "failed_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "b19681631bfc2cd1963a2a4eb4169715090d064a244bdbf1aa28f67422187d45"
+}

@@ -22,6 +22,7 @@ import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ResumeSetup } from '@/features/onboarding';
 import { ProfilePage } from '@/features/profile';
+import { WatchedFoldersSettings } from '@/features/import';
 import { IndexSettings } from '@/features/search';
 import { SpeakerTagsSettings } from '@/features/speaker-tags';
 import { PeopleSettings } from '@/features/speakers';
@@ -34,6 +35,7 @@ import {
   Cpu,
   Download,
   FlaskConical,
+  FolderInput,
   type Icon,
   Info,
   LayoutTemplate,
@@ -139,6 +141,12 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'vocabulary', group: 'capture', icon: SpellCheck, Component: VocabularySettings },
+  {
+    id: 'watched-folders',
+    group: 'capture',
+    icon: FolderInput,
+    Component: WatchedFoldersSettings,
+  },
   { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
   { id: 'speaker-tags', group: 'capture', icon: Contact, Component: SpeakerTagsSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },

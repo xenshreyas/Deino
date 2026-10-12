@@ -257,6 +257,16 @@ uuid_id!(
     InsightId
 );
 
+uuid_id!(
+    /// Identifies a folder Deino watches for recordings to import (CAP-11).
+    WatchedFolderId
+);
+
+uuid_id!(
+    /// Identifies a file a watched folder imported or failed to (CAP-11).
+    WatchedFileId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

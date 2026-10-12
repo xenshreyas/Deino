@@ -11,6 +11,7 @@ use deino_core::search::semantic::Backfill;
 use deino_pipeline::PipelineService;
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Window, WindowEvent};
 
+use crate::composition::import::WatchSchedule;
 use crate::composition::{CalendarSchedule, TrashPurge};
 use crate::features::notes::DroppedFiles;
 use crate::{state::AppState, summary};
@@ -93,6 +94,9 @@ async fn stop_background(app: &AppHandle) {
     }
     if let Some(purge) = app.try_state::<TrashPurge>() {
         purge.stop();
+    }
+    if let Some(watch) = app.try_state::<WatchSchedule>() {
+        watch.stop();
     }
     if let Some(backfill) = app.try_state::<Arc<Backfill>>() {
         backfill.shutdown().await;

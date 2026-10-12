@@ -1,17 +1,11 @@
 /** User-visible strings of the app shell. */
 export const shellCopy = {
-  importDisabledTitle: 'Beta feature disabled',
-  importDisabledDescription:
-    'Enable "Import Audio & Retranscribe" in Settings > Beta to use this feature.',
-  unsupportedDropTitle: 'Please drop an audio file',
-  supportedFormats: (formats: string) => `Supported formats: ${formats}`,
-
   sidebarLabel: 'Sidebar',
   toggleSidebar: 'Toggle sidebar',
   resizeSidebar: 'Resize sidebar',
   newNote: 'New note',
   search: 'Search',
-  importAudio: 'Import audio',
+  importAudio: 'Import recording',
   startRecording: 'Start recording',
   openLiveMeeting: 'Open the live meeting',
   paused: 'Paused',

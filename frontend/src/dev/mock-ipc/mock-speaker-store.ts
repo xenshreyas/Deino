@@ -8,10 +8,15 @@
  */
 import type * as Generated from '@/lib/ipc/generated/speakers';
 
-import { longMeeting, mockPeople } from './database';
 import { events } from './db';
 import { loadFixtureMeetings } from './fixtures';
-import { LONG_MEETING_ID, longMeetingVoices } from './long-meeting';
+import {
+  LONG_MEETING_ID,
+  longMeetingVoices,
+  longTranscript,
+  requestedLongMeeting,
+} from './long-meeting';
+import { fixturePeople } from './mock-people';
 import { type MockPerson, MockSpeakers } from './mock-speakers';
 
 /** The user's address in every fixture. */
@@ -21,6 +26,11 @@ const ONE_ON_ONE = 'meeting-fixture-one-on-one' as Generated.MeetingId;
 
 let seq = 2_000_000;
 const fixtures = loadFixtureMeetings();
+// Derived here rather than read from `database.ts`, which (through feature
+// code) can import this module while it is still initialising.
+const mockPeople = fixturePeople(fixtures);
+const longMeetingLines = requestedLongMeeting();
+const longMeeting = longMeetingLines === null ? null : longTranscript(longMeetingLines);
 const people: MockPerson[] = mockPeople.map((person) => ({
   id: person.id,
   name: person.name,

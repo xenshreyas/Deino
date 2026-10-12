@@ -167,7 +167,8 @@ offerNextMeeting: boolean }
  */
 export type BetaSettings = { 
 /**
- * Import audio files and re-transcribe meetings with another model.
+ * Re-transcribe meetings with another model (importing left beta with
+ * CAP-11; the field keeps its name so saved settings still apply).
  */
 importAndRetranscribe: boolean }
 /**

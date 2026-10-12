@@ -240,6 +240,15 @@ the SQLite adapters behind those ports.
   `TextRedactor` port used by `MaterialSources` and `ExportPorts`, and
   `SettingRedactor` over `privacy.redactSensitive`. No storage: secrets
   are redacted on the way out; the transcript keeps them.
+- `import` (CAP-11, ADR 0044): `ImportService` (check a file, convert it
+  through the `MediaIngest` port into `<recordings>/<meeting>/`, create the
+  meeting as `source = 'import'` and move it to `processing`), the
+  `FileImporter` and `MediaPicker` ports. Fake: `FakeIngest`.
+- `watch` (CAP-11, ADR 0044): `WatchService` (watched folders, Move to
+  processed, the failure list, one `scan`), `StabilityTracker` (10 s
+  unchanged), `SqliteWatchRepo` (`watched_folders`, the `watched_files`
+  ledger), the `WatchFs` port with `LocalWatchFs`, `FolderPicker`,
+  `WatchScheduler`. Fakes: `FakeWatchFs`, `FakeWatchRepo`, `FakeImporter`.
 - `_example` (debug builds only): the reference feature to copy, with its own
   in-memory schema in `src/_example/migrations/`.
 

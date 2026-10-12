@@ -13,6 +13,7 @@ export const settingsSectionSchema = z.enum([
   'detection',
   'transcription',
   'vocabulary',
+  'watched-folders',
   'people',
   'speaker-tags',
   'ai',

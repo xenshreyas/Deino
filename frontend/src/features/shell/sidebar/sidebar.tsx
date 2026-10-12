@@ -4,7 +4,6 @@
  * item and the record block. Resizable and collapsible with `[`.
  */
 import { useImportDialog } from '@/contexts/ImportDialogContext';
-import { useConfig } from '@/contexts/ConfigContext';
 import { cn } from '@/ui/cn';
 import { ICON_PROPS, Upload } from '@/ui/icons';
 
@@ -16,11 +15,9 @@ import { SidebarHeader, SidebarSearch } from './sidebar-header';
 import { SidebarResizeHandle } from './resize-handle';
 import { NavLink, navRowClassName, SidebarNav } from './sidebar-nav';
 
-/** The "Import audio" row, shown while its beta feature is on. */
+/** The "Import recording" row. */
 function ImportAudioRow() {
-  const { betaFeatures } = useConfig();
   const { openImportDialog } = useImportDialog();
-  if (!betaFeatures.importAndRetranscribe) return null;
   return (
     <button
       type="button"
@@ -35,7 +32,7 @@ function ImportAudioRow() {
   );
 }
 
-/** Settings, the beta import row and the record block. */
+/** Settings, the import row and the record block. */
 function SidebarFooter() {
   return (
     <div className="flex shrink-0 flex-col gap-px px-2 pt-2 pb-3">

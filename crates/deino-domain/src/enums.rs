@@ -197,6 +197,25 @@ db_enum! {
 }
 
 db_enum! {
+    /// Why a file could not be imported (CAP-11). Stored in
+    /// `watched_files.failure`; shown in Settings → Watched folders.
+    ImportFailure {
+        /// The file disappeared before it could be read.
+        Missing = "missing",
+        /// The file is larger than an import may be.
+        TooLarge = "too_large",
+        /// The file holds no audio track.
+        NoAudio = "no_audio",
+        /// No decoder reads the file's container or codec.
+        Unsupported = "unsupported",
+        /// The file's audio is damaged.
+        Damaged = "damaged",
+        /// Something else failed: writing the audio, or saving the meeting.
+        Failed = "failed",
+    }
+}
+
+db_enum! {
     /// When an insight runs (AI-06). Stored in `insight_defs.apply_mode`.
     InsightApplyMode {
         /// After every meeting its conditions match.

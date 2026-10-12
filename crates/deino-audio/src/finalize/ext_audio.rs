@@ -29,7 +29,7 @@ const BIT_RATE: u32 = 64_000;
 
 /// The container a finalized file is written in.
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Container {
+pub(crate) enum Container {
     /// `.m4a` (Apple MPEG-4 audio).
     M4a,
     /// `.mp4` (MPEG-4).
@@ -63,13 +63,13 @@ impl PcmReader {
 }
 
 /// Encodes 48 kHz mono f32 into an AAC-LC 64 kbps file.
-pub(super) struct AacWriter {
+pub(crate) struct AacWriter {
     file: ExtAudioFileRef,
 }
 
 impl AacWriter {
     /// Creates (or replaces) `path` in `container`.
-    pub(super) fn create(path: &Path, container: Container) -> Result<Self, FinalizeError> {
+    pub(crate) fn create(path: &Path, container: Container) -> Result<Self, FinalizeError> {
         let file_type = match container {
             Container::M4a => audio::FileTypeId::M4A,
             Container::Mp4 => audio::FileTypeId::MPEG4,
@@ -84,7 +84,7 @@ impl AacWriter {
     }
 
     /// Encodes `samples`.
-    pub(super) fn write(&mut self, samples: &[f32]) -> Result<(), FinalizeError> {
+    pub(crate) fn write(&mut self, samples: &[f32]) -> Result<(), FinalizeError> {
         let frames = u32::try_from(samples.len()).unwrap_or(u32::MAX);
         let list = buffer_list(samples.as_ptr().cast_mut(), samples.len());
         self.file
@@ -93,7 +93,7 @@ impl AacWriter {
     }
 
     /// Drains the encoder and writes the trailer (`ExtAudioFileDispose`).
-    pub(super) fn close(self) {
+    pub(crate) fn close(self) {
         drop(self.file);
     }
 }

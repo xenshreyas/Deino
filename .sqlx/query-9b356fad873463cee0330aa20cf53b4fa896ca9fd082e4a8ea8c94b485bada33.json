@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO watched_folders (id, path, move_to_processed, created_at)\n             VALUES (?1, ?2, ?3, ?4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "9b356fad873463cee0330aa20cf53b4fa896ca9fd082e4a8ea8c94b485bada33"
+}

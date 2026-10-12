@@ -95,6 +95,10 @@ pub enum Table {
     InsightResults,
     /// Cached year-in-review recaps, one per year (ORG-09).
     YearRecaps,
+    /// Folders watched for recordings to import (CAP-11).
+    WatchedFolders,
+    /// Files watched folders imported or failed to import (CAP-11).
+    WatchedFiles,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -102,7 +106,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 41] = [
+    pub const ALL: [Self; 43] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -143,6 +147,8 @@ impl Table {
         Self::InsightDefs,
         Self::InsightResults,
         Self::YearRecaps,
+        Self::WatchedFolders,
+        Self::WatchedFiles,
         Self::ExampleNotes,
     ];
 
@@ -204,6 +210,8 @@ impl Table {
             "year_recaps" => Self::YearRecaps,
             "meeting_views" => Self::MeetingViews,
             "meeting_merge_parts" => Self::MeetingMergeParts,
+            "watched_folders" => Self::WatchedFolders,
+            "watched_files" => Self::WatchedFiles,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

@@ -45,6 +45,7 @@
         "folders:default",
         "integrations:default",
         "insights:default",
+        "import:default",
         "tags:default",
         "speakers:default",
         "stats:default",

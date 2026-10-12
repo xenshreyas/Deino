@@ -207,6 +207,14 @@ export type Table =
  */
 "year_recaps" | 
 /**
+ * Folders watched for recordings to import (CAP-11).
+ */
+"watched_folders" | 
+/**
+ * Files watched folders imported or failed to import (CAP-11).
+ */
+"watched_files" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

@@ -149,6 +149,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
+    // ── CAP-11 imports and watched folders (features/import.rs) ──
+    ("import", IMPORT_COMMANDS),
     // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──
     (
         "vocabulary",

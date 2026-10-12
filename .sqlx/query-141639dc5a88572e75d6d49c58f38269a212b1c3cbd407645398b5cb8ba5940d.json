@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM watched_files WHERE id = ?1 AND failure IS NOT NULL\n               RETURNING folder_id AS \"folder_id: WatchedFolderId\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "folder_id: WatchedFolderId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "141639dc5a88572e75d6d49c58f38269a212b1c3cbd407645398b5cb8ba5940d"
+}

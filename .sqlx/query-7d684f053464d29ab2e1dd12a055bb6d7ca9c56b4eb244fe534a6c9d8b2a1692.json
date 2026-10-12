@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE watched_folders SET move_to_processed = ?1 WHERE id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7d684f053464d29ab2e1dd12a055bb6d7ca9c56b4eb244fe534a6c9d8b2a1692"
+}

@@ -60,6 +60,10 @@
 //!
 //! ORG-09 added [`stats`]: meeting and LLM usage stats computed on read,
 //! and the year in review.
+//!
+//! CAP-11 added [`import`] (an audio or video file becomes a meeting the
+//! pipeline transcribes) and [`watch`] (watched folders that import new
+//! recordings on their own, once each).
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -76,6 +80,7 @@ pub mod final_transcription;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;
+pub mod import;
 pub mod insights;
 pub mod meetings;
 pub mod models;
@@ -100,3 +105,4 @@ mod testing;
 pub mod transcript;
 pub mod vocabulary;
 pub mod voiceprints;
+pub mod watch;

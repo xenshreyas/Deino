@@ -48,6 +48,7 @@ pub mod echo;
 pub mod engine;
 mod error;
 pub mod events;
+pub mod import;
 pub mod lane;
 pub mod live;
 pub mod monitor;
@@ -70,6 +71,7 @@ pub use events::{
     AudioLevels, HealthKind, HealthNotice, RecordingEvents, RecordingPhase, RecordingSnapshot,
     SegmentUpdate, SegmentUpdateKind,
 };
+pub use import::NativeIngest;
 pub use lane::Lane;
 pub use monitor::{HealthIssue, IssueKind};
 pub use observer::{NoStartObserver, StartObserver, StartObservers};

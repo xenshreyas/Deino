@@ -67,6 +67,10 @@ export const settingsCopy = {
       label: 'Vocabulary',
       description: 'Names and terms Deino should spell your way, and replacements.',
     },
+    'watched-folders': {
+      label: 'Watched folders',
+      description: 'Folders whose new recordings become meetings on their own.',
+    },
     people: {
       label: 'People',
       description: 'Recognise speakers by voice, and the voice profiles Deino knows.',

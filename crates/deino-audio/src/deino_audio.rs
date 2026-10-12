@@ -52,6 +52,7 @@ pub mod finalize;
 pub mod fmp4;
 pub mod health;
 pub mod manifest;
+pub mod media;
 pub mod persister;
 pub mod recorder;
 pub mod recovery;

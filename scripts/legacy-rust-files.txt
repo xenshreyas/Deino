@@ -5,7 +5,6 @@ frontend/src-tauri/build/onnxruntime.rs
 frontend/src-tauri/src/api/api.rs
 frontend/src-tauri/src/audio/audio_processing.rs
 frontend/src-tauri/src/audio/decoder.rs
-frontend/src-tauri/src/audio/import.rs
 frontend/src-tauri/src/audio/level_monitor.rs
 frontend/src-tauri/src/audio/retranscription.rs
 frontend/src-tauri/src/audio/transcription/engine.rs

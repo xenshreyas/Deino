@@ -7,6 +7,7 @@
 import { type ReactNode, Suspense } from 'react';
 
 import { DownloadProgressToastProvider } from '@/components/shared/DownloadProgressToast';
+import { ImportDialog } from '@/features/import';
 import { OnboardingFlow, useOnboardingGate } from '@/features/onboarding';
 import { Toaster } from '@/ui/toaster';
 
@@ -15,7 +16,6 @@ import { CommandPalette } from './command-palette/command-palette';
 import { DetectionRecordingStart } from './components/detection-recording-start';
 import { AudioDropTarget } from './components/audio-drop-target';
 import { ChatPlaceholder } from './components/chat-placeholder';
-import { ImportDialogGate } from './components/import-dialog-gate';
 import { TitleBar } from './components/title-bar';
 import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {gate === 'app' ? (
           <MainLayout onAudioFile={importDialog.openWith}>{children}</MainLayout>
         ) : null}
-        <ImportDialogGate
+        <ImportDialog
           open={importDialog.open}
           filePath={importDialog.filePath}
           onOpenChange={importDialog.onOpenChange}

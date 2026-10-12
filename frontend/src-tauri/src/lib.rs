@@ -103,6 +103,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::folders::init())
         .plugin(features::integrations::init())
         .plugin(features::insights::init())
+        .plugin(features::import::init())
         .plugin(features::tags::init())
         .plugin(features::speakers::init())
         .plugin(features::stats::init())
