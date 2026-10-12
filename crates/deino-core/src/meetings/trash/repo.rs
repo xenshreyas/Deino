@@ -11,6 +11,7 @@ use sqlx::types::Json;
 
 use super::{StoredFiles, TrashedMeeting};
 use crate::meetings::SqliteMeetingRepo;
+use crate::sample::SAMPLE_MEETING_ID;
 
 /// Moves meetings into and out of the trash, and deletes them for good.
 #[async_trait]
@@ -126,17 +127,29 @@ impl TrashBin for SqliteMeetingRepo {
     }
 
     async fn delete_trashed(&self, ids: &[MeetingId]) -> Result<Vec<MeetingId>, DbError> {
-        // One statement: foreign keys cascade to every row of each meeting
-        // (and its merge parts) in the same implicit transaction.
+        // Foreign keys cascade to every row of each meeting (and its merge
+        // parts). A real meeting's action items outlive it (`ON DELETE SET
+        // NULL`), but the sample's are demo data and go with it (FND-11).
         let ids = Json(ids);
+        let mut transaction = self.database.writer().begin().await?;
+        sqlx::query!(
+            "DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings
+            WHERE id = ?1 AND deleted_at IS NOT NULL
+              AND id IN (SELECT value FROM json_each(?2)))",
+            SAMPLE_MEETING_ID,
+            ids,
+        )
+        .execute(&mut *transaction)
+        .await?;
         let deleted = sqlx::query_scalar!(
             r#"DELETE FROM meetings
             WHERE id IN (SELECT value FROM json_each(?1)) AND deleted_at IS NOT NULL
             RETURNING id AS "id!: MeetingId""#,
             ids,
         )
-        .fetch_all(self.database.writer())
+        .fetch_all(&mut *transaction)
         .await?;
+        transaction.commit().await?;
         Ok(deleted)
     }
 }

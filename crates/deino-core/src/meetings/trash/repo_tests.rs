@@ -173,3 +173,25 @@ async fn the_purge_deletes_only_meetings_trashed_over_thirty_days_ago() {
         .collect();
     assert_eq!(left, ["recent"]);
 }
+
+#[tokio::test]
+async fn deleting_the_sample_for_good_also_deletes_its_action_items() {
+    let sample = crate::sample::SAMPLE_MEETING_ID;
+    let world = world(&[sample, "real"]).await;
+    let db = &world.repo.database;
+    rows::action_item(db, 1, sample).await;
+    rows::action_item(db, 2, "real").await;
+    world.trash.trash(&ids(&[sample, "real"])).await.unwrap();
+
+    world
+        .trash
+        .delete_forever(&ids(&[sample, "real"]))
+        .await
+        .unwrap();
+
+    let left: Vec<Option<String>> = sqlx::query_scalar("SELECT meeting_id FROM action_items")
+        .fetch_all(db.reader())
+        .await
+        .unwrap();
+    assert_eq!(left, [None], "the real meeting's item outlives it");
+}

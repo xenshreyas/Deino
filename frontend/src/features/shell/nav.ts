@@ -21,6 +21,7 @@ import {
   ScrollText,
   Settings,
   Tag,
+  Trash2,
   Users,
   Workflow,
 } from '@/ui/icons';
@@ -108,6 +109,14 @@ export const NAV_ITEMS = [
     icon: Tag,
     to: '/tags',
     order: 40,
+    section: 'workspace',
+  },
+  {
+    id: 'trash',
+    label: 'Trash',
+    icon: Trash2,
+    to: '/meetings/trash',
+    order: 50,
     section: 'workspace',
   },
   {

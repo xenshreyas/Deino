@@ -101,7 +101,23 @@ let settings: Generated.Settings = {
     microsoft: { clientId: '' },
   },
   integrations: { apps: {} },
-  ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
+  ui: {
+    theme: 'system',
+    showConfidenceIndicator: true,
+    transcriptPaneRatio: 0.3,
+    meetingsList: {
+      view: null,
+      filter: {
+        dateRange: null,
+        people: [],
+        companies: [],
+        tags: [],
+        folders: [],
+        hasActionItems: false,
+        audience: null,
+      },
+    },
+  },
   beta: { importAndRetranscribe: true },
   onboarding: startingOnboarding(),
 };

@@ -24,6 +24,7 @@ import { Route as MeetingsIndexRouteImport } from './routes/meetings/index'
 import { Route as FoldersIndexRouteImport } from './routes/folders/index'
 import { Route as CompaniesIndexRouteImport } from './routes/companies/index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
+import { Route as MeetingsTrashRouteImport } from './routes/meetings/trash'
 import { Route as MeetingsMeetingIdRouteImport } from './routes/meetings/$meetingId'
 import { Route as FoldersUnfiledRouteImport } from './routes/folders/unfiled'
 import { Route as FoldersFolderIdRouteImport } from './routes/folders/$folderId'
@@ -104,6 +105,11 @@ const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeetingsTrashRoute = MeetingsTrashRouteImport.update({
+  id: '/meetings/trash',
+  path: '/meetings/trash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MeetingsMeetingIdRoute = MeetingsMeetingIdRouteImport.update({
   id: '/meetings/$meetingId',
   path: '/meetings/$meetingId',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/folders/$folderId': typeof FoldersFolderIdRoute
   '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings/trash': typeof MeetingsTrashRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/companies/': typeof CompaniesIndexRoute
   '/folders/': typeof FoldersIndexRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/folders/$folderId': typeof FoldersFolderIdRoute
   '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings/trash': typeof MeetingsTrashRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/companies': typeof CompaniesIndexRoute
   '/folders': typeof FoldersIndexRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/folders/$folderId': typeof FoldersFolderIdRoute
   '/folders/unfiled': typeof FoldersUnfiledRoute
   '/meetings/$meetingId': typeof MeetingsMeetingIdRoute
+  '/meetings/trash': typeof MeetingsTrashRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/companies/': typeof CompaniesIndexRoute
   '/folders/': typeof FoldersIndexRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/folders/$folderId'
     | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/meetings/trash'
     | '/people/$personId'
     | '/companies/'
     | '/folders/'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/folders/$folderId'
     | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/meetings/trash'
     | '/people/$personId'
     | '/companies'
     | '/folders'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/folders/$folderId'
     | '/folders/unfiled'
     | '/meetings/$meetingId'
+    | '/meetings/trash'
     | '/people/$personId'
     | '/companies/'
     | '/folders/'
@@ -270,6 +282,7 @@ export interface RootRouteChildren {
   FoldersFolderIdRoute: typeof FoldersFolderIdRoute
   FoldersUnfiledRoute: typeof FoldersUnfiledRoute
   MeetingsMeetingIdRoute: typeof MeetingsMeetingIdRoute
+  MeetingsTrashRoute: typeof MeetingsTrashRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   CompaniesIndexRoute: typeof CompaniesIndexRoute
   FoldersIndexRoute: typeof FoldersIndexRoute
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/meetings/trash': {
+      id: '/meetings/trash'
+      path: '/meetings/trash'
+      fullPath: '/meetings/trash'
+      preLoaderRoute: typeof MeetingsTrashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/meetings/$meetingId': {
       id: '/meetings/$meetingId'
       path: '/meetings/$meetingId'
@@ -430,6 +450,7 @@ const rootRouteChildren: RootRouteChildren = {
   FoldersFolderIdRoute: FoldersFolderIdRoute,
   FoldersUnfiledRoute: FoldersUnfiledRoute,
   MeetingsMeetingIdRoute: MeetingsMeetingIdRoute,
+  MeetingsTrashRoute: MeetingsTrashRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   CompaniesIndexRoute: CompaniesIndexRoute,
   FoldersIndexRoute: FoldersIndexRoute,
