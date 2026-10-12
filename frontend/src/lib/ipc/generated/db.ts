@@ -252,6 +252,26 @@ export type Table =
  */
 "example_notes" | 
 /**
+ * `snapshots`: pictures of the meeting window kept while it records, every
+ * 10 s at most and only when the screen changed (a perceptual hash more
+ * than 10 of 64 bits from the last kept one). The PNG lives in the
+ * meeting's recording folder, `snapshots/<file_name>`, and goes with it
+ * (ORG-07's purge deletes the folder; the rows cascade). `at_ms` is the
+ * offset on the recording's own timeline (pauses skipped), like
+ * `transcript_segments`. `phash` is the 64-bit hash's bits as a signed
+ * integer, kept so later snapshots and the `screen_context` stage can
+ * compare pictures without reading them. Rows are appended by the capture
+ * (`ScreenRepo::add_snapshot`) and deleted only by the user.
+ */
+"snapshots" | 
+/**
+ * `screen_capture_choices`: "Turn off for this meeting". A row with
+ * `capture = 0` keeps screen capture off for that meeting, whatever the
+ * global setting says (a resumed recording does not restart it); no row
+ * means the setting decides. Written only by `ScreenRepo::set_capture`.
+ */
+"screen_capture_choices" | 
+/**
  * Recipes (AI-04): saved prompts the user runs on a meeting, by `/slug` in
  * the ask bar or from the Recipes page. Built-in rows (`built_in` = 1) are
  * written from the app's library (`deino_core::recipes::LIBRARY`) and kept

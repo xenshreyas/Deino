@@ -277,6 +277,26 @@ export type Table =
  */
 "example_notes" | 
 /**
+ * `snapshots`: pictures of the meeting window kept while it records, every
+ * 10 s at most and only when the screen changed (a perceptual hash more
+ * than 10 of 64 bits from the last kept one). The PNG lives in the
+ * meeting's recording folder, `snapshots/<file_name>`, and goes with it
+ * (ORG-07's purge deletes the folder; the rows cascade). `at_ms` is the
+ * offset on the recording's own timeline (pauses skipped), like
+ * `transcript_segments`. `phash` is the 64-bit hash's bits as a signed
+ * integer, kept so later snapshots and the `screen_context` stage can
+ * compare pictures without reading them. Rows are appended by the capture
+ * (`ScreenRepo::add_snapshot`) and deleted only by the user.
+ */
+"snapshots" | 
+/**
+ * `screen_capture_choices`: "Turn off for this meeting". A row with
+ * `capture = 0` keeps screen capture off for that meeting, whatever the
+ * global setting says (a resumed recording does not restart it); no row
+ * means the setting decides. Written only by `ScreenRepo::set_capture`.
+ */
+"screen_capture_choices" | 
+/**
  * Recipes (AI-04): saved prompts the user runs on a meeting, by `/slug` in
  * the ask bar or from the Recipes page. Built-in rows (`built_in` = 1) are
  * written from the app's library (`deino_core::recipes::LIBRARY`) and kept
@@ -323,4 +343,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","recipes","ask_messages","follow_up_drafts","api_keys","webhooks","webhook_deliveries"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","snapshots","screen_capture_choices","recipes","ask_messages","follow_up_drafts","api_keys","webhooks","webhook_deliveries"] as const satisfies readonly Table[]
