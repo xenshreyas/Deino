@@ -27,7 +27,8 @@ use deino_audio::{Bytes, Frames, TestSignal, Track, recording_dir};
 use deino_core::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 use deino_domain::{MeetingEvent, MeetingId, MeetingStatus};
 use deino_recording::{
-    HealthIssue, IssueKind, RecordingError, RecordingPhase, RecordingSnapshot, StartRequest,
+    HealthIssue, IssueKind, Playhead, RecordingError, RecordingPhase, RecordingSnapshot,
+    StartRequest,
 };
 use rig::{FastClock, FixtureCapture, Rig, rig};
 
@@ -93,9 +94,18 @@ async fn a_finished_meeting_resumes_and_appends_after_its_recorded_length() {
     assert_eq!(rig.service.resume_meeting(&meeting).await.unwrap(), meeting);
     let resumed = rig.service.state();
     record_for(&rig, Duration::from_secs(3)).await;
+    let playhead = rig.service.playhead();
     rig.service.stop().await.unwrap();
 
     assert_eq!(resumed.phase, RecordingPhase::Recording);
+    let first_ms = u32::try_from(first_take.as_duration().as_millis()).unwrap();
+    let Playhead::Recording { at, .. } = playhead else {
+        panic!("not recording: {playhead:?}");
+    };
+    assert!(
+        at.0 >= first_ms + 1_000,
+        "the playhead continues the timeline: {at:?}"
+    );
     assert_eq!(resumed.title.as_deref(), Some("Weekly sync"));
     let manifest = ManifestStore::new(&dir).read().unwrap();
     for track in Track::ALL {
@@ -106,7 +116,6 @@ async fn a_finished_meeting_resumes_and_appends_after_its_recorded_length() {
     assert!(manifest.length() > first_take + Frames(48_000));
     let after = segments(&rig, &meeting).await;
     let appended: Vec<&Segment> = after.iter().filter(|s| !before.contains(s)).collect();
-    let first_ms = u32::try_from(first_take.as_duration().as_millis()).unwrap();
     assert!(!appended.is_empty(), "the new audio is transcribed");
     assert!(appended.iter().all(|s| s.start.0 + 500 >= first_ms));
     let state = rig.deps.meetings.state(&meeting).await.unwrap().unwrap();
