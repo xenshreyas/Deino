@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, BetaSettings, CalendarSettings, DetectionSettings, ExportSettings,
-    IntegrationSettings, NetworkSettings, NotificationSettings, OnboardingSettings,
+    AiSettings, AudioSettings, BetaSettings, BriefSettings, CalendarSettings, DetectionSettings,
+    ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings, OnboardingSettings,
     OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings, SettingsError,
     SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
 };
@@ -50,6 +50,8 @@ pub struct Settings {
     pub export: ExportSettings,
     /// Calendar sync and which calendars are shown (ORG-01).
     pub calendar: CalendarSettings,
+    /// Pre-meeting briefs (NOT-08).
+    pub briefs: BriefSettings,
     /// The user's own OAuth apps for integrations (INT-00).
     pub integrations: IntegrationSettings,
     /// Appearance and layout.
@@ -78,6 +80,7 @@ impl Default for Settings {
             organize: OrganizeSettings::default(),
             export: ExportSettings::default(),
             calendar: CalendarSettings::default(),
+            briefs: BriefSettings::default(),
             integrations: IntegrationSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),

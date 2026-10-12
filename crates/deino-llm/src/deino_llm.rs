@@ -25,6 +25,7 @@
 //! `MockProvider` (feature `test-support`).
 
 pub mod admin;
+pub mod brief;
 mod catalog;
 mod context;
 mod credentials;

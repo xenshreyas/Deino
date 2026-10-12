@@ -38,9 +38,16 @@ impl RelatedService {
             .key(meeting)
             .await?
             .ok_or_else(|| LinkError::MeetingNotFound(meeting.clone()))?;
-        let candidates = self.repo.candidates(&key).await?;
+        self.related_to(&key).await
+    }
+
+    /// The meetings related to `key`, which need not be a stored meeting's:
+    /// pre-meeting briefs (NOT-08) build one from an upcoming event, with
+    /// the event's note as `key.meeting` when it has one.
+    pub async fn related_to(&self, key: &RelationKey) -> Result<RelatedMeetings, LinkError> {
+        let candidates = self.repo.candidates(key).await?;
         let me = self.me.me().await?.map(|person| person.id);
-        Ok(relate(&key, candidates, me.as_ref()))
+        Ok(relate(key, candidates, me.as_ref()))
     }
 }
 
