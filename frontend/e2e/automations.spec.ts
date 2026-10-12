@@ -21,15 +21,8 @@ const BOARD = fixtureMeeting('meeting-fixture-board-update');
 const STANDUP = fixtureMeeting('meeting-fixture-standup');
 
 /** The provider steps the picker lists as "WIP" (PARITY_PLAN D12). */
-const WIP_STEPS = [
-  'Webhook',
-  'Slack',
-  'Notion',
-  'Task tools',
-  'CRM',
-  'Google Docs or Apple Notes',
-  'Email',
-];
+/** Provider steps still WIP (D12); the webhook step is live since DEV-01. */
+const WIP_STEPS = ['Slack', 'Notion', 'Task tools', 'CRM', 'Google Docs or Apple Notes', 'Email'];
 
 /** The Automations page's list of automations. */
 const rail = (page: Page) => page.getByRole('navigation', { name: 'Automations', exact: true });
@@ -132,7 +125,7 @@ async function rerunFromMeeting(page: Page) {
   await expect(rerun).toContainText('Done', { timeout: 10_000 });
 }
 
-test('a script step is blocked until shell scripts are allowed; provider steps are WIP', async ({
+test('a script step is blocked until shell scripts are allowed; provider steps are WIP, webhooks live', async ({
   page,
 }) => {
   await page.goto('/automations?automation=new');
@@ -144,6 +137,7 @@ test('a script step is blocked until shell scripts are allowed; provider steps a
   await expect(shell).toBeDisabled();
   await expect(shell).toHaveAccessibleDescription(/Allow shell scripts/);
   await expect(page.getByRole('menuitem', { name: 'Notification', exact: true })).toBeEnabled();
+  await expect(page.getByRole('menuitem', { name: 'Webhook', exact: true })).toBeEnabled();
   for (const name of WIP_STEPS) {
     await expect(page.getByRole('menuitem', { name, exact: true })).toBeDisabled();
   }
