@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO webhooks (id, url, label, events_json, fields_json, enabled,\n                 disabled_reason, failure_streak, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, 0, ?7, ?8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "44e91fd073a6312dfff8d317fa539ff37084440c81f6b84d07456d65bf139a9f"
+}

@@ -22,7 +22,8 @@ test-support = [
 # API key secrets hashed with argon2id (DEV-03; MIT OR Apache-2.0, RustCrypto).
 argon2 = { version = "=0.5.3", features = ["std"] }
 async-trait.workspace = true
-# AI-04: the recipe share string, `deino://recipe?data=<base64url>`.
+# AI-04: the recipe share string, `deino://recipe?data=<base64url>`; DEV-01:
+# the webhook `whsec_` secret and the Standard Webhooks signature.
 base64 = "0.22.1"
 chrono.workspace = true
 deino-db.workspace = true
@@ -32,6 +33,10 @@ deino-domain.workspace = true
 deino-export.workspace = true
 deino-llm.workspace = true
 futures-util.workspace = true
+# A webhook signing secret's random bytes (DEV-01); deino-db's version.
+getrandom = "0.3.4"
+# HMAC-SHA256 webhook signatures (DEV-01); already in the tree.
+hmac = "0.12.1"
 # Company logos: the favicon fetch over the `favicons` service (ORG-04).
 deino-net.workspace = true
 deino-secrets.workspace = true

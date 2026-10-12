@@ -14,6 +14,8 @@ use deino_core::enhance::{
 };
 use deino_core::redaction::{LocalModelCheck, Redactor, SettingRedactor, TextRedactor};
 use deino_core::settings::SettingsService;
+use deino_core::webhooks::LateSink;
+use deino_core::webhooks::taps::TappedNotesWriter;
 use deino_db::Database;
 use deino_domain::MeetingId;
 use deino_llm::Gateway;
@@ -29,6 +31,9 @@ const AI_UNAVAILABLE: &str = "AI is unavailable: the Keychain or the network cou
 /// gateway.
 pub(crate) struct NotesAi {
     service: Option<Arc<EnhanceService>>,
+    /// The webhooks' sink for `notes.generated` and `notes.edited` (DEV-01),
+    /// bound in [`NotesAi::manage`].
+    webhooks: Arc<LateSink>,
     enhancer: Arc<dyn NotesEnhancer>,
     titler: Arc<dyn MeetingTitler>,
 }
@@ -42,9 +47,11 @@ impl NotesAi {
         templates: Arc<dyn TemplateSource>,
     ) -> Self {
         let clock = &deps.clock;
+        let webhooks = Arc::new(LateSink::default());
         let Some(gateway) = deps.gateway.clone() else {
             return Self {
                 service: None,
+                webhooks,
                 enhancer: Arc::new(Unwired),
                 titler: Arc::new(Unwired),
             };
@@ -61,7 +68,7 @@ impl NotesAi {
         let ports = EnhancePorts {
             sources,
             reader: repo.clone(),
-            writer: repo,
+            writer: Arc::new(TappedNotesWriter::new(repo, webhooks.clone())),
             templates,
             gateway,
         };
@@ -69,6 +76,7 @@ impl NotesAi {
         Self {
             enhancer: service.clone(),
             service: Some(service),
+            webhooks,
             titler: Arc::new(titler),
         }
     }
@@ -84,8 +92,11 @@ impl NotesAi {
     }
 
     /// Registers the service as Tauri state, where the `enhance` commands
-    /// find it.
+    /// find it, and connects its notes to the webhooks.
     pub(crate) fn manage<R: Runtime>(&self, app: &impl Manager<R>) {
+        if let Some(sink) = super::webhooks::sink(app) {
+            self.webhooks.bind(sink);
+        }
         if let Some(service) = &self.service {
             app.manage(Arc::clone(service));
         }

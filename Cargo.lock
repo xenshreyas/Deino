@@ -2167,6 +2167,8 @@ dependencies = [
  "deino-speaker-tags",
  "deino-testkit",
  "futures-util",
+ "getrandom 0.3.4",
+ "hmac",
  "insta",
  "json-patch",
  "log",

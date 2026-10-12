@@ -1,25 +1,28 @@
 /**
- * What steps can point at (insights, tags, folders), read through their
- * features, with labels for the pickers.
+ * What steps can point at (insights, tags, folders, webhooks), read through
+ * their features, with labels for the pickers.
  */
 import { useFolderTree } from '@/features/folders';
 import { useInsights } from '@/features/insights';
 import { useTags } from '@/features/tags';
+import { useWebhooks } from '@/features/webhooks';
 import type { Option } from '@/ui/option-select';
 
 import { builderCopy } from '../copy';
 import type { StepChoices } from '../draft';
-import type { Action, ActionKind, FolderId, InsightId, TagId } from '../types';
+import type { Action, ActionKind, FolderId, InsightId, TagId, WebhookId } from '../types';
 
 /** The pickers' options, by what they name; empty while they load. */
 export interface StepOptions {
   insights: Option<InsightId>[];
   tags: Option<TagId>[];
   folders: Option<FolderId>[];
+  webhooks: Option<WebhookId>[];
 }
 
-/** Every insight, tag and folder, as the step pickers list them. */
+/** Every insight, tag, folder and webhook, as the step pickers list them. */
 export function useStepOptions(): StepOptions {
+  const webhooks = useWebhooks().data ?? [];
   const insights = useInsights().data ?? [];
   const tags = useTags().data ?? [];
   const folders = useFolderTree().data?.entries ?? [];
@@ -29,6 +32,10 @@ export function useStepOptions(): StepOptions {
     folders: folders.map((entry) => ({
       value: entry.folder.id,
       label: `${' '.repeat(entry.depth)}${entry.folder.name}`,
+    })),
+    webhooks: webhooks.map((webhook) => ({
+      value: webhook.id,
+      label: webhook.label || webhook.url,
     })),
   };
 }
@@ -55,5 +62,6 @@ export function choicesOf(options: StepOptions): StepChoices {
     insights: options.insights.map((option) => option.value),
     tags: options.tags.map((option) => option.value),
     folders: options.folders.map((option) => option.value),
+    webhooks: options.webhooks.map((option) => option.value),
   };
 }

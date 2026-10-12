@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: WebhookId\", url, label,\n                   events_json AS \"events: Json<Vec<WebhookEvent>>\",\n                   fields_json AS \"fields: Json<PayloadFields>\",\n                   enabled AS \"enabled: bool\", disabled_reason, failure_streak,\n                   failing_since AS \"failing_since: DateTime<Utc>\",\n                   last_success_at AS \"last_success_at: DateTime<Utc>\",\n                   created_at AS \"created_at: DateTime<Utc>\",\n                   updated_at AS \"updated_at: DateTime<Utc>\"\n               FROM webhooks WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: WebhookId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "url",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "label",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "events: Json<Vec<WebhookEvent>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "fields: Json<PayloadFields>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "enabled: bool",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "disabled_reason",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "failure_streak",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "failing_since: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_success_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "983ccebdd5a378e77aacef6f1d4fe668cf48da7f69b48e3b9659857f930f7f70"
+}

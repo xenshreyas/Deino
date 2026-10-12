@@ -32,7 +32,7 @@ const CATALOG: Generated.StepInfo[] = [
   kind: kind as Generated.ActionKind,
   label: label ?? '',
   description: description ?? '',
-  availability: index < 6 ? 'ready' : 'wip',
+  availability: index < 7 ? 'ready' : 'wip',
 }));
 
 export const commands = {

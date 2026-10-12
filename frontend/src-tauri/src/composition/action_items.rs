@@ -56,7 +56,10 @@ pub(super) fn attach_action_items(
 ) -> Arc<dyn ActionItemExtractor> {
     let shared = Shared {
         repo: Arc::new(SqliteActionItemRepo::new(database.clone())),
-        events: Arc::new(TauriActionItemEvents::new(app.clone())),
+        events: super::webhooks::tap_action_items(
+            app,
+            Arc::new(TauriActionItemEvents::new(app.clone())),
+        ),
         zone: Arc::new(SystemZone),
     };
     let items = Arc::new(items_service(database, &shared, wiring));

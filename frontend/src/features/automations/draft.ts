@@ -12,6 +12,7 @@ import type {
   InsightId,
   PayloadFields,
   TagId,
+  WebhookId,
 } from './types';
 
 /** One step row of the form. */
@@ -31,6 +32,7 @@ export interface StepChoices {
   insights: InsightId[];
   tags: TagId[];
   folders: FolderId[];
+  webhooks: WebhookId[];
 }
 
 /** The payload a new script step sends. */
@@ -104,6 +106,8 @@ export function startAction(kind: ActionKind, choices: StepChoices): Action | nu
       return { kind, message: '' };
     case 'run_shell':
       return { kind, command: '', fields: DEFAULT_FIELDS };
+    case 'webhook':
+      return first(choices.webhooks, (webhookId) => ({ kind, webhookId, fields: DEFAULT_FIELDS }));
     default:
       return null;
   }

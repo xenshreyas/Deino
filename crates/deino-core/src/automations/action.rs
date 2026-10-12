@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use deino_domain::{FolderId, InsightId, TagId};
+use deino_domain::{FolderId, InsightId, TagId, WebhookId};
 use deino_export::ExportFormat;
 use serde::{Deserialize, Serialize};
 
@@ -61,6 +61,15 @@ pub enum Action {
         /// What the JSON payload carries.
         fields: PayloadFields,
     },
+    /// Posts the meeting as signed JSON to a webhook endpoint (DEV-01) set
+    /// up in Settings → Developer → Webhooks.
+    Webhook {
+        /// The endpoint.
+        #[serde(rename = "webhookId")]
+        webhook_id: WebhookId,
+        /// What the JSON payload carries.
+        fields: PayloadFields,
+    },
 }
 
 impl Action {
@@ -73,6 +82,7 @@ impl Action {
             Self::ExportFile { .. } => ActionKind::ExportFile,
             Self::Notify { .. } => ActionKind::Notify,
             Self::RunShell { .. } => ActionKind::RunShell,
+            Self::Webhook { .. } => ActionKind::Webhook,
         }
     }
 
@@ -143,7 +153,7 @@ pub enum ActionKind {
     Notify,
     /// [`Action::RunShell`].
     RunShell,
-    /// A signed webhook request (DEV-01).
+    /// [`Action::Webhook`].
     Webhook,
     /// Notes to a Slack channel (INT-01).
     Slack,

@@ -8,7 +8,7 @@
 //!   flowing into the `egress_log` table (with everything recorded before),
 //!   and the Settings → Privacy → Network page gets its [`NetworkControls`].
 
-use std::sync::Arc;
+use std::sync::{Arc, PoisonError, RwLock};
 
 use async_trait::async_trait;
 use deino_core::settings::{AiSettings, SettingsService};
@@ -90,18 +90,56 @@ pub(crate) fn model_downloads<R: Runtime>(
     Ok(Arc::new(client))
 }
 
+/// Hosts a feature's own data adds to a service while it names them (the
+/// webhook endpoints the user saved, DEV-01).
+#[async_trait]
+pub(crate) trait HostSource: Send + Sync {
+    /// The hosts allowed right now.
+    async fn hosts(&self) -> Vec<HostPattern>;
+}
+
 /// [`ServicePolicy`] and [`ServiceSwitch`] over the typed settings: the
 /// `network` section's switches and offline mode, plus the custom LLM
-/// endpoints' hosts. Every request reads the current settings, so a switch
-/// applies to the very next request.
+/// endpoints' hosts and any [`HostSource`] a feature registered. Every
+/// request reads them afresh, so a change applies to the very next request.
 pub(crate) struct SettingsServicePolicy {
     settings: Arc<SettingsService>,
+    sources: RwLock<Vec<(ServiceId, Arc<dyn HostSource>)>>,
 }
 
 impl SettingsServicePolicy {
     /// A policy over `settings`.
     pub(crate) fn new(settings: Arc<SettingsService>) -> Self {
-        Self { settings }
+        Self {
+            settings,
+            sources: RwLock::new(Vec::new()),
+        }
+    }
+
+    /// Adds `source`'s hosts to `service` (a service whose registry entry
+    /// takes custom hosts).
+    pub(crate) fn add_host_source(&self, service: ServiceId, source: Arc<dyn HostSource>) {
+        self.sources
+            .write()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push((service, source));
+    }
+
+    /// The hosts the registered sources add to `service`.
+    async fn sourced_hosts(&self, service: ServiceId) -> Vec<HostPattern> {
+        let sources: Vec<Arc<dyn HostSource>> = self
+            .sources
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .filter(|(owner, _)| *owner == service)
+            .map(|(_, source)| Arc::clone(source))
+            .collect();
+        let mut hosts = Vec::new();
+        for source in sources {
+            hosts.extend(source.hosts().await);
+        }
+        hosts
     }
 }
 
@@ -110,10 +148,12 @@ impl ServicePolicy for SettingsServicePolicy {
     async fn grant(&self, service: ServiceId) -> Grant {
         let settings = self.settings.get().await;
         let default = registry::spec(service).enabled_by_default;
+        let mut custom_hosts = custom_hosts(&settings.ai, service);
+        custom_hosts.extend(self.sourced_hosts(service).await);
         Grant {
             enabled: settings.network.choice(service).unwrap_or(default),
             offline_mode: settings.network.offline_mode,
-            custom_hosts: custom_hosts(&settings.ai, service),
+            custom_hosts,
         }
     }
 }
@@ -206,5 +246,28 @@ mod tests {
                 .custom_hosts
                 .is_empty()
         );
+    }
+
+    struct Endpoints;
+
+    #[async_trait]
+    impl HostSource for Endpoints {
+        async fn hosts(&self) -> Vec<HostPattern> {
+            vec![HostPattern::exact("hooks.zapier.com")]
+        }
+    }
+
+    #[tokio::test]
+    async fn a_host_source_adds_its_hosts_to_its_service_only() {
+        let (policy, _) = policy_over(Settings::default()).await;
+
+        policy.add_host_source(ServiceId::Webhooks, Arc::new(Endpoints));
+
+        let webhooks = policy.grant(ServiceId::Webhooks).await;
+        assert_eq!(
+            webhooks.custom_hosts,
+            [HostPattern::exact("hooks.zapier.com")]
+        );
+        assert!(policy.grant(ServiceId::Slack).await.custom_hosts.is_empty());
     }
 }

@@ -45,7 +45,7 @@ pub(super) fn attach_insights(
         Some(gateway) => Arc::new(GatewayInsightModel::new(gateway.clone())),
         None => Arc::new(NoInsightModel),
     };
-    Arc::new(GenerateService::new(GenerateDeps {
+    let generator = Arc::new(GenerateService::new(GenerateDeps {
         defs: repo.clone(),
         results: repo.clone(),
         records: repo,
@@ -54,5 +54,6 @@ pub(super) fn attach_insights(
         model,
         clock: wiring.clock.clone(),
         zone: Arc::new(SystemZone),
-    }))
+    }));
+    super::webhooks::tap_insights(app, generator)
 }

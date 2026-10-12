@@ -11,6 +11,7 @@ use crate::export::ExportError;
 use crate::folders::FolderError;
 use crate::insights::InsightError;
 use crate::tags::TagError;
+use crate::webhooks::WebhookError;
 
 /// An automations failure.
 #[derive(Debug, thiserror::Error)]
@@ -98,6 +99,8 @@ pub enum StepFailure {
     Llm,
     /// Reading or writing files, or starting a process, failed.
     Io,
+    /// A webhook was not delivered (DEV-01).
+    Delivery,
     /// Deino's own storage failed.
     Storage,
 }
@@ -148,6 +151,9 @@ pub enum StepError {
     /// A file or process operation failed.
     #[error("could not {0}")]
     Io(&'static str, #[source] std::io::Error),
+    /// The webhook could not be delivered (DEV-01).
+    #[error(transparent)]
+    Webhook(#[from] WebhookError),
     /// Deino's storage failed.
     #[error("could not load or save the run")]
     Storage(#[from] DbError),
@@ -160,10 +166,13 @@ impl StepError {
             Self::ShellDisabled => StepFailure::ShellDisabled,
             Self::Timeout { .. } => StepFailure::Timeout,
             Self::ExitStatus { .. } => StepFailure::ExitStatus,
-            Self::MissingTarget(_) => StepFailure::MissingTarget,
+            Self::MissingTarget(_) | Self::Webhook(WebhookError::NotFound(_)) => {
+                StepFailure::MissingTarget
+            }
             Self::Unavailable => StepFailure::Unavailable,
             Self::Insight(InsightError::Llm(_)) | Self::InsightFailed(_) => StepFailure::Llm,
             Self::Io(..) | Self::Export(_) => StepFailure::Io,
+            Self::Webhook(_) => StepFailure::Delivery,
             Self::Insight(_) | Self::Tag(_) | Self::Folder(_) | Self::Storage(_) => {
                 StepFailure::Storage
             }

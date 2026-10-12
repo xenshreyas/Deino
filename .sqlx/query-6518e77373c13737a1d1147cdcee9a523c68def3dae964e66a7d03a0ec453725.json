@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM webhook_deliveries\n             WHERE webhook_id = ?1 AND status IN ('succeeded', 'failed') AND id NOT IN (\n                 SELECT id FROM webhook_deliveries\n                 WHERE webhook_id = ?1 AND status IN ('succeeded', 'failed')\n                 ORDER BY created_at DESC, id DESC LIMIT ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6518e77373c13737a1d1147cdcee9a523c68def3dae964e66a7d03a0ec453725"
+}

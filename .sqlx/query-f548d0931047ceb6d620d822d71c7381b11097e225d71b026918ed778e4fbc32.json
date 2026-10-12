@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE webhooks SET url = ?1, label = ?2, events_json = ?3, fields_json = ?4,\n                 enabled = ?5, disabled_reason = ?6, failure_streak = ?7,\n                 failing_since = ?8, updated_at = ?9\n             WHERE id = ?10",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "f548d0931047ceb6d620d822d71c7381b11097e225d71b026918ed778e4fbc32"
+}

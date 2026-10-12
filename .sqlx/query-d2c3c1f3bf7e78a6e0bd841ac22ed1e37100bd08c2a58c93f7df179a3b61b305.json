@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: WebhookDeliveryId\", webhook_id AS \"webhook_id: WebhookId\",\n                   event, meeting_id AS \"meeting_id: MeetingId\", status, attempts,\n                   next_attempt_at AS \"next_attempt_at: DateTime<Utc>\", last_status, last_error,\n                   created_at AS \"created_at: DateTime<Utc>\",\n                   finished_at AS \"finished_at: DateTime<Utc>\"\n               FROM webhook_deliveries WHERE webhook_id = ?1\n               ORDER BY created_at DESC, id DESC LIMIT ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: WebhookDeliveryId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "webhook_id: WebhookId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "event",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "attempts",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "next_attempt_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_status",
+        "ordinal": 7,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_error",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "finished_at: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "d2c3c1f3bf7e78a6e0bd841ac22ed1e37100bd08c2a58c93f7df179a3b61b305"
+}

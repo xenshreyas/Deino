@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: WebhookDeliveryId\" FROM webhook_deliveries\n               WHERE webhook_id = ?1 AND event = ?2 AND status = 'pending' AND attempts = 0\n                 AND meeting_id IS ?3 AND subject_id IS ?4\n               LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: WebhookDeliveryId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "86291d9942a623d85cad73972b55097e4549aad674da0fbd2ad857cffaecc9cb"
+}

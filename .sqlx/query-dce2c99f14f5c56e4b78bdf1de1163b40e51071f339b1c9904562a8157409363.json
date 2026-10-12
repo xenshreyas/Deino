@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE webhook_deliveries SET status = 'sending', next_attempt_at = NULL,\n                   updated_at = ?2\n               WHERE id = ?1 AND status = 'pending'\n               RETURNING id AS \"id: WebhookDeliveryId\", webhook_id AS \"webhook_id: WebhookId\",\n                   event, meeting_id AS \"meeting_id: MeetingId\", subject_id, body, attempts,\n                   created_at AS \"created_at: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: WebhookDeliveryId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "webhook_id: WebhookId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "event",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "subject_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "body",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "attempts",
+        "ordinal": 6,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "dce2c99f14f5c56e4b78bdf1de1163b40e51071f339b1c9904562a8157409363"
+}

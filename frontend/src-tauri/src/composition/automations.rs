@@ -3,7 +3,7 @@
 //! local steps over the insights generator, the tag and folder services,
 //! the export assembler (redacted like every export, NOT-09), the file
 //! system, system notifications, the settings (shell scripts) and the
-//! recordings folder.
+//! recordings folder, plus DEV-01's webhook step over the webhooks service.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -11,12 +11,13 @@ use std::sync::Arc;
 use deino_core::automations::steps::RecordingFolders;
 use deino_core::automations::{
     AssembledMeetings, AutomationEngine, AutomationPorts, AutomationRunner, AutomationService,
-    EngineDeps, FactsSource, LocalStepPorts, SqliteAutomationRepo, StepRegistry,
+    EngineDeps, FactsSource, LocalStepPorts, MeetingSource, SqliteAutomationRepo, StepRegistry,
 };
 use deino_core::export::FsVault;
 use deino_core::insights::{InsightGenerator, SqliteInsightRepo};
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_core::tags::TagEvents;
+use deino_core::webhooks::{WebhookService, WebhookStep};
 use deino_db::Database;
 use tauri::{AppHandle, Manager};
 
@@ -76,17 +77,17 @@ fn local_steps(
     (organize, generator): (&Organize, Arc<dyn InsightGenerator>),
 ) -> StepRegistry {
     let insights = Arc::new(SqliteInsightRepo::new(database.clone()));
-    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
-    LocalStepPorts {
+    let meetings: Arc<dyn MeetingSource> = Arc::new(AssembledMeetings::new(
+        redacting_assembler(database, wiring.settings.clone()),
+        Arc::new(SqliteMeetingRepo::new(database.clone())),
+    ));
+    let steps = LocalStepPorts {
         insight_defs: insights.clone(),
         insight_runs: insights.clone(),
         generator,
         tags: organize.tags(),
         filer: organize.filing(),
-        meetings: Arc::new(AssembledMeetings::new(
-            redacting_assembler(database, wiring.settings.clone()),
-            meetings,
-        )),
+        meetings: meetings.clone(),
         records: insights,
         vault: Arc::new(FsVault),
         notifier: Arc::new(SystemNotifier::new(app.clone())),
@@ -94,7 +95,23 @@ fn local_steps(
         folders: Arc::new(RecordingFolders(recordings(app))),
         clock: wiring.clock.clone(),
     }
-    .registry()
+    .registry();
+    webhook_step(app, steps, meetings)
+}
+
+/// `steps` with DEV-01's webhook step, when the webhooks are wired.
+fn webhook_step(
+    app: &AppHandle,
+    steps: StepRegistry,
+    meetings: Arc<dyn MeetingSource>,
+) -> StepRegistry {
+    match app.try_state::<Arc<WebhookService>>() {
+        Some(service) => steps.with(Arc::new(WebhookStep::new(
+            WebhookService::clone(&service),
+            meetings,
+        ))),
+        None => steps,
+    }
 }
 
 /// The folder every meeting's folder lives in: a script's working

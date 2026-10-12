@@ -65,6 +65,7 @@ mod stats;
 mod stt;
 mod transcript;
 mod vocabulary;
+mod webhooks;
 
 use std::sync::Arc;
 

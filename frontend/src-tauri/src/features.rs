@@ -69,6 +69,7 @@ pub mod templates;
 pub mod transcript;
 pub mod transcription;
 pub mod vocabulary;
+pub mod webhooks;
 
 #[cfg(test)]
 pub(crate) mod acl;

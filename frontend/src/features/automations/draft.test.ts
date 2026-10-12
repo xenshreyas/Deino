@@ -6,7 +6,7 @@ import { blankDraft, DEFAULT_FIELDS, moved, startAction, toDraft, toInput } from
 import { asAutomationId, type Automation } from './types';
 
 const TAG = asTagId('0192f3a0-6c1e-7b2a-9d4e-0000000000aa');
-const NONE = { insights: [], tags: [], folders: [] };
+const NONE = { insights: [], tags: [], folders: [], webhooks: [] };
 
 describe('startAction', () => {
   it('starts local steps and points named ones at the first option', () => {

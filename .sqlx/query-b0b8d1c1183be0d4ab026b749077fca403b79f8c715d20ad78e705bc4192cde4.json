@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT min(next_attempt_at) AS \"next: DateTime<Utc>\" FROM webhook_deliveries\n               WHERE status = 'pending'",
+  "describe": {
+    "columns": [
+      {
+        "name": "next: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "b0b8d1c1183be0d4ab026b749077fca403b79f8c715d20ad78e705bc4192cde4"
+}

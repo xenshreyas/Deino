@@ -28,6 +28,7 @@ export type {
   StepOutput,
   TagId,
   Trigger,
+  WebhookId,
 } from '@/lib/ipc/generated/automations';
 
 /** An automation ID from a URL. Automation IDs are UUIDs minted by Rust. */
