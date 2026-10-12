@@ -43,7 +43,8 @@ changes without notice; and the rules must be testable without a call.
   belonging to the nearest element that holds exactly one name. The user's own tile ("(me)", "(You)") never names a
   remote voice; crosstalk names nobody.
 - **Chrome is asked to expose web content** with Chromium's
-  `AXManualAccessibility` on its app element, once per process: what a
+  `AXManualAccessibility` on its app element, once per process and only
+  when a Meet room is open in one of its windows: what a
   screen reader does. Not `AXEnhancedUserInterface`, which OpenWhispr found
   breaks Chromium focus. Nothing else touches another app.
 - **The recording's own clock.** `RecordingService::playhead()` gives the

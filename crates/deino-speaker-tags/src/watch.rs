@@ -19,6 +19,7 @@ use crate::ports::{Pid, Platform, Position, RecordingClock, TagSink};
 use crate::reading::{ReadError, Reading};
 use crate::status::LayoutHealth;
 use crate::timeline::{Sighting, Timeline};
+use crate::tree::{AxNode, WindowSummary};
 
 /// How much recording time passes between saves of finished spans.
 pub const FLUSH_EVERY: Millis = Millis(10_000);
@@ -155,13 +156,14 @@ impl Watch {
         pid: Pid,
     ) -> Result<Option<Reading>, TagError> {
         let app = adapter.app();
-        if !self.prepared.contains(&pid) {
+        let mut windows = self.call_windows(adapter, pid)?;
+        // An app is readied only once a call window shows (Chrome exposes its
+        // web content only then), and that window is read again at once.
+        if !windows.is_empty() && !self.prepared.contains(&pid) {
             self.parts.platform.windows.prepare(app, pid);
             self.prepared.push(pid);
+            windows = self.call_windows(adapter, pid)?;
         }
-        let pick = |window: &_| adapter.is_call_window(window);
-        let windows = self.parts.platform.windows.windows(pid, &pick);
-        let windows = windows.map_err(|source| TagError::Unreadable { app, source })?;
         for window in &windows {
             match adapter.read(window) {
                 Ok(reading) => {
@@ -176,6 +178,20 @@ impl Watch {
             }
         }
         Ok(None)
+    }
+
+    /// The windows of `pid` that may hold a call, read in full.
+    fn call_windows(
+        &self,
+        adapter: &dyn SpeakerAdapter,
+        pid: Pid,
+    ) -> Result<Vec<AxNode>, TagError> {
+        let pick = |window: &WindowSummary| adapter.is_call_window(window);
+        let windows = self.parts.platform.windows.windows(pid, &pick);
+        windows.map_err(|source| TagError::Unreadable {
+            app: adapter.app(),
+            source,
+        })
     }
 
     /// Notes a failure, logging it when it is new.

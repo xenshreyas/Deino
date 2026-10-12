@@ -27,7 +27,8 @@ pub trait RunningApps: Send + Sync {
 
 /// Reads an app's windows through Accessibility.
 pub trait WindowReader: Send + Sync {
-    /// Readies a process of `app` for reading; called once per process.
+    /// Readies a process of `app` for reading; called once per process,
+    /// when it first shows a call window.
     /// Chrome exposes web content to Accessibility only when asked.
     fn prepare(&self, app: CallApp, pid: Pid);
 

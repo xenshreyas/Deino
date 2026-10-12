@@ -2,7 +2,6 @@ use super::*;
 use crate::error::AxError;
 use crate::fake::{FakeMac, MemorySink, ScriptedClock};
 use crate::status::{TagState, statuses};
-use crate::tree::AxNode;
 
 const ZOOM: Pid = Pid(101);
 const CHROME: Pid = Pid(202);
@@ -202,26 +201,33 @@ fn spans_are_saved_every_ten_seconds_and_kept_when_a_save_fails() {
     assert_eq!(rig.spans().len(), 2);
 }
 
+/// A Chrome window on `address`.
+fn chrome_window(address: &str) -> AxNode {
+    AxNode {
+        role: "AXWindow".into(),
+        title: Some("Chrome".into()),
+        document: Some(address.into()),
+        ..AxNode::default()
+    }
+}
+
 #[test]
-fn chrome_is_prepared_once_and_a_meet_room_without_a_call_names_nobody() {
+fn chrome_is_prepared_once_a_meet_room_shows_and_a_lobby_names_nobody() {
     let rig = Rig::new();
     rig.mac.run("com.google.Chrome", CHROME);
-    let lobby = AxNode {
-        role: "AXWindow".into(),
-        title: Some("Meet - abc-defg-hij".into()),
-        document: Some("https://meet.google.com/abc-defg-hij".into()),
-        ..AxNode::default()
-    };
-    rig.mac.show(CHROME, Ok(vec![lobby]));
-    let mut watch = rig.watch(vec![Position::At(Millis(0)), Position::At(Millis(250))]);
+    rig.mac
+        .show(CHROME, Ok(vec![chrome_window("https://mail.google.com/")]));
+    let positions = [0, 250, 500].map(|at| Position::At(Millis(at))).to_vec();
+    let mut watch = rig.watch(positions);
 
+    watch.tick();
+    assert!(rig.mac.prepared().is_empty());
+    let lobby = chrome_window("https://meet.google.com/abc-defg-hij");
+    rig.mac.show(CHROME, Ok(vec![lobby]));
     watch.tick();
     watch.tick();
     watch.finish();
 
-    assert_eq!(
-        rig.mac.prepared(),
-        [(CallApp::Zoom, ZOOM), (CallApp::Meet, CHROME)]
-    );
+    assert_eq!(rig.mac.prepared(), [(CallApp::Meet, CHROME)]);
     assert!(rig.spans().is_empty());
 }
