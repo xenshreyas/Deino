@@ -5,7 +5,9 @@ use std::sync::Arc;
 
 use deino_domain::{CalendarEventId, Clock};
 
-use super::{AutoRecordDeps, AutoRecordService, ChoiceScope, RecordChoice, RecordReason};
+use super::{
+    AutoRecordDeps, AutoRecordService, ChoiceScope, RecordChoice, RecordReason, StartTrigger,
+};
 use crate::calendar::TimeRange;
 use crate::calendar::test_calendar::{SyncedCalendar, synced_calendar};
 use crate::calendar::test_events::{clock, hours, meeting};
@@ -171,4 +173,25 @@ async fn all_occurrences_of_a_one_off_is_just_this_one() {
             .iter()
             .any(|(_, _, r)| *r == RecordReason::SeriesChoice)
     );
+}
+
+#[tokio::test]
+async fn only_a_recording_decision_starts_on_a_trigger() {
+    let Harness { rules, settings } = harness().await;
+    let one_off = id_of(&rules, "one-off").await;
+    let mic = StartTrigger::MicInUse;
+    assert!(
+        !rules.starts_on(one_off, mic).await.unwrap(),
+        "the switches are off"
+    );
+
+    settings
+        .update(|settings| settings.calendar.auto_record.external = true)
+        .await
+        .unwrap();
+    assert!(rules.starts_on(one_off, mic).await.unwrap());
+    let closed = StartTrigger::StartTime { note_open: false };
+    assert!(!rules.starts_on(one_off, closed).await.unwrap());
+    let open = StartTrigger::StartTime { note_open: true };
+    assert!(rules.starts_on(one_off, open).await.unwrap());
 }

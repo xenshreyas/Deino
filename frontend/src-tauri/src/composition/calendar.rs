@@ -2,7 +2,9 @@
 //! Google Calendar and Microsoft Graph connectors over `deino-net` scoped
 //! clients, the SQLite calendar, people and company repositories, the sync
 //! scheduler, and the `CalendarChanged` event adapter. Then event linking and
-//! related meetings (ORG-03) over the same calendar.
+//! related meetings (ORG-03) over the same calendar, and ORG-02's rules,
+//! Join, "Review last meeting" and the meeting ticker (reminders and the
+//! start-time trigger).
 
 use std::sync::Arc;
 
@@ -12,9 +14,11 @@ use deino_connect::calendar::{
 };
 use deino_core::calendar::join::JoinService;
 use deino_core::calendar::linking::{
-    EventAttendance, EventLinkDeps, EventLinkService, RelatedService, SqliteRelatedRepo,
+    EventAttendance, EventLinkDeps, EventLinkService, LastMeetingService, RelatedService,
+    SqliteRelatedRepo,
 };
 use deino_core::calendar::rules::{AutoRecordDeps, AutoRecordService};
+use deino_core::calendar::ticker::{MeetingTicker, OpenNote, TickerDeps};
 use deino_core::calendar::{
     AttendeeDirectory, CalendarDeps, CalendarService, CalendarSource, CalendarStore,
     SqliteCalendarRepo, SyncScheduler,
@@ -34,7 +38,10 @@ use tokio_util::sync::CancellationToken;
 use super::attach::Phase;
 use super::browser::SystemBrowser;
 use super::network::SettingsServicePolicy;
-use crate::features::calendar::{LiveRecorder, SystemCallOpener, TauriCalendarEvents};
+use crate::features::calendar::{
+    LiveRecorder, RecorderPhase, ReminderCard, SystemCallOpener, TauriCalendarEvents,
+    TauriReminderWindow,
+};
 
 /// Stops the calendar sync scheduler at exit.
 pub(crate) struct CalendarSchedule(CancellationToken);
@@ -133,6 +140,7 @@ pub(crate) fn attach_calendar(app: &AppHandle, database: &Database, clock: &Arc<
     attach_rules(app, &repo, &service, clock);
     let (scheduler, triggers, cancel) = SyncScheduler::new(Arc::clone(&service));
     source.watch(triggers);
+    attach_ticker(app, &service, clock, cancel.child_token());
     // Owned for the app's lifetime; `CalendarSchedule::stop` ends it at exit.
     tauri::async_runtime::spawn(scheduler.run());
     app.manage(service);
@@ -180,7 +188,14 @@ fn attach_linking(
         clock: Arc::clone(clock),
     })));
     let related = SqliteRelatedRepo::new(database.clone());
-    app.manage(Arc::new(RelatedService::new(Arc::new(related), people)));
+    let related = Arc::new(RelatedService::new(Arc::new(related), people.clone()));
+    app.manage(Arc::new(LastMeetingService::new(
+        related.clone(),
+        people.clone(),
+        people.clone(),
+        people,
+    )));
+    app.manage(related);
 }
 
 /// Manages `Arc<AutoRecordService>` (ORG-02's rules over the visible
@@ -209,4 +224,43 @@ fn attach_rules(
         Arc::new(SystemCallOpener),
         Arc::new(LiveRecorder::new(app.clone())),
     )));
+}
+
+/// Starts the meeting ticker (ORG-02: the reminder window, and recording an
+/// open note's event at its start) until `cancel`, the sync scheduler's
+/// child, fires at exit. Manages `Arc<OpenNote>` and the window. Needs
+/// [`attach_rules`] to have run.
+fn attach_ticker(
+    app: &AppHandle,
+    calendar: &Arc<CalendarService>,
+    clock: &Arc<dyn Clock>,
+    cancel: CancellationToken,
+) {
+    let state = |app: &AppHandle| {
+        let rules = Arc::clone(&*app.try_state::<Arc<AutoRecordService>>()?);
+        let joins = Arc::clone(&*app.try_state::<Arc<JoinService>>()?);
+        let settings = Arc::clone(&*app.try_state::<Arc<SettingsService>>()?);
+        Some((rules, joins, settings))
+    };
+    let Some((rules, joins, settings)) = state(app) else {
+        return log::error!(target: "calendar", "the rules are not wired; meeting reminders are off");
+    };
+    let window = Arc::new(ReminderCard::new(Arc::new(TauriReminderWindow::new(
+        app.clone(),
+    ))));
+    let open_note = Arc::new(OpenNote::default());
+    let ticker = Arc::new(MeetingTicker::new(TickerDeps {
+        calendar: Arc::clone(calendar),
+        rules,
+        joins,
+        settings,
+        window: window.clone(),
+        recorder: Arc::new(RecorderPhase::new(app.clone())),
+        open_note: open_note.clone(),
+        clock: Arc::clone(clock),
+    }));
+    // Owned for the app's lifetime; `CalendarSchedule::stop` cancels it.
+    tauri::async_runtime::spawn(ticker.run(cancel));
+    app.manage(window);
+    app.manage(open_note);
 }

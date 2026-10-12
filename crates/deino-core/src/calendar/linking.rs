@@ -20,6 +20,9 @@
 //!   recurring series, or with exactly the same title and the same people
 //!   (Granola §6.5), with the one just before this meeting as "Previous in
 //!   series".
+//! - **Last meeting** ([`LastMeetingService`], ORG-02): Coming up's "Review
+//!   last meeting": the related meeting before an upcoming event, else the
+//!   latest earlier one with exactly the same people.
 //!
 //! The link is `meetings.calendar_event_id` only (ADR 0012). Each write is
 //! one statement on the writer: the link, then the attendees, then the
@@ -28,6 +31,7 @@
 
 mod attendance;
 mod error;
+mod last_meeting;
 mod model;
 mod nearest;
 #[cfg(test)]
@@ -44,6 +48,7 @@ mod test_people;
 
 pub use attendance::{AttendeeChange, EventAttendance};
 pub use error::LinkError;
+pub use last_meeting::{LastMeetingService, PEOPLE_SCAN};
 pub use model::{EventLinkChange, RelatedBy, RelatedMeeting, RelatedMeetings, TitleRule};
 pub use nearest::{
     LINK_WINDOW, MAX_SUGGESTIONS, SUGGEST_AFTER, SUGGEST_BEFORE, is_linkable, link_range,

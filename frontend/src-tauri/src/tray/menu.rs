@@ -17,10 +17,8 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use deino_core::calendar::CalendarService;
-use deino_core::meetings::MeetingLink;
+use deino_core::calendar::join::{JoinMode, JoinService};
 use deino_domain::{CalendarEventId, LocalZone, SystemZone};
-use deino_integrations::Browser;
 use deino_recording::{RecordingPhase, RecordingService, StartRequest};
 use tauri::menu::{IsMenuItem, Menu, MenuBuilder, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, Runtime};
@@ -237,7 +235,9 @@ fn check_updates<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// `<event id>:<join|record|open>` on one of today's meetings.
+/// `<event id>:<join|record|open>` on one of today's meetings. Join and
+/// Record go through `JoinService`, the path Home's Join and the reminder
+/// window take (ORG-02).
 fn meeting_action<R: Runtime>(app: &AppHandle<R>, rest: &str) {
     let Some((id, action)) = rest.rsplit_once(':') else {
         return;
@@ -245,47 +245,20 @@ fn meeting_action<R: Runtime>(app: &AppHandle<R>, rest: &str) {
     let Ok(id) = id.parse::<CalendarEventId>() else {
         return;
     };
-    let Some(calendar) = app
-        .try_state::<Arc<CalendarService>>()
-        .map(|c| Arc::clone(&c))
-    else {
-        return;
+    let mode = match action {
+        "join" => JoinMode::JoinOnly,
+        "record" => JoinMode::RecordOnly,
+        _ => return super::focus_main_window(app),
     };
-    let (app, action) = (app.clone(), action.to_owned());
-    tauri::async_runtime::spawn(async move {
-        let Ok(event) = calendar.event(id).await else {
-            return;
-        };
-        match action.as_str() {
-            "join" => join(event.conference_url.as_deref()),
-            "record" => start(
-                &app,
-                StartRequest {
-                    title: Some(event.title),
-                    link: Some(MeetingLink {
-                        calendar_event_id: Some(event.id),
-                        series_id: event.series_id,
-                    }),
-                },
-            ),
-            _ => super::focus_main_window(&app),
-        }
-    });
-}
-
-/// Opens the call link in the default browser (or the meeting app).
-fn join(url: Option<&str>) {
-    let Some(Ok(url)) = url.map(url::Url::parse) else {
-        log::warn!(target: "tray", "the event has no call link to open");
-        return;
+    let Some(joins) = app.try_state::<Arc<JoinService>>().map(|j| Arc::clone(&j)) else {
+        return log::warn!(target: "tray", "Join is not ready yet");
     };
+    if mode == JoinMode::RecordOnly {
+        super::focus_main_window(app);
+    }
     tauri::async_runtime::spawn(async move {
-        if crate::composition::browser::SystemBrowser
-            .open(&url)
-            .await
-            .is_err()
-        {
-            log::warn!(target: "tray", "the call link could not be opened");
+        if let Err(error) = joins.join(id, mode).await {
+            log::warn!(target: "tray", "event {id}: {error}");
         }
     });
 }

@@ -1,10 +1,11 @@
-//! The `calendar` plugin's typed event and the adapter that emits it.
+//! The `calendar` plugin's typed events and the adapter that emits them.
 //!
 //! The core announces every status or visibility change through its
 //! `CalendarEvents` port; [`TauriCalendarEvents`] emits it as
 //! `plugin:calendar:calendar-changed`.
 
 use deino_core::calendar::{CalendarEvents, CalendarStatus};
+use deino_domain::CalendarEventId;
 use serde::Serialize;
 use tauri::{AppHandle, Runtime};
 use tauri_specta::Event;
@@ -15,6 +16,15 @@ use tauri_specta::Event;
 pub struct CalendarChanged {
     /// The state of calendar sync now.
     pub status: CalendarStatus,
+}
+
+/// The meeting reminder window (ORG-02) is now for event `event_id`; its
+/// page reloads the event.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub struct ReminderShown {
+    /// The meeting starting in a minute.
+    pub event_id: CalendarEventId,
 }
 
 /// Emits calendar changes to the UI.

@@ -228,6 +228,65 @@ async join(id: CalendarEventId, mode: JoinMode) : Promise<Result<MeetingId | nul
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * The event the reminder window is for, or `None` once it closed.
+ */
+async reminder() : Promise<Result<CalendarEvent | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|reminder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Closes the reminder window (dismiss, or after a button did its work).
+ */
+async dismissReminder() : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|dismiss_reminder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The UI opened the note of event `event` (`None`: it closed it). At the
+ * event's start, an open note starts recording when its rules say so.
+ */
+async setOpenNote(event: CalendarEventId | null) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|set_open_note", { event }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Review last meeting": the meeting before event `id` in its series, or
+ * with the same people; `None` when there is none.
+ */
+async lastMeeting(id: CalendarEventId) : Promise<Result<RelatedMeeting | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|last_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Open in Calendar": macOS Calendar for its events, the provider's web
+ * calendar on the event's day for Google and Microsoft. Fails with
+ * `invalid` when no link can be built.
+ */
+async openInCalendar(id: CalendarEventId) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:calendar|open_in_calendar", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -235,9 +294,11 @@ async join(id: CalendarEventId, mode: JoinMode) : Promise<Result<MeetingId | nul
 
 
 export const events = __makeEvents__<{
-calendarChanged: CalendarChanged
+calendarChanged: CalendarChanged,
+reminderShown: ReminderShown
 }>({
-calendarChanged: "plugin:calendar:calendar-changed"
+calendarChanged: "plugin:calendar:calendar-changed",
+reminderShown: "plugin:calendar:reminder-shown"
 })
 
 /** user-defined constants **/
@@ -739,7 +800,12 @@ export type RelatedBy =
 /**
  * Both have exactly the same title and the same people.
  */
-"titleAndPeople"
+"titleAndPeople" | 
+/**
+ * Both have exactly the same people, whatever the titles ("Review
+ * last meeting" on an upcoming event, ORG-02).
+ */
+"people"
 /**
  * A meeting related to the one open.
  */
@@ -774,6 +840,15 @@ previous: RelatedMeeting | null;
  * [`RELATED_LIMIT`](super::RELATED_LIMIT).
  */
 others: RelatedMeeting[] }
+/**
+ * The meeting reminder window (ORG-02) is now for event `event_id`; its
+ * page reloads the event.
+ */
+export type ReminderShown = { 
+/**
+ * The meeting starting in a minute.
+ */
+eventId: CalendarEventId }
 /**
  * A response to a calendar invitation. Stored in `meeting_attendees.rsvp`
  * and `calendar_events.my_rsvp`.

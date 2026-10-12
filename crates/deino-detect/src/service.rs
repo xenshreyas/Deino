@@ -107,6 +107,16 @@ impl DetectionService {
         self.record(detection, true)
     }
 
+    /// Auto-record (ORG-02): closes prompt `id` and starts recording its
+    /// meeting at once, without the countdown or opening the notes, as when
+    /// a countdown runs out. For a meeting whose calendar event the user's
+    /// rules record.
+    pub fn record_now(&self, id: DetectionId) -> Result<(), DetectError> {
+        let detection = self.answer(id, Answer::TakeNotes)?;
+        log::info!(target: "detect", "prompt {}: its event records automatically", id.0);
+        self.record(detection, false)
+    }
+
     /// "Ignore" or "Don't record": closes prompt `id`; its app stays quiet
     /// for ten minutes.
     pub fn dismiss(&self, id: DetectionId) -> Result<(), DetectError> {

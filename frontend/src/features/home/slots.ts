@@ -7,6 +7,7 @@
  */
 import type { ComponentType } from 'react';
 
+import { EventBrief } from '@/features/briefs';
 import type { CalendarEventId } from '@/features/calendar';
 import { useFollowUpSuggestions } from '@/features/followups';
 import type { MeetingId } from '@/features/meetings';
@@ -34,8 +35,13 @@ export interface HomeSlots {
   Brief: ComponentType<BriefSlotProps> | null;
 }
 
-/** The slots as filled today: NOT-07's follow-ups, no brief yet. */
+/**
+ * The slots as filled today: NOT-07's follow-ups and NOT-08's `EventBrief`.
+ * The event note itself (the meeting page of a note linked to an event) shows
+ * NOT-08's `MeetingBrief` above the notepad and ORG-04's attendees in its
+ * header.
+ */
 export const HOME_SLOTS: HomeSlots = {
   useFollowUps: useFollowUpSuggestions,
-  Brief: null,
+  Brief: EventBrief,
 };

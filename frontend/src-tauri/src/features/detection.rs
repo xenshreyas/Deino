@@ -11,11 +11,14 @@
 //!   [`RecordingRequested`] for the main window's shell;
 //! - [`prompt`]: the always-on-top, non-activating prompt window;
 //! - [`adapters`]: the output ports (events and window, settings);
-//!   [`recorder`]: recording start and status over the live recorder.
+//!   [`recorder`]: recording start and status over the live recorder;
+//! - `auto_record` (ORG-02): a call whose calendar event the user's rules
+//!   record starts recording at once instead of prompting.
 //!
 //! The composition root starts the detector (`composition::attach_detection`).
 
 pub mod adapters;
+mod auto_record;
 mod commands;
 #[cfg(test)]
 mod contract_tests;

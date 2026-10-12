@@ -15,6 +15,7 @@ import type { CommandResult } from '@/lib/ipc/result';
 import { FIXTURE_ACCOUNT, FIXTURE_CALENDAR } from './calendar-fixtures';
 import { failure, ok } from './command-result';
 import { mockCalendarEvents as calendarEvents, mockDatabase, mockEventLinks } from './database';
+import { reminderCommands } from './calendar-reminders';
 import { rulesCommands } from './calendar-rules';
 import { latency } from './latency';
 import { mockEvent } from './mock-event';
@@ -43,6 +44,7 @@ let status: Omit<CalendarStatus, 'connectors'> = {
 
 export const events = {
   calendarChanged: mockEvent<Generated.CalendarChanged>('plugin:calendar:calendar-changed'),
+  reminderShown: mockEvent<Generated.ReminderShown>('plugin:calendar:reminder-shown'),
 } satisfies typeof Generated.events;
 
 /** A direct connector: set up once the mock settings hold its client ID. */
@@ -192,9 +194,13 @@ const baseCommands = {
     const found = mockDatabase.meeting(meetingId);
     return found.status === 'error' ? failure(found.error) : ok(mockEventLinks.related(meetingId));
   },
-} satisfies Omit<typeof Generated.commands, 'recordPlan' | 'chooseRecord' | 'join'>;
+} satisfies Omit<
+  typeof Generated.commands,
+  keyof typeof reminderCommands | 'recordPlan' | 'chooseRecord' | 'join'
+>;
 
 export const commands = {
   ...baseCommands,
   ...rulesCommands((range) => baseCommands.upcoming(range)),
+  ...reminderCommands,
 } satisfies typeof Generated.commands;

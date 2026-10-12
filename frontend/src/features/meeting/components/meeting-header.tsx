@@ -1,6 +1,7 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
 import { MeetingAutomationsMenu } from '@/features/automations';
+import { OpenNoteReporter } from '@/features/calendar';
 import { MeetingCalendarChips } from '@/features/event-links';
 import { MeetingAttendees } from '@/features/entities';
 import { MeetingFolders } from '@/features/folders';
@@ -61,6 +62,8 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
           <ResumeRecordingButton meetingId={meetingId} />
         </span>
       </div>
+      {/* ORG-02: tells Rust this event's note is open (the start-time auto-record trigger). */}
+      <OpenNoteReporter meetingId={meetingId} />
       {/* FND-08: processing status, minimally placed; FND-10 follow-up gives it its home. */}
       <PipelineStrip meetingId={meetingId} />
     </header>

@@ -39,6 +39,9 @@ pub enum RelatedBy {
     Series,
     /// Both have exactly the same title and the same people.
     TitleAndPeople,
+    /// Both have exactly the same people, whatever the titles ("Review
+    /// last meeting" on an upcoming event, ORG-02).
+    People,
 }
 
 /// A meeting related to the one open.

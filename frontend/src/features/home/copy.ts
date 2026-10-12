@@ -45,4 +45,9 @@ export const homeCopy = {
   openNote: 'Open note',
   emailInvitees: 'Email invitees',
   openNoteFailed: 'Could not open the note',
+  reviewLast: 'Review last meeting',
+  noLastMeeting: 'No earlier meeting with these people',
+  lastMeetingFailed: 'Could not find the last meeting',
+  openInCalendar: 'Open in Calendar',
+  openInCalendarFailed: 'Could not open the calendar',
 } as const;

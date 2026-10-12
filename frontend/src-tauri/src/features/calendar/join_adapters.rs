@@ -1,6 +1,7 @@
 //! The Join ports' adapters: [`SystemCallOpener`] opens call links with the
-//! system (web links only, `system_open`), and [`LiveRecorder`] starts the
-//! live recorder.
+//! system (web links only, `system_open`), [`LiveRecorder`] starts the
+//! live recorder, and [`RecorderPhase`] tells the meeting ticker whether it
+//! is busy.
 //!
 //! The recorder is found in Tauri state at each Join, like
 //! [`LinkOnStart`](super::LinkOnStart): it is built before or after the
@@ -13,9 +14,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use deino_core::calendar::CalendarEvent;
 use deino_core::calendar::join::{CallOpener, EventRecorder, PortError};
+use deino_core::calendar::ticker::RecorderBusy;
 use deino_core::meetings::MeetingLink;
 use deino_domain::MeetingId;
-use deino_recording::{RecordingService, StartRequest};
+use deino_recording::{RecordingPhase, RecordingService, StartRequest};
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::system_open::open_external_url;
@@ -58,5 +60,25 @@ impl<R: Runtime> EventRecorder for LiveRecorder<R> {
             }),
         };
         Ok(recorder.start(request).await?)
+    }
+}
+
+/// Whether the live recorder is busy, for the meeting ticker.
+pub struct RecorderPhase<R: Runtime> {
+    app: AppHandle<R>,
+}
+
+impl<R: Runtime> RecorderPhase<R> {
+    /// The phase of the `Arc<RecordingService>` that `app` manages, once it does.
+    pub fn new(app: AppHandle<R>) -> Self {
+        Self { app }
+    }
+}
+
+impl<R: Runtime> RecorderBusy for RecorderPhase<R> {
+    fn is_recording(&self) -> bool {
+        self.app
+            .try_state::<Arc<RecordingService>>()
+            .is_some_and(|recorder| recorder.state().phase != RecordingPhase::Idle)
     }
 }

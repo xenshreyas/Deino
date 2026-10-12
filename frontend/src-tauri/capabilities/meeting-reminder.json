@@ -1,0 +1,13 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "meeting-reminder",
+    "description": "The meeting reminder window (ORG-02): the calendar plugin's commands and events (its event, Join & record, Record only, dismiss), and its theme",
+    "windows": [
+        "meeting_reminder"
+    ],
+    "permissions": [
+        "core:event:default",
+        "core:window:allow-set-theme",
+        "calendar:default"
+    ]
+}

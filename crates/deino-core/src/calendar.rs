@@ -26,7 +26,8 @@
 //! - **Auto-record rules** ([`rules`], ORG-02): which events record on
 //!   their own, and the user's per-event and per-series choices.
 //! - **Reminders** ([`notify`], ORG-02): which meetings show the "starting
-//!   in 1 minute" window.
+//!   in 1 minute" window; the [`ticker`] shows it, and starts recording an
+//!   event whose note is open at its start time.
 //!
 //! A meeting points at its event through `meetings.calendar_event_id`
 //! ([`MeetingLifecycleRepo::link`](crate::meetings::MeetingLifecycleRepo::link));
@@ -56,6 +57,7 @@ pub mod linking;
 mod mapping;
 mod model;
 pub mod notify;
+mod open_link;
 mod reads;
 pub mod rules;
 mod schedule;
@@ -73,6 +75,7 @@ mod sync_tests;
 mod test_calendar;
 #[cfg(test)]
 mod test_events;
+pub mod ticker;
 mod view;
 
 pub use account_repo::{CalendarAccountRepo, SqliteCalendarRepo};
@@ -90,6 +93,7 @@ pub use fake::FakeCalendarRepo;
 pub use fake_source::{FakeCalendarSource, RecordedCalendarEvents};
 pub use filter::TimeRange;
 pub use model::{Calendar, CalendarAccount, CalendarEvent, EventAttendee};
+pub use open_link::{CalendarLink, calendar_link};
 pub use schedule::{REFRESH_INTERVAL, SETTLE_DELAY, SyncScheduler, SyncTrigger, SyncTriggers};
 pub use service::{CalendarDeps, CalendarService, CalendarStore};
 pub use source::{
