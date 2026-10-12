@@ -57,6 +57,7 @@ pub use person_service::{PAGE_MEETINGS, PersonService};
 pub use ports::EntityPorts;
 pub use reads::{EntityDigest, EntityReads, SqliteEntityRepo};
 pub use summarizer::{EntitySummarizer, SummaryOutcome};
+pub(crate) use summary_prompt::visible_answer;
 pub use summary_prompt::{MEETING_CHARS, SUMMARY_MEETINGS};
 pub use upcoming::{MAX_UPCOMING, UPCOMING_DAYS};
 pub use updater::{
