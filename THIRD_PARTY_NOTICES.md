@@ -425,3 +425,17 @@ Commons Attribution 4.0 International License (CC BY 4.0,
 https://creativecommons.org/licenses/by/4.0/). Deino uses it unmodified to
 compute speaker embeddings. Paper: "WeSpeaker: A Research and Production
 oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
+
+---
+
+## Vexa (Google Meet speaker classes)
+
+Source: https://github.com/Vexa-ai/vexa (v0.12.18, `core/meetings/modules/gmeet-capture/`),
+Apache License 2.0.
+
+`crates/deino-speaker-tags/src/adapters/meet.rs` (CAP-05) uses the CSS class
+names Vexa's Meet speaker detection lists for a speaking tile (`Oaajhc`,
+`HX2H7`, `wEsLMd`, `OgVli` and the semantic `speaking`, `active-speaker`,
+`speaker-active`, `speaking-indicator`) and its observation that a tile's
+name is a `span.notranslate`. No Vexa code is included; Deino reads these
+classes through Chromium's Accessibility `AXDOMClassList` instead of the DOM.
