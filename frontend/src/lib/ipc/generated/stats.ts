@@ -30,9 +30,9 @@ async heatmap() : Promise<Result<Heatmap, AppError>> {
 /**
  * This year's recap, if generated, and whether it can be.
  */
-async recapStatus() : Promise<Result<RecapStatus, AppError>> {
+async recap() : Promise<Result<RecapStatus, AppError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("plugin:stats|recap_status") };
+    return { status: "ok", data: await TAURI_INVOKE("plugin:stats|recap") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -42,9 +42,9 @@ async recapStatus() : Promise<Result<RecapStatus, AppError>> {
  * This year's recap, written now if it was not yet; fails with `conflict`
  * outside December and `unavailable` without a model.
  */
-async generateRecap() : Promise<Result<YearRecap, AppError>> {
+async writeRecap() : Promise<Result<YearRecap, AppError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("plugin:stats|generate_recap") };
+    return { status: "ok", data: await TAURI_INVOKE("plugin:stats|write_recap") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

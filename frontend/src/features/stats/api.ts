@@ -13,7 +13,7 @@ export const statsApi = {
   /** Meetings per day over the last year. */
   heatmap: (): Promise<Heatmap> => unwrap(commands.heatmap()),
   /** This year's recap, if generated, and whether it can be. */
-  recapStatus: (): Promise<RecapStatus> => unwrap(commands.recapStatus()),
+  recapStatus: (): Promise<RecapStatus> => unwrap(commands.recap()),
   /** Writes this year's recap (once); rejects outside December or without a model. */
-  generateRecap: (): Promise<YearRecap> => unwrap(commands.generateRecap()),
+  generateRecap: (): Promise<YearRecap> => unwrap(commands.writeRecap()),
 };

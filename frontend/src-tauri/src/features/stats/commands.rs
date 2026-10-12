@@ -17,7 +17,7 @@ use crate::error::IntoIpc;
 
 /// The plugin's commands, for its `tauri_specta::Builder`.
 pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
-    tauri_specta::collect_commands![overview, heatmap, recap_status, generate_recap]
+    tauri_specta::collect_commands![overview, heatmap, recap, write_recap]
 }
 
 /// The numbers of `range`, ending now.
@@ -40,7 +40,7 @@ async fn heatmap(stats: State<'_, Arc<StatsService>>) -> Result<Heatmap, AppErro
 /// This year's recap, if generated, and whether it can be.
 #[tauri::command]
 #[specta::specta]
-async fn recap_status(recap: State<'_, Arc<RecapService>>) -> Result<RecapStatus, AppError> {
+async fn recap(recap: State<'_, Arc<RecapService>>) -> Result<RecapStatus, AppError> {
     recap.status().await.into_ipc()
 }
 
@@ -48,6 +48,6 @@ async fn recap_status(recap: State<'_, Arc<RecapService>>) -> Result<RecapStatus
 /// outside December and `unavailable` without a model.
 #[tauri::command]
 #[specta::specta]
-async fn generate_recap(recap: State<'_, Arc<RecapService>>) -> Result<YearRecap, AppError> {
+async fn write_recap(recap: State<'_, Arc<RecapService>>) -> Result<YearRecap, AppError> {
     recap.generate().await.into_ipc()
 }

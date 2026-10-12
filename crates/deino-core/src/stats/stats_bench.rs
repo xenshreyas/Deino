@@ -18,7 +18,7 @@ const MEETINGS: usize = 2_000;
 const PEOPLE: usize = 300;
 const PER_MEETING: usize = 4;
 const CALLS: usize = 20_000;
-/// The budget for the whole page (overview and heatmap), in a debug build.
+/// The budget for the whole page (overview and heatmap), in a release build.
 const BUDGET: Duration = Duration::from_millis(250);
 
 /// Everything, as set-based SQL over a recursive counter.

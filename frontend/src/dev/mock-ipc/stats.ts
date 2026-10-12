@@ -37,11 +37,11 @@ export const commands = {
     await latency();
     return ok(heatmapOf(facts, now));
   },
-  async recapStatus() {
+  async recap() {
     await latency();
     return ok({ year: now.getUTCFullYear(), available: true, recap });
   },
-  async generateRecap() {
+  async writeRecap() {
     await latency();
     recap ??= {
       year: now.getUTCFullYear(),

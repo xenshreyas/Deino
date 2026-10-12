@@ -247,7 +247,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `database/setup.rs` | Opens `deino.sqlite` at startup, creating a fresh database on first launch (FND-11; the old onboarding created it from the UI). The legacy meeting delete in `database/repositories/meeting.rs` also removes the sample meeting's action items, which a real meeting's items outlive. |
 | `notifications/`, `tray.rs`, `updater/` | OS integration. Notification switches are a section of the typed settings. |
 | `features/insights*`, `composition/insights.rs` | The `insights` plugin (AI-06): `templates`, `list`, `get`, `create`, `update`, `delete`, `for_meeting`, `table`, `candidates`, `run`, `export_csv`; no events (`DbChanged` on `insight_defs`, `insight_results`). `scheduler.rs`: `PipelineScheduler`, the core's `RunScheduler` over `PipelineService::rerun(meeting, "insights")`, found in Tauri state at call time. The wiring builds `InsightService` (with the export plugin's save dialog) and the `GenerateService` the pipeline hands to `insights`. |
-| `features/stats*`, `composition/stats.rs` | The `stats` plugin (ORG-09): `overview`, `heatmap`, `recap_status`, `generate_recap`; no events (`DbChanged` on `meetings`, `meeting_attendees`, `people`, `llm_calls`, `year_recaps`). `attach_stats` builds `StatsService` and `RecapService` over SQLite, the profile, `SystemZone` and the gateway; `DEINO_RECAP_ANYTIME=1` opens the year in review outside December for testing. |
+| `features/stats*`, `composition/stats.rs` | The `stats` plugin (ORG-09): `overview`, `heatmap`, `recap`, `write_recap`; no events (`DbChanged` on `meetings`, `meeting_attendees`, `people`, `llm_calls`, `year_recaps`). `attach_stats` builds `StatsService` and `RecapService` over SQLite, the profile, `SystemZone` and the gateway; `DEINO_RECAP_ANYTIME=1` opens the year in review outside December for testing. |
 
 ## 4. Frontend (`frontend/src`)
 
@@ -819,7 +819,7 @@ Stats page ─▶ plugin:stats|overview(range) ─▶ StatsService::overview
       weekday/hour buckets in the user's zone, pricing::price_of ─▶ estimated micro-dollars
 plugin:stats|heatmap ─▶ meetings since the Monday 52 weeks back ─▶ per local day
 
-December (or DEINO_RECAP_ANYTIME=1): plugin:stats|generate_recap ─▶ RecapService::generate
+December (or DEINO_RECAP_ANYTIME=1): plugin:stats|write_recap ─▶ RecapService::generate
    year_recaps has the year? ─▶ return it
    else StatsService over the local year + titles (sampled to 400) ─▶ recap prompt (no transcripts)
       ─▶ Gateway::complete(recap) ─▶ visible_answer ─▶ year_recaps (first write wins)

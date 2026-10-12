@@ -17,8 +17,8 @@ const commands = vi.hoisted(
     ({
       overview: vi.fn<typeof Generated.commands.overview>(),
       heatmap: vi.fn<typeof Generated.commands.heatmap>(),
-      recapStatus: vi.fn<typeof Generated.commands.recapStatus>(),
-      generateRecap: vi.fn<typeof Generated.commands.generateRecap>(),
+      recap: vi.fn<typeof Generated.commands.recap>(),
+      writeRecap: vi.fn<typeof Generated.commands.writeRecap>(),
     }) satisfies typeof Generated.commands,
 );
 vi.mock('@/lib/ipc/generated/stats', () => ({ commands }));
@@ -53,13 +53,13 @@ describe('year in review', () => {
   });
 
   test('in December it can be written, and asks the stats plugin once', async () => {
-    commands.generateRecap.mockResolvedValue({ status: 'ok', data: RECAP });
+    commands.writeRecap.mockResolvedValue({ status: 'ok', data: RECAP });
     withQueries(<YearRecapSection status={{ year: 2026, available: true, recap: null }} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Write my year in review' }));
 
     await waitFor(() => {
-      expect(commands.generateRecap).toHaveBeenCalledTimes(1);
+      expect(commands.writeRecap).toHaveBeenCalledTimes(1);
     });
   });
 

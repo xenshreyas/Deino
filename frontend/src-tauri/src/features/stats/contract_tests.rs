@@ -97,8 +97,8 @@ fn heatmap_returns_local_days() {
 fn the_recap_is_closed_outside_december() {
     let window = window();
 
-    let status = invoke(&window, "plugin:stats|recap_status", Value::Null).unwrap();
-    let error = invoke(&window, "plugin:stats|generate_recap", Value::Null);
+    let status = invoke(&window, "plugin:stats|recap", Value::Null).unwrap();
+    let error = invoke(&window, "plugin:stats|write_recap", Value::Null);
 
     assert_eq!(
         status,
