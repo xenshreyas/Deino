@@ -63,9 +63,9 @@ pub use finalize_audio::FinalizeAudioStage;
 pub use identify_speakers::IdentifySpeakersStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use identify_speakers::RecordedIdentifications;
-pub use index::{INDEX_STAGE, IndexStage};
 #[cfg(any(test, feature = "test-support"))]
 pub use index::RecordedIndexing;
+pub use index::{INDEX_STAGE, IndexStage};
 pub use insights::InsightsStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use insights::RecordedInsights;
