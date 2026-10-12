@@ -194,7 +194,12 @@ export type Action =
  * Runs a shell command with the meeting as JSON on stdin (Settings →
  * Automations must allow shell scripts).
  */
-{ kind: "run_shell"; command: string; fields: PayloadFields }
+{ kind: "run_shell"; command: string; fields: PayloadFields } | 
+/**
+ * Posts the meeting as signed JSON to a webhook endpoint (DEV-01) set
+ * up in Settings → Developer → Webhooks.
+ */
+{ kind: "webhook"; webhookId: WebhookId; fields: PayloadFields }
 /**
  * Every kind of step the builder lists. Kinds without an [`Action`]
  * variant are planned provider steps, shown as "WIP" (D12).
@@ -225,7 +230,7 @@ export type ActionKind =
  */
 "run_shell" | 
 /**
- * A signed webhook request (DEV-01).
+ * [`Action::Webhook`].
  */
 "webhook" | 
 /**
@@ -888,6 +893,10 @@ export type StepFailure =
  */
 "io" | 
 /**
+ * A webhook was not delivered (DEV-01).
+ */
+"delivery" | 
+/**
  * Deino's own storage failed.
  */
 "storage"
@@ -938,7 +947,11 @@ export type StepOutput =
 /**
  * A script ran and exited successfully.
  */
-{ kind: "script"; output: string }
+{ kind: "script"; output: string } | 
+/**
+ * A webhook delivery was made or queued (DEV-01).
+ */
+{ kind: "webhook"; deliveryId: WebhookDeliveryId; delivered: boolean }
 /**
  * Identifies a tag.
  */
@@ -968,6 +981,15 @@ export type Trigger =
  * The user ran it.
  */
 { kind: "manual" }
+/**
+ * Identifies one message to a webhook endpoint, across its retries
+ * (DEV-01); its `webhook-id` header is derived from it.
+ */
+export type WebhookDeliveryId = string & { readonly __brand: "WebhookDeliveryId" }
+/**
+ * Identifies an outbound webhook endpoint the user added (DEV-01).
+ */
+export type WebhookId = string & { readonly __brand: "WebhookId" }
 
 /** tauri-specta globals **/
 

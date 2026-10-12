@@ -250,7 +250,16 @@ export type Table =
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
-"example_notes"
+"example_notes" | 
+/**
+ * An outbound webhook endpoint: where to POST, for which events, with which
+ * payload fields, and its failure streak (auto-disable).
+ */
+"webhooks" | 
+/**
+ * One message to one endpoint, kept across its retries; the delivery log.
+ */
+"webhook_deliveries"
 
 /** tauri-specta globals **/
 
