@@ -16,8 +16,8 @@
 export { PARAKEET_UNIFIED_PROVIDER, transcriptionApi } from './api';
 export { ModelLicenceNotice } from './components/model-licence-notice';
 export { ParakeetUnifiedManager } from './components/parakeet-unified-manager';
-export { activeModel, isReady } from './models';
-export { engineOf, providerOf, type TranscriptProviderName } from './engine';
+export { activeModel, fileIdOf, isReady } from './models';
+export { providerOf, type TranscriptProviderName } from './engine';
 export {
   modelsQuery,
   transcriptionKeys,
