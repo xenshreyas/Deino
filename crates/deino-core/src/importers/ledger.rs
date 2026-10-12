@@ -15,14 +15,21 @@ pub trait ImportLedger: Send + Sync {
     /// Every ID imported from `source`.
     async fn imported(&self, source: ImportSource) -> Result<HashSet<String>, DbError>;
 
-    /// Records that `source_id` became `meeting` at `at`.
-    async fn record(
-        &self,
-        source: ImportSource,
-        source_id: &str,
-        meeting: &MeetingId,
-        at: DateTime<Utc>,
-    ) -> Result<(), DbError>;
+    /// Records an imported meeting.
+    async fn record(&self, entry: &LedgerEntry) -> Result<(), DbError>;
+}
+
+/// A source meeting and the meeting it became.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LedgerEntry {
+    /// Where it came from.
+    pub source: ImportSource,
+    /// Its ID there.
+    pub source_id: String,
+    /// The meeting it became.
+    pub meeting: MeetingId,
+    /// When it was imported.
+    pub at: DateTime<Utc>,
 }
 
 /// [`ImportLedger`] over SQLite.
@@ -50,22 +57,16 @@ impl ImportLedger for SqliteImportLedger {
         Ok(ids.into_iter().collect())
     }
 
-    async fn record(
-        &self,
-        source: ImportSource,
-        source_id: &str,
-        meeting: &MeetingId,
-        at: DateTime<Utc>,
-    ) -> Result<(), DbError> {
+    async fn record(&self, entry: &LedgerEntry) -> Result<(), DbError> {
         sqlx::query!(
             "INSERT INTO imported_meetings (source, source_id, meeting_id, imported_at) \
              VALUES (?1, ?2, ?3, ?4) \
              ON CONFLICT (source, source_id) DO UPDATE SET meeting_id = excluded.meeting_id, \
              imported_at = excluded.imported_at",
-            source,
-            source_id,
-            meeting,
-            at,
+            entry.source,
+            entry.source_id,
+            entry.meeting,
+            entry.at,
         )
         .execute(self.database.writer())
         .await?;

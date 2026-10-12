@@ -1,0 +1,4 @@
+{
+  "message": "Transcript is too large to include inline. Page through /v1/notes/{note_id}/transcript instead.",
+  "code": "TRANSCRIPT_TOO_LARGE"
+}

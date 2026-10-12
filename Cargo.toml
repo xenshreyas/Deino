@@ -54,6 +54,8 @@ deino-diarize = { path = "crates/deino-diarize" }
 deino-doc = { path = "crates/deino-doc" }
 deino-domain = { path = "crates/deino-domain" }
 deino-export = { path = "crates/deino-export" }
+# Importers from other note-takers (CAP-12).
+deino-importers = { path = "crates/deino-importers" }
 # macOS Calendar through EventKit (ORG-01); a stub elsewhere.
 deino-eventkit = { path = "crates/deino-eventkit" }
 # Tests add `features = ["test-support"]` for its fakes and the scripted provider.

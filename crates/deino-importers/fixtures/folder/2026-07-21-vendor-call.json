@@ -1,0 +1,14 @@
+{
+  "name": "Vendor call: Acme logistics",
+  "createdAt": "2026-07-21T15:00:00Z",
+  "tags": [{ "name": "Vendors", "description": "Calls with suppliers" }],
+  "notes": "## Decisions\n\n- Move freight to the Tuesday pickup",
+  "attendees": [{ "name": "Rosa Diaz", "email": "rosa@acme-logistics.example" }],
+  "transcript": [
+    { "speaker": "Rosa Diaz", "text": "We can move your freight to the Tuesday pickup.", "timestamp": 0.0 },
+    { "speaker": "Me", "words": [
+      { "text": "Tuesday", "startTimestamp": 4.0, "endTimestamp": 4.4 },
+      { "text": "works", "startTimestamp": 4.5, "endTimestamp": 4.8 }
+    ] }
+  ]
+}

@@ -9,7 +9,7 @@ use deino_domain::{Clock, ErrorClass, MeetingId};
 use tokio_util::sync::CancellationToken;
 
 use super::{
-    ImportEvents, ImportLedger, ImportPhase, ImportPreview, ImportProgress, Importer,
+    ImportEvents, ImportLedger, ImportPhase, LedgerEntry, ImportPreview, ImportProgress, Importer,
     ImporterError, SourceItem,
 };
 use crate::transcript_import::TranscriptImporter;
@@ -142,9 +142,13 @@ impl ImportRunner {
         let source_id = item.id.clone();
         let meeting = source.fetch(item).await?;
         let id = self.importer.import(&meeting).await?;
-        self.ledger
-            .record(source.source(), &source_id, &id, self.clock.now())
-            .await?;
+        let entry = LedgerEntry {
+            source: source.source(),
+            source_id,
+            meeting: id.clone(),
+            at: self.clock.now(),
+        };
+        self.ledger.record(&entry).await?;
         Ok(id)
     }
 }

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "48302",
+    "linkAccess": "Viewer",
+    "url": "https://zoom.us/j/81234567890",
+    "createdAt": "2026-09-18T18:15:00.000Z",
+    "updatedAt": "2026-09-18T18:47:03.000Z",
+    "duration": 1950,
+    "name": "Candidate interview: backend engineer",
+    "notes": "## Strengths\n\n- Deep experience with SQLite internals",
+    "icalUid": "x81jv0c2@zoom.us",
+    "recordingUrl": null,
+    "tags": [{ "id": 44, "name": "Hiring", "description": "Interviews and debriefs" }],
+    "attendees": [
+      { "profileId": 9100, "name": "Lena Ortiz", "title": null, "companyName": null, "email": "lena.ortiz@gmail.com", "isCalendarEventOrganizer": false, "isCalendarInvitee": true }
+    ],
+    "actionItems": [],
+    "insights": {},
+    "calendarEvent": null,
+    "privateNotes": null,
+    "sharedWith": []
+  }
+]

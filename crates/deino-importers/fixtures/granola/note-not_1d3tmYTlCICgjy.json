@@ -1,0 +1,50 @@
+{
+  "id": "not_1d3tmYTlCICgjy",
+  "object": "note",
+  "title": "Quarterly planning with design",
+  "owner": { "name": "Sam Carter", "email": "sam@example.com" },
+  "created_at": "2026-08-03T14:00:12Z",
+  "updated_at": "2026-08-03T15:02:40Z",
+  "deleted_at": null,
+  "web_url": "https://notes.granola.ai/d/1d3tmYTlCICgjy",
+  "calendar_event": {
+    "event_title": "Q4 planning: design",
+    "invitees": [{ "email": "sam@example.com" }, { "email": "ines.duarte@lumen.example" }],
+    "organiser": "ines.duarte@lumen.example",
+    "calendar_event_id": "5b2kq0f1lnqg7",
+    "scheduled_start_time": "2026-08-03T14:00:00Z",
+    "scheduled_end_time": "2026-08-03T15:00:00Z"
+  },
+  "attendees": [
+    { "name": "Sam Carter", "email": "sam@example.com" },
+    { "name": "Ines Duarte", "email": "ines.duarte@lumen.example" }
+  ],
+  "folder_membership": [
+    { "id": "fol_4y6jk2Lr9QmP1a", "object": "folder", "name": "Planning", "parent_folder_id": null, "space_id": null }
+  ],
+  "space_membership": [],
+  "summary_text": "Design will prioritise the onboarding redesign in Q4.",
+  "summary_markdown": "### Priorities\n\n- Onboarding redesign first\n- Icon refresh moves to Q1",
+  "private_notes_text": "ask about the contractor budget",
+  "private_notes_markdown": "- ask about the contractor budget",
+  "transcript": [
+    {
+      "speaker": { "source": "microphone", "attribution": "me" },
+      "text": "Let's lock the Q4 priorities for design today.",
+      "start_time": "2026-08-03T14:01:05Z",
+      "end_time": "2026-08-03T14:01:09Z"
+    },
+    {
+      "speaker": { "source": "speaker", "attribution": "them", "diarization_label": "Speaker A", "name": "Ines Duarte" },
+      "text": "The onboarding redesign has to come first, the icon refresh can slip to Q1.",
+      "start_time": "2026-08-03T14:01:10Z",
+      "end_time": "2026-08-03T14:01:18Z"
+    },
+    {
+      "speaker": { "source": "speaker", "attribution": "them", "diarization_label": "Speaker B" },
+      "text": "Agreed, and we need a contractor for the illustrations.",
+      "start_time": "2026-08-03T14:01:20Z",
+      "end_time": "2026-08-03T14:01:25Z"
+    }
+  ]
+}

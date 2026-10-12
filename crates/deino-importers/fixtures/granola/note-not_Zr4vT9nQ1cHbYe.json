@@ -1,0 +1,19 @@
+{
+  "id": "not_Zr4vT9nQ1cHbYe",
+  "object": "note",
+  "title": "All-hands rehearsal",
+  "owner": { "name": "Sam Carter", "email": "sam@example.com" },
+  "created_at": "2026-08-07T16:00:00Z",
+  "updated_at": "2026-08-07T17:31:22Z",
+  "deleted_at": null,
+  "web_url": "https://notes.granola.ai/d/Zr4vT9nQ1cHbYe",
+  "calendar_event": null,
+  "attendees": [],
+  "folder_membership": [],
+  "space_membership": [],
+  "summary_text": "Rehearsed the launch narrative; trim the metrics section.",
+  "summary_markdown": "- Trim the metrics section\n- Open with the customer story",
+  "private_notes_text": null,
+  "private_notes_markdown": null,
+  "transcript": null
+}

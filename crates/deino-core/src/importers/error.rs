@@ -2,7 +2,7 @@
 
 use deino_db::DbError;
 use deino_domain::{ErrorClass, ErrorCode, ImportSource};
-use deino_net::NetError;
+use deino_net::{NetError, SwitchError};
 use deino_secrets::SecretError;
 
 use crate::transcript_import::TranscriptImportError;
@@ -40,6 +40,9 @@ pub enum ImporterError {
     /// One meeting could not be written.
     #[error(transparent)]
     Import(#[from] TranscriptImportError),
+    /// The provider's network switch could not be saved.
+    #[error(transparent)]
+    Switch(#[from] SwitchError),
     /// The ledger could not be read or written.
     #[error("could not save the import")]
     Storage(#[from] DbError),
@@ -69,7 +72,7 @@ impl ErrorClass for ImporterError {
             Self::Net(error) => error.code(),
             Self::Secret(error) => error.code(),
             Self::Import(error) => error.code(),
-            Self::Storage(_) => ErrorCode::Internal,
+            Self::Switch(_) | Self::Storage(_) => ErrorCode::Internal,
         }
     }
 }

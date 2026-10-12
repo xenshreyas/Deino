@@ -2283,6 +2283,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "deino-importers"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "chrono",
+ "deino-core",
+ "deino-domain",
+ "deino-net",
+ "deino-secrets",
+ "futures-util",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sqlx",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
 name = "deino-integrations"
 version = "0.1.0"
 dependencies = [

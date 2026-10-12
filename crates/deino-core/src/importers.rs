@@ -27,7 +27,7 @@ mod wiring;
 
 pub use error::ImporterError;
 pub use jobs::ImportJobs;
-pub use ledger::{ImportLedger, SqliteImportLedger};
+pub use ledger::{ImportLedger, LedgerEntry, SqliteImportLedger};
 pub use model::{ImportEvents, ImportPhase, ImportPreview, ImportProgress, NoImportEvents};
 pub use runner::{ImportRunner, MAX_PAGES};
 pub use source::{Importer, SourceItem, SourcePage};

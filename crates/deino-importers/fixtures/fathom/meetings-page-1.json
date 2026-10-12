@@ -1,0 +1,60 @@
+{
+  "limit": 2,
+  "next_cursor": "eyJwYWdlX251bSI6Mn0=",
+  "items": [
+    {
+      "title": "Kickoff: Beacon migration",
+      "meeting_title": "Beacon x Deino kickoff",
+      "meeting_type": "external",
+      "recording_id": 123456789,
+      "url": "https://fathom.video/calls/123456789",
+      "share_url": "https://fathom.video/share/kq1zP0aWb",
+      "created_at": "2026-09-02T15:31:02Z",
+      "scheduled_start_time": "2026-09-02T15:00:00Z",
+      "scheduled_end_time": "2026-09-02T15:30:00Z",
+      "recording_start_time": "2026-09-02T15:01:10Z",
+      "recording_end_time": "2026-09-02T15:29:55Z",
+      "calendar_invitees_domains_type": "one_or_more_external",
+      "transcript_language": "en",
+      "shared_with": [],
+      "recorded_by": { "name": "Alex Kim", "email": "alex@example.com", "team": "Customer Success", "email_domain": "example.com" },
+      "calendar_invitees": [
+        { "name": "Alex Kim", "email": "alex@example.com", "email_domain": "example.com", "is_external": false, "matched_speaker_display_name": "Alex Kim" },
+        { "name": "Morgan Hale", "email": "morgan@beacon.example", "email_domain": "beacon.example", "is_external": true, "matched_speaker_display_name": "Morgan Hale" }
+      ],
+      "transcript": [
+        { "speaker": { "display_name": "Alex Kim", "matched_calendar_invitee_email": "alex@example.com" }, "text": "Welcome, let's walk through the migration timeline.", "timestamp": "00:00:04" },
+        { "speaker": { "display_name": "Morgan Hale", "matched_calendar_invitee_email": "morgan@beacon.example" }, "text": "Our hard deadline is the end of October.", "timestamp": "00:00:11" },
+        { "speaker": { "display_name": "Alex Kim", "matched_calendar_invitee_email": "alex@example.com" }, "text": "Then we cut over the warehouse in two waves.", "timestamp": "00:01:02" }
+      ],
+      "default_summary": { "template_name": "general", "markdown_formatted": "## Meeting Purpose\n\nPlan the Beacon migration.\n\n## Key Takeaways\n\n- Cut over in two waves before the end of October" },
+      "action_items": [
+        { "description": "Send the wave plan to Morgan", "user_generated": false, "completed": false, "recording_timestamp": "00:01:10", "recording_playback_url": "https://fathom.video/calls/123456789?t=70", "assignee": { "name": "Alex Kim", "email": "alex@example.com", "team": "Customer Success" } },
+        { "description": "Confirm warehouse access", "user_generated": true, "completed": true, "recording_timestamp": "00:01:20", "recording_playback_url": "https://fathom.video/calls/123456789?t=80", "assignee": { "name": "Morgan Hale", "email": "morgan@beacon.example", "team": null } }
+      ]
+    },
+    {
+      "title": "Team retro",
+      "meeting_title": null,
+      "meeting_type": "internal",
+      "recording_id": 123456790,
+      "url": "https://fathom.video/calls/123456790",
+      "share_url": "https://fathom.video/share/ab7Qx2LmN",
+      "created_at": "2026-09-04T17:45:00Z",
+      "scheduled_start_time": null,
+      "scheduled_end_time": null,
+      "recording_start_time": "2026-09-04T17:00:00Z",
+      "recording_end_time": "2026-09-04T17:44:30Z",
+      "calendar_invitees_domains_type": "only_internal",
+      "transcript_language": "en",
+      "shared_with": [],
+      "recorded_by": { "name": "Alex Kim", "email": "alex@example.com", "team": null, "email_domain": "example.com" },
+      "calendar_invitees": [],
+      "transcript": [
+        { "speaker": { "display_name": "Jo Rivera", "matched_calendar_invitee_email": null }, "text": "On-call handoffs were smoother this sprint.", "timestamp": "00:00:02" }
+      ],
+      "default_summary": null,
+      "action_items": []
+    }
+  ]
+}
