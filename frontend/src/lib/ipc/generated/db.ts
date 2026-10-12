@@ -305,6 +305,10 @@ export type Table =
  */
 "api_keys" | 
 /**
+ * Meetings imported from another note-taker or a folder, by their ID there: the de-duplication ledger, so importing twice adds nothing.
+ */
+"imported_meetings" | 
+/**
  * An outbound webhook endpoint: where to POST, for which events, with which
  * payload fields, and its failure streak (auto-disable).
  */
