@@ -32,6 +32,8 @@ objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std
 objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSString", "NSURL"] }
 
 [dev-dependencies]
+# The alignment rule, for the end-to-end test from fixture dumps to won segments.
+deino-core.workspace = true
 deino-speaker-tags = { path = ".", features = ["test-support"] }
 # Reads the fixture dumps, and writes new ones in the capture tool.
 serde_json.workspace = true

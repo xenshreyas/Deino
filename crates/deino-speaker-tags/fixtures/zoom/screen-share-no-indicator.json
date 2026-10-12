@@ -1,0 +1,184 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Zoom Meeting",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting top bar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Meeting information"
+     },
+     {
+      "role": "AXStaticText",
+      "value": "Zoom Meeting"
+     },
+     {
+      "role": "AXButton",
+      "description": "View"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Screen share",
+    "children": [
+     {
+      "role": "AXStaticText",
+      "value": "You are viewing Bea Ruiz's screen"
+     },
+     {
+      "role": "AXGroup",
+      "description": "Shared screen"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Video filmstrip",
+    "children": [
+     {
+      "role": "AXGroup",
+      "description": "Alex Chen, Video on",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Alex Chen"
+       },
+       {
+        "role": "AXImage",
+        "description": "Video on"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Bea Ruiz (Co-host), Video on",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Bea Ruiz"
+       },
+       {
+        "role": "AXImage",
+        "description": "Video on"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Cleo Martin, Video off",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Cleo Martin"
+       },
+       {
+        "role": "AXImage",
+        "description": "Video off"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Shreyas (Host, me), Video on",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Shreyas"
+       },
+       {
+        "role": "AXImage",
+        "description": "Video on"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting controls",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Mute my audio"
+     },
+     {
+      "role": "AXButton",
+      "description": "Stop my video"
+     },
+     {
+      "role": "AXButton",
+      "description": "Security"
+     },
+     {
+      "role": "AXButton",
+      "description": "Participants"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chat"
+     },
+     {
+      "role": "AXButton",
+      "description": "Share Screen"
+     },
+     {
+      "role": "AXButton",
+      "description": "Record"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reactions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Apps"
+     },
+     {
+      "role": "AXButton",
+      "description": "End"
+     }
+    ]
+   }
+  ]
+ }
+]

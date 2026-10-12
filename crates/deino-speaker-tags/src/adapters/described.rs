@@ -55,9 +55,11 @@ pub(super) fn scan(window: &AxNode, grammar: &Grammar) -> Scan {
 /// The element's name and states, if it describes a participant.
 fn describe(node: &AxNode, grammar: &Grammar) -> Option<Described> {
     let text = node.description.as_deref().or(node.title.as_deref())?;
-    let mut parts = text.split(',');
-    let name = parts.next()?;
-    let states: Vec<String> = parts.map(|part| part.trim().to_lowercase()).collect();
+    let (name, rest) = split_name(text)?;
+    let states: Vec<String> = rest
+        .split(',')
+        .map(|part| part.trim().to_lowercase())
+        .collect();
     let has = |words: &[&str]| {
         states
             .iter()
@@ -76,4 +78,34 @@ fn describe(node: &AxNode, grammar: &Grammar) -> Option<Described> {
         audio,
         speaking,
     })
+}
+
+/// The name and the states after it: the text up to the first comma
+/// outside parentheses ("Sam (Host, me), Muted" is "Sam (Host, me)").
+fn split_name(text: &str) -> Option<(&str, &str)> {
+    let mut depth = 0_u32;
+    for (index, character) in text.char_indices() {
+        match character {
+            '(' => depth += 1,
+            ')' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => return Some((text.get(..index)?, text.get(index + 1..)?)),
+            _ => {}
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_name_ends_at_the_first_comma_outside_parentheses() {
+        assert_eq!(
+            split_name("Sam (Host, me), Muted, Video on"),
+            Some(("Sam (Host, me)", " Muted, Video on"))
+        );
+        assert_eq!(split_name("Alex, Talking"), Some(("Alex", " Talking")));
+        assert_eq!(split_name("Gallery view"), None);
+    }
 }

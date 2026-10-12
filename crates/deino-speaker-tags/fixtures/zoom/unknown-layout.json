@@ -1,0 +1,142 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Zoom Meeting",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting top bar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Meeting information"
+     },
+     {
+      "role": "AXStaticText",
+      "value": "Zoom Meeting"
+     },
+     {
+      "role": "AXButton",
+      "description": "View"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Stage",
+    "children": [
+     {
+      "role": "AXGroup",
+      "description": "Participant tile",
+      "children": [
+       {
+        "role": "AXGroup"
+       },
+       {
+        "role": "AXImage"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Participant tile",
+      "children": [
+       {
+        "role": "AXGroup"
+       },
+       {
+        "role": "AXImage"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Participant tile",
+      "children": [
+       {
+        "role": "AXGroup"
+       },
+       {
+        "role": "AXImage"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Participant tile",
+      "children": [
+       {
+        "role": "AXGroup"
+       },
+       {
+        "role": "AXImage"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting controls",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Mute my audio"
+     },
+     {
+      "role": "AXButton",
+      "description": "Stop my video"
+     },
+     {
+      "role": "AXButton",
+      "description": "Security"
+     },
+     {
+      "role": "AXButton",
+      "description": "Participants"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chat"
+     },
+     {
+      "role": "AXButton",
+      "description": "Share Screen"
+     },
+     {
+      "role": "AXButton",
+      "description": "Record"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reactions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Apps"
+     },
+     {
+      "role": "AXButton",
+      "description": "End"
+     }
+    ]
+   }
+  ]
+ }
+]

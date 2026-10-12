@@ -1,0 +1,71 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Zoom Workplace",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Tab bar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Home"
+     },
+     {
+      "role": "AXButton",
+      "description": "Team Chat"
+     },
+     {
+      "role": "AXButton",
+      "description": "Meetings"
+     },
+     {
+      "role": "AXButton",
+      "description": "Contacts"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "New meeting"
+     },
+     {
+      "role": "AXButton",
+      "description": "Join"
+     },
+     {
+      "role": "AXButton",
+      "description": "Schedule"
+     },
+     {
+      "role": "AXButton",
+      "description": "Share screen"
+     }
+    ]
+   },
+   {
+    "role": "AXStaticText",
+    "value": "No upcoming meetings today"
+   }
+  ]
+ }
+]

@@ -1,0 +1,142 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Chat | Microsoft Teams",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXScrollArea",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Chat | Microsoft Teams",
+        "children": [
+         {
+          "role": "AXGroup",
+          "description": "App bar",
+          "children": [
+           {
+            "role": "AXButton",
+            "description": "Activity"
+           },
+           {
+            "role": "AXButton",
+            "description": "Chat"
+           },
+           {
+            "role": "AXButton",
+            "description": "Teams"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calendar"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calls"
+           },
+           {
+            "role": "AXButton",
+            "description": "OneDrive"
+           },
+           {
+            "role": "AXButton",
+            "description": "Apps"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Search",
+          "children": [
+           {
+            "role": "AXTextField",
+            "description": "Search"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Chat list",
+          "children": [
+           {
+            "role": "AXGroup",
+            "description": "Alex Chen, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Alex Chen"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Bea Ruiz, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Bea Ruiz"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Design review, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Design review"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Compose",
+          "children": [
+           {
+            "role": "AXTextArea",
+            "description": "Type a message"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

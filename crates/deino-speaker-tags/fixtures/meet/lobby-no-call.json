@@ -1,0 +1,124 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Meet - abc-defg-hij - Google Chrome",
+  "document": "https://meet.google.com/abc-defg-hij",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXTabGroup",
+    "description": "Tab strip",
+    "children": [
+     {
+      "role": "AXRadioButton",
+      "title": "Meet - abc-defg-hij"
+     },
+     {
+      "role": "AXRadioButton",
+      "title": "Inbox (3) - Gmail"
+     },
+     {
+      "role": "AXButton",
+      "description": "New Tab"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Toolbar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Back"
+     },
+     {
+      "role": "AXButton",
+      "description": "Forward"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reload"
+     },
+     {
+      "role": "AXTextField",
+      "description": "Address and search bar",
+      "value": "meet.google.com/abc-defg-hij"
+     },
+     {
+      "role": "AXButton",
+      "description": "Bookmark this tab"
+     },
+     {
+      "role": "AXButton",
+      "description": "Extensions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chrome"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXGroup",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Meet - abc-defg-hij",
+        "domClasses": [
+         "glue-flexbox"
+        ],
+        "children": [
+         {
+          "role": "AXGroup",
+          "domClasses": [
+           "Bf2Xme"
+          ],
+          "children": [
+           {
+            "role": "AXStaticText",
+            "value": "Ready to join?"
+           },
+           {
+            "role": "AXGroup",
+            "description": "Camera preview"
+           }
+          ]
+         },
+         {
+          "role": "AXButton",
+          "description": "Join now",
+          "domClasses": [
+           "UywwFc-LgbsSe"
+          ]
+         },
+         {
+          "role": "AXButton",
+          "description": "Other ways to join"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

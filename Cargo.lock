@@ -2320,6 +2320,7 @@ name = "deino-speaker-tags"
 version = "0.1.0"
 dependencies = [
  "cidre",
+ "deino-core",
  "deino-domain",
  "deino-speaker-tags",
  "log",
