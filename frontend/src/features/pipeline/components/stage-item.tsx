@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
 import { ICON_PROPS, RotateCcw } from '@/ui/icons';
@@ -21,10 +23,12 @@ interface StageItemProps {
   retrying: boolean;
   /** Asks to run `stage` again. */
   onRetry: (stage: StageId) => void;
+  /** Another feature's control for this stage, after its message. */
+  action?: ReactNode;
 }
 
 /** One stage: its name, status, why it skipped or failed, and a retry on failure. */
-export function StageItem({ stage, retrying, onRetry }: StageItemProps) {
+export function StageItem({ stage, retrying, onRetry, action }: StageItemProps) {
   const label = stageLabel(stage.stage);
   const stopped = stage.status === 'failed' || stage.status === 'cancelled';
   return (
@@ -37,6 +41,7 @@ export function StageItem({ stage, retrying, onRetry }: StageItemProps) {
           {stage.message}
         </span>
       )}
+      {action}
       {stopped && (
         <Button
           variant="ghost"

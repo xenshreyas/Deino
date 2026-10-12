@@ -26,6 +26,7 @@ pub mod automations;
 pub mod briefs;
 pub mod calendar;
 pub mod clips;
+pub mod cloud_transcription;
 pub mod comments;
 pub mod companies;
 pub mod consent;

@@ -19,7 +19,7 @@ use deino_core::automations::AutomationRunner;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
-use deino_core::final_transcription::TrackTranscriber;
+use deino_core::final_transcription::{CloudChoice, OriginalTranscripts, TrackTranscriber};
 use deino_core::folders::AutoFiler;
 use deino_core::followups::FollowUpDrafter;
 use deino_core::insights::InsightGenerator;
@@ -89,6 +89,11 @@ pub struct StagePorts {
     pub transcriber: Arc<dyn TrackTranscriber>,
     /// Settings → Transcription → "High-accuracy re-pass" (CAP-08).
     pub repass: Arc<dyn RepassSetting>,
+    /// The cloud service that transcribes a meeting after it ends, if the
+    /// user turned one on or asked for it (CAP-14).
+    pub cloud: Arc<dyn CloudChoice>,
+    /// Where a transcript the cloud replaces is kept (CAP-14).
+    pub originals: Arc<dyn OriginalTranscripts>,
     /// Corrects transcripts with the vocabulary (TRN-05, `vocab_fixups`).
     pub vocab_fixer: Arc<dyn VocabFixer>,
     /// Reads the shared screen's snapshots before the notes (CAP-09).
@@ -102,7 +107,7 @@ impl StagePorts {
     pub fn fakes() -> Self {
         use deino_core::action_items::FakeActionItemExtractor;
         use deino_core::diarization::FakeTrackDiarizer;
-        use deino_core::final_transcription::ScriptedTracks;
+        use deino_core::final_transcription::{FakeOriginalTranscripts, LocalOnly, ScriptedTracks};
         use deino_core::meetings::FakeMeetingRepo;
         use deino_core::people::FakePeopleRepo;
         use deino_core::segments::FakeSegmentRepo;
@@ -135,6 +140,8 @@ impl StagePorts {
             search: Arc::new(crate::stages::RecordedIndexing::default()),
             transcriber: Arc::new(ScriptedTracks::default()),
             repass: Arc::new(crate::stages::FixedRepass(false)),
+            cloud: Arc::new(LocalOnly),
+            originals: Arc::new(FakeOriginalTranscripts::default()),
             vocab_fixer: Arc::new(crate::stages::RecordedFixer::default()),
             screen_context: Arc::new(crate::stages::RecordedScreenContext::default()),
         }
@@ -209,6 +216,19 @@ impl Registry {
     /// Every stage's ID, in the order they run.
     pub fn ids(&self) -> Vec<StageId> {
         self.stages.iter().map(|stage| stage.id()).collect()
+    }
+
+    /// The IDs of the stage named `id` and every stage after it, in order;
+    /// `None` when it is not registered.
+    pub fn ids_from(&self, id: &StageId) -> Option<Vec<StageId>> {
+        let from = self.position(id)?;
+        Some(
+            self.stages
+                .get(from..)?
+                .iter()
+                .map(|stage| stage.id())
+                .collect(),
+        )
     }
 
     /// The stage named `id`, if it is registered.

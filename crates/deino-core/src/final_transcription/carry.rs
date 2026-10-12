@@ -6,9 +6,10 @@
 //! most. With nothing to overlap, the channel decides: the microphone is the
 //! user, and system audio is the lone remote speaker when there is only one.
 
-use deino_domain::{Channel, Millis, SpeakerId};
+use deino_domain::{Channel, Clock, MeetingId, Millis, SegmentId, SpeakerId};
 
-use crate::segments::{Segment, Speaker};
+use super::HeardSpan;
+use crate::segments::{NewSegment, Segment, Speaker};
 
 /// The speaker each channel falls back to.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -63,6 +64,27 @@ pub fn carried_speaker(
         .into_iter()
         .max_by_key(|(_, total)| *total)
         .map(|(speaker, _)| speaker)
+}
+
+/// The new segment of `span`, heard on `channel`: its speaker carried over
+/// from the `old` segments, else the channel's `fallback`.
+pub fn carried_segment(
+    meeting: &MeetingId,
+    (channel, span): (Channel, HeardSpan),
+    (old, fallback): (&[Segment], ChannelSpeakers),
+    clock: &dyn Clock,
+) -> NewSegment {
+    NewSegment {
+        id: SegmentId::generate(clock),
+        meeting_id: meeting.clone(),
+        channel,
+        speaker_id: carried_speaker(channel, (span.start, span.end), old)
+            .or_else(|| fallback.of_channel(channel)),
+        start: span.start,
+        end: span.end.max(span.start),
+        text: span.text,
+        words: span.words,
+    }
 }
 
 /// How long `segment` and `start..end` overlap, when they do.

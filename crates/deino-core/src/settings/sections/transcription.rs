@@ -1,7 +1,11 @@
 //! The transcription section: which local engine and model turn speech into
-//! text. Transcription never leaves the Mac, so there is nothing else to set.
+//! text, and the opt-in cloud re-transcription after a meeting (CAP-14).
 
 use serde::{Deserialize, Serialize};
+
+mod cloud;
+
+pub use cloud::{CloudTranscriptionModel, CloudTranscriptionProvider};
 
 /// The Parakeet TDT model used when that engine has no model configured.
 pub const DEFAULT_PARAKEET_MODEL: &str = "parakeet-tdt-0.6b-v3-int8";
@@ -55,6 +59,12 @@ pub struct TranscriptionSettings {
     /// recording again with full context and replace the live transcript,
     /// keeping its speakers.
     pub high_accuracy_repass: bool,
+    /// "Transcribe meetings with ElevenLabs after they end" (CAP-14): the
+    /// cloud service whose transcript replaces the one made on this Mac
+    /// once a meeting ends; [`CloudTranscriptionProvider::None`] by default.
+    pub cloud_provider: CloudTranscriptionProvider,
+    /// The cloud service's model (ElevenLabs' `model_id`).
+    pub cloud_model: CloudTranscriptionModel,
 }
 
 impl Default for TranscriptionSettings {
@@ -66,6 +76,8 @@ impl Default for TranscriptionSettings {
                 .to_owned(),
             live_transcription: true,
             high_accuracy_repass: false,
+            cloud_provider: CloudTranscriptionProvider::None,
+            cloud_model: CloudTranscriptionModel::ScribeV2,
         }
     }
 }
@@ -95,6 +107,15 @@ mod tests {
         assert!(settings.live_transcription);
         assert!(!settings.high_accuracy_repass);
         assert_eq!(settings.engine, TranscriptionEngine::Parakeet);
+    }
+
+    #[test]
+    fn a_file_without_the_cloud_option_stays_on_this_mac() {
+        let settings: TranscriptionSettings =
+            serde_json::from_str(r#"{"engine":"parakeet","model":"x"}"#).unwrap();
+
+        assert_eq!(settings.cloud_provider, CloudTranscriptionProvider::None);
+        assert_eq!(settings.cloud_model, CloudTranscriptionModel::ScribeV2);
     }
 
     #[test]

@@ -11,6 +11,7 @@ import { SummaryModelSettings } from '@/components/SummaryModelSettings';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
+import { ElevenLabsSettings } from '@/features/cloud-transcription';
 import { IntegrationsSettings } from '@/features/integrations';
 import { NetworkSettings } from '@/features/network';
 import {
@@ -60,7 +61,8 @@ function RecordingSection() {
 }
 
 /** Transcription: live or after the meeting (CAP-08), then the inherited
- * engine picker over the config context. */
+ * engine picker over the config context, then the opt-in ElevenLabs
+ * re-transcription (CAP-14). */
 function TranscriptionSection() {
   const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
   return (
@@ -70,6 +72,7 @@ function TranscriptionSection() {
         transcriptModelConfig={transcriptModelConfig}
         setTranscriptModelConfig={setTranscriptModelConfig}
       />
+      <ElevenLabsSettings />
     </div>
   );
 }

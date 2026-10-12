@@ -321,7 +321,12 @@ export type ServiceId =
 /**
  * Fathom's API, for importing meetings (CAP-12).
  */
-"fathom"
+"fathom" | 
+/**
+ * ElevenLabs speech to text: each meeting's audio, sent after it
+ * ends when the user turns it on with their own key (CAP-14).
+ */
+"elevenlabs"
 /**
  * What kind of service a [`ServiceId`] is, for grouping in the UI.
  */

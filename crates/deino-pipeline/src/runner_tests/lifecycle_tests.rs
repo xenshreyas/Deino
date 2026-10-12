@@ -8,6 +8,7 @@ use deino_domain::{JobStatus, MeetingStatus};
 use deino_testkit::at;
 
 use super::harness::{Harness, NOW, Waits, outcome, stage, started};
+use crate::PipelineError;
 use crate::testing::{Activity, Behavior};
 
 #[tokio::test]
@@ -178,6 +179,35 @@ async fn rerunning_everything_runs_every_stage_again() {
     harness.service.until_idle().await;
 
     assert_eq!(started(&activity), ["notes", "index", "notes", "index"]);
+    assert_eq!(harness.status_of(&meeting).await, MeetingStatus::Ready);
+}
+
+#[tokio::test]
+async fn rerunning_from_a_stage_runs_it_and_every_later_stage() {
+    let activity = Arc::new(Activity::default());
+    let harness = Harness::new(vec![
+        stage("transcript", 20, Behavior::Succeed, &activity),
+        stage("notes", 50, Behavior::Succeed, &activity),
+        stage("index", 80, Behavior::Succeed, &activity),
+    ])
+    .await;
+    let meeting = harness.record("meeting-a").await;
+    harness.service.until_idle().await;
+
+    harness
+        .service
+        .rerun_from(&meeting, &deino_domain::StageId::new("notes"))
+        .await
+        .unwrap();
+    harness.service.until_idle().await;
+    let unknown = harness
+        .service
+        .rerun_from(&meeting, &deino_domain::StageId::new("nope"))
+        .await;
+
+    let runs = ["transcript", "notes", "index", "notes", "index"];
+    assert_eq!(started(&activity), runs);
+    assert!(matches!(unknown, Err(PipelineError::UnknownStage(_))));
     assert_eq!(harness.status_of(&meeting).await, MeetingStatus::Ready);
 }
 

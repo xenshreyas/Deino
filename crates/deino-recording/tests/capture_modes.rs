@@ -168,10 +168,12 @@ async fn transcribe_after(rig: &rig::Rig, meeting: &MeetingId, fixture: &Fixture
             Arc::new(Scripted),
             Arc::new(tracks),
         )),
+        originals: Arc::new(deino_core::final_transcription::FakeOriginalTranscripts::default()),
         clock: rig.wall.clone(),
     });
     let pass = FinalPass {
         repass: false,
+        cloud: None,
         cancel: CancellationToken::new(),
     };
     service.run(meeting, &pass).await.unwrap()

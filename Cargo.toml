@@ -45,6 +45,8 @@ zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 # The local REST API (DEV-03).
 deino-api = { path = "crates/deino-api" }
 deino-audio = { path = "crates/deino-audio" }
+# Opt-in ElevenLabs transcription after the meeting (CAP-14).
+deino-cloud-transcription = { path = "crates/deino-cloud-transcription" }
 deino-core = { path = "crates/deino-core" }
 deino-connect = { path = "crates/deino-connect" }
 # The chat notice of the consent tools (CAP-13); tests add

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM original_transcripts WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6369d748d7b9191054abf30b52d94227e9a6593f828866eb6207f959421dbb7e"
+}

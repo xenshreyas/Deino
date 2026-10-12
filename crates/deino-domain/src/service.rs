@@ -83,6 +83,11 @@ db_enum! {
         Fireflies = "fireflies",
         /// Fathom's API, for importing meetings (CAP-12).
         Fathom = "fathom",
+        /// ElevenLabs speech to text: each meeting's audio, sent after it
+        /// ends when the user turns it on with their own key (CAP-14).
+        #[serde(rename = "elevenlabs")]
+        #[sqlx(rename = "elevenlabs")]
+        ElevenLabs = "elevenlabs",
     }
 }
 

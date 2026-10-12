@@ -1,0 +1,1 @@
+{"detail":[{"loc":["body","model_id"],"msg":"Input should be scribe_v2 or scribe_v2_medical","type":"value_error"}]}

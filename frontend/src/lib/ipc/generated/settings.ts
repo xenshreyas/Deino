@@ -323,6 +323,32 @@ meet: boolean;
  */
 message: string }
 /**
+ * The ElevenLabs speech-to-text model (`model_id`).
+ */
+export type CloudTranscriptionModel = 
+/**
+ * Scribe v2, ElevenLabs' current batch model.
+ */
+"scribe_v2" | 
+/**
+ * Scribe v1, the first generation (deprecated by ElevenLabs).
+ */
+"scribe_v1"
+/**
+ * The cloud service that re-transcribes meetings after they end. Off
+ * ([`Self::None`]) unless the user turns it on; the key lives in the
+ * Keychain, never here.
+ */
+export type CloudTranscriptionProvider = 
+/**
+ * Transcripts are made on this Mac only.
+ */
+"none" | 
+/**
+ * ElevenLabs Scribe, over the user's ElevenLabs API key.
+ */
+"elevenlabs"
+/**
  * Identifies a company.
  */
 export type CompanyId = string & { readonly __brand: "CompanyId" }
@@ -1316,7 +1342,12 @@ export type ServiceId =
 /**
  * Fathom's API, for importing meetings (CAP-12).
  */
-"fathom"
+"fathom" | 
+/**
+ * ElevenLabs speech to text: each meeting's audio, sent after it
+ * ends when the user turns it on with their own key (CAP-14).
+ */
+"elevenlabs"
 /**
  * Every user preference. Secrets are never here; they live in the Keychain.
  * 
@@ -1569,7 +1600,17 @@ liveTranscription: boolean;
  * recording again with full context and replace the live transcript,
  * keeping its speakers.
  */
-highAccuracyRepass: boolean }
+highAccuracyRepass: boolean; 
+/**
+ * "Transcribe meetings with ElevenLabs after they end" (CAP-14): the
+ * cloud service whose transcript replaces the one made on this Mac
+ * once a meeting ends; [`CloudTranscriptionProvider::None`] by default.
+ */
+cloudProvider: CloudTranscriptionProvider; 
+/**
+ * The cloud service's model (ElevenLabs' `model_id`).
+ */
+cloudModel: CloudTranscriptionModel }
 /**
  * The UI section of `Settings`.
  */

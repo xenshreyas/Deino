@@ -95,10 +95,35 @@ impl PipelineService {
             Some(stage) => vec![self.registered(stage)?],
             None => self.registry.ids(),
         };
+        self.reprocess(meeting, &stages).await
+    }
+
+    /// Runs `stage` of `meeting` again and every stage after it, so they
+    /// work on what it produces (CAP-14: a new transcript gets new speakers
+    /// and notes), and returns the meeting's stages.
+    pub async fn rerun_from(
+        &self,
+        meeting: &MeetingId,
+        stage: &StageId,
+    ) -> Result<Vec<StageStatus>, PipelineError> {
+        let stages = self
+            .registry
+            .ids_from(stage)
+            .ok_or_else(|| PipelineError::UnknownStage(stage.clone()))?;
+        self.reprocess(meeting, &stages).await
+    }
+
+    /// Schedules `stages` of a recorded `meeting` and moves a `ready` or
+    /// `failed` one back to `processing` while they run.
+    async fn reprocess(
+        &self,
+        meeting: &MeetingId,
+        stages: &[StageId],
+    ) -> Result<Vec<StageStatus>, PipelineError> {
         let status = self.processable_status(meeting).await?;
         // Jobs first: entering `processing` triggers `enqueue`, which then
         // finds them scheduled and leaves the rest of the pipeline alone.
-        self.schedule(meeting, &stages).await?;
+        self.schedule(meeting, stages).await?;
         let reopened = match status {
             MeetingStatus::Ready | MeetingStatus::Failed => self
                 .lifecycle

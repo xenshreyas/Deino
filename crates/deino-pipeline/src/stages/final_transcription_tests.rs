@@ -1,4 +1,8 @@
-use deino_core::final_transcription::{HeardSpan, ScriptedTracks};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use deino_core::final_transcription::{
+    CloudPass, CloudSpan, HeardSpan, ScriptedCloud, ScriptedTracks,
+};
 use deino_core::meetings::{
     FakeMeetingRepo, MeetingAudio, MeetingLifecycleRepo, MeetingTitle, NewMeeting,
 };
@@ -139,6 +143,120 @@ fn a_failing_re_pass_is_retried_then_skipped_so_notes_still_come() {
         Ok(StageOutcome::Skipped(REPASS_FAILED))
     );
     assert_eq!(outcome_of(&cancelled, 1), Err(StageError::Cancelled));
+}
+
+/// A cloud choice that always picks its scripted cloud, counting finished runs.
+#[derive(Default)]
+struct FixedCloud {
+    cloud: Arc<ScriptedCloud>,
+    finished: AtomicUsize,
+}
+
+#[async_trait]
+impl CloudChoice for FixedCloud {
+    async fn for_meeting(&self, _meeting: &MeetingId) -> Option<CloudPass> {
+        Some(CloudPass {
+            transcriber: self.cloud.clone(),
+            requested: false,
+        })
+    }
+
+    fn finished(&self, _meeting: &MeetingId) {
+        self.finished.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+struct CloudWorld {
+    world: World,
+    choice: Arc<FixedCloud>,
+}
+
+async fn cloud_world() -> CloudWorld {
+    let choice = Arc::new(FixedCloud::default());
+    let segments = Arc::new(FakeSegmentRepo::default());
+    let tracks = Arc::new(ScriptedTracks::default());
+    let ports = StagePorts {
+        meetings: meetings(Some(MIC)).await,
+        segments: segments.clone(),
+        segment_writer: segments.clone(),
+        speakers: segments.clone(),
+        transcriber: tracks.clone(),
+        cloud: choice.clone(),
+        ..StagePorts::fakes()
+    };
+    let stage = FinalTranscriptionStage::new(&ports);
+    let world = World {
+        segments,
+        tracks,
+        stage,
+    };
+    CloudWorld { world, choice }
+}
+
+impl CloudWorld {
+    async fn text(&self) -> Vec<String> {
+        let transcript = self.world.segments.list(&meeting(), Page::ALL).await;
+        transcript.unwrap().into_iter().map(|s| s.text).collect()
+    }
+
+    fn finished(&self) -> usize {
+        self.choice.finished.load(Ordering::Relaxed)
+    }
+}
+
+fn cloud_said(text: &str) -> CloudSpan {
+    CloudSpan {
+        span: said(text),
+        voice: None,
+    }
+}
+
+#[tokio::test]
+async fn the_cloud_transcribes_when_it_is_chosen() {
+    let cloud = cloud_world().await;
+    cloud
+        .choice
+        .cloud
+        .say(MIC, vec![cloud_said("From the cloud")]);
+    cloud.world.tracks.say(MIC, vec![said("From the Mac")]);
+
+    let outcome = cloud.world.stage.run(&ctx(1), meeting()).await.unwrap();
+
+    assert_eq!(outcome, StageOutcome::Done);
+    assert_eq!(cloud.text().await, ["From the cloud"]);
+    assert!(cloud.world.tracks.heard().is_empty());
+    assert_eq!(cloud.finished(), 1);
+}
+
+#[tokio::test]
+async fn a_refused_key_falls_back_to_the_mac_and_says_why() {
+    let cloud = cloud_world().await;
+    cloud.choice.cloud.fail_with(|| CloudError::KeyRefused);
+    cloud.world.tracks.say(MIC, vec![said("From the Mac")]);
+
+    let outcome = cloud.world.stage.run(&ctx(1), meeting()).await.unwrap();
+
+    let status = "ElevenLabs transcription failed: the API key was refused.";
+    assert_eq!(outcome, StageOutcome::Skipped(status));
+    assert_eq!(cloud.text().await, ["From the Mac"]);
+    assert_eq!(cloud.finished(), 1);
+}
+
+#[tokio::test]
+async fn a_busy_service_is_retried_then_the_mac_takes_over() {
+    let cloud = cloud_world().await;
+    cloud.choice.cloud.fail_with(|| CloudError::RateLimited);
+    cloud.world.tracks.say(MIC, vec![said("From the Mac")]);
+
+    let first = cloud.world.stage.run(&ctx(1), meeting()).await;
+    assert!(first.unwrap_err().is_retryable());
+    assert_eq!(cloud.finished(), 0);
+    assert!(cloud.text().await.is_empty());
+
+    let last = cloud.world.stage.run(&ctx(3), meeting()).await.unwrap();
+    let status = CloudError::RateLimited.status();
+    assert_eq!(last, StageOutcome::Skipped(status));
+    assert_eq!(cloud.text().await, ["From the Mac"]);
 }
 
 #[tokio::test]

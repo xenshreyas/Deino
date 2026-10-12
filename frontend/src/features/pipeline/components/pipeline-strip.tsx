@@ -1,3 +1,5 @@
+import { CloudRetry } from '@/features/cloud-transcription';
+
 import { usePipelineProgress } from '../hooks/use-pipeline-progress';
 import { copy } from '../copy';
 import { usePipelineStatus, useRerunStage } from '../queries';
@@ -10,7 +12,8 @@ interface PipelineStripProps {
 
 /**
  * The meeting's processing status: each post-meeting stage with its status,
- * and a retry button on a failed one. Renders nothing for a meeting the
+ * and a retry button on a failed one (and on a transcript step that gave
+ * up on ElevenLabs, CAP-14's `CloudRetry`). Renders nothing for a meeting the
  * pipeline never ran for. Container: the stages come from a query that
  * `PipelineProgress` events refresh, and retrying is a mutation.
  */
@@ -31,6 +34,7 @@ export function PipelineStrip({ meetingId }: PipelineStripProps) {
           <StageItem
             key={stage.stage}
             stage={stage}
+            action={<CloudRetry meetingId={meetingId} stage={stage} />}
             retrying={rerun.isPending}
             onRetry={(id) => {
               rerun.mutate(id);

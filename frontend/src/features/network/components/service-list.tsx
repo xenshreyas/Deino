@@ -21,7 +21,13 @@ export interface ServiceGroupsProps {
   busy?: boolean;
 }
 
-/** One service: its name, its hosts and its switch. */
+/** What `service` receives, when the Network page says so (CAP-14: audio). */
+function serviceNote(service: ServiceStatus['id']): string | undefined {
+  const notes: Partial<Record<ServiceStatus['id'], string>> = networkCopy.serviceNotes;
+  return notes[service];
+}
+
+/** One service: its name, what it receives, its hosts and its switch. */
 function ServiceRow({
   service,
   onToggle,
@@ -32,10 +38,12 @@ function ServiceRow({
   busy: boolean;
 }) {
   const hosts = service.hosts.length > 0 ? service.hosts.join(', ') : networkCopy.noHosts;
+  const note = serviceNote(service.id);
   return (
     <div className="grid min-h-[52px] grid-cols-[1fr_auto] items-center gap-4 px-4 py-3">
       <div className="min-w-0">
         <p className="text-sm text-fg">{networkCopy.serviceNames[service.id]}</p>
+        {note === undefined ? null : <p className="text-xs text-fg-muted">{note}</p>}
         <p className="truncate font-mono text-xs text-fg-muted" title={hosts}>
           {hosts}
         </p>

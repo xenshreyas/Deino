@@ -51,11 +51,15 @@ pub enum SecretName {
     /// A Fathom API key, for importing meetings (CAP-12).
     #[serde(rename = "fathom_api_key")]
     FathomApiKey,
+    /// The user's ElevenLabs API key, for transcription after the meeting
+    /// (CAP-14).
+    #[serde(rename = "elevenlabs_api_key")]
+    ElevenLabsApiKey,
 }
 
 impl SecretName {
     /// Every secret, in declaration order.
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 14] = [
         Self::OpenAiApiKey,
         Self::AnthropicApiKey,
         Self::GroqApiKey,
@@ -69,6 +73,7 @@ impl SecretName {
         Self::CirclebackApiKey,
         Self::FirefliesApiKey,
         Self::FathomApiKey,
+        Self::ElevenLabsApiKey,
     ];
 
     /// The keychain account the secret is stored under; equal to its serialized name.
@@ -87,6 +92,7 @@ impl SecretName {
             Self::CirclebackApiKey => "circleback_api_key",
             Self::FirefliesApiKey => "fireflies_api_key",
             Self::FathomApiKey => "fathom_api_key",
+            Self::ElevenLabsApiKey => "elevenlabs_api_key",
         }
     }
 
@@ -106,6 +112,7 @@ impl SecretName {
             Self::CirclebackApiKey => "Circleback API key",
             Self::FirefliesApiKey => "Fireflies API key",
             Self::FathomApiKey => "Fathom API key",
+            Self::ElevenLabsApiKey => "ElevenLabs API key",
         }
     }
 }

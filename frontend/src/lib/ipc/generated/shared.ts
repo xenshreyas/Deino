@@ -341,10 +341,14 @@ export type Table =
 /**
  * One message to one endpoint, kept across its retries; the delivery log.
  */
-"webhook_deliveries"
+"webhook_deliveries" | 
+/**
+ * The transcript made on this Mac that a cloud transcription replaced (CAP-14): one per meeting, the first one replaced, until the user restores it or retention deletes the transcript.
+ */
+"original_transcripts"
 
 /** Every `ErrorCode`, for validating errors that arrive over IPC. */
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","snapshots","screen_capture_choices","recipes","ask_messages","follow_up_drafts","api_keys","imported_meetings","webhooks","webhook_deliveries"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","snapshots","screen_capture_choices","recipes","ask_messages","follow_up_drafts","api_keys","imported_meetings","webhooks","webhook_deliveries","original_transcripts"] as const satisfies readonly Table[]

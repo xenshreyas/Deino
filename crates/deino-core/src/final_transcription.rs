@@ -7,6 +7,12 @@
 //!   utterance whole, with context on both sides, which the low-latency live
 //!   window cannot; the new transcript replaces the live one, keeping the
 //!   speakers where they overlap.
+//! - **Cloud transcription** (CAP-14, off by default): with ElevenLabs
+//!   turned on and the user's key saved, the tracks go to the
+//!   [`CloudTranscriber`] instead, and its transcript replaces the live one;
+//!   the replaced one is kept ([`OriginalTranscripts`]) and can be restored
+//!   ([`OriginalTranscriptService`]). A failure writes nothing, so the
+//!   stage falls back to the Mac.
 //!
 //! [`FinalTranscriptionService`] holds the rules over the
 //! [`TrackTranscriber`] port, which `deino-recording`'s `OfflineTranscriber`
@@ -14,16 +20,30 @@
 //! engine); [`carried_speaker`] is the speaker carry-over.
 
 mod carry;
+mod cloud;
+mod cloud_run;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
+mod originals;
 mod port;
+mod restore;
 mod service;
+mod voices;
 
-pub use carry::{ChannelSpeakers, carried_speaker};
+pub use carry::{ChannelSpeakers, carried_segment, carried_speaker};
+pub use cloud::{
+    CLOUD_FAILED, CloudChoice, CloudError, CloudPass, CloudRequest, CloudSpan, CloudTranscriber,
+    LocalOnly,
+};
 #[cfg(any(test, feature = "test-support"))]
-pub use fake::ScriptedTracks;
+pub use fake::{ScriptedCloud, ScriptedTracks};
+#[cfg(any(test, feature = "test-support"))]
+pub use originals::FakeOriginalTranscripts;
+pub use originals::{KeptLine, OriginalTranscripts, SqliteOriginalTranscripts};
 pub use port::{EngineError, HeardSpan, TrackError, TrackRequest, TrackTranscriber};
+pub use restore::{OriginalTranscriptDeps, OriginalTranscriptService};
 pub use service::{
     FinalOutcome, FinalPass, FinalSkip, FinalTranscriptionDeps, FinalTranscriptionError,
     FinalTranscriptionService,
 };
+pub use voices::CloudVoices;
