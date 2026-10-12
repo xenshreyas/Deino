@@ -71,14 +71,17 @@ pub struct Resolved {
 /// The picker's entries: each display, then the ordinary on-screen windows
 /// of other apps, largest first.
 pub fn choices(windows: &[WindowInfo], displays: &[DisplayInfo]) -> Vec<TargetChoice> {
-    let screens = displays.iter().enumerate().map(|(n, display)| TargetChoice {
-        source: Source::Display(display.id),
-        label: if n == 0 {
-            "Entire screen".to_owned()
-        } else {
-            format!("Screen {}", n + 1)
-        },
-    });
+    let screens = displays
+        .iter()
+        .enumerate()
+        .map(|(n, display)| TargetChoice {
+            source: Source::Display(display.id),
+            label: if n == 0 {
+                "Entire screen".to_owned()
+            } else {
+                format!("Screen {}", n + 1)
+            },
+        });
     let mut pickable: Vec<&WindowInfo> = windows.iter().filter(|w| pickable(w)).collect();
     pickable.sort_by(|a, b| (b.width * b.height).total_cmp(&(a.width * a.height)));
     let windows = pickable.into_iter().map(|window| TargetChoice {
@@ -94,7 +97,10 @@ fn pickable(window: &WindowInfo) -> bool {
         && window.on_screen
         && window.width >= MIN_SIDE
         && window.height >= MIN_SIDE
-        && window.bundle_id.as_ref().is_none_or(|id| id.as_str() != OWN_BUNDLE)
+        && window
+            .bundle_id
+            .as_ref()
+            .is_none_or(|id| id.as_str() != OWN_BUNDLE)
 }
 
 /// "Zoom — Design review", or just the app.
@@ -119,13 +125,18 @@ pub fn resolve(
     };
     match target {
         CaptureTarget::MeetingApp(app) => pick_window(windows, app).map(window),
-        CaptureTarget::Picked(Source::Window(id)) => windows.iter().find(|w| w.id == *id).map(window),
+        CaptureTarget::Picked(Source::Window(id)) => {
+            windows.iter().find(|w| w.id == *id).map(window)
+        }
         CaptureTarget::Picked(Source::Display(id)) => {
-            displays.iter().find(|d| d.id == *id).map(|display| Resolved {
-                source: Source::Display(display.id),
-                size: (display.width, display.height),
-                window: None,
-            })
+            displays
+                .iter()
+                .find(|d| d.id == *id)
+                .map(|display| Resolved {
+                    source: Source::Display(display.id),
+                    size: (display.width, display.height),
+                    window: None,
+                })
         }
     }
 }

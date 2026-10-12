@@ -30,8 +30,11 @@ pub trait ScreenRepo: Send + Sync {
 
     /// Deletes snapshot `id` of `meeting` and returns its file name, so
     /// the caller removes the PNG; `None` when there was no such row.
-    async fn delete_snapshot(&self, meeting: &MeetingId, id: i64)
-    -> Result<Option<String>, DbError>;
+    async fn delete_snapshot(
+        &self,
+        meeting: &MeetingId,
+        id: i64,
+    ) -> Result<Option<String>, DbError>;
 }
 
 /// [`ScreenRepo`] over Deino's SQLite database.

@@ -80,7 +80,11 @@ async fn world(ocr: TableOcr, describe: bool) -> World {
     let folder = dir.path().join(MEETING).join(SNAPSHOTS_DIR);
     std::fs::create_dir_all(&folder).unwrap();
     let repo = Arc::new(FakeScreenRepo::default());
-    for (at_ms, name) in [(0, "0000000000.png"), (12_000, "0000012000.png"), (30_000, "0000030000.png")] {
+    for (at_ms, name) in [
+        (0, "0000000000.png"),
+        (12_000, "0000012000.png"),
+        (30_000, "0000030000.png"),
+    ] {
         std::fs::write(folder.join(name), b"png bytes").unwrap();
         let snapshot = NewSnapshot {
             meeting: MeetingId::new(MEETING),
@@ -90,10 +94,15 @@ async fn world(ocr: TableOcr, describe: bool) -> World {
             height: 1_080,
             phash: 0,
         };
-        repo.add_snapshot(&snapshot, at("2026-10-12T09:00:00Z")).await.unwrap();
+        repo.add_snapshot(&snapshot, at("2026-10-12T09:00:00Z"))
+            .await
+            .unwrap();
     }
     let ocr = Arc::new(ocr);
-    let describer = Arc::new(Describer { on: describe, calls: Mutex::default() });
+    let describer = Arc::new(Describer {
+        on: describe,
+        calls: Mutex::default(),
+    });
     let service = ScreenContextService::new(ScreenContextParts {
         repo: repo.clone(),
         ocr: ocr.clone(),
@@ -101,7 +110,13 @@ async fn world(ocr: TableOcr, describe: bool) -> World {
         redactor: Arc::new(KeyRedactor),
         recordings: dir.path().to_path_buf(),
     });
-    World { repo, ocr, describer, service, _dir: dir }
+    World {
+        repo,
+        ocr,
+        describer,
+        service,
+        _dir: dir,
+    }
 }
 
 fn slides() -> TableOcr {
@@ -110,7 +125,9 @@ fn slides() -> TableOcr {
         ("0000012000.png", "API key: sk-ant-123"),
     ];
     TableOcr {
-        texts: texts.map(|(name, text)| (name.to_owned(), text.to_owned())).into(),
+        texts: texts
+            .map(|(name, text)| (name.to_owned(), text.to_owned()))
+            .into(),
         ..TableOcr::default()
     }
 }
@@ -121,7 +138,13 @@ async fn each_snapshot_is_read_once_and_a_missing_picture_reads_as_no_text() {
     let meeting = MeetingId::new(MEETING);
 
     let report = world.service.read(&meeting).await.unwrap();
-    assert_eq!(report, ScreenContextReport { read: 3, described: 0 });
+    assert_eq!(
+        report,
+        ScreenContextReport {
+            read: 3,
+            described: 0
+        }
+    );
     let again = world.service.read(&meeting).await.unwrap();
     assert_eq!(again.read, 0, "a re-run reads only new snapshots");
     assert_eq!(world.ocr.reads.load(Ordering::SeqCst), 3);
@@ -130,16 +153,26 @@ async fn each_snapshot_is_read_once_and_a_missing_picture_reads_as_no_text() {
     let read: Vec<(Millis, &str)> = texts.iter().map(|t| (t.at, t.text.as_str())).collect();
     assert_eq!(
         read,
-        [(Millis(0), "Q3 Review\nRevenue up 40%"), (Millis(12_000), "API key: sk-ant-123")]
+        [
+            (Millis(0), "Q3 Review\nRevenue up 40%"),
+            (Millis(12_000), "API key: sk-ant-123")
+        ]
     );
 }
 
 #[tokio::test]
 async fn without_text_recognition_the_stage_says_so() {
-    let ocr = TableOcr { unsupported: true, ..TableOcr::default() };
+    let ocr = TableOcr {
+        unsupported: true,
+        ..TableOcr::default()
+    };
     let world = world(ocr, false).await;
 
-    let error = world.service.read(&MeetingId::new(MEETING)).await.unwrap_err();
+    let error = world
+        .service
+        .read(&MeetingId::new(MEETING))
+        .await
+        .unwrap_err();
     assert!(matches!(error, ScreenContextError::Unsupported));
     assert_eq!(error.code(), ErrorCode::Unavailable);
 }
@@ -152,12 +185,18 @@ async fn descriptions_skip_a_snapshot_showing_a_secret() {
 
     assert_eq!(report.described, 2, "the key's snapshot is never sent");
     assert_eq!(world.describer.calls.lock().unwrap().len(), 2);
-    assert_eq!(world.repo.description(1).as_deref(), Some("A slide with a revenue chart."));
+    assert_eq!(
+        world.repo.description(1).as_deref(),
+        Some("A slide with a revenue chart.")
+    );
     assert_eq!(world.repo.description(2), None);
 }
 
 #[test]
 fn text_is_trimmed_and_capped() {
     assert_eq!(clean(" a \n\n b "), "a\nb");
-    assert_eq!(clean(&"x".repeat(MAX_TEXT_CHARS + 10)).len(), MAX_TEXT_CHARS);
+    assert_eq!(
+        clean(&"x".repeat(MAX_TEXT_CHARS + 10)).len(),
+        MAX_TEXT_CHARS
+    );
 }

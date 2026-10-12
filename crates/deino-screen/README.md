@@ -14,7 +14,11 @@ ScreenCaptureKit.
   changed from the last kept frame); PNG encoding.
 - `decide`: whether a recording captures (off by default, detected
   meetings only, per-meeting off switch, Screen Recording granted).
-- `pick_window`, `stream_size`, `is_visible`.
+- `pick_window`, `stream_size`, `is_visible`; the record panel's picker
+  (`pick`: `CaptureTarget`, `Source` = a window or a whole display,
+  `choices`, `resolve`) and `picked`, its plan.
+- `recognize_text`: Apple Vision OCR of a snapshot (cidre `vn`), for the
+  `screen_context` stage (CAP-09 phase B).
 - `Capture` (one recording, step by step, on the recorder's timeline),
   `Capturer` (its thread), `ScreenCapture` (the app's handle, `status`).
 - The ports `ScreenSource`/`FrameFeed`, `Windows`, `VideoEncoders`,

@@ -60,7 +60,10 @@ mod tests {
         assert!(!missing.detected_meetings);
         assert!(missing.video && missing.snapshots);
         assert_eq!(missing.video_fps, 1);
-        assert!(!missing.describe_snapshots, "pictures never leave the Mac by default");
+        assert!(
+            !missing.describe_snapshots,
+            "pictures never leave the Mac by default"
+        );
         assert_eq!(missing.consent_reminders_shown, 0);
 
         let on: ScreenSettings =

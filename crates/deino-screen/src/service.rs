@@ -114,7 +114,11 @@ impl ScreenCapture {
     /// Fails without the permission rather than touching
     /// `ScreenCaptureKit`, which would make macOS ask.
     pub fn choices(&self) -> Result<Vec<TargetChoice>, ScreenError> {
-        let platform = self.parts.platform.as_ref().ok_or(ScreenError::Unsupported)?;
+        let platform = self
+            .parts
+            .platform
+            .as_ref()
+            .ok_or(ScreenError::Unsupported)?;
         if !platform.permission.granted() {
             return Err(ScreenError::NotPermitted);
         }

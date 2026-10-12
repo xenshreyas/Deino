@@ -137,7 +137,10 @@ impl ScreenContextService {
 
     /// Reads the snapshots of `meeting` not read yet, then describes the
     /// read ones when describing is on.
-    pub async fn read(&self, meeting: &MeetingId) -> Result<ScreenContextReport, ScreenContextError> {
+    pub async fn read(
+        &self,
+        meeting: &MeetingId,
+    ) -> Result<ScreenContextReport, ScreenContextError> {
         let folder = self
             .parts
             .recordings
@@ -197,7 +200,9 @@ impl ScreenContextService {
             log::info!(target: TARGET, "snapshot {} shows hidden information; not described", snapshot.id);
             return None;
         }
-        let png = tokio::fs::read(folder.join(&snapshot.file_name)).await.ok()?;
+        let png = tokio::fs::read(folder.join(&snapshot.file_name))
+            .await
+            .ok()?;
         match self.parts.describer.describe(png).await {
             Ok(text) => Some(clean(&text)),
             Err(error) => {

@@ -48,7 +48,11 @@ fn the_screen_never_crowds_out_the_transcript() {
 
     let lines = screen_lines(&texts);
 
-    assert!(lines.iter().all(|line| line.text.chars().count() <= MAX_SCREEN_LINE_CHARS));
+    assert!(
+        lines
+            .iter()
+            .all(|line| line.text.chars().count() <= MAX_SCREEN_LINE_CHARS)
+    );
     let total: usize = lines.iter().map(|line| line.text.chars().count()).sum();
     assert!(total <= MAX_SCREEN_CHARS, "{total}");
 }

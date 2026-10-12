@@ -24,8 +24,8 @@ use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::{
     AutomaticNotes, ClockSleeper, MeetingTitler, NotesEnhancer, PipelineDeps, PipelineService,
-    PipelineTrigger, ProgressSink, RepassSetting, ScreenContextReader, SqliteJobRepo, StagePorts, VocabFixer,
-    registry,
+    PipelineTrigger, ProgressSink, RepassSetting, ScreenContextReader, SqliteJobRepo, StagePorts,
+    VocabFixer, registry,
 };
 use tauri::{AppHandle, Manager, Runtime};
 

@@ -45,7 +45,10 @@ struct SlideOcr(HashMap<String, String>);
 
 impl ScreenOcr for SlideOcr {
     fn read(&self, png: &Path) -> Result<String, OcrError> {
-        assert!(png.exists(), "the snapshot's picture is read from its folder");
+        assert!(
+            png.exists(),
+            "the snapshot's picture is read from its folder"
+        );
         let name = png.file_name().and_then(|name| name.to_str()).unwrap_or("");
         self.0
             .get(name)
@@ -75,7 +78,11 @@ impl TemplateSource for OneOnOne {
 
 /// Copies the fixture slides into the meeting's snapshot folder and stores
 /// their rows; the OCR table of their file names.
-async fn record_slides(repo: &SqliteScreenRepo, recordings: &Path, meeting: &MeetingId) -> SlideOcr {
+async fn record_slides(
+    repo: &SqliteScreenRepo,
+    recordings: &Path,
+    meeting: &MeetingId,
+) -> SlideOcr {
     let fixtures = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/screen");
     let folder = recordings.join(meeting.as_str()).join(SNAPSHOTS_DIR);
     std::fs::create_dir_all(&folder).unwrap();
@@ -91,7 +98,9 @@ async fn record_slides(repo: &SqliteScreenRepo, recordings: &Path, meeting: &Mee
             height: 540,
             phash: 1,
         };
-        repo.add_snapshot(&row, at("2026-10-09T09:00:00Z")).await.unwrap();
+        repo.add_snapshot(&row, at("2026-10-09T09:00:00Z"))
+            .await
+            .unwrap();
         table.insert(file_name, text.to_owned());
     }
     SlideOcr(table)
@@ -103,8 +112,16 @@ async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
     seed_fixtures(&database).await.unwrap();
     let templates = Arc::new(SqliteTemplateRepo::new(database.clone()));
     let sync_clock = Arc::new(FakeClock::new(at("2026-10-09T09:00:00Z")));
-    BuiltinSync::new(templates, sync_clock).run(&CATALOG).await.unwrap();
-    let meeting = Fixtures::load().unwrap().meeting(MeetingKind::OneOnOne).unwrap().id.clone();
+    BuiltinSync::new(templates, sync_clock)
+        .run(&CATALOG)
+        .await
+        .unwrap();
+    let meeting = Fixtures::load()
+        .unwrap()
+        .meeting(MeetingKind::OneOnOne)
+        .unwrap()
+        .id
+        .clone();
     let recordings = tempfile::tempdir().unwrap();
     let repo = Arc::new(SqliteScreenRepo::new(database.clone()));
     let ocr = record_slides(&repo, recordings.path(), &meeting).await;

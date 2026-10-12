@@ -43,7 +43,7 @@ export function ImagesStripView({ snapshots, src, onDelete, deleting }: ImagesSt
   const [open, setOpen] = useState<Snapshot | null>(null);
   if (snapshots.length === 0) return null;
   return (
-    <section aria-label={copy.title} className="flex flex-col gap-2">
+    <section aria-label={copy.title} className="mt-3 flex flex-col gap-2">
       <h3 className="text-xs font-medium text-fg-muted">{copy.title}</h3>
       <ul className="flex gap-2 overflow-x-auto pb-1">
         {snapshots.map((snapshot) => (

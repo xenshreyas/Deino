@@ -84,10 +84,10 @@ pub use insights::InsightsStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use insights::RecordedInsights;
 #[cfg(any(test, feature = "test-support"))]
-pub use update_entities::RecordedEntityUpdates;
-#[cfg(any(test, feature = "test-support"))]
 pub use screen_context::RecordedScreenContext;
 pub use screen_context::{ScreenContextReader, ScreenContextStage};
+#[cfg(any(test, feature = "test-support"))]
+pub use update_entities::RecordedEntityUpdates;
 pub use update_entities::UpdateEntitiesStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use vocab_fixups::RecordedFixer;

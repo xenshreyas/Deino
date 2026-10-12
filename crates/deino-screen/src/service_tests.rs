@@ -8,10 +8,10 @@ use super::*;
 use crate::capture::VIDEO_FILE;
 use crate::fake::{FakeEncoders, FakeScreen, MemoryStore, ScriptedClock};
 use crate::frame::{Frame, FrameRate};
+use crate::pick::CaptureTarget;
 use crate::ports::Position;
 use crate::sampler::SnapshotPolicy;
 use crate::status::CaptureState;
-use crate::pick::CaptureTarget;
 use crate::target::WindowInfo;
 
 fn zoom_window() -> WindowInfo {

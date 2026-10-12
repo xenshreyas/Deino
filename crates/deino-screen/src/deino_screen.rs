@@ -50,7 +50,9 @@ pub use capture::{SNAPSHOTS, VIDEO_FILE, VIDEO_PART, has_video, snapshot_name};
 pub use error::ScreenError;
 pub use frame::{Frame, FrameRate};
 pub use phash::PHash;
-pub use pick::{CaptureTarget, DisplayInfo, OWN_BUNDLE, Resolved, Source, TargetChoice, choices, resolve};
+pub use pick::{
+    CaptureTarget, DisplayInfo, OWN_BUNDLE, Resolved, Source, TargetChoice, choices, resolve,
+};
 pub use plan::{CapturePlan, CaptureSettings, PickInput, PlanInput, Skip, decide, picked};
 pub use ports::{
     FrameFeed, Platform, Position, RecordingClock, ScreenPermission, ScreenSource, SnapshotRecord,

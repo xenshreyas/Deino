@@ -19,10 +19,10 @@ use deino_core::screen::{
     SnapshotDescriber, SqliteScreenRepo,
 };
 use deino_core::settings::SettingsService;
-use deino_llm::Gateway;
-use deino_pipeline::ScreenContextReader;
 use deino_db::Database;
 use deino_domain::{Clock, MeetingId};
+use deino_llm::Gateway;
+use deino_pipeline::ScreenContextReader;
 use deino_recording::{Playhead, RecordingService};
 use deino_screen::{
     Position, RecordingClock, ScreenCapture, ScreenCaptureParts, ScreenError, SnapshotRecord,
@@ -71,7 +71,11 @@ pub(crate) fn attach_screen(app: &AppHandle, database: &Database, clock: &Arc<dy
         let settings: Arc<SettingsService> = Arc::clone(&settings);
         let screen = Arc::clone(&*app.state::<Arc<ScreenService>>());
         let capture = Arc::clone(&*app.state::<Arc<ScreenCapture>>());
-        app.manage(Arc::new(ScreenPicker::new(capture, screen, Arc::clone(&settings))));
+        app.manage(Arc::new(ScreenPicker::new(
+            capture,
+            screen,
+            Arc::clone(&settings),
+        )));
         app.manage(Arc::new(ConsentReminders::new(settings)));
     }
 }
@@ -84,7 +88,9 @@ pub(super) fn context_reader(
     database: &Database,
     recordings: &Path,
 ) -> Arc<dyn ScreenContextReader> {
-    let settings = app.try_state::<Arc<SettingsService>>().map(|s| Arc::clone(&*s));
+    let settings = app
+        .try_state::<Arc<SettingsService>>()
+        .map(|s| Arc::clone(&*s));
     let gateway = app.try_state::<Arc<Gateway>>().map(|g| Arc::clone(&*g));
     let (describer, redactor): (Arc<dyn SnapshotDescriber>, Arc<dyn TextRedactor>) =
         match (settings, gateway) {

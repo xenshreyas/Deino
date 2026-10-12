@@ -14,8 +14,8 @@ use deino_domain::BundleId;
 
 use super::native::connect_window_server;
 use crate::error::ScreenError;
-use crate::ports::Windows;
 use crate::pick::DisplayInfo;
+use crate::ports::Windows;
 use crate::target::WindowInfo;
 
 /// How long `ScreenCaptureKit` may take to list the windows.

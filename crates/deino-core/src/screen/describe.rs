@@ -109,6 +109,10 @@ mod tests {
             }))
         );
         assert_eq!(message.text(), "Describe this shared screen.");
-        assert!(prompt.system.is_some_and(|system| system.contains("only what is visible")));
+        assert!(
+            prompt
+                .system
+                .is_some_and(|system| system.contains("only what is visible"))
+        );
     }
 }

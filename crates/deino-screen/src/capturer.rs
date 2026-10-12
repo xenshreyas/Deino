@@ -15,10 +15,10 @@ use std::time::Duration;
 use crate::capture::{Capture, CaptureParts, Step};
 use crate::error::ScreenError;
 use crate::frame::FrameRate;
+use crate::pick::{Source, resolve};
 use crate::plan::CapturePlan;
 use crate::ports::{FrameFeed, Platform, RecordingClock, SnapshotStore};
 use crate::status::StatusCell;
-use crate::pick::{Source, resolve};
 use crate::target::stream_size;
 
 /// The longest wait for a frame before the capture checks the clock.
@@ -108,7 +108,10 @@ fn open(start: &Start) -> Result<(Capture, Box<dyn FrameFeed>), ScreenError> {
     let target = resolve(&start.plan.target, &windows, &displays).ok_or(ScreenError::WindowGone)?;
     let scale = match target.source {
         Source::Window(id) => platform.windows.scale(id),
-        Source::Display(id) => displays.iter().find(|d| d.id == id).map_or(2.0, |d| d.scale),
+        Source::Display(id) => displays
+            .iter()
+            .find(|d| d.id == id)
+            .map_or(2.0, |d| d.scale),
     };
     let size = stream_size(target.size.0, target.size.1, scale);
     // Snapshots alone need a frame every 10 s; one a second is plenty.

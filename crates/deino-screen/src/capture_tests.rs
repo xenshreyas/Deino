@@ -4,9 +4,9 @@ use deino_domain::{BundleId, MeetingId};
 
 use super::*;
 use crate::fake::{FakeEncoders, FakeScreen, MemoryStore, ScriptedClock};
+use crate::pick::CaptureTarget;
 use crate::sampler::SnapshotPolicy;
 use crate::status::CaptureStatus;
-use crate::pick::CaptureTarget;
 use crate::target::WindowInfo;
 
 /// A fresh recording folder under the temp dir.

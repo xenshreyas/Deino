@@ -89,7 +89,9 @@ async fn a_cancelled_run_stops_before_reading() {
     let cancelled = ctx();
     cancelled.cancel.cancel();
 
-    let outcome = stage(read.clone()).run(&cancelled, MeetingId::new("meeting-a")).await;
+    let outcome = stage(read.clone())
+        .run(&cancelled, MeetingId::new("meeting-a"))
+        .await;
 
     assert_eq!(outcome, Err(StageError::Cancelled));
     assert!(read.asked().is_empty());

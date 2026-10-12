@@ -15,9 +15,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use deino_core::screen::{
-    ScreenContextError, ScreenContextReport, ScreenContextService,
-};
+use deino_core::screen::{ScreenContextError, ScreenContextReport, ScreenContextService};
 use deino_domain::{MeetingId, StageId};
 
 use crate::{PipelineStage, StageCtx, StageError, StageOutcome, StagePorts};
