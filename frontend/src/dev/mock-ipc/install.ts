@@ -11,7 +11,7 @@ import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 
 import { mockNotes } from './database';
 import { MockMedia } from './mock-media';
-import { snapshotUrl } from './screen';
+import { snapshotUrl } from './mock-snapshots';
 import { handleLegacyInvoke } from './legacy';
 
 /** What `@tauri-apps/plugin-os` reads synchronously: a Mac on Apple Silicon. */
