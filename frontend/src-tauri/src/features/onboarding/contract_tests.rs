@@ -41,6 +41,7 @@ fn permissions_lists_each_kind_with_its_state() {
             { "kind": "system_audio", "state": "unknown", "optional": false },
             { "kind": "notifications", "state": "not_determined", "optional": false },
             { "kind": "accessibility", "state": "not_determined", "optional": true },
+            { "kind": "screen_recording", "state": "not_determined", "optional": true },
         ])
     );
 }
