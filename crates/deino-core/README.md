@@ -118,6 +118,12 @@ the SQLite adapters behind those ports.
   `LocalZone`; `pricing.rs` estimates cost from list prices) and
   `RecapService` (the year in review on route `recap`, from numbers and
   titles only, kept once per year in `year_recaps` through `RecapRepo`).
+- `briefs` (NOT-08, ADR 0047): `BriefSources` (local data only, redacted
+  through a `TextRedactor`), `BriefInputs` (the local "enough to say?"
+  check, the numbered prompt and its fingerprint, `SourceIndex`),
+  `GatewayBriefWriter` on route `brief`, `SqliteBriefRepo` (`briefs`),
+  `BriefService` (`prepare` only when the inputs changed, `for_event`) and
+  `BriefScheduler` (06:00 and an hour before each event).
 - `models` (CAP-01, AI-01): the bundled model catalog (`catalog.json`: Parakeet
   Unified EN 0.6B, six quants, and Nomic Embed Text v1.5 Q8_0, each pinned to a
   revision, size and SHA-256, each with a purpose; a `ModelService` serves one

@@ -18,6 +18,8 @@
 //! `extract.insights` (AI-06, `insights.rs`) runs the insights engine over
 //! them: the Decisions template scored on recall and attribution, and the
 //! typed Discovery scorecard checked field by field.
+//! `brief` (NOT-08, `brief.rs`) checks a follow-up's cited bullets and that a
+//! new contact gets `insufficient`.
 //!
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
@@ -31,6 +33,7 @@
 //! provider (its key in `OPENAI_API_KEY`). Evals never run in CI.
 
 mod action_items;
+mod brief;
 mod cases;
 mod expectations;
 mod insights;
@@ -56,6 +59,7 @@ fn main() {
     trials.extend(action_items::trials(live_enabled()));
     trials.extend(notes::trials(live_enabled()));
     trials.extend(insights::trials(live_enabled()));
+    trials.extend(brief::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 

@@ -84,7 +84,7 @@ export function MeetingBrief({ meetingId }: { meetingId: MeetingId }) {
   const brief = useMeetingBrief(meetingId);
   if (!brief.data) return null;
   return (
-    <div className="px-6 pt-3">
+    <div className="pt-4">
       <LoadedBrief key={brief.data.eventId} brief={brief.data} />
     </div>
   );
