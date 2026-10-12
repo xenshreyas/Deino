@@ -66,7 +66,7 @@ pub use events::{
     SegmentUpdateKind,
 };
 pub use lane::Lane;
-pub use observer::{NoStartObserver, StartObserver};
+pub use observer::{NoStartObserver, StartObserver, StartObservers};
 pub use offline::{BatchEngines, NativeDecoder, OfflineTranscriber, TrackDecoder};
 pub use recovery::{RecoveryReport, recover_interrupted};
 pub use service::{Playhead, RecordingService};

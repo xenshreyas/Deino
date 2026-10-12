@@ -12,8 +12,9 @@ pub fn windows(app: CallApp, case: &str) -> Vec<AxNode> {
         .join("fixtures")
         .join(app.as_str())
         .join(format!("{case}.json"));
-    let json = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{path:?}: {error}"));
-    serde_json::from_str(&json).unwrap_or_else(|error| panic!("{path:?}: {error}"))
+    let json = std::fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+    serde_json::from_str(&json).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
 /// What the watcher would read from a dump: the first call window that

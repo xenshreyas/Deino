@@ -2,6 +2,12 @@
 //! call, who speaks, the user's own tile, crosstalk, a layout without an
 //! indicator, an unknown layout, and windows without a call.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::panic,
+    reason = "an integration-test crate: helpers fail the test by panicking"
+)]
+
 #[path = "support/dumps.rs"]
 mod dumps;
 

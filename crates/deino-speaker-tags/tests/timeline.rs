@@ -3,6 +3,12 @@
 //! missing for a shared screen); the spans it saves are aligned with
 //! system-track segments by the card's rule (more than half wins).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::panic,
+    reason = "an integration-test crate: helpers fail the test by panicking"
+)]
+
 #[path = "support/dumps.rs"]
 mod dumps;
 

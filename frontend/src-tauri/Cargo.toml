@@ -159,6 +159,8 @@ deino-testkit.workspace = true
 deino-stt.workspace = true
 # Meeting detection and the prompt's rules (CAP-06).
 deino-detect.workspace = true
+# Speaker names from the meeting app's window, through Accessibility (CAP-05).
+deino-speaker-tags.workspace = true
 # `serde_json` types the settings merge patch (`plugin:settings|patch`).
 specta = { workspace = true, features = ["serde_json"] }
 tauri-specta.workspace = true
@@ -209,6 +211,7 @@ ort = { version = "2.0.0-rc.10", features = ["load-dynamic"] }
 deino-audio = { workspace = true, features = ["test-support"] }
 deino-core = { workspace = true, features = ["test-support"] }
 deino-detect = { workspace = true, features = ["test-support"] }
+deino-speaker-tags = { workspace = true, features = ["test-support"] }
 deino-integrations = { workspace = true, features = ["test-support"] }
 deino-recording = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }

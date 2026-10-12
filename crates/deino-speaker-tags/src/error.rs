@@ -3,7 +3,7 @@
 //! when it starts, and the meeting's speakers are named by voice for that
 //! stretch (CAP-04).
 
-use deino_domain::CallApp;
+use deino_domain::{CallApp, ErrorClass, ErrorCode};
 
 use crate::reading::ReadError;
 
@@ -19,6 +19,14 @@ pub enum AxError {
     /// Accessibility does not exist on this platform.
     #[error("Accessibility is not available on this platform")]
     Unsupported,
+}
+
+impl ErrorClass for AxError {
+    fn code(&self) -> ErrorCode {
+        match self {
+            Self::Api(_) | Self::SettingsUnavailable | Self::Unsupported => ErrorCode::Unavailable,
+        }
+    }
 }
 
 /// Why a poll found no speaker name.

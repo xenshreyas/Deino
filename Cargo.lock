@@ -1878,6 +1878,7 @@ dependencies = [
  "deino-pipeline",
  "deino-recording",
  "deino-secrets",
+ "deino-speaker-tags",
  "deino-stt",
  "deino-testkit",
  "dirs 5.0.1",

@@ -13,6 +13,12 @@
 //! the tool checks without prompting and stops if it is missing.
 
 #![cfg(target_os = "macos")]
+#![allow(
+    clippy::unwrap_used,
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a hand-run capture tool: it prints the dump and fails loudly"
+)]
 
 use deino_domain::CallApp;
 use deino_speaker_tags::{capture, platform};

@@ -150,6 +150,10 @@ export type Table =
  */
 "speaker_suggestions" | 
 /**
+ * Who the meeting app showed as the active speaker, and when (CAP-05).
+ */
+"speaker_tag_spans" | 
+/**
  * Connected integration accounts, without their tokens (INT-00).
  */
 "integration_connections" | 
