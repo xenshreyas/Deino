@@ -9,7 +9,11 @@ export function isRunnable(recipe: Recipe): boolean {
   return recipe.kind === 'single';
 }
 
-/** The recipes of `tab` whose name, slug, description or prompt contains `search`. */
+/**
+ * The recipes of `tab` whose name, slug, description or prompt contains
+ * `search`. Built-ins that need several meetings are left out until they can
+ * run (UX-27: nothing unfinished shows).
+ */
 export function filterRecipes(
   recipes: readonly Recipe[],
   tab: RecipeTab,
@@ -18,6 +22,7 @@ export function filterRecipes(
   const needle = search.trim().toLowerCase();
   return recipes.filter((recipe) => {
     if (recipe.builtIn !== (tab === 'built-in')) return false;
+    if (recipe.builtIn && !isRunnable(recipe)) return false;
     if (needle === '') return true;
     return [recipe.name, recipe.slug, recipe.description, recipe.prompt].some((field) =>
       field.toLowerCase().includes(needle),

@@ -14,20 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { eventLinksCopy } from '../copy';
 import { eventTitle } from '../format';
 import { useEventSuggestions, useLinkEvent, useLinkedEvent } from '../queries';
-import type { CalendarEvent, CalendarEventId, EventLinkChange, MeetingId } from '../types';
+import type { CalendarEvent, CalendarEventId, MeetingId } from '../types';
 import { EventPicker } from './event-picker';
 
-/** Says what a link or unlink did: the event, and who joined or left. */
-function announce(change: EventLinkChange) {
-  const description = eventLinksCopy.attendees(change.attendeesAdded, change.attendeesRemoved);
-  const message =
-    change.event === null
-      ? eventLinksCopy.unlinked
-      : eventLinksCopy.linkedTo(eventTitle(change.event));
-  toast.success(message, description === undefined ? undefined : { description });
-}
-
-/** Links (or, for `null`, unlinks) the meeting's event, then says so. */
+/** Links (or, for `null`, unlinks) the meeting's event; the chip and attendees show it. */
 function useEventLinkActions(meetingId: MeetingId, close: () => void) {
   const mutation = useLinkEvent();
   const run = (eventId: CalendarEventId | null) => {
@@ -35,7 +25,6 @@ function useEventLinkActions(meetingId: MeetingId, close: () => void) {
     mutation.mutate(
       { meetingId, eventId },
       {
-        onSuccess: announce,
         onError: (error) => {
           const failed = eventId === null ? eventLinksCopy.unlinkFailed : eventLinksCopy.linkFailed;
           toast.error(failed, { description: error.message });

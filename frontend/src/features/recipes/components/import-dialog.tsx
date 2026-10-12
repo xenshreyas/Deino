@@ -3,7 +3,6 @@
  * or read a file into the field. Imported recipes become the user's own.
  */
 import { type ChangeEvent, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/ui/button';
 import {
@@ -55,10 +54,7 @@ function ImportForm({ onClose, onImported }: Omit<ImportDialogProps, 'open'>) {
   };
   const submit = () => {
     importer.mutate(text, {
-      onSuccess: (recipes) => {
-        toast.success(recipesCopy.imported(recipes.length));
-        onImported(recipes);
-      },
+      onSuccess: onImported,
     });
   };
   return (

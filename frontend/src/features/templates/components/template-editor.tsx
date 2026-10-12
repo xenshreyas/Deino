@@ -1,6 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button, buttonVariants } from '@/ui/button';
 import { Separator } from '@/ui/controls';
@@ -142,7 +141,6 @@ function SaveBar({ template, draft }: { template: Template | null; draft: Draft 
       { id: template?.id ?? null, content: fromDraft(draft) },
       {
         onSuccess: (saved) => {
-          toast.success(templatesCopy.saved);
           if (template === null) open(saved.id);
         },
       },

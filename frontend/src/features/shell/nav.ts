@@ -5,6 +5,11 @@
  * the sidebar, the ⌘K palette's "Go to" group and the "coming soon" pages
  * all pick it up. An item with `comingSoon` shows a calm placeholder page
  * until the named card ships and removes the field.
+ *
+ * The sidebar stays short (UX-25): Home, Meetings, Action items, People and
+ * the Folders tree, then a collapsed "More", then Settings. A page that is
+ * reached from another page (Companies from People; Tags and Trash from
+ * Meetings; Stats from Home) sets `sidebar: false`: it keeps its ⌘K entry.
  */
 import type { ComponentType } from 'react';
 
@@ -30,8 +35,8 @@ import {
 /** A path of a route without parameters, checked against the route tree. */
 export type NavPath = Exclude<keyof FileRoutesByTo, `${string}$${string}`>;
 
-/** Where an item sits in the sidebar. */
-export type NavSection = 'primary' | 'workspace' | 'intelligence' | 'footer';
+/** Where an item sits in the sidebar: the main list, the collapsed "More" group, or the footer. */
+export type NavSection = 'primary' | 'more' | 'footer';
 
 /** One sidebar entry. */
 export interface NavItem {
@@ -42,6 +47,8 @@ export interface NavItem {
   /** Sort key within its section; leave gaps of 10 for later items. */
   order: number;
   section: NavSection;
+  /** `false` keeps the page out of the sidebar; ⌘K "Go to" still lists it. */
+  sidebar?: false;
   /** Set while the feature is unbuilt: the card that builds it and one line on what it will do. */
   comingSoon?: { card: string; description: string };
   /**
@@ -51,15 +58,7 @@ export interface NavItem {
   Component?: ComponentType;
 }
 
-/** Section labels; `primary` and `footer` have none. */
-export const NAV_SECTION_LABELS: Record<NavSection, string | undefined> = {
-  primary: undefined,
-  workspace: 'Workspace',
-  intelligence: 'Intelligence',
-  footer: undefined,
-};
-
-/** Every sidebar entry. */
+/** Every destination, in sidebar order. */
 export const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, to: '/', order: 10, section: 'primary' },
   {
@@ -72,61 +71,59 @@ export const NAV_ITEMS = [
   },
   {
     id: 'action-items',
-    label: 'Action Items',
+    label: 'Action items',
     icon: ListChecks,
     to: '/action-items',
     order: 30,
     section: 'primary',
   },
-  {
-    id: 'people',
-    label: 'People',
-    icon: Users,
-    to: '/people',
-    order: 10,
-    section: 'workspace',
-  },
-  {
-    id: 'companies',
-    label: 'Companies',
-    icon: Building2,
-    to: '/companies',
-    order: 20,
-    section: 'workspace',
-  },
+  { id: 'people', label: 'People', icon: Users, to: '/people', order: 40, section: 'primary' },
   {
     id: 'folders',
     label: 'Folders',
     icon: Folder,
     to: '/folders',
-    order: 30,
-    section: 'workspace',
+    order: 50,
+    section: 'primary',
     // ORG-05: the entry is the folder tree (with Unfiled), not a plain link.
     Component: FolderNavSection,
+  },
+  // Reached from other pages (UX-25): a tab on People, the Meetings header, Home.
+  {
+    id: 'companies',
+    label: 'Companies',
+    icon: Building2,
+    to: '/companies',
+    order: 60,
+    section: 'primary',
+    sidebar: false,
   },
   {
     id: 'tags',
     label: 'Tags',
     icon: Tag,
     to: '/tags',
-    order: 40,
-    section: 'workspace',
+    order: 70,
+    section: 'primary',
+    sidebar: false,
   },
   {
     id: 'stats',
     label: 'Stats',
     icon: ChartColumn,
     to: '/stats',
-    order: 50,
-    section: 'workspace',
+    order: 80,
+    section: 'primary',
+    sidebar: false,
   },
   {
     id: 'trash',
     label: 'Trash',
     icon: Trash2,
     to: '/meetings/trash',
-    order: 60,
-    section: 'workspace',
+    order: 90,
+    section: 'primary',
+    sidebar: false,
   },
   {
     id: 'insights',
@@ -134,23 +131,16 @@ export const NAV_ITEMS = [
     icon: Lightbulb,
     to: '/insights',
     order: 10,
-    section: 'intelligence',
+    section: 'more',
   },
-  {
-    id: 'recipes',
-    label: 'Recipes',
-    icon: ScrollText,
-    to: '/recipes',
-    order: 20,
-    section: 'intelligence',
-  },
+  { id: 'recipes', label: 'Recipes', icon: ScrollText, to: '/recipes', order: 20, section: 'more' },
   {
     id: 'automations',
     label: 'Automations',
     icon: Workflow,
     to: '/automations',
     order: 30,
-    section: 'intelligence',
+    section: 'more',
   },
   {
     id: 'settings',
@@ -165,9 +155,12 @@ export const NAV_ITEMS = [
 /** The ID of a sidebar entry. */
 export type NavItemId = (typeof NAV_ITEMS)[number]['id'];
 
-/** The items of one section, in order. */
+/** The sidebar items of one section, in order; `sidebar: false` items are left out. */
 export function navItemsIn(section: NavSection): readonly NavItem[] {
-  return NAV_ITEMS.filter((item) => item.section === section).sort((a, b) => a.order - b.order);
+  const items: readonly NavItem[] = NAV_ITEMS;
+  return items
+    .filter((item) => item.section === section && item.sidebar !== false)
+    .sort((a, b) => a.order - b.order);
 }
 
 /** The item with `id`. */

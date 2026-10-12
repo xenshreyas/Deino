@@ -59,9 +59,16 @@ export function matchesShortcut(press: KeyPress, shortcut: Shortcut): boolean {
   );
 }
 
+/**
+ * Shortcuts whose feature has not shipped (UX-27): they keep their keys
+ * here, but pressing them does nothing until the feature lands. ⌘J is Ask
+ * Deino (AI-02, deprioritised by D13).
+ */
+const UNSHIPPED: ReadonlySet<ShortcutId> = new Set(['chat']);
+
 /** The shortcut `press` triggers, if any. */
 export function findShortcut(press: KeyPress): ShortcutId | undefined {
-  return SHORTCUT_IDS.find((id) => matchesShortcut(press, SHORTCUTS[id]));
+  return SHORTCUT_IDS.find((id) => !UNSHIPPED.has(id) && matchesShortcut(press, SHORTCUTS[id]));
 }
 
 /**

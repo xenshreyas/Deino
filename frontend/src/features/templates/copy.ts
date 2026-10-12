@@ -53,7 +53,6 @@ export const templatesCopy = {
   newSection: 'New section',
   save: 'Save',
   saving: 'Saving…',
-  saved: 'Saved',
 
   rules: 'Auto rules',
   rulesHint: 'Pick this template by itself when every condition of a rule holds.',

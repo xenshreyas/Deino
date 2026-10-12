@@ -74,16 +74,10 @@ function useMergeChoice(props: MergeDialogProps) {
   };
   const confirm = () => {
     if (chosen === null) return;
-    props.merge(chosen).then(
-      () => {
-        toast.success(entitiesCopy.merged(props.name));
-        close();
-      },
-      (error: unknown) => {
-        const description = error instanceof Error ? error.message : undefined;
-        toast.error(entitiesCopy.actionFailed, { description });
-      },
-    );
+    props.merge(chosen).then(close, (error: unknown) => {
+      const description = error instanceof Error ? error.message : undefined;
+      toast.error(entitiesCopy.actionFailed, { description });
+    });
   };
   return { chosen, setChosen, close, confirm };
 }

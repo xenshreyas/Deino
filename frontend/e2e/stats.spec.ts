@@ -4,12 +4,13 @@ test('the Stats page shows the numbers, follows the period and writes the year i
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Stats' }).click();
+  // UX-25: Stats left the sidebar; Home links to it.
+  await page.getByRole('link', { name: 'See all stats' }).click();
 
   await expect(page.getByRole('heading', { name: 'Stats' })).toBeVisible();
   await expect(page.getByRole('group', { name: /last 12 months/ })).toBeVisible();
   await expect(page.getByText('Hours recorded')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'LLM usage' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AI usage' })).toBeVisible();
   await expect(page.getByText(/Costs are estimates/)).toBeVisible();
 
   const meetings = page.locator('dd').first();

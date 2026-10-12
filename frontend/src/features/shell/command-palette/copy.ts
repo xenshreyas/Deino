@@ -9,9 +9,6 @@ export const paletteCopy = {
   newNote: 'New note',
   newActionItem: 'New action item',
   startRecording: 'Start recording',
-  askDeino: 'Ask Deino',
-  /** Marks a feature that is not finished. */
-  wip: 'WIP',
   importAudio: 'Import recording',
   toggleSidebar: 'Toggle sidebar',
   toggleRightPanel: 'Toggle right panel',

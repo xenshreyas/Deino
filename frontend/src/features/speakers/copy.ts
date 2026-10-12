@@ -30,7 +30,6 @@ export const speakersCopy = {
   noMatches: 'Type a name to add someone new.',
   meBadge: 'You',
   // Outcomes.
-  renamed: (name: string) => `Named ${name}`,
   remembered: (name: string) => `Deino will recognise ${name}’s voice next time.`,
   merged: 'Speakers merged',
   renameFailed: 'Could not rename the speaker',
@@ -64,6 +63,5 @@ export const speakersCopy = {
     'Deino will stop recognising them in new meetings. Names already given to speakers stay.',
   forgetConfirm: 'Forget voice',
   cancel: 'Cancel',
-  forgotten: 'Voice profile deleted',
   deleteFailed: 'Could not delete the voice profile',
 } as const;

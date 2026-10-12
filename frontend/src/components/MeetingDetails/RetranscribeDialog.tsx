@@ -134,9 +134,8 @@ export function RetranscribeDialog({
         async (event) => {
           if (event.payload.meeting_id === meetingId) {
             setIsProcessing(false);
-            toast.success(
-              `Retranscription complete! ${event.payload.segments_count} segments created.`
-            );
+            // The dialog closes; the transcript may be off-screen, so say it is done.
+            toast.success('Transcript updated');
             onCompleteRef.current?.();
             onOpenChangeRef.current(false);
           }
@@ -205,7 +204,6 @@ export function RetranscribeDialog({
         await invoke('cancel_retranscription_command');
         setIsProcessing(false);
         setProgress(null);
-        toast.info('Retranscription cancelled');
       } catch (err) {
         console.error('Failed to cancel retranscription:', err);
       }

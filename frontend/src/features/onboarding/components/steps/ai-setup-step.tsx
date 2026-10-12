@@ -8,12 +8,13 @@ import { SegmentedControl } from '@/ui/segmented-control';
 import { initialChoice, isKeyed, type NotesChoice } from '../../ai-choice';
 import { aiCopy } from '../../copy';
 import { useEmbeddingModel, useTranscriptionModel } from '../../hooks/use-local-models';
-import { ModelDownloadRow } from '../model-download-row';
+import { AutoStart, TranscriptionStatus } from '../model-download-row';
 import { ProviderKeyForm } from '../provider-key-form';
 import { StepFrame, type StepProps } from '../step-frame';
 
 /**
- * Step 3: the local models download right away, while the user picks who
+ * Step 3: transcription gets ready right away (one plain line, UX-23), the
+ * search model downloads without a row (UX-21), and the user picks who
  * writes the notes: Claude or OpenAI with a key, or the built-in model.
  */
 export function AiSetupStep({ dispatch }: StepProps) {
@@ -31,21 +32,15 @@ export function AiSetupStep({ dispatch }: StepProps) {
   );
 }
 
-/** Parakeet and the embedding model, downloading as soon as they show. */
+/** Transcription's line; the search model starts quietly beside it. */
 function LocalModels() {
   const transcription = useTranscriptionModel();
   const embedding = useEmbeddingModel();
   return (
-    <section aria-label={aiCopy.models} className="flex flex-col gap-2">
-      <h2 className="text-sm font-semibold text-fg-muted">{aiCopy.models}</h2>
-      <ul className="flex flex-col divide-y divide-border border-y border-border">
-        <ModelDownloadRow
-          name={aiCopy.transcription}
-          why={aiCopy.transcriptionWhy}
-          model={transcription}
-        />
-        <ModelDownloadRow name={aiCopy.embedding} why={aiCopy.embeddingWhy} model={embedding} />
-      </ul>
+    <section aria-label={aiCopy.transcription} className="flex flex-col gap-2">
+      <h2 className="text-sm font-semibold text-fg-muted">{aiCopy.transcription}</h2>
+      <TranscriptionStatus model={transcription} />
+      <AutoStart model={embedding} />
       <ModelLicenceNotice />
     </section>
   );

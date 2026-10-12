@@ -93,7 +93,6 @@ export function MeetingFollowUp({ meetingId }: { meetingId: MeetingId }) {
         }}
         onDismiss={() => {
           dismiss.mutate(meetingId, {
-            onSuccess: () => toast(followUpsCopy.dismissed),
             onError: (error) =>
               toast.error(followUpsCopy.failed.dismiss, { description: error.message }),
           });

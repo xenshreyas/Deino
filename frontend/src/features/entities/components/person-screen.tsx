@@ -60,7 +60,7 @@ function PersonTop({ page }: { page: PersonPage }) {
         meta={metaOf(page)}
         actions={<PersonActions person={person} />}
       />
-      <Ask scope={{ kind: 'person', id: person.id }} name={person.name} />
+      {Ask === null ? null : <Ask scope={{ kind: 'person', id: person.id }} name={person.name} />}
       <EntitySummary
         summary={person.summaryMd}
         updatedAt={person.summaryUpdatedAt}

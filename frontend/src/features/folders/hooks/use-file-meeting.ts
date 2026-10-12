@@ -28,7 +28,7 @@ function useSeriesOffer() {
         onClick: () => {
           addRule.mutate(
             { folderId: folder.id, rule: { kind: 'series', seriesId } },
-            { onSuccess: () => toast.success(foldersCopy.seriesAdded), onError: reportFailure },
+            { onError: reportFailure },
           );
         },
       },
@@ -46,9 +46,10 @@ export function useFileMeeting() {
       add.mutate(
         { folderId: folder.id, meetingId },
         {
+          // The folder chip and the sidebar count show the filing (UX-32); only
+          // the offer to collect the series needs a toast.
           onSuccess: ({ seriesOffer }) => {
-            if (seriesOffer === null) toast.success(foldersCopy.filed(folder.name));
-            else offerSeries(folder, seriesOffer);
+            if (seriesOffer !== null) offerSeries(folder, seriesOffer);
           },
           onError: reportFailure,
         },

@@ -28,7 +28,10 @@ const ALL = [
 describe('filterRecipes', () => {
   it('splits built-ins from the user’s own', () => {
     expect(filterRecipes(ALL, 'mine', '').map((r) => r.slug)).toEqual(['my-brief']);
-    expect(filterRecipes(ALL, 'built-in', '')).toHaveLength(3);
+    expect(filterRecipes(ALL, 'built-in', '').map((r) => r.slug)).toEqual([
+      'coach-me',
+      'write-a-brief',
+    ]);
   });
 
   it('searches names, slugs and prompts', () => {

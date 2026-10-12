@@ -17,8 +17,9 @@ export function messageOf(error: unknown): string {
 }
 
 /**
- * Copy and email actions for a meeting, each confirmed or explained with a
- * toast. Used by the Share menu and the inherited panels' copy buttons.
+ * Copy and email actions for a meeting. A copy is confirmed with a toast;
+ * Mail opening is its own confirmation (UX-32), so only a failure toasts.
+ * Used by the Share menu and the inherited panels' copy buttons.
  */
 export function useShareActions(meetingId: MeetingId) {
   const copy = useCopyMeeting(meetingId);
@@ -32,7 +33,6 @@ export function useShareActions(meetingId: MeetingId) {
     },
     email: () => {
       email.mutate(undefined, {
-        onSuccess: () => toast.success(exportCopy.emailOpened),
         onError: (error) => toast.error(messageOf(error)),
       });
     },

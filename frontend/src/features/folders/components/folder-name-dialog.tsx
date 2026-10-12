@@ -3,7 +3,6 @@
  * renames one. Errors from Rust (a blank or taken name) show under the field.
  */
 import { type FormEvent, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/ui/button';
 import { Label } from '@/ui/controls';
@@ -46,7 +45,6 @@ function useSaveName(target: Exclude<FolderNameTarget, null>, props: FolderNameD
     const folder = { name, parentId: target.parent?.id ?? null };
     create.mutate(folder, {
       onSuccess: (created) => {
-        toast.success(foldersCopy.created);
         props.onCreated?.(created);
         props.onClose();
       },

@@ -1,11 +1,14 @@
 /**
  * Home (ORG-02, ui.md §4.1): a greeting, Coming up with Join and the record
- * toggle, Recent notes, then suggested follow-ups (NOT-07's slot, hidden
- * while empty) beside the open action items due soon (AI-05).
+ * toggle, Recent notes (or, before the first one, a test recording and the
+ * sample meeting), then suggested follow-ups (NOT-07's slot, hidden while
+ * empty) beside the open action items due soon (AI-05), and the last 30
+ * days in numbers with a link to Stats (UX-25).
  */
 import { Link } from '@tanstack/react-router';
 
 import { TodayDigest } from '@/features/action-items';
+import { StatsGlance } from '@/features/stats';
 
 import { homeCopy } from '../copy';
 import { HOME_SLOTS, type SuggestedFollowUp } from '../slots';
@@ -52,6 +55,13 @@ export function HomeScreen() {
           <TodayDigest hideWhenEmpty limit={5} />
         </section>
       </div>
+      <StatsGlance
+        heading={(id, action) => (
+          <SectionHeading id={id} action={action}>
+            {homeCopy.lastThirtyDays}
+          </SectionHeading>
+        )}
+      />
     </div>
   );
 }

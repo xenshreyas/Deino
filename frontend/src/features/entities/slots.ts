@@ -4,12 +4,11 @@
  *
  * | Slot | Today | Filled by |
  * |---|---|---|
- * | `ask` | a disabled "Ask about …" bar with a WIP badge (D13) | AI-02 (scoped chat) |
+ * | `ask` | nothing: hidden until it ships (UX-27); `AskSlotPlaceholder` is the resting bar | AI-02 (scoped chat) |
  * | `voice` | whether Deino knows the person's voice, and where to manage it | CAP-04 |
  */
 import type { ComponentType } from 'react';
 
-import { AskSlotPlaceholder } from './components/ask-slot';
 import { PersonVoice } from './components/voice-slot';
 import type { CompanyId, PersonId } from './types';
 
@@ -28,11 +27,11 @@ export interface VoiceSlotProps {
   personId: PersonId;
 }
 
-/** The slots and what fills them today. */
+/** The slots and what fills them today; `null` renders nothing. */
 export const ENTITY_SLOTS: {
-  ask: ComponentType<AskSlotProps>;
+  ask: ComponentType<AskSlotProps> | null;
   voice: ComponentType<VoiceSlotProps>;
 } = {
-  ask: AskSlotPlaceholder,
+  ask: null,
   voice: PersonVoice,
 };

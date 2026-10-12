@@ -39,7 +39,5 @@ export const vocabularyCopy = {
   undoAll: 'Undo all',
   undoLine: (from: string, to: string) => `Undo ${from} to ${to}`,
   edited: 'Edited since',
-  undone: (restored: number) =>
-    restored === 1 ? 'Correction undone' : `${restored.toString()} corrections undone`,
   undoFailed: 'Could not undo the correction',
 } as const;

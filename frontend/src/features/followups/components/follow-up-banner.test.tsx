@@ -78,9 +78,7 @@ describe('MeetingFollowUp', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'View draft' }));
     expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('marcus@brightkite.example');
     screen.getByText('1 gap to fill');
-    expect(
-      screen.getByRole<HTMLButtonElement>('button', { name: /Send via Gmail or Outlook/ }).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: /Send via Gmail or Outlook/ })).toBeNull();
     fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Hi Marcus.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Open in Mail' }));
 

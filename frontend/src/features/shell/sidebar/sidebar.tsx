@@ -1,11 +1,10 @@
 /**
  * The app sidebar (ui.md §3 Sidebar, PARITY_PLAN §4.6): drag region and
  * actions, search, the nav registry, and pinned at the bottom the Settings
- * item and the record block. Resizable and collapsible with `[`.
+ * item and the record block. Resizable and collapsible with `[`. Importing a
+ * recording lives in ⌘K, drag-and-drop and the Meetings header (UX-26).
  */
-import { useImportDialog } from '@/contexts/ImportDialogContext';
 import { cn } from '@/ui/cn';
-import { ICON_PROPS, Upload } from '@/ui/icons';
 
 import { shellCopy } from '../copy';
 import { useShellLayout } from '../layout-store';
@@ -13,30 +12,12 @@ import { navItemsIn } from '../nav';
 import { RecordBlock } from './record-block';
 import { SidebarHeader, SidebarSearch } from './sidebar-header';
 import { SidebarResizeHandle } from './resize-handle';
-import { NavLink, navRowClassName, SidebarNav } from './sidebar-nav';
+import { NavLink, SidebarNav } from './sidebar-nav';
 
-/** The "Import recording" row. */
-function ImportAudioRow() {
-  const { openImportDialog } = useImportDialog();
-  return (
-    <button
-      type="button"
-      className={navRowClassName}
-      onClick={() => {
-        openImportDialog();
-      }}
-    >
-      <Upload {...ICON_PROPS} />
-      {shellCopy.importAudio}
-    </button>
-  );
-}
-
-/** Settings, the import row and the record block. */
+/** Settings and the record block. */
 function SidebarFooter() {
   return (
     <div className="flex shrink-0 flex-col gap-px px-2 pt-2 pb-3">
-      <ImportAudioRow />
       {navItemsIn('footer').map((item) => (
         <NavLink key={item.id} item={item} />
       ))}

@@ -35,8 +35,6 @@ export const builderCopy = {
   steps: 'Steps',
   noSteps: 'Add the first step.',
   addStep: 'Add step',
-  wip: 'WIP',
-  comingLater: 'Coming later',
   needs: {
     generate_insight: 'Create an insight first.',
     add_tag: 'Create a tag first.',

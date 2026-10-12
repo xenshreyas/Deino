@@ -16,7 +16,7 @@ test('a new folder from the sidebar collects a meeting dragged onto it', async (
   await expect(folder).toBeVisible();
 
   await page.getByRole('link', { name: interview.title }).dragTo(folder);
-  await expect(page.getByText('Added to Hiring loop')).toBeVisible();
+  // UX-32: filing is silent; the folder page below shows the meeting.
 
   await folder.click();
   await expect(page.getByRole('heading', { name: 'Hiring loop' })).toBeVisible();
@@ -34,7 +34,6 @@ test('a meeting from a recurring series offers to collect the series', async ({ 
   await page.getByRole('link', { name: standup.title }).dragTo(customers);
   await expect(page.getByText('Auto-add future meetings in this series?')).toBeVisible();
   await page.getByRole('button', { name: 'Auto-add' }).click();
-  await expect(page.getByText('Future meetings in this series will be added')).toBeVisible();
 
   await customers.click();
   await expect(page.getByText(`Every “${standup.title}”`)).toBeVisible();

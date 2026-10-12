@@ -21,7 +21,8 @@ test('People lists everyone by last met and opens a person page', async ({ page 
 
   await expect(page.getByRole('heading', { name: 'Maya Chen' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'About' })).toContainText('webhook queue');
-  await expect(page.getByRole('group', { name: 'Ask about Maya Chen' })).toContainText('WIP');
+  // UX-27: chat about a person is hidden until Ask Deino ships.
+  await expect(page.getByRole('group', { name: 'Ask about Maya Chen' })).toHaveCount(0);
   await expect(
     page.getByRole('region', { name: 'Meetings' }).getByRole('link').first(),
   ).toBeVisible();
@@ -49,16 +50,24 @@ test('a duplicate person merges into the one the page shows', async ({ page }) =
   const merge = page.getByRole('dialog', { name: 'Merge a duplicate into Maya Chen' });
   await merge.getByRole('option', { name: /M\. Chen/ }).click();
   await merge.getByRole('button', { name: 'Merge' }).click();
-  await expect(page.getByText('Merged into Maya Chen')).toBeVisible();
+  await expect(merge).toHaveCount(0);
 
   await sidebar.getByRole('link', { name: 'People' }).click();
   await expect(page.getByRole('list', { name: 'People' })).toBeVisible();
   await expect(page.getByRole('link', { name: /M\. Chen/ })).toHaveCount(0);
 });
 
-test('a company page lists its people', async ({ page }) => {
-  await page.goto('/companies');
-  await page.getByRole('link', { name: /Brightkite Logistics/ }).click();
+test('Companies is a tab of People, and a company page lists its people', async ({ page }) => {
+  await page.goto('/people');
+  await page
+    .getByRole('navigation', { name: 'People and companies' })
+    .getByRole('link', { name: 'Companies' })
+    .click();
+  await expect(page).toHaveURL('/companies');
+  await page
+    .getByRole('list', { name: 'Companies' })
+    .getByRole('link', { name: /Brightkite Logistics/ })
+    .click();
 
   await expect(page.getByRole('heading', { name: 'Brightkite Logistics' })).toBeVisible();
   const people = page.getByRole('region', { name: 'People' });

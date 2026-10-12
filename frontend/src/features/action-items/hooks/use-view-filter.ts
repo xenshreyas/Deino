@@ -1,6 +1,3 @@
-import { toast } from 'sonner';
-
-import { copy } from '../copy';
 import { filterKey } from '../filters';
 import { usePageStore } from '../page-store';
 import { useDeleteView, useSaveView } from '../queries';
@@ -60,7 +57,7 @@ export function useViewFilter(
         setDraft(null);
         onChoose({ kind: 'saved', id: saved.id });
       }
-      toast.success(copy.saved);
+      // The view's tab shows it was saved (UX-32: no toast).
       return saved;
     },
     remove: (id) => {

@@ -136,7 +136,7 @@ describe('DetectionPrompt', () => {
 
     expect(await screen.findByText(/Recording in 10s/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Ignore' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: "Don't record" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t record' }));
 
     await waitFor(() => {
       expect(bindings.commands.dismiss).toHaveBeenCalledWith(1);

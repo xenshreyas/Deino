@@ -3,7 +3,7 @@ import { type RecordingSnapshot, useElapsed } from '@/features/recording';
 import { useMountEffect } from '@/hooks/useMountEffect';
 import { IpcError } from '@/lib/ipc/result';
 import { Button } from '@/ui/button';
-import { CircleCheck, FileText, ICON_PROPS, Mic } from '@/ui/icons';
+import { FileText, Mic } from '@/ui/icons';
 import { LevelBars } from '@/ui/level-bars';
 
 import { tryItCopy } from '../copy';
@@ -17,19 +17,26 @@ export interface TestRowProps {
   snapshot: RecordingSnapshot;
   onStart: () => void;
   onStop: () => void;
+  /** Opens the saved test meeting. */
+  onOpen: (meetingId: MeetingId) => void;
 }
 
-/** The 20-second test: start it, watch it count down, see it saved. */
-export function TestRow({ view, snapshot, onStart, onStop }: TestRowProps) {
+/** The 20-second test: start it, watch it count down, open it once saved. */
+export function TestRow({ view, snapshot, onStart, onStop, onOpen }: TestRowProps) {
   if (view.kind === 'recording') return <Countdown snapshot={snapshot} onStop={onStop} />;
   const failed = view.kind === 'failed';
   return (
     <SetupRow icon={Mic} name={tryItCopy.testName} detail={<TestDetail view={view} />}>
       {view.kind === 'done' ? (
-        <span className="flex items-center gap-1.5 text-sm text-fg-muted">
-          <CircleCheck {...ICON_PROPS} className="text-accent" />
-          {tryItCopy.ready}
-        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            onOpen(view.meetingId);
+          }}
+        >
+          {tryItCopy.open}
+        </Button>
       ) : (
         <Button variant="accent" size="sm" disabled={view.kind === 'saving'} onClick={onStart}>
           {failed ? tryItCopy.retry : tryItCopy.start}
@@ -88,7 +95,7 @@ function StopOnMount({ onStop }: { onStop: () => void }) {
 export interface SampleRowProps {
   /** Off while the test is recording. */
   disabled: boolean;
-  /** Opens the imported sample (and ends onboarding). */
+  /** Opens the imported sample. */
   onOpen: (meetingId: MeetingId) => void;
 }
 

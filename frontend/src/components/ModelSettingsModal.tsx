@@ -607,8 +607,6 @@ export function ModelSettingsModal({
   const deleteOllamaModel = async (modelName: string) => {
     try {
       await llmApi.ollamaDelete(modelName);
-
-      toast.success(`Model ${modelName} deleted`);
       await fetchOllamaModels(true); // Refresh list
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete model';

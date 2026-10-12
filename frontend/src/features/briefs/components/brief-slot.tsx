@@ -63,7 +63,6 @@ function LoadedBrief({ brief }: { brief: Brief }) {
         feedback.mutate(
           { event: brief.eventId, feedback: 'not_useful' },
           {
-            onSuccess: () => toast(briefsCopy.thanks),
             onError: (error) =>
               toast.error(briefsCopy.feedbackFailed, { description: error.message }),
           },

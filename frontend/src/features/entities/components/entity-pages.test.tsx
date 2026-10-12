@@ -94,12 +94,12 @@ describe('person page', () => {
     expect(within(meetings).getByRole('link', { name: /1:1 Maya/ })).toBeDefined();
   });
 
-  test('chat about them rests as a disabled WIP bar until Ask Deino ships', async () => {
+  test('chat about them stays hidden until Ask Deino ships (UX-27)', async () => {
     renderAt('/people/person-maya', MayaPage);
 
-    const ask = await screen.findByRole('group', { name: 'Ask about Maya Chen' });
-    expect(ask.getAttribute('aria-disabled')).toBe('true');
-    expect(within(ask).getByText('WIP')).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Maya Chen' })).toBeDefined();
+    expect(screen.queryByRole('group', { name: 'Ask about Maya Chen' })).toBeNull();
+    expect(screen.queryByText('WIP')).toBeNull();
   });
 
   test('merging picks a duplicate and keeps this person', async () => {

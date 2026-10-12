@@ -30,7 +30,6 @@ function useForget(profile: VoiceProfile | null, onClose: () => void) {
   const confirm = () => {
     if (profile === null) return;
     forget.mutate(profile.personId, {
-      onSuccess: () => toast.success(speakersCopy.forgotten),
       onError: (error) => toast.error(speakersCopy.deleteFailed, { description: error.message }),
       onSettled: onClose,
     });

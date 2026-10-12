@@ -3,9 +3,8 @@ import type { ReactNode } from 'react';
 import { Button } from '@/ui/button';
 
 import { flowCopy } from '../copy';
-import { type OnboardingAction, STEPS, stepIndex } from '../machine';
+import { type OnboardingAction, type SetupStep, STEPS, stepIndex } from '../machine';
 import { useProgressSaving } from '../queries';
-import type { OnboardingStep } from '../types';
 import { StepProgress } from './step-progress';
 
 /** What every step component receives from the flow. */
@@ -23,7 +22,7 @@ export interface PrimaryAction {
 
 /** Props of {@link StepFrame}. */
 export interface StepFrameProps extends StepProps {
-  step: OnboardingStep;
+  step: SetupStep;
   title: string;
   description: string;
   primary?: PrimaryAction;
@@ -105,5 +104,5 @@ function StepFooter({ step, dispatch, primary, secondary }: StepFooterProps) {
   );
 }
 
-/** The number of steps, for "Step 2 of 6". */
+/** The number of steps, for "Step 2 of 5". */
 export const STEP_COUNT = STEPS.length;

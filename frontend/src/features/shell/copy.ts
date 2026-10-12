@@ -5,7 +5,6 @@ export const shellCopy = {
   resizeSidebar: 'Resize sidebar',
   newNote: 'New note',
   search: 'Search',
-  importAudio: 'Import recording',
   startRecording: 'Start recording',
   openLiveMeeting: 'Open the live meeting',
   paused: 'Paused',
@@ -13,6 +12,7 @@ export const shellCopy = {
   starting: 'Starting…',
   stopRecording: 'Stop recording',
   untitledRecording: 'New recording',
+  more: 'More',
 
   comingSoonTitle: (feature: string) => `${feature} is on its way`,
   comingSoonAction: 'Back to Home',
@@ -20,6 +20,5 @@ export const shellCopy = {
   chatLabel: 'Ask Deino',
   chatPlaceholder: 'Ask anything',
   chatComingSoon: 'Chat across all your meetings is coming soon.',
-  chatSoonToast: 'Ask Deino is coming soon.',
   close: 'Close',
 } as const;

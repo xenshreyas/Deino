@@ -14,8 +14,7 @@ export function SummaryModelSettings() {
 
   const handleSaveModelConfig = async (config: ModelConfig) => {
     try {
-      await saveModelConfig(config);
-      toast.success('Model settings saved successfully');
+      await saveModelConfig(config); // UX-31: saved silently
     } catch (error) {
       console.error('Error saving model config:', error);
       toast.error('Failed to save model settings', {

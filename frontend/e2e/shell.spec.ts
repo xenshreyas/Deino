@@ -39,12 +39,27 @@ test('`[` collapses and restores the sidebar', async ({ page }) => {
   await expect(sidebar.getByRole('link', { name: 'Home' })).toBeVisible();
 });
 
-test('⌘J says Ask Deino is coming soon instead of opening chat (D13)', async ({ page }) => {
+test('⌘J does nothing while Ask Deino is unfinished (UX-27)', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('complementary', { name: 'Sidebar' })).toBeVisible();
 
   await page.keyboard.press('ControlOrMeta+j');
 
-  await expect(page.getByText('Ask Deino is coming soon.')).toBeVisible();
+  await expect(page.getByText(/coming soon/i)).toHaveCount(0);
   await expect(page.getByRole('dialog', { name: 'Ask Deino' })).toHaveCount(0);
+});
+
+test('the sidebar shows five entries, More collapsed, then Settings (UX-25)', async ({ page }) => {
+  await page.goto('/');
+  const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
+  for (const name of ['Home', 'Meetings', 'Action items', 'People', 'Settings']) {
+    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
+  }
+  for (const name of ['Companies', 'Tags', 'Stats', 'Trash', 'Insights', 'Import recording']) {
+    await expect(sidebar.getByText(name, { exact: true })).toHaveCount(0);
+  }
+
+  await sidebar.getByRole('button', { name: 'More' }).click();
+  await sidebar.getByRole('link', { name: 'Insights' }).click();
+  await expect(page).toHaveURL(/\/insights/);
 });
