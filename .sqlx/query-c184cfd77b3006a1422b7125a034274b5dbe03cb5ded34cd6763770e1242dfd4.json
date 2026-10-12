@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT series_id AS \"series_id: SeriesId\", record AS \"record: bool\"\n               FROM calendar_series_choices",
+  "describe": {
+    "columns": [
+      {
+        "name": "series_id: SeriesId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "record: bool",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c184cfd77b3006a1422b7125a034274b5dbe03cb5ded34cd6763770e1242dfd4"
+}

@@ -36,6 +36,65 @@ pub struct CalendarSettings {
     pub google: ConnectorSettings,
     /// The Microsoft Graph connector's app registration.
     pub microsoft: ConnectorSettings,
+    /// Which events record on their own (ORG-02).
+    pub auto_record: AutoRecordSettings,
+    /// The "starting in 1 minute" window before meetings (ORG-02).
+    pub reminders: ReminderSettings,
+}
+
+/// Which calendar events record on their own (ORG-02, Circleback's
+/// "joining preferences"). An event records when it passes every switch;
+/// the user's per-event and per-series choices win over all of them
+/// ([`crate::calendar::rules`]). Off by default: nothing records until the
+/// user picks an audience.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AutoRecordSettings {
+    /// Record meetings with only people from the user's own domains.
+    pub internal: bool,
+    /// Record meetings with someone from outside them.
+    pub external: bool,
+    /// Also record meetings someone else organised.
+    pub organized_by_others: bool,
+    /// Also record meetings the user has not accepted (tentative or no answer).
+    pub not_accepted: bool,
+}
+
+impl Default for AutoRecordSettings {
+    fn default() -> Self {
+        Self {
+            internal: false,
+            external: false,
+            organized_by_others: true,
+            not_accepted: false,
+        }
+    }
+}
+
+/// The reminder window shown a minute before a meeting, with Join & record.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ReminderSettings {
+    /// Show the window at all.
+    pub enabled: bool,
+    /// Calendars whose events never show it.
+    pub quiet_calendars: BTreeSet<CalendarId>,
+}
+
+impl Default for ReminderSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            quiet_calendars: BTreeSet::new(),
+        }
+    }
+}
+
+impl ReminderSettings {
+    /// True when events of `calendar` (`None`: no known calendar) may remind.
+    pub fn reminds_for(&self, calendar: Option<&CalendarId>) -> bool {
+        self.enabled && calendar.is_none_or(|id| !self.quiet_calendars.contains(id))
+    }
 }
 
 /// A direct calendar connector's app registration.
@@ -71,9 +130,11 @@ impl CalendarSettings {
 
     /// Checks that the hidden list stays bounded.
     pub(super) fn validate(&self) -> Result<(), SettingsError> {
-        if self.hidden_calendars.len() > MAX_HIDDEN_CALENDARS {
+        if self.hidden_calendars.len() > MAX_HIDDEN_CALENDARS
+            || self.reminders.quiet_calendars.len() > MAX_HIDDEN_CALENDARS
+        {
             return Err(SettingsError::invalid(
-                "calendar.hiddenCalendars",
+                "calendar.hiddenCalendars or calendar.reminders.quietCalendars",
                 "lists too many calendars",
             ));
         }
@@ -121,6 +182,18 @@ mod tests {
 
         settings.set_visible(work, true);
         assert!(settings.is_visible(&work));
+    }
+
+    #[test]
+    fn reminders_are_on_except_for_quiet_calendars() {
+        let mut reminders = ReminderSettings::default();
+        let work = calendar();
+        assert!(reminders.reminds_for(Some(&work)) && reminders.reminds_for(None));
+
+        reminders.quiet_calendars.insert(work);
+        assert!(!reminders.reminds_for(Some(&work)));
+        reminders.enabled = false;
+        assert!(!reminders.reminds_for(None));
     }
 
     #[test]

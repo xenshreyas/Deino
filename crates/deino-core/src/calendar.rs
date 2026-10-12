@@ -23,6 +23,10 @@
 //!
 //! - **Linking** ([`linking`], ORG-03): which event a meeting belongs to,
 //!   the meeting header's event picker, and related meetings.
+//! - **Auto-record rules** ([`rules`], ORG-02): which events record on
+//!   their own, and the user's per-event and per-series choices.
+//! - **Reminders** ([`notify`], ORG-02): which meetings show the "starting
+//!   in 1 minute" window.
 //!
 //! A meeting points at its event through `meetings.calendar_event_id`
 //! ([`MeetingLifecycleRepo::link`](crate::meetings::MeetingLifecycleRepo::link));
@@ -47,10 +51,13 @@ mod fake_source;
 #[cfg(any(test, feature = "test-support"))]
 mod fake_sync;
 mod filter;
+pub mod join;
 pub mod linking;
 mod mapping;
 mod model;
+pub mod notify;
 mod reads;
+pub mod rules;
 mod schedule;
 mod service;
 #[cfg(test)]
@@ -62,6 +69,8 @@ mod sync_repo;
 mod sync_repo_tests;
 #[cfg(test)]
 mod sync_tests;
+#[cfg(test)]
+mod test_calendar;
 #[cfg(test)]
 mod test_events;
 mod view;

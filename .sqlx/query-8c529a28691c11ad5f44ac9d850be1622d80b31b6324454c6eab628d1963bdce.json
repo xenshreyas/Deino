@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM calendar_series_choices WHERE series_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8c529a28691c11ad5f44ac9d850be1622d80b31b6324454c6eab628d1963bdce"
+}
