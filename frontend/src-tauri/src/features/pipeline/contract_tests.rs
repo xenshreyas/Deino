@@ -103,6 +103,7 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
             pending("auto_tag"),
             pending("auto_folder"),
             pending("index"),
+            pending("insights"),
             pending("update_entities"),
             pending("auto_export")
         ]))
