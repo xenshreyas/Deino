@@ -75,9 +75,9 @@ struct World {
     _dir: tempfile::TempDir,
 }
 
-async fn world(ocr: TableOcr, describe: bool) -> World {
-    let dir = tempfile::tempdir().unwrap();
-    let folder = dir.path().join(MEETING).join(SNAPSHOTS_DIR);
+/// Three snapshots of the meeting, their pictures in `recordings`.
+async fn three_snapshots(recordings: &Path) -> Arc<FakeScreenRepo> {
+    let folder = recordings.join(MEETING).join(SNAPSHOTS_DIR);
     std::fs::create_dir_all(&folder).unwrap();
     let repo = Arc::new(FakeScreenRepo::default());
     for (at_ms, name) in [
@@ -98,6 +98,12 @@ async fn world(ocr: TableOcr, describe: bool) -> World {
             .await
             .unwrap();
     }
+    repo
+}
+
+async fn world(ocr: TableOcr, describe: bool) -> World {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = three_snapshots(dir.path()).await;
     let ocr = Arc::new(ocr);
     let describer = Arc::new(Describer {
         on: describe,

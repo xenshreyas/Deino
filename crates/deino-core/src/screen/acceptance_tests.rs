@@ -106,8 +106,8 @@ async fn record_slides(
     SlideOcr(table)
 }
 
-#[tokio::test]
-async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
+/// The seeded fixtures with the built-in templates; the 1:1's ID.
+async fn seeded() -> (deino_db::Database, MeetingId) {
     let database = test_db().await;
     seed_fixtures(&database).await.unwrap();
     let templates = Arc::new(SqliteTemplateRepo::new(database.clone()));
@@ -116,12 +116,39 @@ async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
         .run(&CATALOG)
         .await
         .unwrap();
-    let meeting = Fixtures::load()
-        .unwrap()
-        .meeting(MeetingKind::OneOnOne)
-        .unwrap()
-        .id
-        .clone();
+    let fixtures = Fixtures::load().unwrap();
+    let meeting = fixtures.meeting(MeetingKind::OneOnOne).unwrap().id.clone();
+    (database, meeting)
+}
+
+/// Writes the notes of `meeting` over a scripted model; the prompts sent.
+async fn enhance(database: &deino_db::Database, meeting: &MeetingId) -> (String, String) {
+    let mock = Arc::new(MockProvider::new().reply(Route::NotesEnhance, ANSWER));
+    let notes = Arc::new(SqliteEnhancedNotesRepo::new(database.clone()));
+    let ports = EnhancePorts {
+        sources: MaterialSources::sqlite(database),
+        reader: notes.clone(),
+        writer: notes,
+        templates: Arc::new(OneOnOne),
+        gateway: Arc::new(mock_gateway(mock.clone()).gateway),
+    };
+    let clock = Arc::new(FakeClock::new(at("2026-10-09T10:00:00Z")));
+    let view = EnhanceService::new(ports, clock)
+        .enhance(meeting, Overwrite::KeepEdits)
+        .await
+        .unwrap();
+    let prompt: String = mock
+        .requests()
+        .iter()
+        .flat_map(|request| &request.messages)
+        .map(deino_llm::Message::text)
+        .collect();
+    (prompt, format!("{view:?}"))
+}
+
+#[tokio::test]
+async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
+    let (database, meeting) = seeded().await;
     let recordings = tempfile::tempdir().unwrap();
     let repo = Arc::new(SqliteScreenRepo::new(database.clone()));
     let ocr = record_slides(&repo, recordings.path(), &meeting).await;
@@ -135,27 +162,7 @@ async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
     });
     assert_eq!(context.read(&meeting).await.unwrap().read, 2);
 
-    let mock = Arc::new(MockProvider::new().reply(Route::NotesEnhance, ANSWER));
-    let notes = Arc::new(SqliteEnhancedNotesRepo::new(database.clone()));
-    let ports = EnhancePorts {
-        sources: MaterialSources::sqlite(&database),
-        reader: notes.clone(),
-        writer: notes,
-        templates: Arc::new(OneOnOne),
-        gateway: Arc::new(mock_gateway(mock.clone()).gateway),
-    };
-    let clock = Arc::new(FakeClock::new(at("2026-10-09T10:00:00Z")));
-    let view = EnhanceService::new(ports, clock)
-        .enhance(&meeting, Overwrite::KeepEdits)
-        .await
-        .unwrap();
-
-    let prompt: String = mock
-        .requests()
-        .iter()
-        .flat_map(|request| &request.messages)
-        .map(deino_llm::Message::text)
-        .collect();
+    let (prompt, view) = enhance(&database, &meeting).await;
     assert!(
         prompt.contains(
             "[screen 00:12] Q3 Business Review · - Revenue grew 40% year over year · - Churn fell to 2.1%"
@@ -163,5 +170,5 @@ async fn a_recorded_slide_decks_text_reaches_the_enhanced_notes() {
         "{prompt}"
     );
     assert!(prompt.contains("[screen 00:30] Launch plan"), "{prompt}");
-    assert!(format!("{view:?}").contains("Revenue grew 40% year over year"));
+    assert!(view.contains("Revenue grew 40% year over year"));
 }
