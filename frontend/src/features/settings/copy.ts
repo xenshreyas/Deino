@@ -113,6 +113,10 @@ export const settingsCopy = {
       label: 'Network',
       description: 'What may leave this Mac, what is hidden first, and a log of what left.',
     },
+    import: {
+      label: 'Import',
+      description: 'Meetings from Granola, Circleback, Fireflies, Fathom or a folder.',
+    },
     export: {
       label: 'Export',
       description: 'Notes into a folder after every meeting, and every meeting at once.',

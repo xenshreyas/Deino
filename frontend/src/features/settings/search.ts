@@ -25,6 +25,7 @@ export const settingsSectionSchema = z.enum([
   'integrations',
   'security',
   'network',
+  'import',
   'export',
   'beta',
   'about',
