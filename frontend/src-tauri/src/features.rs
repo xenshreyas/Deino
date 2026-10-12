@@ -35,6 +35,7 @@ pub mod manifest;
 pub mod meetings;
 pub mod network;
 pub mod notes;
+pub mod onboarding;
 pub mod people;
 pub mod pipeline;
 pub mod profile;
@@ -59,6 +60,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (db::NAME, db::specta()),
         (detection::NAME, detection::specta()),
         (developer::NAME, developer::specta()),
+        (onboarding::NAME, onboarding::specta()),
         (export::NAME, export::specta()),
         (calendar::NAME, calendar::specta()),
         (enhance::NAME, enhance::specta()),

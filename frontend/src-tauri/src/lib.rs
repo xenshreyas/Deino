@@ -22,9 +22,9 @@ mod error;
 pub mod features;
 mod lifecycle;
 mod llm;
-pub mod onboarding;
 mod onnx_runtime;
 mod paths;
+mod permissions;
 mod setup;
 pub mod stt;
 pub mod updater;
@@ -78,6 +78,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::db::init())
         .plugin(features::detection::init())
         .plugin(features::developer::init())
+        .plugin(features::onboarding::init())
         .plugin(features::export::init())
         .plugin(features::action_items::init())
         .plugin(features::calendar::init())

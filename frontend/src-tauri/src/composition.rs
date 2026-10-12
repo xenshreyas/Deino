@@ -39,6 +39,7 @@ mod network;
 mod notepad;
 mod notes;
 mod organize;
+mod permissions;
 mod pipeline;
 mod recording;
 mod search;
@@ -57,6 +58,7 @@ use enhance::NotesAi;
 use export::ExportServices;
 use notes::{NoteDeps, NoteServices};
 pub(crate) use organize::Organize;
+pub(crate) use permissions::attach_permissions;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
 use pipeline::{StageAdapters, StageServices, attach_pipeline};
