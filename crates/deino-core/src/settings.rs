@@ -43,15 +43,5 @@ pub use patch::SettingsPatch;
 pub(crate) use section::{SettingsSection, register_section};
 // Every section's types, so a new section is exported by its file alone.
 pub use sections::*;
-pub use personal::{
-    AppLockSettings, DEFAULT_LOCK_IDLE_MINUTES, MAX_LOCK_IDLE_MINUTES, MIN_LOCK_IDLE_MINUTES,
-    PrivacySettings,
-};
-pub use profile::{
-    MAX_CONTEXT_CHARS, MAX_FOCUS_AREA_CHARS, MAX_FOCUS_AREAS, MAX_PROFILE_EMAILS,
-    MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,
-};
-pub use retention::{RetentionPeriod, RetentionSettings};
-pub use screen::{CONSENT_REMINDERS, ScreenSettings};
 pub use service::SettingsService;
 pub use store::{JsonFileSettingsStore, SettingsStore};

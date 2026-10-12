@@ -6,6 +6,5 @@ frontend/src-tauri/src/composition.rs merge=union
 frontend/src-tauri/src/features.rs merge=union
 crates/deino-pipeline/src/stages.rs merge=union
 crates/deino-llm/tests/llm_eval/main.rs merge=union
-crates/deino-core/src/settings.rs merge=union
 crates/deino-core/src/settings/sections.rs merge=union
 crates/deino-domain/src/id.rs merge=union
