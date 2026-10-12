@@ -1,10 +1,9 @@
 # UX simplification plan
 
-The owner tested the built app and found it **overwhelming**. This plan sets out how to get it
-to a calm, Granola-like feel: things show up only when they matter, defaults just work, advanced
-options are tucked away, and there is no internal jargon. It is a plan only; no product code
-changed. Paths are relative to `frontend/src/` unless they start with `crates/`. Line numbers
-are from `main` at `f898bfba`.
+The owner found the built app **overwhelming**. This plan aims for a calm, Granola-like feel:
+things show up only when they matter, defaults just work, advanced options are tucked away, and
+there is no jargon. Plan only; no product code changed. Paths are relative to `frontend/src/`
+unless they start with `crates/`; line numbers are from `main` at `f898bfba`.
 
 ## Where we are: the counts
 
@@ -50,12 +49,10 @@ status line, and nothing has pruned them since.
 ### Meeting page
 
 **UX-01 · Do first · Pipeline status is silent unless something failed** (S)
-- *Now:* `features/meeting/components/meeting-header.tsx:67-68` mounts `PipelineStrip` under
-  every meeting header. `features/pipeline/components/pipeline-strip.tsx:29-40` renders every
-  stage, and `stage-item.tsx:33-39` shows its name, status and skip reason, for example "Tags
-  Skipped There are no tags for Deino to apply." The reasons come from
-  `crates/deino-pipeline/src/stages/*.rs`, for example `final_transcription.rs:29` and
-  `auto_folder.rs:21`.
+- *Now:* `features/meeting/components/meeting-header.tsx:67-68` mounts `PipelineStrip`;
+  `features/pipeline/components/pipeline-strip.tsx:29-40` renders every stage, and
+  `stage-item.tsx:33-39` shows name, status and skip reason ("Tags Skipped There are no tags
+  for Deino to apply.", from `crates/deino-pipeline/src/stages/*.rs`).
 - *Change:* Show only `failed | cancelled` stages, one plain-words row each with Retry ("Notes
   couldn't be written. Retry"). While any stage is `running` or `pending`, show one muted line
   ("Writing notes…"). Never show `succeeded` or `skipped`.
@@ -153,14 +150,11 @@ status line, and nothing has pruned them since.
   `deino-core::permissions` already exists.
 
 **UX-11 · Merge "AI models" and "Summary models" into one "AI" section** (M)
-- *Now:* There are two pages for the same job:
-  - "AI models" (`features/llm/settings-page.ts:13`): providers plus a 13-row "Models per task"
-    table with Test buttons. Its copy says "Add or replace them under Summary models"
-    (`features/llm/copy.ts:7`).
-  - "Summary models" (`features/settings/settings-page.tsx:147-153`): the inherited "Auto
-    Summary" switch ("Auto Generating summary after meeting completion(Stopping)",
-    `components/SummaryModelSettings.tsx:32-33`) and the 1,234-line `ModelSettingsModal` (Max
-    Tokens, Temperature, Top P at `:851-876`).
+- *Now:* "AI models" (`features/llm/settings-page.ts:13`) has providers and a 13-row "Models
+  per task" table, and says "Add or replace them under Summary models" (`features/llm/copy.ts:7`).
+  "Summary models" (`features/settings/settings-page.tsx:147-153`) has "Auto Summary" ("Auto
+  Generating summary after meeting completion(Stopping)", `components/SummaryModelSettings.tsx:32-33`)
+  and the 1,234-line `ModelSettingsModal` (Max Tokens, Temperature, Top P at `:851-876`).
 - *Change:* One section with onboarding's three choices (Claude, OpenAI, On this Mac), a key
   field and one "Check". Groq, OpenRouter, Ollama and custom endpoints go under "Other
   providers", and the per-task table moves to Advanced. Delete Auto Summary: notes are
@@ -168,7 +162,7 @@ status line, and nothing has pruned them since.
 - *Why:* This is the most confusing pair in the app; Granola has no model picker. *Risk:*
   `ModelSettingsModal` is legacy and untyped. Retire it behind the typed `llm` settings.
 
-**UX-12 · Delete the Beta page** (S)
+**UX-12 · Do first · Delete the Beta page** (S)
 - *Now:* `features/settings/settings-page.tsx:174-180` registers a whole page for one switch,
   `importAndRetranscribe` (`types/betaFeatures.ts:32`, on by default), which gates
   re-transcribe.
@@ -176,12 +170,10 @@ status line, and nothing has pruned them since.
 - *Why:* A page with one switch that defaults on. *Risk:* None.
 
 **UX-13 · Remove switches that duplicate or defeat defaults** (S)
-- *Now:* `components/RecordingSettings.tsx` has four controls to remove:
-  - "Save Audio Recordings" (`:72-84`); turning it off breaks re-pass, clips and the player.
-  - "Recording Start Notification" (`:120-132`), a duplicate of Consent's "Reminder when
-    recording starts" (`features/consent/copy.ts:17`).
-  - "I use headphones" (`:134-148`), whose own copy says "Deino detects headphones on its own".
-  - A "File Format: MP4 files" box (`:103-106`).
+- *Now:* `components/RecordingSettings.tsx` has "Save Audio Recordings" (`:72-84`; off breaks
+  re-pass, clips and the player), "Recording Start Notification" (`:120-132`; duplicates
+  Consent's reminder, `features/consent/copy.ts:17`), "I use headphones" (`:134-148`; its copy
+  says "Deino detects headphones on its own") and a "File Format: MP4 files" box (`:103-106`).
 - *Change:* Delete all four. Recordings are always saved, and retention already deletes them.
 - *Why:* Principle 4. *Risk:* Medium. Check the Rust readers of `audio.usesHeadphones` and
   `recording.autoSave` first; keep the fields and stop showing them.
@@ -195,12 +187,11 @@ status line, and nothing has pruned them since.
 - *Why:* 32 switches for things the user never set up. *Risk:* None.
 
 **UX-15 · Collapse capture options behind "More options"** (S)
-- *Now:* Several features show every option at once:
-  - Screen capture (`features/screen/components/capture-card.tsx:63-125`): 4 switches and an
-    fps "Frame rate" picker (`:74-80`).
-  - Auto-export (`features/export/components/auto-export-settings.tsx:98-151`): 4 switches,
-    a file-name template, subfolder, sections, "Obsidian" and "sidecar".
-  - Detection (`detection-settings.tsx:58-75`): a countdown-seconds select.
+- *Now:* Screen capture (`features/screen/components/capture-card.tsx:63-125`) shows 4 switches
+  and an fps "Frame rate" picker (`:74-80`). Auto-export
+  (`features/export/components/auto-export-settings.tsx:98-151`) shows 4 switches, a file-name
+  template, subfolder, sections, "Obsidian" and "sidecar". Detection has a countdown-seconds
+  select (`detection-settings.tsx:58-75`).
 - *Change:* Each feature shows one primary switch. The rest sits under a closed "More
   options" (`ui/accordion.tsx`).
 - *Why:* Principle 5. *Risk:* None.
@@ -225,14 +216,11 @@ status line, and nothing has pruned them since.
 - *Why:* One concept, one place. *Risk:* None; the settings keys stay where they are.
 
 **UX-18 · Rename and merge overlapping pages** (S)
-- *Now:* Several pages overlap in name or job:
-  - Settings "People" (voice profiles, `features/speakers/settings-page.ts:13`) collides with
-    the sidebar's People.
-  - "Import" (`features/importers/settings-page.ts:13`), "Watched folders"
-    (`features/import/settings-page.ts:13`) and the sidebar's "Import recording" are three
-    imports.
-  - Profile's "Context and glossary" (`features/profile/copy.ts:20`) overlaps Vocabulary's
-    "Words and names" (`features/vocabulary/copy.ts:9`).
+- *Now:* Settings "People" (voice profiles, `features/speakers/settings-page.ts:13`) collides
+  with the sidebar's People. "Import" (`features/importers/settings-page.ts:13`), "Watched
+  folders" (`features/import/settings-page.ts:13`) and the sidebar's "Import recording" are
+  three imports. Profile's "Context and glossary" (`features/profile/copy.ts:20`) overlaps
+  Vocabulary's "Words and names" (`features/vocabulary/copy.ts:9`).
 - *Change:* Voice profiles become "Voices" in Advanced. Make one "Import" page (from another
   app, watched folders). The Profile glossary hint links to Words and names.
 - *Why:* Principle 3. *Risk:* `SettingsPageIds` change, so alias the old ids in
@@ -296,13 +284,10 @@ status line, and nothing has pruned them since.
 - *Now:* `features/shell/nav.ts:63-163` has 13 entries under "Workspace" and "Intelligence"
   labels. Trash appears twice: in the sidebar (`nav.ts:123-130`) and in the Meetings header
   (`features/meetings-list/components/meetings-list-screen.tsx:35`).
-- *Change:*
-  - Visible entries: Home, Meetings, Action items and People, then the Folders tree and
-    Settings. Drop the two section labels.
-  - Companies becomes a tab on People.
-  - Tags and Trash live in the Meetings header, and Stats moves to Home.
-  - Insights, Recipes and Automations go under one collapsed "More".
-  - Add `sidebar?: false` to `NavItem` so ⌘K "Go to" keeps every page.
+- *Change:* Show Home, Meetings, Action items and People, then the Folders tree and Settings,
+  with no section labels. Companies becomes a tab on People. Tags and Trash live in the
+  Meetings header, and Stats moves to Home. Insights, Recipes and Automations go under one
+  collapsed "More". Add `sidebar?: false` to `NavItem` so ⌘K "Go to" keeps every page.
 - *Why:* Granola's sidebar is notes plus folders. *Risk:* Low.
 
 **UX-26 · Move "Import recording" out of the sidebar footer** (S)
@@ -312,24 +297,21 @@ status line, and nothing has pruned them since.
 - *Why:* A rare action in prime space. *Risk:* None.
 
 **UX-27 · Do first · Hide unfinished features** (S)
-- *Now:* Four unfinished features are visible:
-  - ⌘K lists "Ask Deino" with a "WIP" badge (`features/shell/command-palette/actions-provider.tsx:56-63`).
-  - ⌘J toasts "Ask Deino is coming soon." (`features/shell/hooks/use-global-shortcuts.ts:26-27`).
-  - `ChatPlaceholder` is still mounted (`features/shell/app-shell.tsx:51`).
-  - Integrations shows an "On the way" list of WIP providers
-    (`features/integrations/components/integrations-settings.tsx:89-91`, `copy.ts:17-22`).
+- *Now:* ⌘K lists "Ask Deino" with a "WIP" badge
+  (`features/shell/command-palette/actions-provider.tsx:56-63`). ⌘J toasts "Ask Deino is coming
+  soon." (`features/shell/hooks/use-global-shortcuts.ts:26-27`). `ChatPlaceholder` is still
+  mounted (`features/shell/app-shell.tsx:51`). Integrations lists WIP providers "On the way"
+  (`features/integrations/components/integrations-settings.tsx:89-91`, `copy.ts:17-22`).
 - *Change:* Remove all four until the feature ships.
 - *Why:* Principle 6. *Risk:* None.
 
 ### Recording UI
 
-**UX-28 · One reminder at most when recording starts** (S)
-- *Now:* Starting a recording can show three versions of the same message:
-  - the legacy toast "🔴 Recording Started… Inform all participants…" with a checkbox
-    (`lib/recordingNotification.tsx:22`, called from
-    `features/recording/components/recording-sync.tsx:78`);
-  - Consent's "Let people know" card under the pill (`record-panel.tsx:171`);
-  - the screen-capture reminder card (`record-panel.tsx:172`).
+**UX-28 · Do first · One reminder at most when recording starts** (S)
+- *Now:* Starting a recording can show the legacy toast "🔴 Recording Started… Inform all
+  participants…" with a checkbox (`lib/recordingNotification.tsx:22`, called from
+  `features/recording/components/recording-sync.tsx:78`), Consent's "Let people know" card
+  under the pill (`record-panel.tsx:171`), and the screen-capture reminder (`:172`).
 - *Change:* Delete the legacy toast and its setting (with UX-13). Merge the screen reminder
   into the consent card when screen capture is on.
 - *Why:* Three versions of one message, one with an emoji. *Risk:* None.
@@ -351,12 +333,10 @@ status line, and nothing has pruned them since.
 ### Notifications and toasts
 
 **UX-31 · Do first · Silent success for settings and recoveries** (S)
-- *Now:* Success toasts that confirm nothing new:
-  - "Preference saved" on every legacy switch (`components/RecordingSettings.tsx:81,130,145`);
-  - "Model settings saved successfully" (`components/SummaryModelSettings.tsx:18`);
-  - "Model … downloaded!" (`contexts/OllamaDownloadContext.tsx:52`);
-  - "Audio is back" and "Your Mac woke; recording continues"
-    (`features/recording/components/recording-sync.tsx:38-43`).
+- *Now:* "Preference saved" on every legacy switch (`components/RecordingSettings.tsx:81,130,145`),
+  "Model settings saved successfully" (`components/SummaryModelSettings.tsx:18`), "Model …
+  downloaded!" (`contexts/OllamaDownloadContext.tsx:52`), and "Audio is back" / "Your Mac woke;
+  recording continues" (`features/recording/components/recording-sync.tsx:38-43`).
 - *Change:* Settings save silently, with an inline error on failure (as the typed pages do).
   Recoveries clear the pill's warning, and downloads finish quietly.
 - *Why:* Principle 8. *Risk:* None.
@@ -371,27 +351,21 @@ status line, and nothing has pruned them since.
 ### Copy
 
 **UX-33 · Do first · Sentence case and one name per thing** (S)
-- *Now:* Three kinds of inconsistency:
-  - Casing: "Action Items" in the sidebar (`features/shell/nav.ts:75`), but "Action items"
-    elsewhere. Legacy Title Case in "Save Audio Recordings", "Recording Start Notification",
-    "Default Audio Devices" (`components/RecordingSettings.tsx:74,123,153`), "Data Storage
-    Locations", "Meeting Recordings" (`components/PreferenceSettings.tsx:84,122`) and
-    "Transcript Model" (`components/TranscriptSettings.tsx:43`).
-  - Apostrophes: "Don't show again" (`features/screen/copy.ts:47`) versus "Don’t show again"
-    (`features/consent/copy.ts:10`).
-  - Names: two "Enhance" buttons (UX-05).
+- *Now:* "Action Items" in the sidebar (`features/shell/nav.ts:75`), "Action items" elsewhere.
+  Legacy Title Case: "Save Audio Recordings", "Recording Start Notification", "Default Audio
+  Devices" (`components/RecordingSettings.tsx:74,123,153`), "Data Storage Locations", "Meeting
+  Recordings" (`components/PreferenceSettings.tsx:84,122`), "Transcript Model"
+  (`components/TranscriptSettings.tsx:43`). "Don't show again" (`features/screen/copy.ts:47`)
+  versus "Don’t show again" (`features/consent/copy.ts:10`). Two "Enhance" buttons (UX-05).
 - *Change:* Sentence case, curly apostrophes, and one verb per action.
 - *Why:* Inconsistency reads as unfinished. *Risk:* None; text-matching tests change.
 
 **UX-34 · Remove jargon from default views** (S)
-- *Now:* Default views use internal terms:
-  - "High-accuracy re-pass" (`features/settings/copy.ts:32`)
-  - "Parakeet Unified EN (Recommended, live)" and "Parakeet TDT v3 (ONNX)"
-    (`components/TranscriptSettings.tsx:54-57`)
-  - "Models per task", embeddings and "dimension vectors" (`features/llm/copy.ts:12-27`)
-  - "Keyword index" and "Rebuild" (`features/search/copy.ts:52-55`)
-  - "deino:// links" (`features/hotkeys/settings-page.ts:14`)
-  - "1 fps" (`features/screen/copy.ts:31`)
+- *Now:* "High-accuracy re-pass" (`features/settings/copy.ts:32`); "Parakeet Unified EN
+  (Recommended, live)" and "Parakeet TDT v3 (ONNX)" (`components/TranscriptSettings.tsx:54-57`);
+  "Models per task", embeddings and "dimension vectors" (`features/llm/copy.ts:12-27`);
+  "Keyword index" and "Rebuild" (`features/search/copy.ts:52-55`); "deino:// links"
+  (`features/hotkeys/settings-page.ts:14`); "1 fps" (`features/screen/copy.ts:31`).
 - *Change:* Say "Re-transcribe after the meeting for better accuracy". The transcription
   engine ("Standard (recommended)" or "Alternative"), links and per-task models go to
   Advanced.
@@ -434,8 +408,9 @@ stays reachable from ⌘K "Go to".
 
 ## Suggested order
 
-1. The ten **Do first** items as small PRs (UX-01, 06, 09, 21, 25, 27, 31, 33, plus 12 + 05
-   and 28 + 13 as pairs). All are S and frontend-only; UX-13 keeps the settings fields.
+1. The ten **Do first** items as small PRs: UX-01, 06, 09, 12, 21, 25, 27, 28, 31, 33. Ship
+   UX-12 with UX-05 (re-transcribe needs a home) and UX-28 with UX-13 (same setting). All are
+   S and frontend-only; UX-13 keeps the settings fields.
 2. UX-10 and UX-11 (the Permissions card and the single AI section), which unblock the
    consolidation.
 3. UX-19, folding in UX-14 to UX-18 and UX-20.
@@ -456,8 +431,6 @@ Each change follows `docs/PARITY_PLAN.md` §3, §3A and §3B, and writes a
 5. **Consent chat message:** posting into Zoom, Teams or Meet chat is powerful but
    surprising. Keep it under More options, or move it to Advanced?
 6. **Stats / Year in review:** keep it as a Home section, or hide it until December?
-7. **Not covered here:**
-   - Visual polish such as spacing, type and colour (the design system covers it).
-   - The tray menu (Rust, not audited).
-   - Rust skip-reason wording, which UX-01 hides anyway.
-   - Pipeline behaviour: stages keep running; only their display changes.
+7. **Not covered here:** visual polish (the design system covers it), the tray menu (Rust,
+   not audited), Rust skip-reason wording (UX-01 hides it), and pipeline behaviour (stages
+   keep running; only their display changes).
