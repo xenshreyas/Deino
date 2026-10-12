@@ -20,7 +20,17 @@ pub struct ScreenSettings {
     pub video_fps: u8,
     /// Keep a snapshot when the shared screen changes (every 10 s at most).
     pub snapshots: bool,
+    /// Describe each snapshot with Claude (`vision.describe`), sending the
+    /// picture. Off by default: only text read on this Mac reaches the
+    /// notes otherwise.
+    pub describe_snapshots: bool,
+    /// How many times the screen capture consent reminder has shown; it
+    /// shows the first [`CONSENT_REMINDERS`] times a capture runs.
+    pub consent_reminders_shown: u8,
 }
+
+/// How many captures show the consent reminder.
+pub const CONSENT_REMINDERS: u8 = 3;
 
 impl Default for ScreenSettings {
     fn default() -> Self {
@@ -29,6 +39,8 @@ impl Default for ScreenSettings {
             video: true,
             video_fps: DEFAULT_FPS,
             snapshots: true,
+            describe_snapshots: false,
+            consent_reminders_shown: 0,
         }
     }
 }
@@ -44,6 +56,8 @@ mod tests {
         assert!(!missing.detected_meetings);
         assert!(missing.video && missing.snapshots);
         assert_eq!(missing.video_fps, 1);
+        assert!(!missing.describe_snapshots, "pictures never leave the Mac by default");
+        assert_eq!(missing.consent_reminders_shown, 0);
 
         let on: ScreenSettings =
             serde_json::from_str(r#"{ "detectedMeetings": true, "videoFps": 5 }"#).unwrap();

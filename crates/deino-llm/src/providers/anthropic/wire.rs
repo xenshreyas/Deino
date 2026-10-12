@@ -51,6 +51,18 @@ enum Block<'a> {
         content: &'a str,
         is_error: bool,
     },
+    Image {
+        source: ImageSource<'a>,
+    },
+}
+
+/// A base64 picture (`{"type": "base64", "media_type", "data"}`).
+#[derive(Debug, Serialize)]
+struct ImageSource<'a> {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    media_type: &'a str,
+    data: &'a str,
 }
 
 #[derive(Debug, Serialize)]
@@ -121,6 +133,13 @@ fn message(message: &crate::Message) -> Message<'_> {
                 tool_use_id: &result.call_id,
                 content: &result.content,
                 is_error: result.is_error,
+            },
+            Part::Image(image) => Block::Image {
+                source: ImageSource {
+                    kind: "base64",
+                    media_type: &image.media_type,
+                    data: &image.base64,
+                },
             },
         })
         .collect();

@@ -27,12 +27,17 @@ pub trait ScreenRepo: Send + Sync {
 
     /// The user's choice for `meeting`, if they made one.
     async fn capture_choice(&self, meeting: &MeetingId) -> Result<Option<bool>, DbError>;
+
+    /// Deletes snapshot `id` of `meeting` and returns its file name, so
+    /// the caller removes the PNG; `None` when there was no such row.
+    async fn delete_snapshot(&self, meeting: &MeetingId, id: i64)
+    -> Result<Option<String>, DbError>;
 }
 
 /// [`ScreenRepo`] over Deino's SQLite database.
 #[derive(Clone, Debug)]
 pub struct SqliteScreenRepo {
-    database: Database,
+    pub(super) database: Database,
 }
 
 impl SqliteScreenRepo {
@@ -65,7 +70,7 @@ impl ScreenRepo for SqliteScreenRepo {
     async fn snapshots(&self, meeting: &MeetingId) -> Result<Vec<Snapshot>, DbError> {
         let rows = sqlx::query!(
             r#"SELECT id AS "id!: i64", at_ms AS "at: Millis", file_name,
-                      width AS "width: u32", height AS "height: u32"
+                      width AS "width: u32", height AS "height: u32", ocr_text AS text
                FROM snapshots WHERE meeting_id = ?1 ORDER BY at_ms, id"#,
             meeting
         )
@@ -79,6 +84,7 @@ impl ScreenRepo for SqliteScreenRepo {
                 file_name: row.file_name,
                 width: row.width,
                 height: row.height,
+                text: row.text,
             })
             .collect())
     }
@@ -109,6 +115,21 @@ impl ScreenRepo for SqliteScreenRepo {
         .fetch_optional(self.database.reader())
         .await?;
         Ok(row)
+    }
+
+    async fn delete_snapshot(
+        &self,
+        meeting: &MeetingId,
+        id: i64,
+    ) -> Result<Option<String>, DbError> {
+        let name = sqlx::query_scalar!(
+            "DELETE FROM snapshots WHERE meeting_id = ?1 AND id = ?2 RETURNING file_name",
+            meeting,
+            id
+        )
+        .fetch_optional(self.database.writer())
+        .await?;
+        Ok(name)
     }
 }
 

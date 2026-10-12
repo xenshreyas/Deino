@@ -14,6 +14,7 @@ mod insights;
 pub mod notes_edit;
 mod recap;
 mod redact;
+mod vision;
 
 use askama::Template;
 
@@ -30,6 +31,7 @@ pub use followup::{
 pub use insights::{InsightsSystem, InsightsUser};
 pub use recap::{RecapSystem, RecapUser};
 pub use redact::{RedactCheckSystem, RedactCheckUser};
+pub use vision::{VisionDescribeSystem, VisionDescribeUser};
 
 /// Renders a built-in prompt.
 pub trait PromptText {

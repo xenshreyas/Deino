@@ -14,6 +14,7 @@ use deino_doc::Doc;
 use deino_domain::{CalendarEventId, MeetingId, PersonId, SeriesId};
 
 use super::transcript::TranscriptLine;
+use crate::screen::ScreenText;
 
 /// Terms the transcript should be read with (TRN-05's custom vocabulary).
 #[async_trait]
@@ -54,6 +55,9 @@ pub struct Material {
     pub previous: Option<PreviousNotes>,
     /// Terms to spell as given.
     pub vocabulary: Vec<String>,
+    /// What the shared screen showed, in time order (CAP-09); empty without
+    /// screen capture.
+    pub screen: Vec<ScreenText>,
 }
 
 impl Material {

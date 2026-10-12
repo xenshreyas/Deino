@@ -45,6 +45,7 @@ const TIERS: Record<Generated.Route, Generated.RouteTier> = {
   brief: 'smart',
   'followup.email': 'smart',
   recap: 'smart',
+  'vision.describe': 'fast',
   embed: 'embedding',
 };
 

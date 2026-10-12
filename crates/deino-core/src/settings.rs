@@ -87,7 +87,7 @@ pub use profile::{
     MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,
 };
 pub use retention::{RetentionPeriod, RetentionSettings};
-pub use screen::ScreenSettings;
+pub use screen::{CONSENT_REMINDERS, ScreenSettings};
 pub use service::SettingsService;
 pub use shortcuts::{
     DEFAULT_ASK_HOTKEY, DEFAULT_QUICK_NOTE_HOTKEY, DEFAULT_RECORD_HOTKEY, ShortcutSettings,

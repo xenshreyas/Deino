@@ -87,6 +87,20 @@ pub fn request_screen_recording() -> bool {
     false
 }
 
+/// The text Apple Vision (`VNRecognizeTextRequest`, accurate, English)
+/// reads in the image file at `path`, one line per observation; `""` when
+/// there is none. Blocking: run it off the async runtime.
+#[cfg(target_os = "macos")]
+pub fn recognize_text(path: &std::path::Path) -> Result<String, ScreenError> {
+    macos::recognize_text(path)
+}
+
+/// No text recognition off macOS.
+#[cfg(not(target_os = "macos"))]
+pub fn recognize_text(_path: &std::path::Path) -> Result<String, ScreenError> {
+    Err(ScreenError::Unsupported)
+}
+
 /// Opens System Settings → Privacy & Security → Screen Recording, where the
 /// user allows Deino. Deino never changes the setting itself.
 #[cfg(target_os = "macos")]
