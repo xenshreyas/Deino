@@ -56,7 +56,9 @@ async fn a_wrong_unknown_or_malformed_token_is_unauthorized() {
         .create(&new_key("Script", ApiKeyScope::ReadWrite))
         .await
         .unwrap();
-    let wrong_secret = format!("{}0", &created.token[..created.token.len() - 1]);
+    // Change the last character to one it is not, so the secret really differs.
+    let (head, last) = created.token.split_at(created.token.len() - 1);
+    let wrong_secret = format!("{head}{}", if last == "0" { "1" } else { "0" });
     let other = service
         .create(&new_key("Other", ApiKeyScope::Read))
         .await
