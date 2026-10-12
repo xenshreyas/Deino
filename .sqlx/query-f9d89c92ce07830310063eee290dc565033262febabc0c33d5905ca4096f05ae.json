@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT term_id AS \"term_id: VocabTermId\", variant\n               FROM vocab_variants\n               ORDER BY term_id, position",
+  "describe": {
+    "columns": [
+      {
+        "name": "term_id: VocabTermId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "variant",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "f9d89c92ce07830310063eee290dc565033262febabc0c33d5905ca4096f05ae"
+}

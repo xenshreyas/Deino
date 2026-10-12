@@ -241,6 +241,11 @@ uuid_id!(
     DeliveryId
 );
 
+uuid_id!(
+    /// Identifies a custom vocabulary term or replacement rule (TRN-05).
+    VocabTermId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

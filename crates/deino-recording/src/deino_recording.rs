@@ -22,6 +22,7 @@
 //! | [`service`] | `RecordingService`: start, stop, pause, resume, state; one recording at a time |
 //! | [`session`] | `Session`: one recording's parts, started and stopped in order |
 //! | [`recovery`] | Launch recovery of meetings left in `recording` |
+//! | [`offline`] | Transcribing finished tracks after the meeting (CAP-08) |
 //! | [`live`] | The live pipeline thread |
 //! | [`engine`] | `LaneEngines` and the streaming and utterance lanes |
 //! | [`transcript`] | The router: drafts, holdback verdicts, batched saves, live events |
@@ -46,6 +47,7 @@ pub mod events;
 pub mod lane;
 pub mod live;
 pub mod observer;
+pub mod offline;
 pub mod recovery;
 pub mod service;
 mod session;
@@ -64,5 +66,6 @@ pub use events::{
 };
 pub use lane::Lane;
 pub use observer::{NoStartObserver, StartObserver};
+pub use offline::{BatchEngines, NativeDecoder, OfflineTranscriber, TrackDecoder};
 pub use recovery::{RecoveryReport, recover_interrupted};
 pub use service::RecordingService;

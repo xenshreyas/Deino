@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: VocabTermId\", kind AS \"kind: VocabKind\", text,\n                      created_at AS \"created_at: DateTime<Utc>\",\n                      updated_at AS \"updated_at: DateTime<Utc>\"\n               FROM vocab_terms\n               ORDER BY kind, text COLLATE NOCASE",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: VocabTermId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind: VocabKind",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "text",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "9ed5f07ad600026ed2c87b2fc9f02d7bc908d6dfb0a77678f6b431f868783fef"
+}

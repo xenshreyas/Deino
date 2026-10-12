@@ -5,7 +5,8 @@
 # echo canceller can miss a line and fail an echo or timing threshold. Until
 # they run on a virtual clock (PARITY_PLAN §7.2), they get room to run and one
 # retry; nextest still reports a pass on retry as FLAKY, so it stays visible.
+# `capture_modes` (TRN-05, CAP-08) records the same fixture the same way.
 [[profile.default.overrides]]
-filter = 'binary(live_fixture)'
+filter = 'binary(live_fixture) | binary(capture_modes)'
 threads-required = 4
 retries = 1

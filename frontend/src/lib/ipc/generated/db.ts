@@ -171,6 +171,18 @@ export type Table =
  */
 "embeddings" | 
 /**
+ * The user's vocabulary terms and replacement rules (TRN-05).
+ */
+"vocab_terms" | 
+/**
+ * What each vocabulary term sounds like when misheard (TRN-05).
+ */
+"vocab_variants" | 
+/**
+ * The originals of segments the vocabulary corrected (TRN-05).
+ */
+"vocab_corrections" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

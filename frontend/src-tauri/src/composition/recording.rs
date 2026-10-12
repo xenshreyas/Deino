@@ -19,6 +19,7 @@ use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::SettingsService;
+use deino_core::vocabulary::VocabularyService;
 use deino_db::Database;
 use deino_domain::SystemClock;
 use deino_recording::{
@@ -37,6 +38,7 @@ struct Managed {
     settings: Arc<SettingsService>,
     stt: Arc<SttRuntime>,
     lifecycle: Arc<MeetingLifecycleService>,
+    vocabulary: Arc<VocabularyService>,
 }
 
 impl Managed {
@@ -45,6 +47,7 @@ impl Managed {
             settings: Arc::clone(&*app.try_state::<Arc<SettingsService>>()?),
             stt: Arc::clone(&*app.try_state::<Arc<SttRuntime>>()?),
             lifecycle: Arc::clone(&*app.try_state::<Arc<MeetingLifecycleService>>()?),
+            vocabulary: Arc::clone(&*app.try_state::<Arc<VocabularyService>>()?),
         })
     }
 }
@@ -60,7 +63,7 @@ pub(crate) fn attach_recording(app: &AppHandle, database: &Database) {
         }
     };
     let Some(managed) = Managed::find(app) else {
-        return log::error!(target: "recording", "settings, transcription or the pipeline are not ready; recording is off");
+        return log::error!(target: "recording", "settings, transcription, the vocabulary or the pipeline are not ready; recording is off");
     };
     let deps = recording_deps(app, database, managed, &paths);
     spawn_recovery(deps.clone());
@@ -84,6 +87,7 @@ fn recording_deps(
         settings,
         stt,
         lifecycle,
+        vocabulary,
     } = managed;
     RecordingDeps {
         meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
@@ -106,6 +110,7 @@ fn recording_deps(
             disk: Arc::new(SystemDiskSpace),
         },
         events: Arc::new(TauriRecordingEvents::new(app.clone())),
+        vocabulary,
         recordings: paths.recordings(),
     }
 }
@@ -202,13 +207,15 @@ impl EncoderFactory for NoEncoders {
     }
 }
 
-/// The microphone and headphones settings, read at every start.
+/// The microphone, headphones and live transcription settings, read at
+/// every start.
 struct SettingsPreferences(Arc<SettingsService>);
 
 #[async_trait]
 impl RecordingPreferences for SettingsPreferences {
     async fn current(&self) -> Preferences {
-        let audio = self.0.get().await.audio;
+        let settings = self.0.get().await;
+        let audio = settings.audio;
         Preferences {
             microphone: MicChoice {
                 preferred: audio
@@ -216,6 +223,7 @@ impl RecordingPreferences for SettingsPreferences {
                     .filter(|name| !name.trim().is_empty()),
             },
             uses_headphones: audio.uses_headphones,
+            record_only: !settings.transcription.live_transcription,
         }
     }
 }

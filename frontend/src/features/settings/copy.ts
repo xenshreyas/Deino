@@ -10,6 +10,21 @@ export const settingsCopy = {
 
   title: 'Settings',
   navLabel: 'Settings sections',
+
+  /** Settings → Transcription: when the transcript is written (CAP-08). */
+  captureModes: {
+    title: 'While you record',
+    description: 'When the transcript is written, and how carefully.',
+    liveTitle: 'Live transcription',
+    liveOn: 'The transcript appears as people speak.',
+    liveOff:
+      'Off: only audio is recorded, which keeps the Mac cool on long calls. The transcript is written right after the meeting.',
+    repassTitle: 'High-accuracy re-pass',
+    repassOn:
+      'After each meeting, the whole recording is transcribed again with full context and replaces the live transcript. Speakers are kept.',
+    repassOff: 'Not needed: with live transcription off, every transcript already gets this pass.',
+    saveFailed: 'Could not save the transcription setting',
+  },
   groups: {
     app: 'App',
     capture: 'Capture',
@@ -32,7 +47,11 @@ export const settingsCopy = {
     },
     transcription: {
       label: 'Transcription',
-      description: 'The local speech-to-text engine and its models.',
+      description: 'Live or after the meeting, and the local speech-to-text engine and its models.',
+    },
+    vocabulary: {
+      label: 'Vocabulary',
+      description: 'Names and terms Deino should spell your way, and replacements.',
     },
     people: {
       label: 'People',

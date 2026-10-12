@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO vocab_variants (term_id, position, variant) VALUES (?1, ?2, ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "b6a6699c02e268769f2aff9c192155d1375194daa749499998be96b3e08e4cf0"
+}

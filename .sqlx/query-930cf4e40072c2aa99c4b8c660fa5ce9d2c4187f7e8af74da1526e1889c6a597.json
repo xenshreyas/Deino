@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vocab_corrections SET undone_at = ?1 WHERE segment_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "930cf4e40072c2aa99c4b8c660fa5ce9d2c4187f7e8af74da1526e1889c6a597"
+}

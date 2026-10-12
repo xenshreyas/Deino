@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The kept originals that are not undone, beside each segment's text now:\n-- every one of meeting ?1, or segment ?2's (the other parameter is NULL), in\n-- transcript order. A meeting's segments are found through\n-- idx_transcript_segments_meeting_id_start_ms (asserted in corrections_tests.rs).\nSELECT\n    c.segment_id AS \"segment_id: SegmentId\",\n    c.original_text,\n    c.original_words_json AS \"original_words: Json<Vec<WordTiming>>\",\n    c.corrected_text,\n    s.text\nFROM transcript_segments AS s\nJOIN vocab_corrections AS c ON c.segment_id = s.id\nWHERE c.undone_at IS NULL AND (s.meeting_id = ?1 OR s.id = ?2)\nORDER BY s.start_ms, s.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "segment_id: SegmentId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "original_text",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "original_words: Json<Vec<WordTiming>>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "corrected_text",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "text",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1c1ab3eead451adc246e442fc3922d03ad63ac194c75eb107784ce517e90d4ec"
+}

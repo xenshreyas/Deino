@@ -50,7 +50,7 @@ pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
     CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, MeetingSource, Rsvp,
-    SectionFormat, TagSource,
+    SectionFormat, TagSource, VocabKind,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
@@ -58,7 +58,7 @@ pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
     ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId,
-    SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VoiceprintId,
+    SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId, VoiceprintId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

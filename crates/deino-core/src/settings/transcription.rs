@@ -47,6 +47,14 @@ pub struct TranscriptionSettings {
     /// `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`; empty means the
     /// engine's recommended model.
     pub model: String,
+    /// "Live transcription" (CAP-08): on, the transcript appears while the
+    /// meeting is recorded; off, only audio is recorded (no engine runs) and
+    /// the transcript is written after the meeting.
+    pub live_transcription: bool,
+    /// "High-accuracy re-pass after meeting" (CAP-08): transcribe the whole
+    /// recording again with full context and replace the live transcript,
+    /// keeping its speakers.
+    pub high_accuracy_repass: bool,
 }
 
 impl Default for TranscriptionSettings {
@@ -56,6 +64,8 @@ impl Default for TranscriptionSettings {
             model: TranscriptionEngine::ParakeetUnified
                 .default_model()
                 .to_owned(),
+            live_transcription: true,
+            high_accuracy_repass: false,
         }
     }
 }
@@ -69,6 +79,16 @@ mod tests {
         let engine: TranscriptionEngine = serde_json::from_str(r#""localWhisper""#).unwrap();
         assert_eq!(engine, TranscriptionEngine::Whisper);
         assert_eq!(serde_json::to_value(engine).unwrap(), "whisper");
+    }
+
+    #[test]
+    fn a_file_without_the_capture_modes_transcribes_live_without_a_re_pass() {
+        let settings: TranscriptionSettings =
+            serde_json::from_str(r#"{"engine":"parakeet","model":"x"}"#).unwrap();
+
+        assert!(settings.live_transcription);
+        assert!(!settings.high_accuracy_repass);
+        assert_eq!(settings.engine, TranscriptionEngine::Parakeet);
     }
 
     #[test]

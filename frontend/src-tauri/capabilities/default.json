@@ -62,6 +62,7 @@
         "integrations:default",
         "tags:default",
         "speakers:default",
-        "transcript:default"
+        "transcript:default",
+        "vocabulary:default"
     ]
 }

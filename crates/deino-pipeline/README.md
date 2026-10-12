@@ -17,10 +17,15 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
 - The stages (`stages/`): `finalize_audio` (order 10, FND-05b) over
   `deino_audio::{recover_recording, finalize_recording}` on a blocking
   thread, storing the mic, system and mixed paths with `set_audio` (skipped
-  for meetings without a live recording folder); `diarize` (order 30, CAP-03) over
+  for meetings without a live recording folder); `final_transcription`
+  (order 20, CAP-08) over `deino_core::final_transcription` and the
+  `TrackTranscriber` port (the re-pass setting through `RepassSetting`);
+  `diarize` (order 30, CAP-03) over
   `deino_core::diarization::DiarizeService` (with the attendees' voiceprints);
   `identify_speakers` (order 35, CAP-04) over
-  `deino_core::diarization::SpeakerIdentifier`; `enhance_notes` (order 50, NOT-02)
+  `deino_core::diarization::SpeakerIdentifier`; `vocab_fixups` (order 40,
+  TRN-05) over the `VocabFixer` port (`deino_core::vocabulary::FixupService`);
+  `enhance_notes` (order 50, NOT-02)
   over `deino_core::enhance::EnhanceService` (skipped when
   `Settings::ai.auto_summary`, "Generate notes automatically", is off; the
   meeting page's Enhance button writes notes on demand); `extract_action_items`

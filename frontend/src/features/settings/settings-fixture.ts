@@ -18,7 +18,12 @@ const DEFAULT_SETTINGS: Settings = {
   },
   audio: { preferredMicDevice: null, preferredSystemDevice: null, usesHeadphones: false },
   recording: { autoSave: true, showRecordingNotice: true },
-  transcription: { engine: 'parakeet_unified', model: '' },
+  transcription: {
+    engine: 'parakeet_unified',
+    model: '',
+    liveTranscription: true,
+    highAccuracyRepass: false,
+  },
   notifications: {
     recordingNotifications: true,
     timeBasedReminders: true,

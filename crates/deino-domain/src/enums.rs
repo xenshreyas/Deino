@@ -172,6 +172,17 @@ db_enum! {
     }
 }
 
+db_enum! {
+    /// What a custom vocabulary entry does (TRN-05). Stored in
+    /// `vocab_terms.kind`.
+    VocabKind {
+        /// A word or name spelled as given; its sounds-like variants become it.
+        Term = "term",
+        /// A plain rule: its variants become its text, nothing else.
+        Replacement = "replacement",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,6 +203,7 @@ mod tests {
         assert_names_agree(FolderRuleKind::ALL, FolderRuleKind::as_str);
         assert_names_agree(CalendarProvider::ALL, CalendarProvider::as_str);
         assert_names_agree(ConferencePlatform::ALL, ConferencePlatform::as_str);
+        assert_names_agree(VocabKind::ALL, VocabKind::as_str);
     }
 
     #[test]

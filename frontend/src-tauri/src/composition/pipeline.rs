@@ -9,6 +9,7 @@ use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
+use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
@@ -20,24 +21,36 @@ use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::{
     AutomaticNotes, ClockSleeper, MeetingTitler, NotesEnhancer, PipelineDeps, PipelineService,
-    PipelineTrigger, ProgressSink, SqliteJobRepo, StagePorts, registry,
+    PipelineTrigger, ProgressSink, RepassSetting, SqliteJobRepo, StagePorts, VocabFixer, registry,
 };
 use tauri::{AppHandle, Manager, Runtime};
 
-use super::diarize;
+use super::{diarize, transcript};
 use crate::features;
 use crate::paths::AppPaths;
 
 /// What the pipeline gets from the app: where progress goes, the
 /// diarization engine behind `diarize`, the services behind the speaker,
-/// AI and export stages, and the live recordings' folder that
-/// `finalize_audio` reads.
+/// AI and export stages, the transcript stages' services, and the live
+/// recordings' folder that `finalize_audio` reads.
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) diarizer: Arc<dyn TrackDiarizer>,
     pub(crate) ai: StageServices,
+    pub(crate) transcript: TranscriptStages,
     /// Every live recording's folder lives here (`AppPaths::recordings`).
     pub(crate) recordings: PathBuf,
+}
+
+/// The services behind `final_transcription` (CAP-08) and `vocab_fixups`
+/// (TRN-05).
+pub(crate) struct TranscriptStages {
+    /// Transcribes finished tracks.
+    pub(crate) transcriber: Arc<dyn TrackTranscriber>,
+    /// Settings → Transcription → "High-accuracy re-pass".
+    pub(crate) repass: Arc<dyn RepassSetting>,
+    /// The vocabulary's `FixupService`.
+    pub(crate) vocab_fixer: Arc<dyn VocabFixer>,
 }
 
 /// The AI and export stages' services, built by the composition root.
@@ -100,6 +113,9 @@ fn stage_ports(
         recordings: adapters.recordings,
         search: adapters.ai.adapters.search,
         entities: adapters.ai.adapters.entities,
+        transcriber: adapters.transcript.transcriber,
+        repass: adapters.transcript.repass,
+        vocab_fixer: adapters.transcript.vocab_fixer,
     }
 }
 
@@ -150,7 +166,7 @@ impl Pipeline {
 }
 
 /// Builds the pipeline with the app's adapters, starts it and manages it.
-/// Needs the diarization models.
+/// Needs the diarization models, the settings and the vocabulary.
 pub(super) fn attach_pipeline(
     app: &AppHandle,
     database: &Database,
@@ -169,10 +185,14 @@ pub(super) fn attach_pipeline(
             return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");
         }
     };
+    let Some(transcript) = transcript::stages(app) else {
+        return log::error!(target: "pipeline", "settings or the vocabulary are not ready; the pipeline is off");
+    };
     let adapters = PipelineAdapters {
         diarizer,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         ai,
+        transcript,
         recordings,
     };
     Pipeline::build(database, clock, adapters).start_and_manage(app);

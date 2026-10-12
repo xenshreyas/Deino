@@ -10,6 +10,7 @@ use deino_audio::source::SourceFactory;
 use deino_core::meetings::{MeetingLifecycleRepo, MeetingLifecycleService};
 use deino_core::people::PersonRepo;
 use deino_core::segments::{SegmentWriter, SpeakerRepo};
+use deino_core::vocabulary::LiveVocabulary;
 
 use crate::engine::LaneEngines;
 use crate::events::RecordingEvents;
@@ -38,6 +39,10 @@ pub struct Preferences {
     pub microphone: MicChoice,
     /// The "I use headphones" setting: skip echo cancellation and holdback.
     pub uses_headphones: bool,
+    /// "Live transcription: Off" (CAP-08): record audio only, with no
+    /// engines and no live pipeline; the `final_transcription` stage
+    /// transcribes the tracks after the meeting.
+    pub record_only: bool,
 }
 
 /// Fixed preferences (tests, and anywhere settings do not apply).
@@ -71,6 +76,8 @@ pub struct RecordingDeps {
     pub recorder: RecorderDeps,
     /// Where state, live segments and health go.
     pub events: Arc<dyn RecordingEvents>,
+    /// Corrects live segments and keeps their originals (TRN-05).
+    pub vocabulary: Arc<dyn LiveVocabulary>,
     /// The folder every recording's folder lives in (under the app data dir).
     pub recordings: PathBuf,
 }
