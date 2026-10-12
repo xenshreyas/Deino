@@ -2,7 +2,7 @@
 //! it sends.
 
 use chrono::{DateTime, Utc};
-use deino_domain::{MeetingId, Millis, PaletteColor, PersonId, SegmentId, SpeakerId};
+use deino_domain::{DisplayName, MeetingId, Millis, PaletteColor, PersonId, SegmentId, SpeakerId};
 use serde::{Deserialize, Serialize};
 
 use crate::segments::Speaker;
@@ -180,6 +180,42 @@ pub struct Identification {
     pub named: Vec<(SpeakerId, PersonId)>,
     /// "Is this …?" suggestions, replacing the meeting's previous ones.
     pub suggested: Vec<SuggestedName>,
+    /// Where the meeting app's names re-seat segments (CAP-05), written
+    /// before the names.
+    pub seating: Seating,
+}
+
+/// The speakers and segments the meeting app's names re-seat (CAP-05,
+/// `crate::speaker_tags`). Only speakers nobody named are touched.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Seating {
+    /// New speakers for names no diarized voice holds.
+    pub created: Vec<Speaker>,
+    /// Unnamed speakers shown under the app's name (no person matched it).
+    pub labelled: Vec<(SpeakerId, DisplayName)>,
+    /// Segments moving to their name's speaker.
+    pub moved: Vec<SegmentMove>,
+    /// Unnamed speakers left without segments by the moves, removed.
+    pub emptied: Vec<SpeakerId>,
+}
+
+impl Seating {
+    /// Whether there is nothing to write.
+    pub fn is_empty(&self) -> bool {
+        self.created.is_empty()
+            && self.labelled.is_empty()
+            && self.moved.is_empty()
+            && self.emptied.is_empty()
+    }
+}
+
+/// One segment changing speaker.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SegmentMove {
+    /// The segment.
+    pub segment: SegmentId,
+    /// The speaker it moves to.
+    pub to: SpeakerId,
 }
 
 /// One suggestion to store.

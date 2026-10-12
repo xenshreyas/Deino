@@ -66,6 +66,8 @@ pub enum Table {
     Voiceprints,
     /// "Is this Alex?" suggestions for unnamed speakers (CAP-04).
     SpeakerSuggestions,
+    /// Who the meeting app showed as the active speaker, and when (CAP-05).
+    SpeakerTagSpans,
     /// Connected integration accounts, without their tokens (INT-00).
     IntegrationConnections,
     /// The scopes each integration connection was granted.
@@ -94,7 +96,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 37] = [
+    pub const ALL: [Self; 38] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -121,6 +123,7 @@ impl Table {
         Self::TemplateSections,
         Self::Voiceprints,
         Self::SpeakerSuggestions,
+        Self::SpeakerTagSpans,
         Self::IntegrationConnections,
         Self::IntegrationConnectionScopes,
         Self::IntegrationDeliveries,
@@ -166,6 +169,7 @@ impl Table {
             "template_sections" => Self::TemplateSections,
             "voiceprints" => Self::Voiceprints,
             "speaker_suggestions" => Self::SpeakerSuggestions,
+            "speaker_tag_spans" => Self::SpeakerTagSpans,
             "integration_connections" => Self::IntegrationConnections,
             "integration_connection_scopes" => Self::IntegrationConnectionScopes,
             "integration_deliveries" => Self::IntegrationDeliveries,

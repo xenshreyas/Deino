@@ -47,12 +47,20 @@ pub struct Lineup {
 type Candidate = (PersonId, Vec<Vec<f32>>);
 
 impl Lineup {
-    /// Reads `meeting`; `None` when it has no speakers.
-    pub async fn read(ports: &IdentifyPorts, meeting: &MeetingId) -> Result<Option<Self>, DbError> {
-        let speakers = ports.speakers.speakers(meeting).await?;
-        if speakers.is_empty() {
-            return Ok(None);
-        }
+    /// Reads `meeting`, whose speakers are `speakers` (as the speaker tags
+    /// left them). `claimed` speakers hold a name from the meeting app
+    /// without a person: they are neither matched nor counted for
+    /// elimination.
+    pub async fn read(
+        ports: &IdentifyPorts,
+        meeting: &MeetingId,
+        speakers: Vec<Speaker>,
+        claimed: &[SpeakerId],
+    ) -> Result<Self, DbError> {
+        let speakers: Vec<Speaker> = speakers
+            .into_iter()
+            .filter(|speaker| !claimed.contains(&speaker.id))
+            .collect();
         let me = ports.me.me().await?.map(|person| person.id);
         let on_call = speakers.iter().any(|speaker| speaker.is_me);
         let user = me.filter(|_| on_call);
@@ -67,10 +75,10 @@ impl Lineup {
             attendees,
             roster,
         };
-        Ok(Some(Self {
+        Ok(Self {
             me: microphone(&speakers, me),
             ballot,
-        }))
+        })
     }
 }
 

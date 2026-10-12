@@ -9,11 +9,11 @@ use async_trait::async_trait;
 use deino_db::{Database, DbError};
 use deino_domain::{MeetingId, Millis, PaletteColor, PersonId, SegmentId, SpeakerId};
 
-use super::naming_sql;
 use super::{
     Identification, MergeSpeakers, NameSpeaker, ParticipantRow, PersonRef, SegmentTarget,
     Suggestion,
 };
+use super::{naming_sql, seating_sql};
 use crate::segments::Speaker;
 
 /// Reads a meeting's participants.
@@ -55,8 +55,8 @@ pub trait NamingRepo: Send + Sync {
 /// The `identify_speakers` stage's writes.
 #[async_trait]
 pub trait IdentificationWriter: Send + Sync {
-    /// Names the speakers and replaces the meeting's suggestions, in one
-    /// transaction.
+    /// Re-seats segments by the meeting app's names, names the speakers and
+    /// replaces the meeting's suggestions, in one transaction.
     async fn apply(&self, meeting: &MeetingId, decided: &Identification) -> Result<(), DbError>;
 }
 
@@ -172,6 +172,7 @@ impl NamingRepo for SqliteNamingRepo {
 impl IdentificationWriter for SqliteNamingRepo {
     async fn apply(&self, meeting: &MeetingId, decided: &Identification) -> Result<(), DbError> {
         let mut transaction = self.database.writer().begin().await?;
+        seating_sql::apply(&mut transaction, meeting, &decided.seating).await?;
         for (speaker, person) in &decided.named {
             naming_sql::assign_if_unnamed(&mut transaction, speaker, person).await?;
         }

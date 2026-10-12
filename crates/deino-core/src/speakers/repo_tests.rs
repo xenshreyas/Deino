@@ -1,12 +1,17 @@
 //! What only the real schema and transactions can check.
 
 use deino_db::test_db;
-use deino_domain::{FakeClock, MeetingId, PaletteColor, PersonId, SegmentId, SpeakerId};
+use deino_domain::{
+    Channel, DisplayName, FakeClock, MeetingId, Millis, PaletteColor, PersonId, SegmentId,
+    SpeakerId,
+};
 use deino_testkit::{at, seed};
 
 use super::*;
 use crate::people::{Person, PersonRepo, SqlitePeopleRepo};
-use crate::segments::{Speaker, SpeakerRepo, SqliteSegmentRepo};
+use crate::segments::{
+    NewSegment, Page, SegmentReader, SegmentWriter, Speaker, SpeakerRepo, SqliteSegmentRepo,
+};
 use crate::testing::query_plan;
 
 const MEETING: &str = "meeting-a";
@@ -90,10 +95,12 @@ async fn the_stage_never_renames_a_speaker_the_user_named_and_replaces_suggestio
     let first = Identification {
         named: vec![(named.id, alex)],
         suggested: vec![suggest(alex)],
+        ..Identification::default()
     };
     let second = Identification {
         named: Vec::new(),
         suggested: vec![suggest(maya)],
+        ..Identification::default()
     };
 
     repo.apply(&meeting, &first).await.unwrap();
@@ -105,6 +112,74 @@ async fn the_stage_never_renames_a_speaker_the_user_named_and_replaces_suggestio
     let suggestion = by_label("Speaker 2").suggestion.clone().unwrap();
     assert_eq!(suggestion.person.id, maya);
     assert!((suggestion.score - 0.6).abs() < 1e-6);
+}
+
+/// A system-track segment of `speaker` in the meeting.
+async fn segment_of(segments: &SqliteSegmentRepo, speaker: &Speaker) -> SegmentId {
+    let id = SegmentId::generate(&clock());
+    let segment = NewSegment {
+        id,
+        meeting_id: MeetingId::new(MEETING),
+        channel: Channel::System,
+        speaker_id: Some(speaker.id),
+        start: Millis(0),
+        end: Millis(1_000),
+        text: "…".into(),
+        words: Vec::new(),
+    };
+    segments.append(&[segment]).await.unwrap();
+    id
+}
+
+#[tokio::test]
+async fn seating_creates_labels_moves_and_empties_but_never_touches_named_speakers() {
+    let database = test_db().await;
+    seed::meeting(&database, MEETING, "Standup", at(T0)).await;
+    let people = SqlitePeopleRepo::new(database.clone());
+    let maya = person(&people, "Maya").await;
+    let segments = SqliteSegmentRepo::new(database.clone());
+    let (open, stray) = (speaker("Speaker 1", None), speaker("Speaker 2", None));
+    let named = speaker("Speaker 3", Some(maya));
+    for each in [&open, &stray, &named] {
+        segments.add_speaker(each).await.unwrap();
+    }
+    let (on_stray, on_named) = (
+        segment_of(&segments, &stray).await,
+        segment_of(&segments, &named).await,
+    );
+    let created = speaker("Cleo", None);
+    let to_created = |segment| SegmentMove {
+        segment,
+        to: created.id,
+    };
+    let decided = Identification {
+        seating: Seating {
+            created: vec![created.clone()],
+            labelled: vec![
+                (open.id, DisplayName::parse("Alex").unwrap()),
+                (named.id, DisplayName::parse("Not Maya").unwrap()),
+            ],
+            moved: vec![to_created(on_stray), to_created(on_named)],
+            emptied: vec![stray.id, named.id],
+        },
+        ..Identification::default()
+    };
+
+    SqliteNamingRepo::new(database)
+        .apply(&MeetingId::new(MEETING), &decided)
+        .await
+        .unwrap();
+
+    let after = segments.speakers(&MeetingId::new(MEETING)).await.unwrap();
+    let labels: Vec<&str> = after.iter().map(|s| s.label.as_str()).collect();
+    assert_eq!(labels, ["Alex", "Cleo", "Speaker 3"]);
+    let listed = segments
+        .list(&MeetingId::new(MEETING), Page::ALL)
+        .await
+        .unwrap();
+    let owner = |id| listed.iter().find(|s| s.id == id).unwrap().speaker_id;
+    assert_eq!(owner(on_stray), Some(created.id));
+    assert_eq!(owner(on_named), Some(named.id));
 }
 
 #[tokio::test]
