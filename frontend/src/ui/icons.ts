@@ -104,6 +104,7 @@ export {
   Star,
   Sun,
   Tag,
+  ThumbsDown,
   Target,
   Trash2,
   Undo2,

@@ -243,6 +243,10 @@ export type Table =
  */
 "comments" | 
 /**
+ * Pre-meeting briefs, one per upcoming calendar event (NOT-08).
+ */
+"briefs" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

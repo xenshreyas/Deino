@@ -20,6 +20,7 @@
 pub mod _example;
 pub mod action_items;
 pub mod automations;
+pub mod briefs;
 pub mod calendar;
 pub mod clips;
 pub mod comments;
@@ -107,6 +108,7 @@ fn more_builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>)> {
         (integrations::NAME, integrations::specta()),
         (insights::NAME, insights::specta()),
         (automations::NAME, automations::specta()),
+        (briefs::NAME, briefs::specta()),
         (tags::NAME, tags::specta()),
         (speakers::NAME, speakers::specta()),
         (stats::NAME, stats::specta()),

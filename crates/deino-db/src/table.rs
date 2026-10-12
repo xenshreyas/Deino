@@ -113,6 +113,8 @@ pub enum Table {
     CommentThreads,
     /// The comments of each thread (TRN-06).
     Comments,
+    /// Pre-meeting briefs, one per upcoming calendar event (NOT-08).
+    Briefs,
     /// Notes of the `_example` reference feature, which lives in an in-memory
     /// database in debug builds only.
     ExampleNotes,
@@ -120,7 +122,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 50] = [
+    pub const ALL: [Self; 51] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -170,6 +172,7 @@ impl Table {
         Self::Clips,
         Self::CommentThreads,
         Self::Comments,
+        Self::Briefs,
         Self::ExampleNotes,
     ];
 
@@ -240,6 +243,7 @@ impl Table {
             "clips" => Self::Clips,
             "comment_threads" => Self::CommentThreads,
             "comments" => Self::Comments,
+            "briefs" => Self::Briefs,
             "example_notes" => Self::ExampleNotes,
             _ => return None,
         })

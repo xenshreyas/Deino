@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AiSettings, AudioSettings, AutomationSettings, BetaSettings, CalendarSettings,
+    AiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
     DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
     OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
     SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
@@ -50,6 +50,8 @@ pub struct Settings {
     pub export: ExportSettings,
     /// Calendar sync and which calendars are shown (ORG-01).
     pub calendar: CalendarSettings,
+    /// Pre-meeting briefs (NOT-08).
+    pub briefs: BriefSettings,
     /// The user's own OAuth apps for integrations (INT-00).
     pub integrations: IntegrationSettings,
     /// What automations may do on the Mac (AUT-01).
@@ -81,6 +83,7 @@ impl Default for Settings {
             export: ExportSettings::default(),
             calendar: CalendarSettings::default(),
             automations: AutomationSettings::default(),
+            briefs: BriefSettings::default(),
             integrations: IntegrationSettings::default(),
             ui: UiSettings::default(),
             beta: BetaSettings::default(),

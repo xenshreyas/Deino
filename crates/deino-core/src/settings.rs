@@ -17,6 +17,7 @@
 mod ai;
 mod audio;
 mod automations;
+mod briefs;
 mod calendar;
 mod detection;
 mod error;
@@ -45,6 +46,7 @@ mod ui;
 pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
 pub use audio::{AudioSettings, AutoStopOptions, PanelEdge, PanelPosition, RecordingSettings};
 pub use automations::AutomationSettings;
+pub use briefs::{BriefAudience, BriefSettings};
 pub use calendar::{
     AutoRecordSettings, CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS,
     MAX_HIDDEN_CALENDARS, ReminderSettings,

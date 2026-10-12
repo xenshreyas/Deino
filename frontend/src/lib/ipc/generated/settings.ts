@@ -221,6 +221,32 @@ export type BetaSettings = {
  */
 importAndRetranscribe: boolean }
 /**
+ * Which upcoming meetings get a brief.
+ */
+export type BriefAudience = 
+/**
+ * Meetings with someone outside the user's organisation (Granola's
+ * rule).
+ */
+"external" | 
+/**
+ * Every meeting with at least two attendees, internal ones included.
+ */
+"groups"
+/**
+ * The briefs section of `Settings`.
+ */
+export type BriefSettings = { 
+/**
+ * Prepare briefs at 06:00 and an hour before each meeting. On by
+ * default; briefs read only the user's own data (no web, no email).
+ */
+enabled: boolean; 
+/**
+ * Which meetings get one.
+ */
+audience: BriefAudience }
+/**
  * A macOS bundle identifier, such as `com.tinyspeck.slackmacgap`.
  * 
  * Meeting detection names apps by it, and the user's "always ignore" list
@@ -1209,6 +1235,10 @@ export: ExportSettings;
  * Calendar sync and which calendars are shown (ORG-01).
  */
 calendar: CalendarSettings; 
+/**
+ * Pre-meeting briefs (NOT-08).
+ */
+briefs: BriefSettings; 
 /**
  * The user's own OAuth apps for integrations (INT-00).
  */

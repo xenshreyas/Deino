@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE briefs SET feedback = ?2, feedback_at = ?3 WHERE event_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "9f50d873d4552e38c70fd95fe0959b21567202df3829e2358ee981be58b5fd44"
+}

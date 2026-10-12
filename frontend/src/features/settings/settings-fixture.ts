@@ -94,6 +94,7 @@ const DEFAULT_SETTINGS: Settings = {
     transcriptSidecar: false,
     obsidian: false,
   },
+  briefs: { enabled: true, audience: 'external' },
   calendar: {
     syncEnabled: false,
     hiddenCalendars: [],

@@ -71,6 +71,7 @@
 pub mod _example;
 pub mod action_items;
 pub mod automations;
+pub mod briefs;
 pub mod calendar;
 pub mod cli_setup;
 pub mod clips;
