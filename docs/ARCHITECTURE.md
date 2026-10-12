@@ -214,7 +214,7 @@ flowchart BT
 | `deino-consent` | `crates/deino-consent` | The consent tools' chat notice (CAP-13, ADR 2026-10-12-chat-notice-through-accessibility): a `ChatAdapter` per app (Zoom, Teams, Meet in Chrome) over CAP-05's `SpeakerAdapter` and `WindowReader`, pure `decide` and `attempt::post` with the typing guard, `Session` (once per meeting), `Monitor`/`ChatNotice` (1 s poll of the recorder), macOS `AxDriver` and HID key activity; no network. |
 | `deino-api` | `crates/deino-api` | The local REST API (DEV-03, ADR 2026-10-12-local-rest-api): `RunningServer` on `127.0.0.1` only, `ApiController` (starts and stops with `settings.api`), the `/v1` router (meetings, transcripts, import, search, action items, tags, people, companies, folders, calendar events), the guard (host, key, scope, app lock), cursors with `Link` headers, `ApiError`; reads through `deino-core::query`, writes through the app's services. No HTTP client. |
 | `deino-importers` | `crates/deino-importers` | Importers from other note-takers (CAP-12, ADR 2026-10-12-importers-from-other-note-takers): one `deino_core::importers::Importer` adapter per source (Granola, Circleback, Fireflies, Fathom over `deino-net`; folders of JSON/Markdown), `ProviderApi` (key, refused keys, 429 waits, `Link` paging), `ImportSources` (Keychain keys, service switches, adapters), recorded API fixtures. |
-| `deino-screen` | `crates/deino-screen` | Screen capture (CAP-09, ADR 2026-10-12-screen-capture): `PHash`, `SnapshotSampler`, `decide`, `Capture`/`Capturer`, `ScreenCapture`; ScreenCaptureKit and `AVAssetWriter` through cidre; no network, no tauri. |
+| `deino-screen` | `crates/deino-screen` | Screen capture (CAP-09, ADR 2026-10-12-screen-capture): `PHash`, `SnapshotSampler`, `decide`, `Capture`/`Capturer`, `ScreenCapture`, `pick` (`CaptureTarget`, `Source`, `TargetChoice`, `choices`, `resolve`; displays as a capture source) and `recognize_text` (Vision OCR); ScreenCaptureKit, `AVAssetWriter` and Vision through cidre; no network, no tauri. |
 | `deino` | `frontend/src-tauri` | The Tauri app: plugins, composition root, legacy modules. Library crate `deino_lib`. |
 | `llama-helper` | `llama-helper` | The local LLM sidecar: `generate` (legacy), `stream`, `grammar` (a JSON schema turned into a GBNF grammar) and `embed` requests over JSON lines. |
 
@@ -280,7 +280,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `features/webhooks*`, `composition/webhooks.rs` | The `webhooks` plugin (DEV-01): `list`, `create`, `update`, `delete`, `rotate_secret`, `send_test`, `deliveries`. Two attach hooks: `webhooks` (Local 5: the service, plus `WebhookTaps`, the signal queue) and `webhooks-loop` (Background 70: the lifecycle's `ReadyObserver` and the `DispatchLoop`). `action_items.rs`, `insights.rs` and `enhance.rs` (`NotesAi` binds a `LateSink` in `manage`) tap their event ports; `automations.rs` registers `WebhookStep`. |
 | `features/api*`, `composition/api.rs` | The `api` plugin (DEV-03, Guarded): `server_status`, `configure_server`, `list_keys`, `create_key`, `revoke_key`, `delete_key`. The attach hook (`Background`, order 90) builds the `ApiController`. |
 | `features/importers*`, `composition/importers.rs` | The `importers` plugin (CAP-12, Guarded): `sources`, `save_key`, `forget_key`, `pick_folder`, `preview`, `start`, `cancel`, `status`; event `import-progress-changed`. The attach hook (`Background`, order 95) builds `ImportSources`; its `PipelineWork` lets the `index` stage embed imports. |
-| `features/screen*` | The `screen` plugin (CAP-09 phase A): `status`, `open_screen_recording_settings`, `turn_off_for_meeting`, `snapshots`; `CaptureOnStart` sits beside `WatchOnStart`. |
+| `features/screen*` | The `screen` plugin (CAP-09): `status`, `open_screen_recording_settings`, `turn_off_for_meeting`, `snapshots`, `capture_choices`, `capture_source`; `CaptureOnStart` sits beside `WatchOnStart`. |
 
 ## 4. Frontend (`frontend/src`)
 
@@ -303,7 +303,7 @@ it gains heavy native dependencies or passes about 3k lines. Each crate's
 | `features/webhooks/` | DEV-01: Settings → Developer → Webhooks. |
 | `features/local-api/` | DEV-03: Settings → Developer → Local API and API keys. |
 | `features/importers/` | CAP-12: Settings → Data → Import (keys per provider, Check then Import, the progress card with Stop, the folder row). |
-| `features/screen/` | CAP-09 phase A: Settings → Screen capture and the Screen Recording row in onboarding. |
+| `features/screen/` | CAP-09: Settings → Screen capture, the Screen Recording row in onboarding, the Images strip above the notes (`MeetingImages`) and the record pill's Screen picker and consent reminder. |
 | `ui/` | Shared primitives on the tokens (shadcn/Radix restyled: button, icon button, input, select, switch, popover, menu, dialog, tooltip with shortcut, tabs, segmented control, chips, kbd, skeleton, empty state, page header, scroll area, toaster, level bars); `icons.ts` is the only icon import; `cn.ts` merges classes. |
 | `components/`, `contexts/`, `hooks/`, `services/`, `lib/*`, `types/` | Legacy code, listed in `legacy-files.mjs`. |
 
@@ -389,7 +389,10 @@ the last attempt when it cannot run, so notes still come). `vocab_fixups`
 (order 40, TRN-05) corrects the transcript with the vocabulary after
 diarization has split it, keeping each segment's original for undo. `screen_video` (order 15, CAP-09)
 runs after `finalize_audio`: it gives `video.mp4` the mixed `audio.mp4` with
-`deino_audio::mux` and stores `video_path`.
+`deino_audio::mux` and stores `video_path`. `screen_context` (order 45, CAP-09)
+runs between `vocab_fixups` and `enhance_notes`, so the notes are written with
+the screen's text (no re-run of NOT-02); its port is `StagePorts::screen_context`
+(`ScreenContextReader`), built in `composition/screen.rs::context_reader`.
 `enhance_notes` (order 50)
 writes the enhanced notes below (skipped when "Generate notes automatically"
 is off, when there is nothing to write from, or when the user edited the
@@ -403,7 +406,7 @@ plugin:enhance|enhance(meeting, replaceEdits)   or the enhance_notes stage
   EnhanceService: refuse (conflict) when the newest version is edited and !replaceEdits
   MaterialSources → Material (meeting, attendees, calendar description, user notes Doc,
                     transcript lines [s1 00:04] Speaker: text, previous series notes,
-                    vocabulary) + TemplateSource (the meeting's template, auto_choice)
+                    vocabulary, screen text as [screen mm:ss] lines by time) + TemplateSource (the meeting's template, auto_choice)
                     transcript text → TextRedactor when privacy.redactSensitive (NOT-09):
                     patterns, likely spans checked by the built-in model only
   NotesWriter → Gateway::structured::<EnhancedDoc>(notes.enhance)
@@ -540,6 +543,23 @@ Legacy stores are imported once and removed: the SQLite `settings` and
 runs just before the migration that drops both tables (with `secure_delete`,
 so no key bytes survive); the tauri-plugin-store JSON files by
 `LegacyFileImport` at startup; the UI's localStorage keys by `SettingsSync`.
+
+Sections register themselves (REG-02, ADR 2026-10-12-settings-self-registration).
+In `deino-core` each section is a file `settings/sections/<file>.rs` with
+`crate::settings::register_section! { /// doc  key: Type, order: N,
+[validate: Type::validate,] [dialog_only: ["field"],] }`; `build.rs`
+(`build/settings.rs`) generates the `Settings` struct (fields by `order`, then
+key), `Default`, `validate`, the patch's `DIALOG_ONLY` and the glob re-exports
+of every section file. `SettingsSection::check` is a section's rule check. In
+the UI, `features/settings/sections.ts` collects `features/*/settings-page.{ts,tsx}`
+(`settingsPages: SettingsPage[]`: `id`, `group`, `order`, `icon`, `label`,
+`description`, `Component`), sorted by `SETTINGS_GROUPS`, `order`, id.
+`SettingsSectionId` is `keyof SettingsPageIds` (`features/settings/search.ts`),
+extended by each page file. The bindings test writes
+`generated/settings-defaults.ts` (`DEFAULT_SETTINGS`, which both settings
+fixtures start from; it stays real in `dev:mock`, like `shared.ts`).
+`deino-domain/build.rs` likewise re-exports every `src/id/*.rs`.
+`check-feature-isolation.sh` guards all of it.
 
 ### Recording files (`deino-audio`, wired in by FND-05b)
 
@@ -1241,7 +1261,7 @@ TrashPurger: every 6 h, meetings trashed over 30 days ago, the same way
   switches its `ServiceId` on and forgetting it switches it off. Imports are
   embedded by the `index` stage (`PipelineWork`).
 
-### Screen capture (CAP-09 phase A, ADR 2026-10-12-screen-capture)
+### Screen capture (CAP-09, ADR 2026-10-12-screen-capture)
 
 - `decide` (off by default; "Capture detected meetings"; a per-meeting off
   switch; Screen Recording granted, never prompted) starts a `Capturer` thread
@@ -1254,9 +1274,29 @@ TrashPurger: every 6 h, meetings trashed over 30 days ago, the same way
   keeps a frame when its `PHash` (64-bit DCT) changed by more than 10 bits
   from the last kept one.
 - Files: `<recordings>/<meeting>/video.mp4` (written as `video.part.mp4`, with
-  sound after the `screen_video` stage) and `snapshots/<ms>.png`. Phase B
-  (`screen_context` OCR, the Images strip, the picker, the consent reminder)
-  is in progress.
+  sound after the `screen_video` stage) and `snapshots/<ms>.png`.
+- Screen context (phase B): the `screen_context` stage (order 45) reads each
+  unread snapshot with Apple Vision (`recognize_text`, `VNRecognizeTextRequest`,
+  accurate, en-US, in `spawn_blocking`) and stores `snapshots.ocr_text` (`""` =
+  no text, NULL = not read). With Settings → Screen capture → "Describe
+  snapshots with Claude" (off) and the route `vision.describe` (Fast tier; the
+  PNG goes as `Part::Image`, which only the Anthropic adapter sends;
+  `GatewayDescriber` checks the route's target first and refuses any other
+  provider), it also stores `snapshots.description`. A snapshot whose OCR text
+  NOT-09 would redact is never sent; at most 30 are described a run; failures
+  never fail the stage.
+- NOT-02 material: `Material.screen` (`ScreenText`: at, OCR text, description;
+  redacted like the transcript) is rendered as `[screen mm:ss] …` lines placed
+  by time among the transcript lines (`enhance::screen`: one line per snapshot
+  up to 1,500 chars, 12,000 in all, repeats dropped; map-reduce parts take
+  their span). The system prompts say screen lines are context, never evidence.
+- The record pill's Screen button opens a native picker (`capture_choices`:
+  displays, then other apps' on-screen windows; `capture_source` →
+  `deino_screen::picked`, also on a manual start). `CaptureTarget::{MeetingApp,
+  Picked(Source::{Window, Display})}`; a display is captured without Deino's
+  windows. A recording that already has a video keeps it and the new capture
+  keeps snapshots only. A consent reminder shows under the pill the first 3
+  captures (`screen.consentRemindersShown`).
 
 ### Reads and writes in a feature
 
@@ -1749,7 +1789,8 @@ tables are omitted from the diagram's attributes.
   migration rebuilds `egress_log`'s CHECK for the four importer services.
 - **Screen capture** (CAP-09, migration `cap09_screen`): `snapshots` (the kept
   frames on the recording's timeline) and `screen_capture_choices` (the
-  per-meeting off switch).
+  per-meeting off switch). Migration `cap09_screen_context` adds `snapshots.ocr_text` and
+  `snapshots.description` and widens the `llm_calls.route` CHECK for `vision.describe`.
 - **Settings are not tables:** FND-06 dropped the single-row `settings` and
   `transcript_settings` tables (migration `20261009061225`); settings live in
   `settings.json` and API keys in the Keychain (ADR 0013).
@@ -1817,7 +1858,7 @@ tables are omitted from the diagram's attributes.
 | A `deino://` route (DEV-05) | A `DeepLink` variant, its parse arm and tests in `crates/deino-core/src/links/` (`parse_tests.rs`, `service_tests.rs`); what it shows is a `Navigation` mapped to a route in `features/links/follow.ts` (and `contract_tests.rs`). Meeting links are `deino://meeting/<id>[?t=<ms>]`. |
 | A system-wide hotkey (DEV-05) | A `HotkeyAction` in `crates/deino-core/src/hotkeys/` and its default in `settings.shortcuts`; validation and conflicts are tested with `FakeRegistrar`. |
 | A built-in recipe (AI-04) | An entry in `deino-core::recipes`' `LIBRARY` (upserted by slug on first use; a `multi` one stays WIP until AI-02 builds a scope). |
-| A typed ID | A `uuid_id!` entry in the area's file under `crates/deino-domain/src/id/` (`id.rs` is at its 300-line cap), re-exported by `id`. |
+| A typed ID | A `uuid_id!` entry in the area's file under `crates/deino-domain/src/id/<area>.rs` (`id.rs` is at its 300-line cap), plus one alphabetical `mod <area>;` in `id.rs`; `build.rs` re-exports the file. |
 | A sidebar entry | `features/shell/nav.ts` plus its route file; set `comingSoon` until the screen exists. |
 | A section on the person or company page | `features/entities/slots.ts` (`ENTITY_SLOTS`: `voice` for CAP-04, `ask` for AI-02's scoped chat). |
 | A meeting tab, right-panel section or player | `features/meeting/slots.ts` (and the `?tab=` enum in `features/meeting/search.ts` for a tab). |
@@ -1827,7 +1868,8 @@ tables are omitted from the diagram's attributes.
 | ⌘K palette results | A provider component in `features/shell/command-palette/`, appended to `providers.ts`. |
 | A searchable source | Insert/update/delete triggers writing `search_documents` (a new migration), its rule in `crates/deino-core/src/search/queries/documents/`, a `HitKind` variant and its section in `search/sections.rs`; then the UI's section in `features/search`. |
 | A global shortcut | `features/shell/shortcuts.ts` and its action in `hooks/use-global-shortcuts.ts`. |
-| A settings page | `features/settings/sections.tsx` plus the `?section=` enum in `search.ts` and its copy. |
+| A settings section (REG-02) | A file in `crates/deino-core/src/settings/sections/` with `crate::settings::register_section! { .. }` (an unused `order`) plus one alphabetical `mod` line in `settings/sections.rs`; then `cargo test -p deino --lib bindings`, which regenerates the fixtures' `DEFAULT_SETTINGS`. |
+| A settings page (REG-02) | `features/<feature>/settings-page.tsx` exporting `settingsPages` (its label and description live there) and its id added to `SettingsPageIds` by declaration merging; `features/settings/sections.ts` collects it. |
 | A colour or other design token | `styles/tokens.css` (both themes; `tokens.test.ts` checks parity and contrast), then the `/design` gallery. |
 
 ## 9. Quality gates
