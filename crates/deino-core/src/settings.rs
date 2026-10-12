@@ -64,7 +64,10 @@ pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, Notificat
 pub use onboarding::{OnboardingSettings, OnboardingStep, StepOutcome};
 pub use organize::OrganizeSettings;
 pub use patch::SettingsPatch;
-pub use personal::PrivacySettings;
+pub use personal::{
+    AppLockSettings, DEFAULT_LOCK_IDLE_MINUTES, MAX_LOCK_IDLE_MINUTES, MIN_LOCK_IDLE_MINUTES,
+    PrivacySettings,
+};
 pub use profile::{
     MAX_CONTEXT_CHARS, MAX_FOCUS_AREA_CHARS, MAX_FOCUS_AREAS, MAX_PROFILE_EMAILS,
     MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,

@@ -97,6 +97,7 @@ impl Settings {
         self.calendar.validate()?;
         self.speakers.validate()?;
         self.integrations.validate()?;
+        self.privacy.validate()?;
         self.ui.validate()
     }
 

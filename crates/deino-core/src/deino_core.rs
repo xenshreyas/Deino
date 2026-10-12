@@ -60,6 +60,9 @@
 //!
 //! ORG-09 added [`stats`]: meeting and LLM usage stats computed on read,
 //! and the year in review.
+//!
+//! PRV-02 added [`privacy`] (bringing the database file in line with the
+//! encryption setting before it opens) and [`lock`] (the app lock).
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -77,12 +80,14 @@ pub mod final_transcription;
 mod fixture_tests;
 pub mod folders;
 pub mod insights;
+pub mod lock;
 pub mod meetings;
 pub mod models;
 pub mod notes;
 pub mod people;
 pub mod permissions;
 pub mod player;
+pub mod privacy;
 pub mod profile;
 pub mod query;
 pub mod redaction;
