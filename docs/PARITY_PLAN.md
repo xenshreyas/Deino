@@ -2407,6 +2407,9 @@ Run the waves in order. Cards within a wave can run in parallel. Tick a card whe
 | ORG-07 | dev:mock ignores the "has action items" and internal/external filters, and a trashed meeting's page, action items and search hits stay reachable there (Rust filters them; the contract tests cover it). | FND-04 |
 | ORG-07 | The bulk bar is centred on the window, not the content column, so on windows under ~1000 px it overlaps the sidebar's foot. Centre it on the main column once the shell exposes the sidebar's live width. | FND-10 |
 | ORG-07 | A merged speaker whose label clashes with one of the target's gets " (2)"; a second clash on the same label fails the merge. | ORG-07 follow-up |
+| AUT-01 | ORG-07's Meetings list bulk "Run automation" entry was not on `main` when AUT-01 was built: enable it over `automations|run` (`automationsApi.run(id, meetingIds)`), picking the automation from `automations|list`. | ORG-07 |
+| AUT-01 | The webhook step (DEV-01) and every provider step (INT-01..07) are listed in the step picker as "WIP" (D12). A card adds an `Action` variant, a `Step` for its `ActionKind` and one `.with(..)` in `LocalStepPorts::registry` (or its own registry call in `composition/automations.rs`); integration steps wrap `IntegrationService::deliver` with a `run:<run>:<position>` key and map `is_retryable` to `StepError` so the stage retries. The payload is `AutomationPayload` (`deino.automation` v1). | DEV-01 / INT-01..07 |
+| AUT-01 | The ORG-05 folder page's integrations placeholder can link to `/automations?automation=new` with an `in_folder` condition prefilled. | ORG-05 polish |
 
 **Critical path to "Granola-equivalent daily driver":**
 1. FND-01 → FND-02 → FND-05 / FND-07 → FND-08 → CAP-01 / CAP-02 → NOT-01 → NOT-04 → NOT-02 → ORG-01 → ORG-02 → AI-01 → AI-02
