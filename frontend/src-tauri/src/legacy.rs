@@ -122,7 +122,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         database::commands::get_database_directory,
         database::commands::open_database_folder,
         // macOS System Settings deep links
-        #[cfg(target_os = "macos")]
         utils::open_system_settings,
         // Retranscription and audio import
         audio::retranscription::start_retranscription_command,

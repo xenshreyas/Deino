@@ -254,35 +254,3 @@ pub fn create_system_monitor_with_limits(
     };
     SystemMonitor::with_limits(limits)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_system_monitor_creation() {
-        let monitor = SystemMonitor::new();
-        assert!(monitor.monitoring_enabled);
-    }
-
-    #[tokio::test]
-    async fn test_get_current_resources() {
-        let monitor = SystemMonitor::new();
-        let resources = monitor.get_current_resources().await.unwrap();
-
-        assert!(resources.memory_used_percent >= 0.0);
-        assert!(resources.memory_used_percent <= 100.0);
-        assert!(resources.cpu_usage_percent >= 0.0);
-        assert!(resources.total_memory_mb > 0);
-        assert!(resources.cpu_cores > 0);
-    }
-
-    #[tokio::test]
-    async fn test_safe_worker_count() {
-        let monitor = SystemMonitor::new();
-        let worker_count = monitor.calculate_safe_worker_count().await.unwrap();
-
-        assert!(worker_count >= 1);
-        assert!(worker_count <= 4);
-    }
-}

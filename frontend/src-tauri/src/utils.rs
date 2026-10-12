@@ -6,20 +6,12 @@ pub fn format_timestamp(seconds: f64) -> String {
     format!("{:02}:{:02}:{:02}", hours, minutes, secs)
 }
 
-/// Opens macOS System Settings to a specific privacy preference pane
-#[cfg(target_os = "macos")]
+/// Opens a Privacy & Security pane of macOS System Settings, such as
+/// `Privacy_Microphone`. Only plain pane names are accepted (`system_open`).
 #[tauri::command]
 pub async fn open_system_settings(preference_pane: String) -> Result<(), String> {
-    use std::process::Command;
-
-    // Construct the URL for System Settings
-    let url = format!("x-apple.systempreferences:com.apple.preference.security?{}", preference_pane);
-
-    // Use the 'open' command on macOS to open the URL
-    Command::new("open")
-        .arg(&url)
-        .spawn()
-        .map_err(|e| format!("Failed to open system settings: {}", e))?;
-
-    Ok(())
+    let url = crate::system_open::settings_pane_url(&preference_pane).map_err(|e| e.to_string())?;
+    crate::system_open::launch(std::ffi::OsStr::new(&url))
+        .await
+        .map_err(|e| format!("Failed to open system settings: {}", e))
 } 

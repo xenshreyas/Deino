@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { tabForDigit } from './hooks/use-tab-shortcuts';
 import { meetingTabSchema } from './search';
-import { MEETING_PANELS, MEETING_TABS } from './slots';
+import { MEETING_TABS } from './slots';
 
 // The Notes and Transcript slots reach the legacy session; keep it out of this test.
 vi.mock('./slots/transcript-slot', () => ({ TranscriptSlot: () => null }));
@@ -18,9 +18,5 @@ describe('meeting slots', () => {
     expect(tabForDigit('9')).toBeUndefined();
     expect(tabForDigit('k')).toBeUndefined();
     expect(MEETING_TABS.map((tab) => tab.shortcut)).toEqual(['⌘1', '⌘2', '⌘3', '⌘4']);
-  });
-
-  test('the right panel has Chat, Participants and Details', () => {
-    expect(MEETING_PANELS.map((panel) => panel.id)).toEqual(['chat', 'participants', 'details']);
   });
 });

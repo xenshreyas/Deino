@@ -136,14 +136,3 @@ pub async fn trigger_system_audio_permission_command() -> Result<bool, String> {
     .map_err(|e| format!("Task join error: {}", e))?
     .map_err(|e| e.to_string())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_check_permission() {
-        let has_permission = check_screen_recording_permission();
-        println!("Has Screen Recording permission: {}", has_permission);
-    }
-}

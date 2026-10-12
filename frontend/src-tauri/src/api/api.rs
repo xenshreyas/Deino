@@ -1,13 +1,16 @@
 use log::{debug as log_debug, error as log_error, info as log_info, warn as log_warn};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Runtime};
+use std::path::Path;
+
+use deino_domain::AppError;
+use tauri::{AppHandle, Manager, Runtime};
 
 use crate::{
-    database::{
-        models::MeetingModel,
-        repositories::meeting::MeetingsRepository,
-    },
+    audio::recording_preferences::get_default_recordings_folder,
+    database::repositories::meeting::MeetingsRepository,
+    error::IntoIpc,
     state::AppState,
+    system_open,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -216,94 +219,39 @@ pub async fn api_get_meeting_transcripts<R: Runtime>(
     }
 }
 
-/// Opens the meeting's recording folder in the system file explorer
+/// Opens the meeting's recording folder in Finder. Only a folder inside the
+/// app data dir or the recordings folder opens (`system_open`).
 #[tauri::command]
 pub async fn open_meeting_folder<R: Runtime>(
-    _app: AppHandle<R>,
+    app: AppHandle<R>,
     state: tauri::State<'_, AppState>,
     meeting_id: String,
 ) -> Result<(), String> {
-    log_info!("open_meeting_folder called for meeting_id: {}", meeting_id);
-
-    let pool = state.db_manager.pool();
-
-    // Get meeting with folder_path
-    let meeting: Option<MeetingModel> = sqlx::query_as(
-        "SELECT id, title, created_at, updated_at, folder_path FROM meetings WHERE id = ?",
-    )
-    .bind(&meeting_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("Database error: {}", e))?;
-
-    match meeting {
-        Some(m) => {
-            if let Some(folder_path) = m.folder_path {
-                log_info!("Opening meeting folder: {}", folder_path);
-
-                // Verify folder exists
-                let path = std::path::Path::new(&folder_path);
-                if !path.exists() {
-                    log_warn!("Folder path does not exist: {}", folder_path);
-                    return Err(format!("Recording folder not found: {}", folder_path));
-                }
-
-                // Open folder based on OS
-                #[cfg(target_os = "macos")]
-                {
-                    std::process::Command::new("open")
-                        .arg(&folder_path)
-                        .spawn()
-                        .map_err(|e| format!("Failed to open folder: {}", e))?;
-                }
-
-                #[cfg(target_os = "windows")]
-                {
-                    std::process::Command::new("explorer")
-                        .arg(&folder_path)
-                        .spawn()
-                        .map_err(|e| format!("Failed to open folder: {}", e))?;
-                }
-
-                #[cfg(target_os = "linux")]
-                {
-                    std::process::Command::new("xdg-open")
-                        .arg(&folder_path)
-                        .spawn()
-                        .map_err(|e| format!("Failed to open folder: {}", e))?;
-                }
-
-                log_info!("Successfully opened folder: {}", folder_path);
-                Ok(())
-            } else {
-                log_warn!("Meeting {} has no folder_path set", meeting_id);
-                Err("Recording folder path not available for this meeting".to_string())
-            }
-        }
-        None => {
-            log_warn!("Meeting not found: {}", meeting_id);
-            Err("Meeting not found".to_string())
-        }
-    }
+    let row: Option<Option<String>> =
+        sqlx::query_scalar("SELECT folder_path FROM meetings WHERE id = ?")
+            .bind(&meeting_id)
+            .fetch_optional(state.db_manager.pool())
+            .await
+            .map_err(|e| format!("Database error: {}", e))?;
+    let folder_path = row
+        .ok_or("Meeting not found")?
+        .ok_or("Recording folder path not available for this meeting")?;
+    let roots = [
+        app.path().app_data_dir().map_err(|e| e.to_string())?,
+        get_default_recordings_folder(),
+    ];
+    let folder = system_open::ensure_inside(Path::new(&folder_path), &roots).map_err(|e| {
+        log_warn!("Not opening the folder of meeting {}: {}", meeting_id, e);
+        e.to_string()
+    })?;
+    system_open::launch(folder.as_os_str()).await.map_err(|e| e.to_string())
 }
 
+/// Opens a web or email link in the default browser or mail app. Only
+/// `https:`, `http:` and `mailto:` links open (`system_open`).
 #[tauri::command]
-pub async fn open_external_url(url: String) -> Result<(), String> {
-    use std::process::Command;
-
-    let result = if cfg!(target_os = "windows") {
-        Command::new("cmd").args(&["/C", "start", &url]).output()
-    } else if cfg!(target_os = "macos") {
-        Command::new("open").arg(&url).output()
-    } else {
-        // Linux and other Unix-like systems
-        Command::new("xdg-open").arg(&url).output()
-    };
-
-    match result {
-        Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to open URL: {}", e)),
-    }
+pub async fn open_external_url(url: String) -> Result<(), AppError> {
+    system_open::open_external_url(&url).await.into_ipc()
 }
 
 // ===== CUSTOM OPENAI CONNECTION TEST =====

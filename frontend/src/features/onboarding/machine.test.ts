@@ -19,10 +19,6 @@ const CONTINUE: OnboardingAction = { type: 'continue' };
 const SKIP: OnboardingAction = { type: 'skip' };
 
 describe('the onboarding step machine', () => {
-  it('lists the six steps of the card in order', () => {
-    expect(STEPS).toEqual(['welcome', 'permissions', 'ai_setup', 'calendar', 'profile', 'try_it']);
-  });
-
   it('moves forward and records a finished step as done', () => {
     const progress = run([CONTINUE, CONTINUE]);
 

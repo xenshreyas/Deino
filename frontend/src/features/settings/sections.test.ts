@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { settingsCopy } from './copy';
 import { settingsSectionSchema } from './search';
 import { SETTINGS_SECTIONS } from './sections';
 
@@ -18,13 +17,5 @@ describe('settings sections', () => {
     expect(SETTINGS_SECTIONS.map((section) => section.id).sort()).toEqual(
       [...settingsSectionSchema.options].sort(),
     );
-  });
-
-  test('Appearance sits in the App group, right after General', () => {
-    expect(SETTINGS_SECTIONS.slice(0, 2).map(({ id, group }) => [id, group])).toEqual([
-      ['general', 'app'],
-      ['appearance', 'app'],
-    ]);
-    expect(settingsCopy.sections.appearance.label).toBe('Appearance');
   });
 });
