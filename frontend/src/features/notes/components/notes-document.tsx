@@ -29,11 +29,15 @@ export interface NotesDocumentProps {
   /** Total versions, for the older-version bar. */
   versions: number;
   busy: boolean;
-  onRegenerate: () => void;
+  /** Writes the notes again; `null` when they cannot be (PRV-01). */
+  onRegenerate: (() => void) | null;
   onRestore: () => void;
   onNewest: () => void;
   onStatus: (status: SaveStatus) => void;
 }
+
+/** The banner's action when the notes cannot be regenerated; it is hidden then. */
+const NO_REGENERATE = (): void => undefined;
 
 /** The headings of the rendered notes, in order. */
 function headingsIn(scroller: HTMLElement): HTMLElement[] {
@@ -65,13 +69,14 @@ export function NotesDocument(props: NotesDocumentProps) {
   const { scroller, active, onScroll, jump } = useContents();
   const [dismissed, setDismissed] = useState<number | null>(null);
   const rightPanelOpen = useShellLayout((state) => state.rightPanelOpen);
-  const reasons = dismissed === view.version.version || busy ? [] : view.reasons;
+  const hidden = dismissed === view.version.version || busy || props.onRegenerate === null;
+  const reasons = hidden ? [] : view.reasons;
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       {busy ? <RewritingLine /> : null}
       <RegenerateBanner
         reasons={reasons}
-        onRegenerate={props.onRegenerate}
+        onRegenerate={props.onRegenerate ?? NO_REGENERATE}
         onDismiss={() => {
           setDismissed(view.version.version);
         }}

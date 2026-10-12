@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Finished meetings outside the trash saved at or before ?1: what \"everything\"\n-- moves to the trash, oldest first. A meeting still scheduled, recording or\n-- processing is never touched.\nSELECT m.id AS \"id!: MeetingId\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND m.status IN ('ready', 'failed')\n    AND julianday(m.created_at) <= julianday(?1)\nORDER BY m.created_at, m.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "a963b7a1bbb0a0e704e841c4a291f5c13c43862a784a3b72eaabf9e424e9b105"
+}

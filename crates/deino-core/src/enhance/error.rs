@@ -18,6 +18,12 @@ pub enum EnhanceError {
     /// There is no transcript and no note to write from.
     #[error("There is nothing to write notes from yet: no transcript and no notes.")]
     NothingToEnhance,
+    /// Retention deleted the transcript (PRV-01); the notes it was written
+    /// into stay, but writing them again would lose what came from it.
+    #[error(
+        "The transcript was deleted by your retention settings, so these notes cannot be regenerated."
+    )]
+    TranscriptDeleted,
     /// The newest version has the user's edits; regenerating needs consent.
     #[error("Regenerating will replace the notes you edited.")]
     WouldReplaceEdits,
@@ -72,7 +78,9 @@ impl ErrorClass for EnhanceError {
     fn code(&self) -> ErrorCode {
         match self {
             Self::MeetingNotFound(_) | Self::VersionNotFound { .. } => ErrorCode::NotFound,
-            Self::NothingToEnhance | Self::InvalidDoc(_) => ErrorCode::Invalid,
+            Self::NothingToEnhance | Self::TranscriptDeleted | Self::InvalidDoc(_) => {
+                ErrorCode::Invalid
+            }
             Self::WouldReplaceEdits | Self::AlreadyRunning | Self::NotLatest => ErrorCode::Conflict,
             Self::EmptyNotes => ErrorCode::Llm,
             Self::Llm(error) => error.code(),

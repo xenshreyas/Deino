@@ -115,6 +115,7 @@ impl MaterialSources {
         Ok(Some(Material {
             transcript: self.redacted(transcript).await,
             transcript_edited_at: segments.iter().filter_map(|s| s.edited_at).max(),
+            transcript_deleted: state.transcript_deleted_at.is_some(),
             notes: self.notes(meeting).await?,
             previous: self.previous(&info).await?,
             vocabulary: self.vocabulary.terms(meeting).await?,

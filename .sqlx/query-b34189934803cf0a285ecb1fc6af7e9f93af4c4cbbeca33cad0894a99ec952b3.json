@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meetings SET transcript_deleted_at = ?1, updated_at = ?1\n            WHERE id IN (SELECT value FROM json_each(?2)) AND transcript_deleted_at IS NULL\n            RETURNING id AS \"id!: MeetingId\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "b34189934803cf0a285ecb1fc6af7e9f93af4c4cbbeca33cad0894a99ec952b3"
+}

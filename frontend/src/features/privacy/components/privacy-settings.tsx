@@ -1,8 +1,9 @@
 /**
  * Settings → Privacy & security (PRV-02): encryption at rest, the app lock,
- * and how to protect recordings, which Deino does not encrypt
- * (`docs/setup/encrypted-recordings.md`, summarised inline).
+ * retention (PRV-01), and how to protect recordings, which Deino does not
+ * encrypt (`docs/setup/encrypted-recordings.md`, summarised inline).
  */
+import { RetentionSettings } from '@/features/retention';
 import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 
 import { privacyCopy } from '../copy';
@@ -32,6 +33,7 @@ export function PrivacySettings() {
     <div className="flex flex-col gap-8">
       <EncryptionSettings />
       <LockSettings />
+      <RetentionSettings />
       <RecordingsNote />
     </div>
   );

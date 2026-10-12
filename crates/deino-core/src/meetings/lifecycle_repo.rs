@@ -101,6 +101,7 @@ impl MeetingLifecycleRepo for SqliteMeetingRepo {
                 series_id AS "series_id: SeriesId",
                 template_id AS "template_id: TemplateId",
                 deleted_at AS "deleted_at: DateTime<Utc>",
+                transcript_deleted_at AS "transcript_deleted_at: DateTime<Utc>",
                 audio_path,
                 audio_mic_path,
                 audio_system_path,
@@ -225,6 +226,7 @@ struct StateRow {
     series_id: Option<SeriesId>,
     template_id: Option<TemplateId>,
     deleted_at: Option<DateTime<Utc>>,
+    transcript_deleted_at: Option<DateTime<Utc>>,
     audio_path: Option<String>,
     audio_mic_path: Option<String>,
     audio_system_path: Option<String>,
@@ -244,6 +246,7 @@ impl From<StateRow> for MeetingState {
             series_id: row.series_id,
             template_id: row.template_id,
             deleted_at: row.deleted_at,
+            transcript_deleted_at: row.transcript_deleted_at,
             audio: MeetingAudio {
                 audio_path: row.audio_path,
                 audio_mic_path: row.audio_mic_path,

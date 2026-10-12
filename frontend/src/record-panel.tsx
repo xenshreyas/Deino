@@ -3,7 +3,8 @@
  * transparent, always-on-top, non-activating panel that shows only the
  * pill. No router and no shell, so it loads fast and stays small; its
  * capability (`capabilities/record-panel.json`) grants only the recording
- * plugin, window dragging and the microphone menu.
+ * plugin, window dragging, the microphone menu and the settings (for
+ * PRV-01's once-shown pause tip).
  */
 import '@fontsource-variable/inter';
 import './styles/globals.css';

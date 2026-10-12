@@ -18,6 +18,7 @@ use crate::templates::{BuiltinSync, CATALOG, SqliteTemplateRepo, Template, Templ
 
 mod flows;
 mod long_meetings;
+mod retention;
 
 /// The template every run uses.
 struct Fixed(Template);

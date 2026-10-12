@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Finished meetings outside the trash saved at or before ?1 whose transcript is\n-- still kept and has a line: the transcripts retention deletes, oldest first.\nSELECT m.id AS \"id!: MeetingId\"\nFROM meetings AS m\nWHERE m.deleted_at IS NULL\n    AND m.transcript_deleted_at IS NULL\n    AND m.status IN ('ready', 'failed')\n    AND julianday(m.created_at) <= julianday(?1)\n    AND EXISTS (SELECT 1 FROM transcript_segments AS s WHERE s.meeting_id = m.id)\nORDER BY m.created_at, m.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "d4717d8766f7e3db7a3f3f67270179625b96cf099c14895628ab687cfe40a848"
+}

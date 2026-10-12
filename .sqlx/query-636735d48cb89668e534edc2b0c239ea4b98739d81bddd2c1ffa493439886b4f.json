@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meetings\n            SET audio_path = NULL, audio_mic_path = NULL, audio_system_path = NULL,\n                video_path = NULL, audio_deleted_at = ?1, updated_at = ?1\n            WHERE id IN (SELECT value FROM json_each(?2)) AND audio_deleted_at IS NULL\n            RETURNING id AS \"id!: MeetingId\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "636735d48cb89668e534edc2b0c239ea4b98739d81bddd2c1ffa493439886b4f"
+}

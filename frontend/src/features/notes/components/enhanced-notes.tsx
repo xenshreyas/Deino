@@ -69,7 +69,11 @@ function NotesBody({
   if (query.isPending) return <NotesSkeleton />;
   if (query.isError) return <LoadFailed onRetry={() => void query.refetch()} />;
   if (query.data === null) {
-    return busy ? <WritingNotes /> : <NoNotesYet onEnhance={action.run} error={action.error} />;
+    return busy ? (
+      <WritingNotes />
+    ) : (
+      <NoNotesYet onEnhance={action.run} blocked={action.blocked} error={action.error} />
+    );
   }
   return (
     <LoadedNotes
@@ -103,7 +107,7 @@ function LoadedNotes(props: {
         view={props.view}
         versions={versions}
         busy={props.busy}
-        onRegenerate={action.run}
+        onRegenerate={action.blocked === null ? action.run : null}
         onRestore={() => {
           restore.mutate(props.view.version.version, {
             onSuccess: () => {

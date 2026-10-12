@@ -45,6 +45,9 @@ pub struct Material {
     pub transcript: Vec<TranscriptLine>,
     /// When a transcript segment was last edited.
     pub transcript_edited_at: Option<DateTime<Utc>>,
+    /// Retention deleted the transcript (PRV-01): the notes cannot be
+    /// written again, since only the user's notes are left.
+    pub transcript_deleted: bool,
     /// Who attended.
     pub attendee_ids: Vec<PersonId>,
     /// The notes of the series' previous meeting.

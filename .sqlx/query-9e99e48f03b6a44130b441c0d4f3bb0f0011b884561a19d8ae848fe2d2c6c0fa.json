@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM embeddings\n            WHERE ref_kind = 'transcript' AND meeting_id IN (SELECT value FROM json_each(?1))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "9e99e48f03b6a44130b441c0d4f3bb0f0011b884561a19d8ae848fe2d2c6c0fa"
+}

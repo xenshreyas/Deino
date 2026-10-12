@@ -16,7 +16,7 @@
 //!   meter about 30 times a second and snaps the panel to the nearer edge
 //!   when a drag ends ([`placement`]), remembering where in the settings.
 //! - The page is `record-panel.html`, with its own capability that grants
-//!   the `recording` plugin.
+//!   the `recording` plugin (and `settings`, for PRV-01's pause tip).
 
 mod driver;
 pub(crate) mod placement;

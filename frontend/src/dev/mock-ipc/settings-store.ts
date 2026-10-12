@@ -74,6 +74,8 @@ let settings: Generated.Settings = {
     redactSensitive: false,
     encryptDatabase: false,
     appLock: { enabled: false, idleMinutes: 5, lockOnWake: true },
+    retention: { audio: 'never', transcript: 'never', everything: 'never' },
+    pauseTipSeen: false,
   },
   network: { offlineMode: false, services: {} },
   profile: {

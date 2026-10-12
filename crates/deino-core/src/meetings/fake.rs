@@ -83,6 +83,7 @@ fn default_state(id: &MeetingId, status: MeetingStatus, source: MeetingSource) -
         series_id: None,
         template_id: None,
         deleted_at: None,
+        transcript_deleted_at: None,
         audio: MeetingAudio::default(),
     }
 }

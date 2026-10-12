@@ -89,7 +89,7 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
       <MeetingBrief meetingId={meetingId} />
       <MeetingTemplatePicker
         meetingId={meetingId}
-        onRegenerate={hasNotes ? regenerate.run : null}
+        onRegenerate={hasNotes && regenerate.blocked === null ? regenerate.run : null}
       />
       <MeetingActionItems meetingId={meetingId} />
       <CommentLayer

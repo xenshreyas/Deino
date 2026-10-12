@@ -47,16 +47,25 @@ export function WritingNotes() {
 }
 
 /** No notes yet: what Enhance does, and the button. */
-export function NoNotesYet({ onEnhance, error }: { onEnhance: () => void; error: Error | null }) {
+export function NoNotesYet({
+  onEnhance,
+  blocked,
+  error,
+}: {
+  onEnhance: () => void;
+  /** Why notes cannot be written (PRV-01: the transcript was deleted), or `null`. */
+  blocked: string | null;
+  error: Error | null;
+}) {
   return (
     <div className="flex flex-col items-center">
       <EmptyState
         icon={Sparkles}
         title={notesCopy.emptyTitle}
-        description={notesCopy.emptyBody}
+        description={blocked ?? notesCopy.emptyBody}
         className="pt-[14vh]"
         action={
-          <Button variant="secondary" onClick={onEnhance}>
+          <Button variant="secondary" onClick={onEnhance} disabled={blocked !== null}>
             <Sparkles {...ICON_PROPS} />
             {notesCopy.enhance}
             <Kbd className="ml-1">{ENHANCE_SHORTCUT}</Kbd>

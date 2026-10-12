@@ -22,6 +22,6 @@ mod service;
 
 pub use files::{DiskMeetingFiles, MeetingFiles};
 pub use model::{StoredFiles, TRASH_RETENTION, TrashOutcome, TrashedMeeting};
-pub use purge::{PURGE_INTERVAL, TrashPurger};
+pub use purge::{Housekeeping, PURGE_INTERVAL, TrashPurger};
 pub use repo::TrashBin;
 pub use service::{TrashDeps, TrashService};

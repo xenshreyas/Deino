@@ -36,14 +36,19 @@ impl DiskMeetingFiles {
         Self { recordings, notes }
     }
 
-    /// The folders `files.owner` owns, unless its ID could leave the roots.
-    fn folders(&self, files: &StoredFiles) -> Vec<PathBuf> {
-        let id = files.owner.as_str();
-        if id.is_empty() || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
-            log::warn!(target: "meetings", "skipped the folders of an unexpected meeting ID");
-            return Vec::new();
+    /// Deletes `files`' recordings and the `recordings/<owner>` folder (clips
+    /// included), but not the note images in `meetings/<owner>`: what
+    /// retention removes when a meeting's audio expires (PRV-01). Paths
+    /// outside the recordings folder are the user's own and stay. Missing
+    /// files are not an error.
+    pub async fn delete_recordings(&self, files: &StoredFiles) -> io::Result<()> {
+        for path in self.owned_paths(files) {
+            ignore_missing(tokio::fs::remove_file(path).await)?;
         }
-        vec![self.recordings.join(id), self.notes.join(id)]
+        if let Some(id) = owner_folder(files) {
+            ignore_missing(tokio::fs::remove_dir_all(self.recordings.join(id)).await)?;
+        }
+        Ok(())
     }
 
     /// The recordings inside the app's folders; the user's own files stay.
@@ -60,14 +65,22 @@ impl DiskMeetingFiles {
 #[async_trait]
 impl MeetingFiles for DiskMeetingFiles {
     async fn delete(&self, files: &StoredFiles) -> io::Result<()> {
-        for path in self.owned_paths(files) {
-            ignore_missing(tokio::fs::remove_file(path).await)?;
-        }
-        for folder in self.folders(files) {
-            ignore_missing(tokio::fs::remove_dir_all(&folder).await)?;
+        self.delete_recordings(files).await?;
+        if let Some(id) = owner_folder(files) {
+            ignore_missing(tokio::fs::remove_dir_all(self.notes.join(id)).await)?;
         }
         Ok(())
     }
+}
+
+/// The folder name `files.owner` owns, unless its ID could leave the roots.
+fn owner_folder(files: &StoredFiles) -> Option<&str> {
+    let id = files.owner.as_str();
+    if id.is_empty() || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        log::warn!(target: "meetings", "skipped the folders of an unexpected meeting ID");
+        return None;
+    }
+    Some(id)
 }
 
 /// True when `path` is absolute and lies under `root` with no `..` step.
