@@ -35,12 +35,19 @@ pub struct PlacedReader {
 impl PlacedReader {
     /// A reader of `source` from the start of the recording.
     pub fn new(source: TimelineSource) -> Result<Self, ResampleError> {
+        Self::starting_at(source, Frames::ZERO)
+    }
+
+    /// A reader of `source` whose first block sits at `start` (48 kHz
+    /// frames): a resumed meeting's audio follows its recorded length, and
+    /// nothing before it is read or padded.
+    pub fn starting_at(source: TimelineSource, start: Frames) -> Result<Self, ResampleError> {
         let resampler = ChunkResampler::new(SampleRate::STORAGE, LANE_RATE)?;
         let skip = LANE_RATE.frames_in(resampler.delay());
         Ok(Self {
             source,
             resampler,
-            next: Frames::ZERO,
+            next: start,
             skip,
             block: Vec::with_capacity(4_800),
             fifo: VecDeque::with_capacity(LANE_RATE.frames_in(std::time::Duration::from_secs(4))),

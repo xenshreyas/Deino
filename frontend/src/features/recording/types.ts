@@ -1,10 +1,20 @@
 /** Types of the recording feature, from the generated bindings. */
 export type {
+  AudioLevels,
+  AutoStopState,
   Channel,
+  EndingNotice,
+  HealthIssue,
   HealthKind,
   HealthNotice,
+  IssueKind,
+  Microphone,
+  PanelEdge,
+  PanelRegion,
   RecordingPhase,
   RecordingSnapshot,
   SegmentUpdate,
   SegmentUpdateKind,
+  SplitOffer,
+  StopReason,
 } from '@/lib/ipc/generated/recording';

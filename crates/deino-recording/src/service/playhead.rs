@@ -31,9 +31,10 @@ impl RecordingService {
     /// Where the recorder is now. Cheap: two locks and a clock read.
     pub fn playhead(&self) -> Playhead {
         let slot = lock(&self.slot);
-        let Slot::Active(session) = &*slot else {
+        let Slot::Active(running) = &*slot else {
             return Playhead::Idle;
         };
+        let session = &running.session;
         let meeting = session.meeting().clone();
         match self.state().phase {
             RecordingPhase::Recording => Playhead::Recording {

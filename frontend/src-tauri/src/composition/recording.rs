@@ -6,8 +6,11 @@
 //! builds), the `AVAssetWriter` track encoder and the Tauri event adapter;
 //! each start watches the meeting app's speaker names (CAP-05's
 //! `WatchOnStart`) and links the nearest calendar event (ORG-03's
-//! `LinkOnStart`).
-//! Then it recovers meetings a crash left in `recording`, in the background.
+//! `LinkOnStart`), one `StartObservers` fan-out. Then it recovers meetings a
+//! crash left in `recording`, in the background, and starts auto-stop over
+//! the recorder (`autostop.rs`, CAP-07).
+
+mod autostop;
 
 use std::sync::Arc;
 
@@ -23,7 +26,7 @@ use deino_core::segments::SqliteSegmentRepo;
 use deino_core::settings::SettingsService;
 use deino_core::vocabulary::VocabularyService;
 use deino_db::Database;
-use deino_domain::SystemClock;
+use deino_domain::{Clock, SystemClock};
 use deino_recording::{
     CaptureBackend, DeviceCapture, MockCapture, Preferences, RecordingDeps, RecordingPreferences,
     RecordingService, StartObservers, recover_interrupted,
@@ -31,7 +34,7 @@ use deino_recording::{
 use tauri::{AppHandle, Manager};
 
 use crate::features::calendar::LinkOnStart;
-use crate::features::recording::TauriRecordingEvents;
+use crate::features::recording::{RecordPanel, TauriRecordingEvents};
 use crate::features::speaker_tags::WatchOnStart;
 use crate::paths::AppPaths;
 use crate::stt::{SttLanes, SttRuntime};
@@ -58,7 +61,7 @@ impl Managed {
 /// Builds and manages `Arc<RecordingService>`, and recovers interrupted
 /// recordings. Needs the settings, the STT runtime and the pipeline's
 /// lifecycle service to be managed first.
-pub(crate) fn attach_recording(app: &AppHandle, database: &Database) {
+pub(crate) fn attach_recording(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     let paths = match AppPaths::resolve(app) {
         Ok(paths) => paths,
         Err(error) => {
@@ -77,6 +80,7 @@ pub(crate) fn attach_recording(app: &AppHandle, database: &Database) {
     app.manage(Arc::new(
         RecordingService::new(deps).observing_starts(Arc::new(on_start)),
     ));
+    autostop::attach_autostop(app, clock);
 }
 
 /// The recorder's ports over the app's adapters.
@@ -95,8 +99,10 @@ fn recording_deps(
         lifecycle,
         vocabulary,
     } = managed;
+    let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
     RecordingDeps {
-        meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
+        catalog: meetings.clone(),
+        meetings,
         lifecycle,
         segments: segments.clone(),
         speakers: segments,
@@ -115,7 +121,7 @@ fn recording_deps(
             wall_clock: Arc::new(SystemClock),
             disk: Arc::new(SystemDiskSpace),
         },
-        events: Arc::new(TauriRecordingEvents::new(app.clone())),
+        events: Arc::new(TauriRecordingEvents::new(app.clone()).with(RecordPanel)),
         vocabulary,
         recordings: paths.recordings(),
     }

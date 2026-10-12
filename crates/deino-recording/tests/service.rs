@@ -26,9 +26,9 @@ use deino_core::meetings::{MeetingTitle, NewMeeting};
 use deino_domain::{Clock, MeetingId, MeetingSource, MeetingStatus, Millis};
 use deino_recording::engine::{EngineError, LaneTranscriber};
 use deino_recording::{
-    Lane, LaneEngines, Playhead, RecordingDeps, RecordingError, RecordingPhase, recover_interrupted,
+    LaneEngines, LaneRequest, Playhead, RecordingDeps, RecordingError, RecordingPhase,
+    StartRequest, recover_interrupted,
 };
-use deino_stt::SessionSink;
 use rig::{FastClock, FixtureCapture, Rig, rig, rig_with};
 
 /// Generated voices on headphones, at 4× real time.
@@ -70,8 +70,11 @@ async fn only_one_recording_runs_and_stop_pause_resume_need_one() {
         rig.service.resume(),
         Err(RecordingError::NotRecording)
     ));
-    let meeting = rig.service.start(None).await.unwrap();
-    let second = rig.service.start(Some("Another".into())).await;
+    let meeting = rig.service.start(StartRequest::default()).await.unwrap();
+    let second = rig
+        .service
+        .start(StartRequest::titled(Some("Another".into())))
+        .await;
     let resumed = rig.service.resume();
 
     assert!(matches!(second, Err(RecordingError::AlreadyRecording)));
@@ -88,7 +91,11 @@ async fn only_one_recording_runs_and_stop_pause_resume_need_one() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn pause_time_is_counted_and_stop_hands_the_meeting_to_processing() {
     let rig = rig(voices()).await;
-    let meeting = rig.service.start(Some("Standup".into())).await.unwrap();
+    let meeting = rig
+        .service
+        .start(StartRequest::titled(Some("Standup".into())))
+        .await
+        .unwrap();
     record_for(&rig, Duration::from_secs(2)).await;
 
     let paused = rig.service.pause().unwrap();
@@ -127,7 +134,7 @@ async fn pause_time_is_counted_and_stop_hands_the_meeting_to_processing() {
 async fn the_playhead_follows_the_recording_and_stands_still_while_paused() {
     let rig = rig(voices()).await;
     assert_eq!(rig.service.playhead(), Playhead::Idle);
-    let meeting = rig.service.start(None).await.unwrap();
+    let meeting = rig.service.start(StartRequest::default()).await.unwrap();
     record_for(&rig, Duration::from_secs(2)).await;
 
     let Playhead::Recording { meeting: first, at } = rig.service.playhead() else {
@@ -158,13 +165,9 @@ async fn the_playhead_follows_the_recording_and_stands_still_while_paused() {
 struct MissingModel;
 
 impl LaneEngines for MissingModel {
-    fn open(
-        &self,
-        lane: Lane,
-        _sink: Box<dyn SessionSink>,
-    ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+    fn open(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError> {
         Err(EngineError {
-            lane,
+            lane: request.lane,
             source: "no model downloaded".into(),
         })
     }
@@ -174,7 +177,7 @@ impl LaneEngines for MissingModel {
 async fn a_start_that_fails_leaves_no_meeting_and_the_recorder_idle() {
     let rig = rig_with(voices(), Arc::new(MissingModel)).await;
 
-    let started = rig.service.start(None).await;
+    let started = rig.service.start(StartRequest::default()).await;
 
     assert!(matches!(started, Err(RecordingError::Engine(_))));
     assert_eq!(rig.service.state().phase, RecordingPhase::Idle);
@@ -196,7 +199,7 @@ async fn a_start_that_fails_leaves_no_meeting_and_the_recorder_idle() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn launch_recovery_repairs_interrupted_recordings_and_fails_empty_ones() {
     let rig = rig(voices()).await;
-    let interrupted = rig.service.start(None).await.unwrap();
+    let interrupted = rig.service.start(StartRequest::default()).await.unwrap();
     record_for(&rig, Duration::from_secs(2)).await;
     let never_recorded = MeetingId::new("meeting-without-audio");
     rig.deps

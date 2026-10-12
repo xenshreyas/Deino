@@ -1,7 +1,9 @@
 //! A recording service over real SQLite, mock capture playing fixture
-//! audio, fake encoders and the scripted fake STT engine, with a host clock
-//! that runs several times faster than real time ([`FastClock`]), so a
-//! minute of fixture audio records in a few seconds.
+//! audio, fake encoders and the scripted fake STT engine. The host clock
+//! either runs several times faster than real time ([`FastClock`], for the
+//! state-machine tests) or is paced by the lanes' intake
+//! (`support/paced.rs`, for the transcript tests), so a minute of fixture
+//! audio records in a few seconds.
 #![allow(dead_code, reason = "each test crate uses part of the shared rig")]
 
 use std::path::PathBuf;
@@ -57,6 +59,58 @@ impl HostClock for FastClock {
     fn now(&self) -> HostTime {
         let elapsed = self.real.now().since(self.origin) * self.speed;
         self.origin.plus(elapsed)
+    }
+}
+
+/// A test's host clock: it can wait until some recording time has passed.
+pub trait TestClock: HostClock {
+    /// Returns once `audio` of recording time has passed, without sleeping.
+    fn wait_for(&self, audio: Duration);
+}
+
+impl TestClock for FastClock {
+    fn wait_for(&self, audio: Duration) {
+        FastClock::wait_for(self, audio);
+    }
+}
+
+/// What a rig records with: its clock and capture.
+pub struct Harness {
+    /// The clock the test waits on.
+    pub clock: Arc<dyn TestClock>,
+    /// The same clock, as the recorder's host clock.
+    pub host: Arc<dyn HostClock>,
+    /// The sources.
+    pub capture: Arc<dyn CaptureBackend>,
+}
+
+impl From<FixtureCapture> for Harness {
+    fn from(capture: FixtureCapture) -> Self {
+        let clock = Arc::clone(&capture.clock);
+        Self {
+            clock: clock.clone(),
+            host: clock,
+            capture: Arc::new(capture),
+        }
+    }
+}
+
+/// What a rig transcribes, corrects and encodes with, and the user's settings.
+pub struct RigOptions {
+    pub engines: Arc<dyn LaneEngines>,
+    pub vocabulary: Arc<dyn LiveVocabulary>,
+    pub preferences: Preferences,
+    pub encoders: Arc<dyn EncoderFactory>,
+}
+
+impl Default for RigOptions {
+    fn default() -> Self {
+        Self {
+            engines: Arc::new(ScriptedEngines),
+            vocabulary: Arc::new(NoLiveVocabulary),
+            preferences: Preferences::default(),
+            encoders: Arc::new(FakeEncoderFactory::default()),
+        }
     }
 }
 
@@ -116,12 +170,14 @@ pub struct Rig {
     pub service: RecordingService,
     /// What the service was built over (launch recovery takes it).
     pub deps: RecordingDeps,
-    pub clock: Arc<FastClock>,
+    pub clock: Arc<dyn TestClock>,
     /// The wall clock: meeting times, pauses.
     pub wall: Arc<FakeClock>,
     pub database: Database,
     pub events: Arc<RecordedEvents>,
     pub recordings: tempfile::TempDir,
+    /// The recording volume's free space.
+    pub disk: Arc<FakeDiskSpace>,
 }
 
 /// A service recording `capture` into a fresh database, transcribing with
@@ -139,88 +195,84 @@ pub async fn rig_with(capture: FixtureCapture, engines: Arc<dyn LaneEngines>) ->
     rig_over(capture, options).await
 }
 
-/// What a rig transcribes, corrects and encodes with, and the user's settings.
-pub struct RigOptions {
-    pub engines: Arc<dyn LaneEngines>,
-    pub vocabulary: Arc<dyn LiveVocabulary>,
-    pub preferences: Preferences,
-    pub encoders: Arc<dyn EncoderFactory>,
-}
-
-impl Default for RigOptions {
-    fn default() -> Self {
-        Self {
-            engines: Arc::new(ScriptedEngines),
-            vocabulary: Arc::new(NoLiveVocabulary),
-            preferences: Preferences::default(),
-            encoders: Arc::new(FakeEncoderFactory::default()),
-        }
-    }
-}
-
 /// A service recording `capture` with `options`.
 pub async fn rig_over(capture: FixtureCapture, options: RigOptions) -> Rig {
+    rig_on(capture.into(), options).await
+}
+
+/// A service over `harness` with `options`, into a fresh database.
+pub async fn rig_on(harness: Harness, options: RigOptions) -> Rig {
     let database = deino_testkit::test_db().await;
-    let capture_clock = Arc::clone(&capture.clock);
     let recordings = tempfile::tempdir().unwrap();
     let wall = Arc::new(FakeClock::new(
         Utc.with_ymd_and_hms(2026, 10, 9, 10, 0, 0).unwrap(),
     ));
     let events = Arc::new(RecordedEvents::default());
-    let parts = Parts {
-        database: &database,
-        wall: &wall,
-        events: &events,
-        recordings: &recordings,
-    };
-    let deps = deps(capture, options, &parts);
+    let disk = Arc::new(FakeDiskSpace::new(Bytes::gib(100)));
+    let deps = deps(
+        &database,
+        &recordings,
+        (options, harness.capture),
+        Shared {
+            host: harness.host,
+            wall: wall.clone(),
+            disk: disk.clone(),
+            events: events.clone(),
+        },
+    );
     Rig {
-        clock: capture_clock,
+        clock: harness.clock,
         service: RecordingService::new(deps.clone()),
         deps,
         wall,
         database,
         events,
         recordings,
+        disk,
     }
 }
 
-/// What the rig's dependencies are built over.
-struct Parts<'a> {
-    database: &'a Database,
-    wall: &'a Arc<FakeClock>,
-    events: &'a Arc<RecordedEvents>,
-    recordings: &'a tempfile::TempDir,
+/// The fakes a rig shares with its test.
+struct Shared {
+    host: Arc<dyn HostClock>,
+    wall: Arc<FakeClock>,
+    disk: Arc<FakeDiskSpace>,
+    events: Arc<RecordedEvents>,
 }
 
-/// The recorder's ports over SQLite, the capture and `options`.
-fn deps(capture: FixtureCapture, options: RigOptions, parts: &Parts<'_>) -> RecordingDeps {
+/// The service's ports over `database` and the shared fakes.
+fn deps(
+    database: &Database,
+    recordings: &tempfile::TempDir,
+    (options, capture): (RigOptions, Arc<dyn CaptureBackend>),
+    shared: Shared,
+) -> RecordingDeps {
     let RigOptions {
         engines,
         vocabulary,
         preferences,
         encoders,
     } = options;
-    let (database, wall) = (parts.database, parts.wall);
     let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
     let segments = Arc::new(SqliteSegmentRepo::new(database.clone()));
     RecordingDeps {
+        catalog: meetings.clone(),
         meetings: meetings.clone(),
-        lifecycle: Arc::new(MeetingLifecycleService::new(meetings, wall.clone())),
+        lifecycle: Arc::new(MeetingLifecycleService::new(meetings, shared.wall.clone())),
         segments: segments.clone(),
         speakers: segments,
         people: Arc::new(SqlitePeopleRepo::new(database.clone())),
         engines,
         recorder: RecorderDeps {
             encoders,
-            host_clock: capture.clock.clone(),
-            wall_clock: wall.clone(),
-            disk: Arc::new(FakeDiskSpace::new(Bytes::gib(100))),
+            host_clock: shared.host,
+            wall_clock: shared.wall,
+            disk: shared.disk,
         },
-        capture: Arc::new(capture),
+        capture,
         preferences: Arc::new(preferences),
-        events: parts.events.clone(),
+        events: shared.events,
         vocabulary,
-        recordings: PathBuf::from(parts.recordings.path()),
+        recordings: PathBuf::from(recordings.path()),
     }
 }

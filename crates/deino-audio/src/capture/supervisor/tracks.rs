@@ -3,33 +3,23 @@
 //! The microphone must start for a recording to start. System audio may be
 //! unavailable (no permission, an older macOS); its slot then keeps the
 //! writer's ring, the track records silence, and the watchdog keeps trying
-//! with backoff.
+//! with backoff. Mid-recording the user can switch the microphone (the new
+//! device feeds the same ring, so the timeline goes on) and turn system
+//! audio off and on again (off records silence). Every change and every
+//! tick publishes each track's [`TrackStatus`].
 
 use std::sync::Arc;
 
 use crate::capture::conditioner::CaptureShared;
+use crate::capture::devices::MicChoice;
 use crate::capture::track::TrackCapture;
-use crate::capture::watchdog::{TrackSample, TrackWatch, WatchAction, WatchPolicy};
+use crate::capture::watchdog::WatchAction;
 use crate::health::{HealthEvent, HealthSender};
 use crate::ring::RtSink;
-use crate::source::{SourceError, SourceFactory};
-use crate::units::{Frames, HostTime, Track};
+use crate::source::{AudioSource, SourceError, SourceFactory};
+use crate::units::{HostTime, Track};
 
-/// A track that is capturing, or waiting for its device.
-#[derive(Debug)]
-enum Slot {
-    Running(TrackCapture),
-    Absent(RtSink),
-    /// Momentarily empty while a start is attempted.
-    Empty,
-}
-
-/// One track: its slot and its watchdog.
-#[derive(Debug)]
-struct Watched {
-    slot: Slot,
-    watch: TrackWatch,
-}
+use super::watched::{Slot, Watched, observe, status_of, watched};
 
 /// Both tracks of a recording.
 #[derive(Debug)]
@@ -37,8 +27,10 @@ pub(super) struct TrackSet {
     microphone: Watched,
     system: Watched,
     factory: Arc<dyn SourceFactory>,
+    choice: Option<MicChoice>,
     shared: CaptureShared,
     health: HealthSender,
+    suspended: bool,
 }
 
 /// What a [`TrackSet`] is built from.
@@ -60,13 +52,16 @@ impl TrackSet {
             microphone: watched(Track::Microphone, Slot::Running(microphone), parts.now),
             system: watched(Track::System, Slot::Absent(parts.system), parts.now),
             factory: parts.factory,
+            choice: None,
             shared: parts.shared,
             health: parts.health,
+            suspended: false,
         };
         if set.bring_up(Track::System).is_err() {
             set.health.emit(HealthEvent::SystemAudioUnavailable);
         }
         set.check_hands_free();
+        set.publish();
         Ok(set)
     }
 
@@ -76,28 +71,32 @@ impl TrackSet {
             let action = observe(self.get(track), now);
             self.act(track, action);
         }
+        self.publish();
     }
 
     /// Stops both sources (pause, sleep); conditioners keep their rings.
     pub(super) fn suspend(&mut self) {
+        self.suspended = true;
         for track in Track::ALL {
-            if let Slot::Running(capture) = &mut self.get(track).slot {
-                capture.suspend();
-            }
+            self.stop(track);
         }
+        self.publish();
     }
 
-    /// Restarts both sources (resume, wake) and forgets stalls.
+    /// Restarts the wanted sources (resume, wake) and forgets stalls.
     pub(super) fn resume(&mut self, now: HostTime) {
+        self.suspended = false;
         for track in Track::ALL {
+            if !self.get(track).enabled {
+                continue;
+            }
             if let Err(error) = self.restart(track) {
                 log::warn!(target: "deino_audio::capture", "the {track} source did not restart: {error}");
             }
-        }
-        for track in Track::ALL {
             self.get(track).watch.reset(now);
         }
         self.check_hands_free();
+        self.publish();
     }
 
     /// Restarts one track's source (a device change); its stall watch keeps running.
@@ -110,6 +109,48 @@ impl TrackSet {
             self.check_hands_free();
         }
         result
+    }
+
+    /// Records from the microphone `choice` names from now on. The new
+    /// device feeds the same ring, so the track goes on without a gap
+    /// beyond the switch itself (the timeline fills it with silence).
+    pub(super) fn switch_microphone(
+        &mut self,
+        choice: MicChoice,
+        now: HostTime,
+    ) -> Result<(), SourceError> {
+        let source = self.factory.microphone_for(&choice);
+        self.choice = Some(choice);
+        let result = match &mut self.microphone.slot {
+            Slot::Running(capture) if !self.suspended => capture.replace(source),
+            Slot::Running(capture) => {
+                capture.adopt(source);
+                Ok(())
+            }
+            Slot::Absent(_) | Slot::Empty => self.bring_up(Track::Microphone),
+        };
+        self.microphone.watch.reset(now);
+        self.check_hands_free();
+        self.publish();
+        result
+    }
+
+    /// Turns a track on or off. Off stops its source and records silence;
+    /// on starts it again (immediately, unless the recording is paused).
+    pub(super) fn set_enabled(&mut self, track: Track, enabled: bool, now: HostTime) {
+        if self.get(track).enabled == enabled {
+            return;
+        }
+        self.get(track).enabled = enabled;
+        if !enabled {
+            self.stop(track);
+        } else if !self.suspended {
+            if let Err(error) = self.restart(track) {
+                log::warn!(target: "deino_audio::capture", "the {track} source did not start: {error}");
+            }
+            self.get(track).watch.reset(now);
+        }
+        self.publish();
     }
 
     /// Stops both tracks and joins their conditioners.
@@ -126,6 +167,13 @@ impl TrackSet {
         match track {
             Track::Microphone => &mut self.microphone,
             Track::System => &mut self.system,
+        }
+    }
+
+    /// Stops a running source, keeping its conditioner.
+    fn stop(&mut self, track: Track) {
+        if let Slot::Running(capture) = &mut self.get(track).slot {
+            capture.suspend();
         }
     }
 
@@ -148,10 +196,7 @@ impl TrackSet {
         let Slot::Absent(output) = std::mem::replace(&mut self.get(track).slot, Slot::Empty) else {
             return Ok(());
         };
-        let mut source = match track {
-            Track::Microphone => self.factory.microphone(),
-            Track::System => self.factory.system(),
-        };
+        let mut source = self.new_source(track);
         let stream = match source.start() {
             Ok(stream) => stream,
             Err(error) => {
@@ -164,6 +209,26 @@ impl TrackSet {
         Ok(())
     }
 
+    /// A new source for `track`, following the microphone switch if any.
+    fn new_source(&self, track: Track) -> Box<dyn AudioSource> {
+        match (track, &self.choice) {
+            (Track::Microphone, Some(choice)) => self.factory.microphone_for(choice),
+            (Track::Microphone, None) => self.factory.microphone(),
+            (Track::System, _) => self.factory.system(),
+        }
+    }
+
+    /// Writes each track's status for the pipeline, health and the panel.
+    fn publish(&self) {
+        for (track, watched) in [
+            (Track::Microphone, &self.microphone),
+            (Track::System, &self.system),
+        ] {
+            let status = status_of(watched, self.suspended);
+            self.shared.tracks.get(track).set_status(status);
+        }
+    }
+
     /// Warns once per start when the microphone is a headset in call mode.
     fn check_hands_free(&self) {
         if let Slot::Running(capture) = &self.microphone.slot
@@ -172,32 +237,4 @@ impl TrackSet {
             self.health.emit(HealthEvent::BluetoothCallMode);
         }
     }
-}
-
-fn watched(track: Track, slot: Slot, now: HostTime) -> Watched {
-    let policy = match track {
-        Track::Microphone => WatchPolicy::MICROPHONE,
-        Track::System => WatchPolicy::SYSTEM,
-    };
-    Watched {
-        slot,
-        watch: TrackWatch::new(policy, now),
-    }
-}
-
-/// Feeds one tick of `watched`'s activity to its watchdog. A suspended
-/// track is left alone; an absent one counts as a dead device.
-fn observe(watched: &mut Watched, now: HostTime) -> WatchAction {
-    let sample = match &watched.slot {
-        Slot::Running(capture) if !capture.is_running() => return WatchAction::None,
-        Slot::Running(capture) => TrackSample {
-            frames: capture.meter().frames(),
-            alive: capture.is_alive(),
-        },
-        Slot::Absent(_) | Slot::Empty => TrackSample {
-            frames: Frames::ZERO,
-            alive: false,
-        },
-    };
-    watched.watch.observe(now, sample)
 }

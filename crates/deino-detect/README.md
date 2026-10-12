@@ -25,7 +25,14 @@ countdown.
   (dwell, cooldown, handled meetings, recording and on/off suppression, over
   a `Clock`).
 - `DetectionService` (the prompt's answers, the auto-start countdown, the
-  `DetectionEvent` stream) and the `Detector` thread.
+  `DetectionEvent` stream, and which meeting app holds the microphone while
+  recording) and the `Detector` thread.
+- Auto-stop (`autostop/`, CAP-07, ADR 0039): `AutoStopPolicy` (pure, one
+  `Observation` per tick: microphone released, no speech, sleep, calendar
+  end, disk full; the 15 s "Ending…" notice and Keep recording),
+  `boundary` (the recording's event and the back-to-back offer),
+  `AutoStopService` (arming, answers, the state the UI shows) over the
+  ports in `autostop/ports.rs`, and the 1 Hz `ticker`.
 - The ports the app implements (`outputs.rs`, `calendar.rs`) and their fakes
   (`fake.rs`, feature `test-support`). Which event a call belongs to is
   `deino-core`'s rule (`calendar::linking::nearest_event`, ORG-03), applied
@@ -37,7 +44,8 @@ countdown.
   and `deino-core`'s `DetectionSettings`.
 - Recording: it asks through `RecordingStarter` (CAP-02 owns recording).
 - Calendars: `CalendarLookup` is a port; ORG-01 provides events.
-- Auto-stop (CAP-07 builds on `DetectionEvent::MeetingEnded`).
+- Stopping and starting recordings: auto-stop decides, the app's
+  `AutoStopActions` call the recorder.
 
 ## Invariants
 

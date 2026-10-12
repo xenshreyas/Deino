@@ -27,7 +27,7 @@ use std::time::Duration;
 use deino_audio::capture::OutputRoute;
 use deino_audio::{CmafEncoderFactory, HostClock, SystemHostClock, TestSignal};
 use deino_domain::Channel;
-use deino_recording::Preferences;
+use deino_recording::{Preferences, StartRequest};
 use deino_testkit::Fixtures;
 use deino_testkit::fixture::{MeetingKind, PcmTrack};
 use rig::{FastClock, FixtureCapture, RigOptions, rig_over};
@@ -93,7 +93,7 @@ async fn record(record_only: bool) -> f64 {
     let rig = rig_over(capture, options).await;
     let wall = SystemHostClock::new();
     let (cpu_before, started) = (cpu_time(), wall.now());
-    rig.service.start(None).await.unwrap();
+    rig.service.start(StartRequest::default()).await.unwrap();
     let clock = Arc::clone(&rig.clock);
     tokio::task::spawn_blocking(move || clock.wait_for(LENGTH))
         .await

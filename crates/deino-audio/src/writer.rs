@@ -92,6 +92,9 @@ pub struct WriterContext {
     pub health: HealthSender,
     /// The recording epoch every timeline is anchored to.
     pub epoch: HostTime,
+    /// The timeline frame captured at `epoch`: zero, or the recorded length
+    /// when a finished recording resumes.
+    pub start: Frames,
 }
 
 /// Stops a writer at a host time.
@@ -175,6 +178,7 @@ fn run(
         source: parts.source,
         placed: parts.placed,
         epoch: context.epoch,
+        start: context.start,
         encoder,
         clock: context.clock,
         health: context.health,

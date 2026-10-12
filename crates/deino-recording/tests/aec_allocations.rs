@@ -14,7 +14,7 @@
 )]
 
 use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::cell::Cell;
 
 use deino_recording::echo::{EchoCanceller, FRAME, NoEchoCanceller, SonoraAec};
 
@@ -23,14 +23,23 @@ const SONORA_ALLOCATIONS_PER_FRAME: usize = 36;
 
 struct Counting;
 
-static COUNTING: AtomicBool = AtomicBool::new(false);
-static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
+// Per thread: the tests run in parallel, and only the allocations of the
+// thread being measured count (a shared counter also counted the other
+// test's, which made the zero-allocation test fail now and then). Const
+// initialised and without `Drop`, so reading them never allocates.
+thread_local! {
+    static COUNTING: Cell<bool> = const { Cell::new(false) };
+    static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
+}
 
 // SAFETY: forwards every call to the system allocator unchanged.
 unsafe impl GlobalAlloc for Counting {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        if COUNTING.load(Ordering::Relaxed) {
-            ALLOCATIONS.fetch_add(1, Ordering::Relaxed);
+        if COUNTING.try_with(Cell::get).unwrap_or(false) {
+            // Ignored when the thread is already gone: nothing to count.
+            ALLOCATIONS
+                .try_with(|count| count.set(count.get() + 1))
+                .unwrap_or(());
         }
         // SAFETY: the caller upholds `GlobalAlloc::alloc`'s contract.
         unsafe { System.alloc(layout) }
@@ -61,13 +70,13 @@ fn count(canceller: &mut dyn EchoCanceller, range: std::ops::Range<usize>) -> us
         .map(|index| (frame(index), frame(index + 3)))
         .collect();
     let mut frames = frames;
-    ALLOCATIONS.store(0, Ordering::SeqCst);
-    COUNTING.store(true, Ordering::SeqCst);
+    ALLOCATIONS.set(0);
+    COUNTING.set(true);
     for (reference, capture) in &mut frames {
         canceller.process(reference, capture);
     }
-    COUNTING.store(false, Ordering::SeqCst);
-    ALLOCATIONS.load(Ordering::SeqCst)
+    COUNTING.set(false);
+    ALLOCATIONS.get()
 }
 
 #[test]

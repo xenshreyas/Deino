@@ -19,6 +19,7 @@
 
 mod actor;
 mod tracks;
+mod watched;
 
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender, SyncSender, sync_channel};
@@ -30,8 +31,10 @@ use deino_domain::Clock;
 use self::actor::{Command, Input, Supervisor};
 use self::tracks::{TrackSet, TrackSetParts};
 use super::conditioner::CaptureShared;
+use super::devices::MicChoice;
 use super::events::{SystemEvent, SystemWatch};
 use super::route::{OutputRoute, RouteProbe};
+use super::state::TrackStates;
 use crate::clock::HostClock;
 use crate::health::HealthSender;
 use crate::ring::RtSink;
@@ -137,13 +140,31 @@ impl Capture {
         self.request(Command::Resume);
     }
 
+    /// Each track's meter and status, for the live pipeline, recording
+    /// health and the record panel.
+    pub fn tracks(&self) -> Arc<TrackStates> {
+        Arc::clone(&self.shared.tracks)
+    }
+
+    /// Records from the microphone `choice` names from now on; returns
+    /// once the switch was attempted (a device that fails to start is
+    /// reported through health and retried like any other).
+    pub fn set_microphone(&self, choice: MicChoice) {
+        self.request(|reply| Command::Microphone(choice, reply));
+    }
+
+    /// Turns system audio on or off; off records silence on its track.
+    pub fn set_system_audio(&self, enabled: bool) {
+        self.request(|reply| Command::SystemAudio(enabled, reply));
+    }
+
     /// Stops both tracks and their conditioners; returns once their audio
     /// has reached the writers' rings.
     pub fn stop(mut self) {
         self.shut_down();
     }
 
-    fn request(&self, command: fn(SyncSender<()>) -> Command) {
+    fn request(&self, command: impl FnOnce(SyncSender<()>) -> Command) {
         let (reply, done) = sync_channel(1);
         if self.commands.send(Input::Command(command(reply))).is_ok() {
             done.recv().ok();

@@ -46,7 +46,8 @@ pub use pcm::{Millis, SAMPLE_RATE_HZ};
 pub use pool::{EnginePool, EngineSlot, Lane, PinGuard};
 pub use protocol::{BackendChoice, BatchTranscript, LoadedInfo, StreamParams};
 pub use session::{
-    FinalSegment, LiveSession, LiveText, SegmentOrigin, SegmentPolicy, SessionConfig, SessionSink,
+    FinalSegment, LaneStatus, LiveSession, LiveText, SegmentOrigin, SegmentPolicy, SessionConfig,
+    SessionSink, StatusHandle,
 };
 pub use supervisor::{EngineSupervisor, LoadSpec, StreamHandle, SupervisorConfig, WorkerLauncher};
 pub use transcriber::{BatchTranscriber, StreamingTranscriber, Transcriber, TranscriptStream};

@@ -1,7 +1,8 @@
 //! Detection's recording ports over the live recorder (CAP-02).
 //!
 //! - [`RecorderStarter`]: starts `deino_recording::RecordingService` for a
-//!   detected meeting, titled after its calendar event or its app, and
+//!   detected meeting, titled after its calendar event or its app and
+//!   linked to that event, arms auto-stop to follow its app (CAP-07), and
 //!   tells the main window ([`RecordingRequested`]) so "Take notes" opens
 //!   the record screen;
 //! - [`RecorderStatus`]: whether the recorder is busy.
@@ -11,10 +12,13 @@
 
 use std::sync::Arc;
 
+use deino_core::calendar::CalendarService;
+use deino_core::meetings::MeetingLink;
+use deino_detect::autostop::AutoStopService;
 use deino_detect::{
     DetectError, Detection, MeetingKind, RecordingRequest, RecordingStarter, RecordingStatus,
 };
-use deino_recording::{RecordingPhase, RecordingService};
+use deino_recording::{RecordingPhase, RecordingService, StartRequest};
 use tauri::{AppHandle, Manager, Runtime};
 use tauri_specta::Event;
 
@@ -70,7 +74,10 @@ impl<R: Runtime> RecordingStarter for RecorderStarter<R> {
         if let Err(error) = requested.emit(&self.app) {
             log::warn!(target: "detect", "could not tell the window about the recording: {error}");
         }
-        let (app, title) = (self.app.clone(), meeting_title(&request.detection));
+        if let Some(autostop) = self.app.try_state::<Arc<AutoStopService>>() {
+            autostop.arm(request.detection.app.bundle_id.clone());
+        }
+        let (app, detection) = (self.app.clone(), request.detection.clone());
         tauri::async_runtime::spawn(async move {
             if !crate::features::settings::current(&app)
                 .await
@@ -79,12 +86,37 @@ impl<R: Runtime> RecordingStarter for RecorderStarter<R> {
             {
                 return log::info!(target: "detect", "not recording a detected meeting before setup is finished");
             }
-            if let Err(error) = recorder.start(Some(title)).await {
+            let request = StartRequest {
+                title: Some(meeting_title(&detection)),
+                link: link(&app, &detection).await,
+            };
+            if let Err(error) = recorder.start(request).await {
                 log::warn!(target: "detect", "the detected meeting did not start recording: {error}");
             }
         });
         Ok(())
     }
+}
+
+/// The calendar link of a detected meeting: its event, and the event's
+/// series when the synced calendar knows it.
+async fn link<R: Runtime>(app: &AppHandle<R>, detection: &Detection) -> Option<MeetingLink> {
+    let id = detection.event.as_ref()?.id;
+    let calendar = app
+        .try_state::<Arc<CalendarService>>()
+        .map(|calendar| Arc::clone(&calendar));
+    let series_id = match calendar {
+        Some(calendar) => calendar
+            .event(id)
+            .await
+            .ok()
+            .and_then(|event| event.series_id),
+        None => None,
+    };
+    Some(MeetingLink {
+        calendar_event_id: Some(id),
+        series_id,
+    })
 }
 
 /// Whether the live recorder is recording.

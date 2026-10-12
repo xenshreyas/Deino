@@ -32,6 +32,8 @@ pub(crate) struct PumpParts {
     pub placed: TimelineSink,
     /// The recording epoch the timeline is anchored to.
     pub epoch: HostTime,
+    /// The timeline frame captured at `epoch` (non-zero when resuming).
+    pub start: Frames,
     /// The track's encoder.
     pub encoder: Box<dyn TrackEncoder>,
     /// The clock stalls are measured on.
@@ -77,7 +79,7 @@ impl TrackPump {
     /// A pump with an empty timeline anchored at `parts.epoch`.
     pub(crate) fn new(parts: PumpParts) -> Self {
         Self {
-            timeline: TrackTimeline::new(parts.epoch),
+            timeline: TrackTimeline::resuming(parts.epoch, parts.start),
             backlog: Backlog::new(BACKLOG_LIMIT),
             stall: StallWatch::new(parts.track),
             block: Vec::with_capacity(APPEND_BLOCK.as_len()),

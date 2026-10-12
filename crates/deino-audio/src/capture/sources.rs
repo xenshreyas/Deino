@@ -28,9 +28,13 @@ impl DeviceSources {
 
 impl SourceFactory for DeviceSources {
     fn microphone(&self) -> Box<dyn AudioSource> {
+        self.microphone_for(&self.choice)
+    }
+
+    fn microphone_for(&self, choice: &MicChoice) -> Box<dyn AudioSource> {
         let devices = Arc::new(CpalInputs);
         Box::new(MicSource::new(
-            self.choice.clone(),
+            choice.clone(),
             devices,
             Arc::clone(&self.clock),
         ))

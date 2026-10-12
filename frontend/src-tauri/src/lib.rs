@@ -28,6 +28,7 @@ mod permissions;
 mod setup;
 pub mod stt;
 mod system_open;
+pub mod tray;
 pub mod updater;
 
 legacy_modules! {
@@ -40,7 +41,6 @@ legacy_modules! {
     pub mod parakeet_engine;
     pub mod state;
     pub mod summary;
-    pub mod tray;
     pub mod utils;
     pub mod whisper_engine;
 }

@@ -18,6 +18,7 @@ import type { RecordingSnapshot } from './types';
 export const recordingKeys = {
   all: ['recording'] as const,
   state: () => [...recordingKeys.all, 'state'] as const,
+  autoStop: () => [...recordingKeys.all, 'auto-stop'] as const,
 };
 
 /** Nothing is being recorded (also what shows before the first answer). */
@@ -29,6 +30,10 @@ export const IDLE: RecordingSnapshot = {
   pausedMs: 0,
   pausedAt: null,
   echo: null,
+  calendarEventId: null,
+  microphone: null,
+  systemAudio: true,
+  issues: [],
 };
 
 /** The recorder's state; events keep it current. */
@@ -45,7 +50,7 @@ export function useRecordingState(): RecordingSnapshot {
 }
 
 /** Shows a failed recorder command; `conflict` means it already happened. */
-function report(title: string) {
+export function report(title: string) {
   return (error: unknown) => {
     const failure = IpcError.from(error);
     if (failure.code === 'conflict') return;

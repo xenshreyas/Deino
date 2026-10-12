@@ -1,299 +1,174 @@
-use tauri::{
-    Emitter,
-    menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
-    tray::TrayIconBuilder,
-    AppHandle, Manager, Runtime,
-};
+//! The menu bar (CAP-10): Deino's icon with the time left in the recorded
+//! meeting or a countdown to the next one beside it, and a menu with the
+//! recording's controls and today's meetings (Join / Record / Open).
+//!
+//! - [`view`], what to show, as plain data (tested);
+//! - [`menu`], that data as a native menu, and what its items do.
+//!
+//! The menu is rebuilt when the recorder's phase changes and when the
+//! calendar syncs; the title follows the clock through a light ticker that
+//! re-reads both every [`TITLE_TICK`].
 
-#[derive(Debug, Clone)]
-pub enum RecordingState {
-    Stopped,
-    Starting,
-    Recording,
-    Pausing,
-    Paused,
-    Resuming,
-    Stopping,
-}
+mod menu;
+mod view;
 
+use std::sync::Arc;
+use std::time::Duration;
+
+use chrono::{Days, Utc};
+use deino_core::calendar::{CalendarService, TimeRange};
+use deino_domain::{LocalZone, SystemZone};
+use deino_recording::{RecordingPhase, RecordingService};
+use tauri::tray::TrayIconBuilder;
+use tauri::{AppHandle, Manager, Runtime};
+
+/// The tray icon's ID.
+const TRAY_ID: &str = "main-tray";
+
+/// How often the title re-reads the clock (it shows whole minutes).
+const TITLE_TICK: Duration = Duration::from_secs(20);
+
+/// Creates the menu bar item and starts its title ticker.
 pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
-    // Start with default menu, will update with actual state after initialization
-    // Pass can_record=true initially, will be updated by update_tray_menu immediately
-    let menu = build_menu(app, RecordingState::Stopped, true)?;
-
-    TrayIconBuilder::with_id("main-tray")
+    let menu = menu::build(app, &menu::Contents::default())?;
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .tooltip(crate::APP_NAME)
-        .icon(app.default_window_icon().unwrap().clone())
-        .on_menu_event(|app, event| handle_menu_event(app, event.id.as_ref()))
-        .build(app)?;
-
-    // Update tray menu with actual recording state after creation
-    update_tray_menu(app);
-
+        .on_menu_event(|app, event| menu::handle(app, event.id.as_ref()));
+    if let Some(icon) = app.default_window_icon() {
+        builder = builder.icon(icon.clone());
+    }
+    builder.build(app)?;
+    refresh(app);
+    start_ticker(app.clone());
     Ok(())
 }
 
-fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, item_id: &str) {
-    match item_id {
-        "toggle_recording" => toggle_recording_handler(app),
-        "pause_recording" => pause_recording_handler(app),
-        "resume_recording" => resume_recording_handler(app),
-        "stop_recording" => stop_recording_handler(app),
-        "open_window" => focus_main_window(app),
-        "settings" => {
-            focus_main_window(app);
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("window.location.assign('/settings')");
-            }
-        }
-        "check_updates" => check_updates_handler(app),
-        "quit" => app.exit(0),
-        _ => {}
-    }
-}
-/// The live recorder, once the database (and with it the recorder) is ready.
-fn recorder<R: Runtime>(app: &AppHandle<R>) -> Option<std::sync::Arc<deino_recording::RecordingService>> {
-    app.try_state::<std::sync::Arc<deino_recording::RecordingService>>()
-        .map(|state| std::sync::Arc::clone(&state))
+/// Rebuilds the menu and the title from the recorder and today's calendar.
+pub fn refresh<R: Runtime>(app: &AppHandle<R>) {
+    update(app, true);
 }
 
-/// Starts a recording when idle, stops it otherwise. Rust owns both; the
-/// window follows the recorder's state events.
-fn toggle_recording_handler<R: Runtime>(app: &AppHandle<R>) {
-    focus_main_window(app);
-    let Some(recorder) = recorder(app) else {
-        return log::warn!("Tray: the recorder is not ready yet");
-    };
+/// Updates the title only (the ticker: an open menu stays open).
+fn refresh_title<R: Runtime>(app: &AppHandle<R>) {
+    update(app, false);
+}
+
+fn update<R: Runtime>(app: &AppHandle<R>, with_menu: bool) {
+    let app = app.clone();
     tauri::async_runtime::spawn(async move {
-        let result = if recorder.state().phase == deino_recording::RecordingPhase::Idle {
-            recorder.start(None).await.map(drop)
-        } else {
-            recorder.stop().await.map(drop)
+        let contents = contents(&app).await;
+        let Some(tray) = app.tray_by_id(TRAY_ID) else {
+            return;
         };
-        if let Err(e) = result {
-            log::error!("Tray: the recording toggle failed: {}", e);
-        }
-    });
-}
-
-fn pause_recording_handler<R: Runtime>(app: &AppHandle<R>) {
-    if let Some(Err(e)) = recorder(app).map(|recorder| recorder.pause()) {
-        log::error!("Tray: pausing failed: {}", e);
-    }
-}
-
-fn resume_recording_handler<R: Runtime>(app: &AppHandle<R>) {
-    if let Some(Err(e)) = recorder(app).map(|recorder| recorder.resume()) {
-        log::error!("Tray: resuming failed: {}", e);
-    }
-}
-
-fn stop_recording_handler<R: Runtime>(app: &AppHandle<R>) {
-    let Some(recorder) = recorder(app) else { return };
-    tauri::async_runtime::spawn(async move {
-        if let Err(e) = recorder.stop().await {
-            log::error!("Tray: stopping failed: {}", e);
-        }
-    });
-}
-
-fn check_updates_handler<R: Runtime>(app: &AppHandle<R>) {
-    focus_main_window(app);
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.eval(
-            "window.dispatchEvent(new CustomEvent('check-updates-from-tray'))"
-        );
-    }
-}
-
-pub fn update_tray_menu<R: Runtime>(app: &AppHandle<R>) {
-    // For sync update, spawn async task to get current state
-    let app_clone = app.clone();
-    tauri::async_runtime::spawn(async move {
-        // Small delay to ensure recording state has been updated
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        update_tray_menu_async(&app_clone).await;
-    });
-}
-
-pub fn set_tray_state<R: Runtime>(app: &AppHandle<R>, state: RecordingState) {
-    log::info!("Tray: Setting intermediate state: {:?}", state);
-    // During recording state transitions, we assume recording is allowed (we're already recording)
-    if let Ok(menu) = build_menu(app, state, true) {
-        if let Some(tray) = app.tray_by_id("main-tray") {
-            let result = tray.set_menu(Some(menu));
-            log::info!("Tray: Intermediate state menu update result: {:?}", result);
+        let menu = if with_menu {
+            menu::build(&app, &contents).map(Some)
         } else {
-            log::warn!("Tray: Could not find tray with id 'main-tray'");
+            Ok(None)
+        };
+        let shown = menu
+            .and_then(|menu| menu.map_or(Ok(()), |menu| tray.set_menu(Some(menu))))
+            .and_then(|()| tray.set_title(contents.title.as_deref()));
+        if let Err(error) = shown {
+            log::warn!(target: "tray", "could not update the menu bar: {error}");
         }
-    } else {
-        log::error!("Tray: Failed to build menu for intermediate state");
-    }
+    });
 }
 
-/// The tray's view of the recorder's phase.
-fn get_current_recording_state<R: Runtime>(app: &AppHandle<R>) -> RecordingState {
-    use deino_recording::RecordingPhase;
-    match recorder(app).map(|recorder| recorder.state().phase) {
-        Some(RecordingPhase::Starting) => RecordingState::Starting,
-        Some(RecordingPhase::Recording) => RecordingState::Recording,
-        Some(RecordingPhase::Paused) => RecordingState::Paused,
-        Some(RecordingPhase::Stopping) => RecordingState::Stopping,
-        Some(RecordingPhase::Idle) | None => RecordingState::Stopped,
-    }
-}
-
-/// Check if recording is allowed based on onboarding status and transcription model availability
-/// Returns true if:
-/// - Onboarding is complete (user may prefer Whisper later), OR
-/// - Parakeet transcription model is ready (downloaded)
-async fn check_can_record<R: Runtime>(app: &AppHandle<R>) -> bool {
-    // First check if onboarding is complete
-    let onboarding_complete = crate::features::settings::current(app).await.onboarding.completed;
-
-    // If onboarding is complete, always allow recording
-    // (user may prefer Whisper or have their own transcription setup)
-    if onboarding_complete {
-        return true;
-    }
-
-    // During onboarding, check if Parakeet transcription model is ready
-    match crate::parakeet_engine::commands::parakeet_has_available_models().await {
-        Ok(has_models) => has_models,
-        Err(e) => {
-            log::warn!("Tray: Failed to check Parakeet models: {}, assuming not ready", e);
-            false
-        }
-    }
-}
-
-pub async fn update_tray_menu_async<R: Runtime>(app: &AppHandle<R>) {
-    log::info!("Tray: update_tray_menu_async called");
-    // Get the current recording state
-    let recording_state = get_current_recording_state(app);
-    log::info!("Tray: Current recording state: {:?}", recording_state);
-
-    // Determine if recording should be allowed
-    // Only block recording during incomplete onboarding when no transcription model is ready
-    let can_record = check_can_record(app).await;
-    log::info!("Tray: can_record: {}", can_record);
-
-    if let Ok(menu) = build_menu(app, recording_state, can_record) {
-        if let Some(tray) = app.tray_by_id("main-tray") {
-            let result = tray.set_menu(Some(menu));
-            log::info!("Tray: Menu update result: {:?}", result);
-        } else {
-            log::warn!("Tray: Could not find tray with id 'main-tray'");
-        }
-    } else {
-        log::error!("Tray: Failed to build menu");
-    }
-}
-
-fn build_menu<R: Runtime>(
-    app: &AppHandle<R>,
-    state: RecordingState,
-    can_record: bool, // True if recording is allowed (onboarding complete OR transcription model ready)
-) -> tauri::Result<tauri::menu::Menu<R>> {
-    let mut builder = MenuBuilder::new(app);
-
-    // If recording is not allowed (during onboarding, no transcription model), show disabled message
-    if !can_record {
-        builder = builder.item(
-            &MenuItemBuilder::new("⏳ Downloading transcription model...")
-                .enabled(false)
-                .build(app)?,
-        );
-    } else {
-        match state {
-            RecordingState::Stopped => {
-                builder = builder
-                    .item(&MenuItemBuilder::with_id("toggle_recording", "Start Recording").build(app)?);
-            }
-            RecordingState::Starting => {
-                builder = builder.item(
-                    &MenuItemBuilder::new("🔄 Starting Recording...")
-                        .enabled(false)
-                        .build(app)?,
-                );
-            }
-            RecordingState::Recording => {
-                builder = builder
-                    .item(&MenuItemBuilder::with_id("pause_recording", "⏸ Pause Recording").build(app)?)
-                    .item(&MenuItemBuilder::with_id("stop_recording", "⏹ Stop Recording").build(app)?);
-            }
-            RecordingState::Pausing => {
-                builder = builder
-                    .item(
-                        &MenuItemBuilder::new("⏸ Pausing...")
-                            .enabled(false)
-                            .build(app)?,
-                    )
-                    .item(&MenuItemBuilder::with_id("stop_recording", "⏹ Stop Recording").build(app)?);
-            }
-            RecordingState::Paused => {
-                builder = builder
-                    .item(
-                        &MenuItemBuilder::with_id("resume_recording", "▶ Resume Recording")
-                            .build(app)?,
-                    )
-                    .item(&MenuItemBuilder::with_id("stop_recording", "⏹ Stop Recording").build(app)?);
-            }
-            RecordingState::Resuming => {
-                builder = builder
-                    .item(
-                        &MenuItemBuilder::new("▶ Resuming...")
-                            .enabled(false)
-                            .build(app)?,
-                    )
-                    .item(&MenuItemBuilder::with_id("stop_recording", "⏹ Stop Recording").build(app)?);
-            }
-            RecordingState::Stopping => {
-                builder = builder.item(
-                    &MenuItemBuilder::new("⏹ Stopping...")
-                        .enabled(false)
-                        .build(app)?,
-                );
-            }
-        }
-    }
-
-    builder = builder
-        .item(&PredefinedMenuItem::separator(app)?)
-        .item(&MenuItemBuilder::with_id("open_window", "Open Main Window").build(app)?)
-        .item(&MenuItemBuilder::with_id("settings", "Settings").build(app)?);
-
-    // Only offer update checks when the updater gate is on (PARITY_PLAN §8 D6).
-    if crate::updater::AUTO_UPDATE_ENABLED {
-        builder = builder
-            .item(&MenuItemBuilder::with_id("check_updates", "Check for Updates").build(app)?);
-    }
-
-    builder
-        .item(&PredefinedMenuItem::separator(app)?)
-        .item(&MenuItemBuilder::with_id("quit", "Quit").build(app)?)
-        .build()
-}
-
+/// Brings the main window forward and focuses it.
 pub(crate) fn focus_main_window<R: Runtime>(app: &AppHandle<R>) {
-    if let Some(window) = app.get_webview_window("main") {
-        if let Err(e) = window.unminimize() {
-            log::error!("Failed to unminimize main window: {}", e);
-        }
-
-        if let Err(e) = window.show() {
-            log::error!("Failed to show main window: {}", e);
-        }
-
-        if let Err(e) = window.set_focus() {
-            log::error!("Failed to focus main window: {}", e);
-        }
-
-        if let Err(e) = window.eval("window.focus()") {
-            log::error!("Failed to focus main webview: {}", e);
-        }
-    } else {
-        log::warn!("Could not find main window");
+    let Some(window) = app.get_webview_window("main") else {
+        return log::warn!(target: "tray", "there is no main window");
+    };
+    let shown = window
+        .unminimize()
+        .and_then(|()| window.show())
+        .and_then(|()| window.set_focus());
+    if let Err(error) = shown {
+        log::warn!(target: "tray", "could not bring the main window forward: {error}");
     }
+}
+
+/// Everything the menu shows now.
+async fn contents<R: Runtime>(app: &AppHandle<R>) -> menu::Contents {
+    let now = now();
+    let today = today(app).await;
+    let recording = recording(app, &today);
+    let title = view::title(recording.as_ref(), &today, now);
+    menu::Contents {
+        phase: app
+            .try_state::<Arc<RecordingService>>()
+            .map_or(RecordingPhase::Idle, |recorder| recorder.state().phase),
+        recording,
+        today,
+        title,
+        now,
+    }
+}
+
+/// The recording, with its event's end for "Xm left".
+fn recording<R: Runtime>(app: &AppHandle<R>, today: &[view::Meeting]) -> Option<view::Recording> {
+    let state = app.try_state::<Arc<RecordingService>>()?.state();
+    if !state.is_running() {
+        return None;
+    }
+    let ends_at = state
+        .calendar_event_id
+        .and_then(|id| today.iter().find(|meeting| meeting.id == id))
+        .map(|meeting| meeting.ends_at);
+    Some(view::Recording {
+        title: state.title.unwrap_or_default(),
+        paused: state.phase == RecordingPhase::Paused,
+        started_at: state.started_at?,
+        ends_at,
+    })
+}
+
+/// Today's meetings (local day), without all-day ones, by start.
+async fn today<R: Runtime>(app: &AppHandle<R>) -> Vec<view::Meeting> {
+    let Some(calendar) = app.try_state::<Arc<CalendarService>>() else {
+        return Vec::new();
+    };
+    let zone = SystemZone;
+    let day = zone.day_of(now());
+    let Some(next) = day.checked_add_days(Days::new(1)) else {
+        return Vec::new();
+    };
+    let range = TimeRange {
+        start: zone.start_of(day),
+        end: zone.start_of(next),
+    };
+    let events = calendar.upcoming(range).await.unwrap_or_default();
+    events
+        .into_iter()
+        .filter(|event| !event.is_all_day)
+        .map(|event| view::Meeting {
+            id: event.id,
+            title: event.title,
+            starts_at: event.start_at,
+            ends_at: event.end_at,
+            join_url: event.conference_url,
+        })
+        .collect()
+}
+
+/// Re-reads the clock for the title every [`TITLE_TICK`], for the app's life.
+fn start_ticker<R: Runtime>(app: AppHandle<R>) {
+    let ticker = std::thread::Builder::new()
+        .name("deino-menu-bar".into())
+        .spawn(move || {
+            let (_keep, timer) = std::sync::mpsc::channel::<()>();
+            while timer.recv_timeout(TITLE_TICK).is_err() {
+                refresh_title(&app);
+            }
+        });
+    if let Err(error) = ticker {
+        log::warn!(target: "tray", "the menu bar title will not tick: {error}");
+    }
+}
+
+/// The wall clock (the sanctioned reader, `SystemClock`).
+fn now() -> chrono::DateTime<Utc> {
+    use deino_domain::Clock;
+    deino_domain::SystemClock.now()
 }

@@ -26,7 +26,7 @@
 
 mod action_items;
 mod background;
-mod browser;
+pub(crate) mod browser;
 mod calendar;
 mod detection;
 mod developer;

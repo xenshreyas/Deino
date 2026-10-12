@@ -120,3 +120,46 @@ fn an_encoder_that_cannot_open_fails_the_start() {
         })
     ));
 }
+
+#[test]
+fn a_resumed_recording_appends_a_segment_after_its_length() {
+    let (deps, clock) = deps(Arc::new(FakeEncoderFactory::default()));
+    let dir = tempfile::tempdir().unwrap();
+    let (recorder, mut inputs) = Recorder::start(dir.path(), &deps).unwrap();
+    assert!(inputs.microphone.push(&vec![0.1; 48_000], clock.now()));
+    clock.advance(Duration::from_secs(1));
+    recorder.stop().unwrap();
+    // Time passes between the takes; the timeline does not.
+    clock.advance(Duration::from_hours(1));
+
+    let (recorder, mut inputs) = Recorder::resume(dir.path(), &deps).unwrap();
+    assert!(inputs.microphone.push(&[0.2; 480], clock.now()));
+    clock.advance(BLOCK);
+    let summary = recorder.stop().unwrap();
+
+    let microphone = summary.manifest.track(Track::Microphone).unwrap();
+    assert_eq!(microphone.segments.len(), 2);
+    assert_eq!(microphone.segments[1].first_frame, inputs.start);
+    assert!(inputs.start > Frames::ZERO);
+    assert_eq!(
+        summary.tracks[0].1.frames,
+        Frames(480),
+        "no silence for the gap"
+    );
+    assert!(dir.path().join("audio/mic.002.m4a").exists());
+    let mut placed = Vec::new();
+    let stamp = inputs.placed.microphone.pop_block(&mut placed).unwrap();
+    assert_eq!(stamp.at, inputs.start);
+}
+
+#[test]
+fn an_open_recording_cannot_be_resumed() {
+    let (deps, _clock) = deps(Arc::new(FakeEncoderFactory::default()));
+    let dir = tempfile::tempdir().unwrap();
+    let (recorder, _inputs) = Recorder::start(dir.path(), &deps).unwrap();
+
+    let error = Recorder::resume(dir.path(), &deps).unwrap_err();
+
+    assert!(matches!(error, RecordError::StillOpen));
+    recorder.stop().unwrap();
+}

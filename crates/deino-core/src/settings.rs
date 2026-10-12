@@ -42,7 +42,7 @@ mod transcription;
 mod ui;
 
 pub use ai::{AiSettings, CustomOpenAiSettings, LlmProvider};
-pub use audio::{AudioSettings, RecordingSettings};
+pub use audio::{AudioSettings, AutoStopOptions, PanelEdge, PanelPosition, RecordingSettings};
 pub use calendar::{
     CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS, MAX_HIDDEN_CALENDARS,
 };

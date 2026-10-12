@@ -1,12 +1,15 @@
 /**
  * Keeps the UI in step with the recorder, wherever the recording was
- * started or stopped (record screen, sidebar, tray, ⌘⇧R, meeting detection):
+ * started or stopped (record screen, sidebar, menu bar, ⌘⇧R, detection):
  *
  * - each `recording-state` event becomes the cached state;
  * - when a recording starts, the "tell participants" notice shows (if on);
  * - when a recording finishes saving while the record screen shows, its
  *   meeting page opens;
- * - health notices become toasts.
+ * - the record panel's "Open notes" (`open-live-meeting`) opens the record
+ *   screen;
+ * - health notices become toasts, and so does auto-stop's "Ending…" notice
+ *   when the record panel is switched off (the panel shows it otherwise).
  *
  * Renders nothing; mount it once, inside the router.
  */
@@ -15,16 +18,21 @@ import { useRouter } from '@tanstack/react-router';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
+import { useSettings } from '@/features/settings';
 import { useIpcEvent } from '@/lib/ipc';
-import { showRecordingNotification } from '@/lib/recordingNotification';
 import { events } from '@/lib/ipc/generated/recording';
+import { showRecordingNotification } from '@/lib/recordingNotification';
 
-import { recordingCopy } from '../copy';
+import { recordingApi } from '../api';
+import { endingReason, panelCopy, recordingCopy } from '../copy';
 import { recordingKeys, recordingStateQuery } from '../queries';
-import type { HealthKind, HealthNotice, RecordingSnapshot } from '../types';
+import type { EndingNotice, HealthKind, HealthNotice, RecordingSnapshot } from '../types';
 
 /** The record screen's path. */
 const RECORD_PATH = '/';
+
+/** The toast id of the "Ending…" notice, so a new one replaces the old. */
+const ENDING_TOAST = 'recording-ending';
 
 /** Notices that report a recovery rather than a problem. */
 const GOOD_NEWS: ReadonlySet<HealthKind> = new Set(['recovered', 'awake']);
@@ -33,6 +41,22 @@ function showHealth({ kind }: HealthNotice): void {
   const message = recordingCopy.health[kind];
   if (GOOD_NEWS.has(kind)) toast.success(message);
   else toast.warning(message);
+}
+
+/** The "Ending…" notice as a toast with "Keep recording". */
+function showEnding(ending: EndingNotice | null): void {
+  if (ending === null) {
+    toast.dismiss(ENDING_TOAST);
+    return;
+  }
+  toast.warning(endingReason[ending.reason], {
+    id: ENDING_TOAST,
+    description: panelCopy.ending(
+      Math.max(0, Math.round((Date.parse(ending.stopAt) - Date.now()) / 1000)),
+    ),
+    duration: Math.max(1000, Date.parse(ending.stopAt) - Date.now()),
+    action: { label: panelCopy.keepRecording, onClick: () => void recordingApi.keepRecording() },
+  });
 }
 
 /** The meeting that just finished saving, if `next` ends a stop. */
@@ -45,6 +69,7 @@ function finished(previous: RecordingSnapshot | undefined, next: RecordingSnapsh
 export function RecordingSync() {
   const client = useQueryClient();
   const router = useRouter();
+  const panelShown = useSettings().data?.recording.showPanel ?? true;
   useQuery(recordingStateQuery());
   const last = useRef<RecordingSnapshot | undefined>(undefined);
   useIpcEvent(events.recordingState, ({ snapshot }) => {
@@ -56,6 +81,13 @@ export function RecordingSync() {
     client.setQueryData(recordingKeys.state(), snapshot);
     if (meetingId === null || router.state.location.pathname !== RECORD_PATH) return;
     void router.navigate({ to: '/meetings/$meetingId', params: { meetingId } });
+  });
+  useIpcEvent(events.openLiveMeeting, () => {
+    void router.navigate({ to: '/' });
+  });
+  useIpcEvent(events.autoStopChanged, ({ state }) => {
+    client.setQueryData(recordingKeys.autoStop(), state);
+    if (!panelShown) showEnding(state.ending);
   });
   useIpcEvent(events.health, ({ notice }) => {
     showHealth(notice);

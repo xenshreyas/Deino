@@ -14,6 +14,7 @@ use std::time::Duration;
 
 use super::meter::{PauseLedger, TrackMeter, peak_of};
 use super::resample::{ChunkResampler, ResampleError};
+use super::state::TrackStates;
 use crate::ring::{BlockStamp, RtSink, RtSource};
 use crate::timeline::PLACEMENT_TOLERANCE;
 use crate::units::{HostTime, SampleRate};
@@ -23,6 +24,8 @@ use crate::units::{HostTime, SampleRate};
 pub struct CaptureShared {
     /// Paused time the timeline skips.
     pub pause: Arc<PauseLedger>,
+    /// Each track's meter and status, kept across source restarts.
+    pub tracks: Arc<TrackStates>,
 }
 
 /// One track's native-rate → 48 kHz path.

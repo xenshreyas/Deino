@@ -64,6 +64,115 @@ async state() : Promise<Result<RecordingSnapshot, AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Resumes recording on the finished meeting `meeting_id` (CAP-07): new
+ * audio and transcript are appended and the meeting is processed again
+ * on stop. Fails with `conflict` while a recording runs or the meeting is
+ * not finished, and `not_found` for an unknown meeting.
+ */
+async resumeMeeting(meetingId: MeetingId) : Promise<Result<MeetingId, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|resume_meeting", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Records from the microphone named `name` from now on (`null`: the
+ * system default), without a gap in the meeting. Fails with `conflict`
+ * when nothing is recording.
+ */
+async setMicrophone(name: string | null) : Promise<Result<RecordingSnapshot, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|set_microphone", { name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Records the call's audio, or stops and records silence on its track.
+ */
+async setSystemAudio(enabled: boolean) : Promise<Result<RecordingSnapshot, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|set_system_audio", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The microphones this Mac has, the default first.
+ */
+async microphones() : Promise<Result<Microphone[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|microphones") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Keep recording": withdraws the "Ending…" notice (CAP-07).
+ */
+async keepRecording() : Promise<Result<AutoStopState, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|keep_recording") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Answers "Start new note for …?": `accept` ends this note and starts one
+ * for the meeting that began; otherwise the offer goes away.
+ */
+async answerSplit(accept: boolean) : Promise<Result<AutoStopState, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|answer_split", { accept }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The "Ending…" notice and the offer on screen, for a panel that opens late.
+ */
+async autoStop() : Promise<Result<AutoStopState, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|auto_stop") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Brings the main window forward on the live meeting's notes ("Open
+ * notes", or a click on the panel). Fails with `conflict` when nothing is
+ * recording.
+ */
+async openLiveMeeting() : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|open_live_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Where the pill is inside the panel window: the only part that takes the
+ * mouse; clicks anywhere else pass through to the app below. Answers with
+ * the screen edge the panel hugs, which the pill lays itself out against.
+ */
+async setPanelRegion(region: PanelRegion) : Promise<Result<PanelEdge, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:recording|set_panel_region", { region }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -71,12 +180,22 @@ async state() : Promise<Result<RecordingSnapshot, AppError>> {
 
 
 export const events = __makeEvents__<{
+audioLevel: AudioLevel,
+autoStopChanged: AutoStopChanged,
 health: Health,
 liveSegment: LiveSegment,
+openLiveMeeting: OpenLiveMeeting,
+panelPointer: PanelPointer,
+panelSide: PanelSide,
 recordingState: RecordingState
 }>({
+audioLevel: "plugin:recording:audio-level",
+autoStopChanged: "plugin:recording:auto-stop-changed",
 health: "plugin:recording:health",
 liveSegment: "plugin:recording:live-segment",
+openLiveMeeting: "plugin:recording:open-live-meeting",
+panelPointer: "plugin:recording:panel-pointer",
+panelSide: "plugin:recording:panel-side",
 recordingState: "plugin:recording:recording-state"
 })
 
@@ -102,6 +221,50 @@ code: ErrorCode;
  * A user-safe description of the failure.
  */
 message: string }
+/**
+ * How loud each track is, about 30 times a second, to the record panel only.
+ */
+export type AudioLevel = { 
+/**
+ * The loudest sample per track since the last event.
+ */
+levels: AudioLevels }
+/**
+ * How loud each track is, for the record panel's meter (CAP-10).
+ */
+export type AudioLevels = { 
+/**
+ * The microphone's loudest sample since the last reading, in `[0, 1]`.
+ */
+microphone: number; 
+/**
+ * System audio's loudest sample since the last reading, in `[0, 1]`.
+ */
+system: number }
+/**
+ * The "Ending…" notice or the "Start new note" offer changed (CAP-07).
+ */
+export type AutoStopChanged = { 
+/**
+ * What is shown now.
+ */
+state: AutoStopState }
+/**
+ * What auto-stop shows now: the "Ending…" notice and the split offer.
+ */
+export type AutoStopState = { 
+/**
+ * The recording ends on its own at the notice's time unless kept.
+ */
+ending: EndingNotice | null; 
+/**
+ * A new note is offered for the meeting that just began.
+ */
+split: SplitOffer | null }
+/**
+ * Identifies a calendar event synced from a calendar account.
+ */
+export type CalendarEventId = string & { readonly __brand: "CalendarEventId" }
 /**
  * Which audio a transcript segment was heard on. Stored in
  * `transcript_segments.channel`.
@@ -131,6 +294,18 @@ export type EchoMode =
  * Headphones: the microphone is isolated; nothing to remove.
  */
 "isolated"
+/**
+ * The "Ending…" notice: the recording stops at `stop_at` unless kept.
+ */
+export type EndingNotice = { 
+/**
+ * Why it is ending.
+ */
+reason: StopReason; 
+/**
+ * When it stops.
+ */
+stopAt: string }
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
  * in the `last_error_code` and `error_code` columns of the integration tables.
@@ -180,6 +355,18 @@ export type Health = {
  * What happened.
  */
 notice: HealthNotice }
+/**
+ * One open problem, on a channel when it concerns one.
+ */
+export type HealthIssue = { 
+/**
+ * What is wrong.
+ */
+kind: IssueKind; 
+/**
+ * The track or lane it concerns (Me = `mic`, Them = `system`).
+ */
+channel: Channel | null }
 /**
  * Something about the recording the user may need to know.
  */
@@ -245,6 +432,31 @@ kind: HealthKind;
  */
 channel: Channel | null }
 /**
+ * What can be wrong with a running recording.
+ */
+export type IssueKind = 
+/**
+ * A track delivers no audio.
+ */
+"noAudio" | 
+/**
+ * The microphone hears speech but nothing is transcribed.
+ */
+"noTranscript" | 
+/**
+ * A lane's transcription engine stopped (crashed or hung) and is
+ * recovering.
+ */
+"transcriptionStopped" | 
+/**
+ * The disk is nearly full.
+ */
+"diskLow" | 
+/**
+ * The disk is full: recording stops.
+ */
+"diskFull"
+/**
  * A live transcript line grew, closed (saved) or was discarded as echo.
  */
 export type LiveSegment = { 
@@ -262,9 +474,84 @@ update: SegmentUpdate }
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
 /**
+ * A microphone the panel's picker offers.
+ */
+export type Microphone = { 
+/**
+ * Its name, which the recorder is switched to.
+ */
+name: string; 
+/**
+ * The system's default input.
+ */
+isDefault: boolean; 
+/**
+ * A Bluetooth headset (call mode lowers its quality).
+ */
+bluetooth: boolean }
+/**
  * A count of milliseconds, for example a segment's offset in a recording.
  */
 export type Millis = number
+/**
+ * The record panel asked for the live meeting's notes: the main window
+ * opens the record screen.
+ */
+export type OpenLiveMeeting = { 
+/**
+ * The meeting being recorded.
+ */
+meetingId: MeetingId }
+/**
+ * The screen edge the record panel is snapped to.
+ */
+export type PanelEdge = 
+/**
+ * The left edge.
+ */
+"left" | 
+/**
+ * The right edge (Granola's nub).
+ */
+"right"
+/**
+ * The pointer entered or left the record panel's pill. The panel window
+ * ignores the mouse outside the pill (clicks pass through to the app
+ * below), so it cannot see hover itself; Rust tracks the pointer instead.
+ */
+export type PanelPointer = { 
+/**
+ * The pointer is over the pill.
+ */
+inside: boolean }
+/**
+ * The pill's rectangle inside the panel window, in logical points.
+ */
+export type PanelRegion = { 
+/**
+ * Left.
+ */
+x: number; 
+/**
+ * Top.
+ */
+y: number; 
+/**
+ * Width.
+ */
+width: number; 
+/**
+ * Height.
+ */
+height: number }
+/**
+ * The record panel snapped to a screen edge; the pill hugs that side.
+ */
+export type PanelSide = { 
+/**
+ * The edge.
+ */
+edge: PanelEdge }
 /**
  * Where the recorder is in its lifecycle.
  */
@@ -306,7 +593,9 @@ meetingId: MeetingId | null;
  */
 title: string | null; 
 /**
- * When capture started.
+ * When the recording's elapsed time counts from: when capture started,
+ * or for a resumed meeting that moment moved back by what was already
+ * recorded, so the timer goes on from the meeting's length.
  */
 startedAt: string | null; 
 /**
@@ -321,9 +610,29 @@ pausedAt: string | null;
  * Whether echo is being removed from the microphone (speakers) or not
  * needed (headphones).
  */
-echo: EchoMode | null }
+echo: EchoMode | null; 
 /**
- * The recorder's state changed (phase, meeting, pause time, echo mode).
+ * The calendar event the meeting is recorded for, if any (the menu
+ * bar's "Xm left", auto-stop's calendar rule).
+ */
+calendarEventId: CalendarEventId | null; 
+/**
+ * The microphone picked for this recording by name; `None` follows
+ * the system default.
+ */
+microphone: string | null; 
+/**
+ * Whether system audio (the other side of the call) is recorded.
+ */
+systemAudio: boolean; 
+/**
+ * What is wrong with the recording now (CAP-10 health), most severe
+ * first; empty when all is well.
+ */
+issues: HealthIssue[] }
+/**
+ * The recorder's state changed (phase, meeting, pause time, echo mode,
+ * devices, health issues).
  */
 export type RecordingState = { 
 /**
@@ -383,6 +692,46 @@ export type SegmentUpdateKind =
  * Removed as the call's echo picked up by the microphone.
  */
 "discarded"
+/**
+ * "Start new note for …?": the next meeting has begun.
+ */
+export type SplitOffer = { 
+/**
+ * The event the new note would be for.
+ */
+eventId: CalendarEventId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * When it started.
+ */
+startsAt: string }
+/**
+ * Why a recording ends on its own.
+ */
+export type StopReason = 
+/**
+ * The meeting app let go of the microphone: the call ended.
+ */
+"micReleased" | 
+/**
+ * Nobody has spoken for a long time.
+ */
+"noSpeech" | 
+/**
+ * The calendar event is over and it has gone quiet.
+ */
+"calendarEnded" | 
+/**
+ * The Mac went to sleep.
+ */
+"sleep" | 
+/**
+ * The disk is full.
+ */
+"diskFull"
 
 /** tauri-specta globals **/
 

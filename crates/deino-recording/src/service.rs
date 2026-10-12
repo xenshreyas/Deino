@@ -1,28 +1,39 @@
 //! `RecordingService`: one recording at a time, start to stop.
 //!
 //! ```text
-//!   Idle ─start─▶ Starting ─▶ Recording ⇄ Paused
-//!                    │            │         │
-//!                    └─ fails ─▶ Idle       └──stop──▶ Stopping ─▶ Idle
+//!   Idle ─start / resume_meeting─▶ Starting ─▶ Recording ⇄ Paused
+//!                                     │            │         │
+//!                                     └─ fails ─▶ Idle       └──stop──▶ Stopping ─▶ Idle
 //! ```
 //!
 //! - **Start:** the session is prepared (engines, writers, capture), then
 //!   the meeting row is created (`recording`, `source = live`, its folder,
-//!   the Me and Them speakers), then transcription starts. The
-//!   [`StartObserver`] hears of it (the app links the nearest calendar
-//!   event, ORG-03), and the meeting ID is returned to the UI.
+//!   the Me and Them speakers, the calendar event it was started for), then
+//!   transcription starts. The [`StartObserver`] hears of it (the app links
+//!   the nearest calendar event, ORG-03), and the meeting ID is returned to
+//!   the UI.
+//! - **Resume a finished meeting** (CAP-07, [`resume`]): the same, on the
+//!   meeting's existing row, folder and speakers; the new audio and segments
+//!   follow the recorded length on the same timeline.
 //! - **Stop:** capture stops, both tracks close at the same end, the lanes
 //!   flush their last segments into `transcript_segments`, the meeting gets
 //!   its timing, and it moves to `processing`, which enqueues the
 //!   post-meeting pipeline (`finalize_audio` first).
+//! - **While recording** ([`controls`]): pause and resume, switch the
+//!   microphone, turn system audio off and on, read the levels and what the
+//!   lanes heard. A watcher thread keeps the open health issues in the state.
 //!
 //! The UI never writes the transcript; it watches [`RecordingSnapshot`] and
 //! [`crate::events::SegmentUpdate`] events and reads the stored segments.
 
+mod controls;
 pub(crate) mod meeting;
 mod playhead;
+mod request;
+mod resume;
 
 pub use playhead::Playhead;
+pub use request::StartRequest;
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
@@ -36,31 +47,40 @@ use crate::error::RecordingError;
 use crate::events::{RecordingPhase, RecordingSnapshot};
 use crate::lane::PerLane;
 use crate::observer::{NoStartObserver, StartObserver};
-use crate::session::{self, Plan, Session};
+use crate::session::{self, Plan, Session, Take};
+use crate::state::StateCell;
 
 /// What the service holds between calls.
 enum Slot {
     Idle,
     /// Starting or stopping: a call is in flight.
     Busy,
-    Active(Box<Session>),
+    Active(Box<Running>),
+}
+
+/// The running session and the meeting's own start time.
+struct Running {
+    session: Session,
+    /// When the meeting first started (kept by a resumed meeting).
+    began_at: DateTime<Utc>,
 }
 
 /// The live recorder.
 pub struct RecordingService {
     deps: RecordingDeps,
     slot: Mutex<Slot>,
-    state: Mutex<RecordingSnapshot>,
+    state: StateCell,
     on_start: Arc<dyn StartObserver>,
 }
 
 impl RecordingService {
     /// A service over its ports; nothing is recording.
     pub fn new(deps: RecordingDeps) -> Self {
+        let state = StateCell::new(Arc::clone(&deps.events));
         Self {
             deps,
             slot: Mutex::new(Slot::Idle),
-            state: Mutex::new(RecordingSnapshot::idle()),
+            state,
             on_start: Arc::new(NoStartObserver),
         }
     }
@@ -74,62 +94,17 @@ impl RecordingService {
 
     /// The recorder's state now.
     pub fn state(&self) -> RecordingSnapshot {
-        lock(&self.state).clone()
+        self.state.get()
     }
 
-    /// Starts recording a new meeting titled `title` (a default when
-    /// missing or blank); returns its ID.
-    pub async fn start(&self, title: Option<String>) -> Result<MeetingId, RecordingError> {
+    /// Starts recording a new meeting; returns its ID.
+    pub async fn start(&self, request: StartRequest) -> Result<MeetingId, RecordingError> {
         self.claim()?;
-        let titled = title
-            .as_deref()
-            .is_some_and(|title| !title.trim().is_empty());
-        let result = self.begin(title).await;
-        match result {
-            Ok((session, state)) => {
-                let meeting = session.meeting().clone();
-                *lock(&self.slot) = Slot::Active(Box::new(session));
-                self.publish(state);
-                self.announce_start(&meeting, titled).await;
-                Ok(meeting)
-            }
-            Err(error) => {
-                *lock(&self.slot) = Slot::Idle;
-                self.publish(RecordingSnapshot::idle());
-                Err(error)
-            }
-        }
-    }
-
-    /// Prepares the session, creates the meeting, starts transcribing.
-    async fn begin(
-        &self,
-        title: Option<String>,
-    ) -> Result<(Session, RecordingSnapshot), RecordingError> {
-        let now = self.deps.recorder.wall_clock.now();
-        let title = meeting::title(title.as_deref())?;
-        let plan = self.plan(self.deps.preferences.current().await);
-        let (meeting, speakers) = (plan.meeting.clone(), plan.speakers);
-        self.publish(state(RecordingPhase::Starting, &meeting, &title));
-        let deps = self.deps.clone();
-        let prepared = blocking(move || session::prepare(&deps, plan)).await??;
-        let row = meeting::MeetingRow {
-            meeting: &meeting,
-            title: &title,
-            now,
-            speakers,
-        };
-        if let Err(error) = meeting::create(&self.deps, &row).await {
-            blocking(move || prepared.abort()).await.ok();
-            return Err(error);
-        }
-        let events = Arc::clone(&self.deps.events);
-        let session = blocking(move || prepared.go(events)).await??;
-        let recording = RecordingSnapshot {
-            started_at: Some(now),
-            ..state(RecordingPhase::Recording, &meeting, &title)
-        };
-        Ok((session, recording))
+        let titled = request.is_titled();
+        let started = self.begin(request).await;
+        let meeting = self.settle(started)?;
+        self.announce_start(&meeting, titled).await;
+        Ok(meeting)
     }
 
     /// Tells the observer, and shows the title it gave the meeting while
@@ -138,15 +113,44 @@ impl RecordingService {
         let Some(title) = self.on_start.started(meeting, titled).await else {
             return;
         };
-        self.update(|state| {
+        self.state.update(|state| {
             if state.meeting_id.as_ref() == Some(meeting) {
                 state.title = Some(title);
             }
         });
     }
 
+    /// Prepares the session, creates the meeting, starts transcribing.
+    async fn begin(&self, request: StartRequest) -> Result<Launched, RecordingError> {
+        let now = self.deps.recorder.wall_clock.now();
+        let title = meeting::title(request.title.as_deref())?;
+        let plan = self.plan(Take::New, self.deps.preferences.current().await);
+        let meeting_id = plan.meeting.clone();
+        let row = meeting::MeetingRow {
+            meeting: &meeting_id,
+            title: &title,
+            now,
+            speakers: plan.speakers,
+            link: request.link.as_ref(),
+        };
+        let starting = RecordingSnapshot {
+            calendar_event_id: request
+                .link
+                .as_ref()
+                .and_then(|link| link.calendar_event_id),
+            ..Self::starting(&plan, &title)
+        };
+        self.state.set(starting.clone());
+        let prepared = self.prepare(plan).await?;
+        if let Err(error) = meeting::create(&self.deps, &row).await {
+            blocking(move || prepared.abort()).await.ok();
+            return Err(error);
+        }
+        self.go(prepared, starting, (now, now)).await
+    }
+
     /// A new meeting's ID, speakers and folder.
-    fn plan(&self, preferences: Preferences) -> Plan {
+    fn plan(&self, take: Take, preferences: Preferences) -> Plan {
         let clock = self.deps.recorder.wall_clock.as_ref();
         let meeting = meeting::new_id(clock);
         Plan {
@@ -158,73 +162,91 @@ impl RecordingService {
             },
             preferences,
             runtime: Handle::current(),
+            take,
         }
     }
 
-    /// Pauses capture; the recording's timeline skips the pause.
-    pub fn pause(&self) -> Result<RecordingSnapshot, RecordingError> {
-        let slot = lock(&self.slot);
-        let (Slot::Active(session), RecordingPhase::Recording) = (&*slot, self.state().phase)
-        else {
-            return Err(RecordingError::NotRecording);
-        };
-        session.pause();
-        let now = self.deps.recorder.wall_clock.now();
-        Ok(self.update(|state| {
-            state.phase = RecordingPhase::Paused;
-            state.paused_at = Some(now);
-        }))
+    /// The state while `plan` starts.
+    fn starting(plan: &Plan, title: &MeetingTitle) -> RecordingSnapshot {
+        RecordingSnapshot {
+            phase: RecordingPhase::Starting,
+            meeting_id: Some(plan.meeting.clone()),
+            title: Some(title.as_str().to_owned()),
+            microphone: plan.preferences.microphone.preferred.clone(),
+            ..RecordingSnapshot::idle()
+        }
     }
 
-    /// Resumes a paused recording.
-    pub fn resume(&self) -> Result<RecordingSnapshot, RecordingError> {
-        let slot = lock(&self.slot);
-        let (Slot::Active(session), RecordingPhase::Paused) = (&*slot, self.state().phase) else {
-            return Err(RecordingError::NotRecording);
+    /// Opens the engines, writers and capture, off the async runtime.
+    async fn prepare(&self, plan: Plan) -> Result<session::Prepared, RecordingError> {
+        let deps = self.deps.clone();
+        blocking(move || session::prepare(&deps, plan)).await?
+    }
+
+    /// Starts transcribing; the recording's clock counts from `clock_from`.
+    async fn go(
+        &self,
+        prepared: session::Prepared,
+        starting: RecordingSnapshot,
+        (began_at, clock_from): (DateTime<Utc>, DateTime<Utc>),
+    ) -> Result<Launched, RecordingError> {
+        let (deps, state) = (self.deps.clone(), self.state.clone());
+        let session = blocking(move || prepared.go(&deps, state)).await??;
+        let recording = RecordingSnapshot {
+            phase: RecordingPhase::Recording,
+            started_at: Some(clock_from),
+            ..starting
         };
-        session.resume();
-        let now = self.deps.recorder.wall_clock.now();
-        Ok(self.update(|state| {
-            let paused = state
-                .paused_at
-                .take()
-                .map(|at| paused_ms(at, now))
-                .unwrap_or_default();
-            state.paused_ms += paused;
-            state.phase = RecordingPhase::Recording;
-        }))
+        Ok(Launched {
+            running: Running { session, began_at },
+            state: recording,
+        })
+    }
+
+    /// Installs a launched session, or returns to idle after a failure.
+    fn settle(
+        &self,
+        launched: Result<Launched, RecordingError>,
+    ) -> Result<MeetingId, RecordingError> {
+        match launched {
+            Ok(Launched { running, state }) => {
+                let meeting = running.session.meeting().clone();
+                *lock(&self.slot) = Slot::Active(Box::new(running));
+                self.state.set(state);
+                Ok(meeting)
+            }
+            Err(error) => {
+                *lock(&self.slot) = Slot::Idle;
+                self.state.set(RecordingSnapshot::idle());
+                Err(error)
+            }
+        }
     }
 
     /// Stops the recording, saves its last segments and moves the meeting
     /// to `processing`; returns its ID.
     pub async fn stop(&self) -> Result<MeetingId, RecordingError> {
-        let session = {
+        let running = {
             let mut slot = lock(&self.slot);
             match std::mem::replace(&mut *slot, Slot::Busy) {
-                Slot::Active(session) => session,
+                Slot::Active(running) => running,
                 other => {
                     *slot = other;
                     return Err(RecordingError::NotRecording);
                 }
             }
         };
-        let started_at = self
-            .update(|state| state.phase = RecordingPhase::Stopping)
-            .started_at;
+        self.state
+            .update(|state| state.phase = RecordingPhase::Stopping);
+        let Running { session, began_at } = *running;
         let meeting = session.meeting().clone();
-        let host_clock = Arc::clone(&self.deps.recorder.host_clock);
+        let host_clock = std::sync::Arc::clone(&self.deps.recorder.host_clock);
         let stopped = blocking(move || session.stop(host_clock.as_ref())).await;
         *lock(&self.slot) = Slot::Idle;
-        self.publish(RecordingSnapshot::idle());
+        self.state.set(RecordingSnapshot::idle());
         let length = stopped??;
         let ended_at = self.deps.recorder.wall_clock.now();
-        meeting::close(
-            &self.deps,
-            &meeting,
-            (started_at.unwrap_or(ended_at), ended_at),
-            length,
-        )
-        .await?;
+        meeting::close(&self.deps, &meeting, (began_at, ended_at), length).await?;
         Ok(meeting)
     }
 
@@ -238,29 +260,19 @@ impl RecordingService {
         Ok(())
     }
 
-    fn update(&self, change: impl FnOnce(&mut RecordingSnapshot)) -> RecordingSnapshot {
-        let state = {
-            let mut state = lock(&self.state);
-            change(&mut state);
-            state.clone()
-        };
-        self.deps.events.state(&state);
-        state
-    }
-
-    fn publish(&self, state: RecordingSnapshot) {
-        self.update(|current| *current = state);
+    /// Runs `act` on the running session, or fails when nothing records.
+    fn with_session<T>(&self, act: impl FnOnce(&Session) -> T) -> Result<T, RecordingError> {
+        match &*lock(&self.slot) {
+            Slot::Active(running) => Ok(act(&running.session)),
+            Slot::Idle | Slot::Busy => Err(RecordingError::NotRecording),
+        }
     }
 }
 
-/// The state of `meeting` in `phase`.
-fn state(phase: RecordingPhase, meeting: &MeetingId, title: &MeetingTitle) -> RecordingSnapshot {
-    RecordingSnapshot {
-        phase,
-        meeting_id: Some(meeting.clone()),
-        title: Some(title.as_str().to_owned()),
-        ..RecordingSnapshot::idle()
-    }
+/// A session that started, and the state to publish for it.
+struct Launched {
+    running: Running,
+    state: RecordingSnapshot,
 }
 
 /// Runs blocking work (device and engine startup, joins) off the async runtime.
@@ -270,10 +282,6 @@ async fn blocking<T: Send + 'static>(
     tokio::task::spawn_blocking(work)
         .await
         .map_err(|error| RecordingError::Thread(std::io::Error::other(error)))
-}
-
-fn paused_ms(from: DateTime<Utc>, to: DateTime<Utc>) -> u64 {
-    u64::try_from((to - from).num_milliseconds()).unwrap_or_default()
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {

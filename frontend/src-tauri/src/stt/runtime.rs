@@ -7,10 +7,9 @@ use std::thread;
 use std::time::Duration;
 
 use deino_core::models::{ModelError, ModelFileId, ModelService};
-use deino_recording::Lane;
-use deino_recording::engine::{EngineError, StreamingLane, StreamingParts};
+use deino_recording::engine::{EngineError, LaneRequest, StreamingLane, StreamingParts};
 use deino_stt::clock::MonotonicClock;
-use deino_stt::{BackendChoice, EnginePool, EngineSlot, LoadSpec, SessionSink, SttError};
+use deino_stt::{BackendChoice, EnginePool, EngineSlot, LoadSpec, SttError};
 
 /// Engines unused this long are unloaded (Handy's default), which returns
 /// their worker's memory. A recording pins its engines, so they never unload.
@@ -95,11 +94,8 @@ impl SttRuntime {
     /// Loads `lane`'s engine (its own worker; blocking, about a second warm)
     /// and opens a stream delivering into `sink`. The lane pins its engine
     /// for the recording.
-    pub fn open_lane(
-        &self,
-        lane: Lane,
-        sink: Box<dyn SessionSink>,
-    ) -> Result<StreamingLane, EngineError> {
+    pub fn open_lane(&self, request: LaneRequest) -> Result<StreamingLane, EngineError> {
+        let lane = request.lane;
         let slot = EngineSlot::Live(lane.engine());
         let (engine, info) = self.pool.engine(slot).map_err(|source| EngineError {
             lane,
@@ -112,7 +108,8 @@ impl SttRuntime {
         StreamingLane::start(StreamingParts {
             lane,
             transcriber: engine,
-            sink,
+            sink: request.sink,
+            start: request.start,
             clock: Arc::clone(&self.monotonic),
             keep_alive: vec![pin],
         })

@@ -8,10 +8,13 @@ use std::time::Duration;
 use deino_audio::{HostClock, HostTime};
 use deino_core::segments::NewSegment;
 use deino_domain::{Clock, MeetingId, SegmentId, SpeakerId};
-use deino_stt::{FinalSegment, LiveText};
+use deino_stt::{FinalSegment, LiveText, Millis};
+
+mod saving;
 
 use super::drafts::{Drafts, Owner};
 use super::{RouterHandle, RouterInput, SegmentStore};
+use crate::activity::LiveActivity;
 use crate::bleed::{Holdback, HoldbackPolicy, Offer, Verdict};
 use crate::echo::EchoMode;
 use crate::events::{RecordingEvents, SegmentUpdate, SegmentUpdateKind};
@@ -41,6 +44,8 @@ pub struct RouterParts {
     pub host_clock: Arc<dyn HostClock>,
     /// The holdback's thresholds.
     pub policy: HoldbackPolicy,
+    /// Where each lane's speech and text are tallied for the watchers.
+    pub activity: Arc<LiveActivity>,
 }
 
 /// A held Me segment and whether its draft row exists.
@@ -103,6 +108,7 @@ struct State {
     writes: Vec<NewSegment>,
     removed: Vec<SegmentId>,
     flushed_at: HostTime,
+    activity: Arc<LiveActivity>,
 }
 
 impl State {
@@ -123,6 +129,7 @@ impl State {
             them_speaking: false,
             writes: Vec::new(),
             removed: Vec::new(),
+            activity: parts.activity,
         }
     }
 
@@ -143,12 +150,27 @@ impl State {
     }
 
     fn handle(&mut self, input: RouterInput) {
+        self.tally(&input);
         match input {
             RouterInput::Live(lane, text) => self.live(lane, &text),
             RouterInput::Final(lane, segment) => self.closed(lane, &segment),
             RouterInput::Voice(lane, change) => self.voice(lane, change),
+            RouterInput::Progress(lane, through) => self.progress(lane, through),
             RouterInput::Mode(mode) => self.mode = mode,
             RouterInput::Finish(_) => {}
+        }
+    }
+
+    /// Tallies speech, text and watermarks for the recording's watchers.
+    fn tally(&self, input: &RouterInput) {
+        match input {
+            RouterInput::Live(lane, text) if !text.committed.trim().is_empty() => {
+                self.activity.text(*lane);
+            }
+            RouterInput::Final(lane, _) => self.activity.text(*lane),
+            RouterInput::Voice(lane, change) => self.activity.voice(*lane, *change),
+            RouterInput::Progress(lane, through) => self.activity.progress(*lane, *through),
+            _ => {}
         }
     }
 
@@ -193,7 +215,7 @@ impl State {
             text: segment.text.clone(),
             payload: Pending { row, draft_saved },
         };
-        let verdict = self.holdback.offer(offer, self.host_clock.now());
+        let verdict = self.holdback.offer(offer, self.clock.now());
         self.apply(verdict.into_iter().collect());
     }
 
@@ -202,11 +224,23 @@ impl State {
             return;
         }
         match change {
-            VoiceChange::Started(_) => self.them_speaking = true,
+            VoiceChange::Started(at) => {
+                self.them_speaking = true;
+                self.holdback.them_voice_started(at);
+            }
             VoiceChange::Ended(span) => {
                 self.them_speaking = false;
                 self.holdback.them_voice(span);
             }
+        }
+    }
+
+    /// The Them lane has transcribed up to `through`: Me segments waiting
+    /// for it are judged.
+    fn progress(&mut self, lane: Lane, through: Millis) {
+        if lane == Lane::Them {
+            let verdicts = self.holdback.them_progress(through);
+            self.apply(verdicts);
         }
     }
 
@@ -251,50 +285,12 @@ impl State {
 
     /// Releases expired holds and saves once per [`FLUSH`].
     fn tick(&mut self) {
-        let now = self.host_clock.now();
-        let verdicts = self.holdback.tick(now);
+        let verdicts = self.holdback.tick(self.clock.now());
         self.apply(verdicts);
+        let now = self.host_clock.now();
         if now.since(self.flushed_at) >= FLUSH {
             self.flushed_at = now;
             self.flush();
         }
-    }
-
-    /// Saves finals, discards and the drafts that may be saved now.
-    fn flush(&mut self) {
-        for lane in Lane::ALL {
-            if lane == Lane::Me && !self.me_drafts_safe() {
-                continue;
-            }
-            if let Some(draft) = self.drafts.unsaved(lane) {
-                draft.dirty = false;
-                draft.saved = true;
-                let draft = draft.clone();
-                self.writes.push(self.owner.draft_row(lane, &draft));
-            }
-        }
-        if self.writes.is_empty() && self.removed.is_empty() {
-            return;
-        }
-        match self.store.save(&self.writes, &self.removed) {
-            Ok(()) => {
-                self.writes.clear();
-                self.removed.clear();
-            }
-            // Kept for the next flush (one transaction per batch).
-            Err(error) => log::warn!(target: "recording", "{error}; retrying with the next batch"),
-        }
-    }
-
-    /// Me drafts are saved only when they cannot be echo (headphones, or a quiet call with nothing held).
-    fn me_drafts_safe(&self) -> bool {
-        self.mode == EchoMode::Isolated || (!self.them_speaking && !self.holdback.is_holding())
-    }
-
-    fn finish(&mut self) {
-        let verdicts = self.holdback.drain();
-        self.apply(verdicts);
-        self.flush();
-        log::info!(target: "recording", "transcript router finished for meeting {}", self.owner.meeting);
     }
 }

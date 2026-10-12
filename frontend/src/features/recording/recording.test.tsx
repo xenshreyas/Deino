@@ -26,6 +26,15 @@ const bindings = vi.hoisted(() => {
     pause: vi.fn<typeof Generated.commands.pause>(),
     resume: vi.fn<typeof Generated.commands.resume>(),
     state: vi.fn<typeof Generated.commands.state>(),
+    resumeMeeting: vi.fn<typeof Generated.commands.resumeMeeting>(),
+    setMicrophone: vi.fn<typeof Generated.commands.setMicrophone>(),
+    setSystemAudio: vi.fn<typeof Generated.commands.setSystemAudio>(),
+    microphones: vi.fn<typeof Generated.commands.microphones>(),
+    keepRecording: vi.fn<typeof Generated.commands.keepRecording>(),
+    answerSplit: vi.fn<typeof Generated.commands.answerSplit>(),
+    autoStop: vi.fn<typeof Generated.commands.autoStop>(),
+    openLiveMeeting: vi.fn<typeof Generated.commands.openLiveMeeting>(),
+    setPanelRegion: vi.fn<typeof Generated.commands.setPanelRegion>(),
   } satisfies typeof Generated.commands;
   const events = {
     health: { listen: listenFor('health') },

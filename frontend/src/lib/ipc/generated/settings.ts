@@ -129,6 +129,26 @@ enabled: boolean;
  */
 countdownSeconds: number }
 /**
+ * When a recording ends on its own, and the back-to-back prompt (CAP-07).
+ */
+export type AutoStopOptions = { 
+/**
+ * End the recording when the call app lets go of the microphone, after
+ * 15 minutes without speech, or when the Mac sleeps (each with a
+ * "Keep recording" notice, sleep aside).
+ */
+enabled: boolean; 
+/**
+ * Also end it 10 minutes after the calendar event's end once it went
+ * quiet. Off by default: meetings often run over.
+ */
+afterCalendarEnd: boolean; 
+/**
+ * Offer a new note when the next calendar meeting begins with other
+ * people while recording.
+ */
+offerNextMeeting: boolean }
+/**
  * The beta section of `Settings`: features still being proven.
  */
 export type BetaSettings = { 
@@ -656,6 +676,30 @@ export type OrganizeSettings = {
  */
 autoTag: boolean }
 /**
+ * The screen edge the record panel is snapped to.
+ */
+export type PanelEdge = 
+/**
+ * The left edge.
+ */
+"left" | 
+/**
+ * The right edge (Granola's nub).
+ */
+"right"
+/**
+ * Where the record panel sits: an edge, and how far down it.
+ */
+export type PanelPosition = { 
+/**
+ * The edge it hugs.
+ */
+edge: PanelEdge; 
+/**
+ * How far down the screen's work area, in thousandths (0 = top).
+ */
+fromTop: number }
+/**
  * The privacy section of `Settings`.
  */
 export type PrivacySettings = { 
@@ -745,7 +789,20 @@ autoSave: boolean;
 /**
  * Remind the user to tell participants that the meeting is recorded.
  */
-showRecordingNotice: boolean }
+showRecordingNotice: boolean; 
+/**
+ * Show the floating record panel while recording (CAP-10).
+ */
+showPanel: boolean; 
+/**
+ * Where the record panel was last left; `None` puts it at the right
+ * edge, a third of the way down.
+ */
+panelPosition: PanelPosition | null; 
+/**
+ * When a recording ends on its own (CAP-07).
+ */
+autoStop: AutoStopOptions }
 /**
  * What an LLM call is for. Serialized as the dotted names of §4.3.
  */

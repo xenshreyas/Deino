@@ -54,6 +54,7 @@ import {
 
 import { CaptureModeSettings } from './components/capture-mode-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
+import { RecordingBehaviour } from './components/recording-behaviour';
 import { RedactionSettings } from './components/redaction-settings';
 import { settingsCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
@@ -83,6 +84,16 @@ function AppearanceSection() {
         <ThemePicker value={preference} onChange={saveTheme} />
       </div>
     </section>
+  );
+}
+
+/** Recording: the record panel and auto-stop, then the inherited audio settings. */
+function RecordingSection() {
+  return (
+    <div className="flex flex-col gap-8">
+      <RecordingBehaviour />
+      <RecordingSettings />
+    </div>
   );
 }
 
@@ -124,7 +135,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'general', group: 'app', icon: Settings, Component: PreferenceSettings },
   { id: 'appearance', group: 'app', icon: Palette, Component: AppearanceSection },
   { id: 'setup', group: 'app', icon: Rocket, Component: ResumeSetup },
-  { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
+  { id: 'recording', group: 'capture', icon: Mic, Component: RecordingSection },
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'vocabulary', group: 'capture', icon: SpellCheck, Component: VocabularySettings },

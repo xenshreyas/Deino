@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use deino_stt::clock::MonotonicClock;
-use deino_stt::{LiveSession, Millis, SessionConfig, SessionSink, Transcriber};
+use deino_stt::{LiveSession, Millis, SessionConfig, SessionSink, StatusHandle, Transcriber};
 
 use super::{EngineError, LaneTranscriber};
 use crate::lane::Lane;
@@ -16,6 +16,8 @@ pub struct StreamingParts {
     pub transcriber: Arc<dyn Transcriber>,
     /// Where text goes.
     pub sink: Box<dyn SessionSink>,
+    /// Where the lane starts on the recording's timeline.
+    pub start: Millis,
     /// Measures latency for the lane's perf log.
     pub clock: Arc<dyn MonotonicClock>,
     /// Anything that must live as long as the lane (the engine's pin).
@@ -34,6 +36,7 @@ impl StreamingLane {
     pub fn start(parts: StreamingParts) -> Result<Self, EngineError> {
         let config = SessionConfig {
             label: parts.lane.engine().as_str(),
+            start: parts.start,
             ..SessionConfig::default()
         };
         let session = LiveSession::start(parts.transcriber, parts.sink, parts.clock, config)
@@ -56,6 +59,10 @@ impl LaneTranscriber for StreamingLane {
 
     fn backlog(&self) -> Millis {
         self.session.backlog()
+    }
+
+    fn status(&self) -> Option<StatusHandle> {
+        Some(self.session.status_handle())
     }
 
     fn finish(self: Box<Self>) {

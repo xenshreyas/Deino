@@ -9,6 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 import {
   formatElapsed,
+  issueLabel,
   type RecordingSnapshot,
   useElapsed,
   useRecordingActions,
@@ -87,10 +88,17 @@ function RunningRow({ snapshot, title }: { snapshot: RecordingSnapshot; title: s
   const seconds = useElapsed(snapshot);
   const { stop } = useRecordingActions();
   const paused = snapshot.phase === 'paused';
+  const issue = snapshot.issues[0];
   return (
     <LiveRow
       title={title}
-      meta={paused ? shellCopy.paused : formatElapsed(seconds)}
+      meta={
+        issue === undefined
+          ? paused
+            ? shellCopy.paused
+            : formatElapsed(seconds)
+          : issueLabel(issue)
+      }
       bars={paused ? 'paused' : 'live'}
       onStop={() => {
         stop.mutate();

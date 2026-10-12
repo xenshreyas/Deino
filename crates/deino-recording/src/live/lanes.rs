@@ -25,11 +25,17 @@ pub struct LaneInput {
 }
 
 impl LaneInput {
-    /// A lane feeding `transcriber` and reporting voice to `router`.
-    pub fn new(lane: Lane, transcriber: Box<dyn LaneTranscriber>, router: RouterHandle) -> Self {
+    /// A lane feeding `transcriber` and reporting voice to `router`, its
+    /// audio starting at `start` on the recording's timeline.
+    pub fn new(
+        lane: Lane,
+        transcriber: Box<dyn LaneTranscriber>,
+        router: RouterHandle,
+        start: Millis,
+    ) -> Self {
         Self {
             lane,
-            vad: LaneVad::default(),
+            vad: LaneVad::starting_at(start),
             transcriber,
             router,
             batch: Vec::with_capacity(FEED),

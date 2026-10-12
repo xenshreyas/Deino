@@ -30,10 +30,10 @@ use deino_core::meetings::{MeetingAudio, MeetingLifecycleRepo, SqliteMeetingRepo
 use deino_core::segments::{Page, Segment, SegmentReader, SpeakerRepo, SqliteSegmentRepo};
 use deino_core::vocabulary::{Corrector, Lexicon, RecordedLiveVocabulary, VocabTerm};
 use deino_domain::{Channel, Clock, FakeClock, MeetingId, MeetingStatus, VocabKind, VocabTermId};
-use deino_recording::engine::{EngineError, LaneEngines, LaneTranscriber};
-use deino_recording::{BatchEngines, Lane, OfflineTranscriber, Preferences, TrackDecoder};
+use deino_recording::engine::{EngineError, LaneEngines, LaneRequest, LaneTranscriber};
+use deino_recording::{BatchEngines, OfflineTranscriber, Preferences, StartRequest, TrackDecoder};
+use deino_stt::BatchTranscriber;
 use deino_stt::transcriber::FakeTranscriber;
-use deino_stt::{BatchTranscriber, SessionSink};
 use deino_testkit::Fixtures;
 use deino_testkit::fixture::{MeetingKind, PcmTrack, Segment as TruthSegment};
 use rig::{FastClock, FixtureCapture, RigOptions, rig_over};
@@ -74,14 +74,10 @@ fn one_on_one() -> Fixture {
 struct NoEngines;
 
 impl LaneEngines for NoEngines {
-    fn open(
-        &self,
-        lane: Lane,
-        _sink: Box<dyn SessionSink>,
-    ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+    fn open(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError> {
         let refused = std::io::Error::other("a record-only recording opened an engine");
         Err(EngineError {
-            lane,
+            lane: request.lane,
             source: Box::new(refused),
         })
     }
@@ -98,7 +94,7 @@ async fn record(fixture: &Fixture, options: RigOptions) -> (rig::Rig, MeetingId)
     let rig = rig_over(capture, options).await;
     let meeting = rig
         .service
-        .start(Some("Weekly one-on-one".into()))
+        .start(StartRequest::titled(Some("Weekly one-on-one".into())))
         .await
         .unwrap();
     let (length, clock) = (

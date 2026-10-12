@@ -225,8 +225,7 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "full_export_status",
         ],
     ),
-    // ── FND-05b / CAP-02 live recorder (features/recording.rs) ──
-    ("recording", &["start", "stop", "pause", "resume", "state"]),
+    ("recording", RECORDING_COMMANDS), // FND-05b, CAP-02, CAP-07, CAP-10 (recording_manifest.rs)
     // ── ORG-01 calendar sync (features/calendar.rs) ──
     (
         "calendar",
@@ -293,3 +292,4 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ("speaker-tags", &["status", "open_accessibility_settings"]),
     ("stats", &["overview", "heatmap", "recap", "write_recap"]), // ORG-09 (features/stats.rs)
 ];
+include!("recording_manifest.rs"); // `RECORDING_COMMANDS`, beside this file

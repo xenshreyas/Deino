@@ -403,7 +403,7 @@ pub async fn parakeet_download_model<R: Runtime>(
 
                 // Update tray menu to reflect model is now available
                 log::info!("Parakeet model download complete - updating tray menu");
-                crate::tray::update_tray_menu(&app_handle);
+                crate::tray::refresh(&app_handle);
 
                 Ok(())
             }
