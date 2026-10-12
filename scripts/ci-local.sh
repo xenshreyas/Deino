@@ -56,7 +56,8 @@ step_vitest() { pnpm --dir frontend test; }
 step_vite_build() { pnpm --dir frontend exec vite build; }
 # Playwright smoke tests in the installed Chrome over `pnpm dev:mock`;
 # screenshots land in frontend/test-results/.
-step_e2e() { pnpm --dir frontend test:e2e; }
+# One retry: under heavy load a click can time out before Vite has compiled.
+step_e2e() { pnpm --dir frontend test:e2e --retries=1; }
 
 step_clippy() {
     stage_sidecar

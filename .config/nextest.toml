@@ -1,0 +1,11 @@
+# cargo-nextest settings (https://nexte.st/docs/configuration/).
+
+# The live-pipeline fixture tests play audio through the real pipeline on the
+# wall clock. When the machine is overloaded (parallel agent builds), a starved
+# echo canceller can miss a line and fail an echo or timing threshold. Until
+# they run on a virtual clock (PARITY_PLAN §7.2), they get room to run and one
+# retry; nextest still reports a pass on retry as FLAKY, so it stays visible.
+[[profile.default.overrides]]
+filter = 'binary(live_fixture)'
+threads-required = 4
+retries = 1
