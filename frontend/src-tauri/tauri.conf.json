@@ -29,12 +29,14 @@
                 "default-src": "'self'",
                 "style-src": "'self' 'unsafe-inline'",
                 "img-src": "'self' asset: https://asset.localhost data:",
+                "media-src": "'self' asset: https://asset.localhost",
                 "connect-src": "'self' ipc: http://ipc.localhost asset:"
             },
             "devCsp": {
                 "default-src": "'self'",
                 "style-src": "'self' 'unsafe-inline'",
                 "img-src": "'self' asset: https://asset.localhost data:",
+                "media-src": "'self' asset: https://asset.localhost",
                 "connect-src": "'self' ipc: http://ipc.localhost asset: ws://localhost:3118 http://localhost:3118"
             },
             "assetProtocol": {

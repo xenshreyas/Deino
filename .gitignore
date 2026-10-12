@@ -85,3 +85,6 @@ target/
 frontend/src-tauri/binaries/
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# scripts/build-app.sh output (signed app copied out of iCloud reach)
+/dist-app/
