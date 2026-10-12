@@ -1,10 +1,15 @@
 //! Clip file names: safe on every file system, and unique in their folder.
 
 use std::collections::HashSet;
+use std::hash::BuildHasher;
 
 /// The longest stem a clip file gets, in characters (well under the 255
 /// bytes HFS+ and APFS allow, leaving room for " 99.m4a").
 const MAX_STEM: usize = 80;
+
+/// The highest number appended to a taken name (a folder never holds this
+/// many clips of one name; past it the save fails on the unique path).
+const MAX_SUFFIX: u32 = 100_000;
 
 /// The stem of an unnamed or unprintable clip.
 const FALLBACK_STEM: &str = "Clip";
@@ -41,13 +46,17 @@ fn allowed(character: char) -> bool {
 /// `stem.extension`, or `stem 2.extension`, `stem 3.extension`, … : the
 /// first file name not in `taken` (compared case-insensitively, as APFS does
 /// by default).
-pub fn unique_file_name(stem: &str, extension: &str, taken: &HashSet<String>) -> String {
+pub fn unique_file_name<S: BuildHasher>(
+    stem: &str,
+    extension: &str,
+    taken: &HashSet<String, S>,
+) -> String {
     let free = |candidate: &str| !taken.contains(&candidate.to_lowercase());
     let first = format!("{stem}.{extension}");
     if free(&first) {
         return first;
     }
-    (2_u32..)
+    (2..=MAX_SUFFIX)
         .map(|n| format!("{stem} {n}.{extension}"))
         .find(|candidate| free(candidate))
         .unwrap_or(first)

@@ -2,7 +2,7 @@
 //! (TRN-06, ADR 0048): `PlayerService` over the meetings, the recordings
 //! folder (the same folder the asset protocol is scoped to) and the
 //! Rust-side save dialog; `ClipService` over the `clips` table, the player's
-//! view of each recording, that folder, the AVFoundation cutter and Finder;
+//! view of each recording, that folder, the `AVFoundation` cutter and Finder;
 //! `CommentService` over its tables.
 
 use std::sync::Arc;

@@ -1,5 +1,5 @@
 //! The clip service's macOS adapters: [`AvClipCutter`] over
-//! `deino_audio::clip` (AVFoundation passthrough export, run off the async
+//! `deino_audio::clip` (`AVFoundation` passthrough export, run off the async
 //! runtime) and [`OpenFinder`] (`open -R`).
 
 use std::io;

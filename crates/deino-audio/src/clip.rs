@@ -57,10 +57,10 @@ pub enum ClipError {
     /// The range is empty or reversed.
     #[error("the clip's range is empty")]
     EmptyRange,
-    /// A path is not valid UTF-8, so AVFoundation cannot take it.
+    /// A path is not valid UTF-8, so `AVFoundation` cannot take it.
     #[error("the clip's path is not valid")]
     InvalidPath,
-    /// AVFoundation offered no passthrough export for the source.
+    /// `AVFoundation` offered no passthrough export for the source.
     #[error("this recording cannot be clipped")]
     Unavailable,
     /// The export did not finish in time.
