@@ -76,7 +76,7 @@ async fn each_chosen_field_adds_exactly_its_part_in_circleback_shape() {
     assert_eq!(data["transcript"][0]["text"], "We renew.");
     assert_eq!(data["attendees"][0]["email"], "maya@acme.test");
     assert_eq!(data["insights"], serde_json::json!([]));
-    assert_eq!(data["url"], "deino://meetings/meeting-acme");
+    assert_eq!(data["url"], "deino://meeting/meeting-acme");
     assert_eq!(data["audioPath"], "/recordings/meeting-acme/audio.m4a");
 
     let only_transcript = body(PayloadFields {
