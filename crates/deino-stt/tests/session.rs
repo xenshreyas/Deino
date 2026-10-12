@@ -286,12 +286,18 @@ fn a_lost_stream_is_counted_in_the_lane_status() {
     assert_eq!(session.status().recoveries, 0);
 
     feed_in(&session, Millis(400), &[loud(2000), silent(2000)]);
+    // The loss is counted before the new stream opens, so wait for both
+    // (a loaded machine can read the status in between).
     let recovered = (0..500).any(|_| {
         seen.recv_timeout(std::time::Duration::from_millis(10)).ok();
-        session.status().recoveries == 1
+        let status = session.status();
+        status.recoveries == 1 && status.streaming
     });
 
-    assert!(recovered, "the loss is reported while the lane runs");
-    assert!(session.status().streaming, "a new stream opened");
+    assert!(
+        recovered,
+        "the loss is counted and a new stream opened while the lane runs"
+    );
+    assert_eq!(session.status().recoveries, 1, "one loss, counted once");
     session.finish();
 }
