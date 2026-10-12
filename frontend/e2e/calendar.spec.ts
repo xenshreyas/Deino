@@ -17,7 +17,7 @@ async function goHome(page: Page) {
 async function openCalendarSettings(page: Page) {
   await page.goto('/settings');
   await page
-    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('navigation', { name: 'Settings pages' })
     .getByRole('link', { name: 'Calendar' })
     .click();
 }

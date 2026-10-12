@@ -11,10 +11,10 @@ export const consentCopy = {
     saveFailed: 'Could not save the reminder setting',
   },
   settings: {
-    reminderSection: 'Reminder',
+    reminderSection: 'Tell people',
     description:
-      'Help the people on your calls know they are being transcribed. Both tools are yours to turn on; nothing is sent anywhere else.',
-    reminderTitle: 'Reminder when recording starts',
+      'Help the people on your calls know they are being transcribed. Nothing is sent anywhere else.',
+    reminderTitle: 'Remind me to tell people',
     reminderOn: 'A small card under the recording pill reminds you to tell everyone.',
     reminderOff: 'No reminder is shown.',
     chatTitle: 'Automatic chat message',
@@ -23,10 +23,8 @@ export const consentCopy = {
     messageTitle: 'Message',
     messageHint: (max: number) => `Posted as written, up to ${max} characters.`,
     messageEmpty: 'Write a message before turning an app on.',
-    permissionHint:
-      'Posting needs Accessibility: allow Deino under Privacy & Security → Accessibility. Deino never turns this on by itself.',
-    openSettings: 'Open System Settings',
-    saveFailed: 'Could not save the consent settings',
+    permission: 'Accessibility',
+    saveFailed: 'Couldn’t save the consent settings',
   },
   apps: {
     zoom: { name: 'Zoom', where: 'The meeting chat in the Zoom desktop app' },

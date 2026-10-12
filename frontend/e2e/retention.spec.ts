@@ -16,8 +16,8 @@ async function shootBothThemes(page: Page, name: string) {
 test('retention periods: a longer recording period raises the transcript', async ({ page }) => {
   await page.goto('/settings');
   await page
-    .getByRole('navigation', { name: 'Settings sections' })
-    .getByRole('link', { name: 'Privacy & security' })
+    .getByRole('navigation', { name: 'Settings pages' })
+    .getByRole('link', { name: 'Privacy' })
     .click();
 
   const audio = page.getByRole('combobox', { name: 'Delete recordings after' });

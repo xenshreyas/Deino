@@ -27,9 +27,9 @@ export function ProviderList() {
   const providers = useProviders();
   return (
     <section aria-labelledby="llm-providers" className="flex flex-col gap-2">
-      <h3 id="llm-providers" className="text-sm font-semibold text-fg">
+      <h4 id="llm-providers" className="text-sm font-semibold text-fg">
         {llmCopy.providersTitle}
-      </h3>
+      </h4>
       <p className="text-xs text-fg-muted">{llmCopy.providersDescription}</p>
       {providers.data === undefined ? (
         <SkeletonText lines={3} />

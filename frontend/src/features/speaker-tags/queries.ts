@@ -5,7 +5,7 @@
  * it: the page polls it while it is open, which is how a permission granted
  * in System Settings shows up here without a reload.
  */
-import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { speakerTagsApi } from './api';
 
@@ -30,9 +30,4 @@ export const speakerTagStatusQuery = () =>
 /** Each meeting app's speaker-tag state, kept fresh while mounted. */
 export function useSpeakerTagStatus() {
   return useQuery(speakerTagStatusQuery());
-}
-
-/** Opens the Accessibility page of System Settings. */
-export function useOpenAccessibilitySettings() {
-  return useMutation({ mutationFn: speakerTagsApi.openAccessibilitySettings });
 }

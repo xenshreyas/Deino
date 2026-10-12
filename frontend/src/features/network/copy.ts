@@ -3,6 +3,8 @@ import type { EgressOutcome, ServiceId, ServiceKind } from './types';
 /** Every visible string of the network feature. */
 export const networkCopy = {
   offline: {
+    sectionTitle: 'Network',
+    sectionDescription: 'Whether anything may leave this Mac. Which services may is in Advanced.',
     title: 'Offline mode',
     description:
       'Send nothing from this Mac. Model downloads you start still work, and notes use the built-in model.',

@@ -15,7 +15,7 @@ export const notesCopy = {
     'Deino turns your notes and the transcript into finished notes, keeping every line you typed.',
   failedTitle: 'The notes could not be written',
   loadFailed: 'The notes could not be opened',
-  openSettings: 'Settings → AI',
+  openSettings: 'Settings → Notes',
   tryAgain: 'Try again',
   confirmTitle: 'Replace your edits?',
   confirmBody:

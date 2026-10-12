@@ -32,19 +32,19 @@ test('a right-click on a Coming up row opens its menu with Review last meeting',
   await expect(page).toHaveURL(/\/meetings\/meeting-fixture-/);
 });
 
-test('Settings → Calendar has the auto-record switches and per-calendar reminders', async ({
+test('Settings → Calendar has the auto-record switches, General the per-calendar reminders', async ({
   page,
 }) => {
   await page.goto('/settings');
-  await page
-    .getByRole('navigation', { name: 'Settings sections' })
-    .getByRole('link', { name: 'Calendar' })
-    .click();
+  const nav = page.getByRole('navigation', { name: 'Settings pages' });
+  await nav.getByRole('link', { name: 'Calendar' }).click();
 
   const external = page.getByRole('switch', { name: 'External meetings' });
   await external.scrollIntoViewIfNeeded();
   await external.click();
   await expect(external).toBeChecked();
+  await nav.getByRole('link', { name: 'General' }).click();
+  await page.getByRole('button', { name: 'Which calendars remind' }).click();
   const remind = page.getByRole('switch', { name: 'Remind for Work' });
   await expect(remind).toBeChecked();
   await remind.click();

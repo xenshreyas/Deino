@@ -6,8 +6,6 @@
  */
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { speakerTagsApi } from '@/features/speaker-tags';
-
 import { consentApi } from './api';
 
 /** Query keys; every key starts with `consentKeys.all`. */
@@ -36,9 +34,4 @@ export function useStopReminding() {
     mutationFn: consentApi.stopReminding,
     onSuccess: () => client.invalidateQueries({ queryKey: consentKeys.all }),
   });
-}
-
-/** Opens System Settings → Privacy & Security → Accessibility. */
-export function useOpenAccessibilitySettings() {
-  return useMutation({ mutationFn: speakerTagsApi.openAccessibilitySettings });
 }

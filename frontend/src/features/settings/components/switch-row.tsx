@@ -18,7 +18,11 @@ export interface SwitchRowProps {
 /** A labelled switch. */
 export function SwitchRow({ id, label, checked, disabled = false, ...props }: SwitchRowProps) {
   return (
-    <SettingsRow label={label} htmlFor={id} {...(props.description === undefined ? {} : { description: props.description })}>
+    <SettingsRow
+      label={label}
+      htmlFor={id}
+      {...(props.description === undefined ? {} : { description: props.description })}
+    >
       <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={props.onChange} />
     </SettingsRow>
   );

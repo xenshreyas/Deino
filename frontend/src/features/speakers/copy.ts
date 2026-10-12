@@ -42,11 +42,13 @@ export const speakersCopy = {
   regenerating: 'Regenerating notes',
   regenerateFailed: 'Could not regenerate the notes',
   dismissNotice: 'Dismiss',
-  // Settings → People.
+  // Settings → Recording → Speakers, and Advanced → Voices.
+  settingsTitle: 'Speakers',
+  settingsBody: 'Who said what, named on this Mac.',
   settingsIdentifyTitle: 'Recognise speakers by voice',
   settingsIdentifyBody:
     'After each meeting, Deino names the voices it knows and asks about the ones it is unsure of. Voices never leave this Mac.',
-  profilesTitle: 'Voice profiles',
+  profilesTitle: 'Voices',
   profilesBody:
     'Saved when you name a speaker for all of their segments. Each person keeps their five clearest samples.',
   profilesEmptyTitle: 'No voice profiles yet',

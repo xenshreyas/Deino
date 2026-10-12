@@ -18,7 +18,7 @@ test('the ⌘K palette finds a meeting and opens it', async ({ page }) => {
   await expect(page).toHaveURL(`/meetings/${oneOnOne.id}`);
 });
 
-test('Settings → Appearance switches the app to the dark theme', async ({ page }) => {
+test('Settings → General → Theme switches the app to the dark theme', async ({ page }) => {
   await page.goto('/settings?section=appearance');
 
   await page.getByRole('radio', { name: 'Dark' }).click();

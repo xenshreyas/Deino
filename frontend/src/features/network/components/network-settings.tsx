@@ -9,7 +9,7 @@
  */
 import { Switch } from '@/ui/controls';
 
-import { SettingsCard } from '@/ui/settings-section';
+import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 
 import { networkCopy } from '../copy';
 import { EgressLogSection } from './egress-log';
@@ -47,7 +47,12 @@ function OfflineModeCard({ offlineMode, onOfflineModeChange }: NetworkSettingsPr
 export function NetworkSettings(props: NetworkSettingsProps) {
   return (
     <div className="flex flex-col gap-8">
-      <OfflineModeCard {...props} />
+      <SettingsSection
+        title={networkCopy.offline.sectionTitle}
+        description={networkCopy.offline.sectionDescription}
+      >
+        <OfflineModeCard {...props} />
+      </SettingsSection>
       <EgressLogSection />
     </div>
   );

@@ -20,7 +20,7 @@ export const rulesCopy = {
     enabledOff: 'No reminder windows.',
     calendars: 'Remind for',
     remindFor: (title: string) => `Remind for ${title}`,
-    saveFailed: 'Could not save the reminder settings.',
+    saveFailed: 'Couldn’t save the reminder settings.',
   },
   autoRecord: {
     title: 'Auto-record',

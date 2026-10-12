@@ -2,7 +2,8 @@
  * Settings → Calendar (ORG-01): turn macOS Calendar sync on or off, see what
  * macOS allows and when the last sync ran, connect Google or Microsoft
  * directly, choose which calendars show, then (ORG-02) which meetings
- * record on their own and which calendars show the meeting reminder.
+ * record on their own. Meeting reminders are Settings → General →
+ * Notifications (UX-17).
  * Container: state comes from the `calendar` plugin's queries, kept current
  * by `CalendarChanged` and `DbChanged`.
  */
@@ -22,7 +23,7 @@ import {
 } from '../queries';
 import { CalendarList } from './calendar-list';
 import { ConnectorsSection } from './connectors-section';
-import { AutoRecordSection, RemindersSection } from './rules-settings';
+import { AutoRecordSection } from './rules-settings';
 import { SyncCard } from './sync-card';
 
 /** The macOS Calendar section: the switch, access and the last sync. */
@@ -104,7 +105,7 @@ function CalendarsSection() {
 
 /**
  * The Calendar settings page. Onboarding hides the direct Google and
- * Microsoft connections, auto-record and reminders (`connectors={false}`):
+ * Microsoft connections and auto-record (`connectors={false}`):
  * they are no first-run task.
  */
 export function CalendarSettings({ connectors = true }: { connectors?: boolean }) {
@@ -115,7 +116,6 @@ export function CalendarSettings({ connectors = true }: { connectors?: boolean }
       {connectors ? <ConnectorsSection /> : null}
       <CalendarsSection />
       {connectors ? <AutoRecordSection /> : null}
-      {connectors ? <RemindersSection /> : null}
     </div>
   );
 }

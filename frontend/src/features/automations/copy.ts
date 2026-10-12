@@ -42,7 +42,7 @@ export const builderCopy = {
     add_tag: 'Create a tag first.',
     add_to_folder: 'Create a folder first.',
     run_shell: 'Turn on “Allow shell scripts” at the top of the page first.',
-    webhook: 'Add a webhook in Settings → Developer first.',
+    webhook: 'Add a webhook in Settings → Advanced first.',
   } satisfies Partial<Record<ActionKind, string>>,
   moveUp: 'Move step up',
   moveDown: 'Move step down',

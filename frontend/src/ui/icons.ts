@@ -97,6 +97,7 @@ export {
   Settings,
   Share,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   SpellCheck,
   Square,

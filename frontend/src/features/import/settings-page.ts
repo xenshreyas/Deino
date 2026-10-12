@@ -1,20 +1,11 @@
-/** Settings → Watched folders: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { FolderInput } from '@/ui/icons';
+/** Settings → Connections → Watched folders: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { WatchedFoldersSettings } from './components/watched-folders-settings';
 
-export const settingsPages = [
-  {
-    id: 'watched-folders',
-    group: 'capture',
-    order: 50,
-    icon: FolderInput,
-    label: 'Watched folders',
-    description: 'Folders whose new recordings become meetings on their own.',
-    Component: WatchedFoldersSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'watched-folders', page: 'connections', order: 40, Component: WatchedFoldersSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

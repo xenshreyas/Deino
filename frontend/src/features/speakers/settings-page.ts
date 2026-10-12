@@ -1,23 +1,17 @@
-/** Settings → People: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Users } from '@/ui/icons';
+/** Settings → Recording → Speakers and Settings → Advanced → Voices: this feature's settings sections (REG-02, UX-18, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
-import { PeopleSettings } from './components/people-settings';
+import { SpeakerSettings, VoiceSettings } from './components/speaker-settings';
 
-export const settingsPages = [
-  {
-    id: 'people',
-    group: 'capture',
-    order: 60,
-    icon: Users,
-    label: 'People',
-    description: 'Recognise speakers by voice, and the voice profiles Deino knows.',
-    Component: PeopleSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'speakers', page: 'recording', order: 70, Component: SpeakerSettings },
+  { id: 'voices', page: 'advanced', order: 40, aliases: ['people'], Component: VoiceSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {
+    speakers: true;
+    voices: true;
     people: true;
   }
 }

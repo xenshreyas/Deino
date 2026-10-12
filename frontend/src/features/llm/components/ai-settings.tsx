@@ -1,4 +1,6 @@
 import { Separator } from '@/ui/controls';
+import { MoreOptions } from '@/ui/more-options';
+import { SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { llmCopy } from '../copy';
@@ -12,9 +14,9 @@ function RouteTable() {
   const providers = useProviders();
   return (
     <section aria-labelledby="llm-routes" className="flex flex-col gap-2">
-      <h3 id="llm-routes" className="text-sm font-semibold text-fg">
+      <h4 id="llm-routes" className="text-sm font-semibold text-fg">
         {llmCopy.routesTitle}
-      </h3>
+      </h4>
       <p className="text-xs text-fg-muted">{llmCopy.routesDescription}</p>
       {routes.data === undefined || providers.data === undefined ? (
         <SkeletonText lines={6} />
@@ -35,16 +37,21 @@ function RouteTable() {
 }
 
 /**
- * Settings → AI: the providers Deino can use (masked keys only) and which
- * provider and model serve each AI task, with a Test button per task.
+ * Settings → Advanced → AI per task: the providers Deino can use (masked
+ * keys only) and which provider and model serve each AI task, with a Test
+ * button per task. The everyday choice is Settings → Notes → AI.
  */
 export function AiSettings() {
   useLlmSettingsChanges();
   return (
-    <div className="flex flex-col gap-6">
-      <ProviderList />
-      <Separator />
-      <RouteTable />
-    </div>
+    <SettingsSection title={llmCopy.sectionTitle} description={llmCopy.sectionDescription}>
+      <MoreOptions label={llmCopy.showModels}>
+        <div className="flex flex-col gap-6">
+          <ProviderList />
+          <Separator />
+          <RouteTable />
+        </div>
+      </MoreOptions>
+    </SettingsSection>
   );
 }

@@ -1,4 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,12 +28,24 @@ function rows(state: TagState): AppTagStatus[] {
   return (['zoom', 'teams', 'meet'] as const).map((app) => ({ app, state }));
 }
 
+/** The section at `/settings`, so its link can navigate. */
 function renderPage() {
+  const root = createRootRoute();
+  const settings = createRoute({
+    getParentRoute: () => root,
+    path: '/settings',
+    component: SpeakerTagsSettings,
+  });
+  const router = createRouter({
+    routeTree: root.addChildren([settings]),
+    history: createMemoryHistory({ initialEntries: ['/settings'] }),
+  });
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <SpeakerTagsSettings />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+  return router;
 }
 
 describe('SpeakerTagsSettings', () => {
@@ -34,16 +53,15 @@ describe('SpeakerTagsSettings', () => {
     vi.clearAllMocks();
   });
 
-  it('shows one Accessibility row and the apps as plain text', async () => {
+  it('lists the apps as plain text, with no row or button of its own', async () => {
     mocked.status.mockResolvedValue({ status: 'ok', data: rows('enabled') });
     renderPage();
 
-    expect(await screen.findByText('Accessibility')).toBeTruthy();
-    expect(screen.getByText('Allowed')).toBeTruthy();
     expect(
-      screen.getByText('Works with Zoom, Microsoft Teams and Google Meet.', { exact: false }),
+      await screen.findByText('Works with Zoom, Microsoft Teams and Google Meet.'),
     ).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('marks an app only when it is unsupported', async () => {
@@ -60,44 +78,27 @@ describe('SpeakerTagsSettings', () => {
     expect(
       await screen.findByText(
         'Works with Zoom, Microsoft Teams (not supported here) and Google Meet.',
-        { exact: false },
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Allowed')).toBeTruthy();
   });
 
-  it('offers System Settings once, without asking macOS itself', async () => {
+  it('links once to the Permissions card while Accessibility is missing', async () => {
     mocked.status.mockResolvedValue({ status: 'ok', data: rows('needsPermission') });
-    mocked.openAccessibilitySettings.mockResolvedValue({ status: 'ok', data: null });
-    renderPage();
+    const router = renderPage();
 
-    const open = await screen.findByRole('button', {
-      name: 'Open System Settings to allow Accessibility',
-    });
-    expect(screen.getAllByRole('button')).toHaveLength(1);
-    expect(screen.getAllByText('Needs permission')).toHaveLength(1);
-    fireEvent.click(open);
+    fireEvent.click(await screen.findByRole('link', { name: 'Needs Accessibility' }));
 
     await waitFor(() => {
-      expect(mocked.openAccessibilitySettings).toHaveBeenCalledOnce();
+      expect(router.state.location.search).toEqual({ section: 'permissions' });
     });
+    expect(mocked.openAccessibilitySettings).not.toHaveBeenCalled();
   });
 
-  it('says so inline when System Settings would not open', async () => {
-    mocked.status.mockResolvedValue({ status: 'ok', data: rows('needsPermission') });
-    mocked.openAccessibilitySettings.mockResolvedValue({
-      status: 'error',
-      error: { code: 'unavailable', message: 'System Settings could not be opened' },
-    });
+  it('says so when no app is supported here', async () => {
+    mocked.status.mockResolvedValue({ status: 'ok', data: rows('unsupported') });
     renderPage();
 
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Open System Settings to allow Accessibility' }),
-    );
-
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'Open Privacy & Security → Accessibility there.',
-    );
+    expect(await screen.findByText(/Not available on this Mac/)).toBeTruthy();
   });
 
   it('shows an inline error when the status cannot be read', async () => {

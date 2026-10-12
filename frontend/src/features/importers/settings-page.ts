@@ -1,20 +1,11 @@
-/** Settings → Import: this feature's settings page (REG-02). */
-import type { SettingsPage } from '@/features/settings';
-import { Inbox } from '@/ui/icons';
+/** Settings → Connections → Import: this feature's settings section (REG-02, UX-19). */
+import type { SettingsPageSection } from '@/features/settings';
 
 import { ImportSettings } from './components/import-settings';
 
-export const settingsPages = [
-  {
-    id: 'import',
-    group: 'data',
-    order: 10,
-    icon: Inbox,
-    label: 'Import',
-    description: 'Meetings from Granola, Circleback, Fireflies, Fathom or a folder.',
-    Component: ImportSettings,
-  },
-] satisfies readonly SettingsPage[];
+export const settingsSections = [
+  { id: 'import', page: 'connections', order: 30, Component: ImportSettings },
+] satisfies readonly SettingsPageSection[];
 
 declare module '@/features/settings/search' {
   interface SettingsPageIds {

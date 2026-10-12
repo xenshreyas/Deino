@@ -31,7 +31,7 @@ export const statsCopy = {
   internal: 'Internal',
   external: 'External',
   unknown: 'Unknown',
-  audienceHint: 'Internal means everyone was from your organisation (Settings → Profile).',
+  audienceHint: 'Internal means everyone was from your organisation (Settings → Notes).',
 
   topPeople: 'Top people',
   noPeople: 'Nobody met in this period.',
