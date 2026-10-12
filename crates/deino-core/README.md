@@ -187,7 +187,7 @@ the SQLite adapters behind those ports.
   `deino-net`'s `favicons` service) and `LogoFiles` (`FsLogoFiles`) ports;
   `EntityUpdateService`, the `update_entities` stage's port. A table that
   references `people` adds its move to `merge_repo.rs`.
-- `vocabulary` (TRN-05, ADR 0034): `VocabularyService` (entries in
+- `vocabulary` (TRN-05, ADR 0037): `VocabularyService` (entries in
   `vocab_terms` and `vocab_variants`: terms with sounds-like spellings and
   replacement rules), the pure `Lexicon`, matcher and `Corrector` (whole
   words, ignoring case; Jaro-Winkler for misheard names), `NameSources`
@@ -196,7 +196,7 @@ the SQLite adapters behind those ports.
   recorder's live pass), `FixupService` (the `vocab_fixups` stage's rules)
   and `PromptVocabulary` (the enhanced notes' terms). Fakes:
   `RecordedLiveVocabulary`, `NoLiveVocabulary`.
-- `final_transcription` (CAP-08, ADR 0034): `FinalTranscriptionService`
+- `final_transcription` (CAP-08, ADR 0037): `FinalTranscriptionService`
   (the `final_transcription` stage's rules: transcribe a record-only
   meeting's tracks, or re-transcribe with the high-accuracy re-pass) over
   the `TrackTranscriber` port, and `carried_speaker`. Fake: `ScriptedTracks`.
