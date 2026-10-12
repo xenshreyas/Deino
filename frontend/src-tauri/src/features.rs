@@ -20,6 +20,7 @@
 
 pub mod _example;
 pub mod action_items;
+pub mod ask;
 pub mod automations;
 pub mod briefs;
 pub mod calendar;
@@ -50,6 +51,7 @@ pub mod pipeline;
 pub mod player;
 pub mod privacy;
 pub mod profile;
+pub mod recipes;
 pub mod recording;
 pub mod registry;
 pub mod retention;

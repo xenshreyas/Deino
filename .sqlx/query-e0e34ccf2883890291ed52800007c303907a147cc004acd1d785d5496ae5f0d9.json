@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM ask_messages WHERE meeting_id = ?1 AND id NOT IN (\n                 SELECT id FROM ask_messages WHERE meeting_id = ?1\n                 ORDER BY created_at DESC, id DESC LIMIT ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e0e34ccf2883890291ed52800007c303907a147cc004acd1d785d5496ae5f0d9"
+}

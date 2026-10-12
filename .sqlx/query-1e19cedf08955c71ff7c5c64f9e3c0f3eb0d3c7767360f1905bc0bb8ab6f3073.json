@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM recipes WHERE built_in = 1\n             AND slug NOT IN (SELECT value FROM json_each(?1))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "1e19cedf08955c71ff7c5c64f9e3c0f3eb0d3c7767360f1905bc0bb8ab6f3073"
+}

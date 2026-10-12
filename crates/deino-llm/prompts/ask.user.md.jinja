@@ -1,0 +1,23 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<user_notes>
+{%- if let Some(notes) = notes %}
+{{ notes }}
+{%- else %}
+The user typed no notes.
+{%- endif %}
+</user_notes>
+{%- if let Some(enhanced) = enhanced %}
+
+<enhanced_notes>
+{{ enhanced }}
+</enhanced_notes>
+{%- endif %}
+
+<transcript>
+{{ transcript }}
+</transcript>
+
+{{ request }}

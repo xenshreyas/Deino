@@ -143,10 +143,6 @@ export const NAV_ITEMS = [
     to: '/recipes',
     order: 20,
     section: 'intelligence',
-    comingSoon: {
-      card: 'AI-04',
-      description: 'Reusable prompts for follow-ups, briefs and summaries.',
-    },
   },
   {
     id: 'automations',

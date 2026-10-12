@@ -70,6 +70,7 @@
 #[cfg(debug_assertions)]
 pub mod _example;
 pub mod action_items;
+pub mod ask;
 pub mod automations;
 pub mod briefs;
 pub mod calendar;
@@ -101,6 +102,7 @@ pub mod player;
 pub mod privacy;
 pub mod profile;
 pub mod query;
+pub mod recipes;
 pub mod redaction;
 pub mod retention;
 pub mod sample;

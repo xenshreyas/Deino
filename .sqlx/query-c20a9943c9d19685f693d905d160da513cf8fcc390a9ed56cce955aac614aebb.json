@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO ask_messages\n                    (id, meeting_id, role, parts_json, recipe_slug, recipe_name, created_at)\n                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "c20a9943c9d19685f693d905d160da513cf8fcc390a9ed56cce955aac614aebb"
+}

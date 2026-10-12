@@ -23,6 +23,8 @@
 //! `followup.email` (NOT-07, `followup.rs`) checks that the discovery call
 //! warrants a follow-up with placeholders and that a colleague's promise to
 //! send it keeps the draft quiet.
+//! `chat` (AI-02-lite, `ask.rs`) asks each fixture a ground-truth question
+//! about that one meeting and checks its answer cites the evidence line.
 //!
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
@@ -36,6 +38,7 @@
 //! provider (its key in `OPENAI_API_KEY`). Evals never run in CI.
 
 mod action_items;
+mod ask;
 mod brief;
 mod cases;
 mod expectations;
@@ -65,6 +68,7 @@ fn main() {
     trials.extend(insights::trials(live_enabled()));
     trials.extend(brief::trials(live_enabled()));
     trials.extend(followup::trials(live_enabled()));
+    trials.extend(ask::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 
