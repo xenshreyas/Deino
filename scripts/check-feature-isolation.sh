@@ -68,8 +68,9 @@ while read -r hooked; do
         forbid "$APP/src/composition.rs" "$module::$wiring\(" "calls $module::$wiring, which runs from its attach hook"
     done < <(grep -A6 -E 'attach::attach!\(' "$hooked" | grep -oE 'attach_[a-z_]+\(' | tr -d '(' | sort -u)
 done < <(grep -lE 'attach::attach!\(' "$APP"/src/composition/*.rs)
-lines="$(wc -l <"$APP/src/composition.rs")"
-((lines <= 230)) || fail "$APP/src/composition.rs has $lines lines (cap 230): move feature wiring into an attach hook"
+# Module declarations don't count: every feature adds one, and that is allowed.
+lines="$(grep -cvE '^(pub(\(crate\))? )?mod [a-z_0-9]+;$' "$APP/src/composition.rs")"
+((lines <= 230)) || fail "$APP/src/composition.rs has $lines lines besides mod lines (cap 230): move feature wiring into an attach hook"
 
 # bindings.rs lists no builder.
 forbid "$APP/src/bindings.rs" 'features::[a-z_]+::specta' "lists a bindings builder; plugins register their own"

@@ -1,0 +1,9 @@
+# Module-list files where parallel features each add one `mod` line: keep both
+# sides instead of conflicting (git's union driver). The gate catches anything
+# that does not compile. See CLAUDE.md "Merge workflow".
+crates/deino-core/src/deino_core.rs merge=union
+frontend/src-tauri/src/composition.rs merge=union
+frontend/src-tauri/src/features.rs merge=union
+crates/deino-pipeline/src/stages.rs merge=union
+crates/deino-llm/tests/llm_eval/main.rs merge=union
+crates/deino-core/src/settings.rs merge=union
