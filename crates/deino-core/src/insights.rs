@@ -1,4 +1,4 @@
-//! Custom AI insights (AI-06, ADR 0037): questions the user asks of their
+//! Custom AI insights (AI-06, ADR 0038): questions the user asks of their
 //! meetings, answered with typed fields and attributed to the moment each
 //! answer was said.
 //!

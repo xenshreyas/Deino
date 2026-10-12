@@ -1,4 +1,4 @@
--- AI-06: custom AI insights (ADR 0037).
+-- AI-06: custom AI insights (ADR 0038).
 --
 -- An insight is a question the user asks of meetings: a name, a description
 -- that is the prompt, optional typed fields, how many answers to keep, and
