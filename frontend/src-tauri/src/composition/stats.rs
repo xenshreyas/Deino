@@ -46,3 +46,10 @@ fn recap_window() -> RecapWindow {
         RecapWindow::December
     }
 }
+
+/// Wires the services that read the library for the user: stats (ORG-09) and
+/// pre-meeting briefs (NOT-08).
+pub(super) fn attach_read_models(app: &AppHandle, database: &Database, wiring: &ActionItemWiring) {
+    attach_stats(app, database, wiring);
+    super::briefs::attach_briefs(app, database, wiring);
+}

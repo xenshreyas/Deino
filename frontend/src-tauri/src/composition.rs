@@ -184,7 +184,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
         clock: Arc::clone(&clock),
     };
     let stage_adapters = attach_stage_services(app, &database, &wiring, (&organize, search));
-    stats::attach_stats(app, &database, &wiring);
+    stats::attach_read_models(app, &database, &wiring);
     let deps = NoteDeps {
         settings: Arc::clone(&settings),
         gateway: gateway.clone(),
@@ -202,7 +202,6 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     attach_pipeline(app, &database, &clock, ai);
     background::attach_background(app, &database, &clock);
-    briefs::attach_briefs(app, &database, &wiring);
 }
 
 /// Wires the services that need only the database: [`Services`], folders and
