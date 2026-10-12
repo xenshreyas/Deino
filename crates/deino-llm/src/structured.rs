@@ -6,7 +6,12 @@
 //! [`OutputFormat::Json`]). The answer is parsed with serde; when that fails,
 //! the gateway asks once more, showing the model its answer and the parse
 //! error, and fails with [`LlmError::InvalidOutput`] if the repair fails too.
-//! `T` must be a JSON object (a struct): Anthropic tool inputs are objects.
+//! `T` must be a JSON object (a struct), and must not be recursive:
+//! Anthropic's structured outputs refuse recursive schemas (such a `T` is
+//! asked for as prompt-only JSON instead) and drop constraints such as
+//! `maxLength` or `minimum`, so the serde parse here and each caller's own
+//! validation are the checks that always run. A JSON answer cut off at `max_tokens` fails as
+//! [`LlmError::Truncated`] on Anthropic rather than reaching the repair.
 
 use schemars::generate::SchemaSettings;
 use schemars::{JsonSchema, Schema};

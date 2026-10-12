@@ -146,28 +146,179 @@ async fn tools_and_tool_results_use_anthropic_content_blocks() {
     assert!(body.get("tool_choice").is_none());
 }
 
-#[tokio::test]
-async fn a_json_answer_forces_the_answer_tool_and_streams_its_input_as_text() {
-    let fixture = include_str!("../../../tests/fixtures/anthropic_json_answer.sse");
-    let (provider, http) = provider(FakeHttp::new().reply(200, fixture));
-    let output = OutputFormat::Json(JsonOutput {
+fn json_output(schema: serde_json::Value) -> OutputFormat {
+    OutputFormat::Json(JsonOutput {
         name: "meeting_title".into(),
-        schema: json!({ "type": "object", "properties": { "title": { "type": "string" } } }),
+        schema,
+    })
+}
+
+fn title_output() -> OutputFormat {
+    json_output(json!({
+        "type": "object",
+        "properties": { "title": { "type": "string", "maxLength": 80 } },
+        "required": ["title"]
+    }))
+}
+
+#[tokio::test]
+async fn a_json_answer_is_a_structured_output_without_tools_or_temperature() {
+    let (provider, http) = provider(FakeHttp::new());
+    let mut asked = request(title_output());
+    asked.temperature = Some(0.2);
+    asked.tools = vec![ToolDefinition {
+        name: "search_meetings".into(),
+        description: "Search past meetings.".into(),
+        input_schema: json!({ "type": "object" }),
+    }];
+
+    assert!(
+        provider.stream(asked).await.is_err(),
+        "no reply is scripted"
+    );
+
+    assert_eq!(
+        http.json_body(0),
+        json!({
+            "model": "claude-sonnet-5-5",
+            "max_tokens": wire::JSON_ANSWER_MIN_TOKENS,
+            "system": "Be brief.",
+            "messages": [{ "role": "user", "content": [{ "type": "text", "text": "Hi" }] }],
+            "output_config": {
+                "format": {
+                    "type": "json_schema",
+                    "schema": {
+                        "type": "object",
+                        "properties": { "title": { "type": "string" } },
+                        "required": ["title"],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "stream": true,
+        })
+    );
+}
+
+#[tokio::test]
+async fn a_json_answer_keeps_a_cap_above_the_floor() {
+    let (provider, http) = provider(FakeHttp::new());
+    let mut asked = request(title_output());
+    asked.max_tokens = 32_000;
+
+    assert!(
+        provider.stream(asked).await.is_err(),
+        "no reply is scripted"
+    );
+
+    assert_eq!(http.json_body(0)["max_tokens"], 32_000);
+}
+
+#[tokio::test]
+async fn a_schema_structured_outputs_cannot_take_is_asked_for_in_the_system_prompt() {
+    let (provider, http) = provider(FakeHttp::new());
+    let recursive = json!({
+        "type": "object",
+        "properties": { "children": { "type": "array", "items": { "$ref": "#" } } }
     });
 
-    let completion = provider.complete(request(output)).await.unwrap();
+    assert!(
+        provider
+            .stream(request(json_output(recursive.clone())))
+            .await
+            .is_err(),
+        "no reply is scripted"
+    );
+
+    let body = http.json_body(0);
+    assert!(body.get("output_config").is_none());
+    assert!(body.get("tools").is_none());
+    assert!(body.get("tool_choice").is_none());
+    let system = body["system"].as_str().unwrap();
+    assert!(system.starts_with("Be brief.\n\nReply with only one JSON value"));
+    assert!(system.ends_with(&recursive.to_string()));
+}
+
+#[tokio::test]
+async fn a_json_answer_streams_its_text_after_thinking() {
+    let fixture = include_str!("../../../tests/fixtures/anthropic_json_answer.sse");
+    let (provider, _) = provider(FakeHttp::new().reply(200, fixture));
+
+    let completion = provider.complete(request(title_output())).await.unwrap();
 
     assert_eq!(completion.text, r#"{"title": "Brightkite pilot scope"}"#);
     assert!(completion.tool_calls.is_empty());
     assert_eq!(completion.stop, StopReason::EndTurn);
-    let body = http.json_body(0);
     assert_eq!(
-        body["tool_choice"],
-        json!({ "type": "tool", "name": "meeting_title" })
+        completion.usage,
+        Usage {
+            input_tokens: 120,
+            output_tokens: 48
+        }
     );
+}
+
+#[tokio::test]
+async fn a_json_answer_cut_off_at_max_tokens_is_truncated_after_its_usage() {
+    use futures_util::StreamExt;
+    let fixture = include_str!("../../../tests/fixtures/anthropic_json_max_tokens.sse");
+    let (provider, _) = provider(FakeHttp::new().reply(200, fixture));
+
+    let events: Vec<Result<CompletionEvent, LlmError>> = provider
+        .stream(request(title_output()))
+        .await
+        .unwrap()
+        .collect()
+        .await;
+
+    let usage = Usage {
+        input_tokens: 900,
+        output_tokens: 16_000,
+    };
+    assert!(matches!(&events[..], [
+        Ok(CompletionEvent::Text(_)),
+        Ok(CompletionEvent::Usage(reported)),
+        Err(LlmError::Truncated),
+    ] if *reported == usage));
+}
+
+#[tokio::test]
+async fn a_text_answer_cut_off_at_max_tokens_still_ends_normally() {
+    let fixture = include_str!("../../../tests/fixtures/anthropic_json_max_tokens.sse");
+    let (provider, _) = provider(FakeHttp::new().reply(200, fixture));
+
+    let completion = provider
+        .complete(request(OutputFormat::Text))
+        .await
+        .unwrap();
+
+    assert_eq!(completion.stop, StopReason::MaxTokens);
+}
+
+#[tokio::test]
+async fn text_and_tool_requests_never_send_a_temperature() {
+    let (provider, http) = provider(FakeHttp::new());
+    let mut asked = request(OutputFormat::Text);
+    asked.temperature = Some(0.2);
+    asked.tools = vec![ToolDefinition {
+        name: "search_meetings".into(),
+        description: "Search past meetings.".into(),
+        input_schema: json!({ "type": "object" }),
+    }];
+
+    assert!(
+        provider.stream(asked).await.is_err(),
+        "no reply is scripted"
+    );
+
+    let body = http.json_body(0);
+    assert!(body.get("temperature").is_none());
+    assert!(body.get("tool_choice").is_none());
+    assert!(body.get("output_config").is_none());
+    assert_eq!(body["max_tokens"], 256);
     assert_eq!(
-        body["tools"][0]["input_schema"]["properties"]["title"]["type"],
-        "string"
+        body["tools"][0]["input_schema"],
+        json!({ "type": "object" })
     );
 }
 

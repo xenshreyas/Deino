@@ -95,3 +95,12 @@ async fn the_request_goes_to_the_tagging_route_with_the_pick_prompt() {
 fn the_pick_prompt_lists_the_meeting_and_every_candidate() {
     insta::assert_snapshot!(pick_prompt(&meeting(), &candidates()));
 }
+
+#[test]
+fn the_pick_schema_is_an_anthropic_structured_output() {
+    let schema = deino_llm::json_schema_for::<super::classifier::Pick>();
+
+    let sent = deino_llm::providers::anthropic::schema::constrained_schema(&schema).unwrap();
+
+    assert_eq!(sent["additionalProperties"], false);
+}

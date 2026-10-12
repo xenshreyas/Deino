@@ -120,8 +120,9 @@ pub enum OutputFormat {
     #[default]
     Text,
     /// One JSON value matching a schema. Each provider enforces it its own
-    /// way: Anthropic with a forced tool, OpenAI with `response_format`, the
-    /// built-in model with a grammar. The JSON arrives as `Text` events.
+    /// way: Anthropic with a structured output (`output_config.format`),
+    /// OpenAI with `response_format`, the built-in model with a grammar. The
+    /// JSON arrives as `Text` events.
     Json(JsonOutput),
 }
 
