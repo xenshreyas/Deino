@@ -232,6 +232,18 @@ export type Table =
  */
 "year_recaps" | 
 /**
+ * Automations: conditions and the steps to run (AUT-01).
+ */
+"automations" | 
+/**
+ * Each automation's latest run on each meeting (AUT-01).
+ */
+"automation_runs" | 
+/**
+ * The steps of each automation run, with their results (AUT-01).
+ */
+"automation_run_steps" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -241,4 +253,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","automations","automation_runs","automation_run_steps","example_notes"] as const satisfies readonly Table[]

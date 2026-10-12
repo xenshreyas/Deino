@@ -163,6 +163,15 @@ afterCalendarEnd: boolean;
  */
 offerNextMeeting: boolean }
 /**
+ * The automations section of `Settings`.
+ */
+export type AutomationSettings = { 
+/**
+ * Let "Run shell script" steps run commands. Off by default: a script
+ * runs with the user's own permissions, so the user turns it on.
+ */
+shellScripts: boolean }
+/**
  * The beta section of `Settings`: features still being proven.
  */
 export type BetaSettings = { 
@@ -1133,6 +1142,10 @@ calendar: CalendarSettings;
  * The user's own OAuth apps for integrations (INT-00).
  */
 integrations: IntegrationSettings; 
+/**
+ * What automations may do on the Mac (AUT-01).
+ */
+automations: AutomationSettings; 
 /**
  * Appearance and layout.
  */

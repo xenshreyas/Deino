@@ -207,6 +207,18 @@ export type Table =
  */
 "year_recaps" | 
 /**
+ * Automations: conditions and the steps to run (AUT-01).
+ */
+"automations" | 
+/**
+ * Each automation's latest run on each meeting (AUT-01).
+ */
+"automation_runs" | 
+/**
+ * The steps of each automation run, with their results (AUT-01).
+ */
+"automation_run_steps" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

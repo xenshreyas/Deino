@@ -1318,7 +1318,7 @@ tables are omitted from the diagram's attributes.
   status, its answers as a write-once snapshot (each citing a segment by ID
   without a foreign key, like enhanced notes' citations) and the revision
   they answer. Earlier answers survive a pending or failed run.
-- **Automations** (AUT-01, ADR 0042, migration `20261012022631`):
+- **Automations** (AUT-01, ADR 0042, migration `20261012052556`):
   `automations` keeps each definition whole (conditions and steps as typed
   JSON documents, names unique ignoring case); `automation_runs` keeps the
   latest run of each automation on each meeting (status, trigger and the
