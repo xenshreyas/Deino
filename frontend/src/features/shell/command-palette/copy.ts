@@ -12,7 +12,7 @@ export const paletteCopy = {
   askDeino: 'Ask Deino',
   /** Marks a feature that is not finished. */
   wip: 'WIP',
-  importAudio: 'Import audio',
+  importAudio: 'Import recording',
   toggleSidebar: 'Toggle sidebar',
   toggleRightPanel: 'Toggle right panel',
   theme: (name: string) => `Theme: ${name}`,
