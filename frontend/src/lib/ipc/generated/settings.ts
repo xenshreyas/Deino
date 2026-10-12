@@ -900,7 +900,12 @@ export type ServiceId =
 /**
  * Outbound webhooks to URLs the user enters (DEV-01).
  */
-"webhooks"
+"webhooks" | 
+/**
+ * Company logos: `https://<domain>/favicon.ico`, fetched once per
+ * company (ORG-04).
+ */
+"favicons"
 /**
  * Every user preference. Secrets are never here; they live in the Keychain.
  * 

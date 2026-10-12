@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people SET summary_md = ?1, summary_updated_at = ?2 WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "0799767ccbf9cd9621a5ac2205a1da3f096e539e09c4dd75ad0b9703d61c8b87"
+}

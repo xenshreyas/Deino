@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 
 import { cn } from '@/ui/cn';
+import { ICON_PROPS, Plus } from '@/ui/icons';
 
 import { notepadCopy } from '../copy';
 import { initials } from '../editor/mention';
@@ -15,6 +16,24 @@ import type { MentionCandidate } from '../types';
 
 /** Gap between the typed query and the menu, in px. */
 const MENU_OFFSET = 6;
+
+/** Initials, or a dashed "+" for someone not added yet. */
+function OptionAvatar({ candidate }: { candidate: MentionCandidate }) {
+  const isNew = candidate.isNew === true;
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold',
+        isNew
+          ? 'border border-dashed border-border-strong text-fg-muted'
+          : 'bg-accent-soft text-accent',
+      )}
+    >
+      {isNew ? <Plus {...ICON_PROPS} size={12} /> : initials(candidate.label)}
+    </span>
+  );
+}
 
 /** One person in the menu. */
 function MentionOption({
@@ -39,13 +58,10 @@ function MentionOption({
         active && 'bg-bg-muted',
       )}
     >
-      <span
-        aria-hidden="true"
-        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent"
-      >
-        {initials(candidate.label)}
+      <OptionAvatar candidate={candidate} />
+      <span className="truncate">
+        {candidate.isNew === true ? notepadCopy.addPerson(candidate.label) : candidate.label}
       </span>
-      <span className="truncate">{candidate.label}</span>
       {candidate.detail === null ? null : (
         <span className="ml-auto truncate pl-2 text-xs text-fg-subtle">{candidate.detail}</span>
       )}

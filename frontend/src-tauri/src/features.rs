@@ -19,6 +19,7 @@
 pub mod _example;
 pub mod action_items;
 pub mod calendar;
+pub mod companies;
 pub mod db;
 pub mod detection;
 #[cfg(debug_assertions)]
@@ -60,6 +61,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (export::NAME, export::specta()),
         (calendar::NAME, calendar::specta()),
         (enhance::NAME, enhance::specta()),
+        (companies::NAME, companies::specta()),
         (meetings::NAME, meetings::specta()),
         (network::NAME, network::specta()),
         (pipeline::NAME, pipeline::specta()),

@@ -14,6 +14,7 @@ use super::{
     MergeSpeakers, NameCandidate, NamingRepo, Participant, ParticipantReader, ParticipantRow,
     PersonRef, Rename, RenameScope, Renamed, SpeakerError, SpeakerName,
 };
+use crate::entities::EntityDirectory;
 use crate::people::{AttendeeRepo, Person, PersonRepo};
 use crate::segments::{Speaker, SpeakerRepo};
 use crate::voiceprints::VoiceprintService;
@@ -36,6 +37,8 @@ pub struct SpeakerPorts {
     pub attendees: Arc<dyn AttendeeRepo>,
     /// Enrols a confirmed voice.
     pub voiceprints: Arc<VoiceprintService>,
+    /// The upsert rules, for a speaker named after someone new (ORG-04).
+    pub directory: Arc<EntityDirectory>,
     /// IDs and timestamps.
     pub clock: Arc<dyn Clock>,
 }

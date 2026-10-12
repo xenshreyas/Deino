@@ -6,7 +6,7 @@ import { asTemplateId, type Template } from '@/features/templates';
 import { toNoteDoc } from '../doc-schema';
 import type { Person } from '../types';
 import { noteExtensions } from './extensions';
-import { MENTION_LIMIT, rankMentionCandidates } from './mention-ranking';
+import { MENTION_LIMIT, rankMentionCandidates, withNewPerson } from './mention-ranking';
 import { createMenuStore, createMentionStore } from './menu-store';
 import type { TemplateCommandOptions } from './template-command';
 import { pastePlainText } from './plain-paste';
@@ -100,6 +100,17 @@ describe('mention suggestions', () => {
   it('never offer more than the menu shows', () => {
     const people = Array.from({ length: 12 }, (_, n) => person(`Person ${String(n)}`, null));
     expect(rankMentionCandidates(people, '')).toHaveLength(MENTION_LIMIT);
+  });
+
+  it('offer to add someone new only when nobody has the typed name', () => {
+    const known = [{ id: 'a', label: 'Owen Price', detail: null }];
+
+    expect(withNewPerson(known, ' owen  price ')).toEqual(known);
+    expect(withNewPerson(known, 'a')).toEqual(known);
+    expect(withNewPerson(known, 'Dana  Ortiz').at(-1)).toMatchObject({
+      label: 'Dana Ortiz',
+      isNew: true,
+    });
   });
 
   it('move the highlight with the arrows and choose with return', () => {

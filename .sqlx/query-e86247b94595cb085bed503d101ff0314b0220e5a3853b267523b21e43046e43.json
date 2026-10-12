@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE enhanced_notes SET doc_json = replace(doc_json, ?2, ?1)\n         WHERE instr(doc_json, ?2) > 0",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e86247b94595cb085bed503d101ff0314b0220e5a3853b267523b21e43046e43"
+}

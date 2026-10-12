@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE companies SET merged_into = ?1 WHERE merged_into = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "870895ccbabf0738ce1d66d2d013e57b4f72904b1207e7142c2b841573aea602"
+}

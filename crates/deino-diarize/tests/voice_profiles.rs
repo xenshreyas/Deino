@@ -21,10 +21,12 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use deino_core::companies::SqliteCompanyRepo;
 use deino_core::diarization::{
     DiarizeDeps, DiarizeService, IdentifyPolicy, IdentifyPorts, IdentifyService, SpeakerIdentifier,
     TrackDiarization, TrackDiarizer, TrackError, TrackRequest,
 };
+use deino_core::entities::EntityDirectory;
 use deino_core::meetings::{MeetingAudio, MeetingLifecycleRepo, SqliteMeetingRepo};
 use deino_core::people::{MeRepo, SqlitePeopleRepo};
 use deino_core::segments::SqliteSegmentRepo;
@@ -138,8 +140,13 @@ fn naming(database: &Database) -> SpeakerService {
         naming,
         speakers: segments,
         people: people.clone(),
-        attendees: people,
+        attendees: people.clone(),
         voiceprints: Arc::new(voiceprints),
+        directory: Arc::new(EntityDirectory::new(
+            people.clone(),
+            Arc::new(SqliteCompanyRepo::new(database.clone())),
+            Arc::new(SystemClock),
+        )),
         clock: Arc::new(SystemClock),
     })
 }

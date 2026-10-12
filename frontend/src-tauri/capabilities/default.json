@@ -42,6 +42,7 @@
         "developer:default",
         "action-items:default",
         "calendar:default",
+        "companies:default",
         "meetings:default",
         "export:default",
         "network:default",

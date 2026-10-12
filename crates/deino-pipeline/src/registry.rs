@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
+use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::folders::AutoFiler;
 use deino_core::meetings::MeetingLifecycleRepo;
@@ -22,7 +23,7 @@ use deino_domain::{Clock, StageId};
 use crate::stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
     EnhanceNotesStage, ExtractActionItemsStage, FinalizeAudioStage, IdentifySpeakersStage,
-    IndexStage, MeetingTitler, NotesEnhancer,
+    IndexStage, MeetingTitler, NotesEnhancer, UpdateEntitiesStage,
 };
 use crate::{Job, PipelineStage};
 
@@ -62,6 +63,8 @@ pub struct StagePorts {
     pub auto_tagger: Arc<dyn AutoTagger>,
     /// The auto-filer (ORG-05).
     pub auto_filer: Arc<dyn AutoFiler>,
+    /// People and companies after a meeting (ORG-04).
+    pub entities: Arc<dyn EntityUpdater>,
     /// The folder holding every live recording's folder (`finalize_audio`).
     pub recordings: PathBuf,
     /// Search indexing: keyword documents and embeddings (ORG-08, AI-01).
@@ -99,6 +102,7 @@ impl StagePorts {
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
             auto_tagger: Arc::new(crate::stages::RecordedAutoTags::default()),
             auto_filer: Arc::new(crate::stages::RecordedAutoFiling::default()),
+            entities: Arc::new(crate::stages::RecordedEntityUpdates::default()),
             recordings: PathBuf::from("no-recordings"),
             search: Arc::new(crate::stages::RecordedIndexing::default()),
         }
@@ -126,6 +130,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(AutoFolderStage::new(ports)),
         // 80 · ORG-08 / AI-01: keyword documents and embeddings.
         Arc::new(IndexStage::new(ports)),
+        // 90 · ORG-04: people and company summaries, logos.
+        Arc::new(UpdateEntitiesStage::new(ports)),
         // 99 · EXP-02: the notes into the user's folder, last.
         Arc::new(AutoExportStage::new(ports)),
     ])
@@ -212,6 +218,7 @@ mod tests {
                 "auto_tag",
                 "auto_folder",
                 "index",
+                "update_entities",
                 "auto_export"
             ]
             .map(StageId::new)

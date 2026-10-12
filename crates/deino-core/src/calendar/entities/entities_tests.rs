@@ -21,7 +21,7 @@ struct Harness {
 fn harness() -> Harness {
     let people = Arc::new(FakePeopleRepo::default());
     let companies = Arc::new(FakeCompanyRepo::default());
-    let directory = AttendeeDirectory::new(people.clone(), companies.clone(), Arc::new(clock()));
+    let directory = AttendeeDirectory::over(people.clone(), companies.clone(), Arc::new(clock()));
     Harness {
         directory,
         people,
@@ -118,7 +118,7 @@ async fn existing_people_are_left_as_the_user_edited_them() {
         .unwrap();
     marcus.name = "Marcus Webb".into();
     people.update(&marcus).await.unwrap();
-    let fresh = AttendeeDirectory::new(
+    let fresh = AttendeeDirectory::over(
         people.clone(),
         Arc::new(FakeCompanyRepo::default()),
         Arc::new(clock()),

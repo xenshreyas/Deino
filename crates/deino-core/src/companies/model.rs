@@ -20,10 +20,42 @@ pub struct Company {
     pub notes_md: String,
     /// The AI summary of the relationship, in Markdown (ORG-04).
     pub summary_md: Option<String>,
+    /// When `summary_md` was last refreshed.
+    pub summary_updated_at: Option<DateTime<Utc>>,
+    /// When the favicon was last asked for, found or not; logos are fetched
+    /// once.
+    pub logo_checked_at: Option<DateTime<Utc>>,
+    /// The company this one was merged into; merged companies are hidden
+    /// from lists and their domain resolves to the survivor.
+    pub merged_into: Option<CompanyId>,
     /// When the company was added.
     pub created_at: DateTime<Utc>,
     /// When the company last changed.
     pub updated_at: DateTime<Utc>,
+}
+
+impl Company {
+    /// A new company with no logo, notes or summary yet.
+    pub fn new(
+        id: CompanyId,
+        name: String,
+        domain: Option<CompanyDomain>,
+        at: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            domain,
+            logo_path: None,
+            notes_md: String::new(),
+            summary_md: None,
+            summary_updated_at: None,
+            logo_checked_at: None,
+            merged_into: None,
+            created_at: at,
+            updated_at: at,
+        }
+    }
 }
 
 /// A web domain such as `acme.com`: trimmed, lower case, with at least one

@@ -14,10 +14,12 @@ use std::sync::Arc;
 use crate::stages::{DiarizeStage, IdentifySpeakersStage};
 use crate::{PipelineStage, RecordedProgress, StageCtx, StageOutcome, StagePorts};
 use async_trait::async_trait;
+use deino_core::companies::SqliteCompanyRepo;
 use deino_core::diarization::{
     FakeTrackDiarizer, IdentifyPolicy, IdentifyPorts, IdentifyService, TrackDiarization, Voice,
     VoiceTurn,
 };
+use deino_core::entities::EntityDirectory;
 use deino_core::meetings::{MeetingAudio, MeetingLifecycleRepo, SqliteMeetingRepo};
 use deino_core::people::{MeRepo, SqlitePeopleRepo};
 use deino_core::segments::SqliteSegmentRepo;
@@ -192,8 +194,13 @@ fn speakers(database: &Database) -> SpeakerService {
         naming,
         speakers: segments,
         people: people.clone(),
-        attendees: people,
+        attendees: people.clone(),
         voiceprints: Arc::new(voiceprints),
+        directory: Arc::new(EntityDirectory::new(
+            people.clone(),
+            Arc::new(SqliteCompanyRepo::new(database.clone())),
+            clock(),
+        )),
         clock: clock(),
     })
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO meeting_attendees (meeting_id, person_id, role, rsvp)\n         SELECT meeting_id, ?1, role, rsvp FROM meeting_attendees WHERE person_id = ?2\n         ON CONFLICT (meeting_id, person_id) DO UPDATE SET\n             role = CASE meeting_attendees.role WHEN 'speaker_only' THEN excluded.role\n                    ELSE meeting_attendees.role END,\n             rsvp = coalesce(meeting_attendees.rsvp, excluded.rsvp)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e70a9325d268c395f46afb110c8bb4f9cc3376d57e0edfe459818591994f5abe"
+}

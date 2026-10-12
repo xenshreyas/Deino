@@ -2022,6 +2022,7 @@ dependencies = [
  "deino-domain",
  "deino-export",
  "deino-llm",
+ "deino-net",
  "deino-secrets",
  "deino-testkit",
  "futures-util",

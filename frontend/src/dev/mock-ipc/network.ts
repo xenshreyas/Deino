@@ -50,6 +50,7 @@ const REGISTRY: readonly RegistryEntry[] = [
   { id: 'zoho_crm', kind: 'integration', hosts: ['*.zoho.com', '*.zohoapis.com'] },
   { id: 'web_search', kind: 'web', hosts: ['api.search.brave.com', 'api.tavily.com'] },
   { id: 'webhooks', kind: 'web', hosts: [] },
+  { id: 'favicons', kind: 'web', hosts: ['any public website'] },
 ];
 
 /** The user's switches; services without one keep the Rust default. */

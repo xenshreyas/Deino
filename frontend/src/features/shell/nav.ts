@@ -83,10 +83,6 @@ export const NAV_ITEMS = [
     to: '/people',
     order: 10,
     section: 'workspace',
-    comingSoon: {
-      card: 'ORG-04',
-      description: 'Everyone you meet, with what was said and what is still open.',
-    },
   },
   {
     id: 'companies',
@@ -95,10 +91,6 @@ export const NAV_ITEMS = [
     to: '/companies',
     order: 20,
     section: 'workspace',
-    comingSoon: {
-      card: 'ORG-04',
-      description: 'The organisations behind your meetings, in one place.',
-    },
   },
   {
     id: 'folders',

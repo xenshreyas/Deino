@@ -4,7 +4,9 @@
 
 use std::sync::Arc;
 
+use deino_core::companies::SqliteCompanyRepo;
 use deino_core::diarization::{IdentifyPolicy, IdentifyPorts, IdentifyService, SpeakerIdentifier};
+use deino_core::entities::EntityDirectory;
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
 use deino_core::speakers::{SpeakerPorts, SpeakerService, SqliteNamingRepo};
@@ -39,6 +41,11 @@ impl Speakers {
             people: people.clone(),
             attendees: people.clone(),
             voiceprints: Arc::clone(&voiceprints),
+            directory: Arc::new(EntityDirectory::new(
+                people.clone(),
+                Arc::new(SqliteCompanyRepo::new(database.clone())),
+                Arc::clone(clock),
+            )),
             clock: Arc::clone(clock),
         }));
         Self {

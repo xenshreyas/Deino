@@ -47,7 +47,7 @@ async fn harness() -> Harness {
         source: source.clone(),
         connectors: vec![google.clone()],
         store: CalendarStore::over(&repo),
-        directory: AttendeeDirectory::new(
+        directory: AttendeeDirectory::over(
             Arc::new(FakePeopleRepo::default()),
             Arc::new(FakeCompanyRepo::default()),
             clock.clone(),

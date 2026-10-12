@@ -1,7 +1,9 @@
 import { useRouter } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 import { useMountEffect } from '@/hooks/useMountEffect';
 
+import { shellCopy } from '../copy';
 import { useShellLayout } from '../layout-store';
 import { requestRecordingStart } from '../recording';
 import { findShortcut, isTypingTarget, type ShortcutId } from '../shortcuts';
@@ -19,8 +21,10 @@ function runShortcut(id: ShortcutId, router: Router): void {
     palette: () => {
       layout.setPaletteOpen(!layout.paletteOpen);
     },
+    // D13: Ask Deino (AI-02) is deprioritised; ⌘J says so instead of
+    // opening an empty chat bar.
     chat: () => {
-      layout.setChatOpen(!layout.chatOpen);
+      toast(shellCopy.chatSoonToast);
     },
     newNote: goHome,
     record: () => {

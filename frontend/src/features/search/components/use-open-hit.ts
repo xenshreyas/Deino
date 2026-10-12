@@ -8,7 +8,7 @@ import type { FilterChip } from '../types';
 
 /** Every place search can take the user: a hit's target or the results page. */
 export type SearchDestination =
-  Exclude<HitTarget, { kind: 'filter' }> | { kind: 'results'; text: string; filters: FilterChip[] };
+  HitTarget | { kind: 'results'; text: string; filters: FilterChip[] };
 
 /** A function that navigates to a search destination. */
 export function useOpenHit(): (destination: SearchDestination) => void {
@@ -20,6 +20,15 @@ export function useOpenHit(): (destination: SearchDestination) => void {
           to: '/meetings/$meetingId',
           params: { meetingId: destination.meetingId },
           search: destination.atMs === null ? {} : { tab: 'transcript', t: destination.atMs },
+        });
+        return;
+      case 'person':
+        void navigate({ to: '/people/$personId', params: { personId: destination.personId } });
+        return;
+      case 'company':
+        void navigate({
+          to: '/companies/$companyId',
+          params: { companyId: destination.companyId },
         });
         return;
       case 'folder':

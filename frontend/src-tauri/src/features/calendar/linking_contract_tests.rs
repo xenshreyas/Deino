@@ -119,7 +119,7 @@ async fn link_service(
     )
     .await
     .unwrap();
-    let directory = AttendeeDirectory::new(
+    let directory = AttendeeDirectory::over(
         people.clone(),
         Arc::new(SqliteCompanyRepo::new(database.clone())),
         clock.clone(),

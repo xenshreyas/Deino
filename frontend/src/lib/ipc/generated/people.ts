@@ -16,6 +16,128 @@ async search(query: string) : Promise<Result<Person[], AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Everyone the user meets, most recently met first.
+ */
+async list() : Promise<Result<PersonRow[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|list") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The person page of `id` (or of whom they were merged into).
+ */
+async page(id: PersonId) : Promise<Result<PersonPage, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|page", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Adds a person; `invalid` for a blank name or bad address, `conflict`
+ * for an address someone else has.
+ */
+async create(fields: PersonFields) : Promise<Result<Person, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|create", { fields }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Saves the person form.
+ */
+async update(id: PersonId, fields: PersonFields) : Promise<Result<Person, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|update", { id, fields }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Saves the user's notes about a person.
+ */
+async setNotes(id: PersonId, notes: string) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|set_notes", { id, notes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Merges `absorbed` into `survivor`, moving every link; returns the survivor.
+ */
+async merge(survivor: PersonId, absorbed: PersonId) : Promise<Result<Person, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|merge", { survivor, absorbed }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The person called `name`, added if nobody is (an @mention of someone new).
+ */
+async fromMention(name: string) : Promise<Result<Person, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|from_mention", { name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Rewrites the person's AI summary now.
+ */
+async refreshSummary(id: PersonId) : Promise<Result<SummaryOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|refresh_summary", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The meeting's attendees: the organiser first, the user last.
+ */
+async attendees(meetingId: MeetingId) : Promise<Result<MeetingPerson[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|attendees", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Adds a person to the meeting as an invitee.
+ */
+async addAttendee(meetingId: MeetingId, personId: PersonId) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|add_attendee", { meetingId, personId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Takes a person off the meeting; `true` when they were on it.
+ */
+async removeAttendee(meetingId: MeetingId, personId: PersonId) : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:people|remove_attendee", { meetingId, personId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -29,6 +151,10 @@ async search(query: string) : Promise<Result<Person[], AppError>> {
 
 /** user-defined types **/
 
+/**
+ * Identifies an action item.
+ */
+export type ActionItemId = string & { readonly __brand: "ActionItemId" }
 /**
  * The only error type that crosses IPC.
  * 
@@ -46,6 +172,81 @@ code: ErrorCode;
  */
 message: string }
 /**
+ * How a person took part in a meeting. Stored in `meeting_attendees.role`.
+ */
+export type AttendeeRole = 
+/**
+ * Organised the calendar event.
+ */
+"organizer" | 
+/**
+ * Was invited through the calendar event.
+ */
+"invitee" | 
+/**
+ * Spoke in the meeting without being invited.
+ */
+"speaker_only"
+/**
+ * Identifies a calendar event synced from a calendar account.
+ */
+export type CalendarEventId = string & { readonly __brand: "CalendarEventId" }
+/**
+ * A company the user's contacts work at.
+ */
+export type Company = { 
+/**
+ * The company's ID.
+ */
+id: CompanyId; 
+/**
+ * Its display name.
+ */
+name: string; 
+/**
+ * Its web domain; unique, so people with that email domain join it.
+ */
+domain: CompanyDomain | null; 
+/**
+ * A locally cached logo (ORG-04 fetches the favicon once).
+ */
+logoPath: string | null; 
+/**
+ * The user's own notes, in Markdown.
+ */
+notesMd: string; 
+/**
+ * The AI summary of the relationship, in Markdown (ORG-04).
+ */
+summaryMd: string | null; 
+/**
+ * When `summary_md` was last refreshed.
+ */
+summaryUpdatedAt: string | null; 
+/**
+ * When the favicon was last asked for, found or not; logos are fetched
+ * once.
+ */
+logoCheckedAt: string | null; 
+/**
+ * The company this one was merged into; merged companies are hidden
+ * from lists and their domain resolves to the survivor.
+ */
+mergedInto: CompanyId | null; 
+/**
+ * When the company was added.
+ */
+createdAt: string; 
+/**
+ * When the company last changed.
+ */
+updatedAt: string }
+/**
+ * A web domain such as `acme.com`: trimmed, lower case, with at least one
+ * dot and no `@` or whitespace. The schema checks the same shape.
+ */
+export type CompanyDomain = string
+/**
  * Identifies a company.
  */
 export type CompanyId = string & { readonly __brand: "CompanyId" }
@@ -60,6 +261,51 @@ export type CompanyId = string & { readonly __brand: "CompanyId" }
  * makes case-insensitive.
  */
 export type Email = string
+/**
+ * An open action item on an entity page. Its own shape, so the page does
+ * not change when the action items feature (AI-05) grows its model.
+ */
+export type EntityActionItem = { 
+/**
+ * The item.
+ */
+id: ActionItemId; 
+/**
+ * What to do.
+ */
+title: string; 
+/**
+ * When it is due.
+ */
+dueAt: string | null; 
+/**
+ * Who should do it.
+ */
+assigneePersonId: PersonId | null; 
+/**
+ * The meeting it came from.
+ */
+meetingId: MeetingId | null }
+/**
+ * A meeting on an entity page or hover card.
+ */
+export type EntityMeeting = { 
+/**
+ * The meeting.
+ */
+id: MeetingId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * When it started, or was created when the start is unknown.
+ */
+at: string; 
+/**
+ * Its recorded length in seconds, when known.
+ */
+durationS: number | null }
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
  * in the `last_error_code` and `error_code` columns of the integration tables.
@@ -101,6 +347,51 @@ export type ErrorCode =
  * A bug or an unexpected failure; the details are in the log.
  */
 "internal"
+/**
+ * Identifies a meeting.
+ * 
+ * Meetings predate UUIDv7 IDs: existing rows use `meeting-<UUIDv4>`, and
+ * the legacy recording and import paths still create IDs in that format.
+ * FND-07 keeps the ID opaque text so every existing meeting still opens;
+ * new meetings may use any unique text, including `meeting-<UUIDv7>`.
+ */
+export type MeetingId = string & { readonly __brand: "MeetingId" }
+/**
+ * A person in a meeting, as the header shows them.
+ */
+export type MeetingPerson = { 
+/**
+ * The person (the survivor, if the attendee was merged since).
+ */
+personId: PersonId; 
+/**
+ * Their name.
+ */
+name: string; 
+/**
+ * Their address.
+ */
+email: Email | null; 
+/**
+ * Their job title.
+ */
+title: string | null; 
+/**
+ * Where they work.
+ */
+companyId: CompanyId | null; 
+/**
+ * The company's cached logo.
+ */
+companyLogoPath: string | null; 
+/**
+ * How they took part.
+ */
+role: AttendeeRole; 
+/**
+ * True for the user.
+ */
+isMe: boolean }
 /**
  * Someone the user meets.
  */
@@ -158,9 +449,138 @@ createdAt: string;
  */
 updatedAt: string }
 /**
+ * A person's details as the user types them (add and edit).
+ */
+export type PersonFields = { 
+/**
+ * Their name; required.
+ */
+name: string; 
+/**
+ * Their email address; blank for none.
+ */
+email: string | null; 
+/**
+ * Their job title; blank for none.
+ */
+title: string | null; 
+/**
+ * Where they work.
+ */
+companyId: CompanyId | null }
+/**
  * Identifies a person.
  */
 export type PersonId = string & { readonly __brand: "PersonId" }
+/**
+ * Everything the person page shows.
+ */
+export type PersonPage = { 
+/**
+ * The person (the survivor, when the asked-for person was merged).
+ */
+person: Person; 
+/**
+ * Where they work.
+ */
+company: Company | null; 
+/**
+ * Their meetings, most recent first.
+ */
+meetings: EntityMeeting[]; 
+/**
+ * Their open action items, soonest due first.
+ */
+actionItems: EntityActionItem[]; 
+/**
+ * Calendar events with them in the next two weeks.
+ */
+upcoming: UpcomingEvent[] }
+/**
+ * A row of the People list: who, where they work, and when the user last
+ * met them. The aggregates are computed on read (ADR 0036).
+ */
+export type PersonRow = { 
+/**
+ * The person.
+ */
+id: PersonId; 
+/**
+ * Their name.
+ */
+name: string; 
+/**
+ * Their email address.
+ */
+email: Email | null; 
+/**
+ * Their job title.
+ */
+title: string | null; 
+/**
+ * Where they work.
+ */
+companyId: CompanyId | null; 
+/**
+ * The company's name, for the row's second line.
+ */
+companyName: string | null; 
+/**
+ * The company's cached logo, shown on the person's avatar.
+ */
+companyLogoPath: string | null; 
+/**
+ * When their latest meeting outside the trash happened.
+ */
+lastMetAt: string | null; 
+/**
+ * How many meetings outside the trash they attended.
+ */
+meetingCount: number }
+/**
+ * What a refresh did.
+ */
+export type SummaryOutcome = 
+/**
+ * A new summary was stored.
+ */
+"refreshed" | 
+/**
+ * Nothing has been written about them yet; the summary is unchanged.
+ */
+"no_content" | 
+/**
+ * The model answered with nothing usable; the summary is unchanged.
+ */
+"empty_answer" | 
+/**
+ * No LLM could be wired at startup; the summary is unchanged.
+ */
+"no_model"
+/**
+ * A calendar event coming up with the person or company.
+ */
+export type UpcomingEvent = { 
+/**
+ * The event.
+ */
+id: CalendarEventId; 
+/**
+ * Its title; may be empty.
+ */
+title: string; 
+/**
+ * When it starts.
+ */
+startAt: string; 
+/**
+ * When it ends.
+ */
+endAt: string; 
+/**
+ * Its video-call link.
+ */
+conferenceUrl: string | null }
 
 /** tauri-specta globals **/
 

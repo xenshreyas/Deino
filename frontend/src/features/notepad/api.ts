@@ -32,6 +32,8 @@ export const notesApi = {
 export const peopleApi = {
   /** People whose name, a word of it, or email starts with `query`. */
   search: (query: string): Promise<Person[]> => unwrap(people.search(query)),
+  /** The person called `name`, added if nobody is (an @mention of someone new). */
+  fromMention: (name: string): Promise<Person> => unwrap(people.fromMention(name)),
 };
 
 /**

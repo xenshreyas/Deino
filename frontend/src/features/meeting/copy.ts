@@ -12,8 +12,6 @@ export const meetingCopy = {
   tabsLabel: 'Meeting sections',
   panelLabel: 'Meeting side panel',
   editTitle: 'Rename meeting',
-  addAttendees: 'Add attendees',
-  comingSoon: 'Coming soon',
   loadError: 'This meeting could not be opened.',
   backToMeetings: 'Back to Meetings',
   insightsTitle: 'No insights yet',

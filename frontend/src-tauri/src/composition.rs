@@ -31,6 +31,7 @@ mod detection;
 mod developer;
 mod diarize;
 mod enhance;
+mod entities;
 mod export;
 mod integrations;
 mod llm;
@@ -218,9 +219,9 @@ fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock
 }
 
 /// Builds and manages the services behind the pipeline's AI and export
-/// stages: the auto-tagger, the exports (EXP-01/02), action items (AI-05)
-/// and the speaker identifier (CAP-04); the search indexer (ORG-08) is
-/// already built.
+/// stages: the auto-tagger, the exports (EXP-01/02), action items (AI-05),
+/// the speaker identifier (CAP-04) and people and companies (ORG-04); the
+/// search indexer (ORG-08) is already built.
 fn attach_stage_services(
     app: &AppHandle,
     database: &Database,
@@ -242,6 +243,7 @@ fn attach_stage_services(
         action_items: action_items::attach_action_items(app, database, wiring),
         identifier: speakers::identifier(database, wiring.settings.clone()),
         search,
+        entities: entities::attach_entities(app, database, wiring.gateway.clone(), &wiring.clock),
     }
 }
 
@@ -377,6 +379,7 @@ mod tests {
                     ),
                     identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
                     search: Arc::new(deino_pipeline::RecordedIndexing::default()),
+                    entities: Arc::new(deino_pipeline::RecordedEntityUpdates::default()),
                 },
             },
             recordings: std::path::PathBuf::from("no-recordings"),

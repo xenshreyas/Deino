@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM voiceprints WHERE person_id = ?1 AND id NOT IN (\n             SELECT id FROM voiceprints WHERE person_id = ?1\n             ORDER BY quality DESC, created_at DESC LIMIT ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "9065ab8f38ce0b10a23d6e2033b772ffa6b240bd8efd3b25b546d3665e7becff"
+}

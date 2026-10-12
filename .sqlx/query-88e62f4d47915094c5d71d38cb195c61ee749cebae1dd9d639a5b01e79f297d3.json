@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE companies\n             SET name = ?1, domain = ?2, logo_path = ?3, notes_md = ?4, summary_md = ?5,\n                 summary_updated_at = ?6, logo_checked_at = ?7, merged_into = ?8, updated_at = ?9\n             WHERE id = ?10",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "88e62f4d47915094c5d71d38cb195c61ee749cebae1dd9d639a5b01e79f297d3"
+}

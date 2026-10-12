@@ -60,16 +60,17 @@ describe('where a hit leads', () => {
     });
   });
 
-  test('people and companies become filters; standalone items go to the list', () => {
+  test('people and companies open their pages; standalone items go to the list', () => {
     const maya = hit({
       kind: 'person',
       refId: 'p1',
       meetingId: null,
       label: { text: 'Maya', highlights: [] },
     });
-    expect(hitTarget(maya)).toEqual({
-      kind: 'filter',
-      chip: { kind: 'person', id: 'p1', label: 'Maya' },
+    expect(hitTarget(maya)).toEqual({ kind: 'person', personId: 'p1' });
+    expect(hitTarget(hit({ kind: 'company', refId: 'c1', meetingId: null }))).toEqual({
+      kind: 'company',
+      companyId: 'c1',
     });
     expect(hitTarget(hit({ kind: 'action_item', meetingId: null }))).toEqual({
       kind: 'action-items',

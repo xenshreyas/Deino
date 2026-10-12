@@ -36,6 +36,9 @@
 //!
 //! TRN-01 added [`transcript`]: a meeting's transcript with its speakers'
 //! display names, as the transcript view reads it.
+//!
+//! ORG-04 added [`entities`]: the rules over people and companies (upserts,
+//! merges, pages, AI summaries, company logos).
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -45,6 +48,7 @@ pub mod cli_setup;
 pub mod companies;
 pub mod diarization;
 pub mod enhance;
+pub mod entities;
 pub mod export;
 mod f32_blob;
 #[cfg(test)]

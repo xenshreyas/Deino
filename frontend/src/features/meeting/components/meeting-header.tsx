@@ -1,16 +1,15 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
 import { MeetingCalendarChips } from '@/features/event-links';
+import { MeetingAttendees } from '@/features/entities';
 import { MeetingFolders } from '@/features/folders';
 import { type MeetingId, useMeeting } from '@/features/meetings';
 import { PipelineStrip } from '@/features/pipeline';
 import { MeetingTags } from '@/features/tags';
-import { Chip, MetaChip } from '@/ui/chip';
-import { Calendar, type Icon, Users } from '@/ui/icons';
+import { MetaChip } from '@/ui/chip';
+import { Calendar } from '@/ui/icons';
 import { Skeleton } from '@/ui/skeleton';
-import { Hint } from '@/ui/tooltip';
 
-import { meetingCopy } from '../copy';
 import { MeetingTitle } from './meeting-title';
 
 /** `Today 14:00`, `Yesterday 09:30` or `Oct 8, 14:00`. */
@@ -26,21 +25,10 @@ export function meetingDateLabel(iso: string, now: Date): string {
 const REVEAL_ON_HOVER =
   'opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100';
 
-/** A placeholder chip for data a later card fills (attendees). */
-function SoonChip({ label, icon }: { label: string; icon: Icon }) {
-  return (
-    <Hint label={meetingCopy.comingSoon}>
-      <Chip variant="ghost" icon={icon} aria-disabled className={REVEAL_ON_HOVER}>
-        {label}
-      </Chip>
-    </Hint>
-  );
-}
-
 /**
  * Title, then a row of meta chips: date, the calendar event and the
- * previous meeting of its series (ORG-03), attendees (a placeholder until
- * ORG-04), folders and tags, then the processing status strip.
+ * previous meeting of its series (ORG-03), attendees (ORG-04), folders
+ * and tags, then the processing status strip.
  */
 export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
   const meeting = useMeeting(meetingId);
@@ -58,7 +46,7 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <MetaChip icon={Calendar}>{meetingDateLabel(meeting.data.createdAt, new Date())}</MetaChip>
         <MeetingCalendarChips meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
-        <SoonChip icon={Users} label={meetingCopy.addAttendees} />
+        <MeetingAttendees meetingId={meetingId} restingClassName={REVEAL_ON_HOVER} />
         <MeetingFolders meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
         <MeetingTags meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
       </div>

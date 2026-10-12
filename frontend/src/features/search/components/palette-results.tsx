@@ -110,19 +110,12 @@ function HitGroup({
   );
 }
 
-/** Runs a hit: people and companies become filters, the rest navigate. */
+/** Runs a hit: closes the palette and goes where the hit leads. */
 function usePaletteOpen(palette: SearchPaletteProps) {
   const openHit = useOpenHit();
   return (hit: Hit) => {
-    const target = hitTarget(hit);
-    if (target.kind === 'filter') {
-      const known = palette.filters.some((chip) => chip.id === target.chip.id);
-      palette.onFiltersChange(known ? [...palette.filters] : [...palette.filters, target.chip]);
-      palette.onSearchChange('');
-      return;
-    }
     palette.close();
-    openHit(target);
+    openHit(hitTarget(hit));
   };
 }
 

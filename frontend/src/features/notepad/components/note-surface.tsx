@@ -7,6 +7,8 @@
 import { EditorContent } from '@tiptap/react';
 import type { ReactNode } from 'react';
 
+import { MentionHoverZone } from '@/features/entities';
+
 import type { NoteEditorHandle } from '../hooks/use-note-editor';
 import { MentionMenu } from './mention-menu';
 import { SavedIndicator } from './saved-indicator';
@@ -36,7 +38,9 @@ export function NoteSurface({ handle, toolbar }: NoteSurfaceProps) {
           editor.commands.focus('end');
         }}
       >
-        <EditorContent editor={editor} />
+        <MentionHoverZone>
+          <EditorContent editor={editor} />
+        </MentionHoverZone>
       </div>
       <MentionMenu store={mentions} />
       <TemplateMenu store={templates} />

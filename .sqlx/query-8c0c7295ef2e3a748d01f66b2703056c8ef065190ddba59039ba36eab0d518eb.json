@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE action_items SET assignee_person_id = ?1 WHERE assignee_person_id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8c0c7295ef2e3a748d01f66b2703056c8ef065190ddba59039ba36eab0d518eb"
+}

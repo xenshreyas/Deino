@@ -79,6 +79,16 @@ impl PersonRepo for FakePeopleRepo {
         Ok(self.listed(|_| true))
     }
 
+    async fn find_by_name(&self, name: &str) -> Result<Option<Person>, DbError> {
+        let people = lock(&self.people);
+        let mut matching: Vec<&Person> = people
+            .iter()
+            .filter(|person| person.merged_into.is_none() && person.name.eq_ignore_ascii_case(name))
+            .collect();
+        matching.sort_by_key(|person| (person.created_at, person.id));
+        Ok(matching.first().map(|person| (*person).clone()))
+    }
+
     async fn list_by_company(&self, company: &CompanyId) -> Result<Vec<Person>, DbError> {
         Ok(self.listed(|person| person.company_id == Some(*company)))
     }

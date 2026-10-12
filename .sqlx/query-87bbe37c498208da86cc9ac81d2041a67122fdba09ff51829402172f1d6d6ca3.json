@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people\n         SET email = ?1, company_id = ?2, title = ?3, avatar_path = ?4, notes_md = ?5,\n             summary_md = ?6, summary_updated_at = ?7, is_me = ?8, merged_into = ?9, updated_at = ?10\n         WHERE id = ?11",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 11
+    },
+    "nullable": []
+  },
+  "hash": "87bbe37c498208da86cc9ac81d2041a67122fdba09ff51829402172f1d6d6ca3"
+}
