@@ -14,6 +14,7 @@ mod perf;
 #[macro_use]
 mod legacy_lints;
 
+mod app_lock;
 #[cfg(test)]
 mod bindings;
 mod composition;
@@ -45,6 +46,8 @@ legacy_modules! {
     pub mod whisper_engine;
 }
 
+use features::privacy::guard::{Guarded, guard_legacy};
+use tauri::plugin::TauriPlugin;
 use tauri::{Builder, Wry};
 
 /// User-visible product name, used for notification titles and the tray tooltip.
@@ -67,54 +70,65 @@ pub fn run() {
     builder
         .setup(setup::run)
         .on_window_event(lifecycle::on_window_event)
-        .invoke_handler(legacy::invoke_handler())
+        .invoke_handler(guard_legacy(legacy::invoke_handler()))
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(lifecycle::on_run_event);
 }
 
-/// Registers every feature plugin: one line per entry in `features/manifest.rs`
-/// and `features/organize_manifest.rs`.
+/// Registers every feature plugin behind the app lock's IPC guard
+/// (`features/privacy/guard.rs`).
 fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
-    let builder = builder
-        .plugin(features::db::init())
-        .plugin(features::detection::init())
-        .plugin(features::developer::init())
-        .plugin(features::onboarding::init())
-        .plugin(features::export::init())
-        .plugin(features::action_items::init())
-        .plugin(features::calendar::init())
-        .plugin(features::enhance::init())
-        .plugin(features::companies::init())
-        .plugin(features::meetings::init())
-        .plugin(features::network::init())
-        .plugin(features::pipeline::init())
-        .plugin(features::profile::init())
-        .plugin(features::search::init())
-        .plugin(features::notes::init())
-        .plugin(features::people::init())
-        .plugin(features::recording::init())
-        .plugin(features::secrets::init())
-        .plugin(features::llm::init())
-        .plugin(features::settings::init())
-        .plugin(features::transcription::init())
-        .plugin(features::system::init())
-        .plugin(features::templates::init())
-        .plugin(features::folders::init())
-        .plugin(features::integrations::init())
-        .plugin(features::insights::init())
-        .plugin(features::tags::init())
-        .plugin(features::speakers::init())
-        .plugin(features::stats::init())
-        .plugin(features::transcript::init())
-        .plugin(features::vocabulary::init())
-        .plugin(features::speaker_tags::init())
-        .plugin(features::player::init());
+    feature_plugins()
+        .into_iter()
+        .fold(builder, |builder, plugin| {
+            builder.plugin(Guarded::new(plugin))
+        })
+}
+
+/// Every feature plugin: one line per entry in `features/manifest.rs`
+/// and `features/organize_manifest.rs`.
+fn feature_plugins() -> Vec<TauriPlugin<Wry>> {
+    #[allow(unused_mut, reason = "release builds add no debug-only plugins")]
+    let mut plugins = vec![
+        features::db::init(),
+        features::detection::init(),
+        features::developer::init(),
+        features::onboarding::init(),
+        features::export::init(),
+        features::action_items::init(),
+        features::calendar::init(),
+        features::enhance::init(),
+        features::companies::init(),
+        features::meetings::init(),
+        features::network::init(),
+        features::pipeline::init(),
+        features::profile::init(),
+        features::search::init(),
+        features::notes::init(),
+        features::people::init(),
+        features::recording::init(),
+        features::secrets::init(),
+        features::llm::init(),
+        features::settings::init(),
+        features::transcription::init(),
+        features::system::init(),
+        features::templates::init(),
+        features::folders::init(),
+        features::integrations::init(),
+        features::insights::init(),
+        features::tags::init(),
+        features::speakers::init(),
+        features::transcript::init(),
+        features::vocabulary::init(),
+        features::speaker_tags::init(),
+        features::player::init(),
+        features::stats::init(),
+        features::privacy::init(),
+    ];
     #[cfg(debug_assertions)]
-    let builder = builder
-        .plugin(features::_example::init())
-        .plugin(features::dev::init());
-    builder
+    plugins.extend([features::_example::init(), features::dev::init()]);
+    plugins
 }
 
 /// Registers the third-party Tauri plugins the app depends on.

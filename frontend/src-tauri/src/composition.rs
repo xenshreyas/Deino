@@ -45,6 +45,7 @@ pub(crate) mod onboarding;
 mod organize;
 mod pipeline;
 mod player;
+mod privacy;
 mod recording;
 mod search;
 mod speaker_tags;
@@ -69,6 +70,7 @@ pub(crate) use organize::Organize;
 #[cfg(test)]
 use pipeline::{Pipeline, PipelineAdapters};
 use pipeline::{StageAdapters, StageServices, attach_pipeline};
+pub(crate) use privacy::attach_privacy;
 pub(crate) use speakers::Speakers;
 pub(crate) use stt::attach_stt;
 pub(crate) use vocabulary::Vocabulary;
@@ -165,6 +167,7 @@ impl Services {
 /// managed" error, as the legacy commands always have.
 pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     let database = manager.database().clone();
+    privacy::library_ready(app, manager.encryption());
     let clock: Arc<dyn Clock> = Arc::new(SystemClock);
     app.manage(AppState {
         db_manager: manager,

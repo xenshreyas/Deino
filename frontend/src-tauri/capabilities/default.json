@@ -39,6 +39,7 @@
         "secrets:default",
         "llm:default",
         "settings:default",
+        "privacy:default",
         "templates:default",
         "enhance:default",
         "transcription:default",

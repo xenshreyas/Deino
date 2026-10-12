@@ -76,7 +76,10 @@ async fn encrypting_saves_the_key_before_converting() {
     );
     assert_eq!(harness.file.current(), FileFormat::Encrypted);
     let saved = harness.saved_key().unwrap();
-    assert!(prepared.key.unwrap().to_hex().as_str() == saved, "opens with the saved key");
+    assert!(
+        prepared.key.unwrap().to_hex().as_str() == saved,
+        "opens with the saved key"
+    );
     assert_eq!(
         prepared.outcome,
         StartupOutcome::Converted {
@@ -144,7 +147,10 @@ async fn a_failed_decryption_keeps_the_key_and_opens_encrypted() {
     let prepared = harness.conversion().prepare(false).await.unwrap();
 
     assert!(prepared.is_encrypted());
-    assert!(harness.saved_key().is_some(), "the key is never forgotten early");
+    assert!(
+        harness.saved_key().is_some(),
+        "the key is never forgotten early"
+    );
     assert!(!harness.journal.steps().contains(&Step::ForgetKey));
     assert_eq!(
         prepared.outcome,
@@ -175,7 +181,12 @@ async fn an_encrypted_file_without_a_key_is_a_typed_error() {
         let error = harness.conversion().prepare(encrypt).await.err().unwrap();
 
         assert!(matches!(error, PrivacyError::KeyMissing));
-        assert!(!harness.journal.steps().contains(&Step::Convert(Direction::Decrypt)));
+        assert!(
+            !harness
+                .journal
+                .steps()
+                .contains(&Step::Convert(Direction::Decrypt))
+        );
     }
 }
 

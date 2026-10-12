@@ -25,7 +25,9 @@ fn policy(enabled: bool) -> AppLockSettings {
 }
 
 fn harness(enabled: bool) -> Harness {
-    let clock = Arc::new(FakeClock::new(Utc.with_ymd_and_hms(2026, 10, 11, 9, 0, 0).unwrap()));
+    let clock = Arc::new(FakeClock::new(
+        Utc.with_ymd_and_hms(2026, 10, 11, 9, 0, 0).unwrap(),
+    ));
     let auth = Arc::new(FakeAuthenticator::default());
     let lock = LockService::new(clock.clone(), auth.clone(), policy(enabled));
     Harness { clock, auth, lock }
