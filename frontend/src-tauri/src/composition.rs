@@ -46,6 +46,7 @@ pub(crate) mod onboarding;
 mod organize;
 mod pipeline;
 mod player;
+pub(crate) mod privacy;
 mod recording;
 mod search;
 mod speaker_tags;
@@ -54,7 +55,6 @@ mod stats;
 mod stt;
 mod transcript;
 mod vocabulary;
-
 use std::sync::Arc;
 
 use action_items::ActionItemWiring;

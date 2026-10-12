@@ -105,6 +105,10 @@ export const settingsCopy = {
       label: 'Integrations',
       description: 'Send notes, tasks and messages to the tools you use.',
     },
+    security: {
+      label: 'Privacy & security',
+      description: 'Encrypt the library, lock Deino behind Touch ID, and protect recordings.',
+    },
     network: {
       label: 'Network',
       description: 'What may leave this Mac, what is hidden first, and a log of what left.',

@@ -64,6 +64,8 @@
 //! CAP-11 added [`import`] (an audio or video file becomes a meeting the
 //! pipeline transcribes) and [`watch`] (watched folders that import new
 //! recordings on their own, once each).
+//! PRV-02 added [`privacy`] (bringing the database file in line with the
+//! encryption setting before it opens) and [`lock`] (the app lock).
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -82,12 +84,14 @@ mod fixture_tests;
 pub mod folders;
 pub mod import;
 pub mod insights;
+pub mod lock;
 pub mod meetings;
 pub mod models;
 pub mod notes;
 pub mod people;
 pub mod permissions;
 pub mod player;
+pub mod privacy;
 pub mod profile;
 pub mod query;
 pub mod redaction;

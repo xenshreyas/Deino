@@ -21,6 +21,7 @@ import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
 import { ResumeSetup } from '@/features/onboarding';
+import { PrivacySettings } from '@/features/privacy';
 import { ProfilePage } from '@/features/profile';
 import { WatchedFoldersSettings } from '@/features/import';
 import { IndexSettings } from '@/features/search';
@@ -39,6 +40,7 @@ import {
   type Icon,
   Info,
   LayoutTemplate,
+  Lock,
   Mic,
   Palette,
   Plug,
@@ -156,6 +158,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'search', group: 'ai', icon: Search, Component: IndexSettings },
   { id: 'calendar', group: 'workspace', icon: Calendar, Component: CalendarSettings },
   { id: 'integrations', group: 'workspace', icon: Plug, Component: IntegrationsSection },
+  { id: 'security', group: 'privacy', icon: Lock, Component: PrivacySettings },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
   { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },
   { id: 'beta', group: 'more', icon: FlaskConical, Component: BetaSettings },

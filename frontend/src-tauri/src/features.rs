@@ -46,6 +46,7 @@ pub mod organize_manifest;
 pub mod people;
 pub mod pipeline;
 pub mod player;
+pub mod privacy;
 pub mod profile;
 pub mod recording;
 pub mod search;
@@ -100,6 +101,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (speaker_tags::NAME, speaker_tags::specta()),
         (player::NAME, player::specta()),
         (import::NAME, import::specta()),
+        (privacy::NAME, privacy::specta()),
     ];
     builders.extend(dev_builders());
     builders

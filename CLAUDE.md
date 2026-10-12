@@ -137,6 +137,7 @@ Does Not Own, Invariants); read it before editing the crate.
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
   `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `import`, `insights`, `stats`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `stats`, `developer`, `onboarding`, `db`, `privacy`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
   `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   (and `organize_manifest.rs` for the ORG features) lists them for the ACL.

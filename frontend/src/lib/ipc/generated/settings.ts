@@ -99,6 +99,22 @@ code: ErrorCode;
  */
 message: string }
 /**
+ * When the app locks itself (PRV-02).
+ */
+export type AppLockSettings = { 
+/**
+ * Lock at all. Off by default.
+ */
+enabled: boolean; 
+/**
+ * Lock after this many minutes without using Deino.
+ */
+idleMinutes: number; 
+/**
+ * Lock when the Mac wakes from sleep or its screen locks.
+ */
+lockOnWake: boolean }
+/**
  * Who a meeting is with, from the user's side: only colleagues, or
  * someone from outside. Template auto rules match on it (NOT-04);
  * briefs, follow-up emails and calendar sync use it later.
@@ -798,7 +814,17 @@ export type PrivacySettings = {
  * with `[redacted]` before notes are written and in exports (NOT-09).
  * The transcript keeps the originals. Off by default.
  */
-redactSensitive: boolean }
+redactSensitive: boolean; 
+/**
+ * Keep the database encrypted with a key in the Keychain (PRV-02,
+ * ADR 0041). The file is converted at the next launch, before it opens.
+ * Off by default.
+ */
+encryptDatabase: boolean; 
+/**
+ * Lock the window behind Touch ID or the Mac's password (PRV-02).
+ */
+appLock: AppLockSettings }
 /**
  * The profile section of `Settings`. Every field may be empty.
  */
