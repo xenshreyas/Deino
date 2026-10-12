@@ -295,6 +295,9 @@ uuid_id!(
     CommentId
 );
 
+mod chat;
+pub use chat::*;
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

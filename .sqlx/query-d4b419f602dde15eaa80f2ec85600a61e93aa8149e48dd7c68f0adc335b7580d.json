@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!: AskMessageId\", meeting_id AS \"meeting_id!: MeetingId\",\n                role AS \"role!: AskRole\", parts_json AS \"parts!: Json<Vec<AnswerPart>>\",\n                recipe_slug, recipe_name, created_at AS \"created_at!: DateTime<Utc>\"\n            FROM ask_messages WHERE meeting_id = ?1 ORDER BY created_at, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: AskMessageId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "role!: AskRole",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "parts!: Json<Vec<AnswerPart>>",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "recipe_slug",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "recipe_name",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "d4b419f602dde15eaa80f2ec85600a61e93aa8149e48dd7c68f0adc335b7580d"
+}

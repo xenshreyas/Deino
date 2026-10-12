@@ -6,6 +6,7 @@
 //! Every template has an inline snapshot test, so a wording change shows up
 //! in review. User-editable templates use [`crate::UserTemplate`] instead.
 
+mod ask;
 mod brief;
 mod enhance;
 mod insights;
@@ -14,6 +15,7 @@ mod redact;
 
 use askama::Template;
 
+pub use ask::{AskSystem, AskUser};
 pub use brief::{BriefSystem, BriefUser};
 pub use enhance::{
     EnhanceMergeUser, EnhancePartSystem, EnhancePartUser, EnhanceSystem, EnhanceUser,

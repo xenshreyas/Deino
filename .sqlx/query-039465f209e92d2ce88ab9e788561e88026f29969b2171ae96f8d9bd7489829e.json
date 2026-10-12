@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO recipes\n                    (id, slug, name, description, prompt, kind, built_in, created_at, updated_at)\n                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7, ?7)\n                 ON CONFLICT (slug) DO UPDATE SET\n                     name = excluded.name, description = excluded.description,\n                     prompt = excluded.prompt, kind = excluded.kind,\n                     updated_at = excluded.updated_at\n                 WHERE recipes.built_in = 1 AND (recipes.name, recipes.description,\n                     recipes.prompt, recipes.kind) IS NOT (excluded.name,\n                     excluded.description, excluded.prompt, excluded.kind)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "039465f209e92d2ce88ab9e788561e88026f29969b2171ae96f8d9bd7489829e"
+}

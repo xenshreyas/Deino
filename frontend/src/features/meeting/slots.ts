@@ -12,7 +12,7 @@
  * | Transcript tab | transcript view (`features/transcript`), with the inherited folder and re-transcribe tools | TRN-01 |
  * | Insights tab | each insight's answers, attributed (AI-06) | |
  * | Clips tab | the meeting's clips (`features/clips`): play, rename, Finder, delete | TRN-04 |
- * | Chat panel | empty state | AI-02 |
+ * | Chat panel | "Ask about this meeting" (`features/ask`): questions and `/` recipes, cited, a thread per meeting | AI-02-lite, AI-04 (D13); AI-02 for cross-meeting |
  * | Comments panel | every comment thread (`features/comments`), detached ones marked | TRN-06 |
  * | Participants panel | speakers, talk time, naming (CAP-04) | ORG-04 (attendees) |
  * | Details panel | created and edited dates, calendar event, related meetings (ORG-03) | |
@@ -20,6 +20,7 @@
  */
 import type { ComponentType } from 'react';
 
+import { AskPanel } from '@/features/ask';
 import { MeetingInsights } from '@/features/insights';
 import { ParticipantsPanel } from '@/features/speakers';
 
@@ -27,7 +28,6 @@ import { meetingCopy } from './copy';
 import { DetailsPanelSlot } from './slots/details-panel';
 import { NotesSlot } from './slots/notes-slot';
 import { ClipsSlot, CommentsPanelSlot } from './slots/annotation-slots';
-import { ChatPanelSlot } from './slots/placeholder-slots';
 import { PlayerSlot } from './slots/player-slot';
 import { TranscriptSlot } from './slots/transcript-slot';
 import type { MeetingPanelSlot, MeetingSlotProps, MeetingTabSlot } from './types';
@@ -42,7 +42,7 @@ export const MEETING_TABS: readonly MeetingTabSlot[] = [
 
 /** The right panel's sections, in order. */
 export const MEETING_PANELS: readonly MeetingPanelSlot[] = [
-  { id: 'chat', label: meetingCopy.chat, Component: ChatPanelSlot },
+  { id: 'chat', label: meetingCopy.chat, Component: AskPanel },
   { id: 'comments', label: meetingCopy.comments, Component: CommentsPanelSlot },
   { id: 'participants', label: meetingCopy.participants, Component: ParticipantsPanel },
   { id: 'details', label: meetingCopy.details, Component: DetailsPanelSlot },

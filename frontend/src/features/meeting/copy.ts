@@ -15,8 +15,6 @@ export const meetingCopy = {
   editTitle: 'Rename meeting',
   loadError: 'This meeting could not be opened.',
   backToMeetings: 'Back to Meetings',
-  chatTitle: 'Ask about this meeting',
-  chatBody: 'Chat with your meeting’s notes and transcript is coming soon.',
   created: 'Created',
   updated: 'Last edited',
 } as const;

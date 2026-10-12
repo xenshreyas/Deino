@@ -20,6 +20,8 @@ test-support = [
 
 [dependencies]
 async-trait.workspace = true
+# AI-04: the recipe share string, `deino://recipe?data=<base64url>`.
+base64 = "0.22.1"
 chrono.workspace = true
 deino-db.workspace = true
 deino-doc.workspace = true

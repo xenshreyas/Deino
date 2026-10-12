@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT slug AS \"slug!\" FROM recipes",
+  "describe": {
+    "columns": [
+      {
+        "name": "slug!",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a1dbe54d6654a272b03dba7edb1527ec3d38ee3b84d37c2659fcae922eb365f6"
+}

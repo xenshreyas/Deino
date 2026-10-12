@@ -58,14 +58,18 @@ export function CitationPopover({
         <h3 className="px-3 pt-3 pb-1 text-xs font-semibold text-fg-muted">
           {notesCopy.sourcesTitle}
         </h3>
-        <Excerpts meetingId={meetingId} citations={citations} enabled={open} />
+        <CitedExcerpts meetingId={meetingId} citations={citations} enabled={open} />
       </PopoverContent>
     </Popover>
   );
 }
 
-/** The excerpts, loading or gone. */
-function Excerpts({
+/**
+ * The excerpts, loading or gone: each with its speaker, time, Play and
+ * "Show in transcript". Also what "Ask about this meeting" opens from an
+ * answer's citation (AI-02-lite).
+ */
+export function CitedExcerpts({
   meetingId,
   citations,
   enabled,

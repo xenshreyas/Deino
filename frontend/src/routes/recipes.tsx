@@ -1,10 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ComingSoonScreen } from '@/features/shell';
+import { RecipePreview } from '@/features/ask';
+import { RecipesScreen } from '@/features/recipes';
 
-/** `/recipes`: Recipes, a placeholder until its feature card ships (see `nav.ts`). */
-export const Route = createFileRoute('/recipes')({ component: Placeholder });
+/**
+ * `/recipes`: the Recipes page (AI-04). Preview runs a recipe through the
+ * `ask` feature, handed in here so the two features stay independent.
+ */
+export const Route = createFileRoute('/recipes')({ component: RecipesRoute });
 
-function Placeholder() {
-  return <ComingSoonScreen navId="recipes" />;
+function RecipesRoute() {
+  return <RecipesScreen Preview={RecipePreview} />;
 }
