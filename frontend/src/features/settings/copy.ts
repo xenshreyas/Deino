@@ -37,6 +37,10 @@ export const settingsCopy = {
   sections: {
     general: { label: 'General', description: 'Notifications, storage and how Deino starts.' },
     appearance: { label: 'Appearance', description: 'Theme for every Deino window.' },
+    setup: {
+      label: 'Setup',
+      description: 'Go back through first-run setup: permissions, AI, calendar and profile.',
+    },
     recording: {
       label: 'Recording',
       description: 'Where recordings are saved and how audio is captured.',

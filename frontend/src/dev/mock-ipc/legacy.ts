@@ -21,12 +21,6 @@ type LegacyHandler = (args: Record<string, unknown>) => unknown;
 
 /** Settings and status the inherited providers read at startup. */
 const STATIC_RESPONSES: Record<string, unknown> = {
-  get_onboarding_status: {
-    completed: true,
-    current_step: 4,
-    version: '1.0',
-    model_status: { parakeet: 'downloaded', summary: 'downloaded' },
-  },
   check_first_launch: false,
   // The Tauri window API the appearance feature calls; a browser has no window to theme.
   'plugin:window|set_theme': null,

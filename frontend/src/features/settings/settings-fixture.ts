@@ -93,14 +93,7 @@ const DEFAULT_SETTINGS: Settings = {
   integrations: { apps: {} },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
-  onboarding: {
-    completed: false,
-    currentStep: 1,
-    parakeet: 'not_downloaded',
-    summary: 'not_downloaded',
-    selectedSummaryModel: null,
-    updatedAt: null,
-  },
+  onboarding: { completed: false, step: 'welcome', outcomes: {} },
 };
 
 /** A fresh copy of the default settings. */

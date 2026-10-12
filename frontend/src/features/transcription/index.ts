@@ -15,15 +15,14 @@
  */
 export { PARAKEET_UNIFIED_PROVIDER, transcriptionApi } from './api';
 export { ModelLicenceNotice } from './components/model-licence-notice';
-export {
-  type DefaultModelProgress,
-  downloadDefaultModel,
-  isAnyModelDownloading,
-  isDefaultModelReady,
-  onDefaultModelProgress,
-} from './default-model';
 export { ParakeetUnifiedManager } from './components/parakeet-unified-manager';
 export { activeModel, isReady } from './models';
 export { engineOf, providerOf, type TranscriptProviderName } from './engine';
-export { modelsQuery, transcriptionKeys, useModels } from './queries';
+export {
+  modelsQuery,
+  transcriptionKeys,
+  useDownloadModel,
+  useModelEvents,
+  useModels,
+} from './queries';
 export type { DownloadProgress, ModelFileId, ModelFileView, Quant } from './types';

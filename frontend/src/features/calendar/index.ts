@@ -19,6 +19,8 @@ export {
   useCalendarChanges,
   useCalendars,
   useCalendarStatus,
+  useOpenAccessSettings,
+  useSetCalendarSync,
   useUpcoming,
 } from './queries';
 export type {

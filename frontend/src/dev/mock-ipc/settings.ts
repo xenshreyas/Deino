@@ -2,7 +2,8 @@
  * Mock of `@/lib/ipc/generated/settings`: the settings in memory, changed by
  * RFC 7396 merge patches, with `SettingsChanged` after every change.
  *
- * It starts past onboarding, so `pnpm dev:mock` opens the app. It does not
+ * It starts past onboarding (`?onboarding` starts the flow instead; see
+ * `settings-store.ts`), so `pnpm dev:mock` opens the app. It does not
  * repeat the Rust validation: a patch the UI could not have typed is the
  * Rust contract tests' job.
  */

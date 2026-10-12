@@ -7,13 +7,22 @@
  * into a `DbChanged` event, so TanStack Query invalidation works exactly as
  * it does in the app.
  */
-import { asMeetingId, type Meeting, type MeetingId } from '@/features/meetings';
+import type { Meeting, MeetingId } from '@/features/meetings';
 import type { SeedReport } from '@/lib/ipc/generated/dev';
 import type { AppError, Table } from '@/lib/ipc/generated/shared';
 import type { CommandResult } from '@/lib/ipc/result';
 
 import { failure, ok } from './command-result';
 import type { FixtureMeeting } from './fixture-schema';
+
+/**
+ * A meeting ID from a fixture or a new UUID. The meetings feature's
+ * `asMeetingId` is not imported at runtime: its index loads the meetings mock,
+ * which loads `database.ts`, which needs this module finished first.
+ */
+function asMeetingId(raw: string): MeetingId {
+  return raw as MeetingId;
+}
 
 /** Same limit as `deino_core::meetings::MAX_TITLE_CHARS`. */
 const MAX_TITLE_CHARS = 200;
