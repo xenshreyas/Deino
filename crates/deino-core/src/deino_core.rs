@@ -40,7 +40,8 @@
 //! user's profile as AI context, the "Me" person, internal vs external).
 //!
 //! FND-11 added [`permissions`]: the macOS permissions onboarding asks for,
-//! over a port the app implements.
+//! over a port the app implements; and [`sample`], the bundled sample
+//! meeting onboarding offers.
 //!
 //! TRN-01 added [`transcript`]: a meeting's transcript with its speakers'
 //! display names, as the transcript view reads it.
@@ -70,6 +71,7 @@ pub mod people;
 pub mod permissions;
 pub mod profile;
 pub mod query;
+pub mod sample;
 pub mod search;
 pub mod segments;
 pub mod settings;

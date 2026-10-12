@@ -64,7 +64,7 @@ pub use error::EnhanceError;
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::FakeEnhancedNotesRepo;
 pub use history::MAX_CITED;
-pub use legacy_import::{DROP_LEGACY_SUMMARIES_VERSION, LegacySummaryImport, summary_doc};
+pub use legacy_import::{DROP_LEGACY_SUMMARIES_VERSION, LegacySummaryImport, ai_doc, summary_doc};
 pub use material::{
     AttendeeInfo, Material, MeetingInfo, NoVocabulary, PreviousNotes, UserNotes, Vocabulary,
 };

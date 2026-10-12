@@ -1,0 +1,284 @@
+{
+  "title": "Sample: Eng standup",
+  "durationMs": 255618,
+  "speakers": [
+    {
+      "label": "Me",
+      "isMe": true,
+      "color": 1
+    },
+    {
+      "label": "Maya",
+      "isMe": false,
+      "color": 2
+    },
+    {
+      "label": "Diego",
+      "isMe": false,
+      "color": 3
+    },
+    {
+      "label": "Priya",
+      "isMe": false,
+      "color": 4
+    }
+  ],
+  "segments": [
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 696,
+      "endMs": 6531,
+      "text": "Morning, everyone. Let's keep it quick today, I've got a hard stop at quarter to."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 6842,
+      "endMs": 9302,
+      "text": "Maya, do you want to kick us off?"
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 9764,
+      "endMs": 16799,
+      "text": "Sure. So yesterday I mostly watched the Fernhollow dashboards after the dedupe fix went out on Tuesday."
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 17033,
+      "endMs": 25508,
+      "text": "Zero new duplicates in two days, and Owen confirmed the same on his side this morning. So I'm calling the incident closed."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 26201,
+      "endMs": 29001,
+      "text": "Nice. That's a big one. Thank you."
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 29630,
+      "endMs": 41225,
+      "text": "Today I'm back on Calendar Sync v2, writing the subscription renewal part of the design doc. No blockers. And, uh, first morning off the pager, which is lovely."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 41595,
+      "endMs": 44425,
+      "text": "Well earned. Okay, Diego, you're up."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 45056,
+      "endMs": 52926,
+      "text": "Yeah. Yesterday I got the read-only offline job list caching working on Android. Today I'm starting the iOS side."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 53246,
+      "endMs": 63916,
+      "text": "I am kind of blocked, though. I need a last modified at field on each job in the jobs list endpoint, so the app knows when its cached copy is stale."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 64070,
+      "endMs": 73765,
+      "text": "Right now I'm diffing the whole payload, which works, but it's slow and it's going to be terrible on a bad connection out in somebody's basement."
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 74351,
+      "endMs": 81116,
+      "text": "Oh, that one's on me, sorry. I said I'd add it last week and then the incident ate the week."
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 81469,
+      "endMs": 86789,
+      "text": "It's a small change. I can have it on the endpoint by end of day tomorrow."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 87440,
+      "endMs": 91105,
+      "text": "Tomorrow works. I'll stub it on my side until then."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 91485,
+      "endMs": 102970,
+      "text": "For context, the Android cache keeps the next fourteen days of jobs for the technician, so it's usually under two hundred jobs. It loads in about a second from cold."
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 103383,
+      "endMs": 110213,
+      "text": "On iOS I'm reusing the same cache schema, so hopefully it's two or three days of work, not a week."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 110742,
+      "endMs": 115087,
+      "text": "Two or three days is fine. Nothing's waiting on it this week."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 115362,
+      "endMs": 118697,
+      "text": "Does that mean the offline list misses today's cut?"
+    },
+    {
+      "speaker": "Diego",
+      "channel": "system",
+      "startMs": 119236,
+      "endMs": 129451,
+      "text": "Yeah. Honestly it was never really going to make this one. I'd rather it goes out in next week's release with the real field than hack around it."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 129824,
+      "endMs": 135574,
+      "text": "Okay, agreed. Offline list goes in next week's release, not this one. Priya?"
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 136156,
+      "endMs": 148476,
+      "text": "Yesterday was mostly SOC 2 prep. Kestrel Audit sent over their evidence request list, it's about sixty items, and I've mapped maybe two thirds of them to things we already collect."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 148684,
+      "endMs": 158594,
+      "text": "Kestrel wants the observation window to start cleanly on the first of November, so everything on that list needs an owner by the end of next week."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 158956,
+      "endMs": 167496,
+      "text": "I'll send each of you the handful of items that are yours on Monday. Most of it is screenshots of settings, nothing scary."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 168019,
+      "endMs": 170849,
+      "text": "Is anything on there going to surprise us?"
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 171472,
+      "endMs": 181052,
+      "text": "Access reviews for the production database, probably. We've never done a formal one. I'll draft a process, but that's a next-week problem."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 181458,
+      "endMs": 192238,
+      "text": "The other thing is the flaky test. The webhook retry integration test has failed something like one in eight runs this week, always on the timeout assertion."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 192585,
+      "endMs": 200300,
+      "text": "I'm quarantining it this morning so it stops blocking merges, and I'll file a ticket with the logs I've got so far."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 200744,
+      "endMs": 203199,
+      "text": "Is it a real bug or just the test?"
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 204063,
+      "endMs": 217703,
+      "text": "I think it's the test. It sleeps for a fixed two seconds and then checks the retry fired, and the CI runners are just slower some days. But I want to look properly before I say that for sure."
+    },
+    {
+      "speaker": "Maya",
+      "channel": "system",
+      "startMs": 218586,
+      "endMs": 227186,
+      "text": "It does touch the retry queue I'm about to rewrite for v2, so I'm happy to pair on it next week if it turns out to be real."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 227855,
+      "endMs": 230840,
+      "text": "Maybe. Let's see what the logs say first."
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 231259,
+      "endMs": 242779,
+      "text": "And today I'm driving the release cut. Plan's still Thursday afternoon, so four o'clock today. If you've got something that needs to be in, merge it by three thirty."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 243220,
+      "endMs": 246160,
+      "text": "And the quarantined test won't block the cut?"
+    },
+    {
+      "speaker": "Priya",
+      "channel": "system",
+      "startMs": 246727,
+      "endMs": 252482,
+      "text": "No, quarantined tests still run but they don't gate anything. No blockers from me."
+    },
+    {
+      "speaker": "Me",
+      "channel": "mic",
+      "startMs": 253183,
+      "endMs": 255618,
+      "text": "Great, thanks, everyone. That's us for today."
+    }
+  ],
+  "notes": "> This is a sample meeting, so you can see what Deino writes after a call. Delete it whenever you like.\n\n### Updates\n- **Maya:** closed the Fernhollow duplicates incident, with no new duplicates in two days. Back on Calendar Sync v2, writing the subscription renewal design.\n- **Diego:** offline job list caching works on Android; starting iOS with the same cache schema (two or three days).\n- **Priya:** SOC 2 prep with Kestrel Audit. About 60 evidence items, two thirds already mapped. Driving today's release cut.\n\n### Decisions\n- The offline job list ships in next week's release, not today's cut.\n- The flaky webhook retry test is quarantined, so it stops blocking merges.\n\n### Blockers and risks\n- Diego needs a last-modified field on the jobs list endpoint to detect stale caches.\n- Production database access reviews have never been done formally.\n\n### Next\n- Release cut at 4 pm. Merge anything that needs to be in by 3:30.\n",
+  "actionItems": [
+    {
+      "title": "Add a last-modified field to the jobs list endpoint",
+      "description": "Diego needs it to tell when the offline cache is stale. Maya, by end of day tomorrow.",
+      "segment": 11
+    },
+    {
+      "title": "Send each engineer their SOC 2 evidence items",
+      "description": "Priya, on Monday. Everything needs an owner by the end of next week.",
+      "segment": 21
+    },
+    {
+      "title": "File a ticket for the flaky webhook retry test",
+      "description": "Priya, with the logs so far. Maya can pair on it if it turns out to be a real bug.",
+      "segment": 25
+    }
+  ]
+}
