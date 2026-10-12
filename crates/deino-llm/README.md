@@ -17,7 +17,11 @@ and model, streams the answer, and meters the call into `llm_calls`.
   user choices over the §4.3 defaults (Claude Sonnet/Haiku with a key, the
   built-in model without, `embed` always local).
 - `LlmProvider` (`provider.rs`, one required method: `stream`) and the
-  adapters in `providers/`: Anthropic (Messages API, tool trick for JSON),
+  adapters in `providers/`: Anthropic (Messages API; JSON answers are
+  structured outputs, `output_config.format`, under a schema rewritten to
+  the subset the API accepts by `providers/anthropic/schema.rs`; never a
+  forced `tool_choice`, never `temperature`; `max_tokens` at least 16 000,
+  since 5.5 models think first),
   OpenAI-compatible (`Flavor`: OpenAI, Groq, OpenRouter, custom; Ollama's
   `/v1`), Ollama (models, context windows, pulls), BuiltIn (llama-helper,
   `providers/builtin/protocol.rs` is the app's half of its protocol).
@@ -36,7 +40,9 @@ and model, streams the answer, and meters the call into `llm_calls`.
   an allowlist), both after anarlog's `template-app` (MIT).
 - Test support (feature `test-support`): `MockProvider` keyed by route
   (scripted text, tool calls, errors), `mock_gateway`, `FakeHttp`,
-  `FakeLocalModels`, `MemoryRouteStore`, `MemoryUsage`, `StaticCredentials`.
+  `FakeLocalModels`, `MemoryRouteStore`, `MemoryUsage`, `StaticCredentials`,
+  and `providers::anthropic::schema::constrained_schema` (proves a real
+  schema reaches Anthropic as a valid structured output).
 - Extraction answers (`extraction.rs`): `ActionItemsAnswer` (AI-05), the
   shape `extract.action_items` returns, and the prompt-line helpers
   (`meeting_header`, `attendee_line`, `transcript_line`) callers use to
@@ -70,4 +76,7 @@ and model, streams the answer, and meters the call into `llm_calls`.
 - Every provider call becomes exactly one `llm_calls` row (finished, failed,
   truncated or cancelled), with no content.
 - A provider stream ends with exactly one `Stop`, or with an `Err`.
+- Structured answer types must not be recursive: Anthropic's structured
+  outputs refuse recursive schemas, and such a type would fall back to an
+  unconstrained, prompt-only JSON answer.
 - New routes need a migration widening the `llm_calls.route` CHECK.

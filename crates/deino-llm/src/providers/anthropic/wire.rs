@@ -2,15 +2,36 @@
 //!
 //! Requests borrow from the [`CompletionRequest`], so building one copies no
 //! prompt text. Responses are the server-sent events of a streamed message.
+//!
+//! A JSON answer is a structured output: `output_config.format` carries the
+//! answer's schema, rewritten to the subset the API accepts
+//! ([`output_schema`]), and the JSON arrives as ordinary text. Claude
+//! 5.1/5.5-generation models refuse the older tool trick (a forced
+//! `tool_choice`), so no request sends one. No request sends `temperature`
+//! either: Haiku 5.5 refuses any value but its default and Sonnet 5.5 asks
+//! callers to drop non-default sampling, so every Claude model samples at
+//! its own default. Every request's `max_tokens` is at least
+//! [`ANTHROPIC_MIN_TOKENS`], since 5.5 models think before they answer.
+
+use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{CompletionRequest, OutputFormat, Part, Role};
+use super::schema::{OutputSchema, output_schema};
+use crate::{CompletionRequest, JsonOutput, OutputFormat, Part, Role};
 
-/// What the forced tool of a JSON answer tells the model.
-const JSON_TOOL_DESCRIPTION: &str =
-    "Record your answer. Call this exactly once with the complete answer as its input.";
+/// Every request's `max_tokens`, at least. Sonnet and Haiku 5.5 think
+/// adaptively by default and thinking counts against `max_tokens`, so a
+/// route cap sized for the answer alone (a 40-token title, a JSON answer)
+/// could be spent on thinking and leave the answer empty or cut off. The
+/// request streams, so a large cap is no timeout risk, and it is a ceiling,
+/// not a spend: the prompts still ask for short answers. Other providers
+/// keep the route's cap.
+pub(super) const ANTHROPIC_MIN_TOKENS: u32 = 16_000;
+
+/// What a schema the API cannot constrain asks for in the system prompt.
+const JSON_INSTRUCTION: &str = "Reply with only one JSON value that matches this JSON schema, with no Markdown fence and no other text.";
 
 /// The request body.
 #[derive(Debug, Serialize)]
@@ -18,15 +39,27 @@ pub(super) struct MessagesRequest<'a> {
     model: &'a str,
     max_tokens: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
-    system: Option<&'a str>,
+    system: Option<Cow<'a, str>>,
     messages: Vec<Message<'a>>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     tools: Vec<Tool<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tool_choice: Option<ToolChoice<'a>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    temperature: Option<f32>,
+    output_config: Option<OutputConfig>,
     stream: bool,
+}
+
+/// `output_config`: the answer's format.
+#[derive(Debug, Serialize)]
+struct OutputConfig {
+    format: JsonSchemaFormat,
+}
+
+/// `{"type": "json_schema", "schema": …}`.
+#[derive(Debug, Serialize)]
+struct JsonSchemaFormat {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    schema: Value,
 }
 
 #[derive(Debug, Serialize)]
@@ -72,36 +105,44 @@ struct Tool<'a> {
     input_schema: &'a Value,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-enum ToolChoice<'a> {
-    Tool { name: &'a str },
-}
-
 impl<'a> MessagesRequest<'a> {
-    /// The streamed request for `request`. A JSON answer uses the tool trick:
-    /// one tool whose input schema is the answer's schema, forced.
+    /// The streamed request for `request` (see the module docs).
     pub(super) fn new(request: &'a CompletionRequest) -> Self {
-        let (tools, tool_choice) = match &request.output {
-            OutputFormat::Json(json) => (
-                vec![Tool {
-                    name: &json.name,
-                    description: JSON_TOOL_DESCRIPTION,
-                    input_schema: &json.schema,
-                }],
-                Some(ToolChoice::Tool { name: &json.name }),
-            ),
-            OutputFormat::Text => (request.tools.iter().map(tool).collect(), None),
-        };
-        Self {
+        let mut body = Self {
             model: &request.model,
-            max_tokens: request.max_tokens,
-            system: request.system.as_deref(),
+            max_tokens: request.max_tokens.max(ANTHROPIC_MIN_TOKENS),
+            system: request.system.as_deref().map(Cow::Borrowed),
             messages: request.messages.iter().map(message).collect(),
-            tools,
-            tool_choice,
-            temperature: request.temperature,
+            tools: Vec::new(),
+            output_config: None,
             stream: true,
+        };
+        match &request.output {
+            OutputFormat::Json(json) => body.answer_in_json(json),
+            OutputFormat::Text => body.tools = request.tools.iter().map(tool).collect(),
+        }
+        body
+    }
+
+    /// A JSON answer: a structured output when the schema allows one, the
+    /// schema in the system prompt otherwise; no tools either way.
+    fn answer_in_json(&mut self, json: &JsonOutput) {
+        match output_schema(&json.schema) {
+            OutputSchema::Constrained(schema) => {
+                let format = JsonSchemaFormat {
+                    kind: "json_schema",
+                    schema,
+                };
+                self.output_config = Some(OutputConfig { format });
+            }
+            OutputSchema::Unconstrained(reason) => {
+                log::info!(target: "llm", "anthropic: the {} schema is {reason}; asking for JSON in the prompt", json.name);
+                let instruction = format!("{JSON_INSTRUCTION}\n\n{}", json.schema);
+                self.system = Some(Cow::Owned(match self.system.take() {
+                    Some(system) => format!("{system}\n\n{instruction}"),
+                    None => instruction,
+                }));
+            }
         }
     }
 }

@@ -115,6 +115,8 @@ pub mod settings;
 pub mod speaker_tags;
 pub mod speakers;
 pub mod stats;
+#[cfg(test)]
+mod structured_schemas_tests;
 pub mod tags;
 pub mod templates;
 #[cfg(any(test, feature = "test-support"))]

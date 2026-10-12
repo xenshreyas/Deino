@@ -3,8 +3,9 @@
 //!
 //! Draft-07, objects and arrays only, the same subset `schemars` produces
 //! for the built-in routes, so every provider accepts it: Anthropic as a
-//! forced tool, OpenAI-compatible as `response_format`, the built-in model as
-//! a grammar. This is the one place insights build JSON by hand; the answer
+//! structured output (which drops `maxItems`; the count is enforced when the
+//! answer is validated), OpenAI-compatible as `response_format`, the built-in
+//! model as a grammar. This is the one place insights build JSON by hand; the answer
 //! comes back as the typed [`WireAnswer`](super::wire::WireAnswer).
 
 use serde_json::{Value, json};
@@ -151,6 +152,21 @@ mod tests {
         let answers = &schema["properties"]["answers"];
         assert!(answers.get("maxItems").is_none());
         assert_eq!(answers["items"]["required"], json!(["value", "evidence"]));
+    }
+
+    #[test]
+    fn every_answer_schema_is_an_anthropic_structured_output() {
+        use deino_llm::providers::anthropic::schema::constrained_schema;
+        let schemas = [
+            answer_schema(&fields(), Cardinality::Fixed { count: 2 }),
+            answer_schema(&fields(), Cardinality::Auto),
+            answer_schema(&[], Cardinality::Auto),
+        ];
+
+        for schema in &schemas {
+            let sent = constrained_schema(schema).unwrap();
+            assert!(sent["properties"]["answers"].get("maxItems").is_none());
+        }
     }
 
     #[test]

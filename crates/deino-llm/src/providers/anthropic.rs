@@ -1,11 +1,17 @@
 //! Anthropic (Claude) over the Messages API, streamed.
 //!
-//! Tool use is native; JSON answers use the tool trick (one forced tool
-//! whose input schema is the answer's schema). Extended thinking is not
-//! requested: notes and extraction do not need it, and any reasoning a model
-//! returns is dropped by the decoder.
+//! Tool use is native, with `tool_choice` left to the model. JSON answers
+//! are structured outputs (`output_config.format`) under the answer's schema,
+//! rewritten to the subset the API accepts ([`schema`]); the answer arrives as
+//! text and the gateway still parses it. `temperature` is never sent. Thinking
+//! is not configured: Sonnet and Haiku 5.5 think adaptively by default (and
+//! refuse `thinking: disabled`), so every request gets a `max_tokens` floor
+//! (a 40-token title cap could otherwise go entirely to thinking) and the
+//! decoder drops whatever reasoning comes back: only text blocks are answer. Effort is left
+//! at each model's default, since older models refuse the parameter.
 
 mod decode;
+pub mod schema;
 mod wire;
 
 use std::sync::Arc;

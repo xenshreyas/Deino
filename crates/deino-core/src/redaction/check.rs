@@ -186,6 +186,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_verdicts_schema_is_an_anthropic_structured_output() {
+        let schema = deino_llm::json_schema_for::<Verdicts>();
+
+        let sent = deino_llm::providers::anthropic::schema::constrained_schema(&schema).unwrap();
+
+        let verdict = &sent["properties"]["verdicts"]["items"];
+        assert_eq!(
+            verdict["properties"]["number"],
+            serde_json::json!({ "type": "integer", "description": "The candidate's number, as listed." })
+        );
+    }
+
+    #[test]
     fn an_excerpt_is_a_few_words_around_the_candidate() {
         let text = "one two three four five six seven the code is 4821 and then we left the call";
         let start = text.find("4821").unwrap_or_default();
