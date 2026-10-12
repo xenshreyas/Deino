@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use super::*;
 use crate::settings::{
-    FakeSettingsStore, ModelDownloadState, RecordedSettingsEvents, Settings, SettingsService,
+    FakeSettingsStore, OnboardingSettings, RecordedSettingsEvents, Settings, SettingsService,
 };
 
 const RECORDING: &str = r#"{"preferences":{"save_folder":"/Users/me/Movies/Deino","auto_save":false,"file_format":"mp4","preferred_mic_device":"MacBook Pro Microphone (input)","preferred_system_device":null,"system_audio_backend":"coreaudio"}}"#;
@@ -62,8 +62,7 @@ async fn every_legacy_store_is_carried_over_then_deleted() {
         settings.audio.preferred_mic_device.as_deref(),
         Some("MacBook Pro Microphone (input)")
     );
-    assert!(settings.onboarding.completed && settings.onboarding.started());
-    assert_eq!(settings.onboarding.summary, ModelDownloadState::Downloaded);
+    assert_eq!(settings.onboarding, OnboardingSettings::finished());
     assert!(settings.notifications.consent_given);
     assert_eq!(
         settings.notifications.preferences.meeting_reminder_minutes,
@@ -101,7 +100,7 @@ async fn an_unreadable_store_is_left_in_place_and_the_rest_still_moves() {
     let settings = harness.import().await;
 
     assert!(!settings.recording.show_recording_notice);
-    assert!(!settings.onboarding.started());
+    assert!(!settings.onboarding.completed);
     assert!(harness.exists("onboarding-status.json"));
 }
 

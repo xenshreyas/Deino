@@ -61,7 +61,7 @@ pub use llm_access::{LlmAccess, secret_for};
 pub use model::{SETTINGS_VERSION, Settings};
 pub use network::NetworkSettings;
 pub use notifications::{MAX_REMINDER_MINUTES, NotificationPreferences, NotificationSettings};
-pub use onboarding::{ModelDownloadState, OnboardingSettings};
+pub use onboarding::{OnboardingSettings, OnboardingStep, StepOutcome};
 pub use organize::OrganizeSettings;
 pub use patch::SettingsPatch;
 pub use personal::PrivacySettings;

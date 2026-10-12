@@ -20,6 +20,7 @@ import { ExportSettingsPage } from '@/features/export';
 import { IntegrationsSettings } from '@/features/integrations';
 import { AiSettings } from '@/features/llm';
 import { NetworkSettings } from '@/features/network';
+import { ResumeSetup } from '@/features/onboarding';
 import { ProfilePage } from '@/features/profile';
 import { IndexSettings } from '@/features/search';
 import { PeopleSettings } from '@/features/speakers';
@@ -37,6 +38,7 @@ import {
   Mic,
   Palette,
   Plug,
+  Rocket,
   Search,
   Settings,
   ShieldCheck,
@@ -112,6 +114,7 @@ function IntegrationsSection() {
 export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'general', group: 'app', icon: Settings, Component: PreferenceSettings },
   { id: 'appearance', group: 'app', icon: Palette, Component: AppearanceSection },
+  { id: 'setup', group: 'app', icon: Rocket, Component: ResumeSetup },
   { id: 'recording', group: 'capture', icon: Mic, Component: () => <RecordingSettings /> },
   { id: 'detection', group: 'capture', icon: Video, Component: DetectionSettingsPage },
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },

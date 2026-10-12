@@ -40,6 +40,7 @@
         "system:default",
         "detection:default",
         "developer:default",
+        "onboarding:default",
         "action-items:default",
         "calendar:default",
         "companies:default",

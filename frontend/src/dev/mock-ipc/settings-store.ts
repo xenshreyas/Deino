@@ -5,6 +5,15 @@
  */
 import type * as Generated from '@/lib/ipc/generated/settings';
 
+/**
+ * Onboarding as `pnpm dev:mock` starts it: done, so the app opens, unless
+ * the URL asks for the flow (`?onboarding`), which starts a fresh install's.
+ */
+function startingOnboarding(): Generated.OnboardingSettings {
+  const fresh = new URLSearchParams(window.location.search).has('onboarding');
+  return { completed: !fresh, step: 'welcome', outcomes: {} };
+}
+
 /** The settings a returning user has: onboarding done, Claude for notes. */
 let settings: Generated.Settings = {
   version: 1,
@@ -94,14 +103,7 @@ let settings: Generated.Settings = {
   integrations: { apps: {} },
   ui: { theme: 'system', showConfidenceIndicator: true, transcriptPaneRatio: 0.3 },
   beta: { importAndRetranscribe: true },
-  onboarding: {
-    completed: true,
-    currentStep: 4,
-    parakeet: 'downloaded',
-    summary: 'downloaded',
-    selectedSummaryModel: null,
-    updatedAt: '2026-10-01T09:00:00Z',
-  },
+  onboarding: startingOnboarding(),
 };
 
 /** The settings as they are now. */

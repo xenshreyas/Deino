@@ -6,7 +6,6 @@ import { UpdateCheckProvider } from '@/components/UpdateCheckProvider';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { ImportDialogProvider } from '@/contexts/ImportDialogContext';
 import { OllamaDownloadProvider } from '@/contexts/OllamaDownloadContext';
-import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { RecordingSync } from '@/features/recording';
 import { SettingsSync } from '@/features/settings';
 
@@ -33,17 +32,13 @@ export function AppProviders({ onOpenImportDialog, children }: AppProvidersProps
       <RecordingSync />
       <ConfigProvider>
         <OllamaDownloadProvider>
-          <OnboardingProvider>
-            <UpdateCheckProvider>
-              <SidebarProvider>
-                <TooltipProvider>
-                  <ImportDialogProvider onOpen={onOpenImportDialog}>
-                    {children}
-                  </ImportDialogProvider>
-                </TooltipProvider>
-              </SidebarProvider>
-            </UpdateCheckProvider>
-          </OnboardingProvider>
+          <UpdateCheckProvider>
+            <SidebarProvider>
+              <TooltipProvider>
+                <ImportDialogProvider onOpen={onOpenImportDialog}>{children}</ImportDialogProvider>
+              </TooltipProvider>
+            </SidebarProvider>
+          </UpdateCheckProvider>
         </OllamaDownloadProvider>
       </ConfigProvider>
     </>

@@ -14,7 +14,7 @@
 mod devices;
 
 use crate::{
-    api, audio, console_utils, database, notifications, onboarding, parakeet_engine, summary,
+    api, audio, console_utils, database, notifications, parakeet_engine, summary,
     updater, whisper_engine,
 };
 #[cfg(target_os = "macos")]
@@ -121,11 +121,6 @@ pub(crate) fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> boo
         database::commands::initialize_fresh_database,
         database::commands::get_database_directory,
         database::commands::open_database_folder,
-        // Onboarding
-        onboarding::get_onboarding_status,
-        onboarding::save_onboarding_status_cmd,
-        onboarding::reset_onboarding_status_cmd,
-        onboarding::complete_onboarding,
         // macOS System Settings deep links
         #[cfg(target_os = "macos")]
         utils::open_system_settings,

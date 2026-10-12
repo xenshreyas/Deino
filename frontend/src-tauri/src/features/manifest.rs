@@ -268,6 +268,16 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── TRN-01 transcript view (features/transcript.rs) ──
     ("transcript", &["get"]),
+    // ── FND-11 onboarding: the permissions it asks for ──
+    (
+        "onboarding",
+        &[
+            "permissions",
+            "request_permission",
+            "open_permission_settings",
+            "import_sample",
+        ],
+    ),
 ];
 
 /// Feature plugins compiled into debug builds only. `build.rs` registers

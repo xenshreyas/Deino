@@ -69,10 +69,16 @@ pub fn summary_doc(result: &str) -> Option<Doc> {
         Some(markdown) => markdown.to_owned(),
         None => sections_markdown(&value),
     };
+    ai_doc(&markdown)
+}
+
+/// `markdown` as a document whose text is marked as the AI's; `None` when
+/// it is empty or does not parse. Also builds the sample meeting's notes.
+pub fn ai_doc(markdown: &str) -> Option<Doc> {
     if markdown.trim().is_empty() {
         return None;
     }
-    let mut doc = deino_doc::from_markdown(&markdown).ok()?;
+    let mut doc = deino_doc::from_markdown(markdown).ok()?;
     doc.content.iter_mut().for_each(mark_block);
     Some(doc.normalized())
 }

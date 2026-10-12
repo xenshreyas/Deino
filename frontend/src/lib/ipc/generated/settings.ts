@@ -494,22 +494,6 @@ export type LlmProvider =
  */
 "custom-openai"
 /**
- * Where a model download stands.
- */
-export type ModelDownloadState = 
-/**
- * Not on disk.
- */
-"not_downloaded" | 
-/**
- * Downloading now.
- */
-"downloading" | 
-/**
- * On disk and ready.
- */
-"downloaded"
-/**
  * The network section of `Settings`.
  */
 export type NetworkSettings = { 
@@ -622,29 +606,45 @@ redirectPort: number | null }
  */
 export type OnboardingSettings = { 
 /**
- * Setup has finished.
+ * Setup has finished; the app opens straight to Home.
  */
 completed: boolean; 
 /**
- * The step the user is on, from 1.
+ * The step the flow shows next.
  */
-currentStep: number; 
+step: OnboardingStep; 
 /**
- * The transcription model's download.
+ * How each visited step was left; unvisited steps are absent.
  */
-parakeet: ModelDownloadState; 
+outcomes: Partial<{ [key in OnboardingStep]: StepOutcome }> }
 /**
- * The built-in summary model's download.
+ * One onboarding step, in the order the flow shows them.
  */
-summary: ModelDownloadState; 
+export type OnboardingStep = 
 /**
- * The built-in summary model the user picked.
+ * What Deino is and how it keeps data on the Mac.
  */
-selectedSummaryModel: string | null; 
+"welcome" | 
 /**
- * When onboarding last saved its progress; `None` until it first does.
+ * Microphone, system audio, notifications, Accessibility and Calendar.
  */
-updatedAt: string | null }
+"permissions" | 
+/**
+ * The local models and the provider for notes.
+ */
+"ai_setup" | 
+/**
+ * A calendar for upcoming meetings.
+ */
+"calendar" | 
+/**
+ * Who the user is, for every AI prompt (NOT-05).
+ */
+"profile" | 
+/**
+ * A short test recording.
+ */
+"try_it"
 /**
  * The organize section of `Settings`.
  */
@@ -1010,6 +1010,18 @@ autoIdentify: boolean;
  * When a voice counts as a known person.
  */
 thresholds: IdentifyThresholds }
+/**
+ * How the user left a step.
+ */
+export type StepOutcome = 
+/**
+ * The user went through it.
+ */
+"done" | 
+/**
+ * The user skipped it; Settings can resume it.
+ */
+"skipped"
 /**
  * A provider and model, chosen by a route or pinned by the caller.
  */

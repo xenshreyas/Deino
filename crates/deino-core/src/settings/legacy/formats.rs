@@ -4,12 +4,9 @@
 //! app versions, and a missing field must keep today's default rather than
 //! fail the import.
 
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use super::super::{
-    CustomOpenAiSettings, ModelDownloadState, NotificationSettings, OnboardingSettings, Settings,
-};
+use super::super::{CustomOpenAiSettings, NotificationSettings, OnboardingSettings, Settings};
 
 /// The `customOpenAIConfig` JSON column of the legacy `settings` row.
 #[derive(Debug, Deserialize)]
@@ -85,7 +82,9 @@ impl PreferencesFile {
     }
 }
 
-/// `onboarding-status.json`: `{ "status": { … } }`.
+/// `onboarding-status.json`: `{ "status": { … } }`. Only completion
+/// carries over; FND-11's steps differ from the legacy ones, and model states
+/// are read live from the model managers.
 #[derive(Debug, Deserialize)]
 pub(super) struct OnboardingFile {
     status: OnboardingStatus,
@@ -95,35 +94,14 @@ pub(super) struct OnboardingFile {
 struct OnboardingStatus {
     #[serde(default)]
     completed: bool,
-    #[serde(default = "first_step")]
-    current_step: u8,
-    #[serde(default)]
-    model_status: ModelStatus,
-    #[serde(default)]
-    last_updated: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct ModelStatus {
-    #[serde(default)]
-    parakeet: ModelDownloadState,
-    #[serde(default)]
-    summary: ModelDownloadState,
-    #[serde(default)]
-    selected_summary_model: Option<String>,
 }
 
 impl OnboardingFile {
     pub(super) fn apply(self, settings: &mut Settings) {
-        let status = self.status;
-        settings.onboarding = OnboardingSettings {
-            completed: status.completed,
-            current_step: status.current_step,
-            parakeet: status.model_status.parakeet,
-            summary: status.model_status.summary,
-            selected_summary_model: status.model_status.selected_summary_model,
-            // The file existing means onboarding saved progress.
-            updated_at: Some(status.last_updated.unwrap_or(DateTime::UNIX_EPOCH)),
+        settings.onboarding = if self.status.completed {
+            OnboardingSettings::finished()
+        } else {
+            OnboardingSettings::default()
         };
     }
 }
@@ -142,8 +120,4 @@ impl NotificationsFile {
 
 const fn yes() -> bool {
     true
-}
-
-const fn first_step() -> u8 {
-    1
 }

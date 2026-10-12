@@ -14,7 +14,14 @@ export { SearchScreen, type SearchScreenProps } from './components/search-screen
 export { searchCopy } from './copy';
 export { activeMention, momentTime } from './format';
 export { hitTarget } from './hit-target';
-export { searchKeys, searchQuery, useIndexStatus, useSearch } from './queries';
+export {
+  searchKeys,
+  searchQuery,
+  useDownloadModel as useDownloadEmbeddingModel,
+  useIndexStatus,
+  useModelDownloadProgress,
+  useSearch,
+} from './queries';
 export type {
   FilterChip,
   FilterKind,

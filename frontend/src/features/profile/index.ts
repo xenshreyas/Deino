@@ -4,5 +4,7 @@
  * preview of the context every AI prompt starts with.
  */
 export { profileApi } from './api';
+export { AboutYouFields } from './components/profile-fields';
 export { ProfilePage } from './components/profile-page';
+export { type ProfileFormState, useProfileForm } from './hooks/use-profile-form';
 export { profileContextQuery, profileKeys, useProfileContext, useSaveProfile } from './queries';

@@ -4,10 +4,10 @@
  * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the
  * meeting-detection listener that opens the record screen.
  */
-import type { ReactNode } from 'react';
+import { type ReactNode, Suspense } from 'react';
 
-import { OnboardingFlow } from '@/components/onboarding';
 import { DownloadProgressToastProvider } from '@/components/shared/DownloadProgressToast';
+import { OnboardingFlow, useOnboardingGate } from '@/features/onboarding';
 import { Toaster } from '@/ui/toaster';
 
 import { AppProviders } from './app-providers';
@@ -20,7 +20,6 @@ import { TitleBar } from './components/title-bar';
 import { useFocusMode } from './hooks/use-focus-mode';
 import { useGlobalShortcuts } from './hooks/use-global-shortcuts';
 import { useImportDialogState } from './hooks/use-import-dialog-state';
-import { useOnboardingGate } from './hooks/use-onboarding-gate';
 import { useProductionContextMenuGuard } from './hooks/use-production-context-menu-guard';
 import { Sidebar } from './sidebar/sidebar';
 
@@ -52,7 +51,7 @@ function MainLayout({ onAudioFile, children }: MainLayoutProps) {
 
 /** Renders `children` (the matched route) inside the app chrome. */
 export function AppShell({ children }: { children: ReactNode }) {
-  const { showOnboarding, completeOnboarding } = useOnboardingGate();
+  const gate = useOnboardingGate();
   const importDialog = useImportDialogState();
   useProductionContextMenuGuard();
 
@@ -61,11 +60,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppProviders onOpenImportDialog={importDialog.openWith}>
         <DownloadProgressToastProvider />
         <DetectionRecordingStart />
-        {showOnboarding ? (
-          <OnboardingFlow onComplete={completeOnboarding} />
-        ) : (
+        {gate === 'onboarding' ? (
+          <Suspense fallback={<div className="h-screen w-screen bg-bg" />}>
+            <OnboardingFlow />
+          </Suspense>
+        ) : null}
+        {gate === 'app' ? (
           <MainLayout onAudioFile={importDialog.openWith}>{children}</MainLayout>
-        )}
+        ) : null}
         <ImportDialogGate
           open={importDialog.open}
           filePath={importDialog.filePath}

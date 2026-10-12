@@ -16,6 +16,22 @@ export interface ProfileForm {
   context: string;
 }
 
+/** Every field of the form, for comparing two forms. */
+const FIELDS = [
+  'name',
+  'emails',
+  'role',
+  'company',
+  'focusAreas',
+  'writingStyle',
+  'context',
+] as const satisfies readonly (keyof ProfileForm)[];
+
+/** True when any field of `form` differs from `saved`. */
+export function isDirty(form: ProfileForm, saved: ProfileForm): boolean {
+  return FIELDS.some((field) => form[field] !== saved[field]);
+}
+
 /** The form for a saved profile. */
 export function toForm(profile: ProfileSettings): ProfileForm {
   return {
