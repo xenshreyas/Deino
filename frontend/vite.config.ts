@@ -56,6 +56,17 @@ const tauriDevHost = process.env.TAURI_DEV_HOST;
 /** True for `tauri build --debug`: keep the bundle readable. */
 const isTauriDebugBuild = Boolean(process.env.TAURI_ENV_DEBUG);
 
+/**
+ * Every HTML page: the app, the meeting prompt's own small window (CAP-06),
+ * the record panel's (CAP-10) and the meeting reminder's (ORG-02).
+ */
+const PAGES = Object.fromEntries(
+  ['index', 'detection-prompt', 'record-panel', 'meeting-reminder'].map((page) => [
+    page === 'index' ? 'main' : page,
+    fileURLToPath(new URL(`./${page}.html`, import.meta.url)),
+  ]),
+);
+
 export default defineConfig(({ mode }) => ({
   plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
   resolve: {
@@ -89,16 +100,7 @@ export default defineConfig(({ mode }) => ({
     // web. The meeting route carries BlockNote (~930 kB) until NOT-01.
     chunkSizeWarningLimit: 1024,
     sourcemap: isTauriDebugBuild,
-    // Four pages: the app, the meeting prompt's own small window (CAP-06),
-    // the record panel's (CAP-10) and the meeting reminder's (ORG-02).
-    rollupOptions: {
-      input: {
-        main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        'detection-prompt': fileURLToPath(new URL('./detection-prompt.html', import.meta.url)),
-        'record-panel': fileURLToPath(new URL('./record-panel.html', import.meta.url)),
-        'meeting-reminder': fileURLToPath(new URL('./meeting-reminder.html', import.meta.url)),
-      },
-    },
+    rollupOptions: { input: PAGES },
   },
   test: {
     environment: 'happy-dom',
