@@ -251,57 +251,12 @@ uuid_id!(
 mod webhook;
 pub use webhook::{WebhookDeliveryId, WebhookId};
 
-uuid_id!(
-    /// Identifies a custom vocabulary term or replacement rule (TRN-05).
-    VocabTermId
-);
-
-uuid_id!(
-    /// Identifies an insight the user defined (AI-06): what to extract from
-    /// meetings, and when.
-    InsightId
-);
-
-uuid_id!(
-    /// Identifies a folder Deino watches for recordings to import (CAP-11).
-    WatchedFolderId
-);
-
-uuid_id!(
-    /// Identifies a file a watched folder imported or failed to (CAP-11).
-    WatchedFileId
-);
-
-uuid_id!(
-    /// Identifies an automation (AUT-01): conditions and the steps to run.
-    AutomationId
-);
-
-uuid_id!(
-    /// Identifies one automation's run on one meeting (AUT-01).
-    AutomationRunId
-);
-
-uuid_id!(
-    /// Identifies a clip: a named range of a meeting's recording (TRN-04).
-    ClipId
-);
-
-uuid_id!(
-    /// Identifies a comment thread anchored to a transcript or notes span
-    /// (TRN-06).
-    CommentThreadId
-);
-
-uuid_id!(
-    /// Identifies one comment of a thread (TRN-06).
-    CommentId
-);
-
 mod api;
 mod chat;
+mod features;
 pub use api::ApiKeyId;
 pub use chat::*;
+pub use features::*;
 
 #[cfg(test)]
 mod tests {
