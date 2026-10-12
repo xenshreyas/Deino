@@ -14,11 +14,11 @@ use deino_core::calendar::join::JoinService;
 use deino_core::calendar::linking::{
     EventAttendance, EventLinkDeps, EventLinkService, RelatedService, SqliteRelatedRepo,
 };
+use deino_core::calendar::rules::{AutoRecordDeps, AutoRecordService};
 use deino_core::calendar::{
     AttendeeDirectory, CalendarDeps, CalendarService, CalendarSource, CalendarStore,
     SqliteCalendarRepo, SyncScheduler,
 };
-use deino_core::calendar::rules::{AutoRecordDeps, AutoRecordService};
 use deino_core::companies::SqliteCompanyRepo;
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_core::people::SqlitePeopleRepo;

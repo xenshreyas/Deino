@@ -179,11 +179,11 @@ pub fn decide(rules: &AutoRecordSettings, facts: &EventFacts, choices: Choices) 
     if facts.all_day || facts.attendees < MIN_MEETING_ATTENDEES {
         return RecordDecision::no(RecordReason::NotAMeeting);
     }
-    switches(rules, facts)
+    switches(*rules, facts)
 }
 
 /// Step 5: the global switches, audience first.
-fn switches(rules: &AutoRecordSettings, facts: &EventFacts) -> RecordDecision {
+fn switches(rules: AutoRecordSettings, facts: &EventFacts) -> RecordDecision {
     let audience_on = match facts.audience {
         Audience::Internal => rules.internal,
         Audience::External => rules.external,

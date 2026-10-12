@@ -2,11 +2,12 @@
 //! system (web links only, `system_open`), and [`LiveRecorder`] starts the
 //! live recorder.
 //!
-//! The recorder is found in Tauri state at each Join, like [`LinkOnStart`]
-//! (super::LinkOnStart): it is built before or after the calendar depending
-//! on startup order. The recording is titled after the event, and
-//! `LinkOnStart` links it to the event nearest to now, which is the one
-//! being joined. TODO(CAP-10): pass the event in its `StartRequest` link.
+//! The recorder is found in Tauri state at each Join, like
+//! [`LinkOnStart`](super::LinkOnStart): it is built before or after the
+//! calendar depending on startup order. The recording is titled after the
+//! event, and `LinkOnStart` links it to the event nearest to now, which is
+//! the one being joined. After CAP-10 merges, pass the event in its
+//! `StartRequest` link instead (PARITY_PLAN §7.2).
 
 use std::sync::Arc;
 

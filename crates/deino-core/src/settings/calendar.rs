@@ -49,6 +49,10 @@ pub struct CalendarSettings {
 /// user picks an audience.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "independent switches the user toggles one by one in Settings → Calendar"
+)]
 pub struct AutoRecordSettings {
     /// Record meetings with only people from the user's own domains.
     pub internal: bool,

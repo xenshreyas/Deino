@@ -117,7 +117,11 @@ async fn join_and_record_captures_within_two_seconds_of_a_slow_browser() {
     assert_eq!(meeting, Some(MeetingId::new("meeting-for-standup")));
     let after = captured_after(&recorder).unwrap();
     assert!(after <= CAPTURE_BOUND, "capture began after {after:?}");
-    assert_eq!(opener.opened.lock().unwrap().len(), 1, "the call opened too");
+    assert_eq!(
+        opener.opened.lock().unwrap().len(),
+        1,
+        "the call opened too"
+    );
 }
 
 #[tokio::test(start_paused = true)]
@@ -133,8 +137,18 @@ async fn each_mode_does_only_what_it_says() {
     assert!(captured_after(&recorder).is_none());
 
     let before = opener.opened.lock().unwrap().len();
-    assert!(service.join(event, JoinMode::RecordOnly).await.unwrap().is_some());
-    assert_eq!(opener.opened.lock().unwrap().len(), before, "record only opens nothing");
+    assert!(
+        service
+            .join(event, JoinMode::RecordOnly)
+            .await
+            .unwrap()
+            .is_some()
+    );
+    assert_eq!(
+        opener.opened.lock().unwrap().len(),
+        before,
+        "record only opens nothing"
+    );
 }
 
 #[tokio::test(start_paused = true)]
@@ -145,7 +159,13 @@ async fn a_browser_failure_keeps_the_recording_but_fails_join_only() {
     };
     let Harness { service, event, .. } = harness(failing, standup());
 
-    assert!(service.join(event, JoinMode::JoinAndRecord).await.unwrap().is_some());
+    assert!(
+        service
+            .join(event, JoinMode::JoinAndRecord)
+            .await
+            .unwrap()
+            .is_some()
+    );
     let only = service.join(event, JoinMode::JoinOnly).await;
     assert!(matches!(only, Err(JoinError::Open(_))));
 }
@@ -158,5 +178,11 @@ async fn joining_an_event_without_a_link_is_refused() {
 
     let refused = service.join(event, JoinMode::JoinOnly).await;
     assert!(matches!(refused, Err(JoinError::NoCallLink)));
-    assert!(service.join(event, JoinMode::JoinAndRecord).await.unwrap().is_some());
+    assert!(
+        service
+            .join(event, JoinMode::JoinAndRecord)
+            .await
+            .unwrap()
+            .is_some()
+    );
 }

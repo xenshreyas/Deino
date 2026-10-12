@@ -141,7 +141,11 @@ impl JoinService {
             if !mode.records() {
                 return Ok(None);
             }
-            self.recorder.record(&event).await.map(Some).map_err(JoinError::Record)
+            self.recorder
+                .record(&event)
+                .await
+                .map(Some)
+                .map_err(JoinError::Record)
         };
         let (opened, recorded) = tokio::join!(open, record);
         let meeting = recorded?;

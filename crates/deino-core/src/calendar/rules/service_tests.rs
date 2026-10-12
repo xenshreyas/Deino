@@ -49,7 +49,13 @@ async fn plan(rules: &AutoRecordService) -> Vec<(String, bool, RecordReason)> {
     let planned = rules.plan(range).await.unwrap();
     planned
         .into_iter()
-        .map(|it| (it.event.provider_event_id, it.decision.record, it.decision.reason))
+        .map(|it| {
+            (
+                it.event.provider_event_id,
+                it.decision.record,
+                it.decision.reason,
+            )
+        })
         .collect()
 }
 
@@ -78,14 +84,20 @@ fn row(id: &str, record: bool, reason: RecordReason) -> (String, bool, RecordRea
 async fn the_plan_follows_the_switches() {
     let Harness { rules, settings } = harness().await;
     let off = plan(&rules).await;
-    assert!(off.iter().all(|(_, record, reason)| !record && *reason == RecordReason::AudienceOff));
+    assert!(
+        off.iter()
+            .all(|(_, record, reason)| !record && *reason == RecordReason::AudienceOff)
+    );
 
     settings
         .update(|settings| settings.calendar.auto_record.external = true)
         .await
         .unwrap();
     let on = plan(&rules).await;
-    assert!(on.iter().all(|(_, record, reason)| *record && *reason == RecordReason::Rules));
+    assert!(
+        on.iter()
+            .all(|(_, record, reason)| *record && *reason == RecordReason::Rules)
+    );
 }
 
 #[tokio::test]
@@ -93,7 +105,10 @@ async fn just_this_one_leaves_the_other_occurrences_alone() {
     let Harness { rules, .. } = harness().await;
     let first = id_of(&rules, "weekly-1").await;
 
-    let decision = rules.choose(first, choice(Some(true), ChoiceScope::ThisEvent)).await.unwrap();
+    let decision = rules
+        .choose(first, choice(Some(true), ChoiceScope::ThisEvent))
+        .await
+        .unwrap();
     assert!(decision.record);
     assert_eq!(
         plan(&rules).await,
@@ -110,16 +125,35 @@ async fn all_occurrences_overrides_earlier_single_choices_and_clears() {
     let Harness { rules, .. } = harness().await;
     let first = id_of(&rules, "weekly-1").await;
     let second = id_of(&rules, "weekly-2").await;
-    rules.choose(second, choice(Some(true), ChoiceScope::ThisEvent)).await.unwrap();
+    rules
+        .choose(second, choice(Some(true), ChoiceScope::ThisEvent))
+        .await
+        .unwrap();
 
-    rules.choose(first, choice(Some(false), ChoiceScope::AllOccurrences)).await.unwrap();
+    rules
+        .choose(first, choice(Some(false), ChoiceScope::AllOccurrences))
+        .await
+        .unwrap();
     let series = plan(&rules).await;
-    assert_eq!(series[0], row("weekly-1", false, RecordReason::SeriesChoice));
-    assert_eq!(series[2], row("weekly-2", false, RecordReason::SeriesChoice));
+    assert_eq!(
+        series[0],
+        row("weekly-1", false, RecordReason::SeriesChoice)
+    );
+    assert_eq!(
+        series[2],
+        row("weekly-2", false, RecordReason::SeriesChoice)
+    );
 
-    rules.choose(second, choice(None, ChoiceScope::AllOccurrences)).await.unwrap();
+    rules
+        .choose(second, choice(None, ChoiceScope::AllOccurrences))
+        .await
+        .unwrap();
     let cleared = plan(&rules).await;
-    assert!(cleared.iter().all(|(_, _, reason)| *reason == RecordReason::AudienceOff));
+    assert!(
+        cleared
+            .iter()
+            .all(|(_, _, reason)| *reason == RecordReason::AudienceOff)
+    );
 }
 
 #[tokio::test]
@@ -131,5 +165,10 @@ async fn all_occurrences_of_a_one_off_is_just_this_one() {
         .await
         .unwrap();
     assert_eq!(decision.reason, RecordReason::EventChoice);
-    assert!(!plan(&rules).await.iter().any(|(_, _, r)| *r == RecordReason::SeriesChoice));
+    assert!(
+        !plan(&rules)
+            .await
+            .iter()
+            .any(|(_, _, r)| *r == RecordReason::SeriesChoice)
+    );
 }

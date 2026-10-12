@@ -69,28 +69,68 @@ const fn no(reason: RecordReason) -> RecordDecision {
     }
 }
 
+fn assert_cases(cases: &[(AutoRecordSettings, EventFacts, RecordDecision)]) {
+    for (index, (rules, facts, expected)) in cases.iter().enumerate() {
+        assert_eq!(
+            decide(rules, facts, NONE),
+            *expected,
+            "case {index}: {facts:?}"
+        );
+    }
+}
+
 #[test]
-fn the_global_switches_decide_without_choices() {
+fn the_audience_switches_decide_first() {
     let accepted = Some(Rsvp::Accepted);
     let tentative = Some(Rsvp::Tentative);
-    let cases = [
+    let defaults = AutoRecordSettings::default();
+    assert_cases(&[
         (OFF, facts(Internal, Me, accepted), no(AudienceOff)),
         (OFF, facts(External, Me, accepted), no(AudienceOff)),
         (ALL_ON, facts(Internal, Someone, None), yes(Rules)),
         (ALL_ON, facts(External, Someone, tentative), yes(Rules)),
-        (EXTERNAL_ONLY, facts(Internal, Me, accepted), no(AudienceOff)),
-        (EXTERNAL_ONLY, facts(External, Someone, accepted), yes(Rules)),
-        (EXTERNAL_ONLY, facts(External, Someone, tentative), no(NotAccepted)),
+        (
+            EXTERNAL_ONLY,
+            facts(Internal, Me, accepted),
+            no(AudienceOff),
+        ),
+        (defaults, facts(Internal, Me, accepted), no(AudienceOff)),
+        (
+            defaults,
+            facts(External, Someone, accepted),
+            no(AudienceOff),
+        ),
+    ]);
+}
+
+#[test]
+fn then_the_organiser_and_the_rsvp() {
+    let accepted = Some(Rsvp::Accepted);
+    let tentative = Some(Rsvp::Tentative);
+    assert_cases(&[
+        (
+            EXTERNAL_ONLY,
+            facts(External, Someone, accepted),
+            yes(Rules),
+        ),
+        (
+            EXTERNAL_ONLY,
+            facts(External, Someone, tentative),
+            no(NotAccepted),
+        ),
         (EXTERNAL_ONLY, facts(External, Me, None), yes(Rules)),
         (MINE_ONLY, facts(Internal, Me, accepted), yes(Rules)),
-        (MINE_ONLY, facts(Internal, Someone, accepted), no(OrganizedByOthers)),
-        (MINE_ONLY, facts(External, Someone, None), no(OrganizedByOthers)),
-        (AutoRecordSettings::default(), facts(Internal, Me, accepted), no(AudienceOff)),
-        (AutoRecordSettings::default(), facts(External, Someone, accepted), no(AudienceOff)),
-    ];
-    for (index, (rules, facts, expected)) in cases.into_iter().enumerate() {
-        assert_eq!(decide(&rules, &facts, NONE), expected, "case {index}: {facts:?}");
-    }
+        (
+            MINE_ONLY,
+            facts(Internal, Someone, accepted),
+            no(OrganizedByOthers),
+        ),
+        (
+            MINE_ONLY,
+            facts(External, Someone, None),
+            no(OrganizedByOthers),
+        ),
+    ]);
 }
 
 #[test]
@@ -130,8 +170,18 @@ fn choices_win_this_one_over_the_series_over_the_switches() {
     };
     let cases = [
         (OFF, declined, event_yes, yes(EventChoice)),
-        (ALL_ON, facts(Internal, Me, None), series_no, no(SeriesChoice)),
-        (OFF, facts(Internal, Someone, None), series_yes, yes(SeriesChoice)),
+        (
+            ALL_ON,
+            facts(Internal, Me, None),
+            series_no,
+            no(SeriesChoice),
+        ),
+        (
+            OFF,
+            facts(Internal, Someone, None),
+            series_yes,
+            yes(SeriesChoice),
+        ),
         (ALL_ON, facts(External, Me, None), event_no, no(EventChoice)),
     ];
     for (index, (rules, facts, choices, expected)) in cases.into_iter().enumerate() {
@@ -156,17 +206,33 @@ fn the_start_time_needs_the_note_open_and_the_mic_does_not() {
 fn facts_read_the_organiser_from_the_users_addresses() {
     let own = InternalDomains::from_emails(&[Email::parse(ME).unwrap()]);
     let mut event = stored("Sync", 1);
-    assert_eq!(EventFacts::of(&event, &own).organizer, Me, "the user is flagged");
+    assert_eq!(
+        EventFacts::of(&event, &own).organizer,
+        Me,
+        "the user is flagged"
+    );
 
     event.organizer_email = Some("ada@example.com".into());
     event.attendees[0].email = Some("ada@example.com".into());
     assert_eq!(EventFacts::of(&event, &own).organizer, Someone);
 
     event.organizer_email = Some("Maya@Deino.dev".into());
-    assert_eq!(EventFacts::of(&event, &own).organizer, Me, "addresses ignore case");
+    assert_eq!(
+        EventFacts::of(&event, &own).organizer,
+        Me,
+        "addresses ignore case"
+    );
 
     event.organizer_email = None;
-    assert_eq!(EventFacts::of(&event, &own).organizer, Someone, "flagged attendee");
+    assert_eq!(
+        EventFacts::of(&event, &own).organizer,
+        Someone,
+        "flagged attendee"
+    );
     event.attendees[0].is_organizer = false;
-    assert_eq!(EventFacts::of(&event, &own).organizer, Me, "no organiser named");
+    assert_eq!(
+        EventFacts::of(&event, &own).organizer,
+        Me,
+        "no organiser named"
+    );
 }

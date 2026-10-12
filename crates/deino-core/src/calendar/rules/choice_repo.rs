@@ -36,7 +36,10 @@ impl SeriesChoiceRepo for SqliteCalendarRepo {
         )
         .fetch_all(self.database.reader())
         .await?;
-        Ok(rows.into_iter().map(|row| (row.series_id, row.record)).collect())
+        Ok(rows
+            .into_iter()
+            .map(|row| (row.series_id, row.record))
+            .collect())
     }
 
     async fn set_series_choice(
@@ -47,9 +50,12 @@ impl SeriesChoiceRepo for SqliteCalendarRepo {
     ) -> Result<(), DbError> {
         let mut tx = self.database.writer().begin().await?;
         let Some(record) = record else {
-            sqlx::query!("DELETE FROM calendar_series_choices WHERE series_id = ?1", series)
-                .execute(&mut *tx)
-                .await?;
+            sqlx::query!(
+                "DELETE FROM calendar_series_choices WHERE series_id = ?1",
+                series
+            )
+            .execute(&mut *tx)
+            .await?;
             return Ok(tx.commit().await?);
         };
         sqlx::query!(

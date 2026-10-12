@@ -26,12 +26,20 @@ fn titles(due: &[&CalendarEvent]) -> Vec<String> {
 
 #[test]
 fn only_meetings_starting_within_the_lead_remind_and_only_once() {
-    let events = [meeting("Soon", 50), meeting("Later", 120), meeting("Started", -10)];
+    let events = [
+        meeting("Soon", 50),
+        meeting("Later", 120),
+        meeting("Started", -10),
+    ];
     let settings = ReminderSettings::default();
     let mut clock = ReminderClock::default();
 
     assert_eq!(titles(&clock.due(&events, hours(0), &settings)), ["Soon"]);
-    assert!(clock.due(&events, hours(0) + TimeDelta::seconds(15), &settings).is_empty());
+    assert!(
+        clock
+            .due(&events, hours(0) + TimeDelta::seconds(15), &settings)
+            .is_empty()
+    );
 
     let later = hours(0) + TimeDelta::seconds(120) - REMINDER_LEAD;
     assert_eq!(titles(&clock.due(&events, later, &settings)), ["Later"]);
@@ -42,7 +50,10 @@ fn a_late_tick_after_sleep_still_reminds_before_the_start() {
     let events = [meeting("Standup", 30)];
     let mut clock = ReminderClock::default();
     let woke = hours(0) + TimeDelta::seconds(20);
-    assert_eq!(titles(&clock.due(&events, woke, &ReminderSettings::default())), ["Standup"]);
+    assert_eq!(
+        titles(&clock.due(&events, woke, &ReminderSettings::default())),
+        ["Standup"]
+    );
 }
 
 #[test]

@@ -10,7 +10,9 @@ use serde::{Deserialize, Serialize};
 
 use super::choice_repo::SeriesChoiceRepo;
 use super::policy::{Choices, EventFacts, RecordDecision, decide};
-use crate::calendar::{CalendarError, CalendarEvent, CalendarEventRepo, CalendarService, TimeRange};
+use crate::calendar::{
+    CalendarError, CalendarEvent, CalendarEventRepo, CalendarService, TimeRange,
+};
 use crate::profile::InternalDomains;
 use crate::settings::{Settings, SettingsService};
 
@@ -74,7 +76,10 @@ impl Context {
     fn decide(&self, event: &CalendarEvent) -> RecordDecision {
         let choices = Choices {
             event: event.record_override,
-            series: event.series_id.as_ref().and_then(|id| self.series.get(id).copied()),
+            series: event
+                .series_id
+                .as_ref()
+                .and_then(|id| self.series.get(id).copied()),
         };
         let facts = EventFacts::of(event, &self.own);
         decide(&self.settings.calendar.auto_record, &facts, choices)
@@ -115,13 +120,19 @@ impl AutoRecordService {
         let event = self.deps.calendar.event(id).await?;
         match (choice.scope, event.series_id.as_ref()) {
             (ChoiceScope::AllOccurrences, Some(series)) => {
-                self.deps.series.set_series_choice(series, choice.record, at).await?;
+                self.deps
+                    .series
+                    .set_series_choice(series, choice.record, at)
+                    .await?;
                 if choice.record.is_none() {
                     self.deps.events.set_record_override(&id, None, at).await?;
                 }
             }
             _ => {
-                self.deps.events.set_record_override(&id, choice.record, at).await?;
+                self.deps
+                    .events
+                    .set_record_override(&id, choice.record, at)
+                    .await?;
             }
         }
         let event = self.deps.calendar.event(id).await?;
