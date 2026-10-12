@@ -29,6 +29,12 @@ commit-time change signals (ADR 0005).
   busy timeout, for the `deino` CLI; never creates, migrates or writes it, and
   refuses a schema whose applied migrations differ from the binary's
   (`SchemaCheck`: newer or older).
+- Encryption at rest (PRV-02, ADR 0041): SQLCipher linked in place of
+  SQLite on Unix (CommonCrypto on macOS); `DbKey` (zeroized, never
+  printed); `FileFormat::detect`; `Database::open_keyed` and
+  `open_read_only_keyed`; `convert` (encrypt or decrypt a closed file in
+  place through a verified copy and an atomic swap) and `recover` (after a
+  crash); `Fingerprint` (row counts and SHA-256 per table and schema).
 - `test_db()` (feature `test-support`): an in-memory database with every
   migration applied.
 
@@ -38,6 +44,8 @@ commit-time change signals (ADR 0005).
 - Turning changes into IPC events: the app's `features/db.rs`.
 - Legacy corruption recovery (deleting WAL side files): the app's
   `database/manager.rs`.
+- Where the key is kept (`deino-secrets`' `DatabaseKeyStore`) and when to
+  convert (the app, at startup, before the database opens).
 
 ## Invariants
 
@@ -52,5 +60,10 @@ commit-time change signals (ADR 0005).
 - The update hook cannot see `DELETE` without `WHERE` or `REPLACE` conflicts,
   nor `WITHOUT ROWID` tables: never create one, and write upserts as
   `ON CONFLICT DO UPDATE`.
+- A key never reaches a log: keyed connections disable sqlx statement
+  logging, and `ATTACH … KEY` binds the key instead of formatting it.
+- `KeyRequired`, `WrongKey` and `NotEncrypted` are never corruption, so
+  nothing deletes side files over a database it cannot read.
+- `convert` and `recover` run only while no connection has the file open.
 - A view never reaches the update hook; writes through `transcripts` are
   reported as `transcript_segments`.

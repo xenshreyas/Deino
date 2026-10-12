@@ -35,6 +35,34 @@ pub enum DbError {
     /// The file's schema is not the one this binary was built for.
     #[error(transparent)]
     Schema(crate::SchemaCheck),
+    /// The database file could not be read to tell its format.
+    #[error("could not read the database file")]
+    Inspect(#[source] std::io::Error),
+    /// The file is encrypted and no key was given.
+    #[error("the Deino database is encrypted and its key is not available")]
+    KeyRequired,
+    /// The key does not open the encrypted file.
+    #[error("the database key does not open the Deino database")]
+    WrongKey,
+    /// A key was given for a file that is not encrypted.
+    #[error("the Deino database is not encrypted")]
+    NotEncrypted,
+    /// Encryption was asked for a file that is already encrypted.
+    #[error("the Deino database is already encrypted")]
+    AlreadyEncrypted,
+    /// The linked SQLite is not SQLCipher, so keys would be ignored.
+    #[error("this build of Deino cannot encrypt its database")]
+    CipherUnavailable,
+    /// The converted copy did not match the original; the original is untouched.
+    #[error("the converted database did not match the original; nothing was changed")]
+    Mismatch,
+    /// The database still had a write-ahead log after its last connection
+    /// closed, so another process has it open.
+    #[error("the Deino database is in use by another process")]
+    InUse,
+    /// Moving the converted file into place (or the backup back) failed.
+    #[error("could not swap in the converted database")]
+    Swap(#[source] std::io::Error),
 }
 
 impl DbError {
@@ -49,7 +77,16 @@ impl DbError {
             | Self::Migrate(_)
             | Self::DataMigration(_)
             | Self::Missing(_)
-            | Self::Schema(_) => return false,
+            | Self::Schema(_)
+            | Self::Inspect(_)
+            | Self::KeyRequired
+            | Self::WrongKey
+            | Self::NotEncrypted
+            | Self::AlreadyEncrypted
+            | Self::CipherUnavailable
+            | Self::Mismatch
+            | Self::InUse
+            | Self::Swap(_) => return false,
         };
         primary_code(source).is_some_and(|code| code == SQLITE_CORRUPT || code == SQLITE_NOTADB)
     }
@@ -86,7 +123,12 @@ fn primary_code(error: &sqlx::Error) -> Option<i32> {
 
 impl ErrorClass for DbError {
     fn code(&self) -> ErrorCode {
-        ErrorCode::Internal
+        match self {
+            Self::KeyRequired | Self::WrongKey => ErrorCode::PermissionDenied,
+            Self::CipherUnavailable => ErrorCode::Unavailable,
+            Self::InUse => ErrorCode::Conflict,
+            _ => ErrorCode::Internal,
+        }
     }
 }
 

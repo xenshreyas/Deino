@@ -167,15 +167,30 @@ async fn a_rolled_back_transaction_publishes_nothing() {
 async fn a_file_that_is_not_a_database_is_reported_as_corruption() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("deino.sqlite");
-    std::fs::write(
-        &path,
-        b"definitely not an SQLite file, but long enough to have a header",
-    )
-    .unwrap();
+    // SQLite's header, then garbage: a plaintext file that is broken.
+    let mut bytes = b"SQLite format 3\0".to_vec();
+    bytes.extend_from_slice(&[0xff; 200]);
+    std::fs::write(&path, bytes).unwrap();
 
     let error = Database::open(&DbLocation::File(path), &MIGRATOR)
         .await
         .unwrap_err();
 
     assert!(error.is_corruption(), "{error:?}");
+}
+
+#[tokio::test]
+async fn a_file_without_the_sqlite_header_needs_a_key_and_is_not_corruption() {
+    // Without a key an encrypted file and random bytes look the same, so the
+    // app never deletes side files over a database it cannot read.
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("deino.sqlite");
+    std::fs::write(&path, b"definitely not an SQLite file, but long enough").unwrap();
+
+    let error = Database::open(&DbLocation::File(path), &MIGRATOR)
+        .await
+        .unwrap_err();
+
+    assert!(matches!(error, crate::DbError::KeyRequired), "{error:?}");
+    assert!(!error.is_corruption());
 }

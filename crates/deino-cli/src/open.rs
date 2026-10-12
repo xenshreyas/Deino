@@ -9,8 +9,11 @@ use deino_core::redaction::TextRedactor;
 use deino_core::search::semantic::Embedder;
 use deino_db::{Database, MIGRATOR};
 use deino_domain::{SystemClock, SystemZone};
+use deino_secrets::KeychainSecretStore;
 
 use crate::CliError;
+use crate::db_key::key_for;
+use crate::db_path::APP_IDENTIFIER;
 use crate::embedder::HelperEmbedder;
 use crate::redaction::redactor_for;
 
@@ -26,9 +29,13 @@ impl Opened {
     /// Opens the database at `path` read-only, after checking its schema.
     /// Search adds meaning to keywords when the app's embedding model and
     /// llama-helper are installed. Times are in the Mac's zone (`TZ`
-    /// overrides it). Secrets are redacted when the app's setting says so.
+    /// overrides it). An encrypted database opens with the app's key from
+    /// the Keychain (PRV-02). Secrets are redacted when the app's setting
+    /// says so.
     pub async fn read_only(path: &Path) -> Result<Self, CliError> {
-        let database = Database::open_read_only(path, &MIGRATOR).await?;
+        let keychain = KeychainSecretStore::new(APP_IDENTIFIER);
+        let key = key_for(path, &keychain).await?;
+        let database = Database::open_read_only_keyed(path, key.as_ref(), &MIGRATOR).await?;
         let embedder = HelperEmbedder::locate(path)
             .await
             .map(|embedder| Arc::new(embedder) as Arc<dyn Embedder>);

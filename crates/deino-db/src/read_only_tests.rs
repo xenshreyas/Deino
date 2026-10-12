@@ -27,7 +27,7 @@ async fn migrated_file(dir: &Path) -> PathBuf {
 
 /// Runs `sql` on the file through a normal, writable connection.
 async fn tamper(path: &Path, sql: &str) {
-    let database = Database::connect(&DbLocation::File(path.to_path_buf()))
+    let database = Database::connect(&DbLocation::File(path.to_path_buf()), None)
         .await
         .unwrap();
     sqlx::query(sql).execute(database.writer()).await.unwrap();

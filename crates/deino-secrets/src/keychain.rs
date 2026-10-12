@@ -3,13 +3,17 @@
 //!
 //! Each secret is a generic password with the service set to the app's bundle
 //! identifier (`com.xenshreyas.deino`) and the account set to
-//! [`SecretName::account`] or [`CredentialKey::as_str`]. Keychain calls
+//! [`SecretName::account`], [`CredentialKey::as_str`] or
+//! [`DATABASE_KEY_ACCOUNT`]. Keychain calls
 //! block, sometimes on a system prompt, so each runs on Tokio's blocking pool.
 
 use async_trait::async_trait;
 
 use crate::error::PlatformError;
-use crate::{CredentialKey, CredentialStore, SecretError, SecretName, SecretStore, SecretValue};
+use crate::{
+    CredentialKey, CredentialStore, DATABASE_KEY_ACCOUNT, DatabaseKeyStore, SecretError,
+    SecretName, SecretStore, SecretValue,
+};
 
 /// Secrets in the macOS Keychain (the platform's native store elsewhere).
 #[derive(Clone, Debug)]
@@ -24,6 +28,8 @@ enum Item {
     Named(SecretName),
     /// An integration credential.
     Credential(CredentialKey),
+    /// The database encryption key (PRV-02).
+    DatabaseKey,
 }
 
 impl Item {
@@ -31,6 +37,7 @@ impl Item {
         match self {
             Self::Named(name) => name.account(),
             Self::Credential(key) => key.as_str(),
+            Self::DatabaseKey => DATABASE_KEY_ACCOUNT,
         }
     }
 
@@ -38,6 +45,7 @@ impl Item {
         match self {
             Self::Named(name) => SecretError::AccessDenied(*name),
             Self::Credential(_) => SecretError::CredentialDenied,
+            Self::DatabaseKey => SecretError::DatabaseKeyDenied,
         }
     }
 
@@ -45,7 +53,7 @@ impl Item {
     /// counts as nothing saved.
     fn value(&self, password: &str) -> Option<SecretValue> {
         match self {
-            Self::Named(_) => SecretValue::parse(password).ok(),
+            Self::Named(_) | Self::DatabaseKey => SecretValue::parse(password).ok(),
             Self::Credential(_) => SecretValue::parse_credential(password).ok(),
         }
     }
@@ -129,6 +137,21 @@ impl CredentialStore for KeychainSecretStore {
 
     async fn remove(&self, key: &CredentialKey) -> Result<(), SecretError> {
         self.erase(&Item::Credential(key.clone())).await
+    }
+}
+
+#[async_trait]
+impl DatabaseKeyStore for KeychainSecretStore {
+    async fn save_database_key(&self, key: SecretValue) -> Result<(), SecretError> {
+        self.write(&Item::DatabaseKey, key).await
+    }
+
+    async fn load_database_key(&self) -> Result<Option<SecretValue>, SecretError> {
+        self.read_item(&Item::DatabaseKey).await
+    }
+
+    async fn forget_database_key(&self) -> Result<(), SecretError> {
+        self.erase(&Item::DatabaseKey).await
     }
 }
 

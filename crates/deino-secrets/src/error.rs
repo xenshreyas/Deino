@@ -31,6 +31,9 @@ pub enum SecretError {
     /// over (as for [`SecretError::AccessDenied`]). Connecting again fixes it.
     #[error("macOS denied access to a saved sign-in; connect the integration again")]
     CredentialDenied,
+    /// macOS refused to hand over the database key (PRV-02).
+    #[error("macOS denied access to the database key; allow Deino in the Keychain prompt")]
+    DatabaseKeyDenied,
     /// A credential key is not a valid `integration.` account name (a bug).
     #[error("the credential name is not valid")]
     InvalidCredentialKey,
@@ -46,7 +49,9 @@ impl ErrorClass for SecretError {
     fn code(&self) -> ErrorCode {
         match self {
             Self::Empty | Self::TooLong => ErrorCode::Invalid,
-            Self::AccessDenied(_) | Self::CredentialDenied => ErrorCode::PermissionDenied,
+            Self::AccessDenied(_) | Self::CredentialDenied | Self::DatabaseKeyDenied => {
+                ErrorCode::PermissionDenied
+            }
             Self::Unavailable(_) => ErrorCode::Unavailable,
             Self::InvalidCredentialKey | Self::Backend(_) => ErrorCode::Internal,
         }

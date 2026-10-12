@@ -1,12 +1,13 @@
 //! Opening, migrating and closing a Deino database.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
 
-use crate::{ChangeNotifier, DataMigration, DbError};
+use crate::cipher::{FileFormat, keyed, open_error, require_cipher};
+use crate::{ChangeNotifier, DataMigration, DbError, DbKey};
 
 /// Read connections. In WAL mode SQLite serves readers alongside the writer.
 pub(crate) const READ_POOL_SIZE: u32 = 4;
@@ -53,7 +54,24 @@ impl Database {
         migrator: &Migrator,
         steps: &[&dyn DataMigration],
     ) -> Result<Self, DbError> {
-        let database = Self::connect(location).await?;
+        Self::open_keyed(location, None, migrator, steps).await
+    }
+
+    /// Opens the database like [`Database::open_with`], encrypted with `key`
+    /// when one is given (PRV-02, ADR 0041).
+    ///
+    /// With a key, the file must be encrypted (or missing, and then it is
+    /// created encrypted): a plaintext file fails with
+    /// [`DbError::NotEncrypted`], a wrong key with [`DbError::WrongKey`].
+    /// Without one, an encrypted file fails with [`DbError::KeyRequired`].
+    /// Convert a file between the two with [`crate::convert`].
+    pub async fn open_keyed(
+        location: &DbLocation,
+        key: Option<&DbKey>,
+        migrator: &Migrator,
+        steps: &[&dyn DataMigration],
+    ) -> Result<Self, DbError> {
+        let database = Self::connect(location, key).await?;
         let mut ordered = steps.to_vec();
         ordered.sort_by_key(|step| step.runs_before());
         let mut moved_data = false;
@@ -79,23 +97,24 @@ impl Database {
     }
 
     /// Opens the writer and the read pool without touching the schema.
-    pub(crate) async fn connect(location: &DbLocation) -> Result<Self, DbError> {
-        if let DbLocation::File(path) = location
-            && let Some(directory) = path.parent()
-        {
-            std::fs::create_dir_all(directory).map_err(DbError::CreateDir)?;
+    pub(crate) async fn connect(
+        location: &DbLocation,
+        key: Option<&DbKey>,
+    ) -> Result<Self, DbError> {
+        if let DbLocation::File(path) = location {
+            prepare_file(path, key).await?;
         }
         let changes = ChangeNotifier::new();
-        let options = connect_options(location);
+        let options = keyed(connect_options(location), key);
         let writer = changes
             .install(single_connection_pool())
             .connect_with(options.clone())
             .await
-            .map_err(DbError::Open)?;
+            .map_err(|error| open_error(error, key))?;
         let reader = match location {
             // Each in-memory connection is its own database, so reads share the writer.
             DbLocation::Memory => writer.clone(),
-            DbLocation::File(_) => read_pool(options).await?,
+            DbLocation::File(_) => read_pool(options, key).await?,
         };
         Ok(Self {
             writer,
@@ -178,10 +197,27 @@ fn single_connection_pool() -> SqlitePoolOptions {
         .max_lifetime(None)
 }
 
-async fn read_pool(options: SqliteConnectOptions) -> Result<SqlitePool, DbError> {
+async fn read_pool(
+    options: SqliteConnectOptions,
+    key: Option<&DbKey>,
+) -> Result<SqlitePool, DbError> {
     SqlitePoolOptions::new()
         .max_connections(READ_POOL_SIZE)
         .connect_with(options.pragma("query_only", "ON"))
         .await
-        .map_err(DbError::Open)
+        .map_err(|error| open_error(error, key))
+}
+
+/// Creates the file's folder and checks that `key` suits the file: an
+/// encrypted file needs one, a plaintext file must not get one, and a key
+/// needs SQLCipher to be linked.
+async fn prepare_file(path: &Path, key: Option<&DbKey>) -> Result<(), DbError> {
+    if let Some(directory) = path.parent() {
+        std::fs::create_dir_all(directory).map_err(DbError::CreateDir)?;
+    }
+    FileFormat::detect(path)?.check_key(key)?;
+    if key.is_some() {
+        require_cipher().await?;
+    }
+    Ok(())
 }

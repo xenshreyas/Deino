@@ -17,6 +17,7 @@
 //! `[redacted]` (NOT-09, [`redaction`]).
 
 mod cli;
+mod db_key;
 pub mod db_path;
 pub mod embedder;
 mod error;

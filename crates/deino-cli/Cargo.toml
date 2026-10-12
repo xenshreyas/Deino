@@ -26,6 +26,8 @@ deino-domain.workspace = true
 deino-export.workspace = true
 # The llama-helper protocol types, for semantic search through the sidecar.
 deino-llm.workspace = true
+# The database key of an encrypted database, from the Keychain (PRV-02).
+deino-secrets.workspace = true
 # The app data dir the way Tauri resolves it (MIT/Apache-2.0); already in the tree.
 dirs = "6.0.0"
 # The MCP server over stdio (Apache-2.0, the official Rust SDK).
@@ -42,6 +44,7 @@ tokio = { workspace = true, features = ["io-std", "macros", "rt-multi-thread"] }
 assert_cmd = "=2.0.17"
 deino-core = { workspace = true, features = ["test-support"] }
 deino-db = { workspace = true, features = ["test-support"] }
+deino-secrets = { workspace = true, features = ["test-support"] }
 insta = { version = "=1.43.1", features = ["json"] }
 sha2 = "0.10.9"
 # A plain connection to age a test database's schema.
