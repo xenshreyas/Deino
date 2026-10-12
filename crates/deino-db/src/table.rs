@@ -142,6 +142,11 @@ impl Table {
     /// Runs inside SQLite's update hook for every changed row, so it neither
     /// allocates nor logs.
     pub fn from_name(name: &str) -> Option<Self> {
+        Self::core_table(name).or_else(|| Self::feature_table(name))
+    }
+
+    /// A table of the core schema (FND-07, FND-08, FND-09, FND-12).
+    fn core_table(name: &str) -> Option<Self> {
         Some(match name {
             "meetings" => Self::Meetings,
             "transcript_segments" => Self::TranscriptSegments,
@@ -165,6 +170,13 @@ impl Table {
             "jobs" => Self::Jobs,
             "job_runs" => Self::JobRuns,
             "egress_log" => Self::EgressLog,
+            _ => return None,
+        })
+    }
+
+    /// A table a feature card added (NOT-04 onwards).
+    fn feature_table(name: &str) -> Option<Self> {
+        Some(match name {
             "templates" => Self::Templates,
             "template_sections" => Self::TemplateSections,
             "voiceprints" => Self::Voiceprints,
