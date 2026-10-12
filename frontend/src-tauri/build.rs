@@ -64,6 +64,7 @@ const RELEASE_CAPABILITIES: &str = "./capabilities/*.json";
 fn tauri_attributes() -> tauri_build::Attributes {
     println!("cargo:rerun-if-changed=src/features/manifest.rs");
     println!("cargo:rerun-if-changed=src/features/dev_manifest.rs");
+    println!("cargo:rerun-if-changed=src/features/recording_manifest.rs");
     let debug = std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_some();
     let dev_features: &[(&str, &[&str])] = if debug { DEV_FEATURES } else { &[] };
     let attributes = FEATURES.iter().chain(dev_features).fold(

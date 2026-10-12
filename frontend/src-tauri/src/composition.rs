@@ -25,8 +25,7 @@
 //! [`Services::build`] and one in [`Services::manage`].
 
 mod action_items;
-mod autostop;
-mod browser;
+pub(crate) mod browser;
 mod calendar;
 mod detection;
 mod developer;
@@ -54,7 +53,6 @@ mod vocabulary;
 use std::sync::Arc;
 
 use action_items::ActionItemWiring;
-pub(crate) use browser::SystemBrowser;
 pub(crate) use calendar::CalendarSchedule;
 pub(crate) use detection::attach_detection;
 pub(crate) use developer::attach_developer;
@@ -222,14 +220,13 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
 }
 
 /// Wires the services that run on their own once the pipeline is up: speaker
-/// tags (CAP-05), the live recorder, calendar sync (its scheduler starts
-/// here), the integrations service and auto-stop.
+/// tags (CAP-05), the live recorder with its auto-stop, calendar sync (its
+/// scheduler starts here) and the integrations service.
 fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     speaker_tags::attach_speaker_tags(app, database);
-    recording::attach_recording(app, database);
+    recording::attach_recording(app, database, clock);
     calendar::attach_calendar(app, database, clock);
     integrations::attach_integrations(app, database, clock);
-    autostop::attach_autostop(app, clock);
 }
 
 /// Builds and manages the services behind the pipeline's AI and export

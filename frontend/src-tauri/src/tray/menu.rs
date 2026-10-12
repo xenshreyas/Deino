@@ -280,7 +280,11 @@ fn join(url: Option<&str>) {
         return;
     };
     tauri::async_runtime::spawn(async move {
-        if crate::composition::SystemBrowser.open(&url).await.is_err() {
+        if crate::composition::browser::SystemBrowser
+            .open(&url)
+            .await
+            .is_err()
+        {
             log::warn!(target: "tray", "the call link could not be opened");
         }
     });

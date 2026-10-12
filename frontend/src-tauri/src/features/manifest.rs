@@ -224,26 +224,7 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "full_export_status",
         ],
     ),
-    // ── FND-05b / CAP-02 / CAP-07 / CAP-10 live recorder and record panel (features/recording.rs) ──
-    (
-        "recording",
-        &[
-            "start",
-            "stop",
-            "pause",
-            "resume",
-            "state",
-            "resume_meeting",
-            "set_microphone",
-            "set_system_audio",
-            "microphones",
-            "keep_recording",
-            "answer_split",
-            "auto_stop",
-            "open_live_meeting",
-            "set_panel_region",
-        ],
-    ),
+    ("recording", RECORDING_COMMANDS), // FND-05b, CAP-02, CAP-07, CAP-10 (recording_manifest.rs)
     // ── ORG-01 calendar sync (features/calendar.rs) ──
     (
         "calendar",
@@ -316,3 +297,4 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     // ── CAP-05 speaker tags (features/speaker_tags.rs) ──
     ("speaker-tags", &["status", "open_accessibility_settings"]),
 ];
+include!("recording_manifest.rs"); // `RECORDING_COMMANDS`, beside this file
