@@ -52,6 +52,10 @@ spoken. The UI only watches.
   `TrackTranscriber`) over the `TrackDecoder` (`NativeDecoder`:
   `ExtAudioFile`) and `BatchEngines` ports; VAD utterances of at most 30 s,
   runs that stopped early read again in halves.
+- Imported files (`import.rs`, CAP-11): `NativeIngest`, `deino-core`'s
+  `MediaIngest` over `deino-audio::media` (`audio.m4a`, and a video kept as
+  `video.<ext>`). `examples/import_bench.rs` times a watched-folder import
+  end to end with the real engine.
 - Launch recovery (`recovery.rs`): meetings left in `recording`.
 - Recording health (`monitor.rs`, `monitor/watch.rs`, CAP-10): the pure
   `HealthMonitor` (no audio 5 s per track, a speaking microphone with no

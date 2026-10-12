@@ -26,6 +26,12 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
 - `fmp4::truncate_to_playable`, `recovery::recover_recording`,
   `finalize::finalize_recording`, and `decode::read_mono` (a finished
   track as mono PCM at any rate, priming trimmed; diarization reads 16 kHz).
+- `media` (CAP-11, [ADR 0044](../../docs/adr/0044-imports-convert-to-the-recording-format-and-watched-folders-poll-a-ledger.md)):
+  the `MediaDecoder` / `PcmStream` ports for imported files, with
+  `SymphoniaDecoder` (symphonia `all` plus libopus for Opus) and
+  `AssetReaderDecoder` (macOS `AVAssetReader`, 48 kHz mono f32), and
+  `transcode`, which streams the first decoder that reads the whole file
+  into a 48 kHz mono AAC `.m4a`. No FFmpeg.
 - `HealthEvent` (`Stalled`, `Resumed`, `FramesDropped`, `DiskLow`,
   `StorageFailed`, and from capture `Recovering`, `Recovered`, `DeviceLost`,
   `BluetoothCallMode`, `SystemAudioUnavailable`, `Asleep`, `Awake`) on a
