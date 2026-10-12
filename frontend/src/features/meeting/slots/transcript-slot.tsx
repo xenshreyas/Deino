@@ -4,7 +4,8 @@
  * line (`?segment=`). Its
  * tools are "Copy transcript" and, while the inherited session still owns
  * them, the recording folder and re-transcription buttons. Selected words
- * can be commented on (TRN-06), clipped or linked to (TRN-04).
+ * can be commented on (TRN-06), clipped or linked to (TRN-04). Once
+ * retention deleted the transcript (PRV-01) the tab says so instead.
  */
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -15,6 +16,7 @@ import { mediaQuery } from '@/features/player';
 import type { MeetingId } from '@/features/meetings';
 import { useShareActions } from '@/features/export';
 import { useRecordingState } from '@/features/recording';
+import { TranscriptGate } from '@/features/retention';
 import { TranscriptPanel, transcriptCopy, transcriptQuery } from '@/features/transcript';
 import { Copy } from '@/ui/icons';
 import { IconButton } from '@/ui/icon-button';
@@ -65,15 +67,17 @@ export function TranscriptSlot({ meetingId, moment }: MeetingSlotProps) {
   const live = useIsLive(meetingId);
   const actions = useSelectionActions(meetingId);
   return (
-    <CommentLayer meetingId={meetingId} target="transcript" actions={actions} className="h-full">
-      <TranscriptPanel
-        meetingId={meetingId}
-        live={live}
-        moment={moment?.target}
-        onMomentShown={moment?.onShown}
-        tools={<TranscriptTools meetingId={meetingId} />}
-      />
-      <ClipDialog />
-    </CommentLayer>
+    <TranscriptGate meetingId={meetingId}>
+      <CommentLayer meetingId={meetingId} target="transcript" actions={actions} className="h-full">
+        <TranscriptPanel
+          meetingId={meetingId}
+          live={live}
+          moment={moment?.target}
+          onMomentShown={moment?.onShown}
+          tools={<TranscriptTools meetingId={meetingId} />}
+        />
+        <ClipDialog />
+      </CommentLayer>
+    </TranscriptGate>
   );
 }

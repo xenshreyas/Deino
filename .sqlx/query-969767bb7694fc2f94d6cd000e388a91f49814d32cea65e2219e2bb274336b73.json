@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE meeting_merge_parts\n            SET audio_path = NULL, audio_mic_path = NULL, audio_system_path = NULL, video_path = NULL\n            WHERE meeting_id IN (SELECT value FROM json_each(?1))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "969767bb7694fc2f94d6cd000e388a91f49814d32cea65e2219e2bb274336b73"
+}

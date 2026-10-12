@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                audio_deleted_at AS \"audio_deleted_at: DateTime<Utc>\",\n                transcript_deleted_at AS \"transcript_deleted_at: DateTime<Utc>\"\n            FROM meetings\n            WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "audio_deleted_at: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "transcript_deleted_at: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "dc99ea7cc090f620011a2b2bd1ef46dac1d23df90ac728468f8ba44246e14741"
+}

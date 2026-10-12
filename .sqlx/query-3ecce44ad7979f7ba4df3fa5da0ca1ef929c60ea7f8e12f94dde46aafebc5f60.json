@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "-- The recording files retention deletes: of every finished meeting outside\n-- the trash saved at or before ?1 whose recording is still kept and that has a\n-- file to delete. One row per meeting, per part merged into it (ORG-07,\n-- owned by the absorbed meeting's folders) and per clip (TRN-04, the clip's\n-- file in `audio_path`). The meeting's own row comes first.\nWITH due (id) AS (\n    SELECT m.id\n    FROM meetings AS m\n    WHERE m.deleted_at IS NULL\n        AND m.audio_deleted_at IS NULL\n        AND m.status IN ('ready', 'failed')\n        AND julianday(m.created_at) <= julianday(?1)\n        AND (\n            coalesce(m.audio_path, m.audio_mic_path, m.audio_system_path, m.video_path) IS NOT NULL\n            OR EXISTS (SELECT 1 FROM clips AS c WHERE c.meeting_id = m.id)\n            OR EXISTS (\n                SELECT 1 FROM meeting_merge_parts AS p\n                WHERE p.meeting_id = m.id\n                    AND coalesce(p.audio_path, p.audio_mic_path, p.audio_system_path, p.video_path) IS NOT NULL\n            )\n        )\n)\nSELECT\n    m.id AS \"meeting!: MeetingId\",\n    m.id AS \"owner!: MeetingId\",\n    m.audio_path AS \"audio_path?: String\",\n    m.audio_mic_path AS \"audio_mic_path?: String\",\n    m.audio_system_path AS \"audio_system_path?: String\",\n    m.video_path AS \"video_path?: String\"\nFROM meetings AS m\nWHERE m.id IN (SELECT id FROM due)\nUNION ALL\nSELECT\n    p.meeting_id,\n    p.source_meeting_id,\n    p.audio_path,\n    p.audio_mic_path,\n    p.audio_system_path,\n    p.video_path\nFROM meeting_merge_parts AS p\nWHERE p.meeting_id IN (SELECT id FROM due)\nUNION ALL\nSELECT c.meeting_id, c.meeting_id, c.path, NULL, NULL, NULL\nFROM clips AS c\nWHERE c.meeting_id IN (SELECT id FROM due)\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "owner!: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_path?: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_mic_path?: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "audio_system_path?: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_path?: String",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "3ecce44ad7979f7ba4df3fa5da0ca1ef929c60ea7f8e12f94dde46aafebc5f60"
+}

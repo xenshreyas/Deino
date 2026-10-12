@@ -18,6 +18,7 @@ use tauri::{AppHandle, Manager};
 use tokio_util::sync::CancellationToken;
 
 use super::Organize;
+use super::retention::{RetentionWiring, attach_retention};
 use crate::paths::AppPaths;
 
 /// Stops the trash purge's loop at exit.
@@ -57,7 +58,7 @@ pub(crate) fn attach_meetings(
         clock: Arc::clone(clock),
         work: Arc::clone(&work),
     })));
-    attach_trash(app, repo, (clock, work));
+    attach_trash(app, repo, (clock, work), (database, settings));
 }
 
 /// [`MeetingWork`] over the post-meeting pipeline. It looks the pipeline up
@@ -90,11 +91,13 @@ impl MeetingWork for PipelineWork {
     }
 }
 
-/// The trash over the app's recordings and note folders, and its purge.
+/// The trash over the app's recordings and note folders, and its purge,
+/// which runs PRV-01's retention sweep first.
 fn attach_trash(
     app: &AppHandle,
     repo: Arc<SqliteMeetingRepo>,
     (clock, work): (&Arc<dyn Clock>, Arc<dyn MeetingWork>),
+    (database, settings): (&Database, &Arc<SettingsService>),
 ) {
     let paths = match AppPaths::resolve(app) {
         Ok(paths) => paths,
@@ -102,15 +105,23 @@ fn attach_trash(
             return log::error!(target: "meetings", "no app folders, the trash is unavailable: {error}");
         }
     };
+    let files = Arc::new(DiskMeetingFiles::new(paths.recordings(), paths.meetings()));
     let trash = Arc::new(TrashService::new(TrashDeps {
         bin: repo,
-        files: Arc::new(DiskMeetingFiles::new(paths.recordings(), paths.meetings())),
+        files: files.clone(),
         clock: Arc::clone(clock),
-        work,
+        work: Arc::clone(&work),
     }));
+    let wiring = RetentionWiring {
+        database,
+        settings,
+        clock,
+        work,
+    };
+    let retention = attach_retention(app, wiring, (&trash, files));
     let (purger, cancel) = TrashPurger::new(Arc::clone(&trash));
     // Owned for the app's lifetime; `TrashPurge::stop` ends it at exit.
-    tauri::async_runtime::spawn(purger.run());
+    tauri::async_runtime::spawn(purger.with(retention).run());
     app.manage(trash);
     app.manage(TrashPurge(cancel));
 }

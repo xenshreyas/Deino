@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM transcript_segments WHERE meeting_id IN (SELECT value FROM json_each(?1))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ed8313eb2ac61c3dc3744071665e0756e6bbe1c3039beadac20ca151a6a0c154"
+}

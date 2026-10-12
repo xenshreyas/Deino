@@ -37,6 +37,8 @@ pub const NOTHING_TO_WRITE: &str = "The meeting has no transcript or notes to wr
 pub const KEPT_EDITS: &str = "Your edited notes were kept. Regenerate them from the Notes tab.";
 /// Shown when nothing changed since the notes were written.
 pub const UP_TO_DATE: &str = "The notes are up to date.";
+/// Shown when retention deleted the transcript the notes came from (PRV-01).
+pub const TRANSCRIPT_DELETED: &str = "The transcript was deleted; the notes were kept.";
 
 /// Which template a meeting's notes are written with.
 #[async_trait]
@@ -118,6 +120,9 @@ impl EnhanceService {
             return Err(EnhanceError::WouldReplaceEdits);
         }
         let material = self.material(meeting).await?;
+        if material.transcript_deleted {
+            return Err(EnhanceError::TranscriptDeleted);
+        }
         if material.is_empty() {
             return Err(EnhanceError::NothingToEnhance);
         }
@@ -132,6 +137,9 @@ impl EnhanceService {
     /// since they were written.
     pub async fn run_for_pipeline(&self, meeting: &MeetingId) -> Result<PipelineRun, EnhanceError> {
         let material = self.material(meeting).await?;
+        if material.transcript_deleted {
+            return Ok(PipelineRun::Skipped(TRANSCRIPT_DELETED));
+        }
         if material.is_empty() {
             return Ok(PipelineRun::Skipped(NOTHING_TO_WRITE));
         }

@@ -99,6 +99,7 @@ pub mod privacy;
 pub mod profile;
 pub mod query;
 pub mod redaction;
+pub mod retention;
 pub mod sample;
 pub mod search;
 pub mod segments;

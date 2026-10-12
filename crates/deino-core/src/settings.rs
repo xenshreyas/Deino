@@ -36,6 +36,7 @@ mod organize;
 mod patch;
 mod personal;
 mod profile;
+mod retention;
 mod service;
 mod speakers;
 mod store;
@@ -77,6 +78,7 @@ pub use profile::{
     MAX_CONTEXT_CHARS, MAX_FOCUS_AREA_CHARS, MAX_FOCUS_AREAS, MAX_PROFILE_EMAILS,
     MAX_PROFILE_LINE_CHARS, MAX_WRITING_STYLE_CHARS, ProfileSettings,
 };
+pub use retention::{RetentionPeriod, RetentionSettings};
 pub use service::SettingsService;
 pub use speakers::{IdentifyThresholds, SpeakerSettings};
 pub use store::{JsonFileSettingsStore, SettingsStore};

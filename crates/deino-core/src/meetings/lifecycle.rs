@@ -54,6 +54,9 @@ pub struct MeetingState {
     pub template_id: Option<TemplateId>,
     /// When the meeting was moved to the trash.
     pub deleted_at: Option<DateTime<Utc>>,
+    /// When retention deleted the transcript (PRV-01); the notes stay but
+    /// cannot be regenerated.
+    pub transcript_deleted_at: Option<DateTime<Utc>>,
     /// The meeting's recording files.
     pub audio: MeetingAudio,
 }

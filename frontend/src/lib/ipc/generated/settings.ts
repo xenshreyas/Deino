@@ -891,7 +891,16 @@ encryptDatabase: boolean;
 /**
  * Lock the window behind Touch ID or the Mac's password (PRV-02).
  */
-appLock: AppLockSettings }
+appLock: AppLockSettings; 
+/**
+ * How long recordings, transcripts and meetings are kept (PRV-01).
+ */
+retention: RetentionSettings; 
+/**
+ * The record panel has shown "Pause for sensitive discussions" and the
+ * user dismissed it (PRV-01); it is shown once.
+ */
+pauseTipSeen: boolean }
 /**
  * The profile section of `Settings`. Every field may be empty.
  */
@@ -998,6 +1007,46 @@ enabled: boolean;
  * Calendars whose events never show it.
  */
 quietCalendars: CalendarId[] }
+/**
+ * How long something is kept.
+ */
+export type RetentionPeriod = 
+/**
+ * Kept until the user deletes it.
+ */
+"never" | 
+/**
+ * Deleted 7 days after the meeting.
+ */
+"days7" | 
+/**
+ * Deleted 30 days after the meeting.
+ */
+"days30" | 
+/**
+ * Deleted 90 days after the meeting.
+ */
+"days90" | 
+/**
+ * Deleted 365 days after the meeting.
+ */
+"days365"
+/**
+ * The retention part of the privacy section. Everything is kept by default.
+ */
+export type RetentionSettings = { 
+/**
+ * Recordings (audio and screen video, clips included).
+ */
+audio: RetentionPeriod; 
+/**
+ * Transcripts; never shorter than `audio`. The notes stay.
+ */
+transcript: RetentionPeriod; 
+/**
+ * Whole meetings, which move to the trash.
+ */
+everything: RetentionPeriod }
 /**
  * What an LLM call is for. Serialized as the dotted names of §4.3.
  */

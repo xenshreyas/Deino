@@ -3,7 +3,8 @@
  * with a sparkles icon), ⌘⇧E anywhere on the meeting page. It reads
  * "Regenerate" once notes exist, shows a spinner while notes are being
  * written (here or by the pipeline), and hosts the dialog that asks before
- * replacing notes the user edited.
+ * replacing notes the user edited. Once retention deleted the transcript
+ * (PRV-01) it is disabled, and its hint says why.
  */
 import { type RefObject, useRef } from 'react';
 
@@ -20,6 +21,9 @@ import { ConfirmRegenerate } from './confirm-regenerate';
 
 /** The shortcut, shown in the tooltip. */
 export const ENHANCE_SHORTCUT = '⌘⇧E';
+
+/** The element that says why the button is disabled. */
+const BLOCKED_ID = 'enhance-blocked-reason';
 
 /**
  * ⌘⇧E presses `button` while the meeting page is open; a disabled button
@@ -45,6 +49,54 @@ export interface EnhanceButtonProps {
   meetingId: MeetingId;
 }
 
+/** Props of {@link Trigger}. */
+interface TriggerProps {
+  button: RefObject<HTMLButtonElement>;
+  label: string;
+  hint: string;
+  busy: boolean;
+  /** Why it is disabled, or `null`. */
+  blocked: string | null;
+  onClick: () => void;
+}
+
+/**
+ * The button and its hint. A disabled button gets no pointer events, so a
+ * blocked one sits in a focusable span that keeps the hint, and names the
+ * reason for screen readers.
+ */
+function Trigger({ button, label, hint, busy, blocked, onClick }: TriggerProps) {
+  return (
+    <>
+      <Hint label={blocked ?? hint} shortcut={blocked === null ? ENHANCE_SHORTCUT : undefined}>
+        <span className="inline-flex" tabIndex={blocked === null ? undefined : 0}>
+          <Button
+            ref={button}
+            variant="ghost"
+            size="sm"
+            onClick={onClick}
+            disabled={busy || blocked !== null}
+            aria-busy={busy}
+            aria-describedby={blocked === null ? undefined : BLOCKED_ID}
+          >
+            {busy ? (
+              <LoaderCircle {...ICON_PROPS} className="animate-spin" />
+            ) : (
+              <Sparkles {...ICON_PROPS} />
+            )}
+            {label}
+          </Button>
+        </span>
+      </Hint>
+      {blocked === null ? null : (
+        <span id={BLOCKED_ID} className="sr-only">
+          {blocked}
+        </span>
+      )}
+    </>
+  );
+}
+
 /** Enhance (or Regenerate) the meeting's notes. */
 export function EnhanceButton({ meetingId }: EnhanceButtonProps) {
   const action = useEnhanceAction(meetingId);
@@ -53,29 +105,16 @@ export function EnhanceButton({ meetingId }: EnhanceButtonProps) {
   const hasNotes = notes.data !== null && notes.data !== undefined;
   const button = useRef<HTMLButtonElement>(null);
   useEnhanceShortcut(button);
-  const label = hasNotes ? notesCopy.regenerate : notesCopy.enhance;
   return (
     <>
-      <Hint
-        label={hasNotes ? notesCopy.regenerateHint : notesCopy.enhanceHint}
-        shortcut={ENHANCE_SHORTCUT}
-      >
-        <Button
-          ref={button}
-          variant="ghost"
-          size="sm"
-          onClick={action.run}
-          disabled={busy}
-          aria-busy={busy}
-        >
-          {busy ? (
-            <LoaderCircle {...ICON_PROPS} className="animate-spin" />
-          ) : (
-            <Sparkles {...ICON_PROPS} />
-          )}
-          {label}
-        </Button>
-      </Hint>
+      <Trigger
+        button={button}
+        label={hasNotes ? notesCopy.regenerate : notesCopy.enhance}
+        hint={hasNotes ? notesCopy.regenerateHint : notesCopy.enhanceHint}
+        busy={busy}
+        blocked={action.blocked}
+        onClick={action.run}
+      />
       <ConfirmRegenerate meetingId={meetingId} onConfirm={action.replace} />
     </>
   );

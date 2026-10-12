@@ -62,6 +62,7 @@ pub(super) fn material(notes: Option<&str>, lines: Vec<TranscriptLine>) -> Mater
         }),
         transcript: lines,
         transcript_edited_at: None,
+        transcript_deleted: false,
         attendee_ids: Vec::new(),
         previous: None,
         vocabulary: Vec::new(),

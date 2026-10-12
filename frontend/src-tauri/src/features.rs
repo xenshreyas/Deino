@@ -48,6 +48,7 @@ pub mod privacy;
 pub mod profile;
 pub mod recording;
 pub mod registry;
+pub mod retention;
 pub mod search;
 pub mod secrets;
 pub mod settings;

@@ -48,6 +48,7 @@ mod pipeline;
 mod player;
 pub(crate) mod privacy;
 mod recording;
+mod retention;
 mod search;
 mod services;
 mod settings;

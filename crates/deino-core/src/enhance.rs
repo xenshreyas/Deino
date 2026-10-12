@@ -75,7 +75,7 @@ pub use model::{
 pub use repo::{EnhancedNotesReader, EnhancedNotesWriter, SqliteEnhancedNotesRepo, VersionEdit};
 pub use service::{
     EnhancePorts, EnhanceService, KEPT_EDITS, NOTHING_TO_WRITE, Overwrite, PipelineRun,
-    TemplateSource, UP_TO_DATE,
+    TRANSCRIPT_DELETED, TemplateSource, UP_TO_DATE,
 };
 pub use sources::MaterialSources;
 pub use title::{
