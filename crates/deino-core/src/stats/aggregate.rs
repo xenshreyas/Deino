@@ -92,7 +92,7 @@ pub fn people(attendance: &[AttendanceFact], domains: &InternalDomains) -> (u32,
     let mut ranked: Vec<TopPerson> = met
         .into_iter()
         .map(|(id, (name, meetings))| TopPerson {
-            id: id.clone(),
+            id: *id,
             name: name.to_owned(),
             meetings,
         })

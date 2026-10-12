@@ -49,11 +49,11 @@ pub struct RecapService {
 
 impl RecapService {
     /// A service over the stats `ports` and `parts`.
-    pub fn new(ports: StatsPorts, parts: RecapParts) -> Self {
+    pub fn new(ports: StatsPorts, recap: RecapParts) -> Self {
         Self {
             stats: StatsService::new(ports.clone()),
             ports,
-            parts,
+            parts: recap,
         }
     }
 

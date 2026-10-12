@@ -98,7 +98,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 38] = [
+    pub const ALL: [Self; 39] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
