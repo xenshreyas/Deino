@@ -8,6 +8,7 @@
 import type { ComponentType } from 'react';
 
 import type { CalendarEventId } from '@/features/calendar';
+import { useFollowUpSuggestions } from '@/features/followups';
 import type { MeetingId } from '@/features/meetings';
 
 /** One suggested follow-up (NOT-07). */
@@ -33,8 +34,8 @@ export interface HomeSlots {
   Brief: ComponentType<BriefSlotProps> | null;
 }
 
-/** The slots as filled today: no follow-ups, no brief. */
+/** The slots as filled today: NOT-07's follow-ups, no brief yet. */
 export const HOME_SLOTS: HomeSlots = {
-  useFollowUps: () => [],
+  useFollowUps: useFollowUpSuggestions,
   Brief: null,
 };

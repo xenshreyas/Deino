@@ -86,6 +86,7 @@ pub mod final_transcription;
 #[cfg(test)]
 mod fixture_tests;
 pub mod folders;
+pub mod followups;
 pub mod import;
 pub mod insights;
 pub mod lock;

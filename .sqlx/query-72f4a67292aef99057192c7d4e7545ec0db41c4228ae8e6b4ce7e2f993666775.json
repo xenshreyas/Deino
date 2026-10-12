@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE follow_up_drafts\n             SET subject = ?2, body = ?3, recipients_json = ?4, edited_at = ?5\n             WHERE meeting_id = ?1 AND status = 'ready'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "72f4a67292aef99057192c7d4e7545ec0db41c4228ae8e6b4ce7e2f993666775"
+}

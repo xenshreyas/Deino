@@ -12,6 +12,7 @@ use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::{AutoFileService, FolderPorts, SqliteFolderRepo};
+use deino_core::followups::FollowUpDrafter;
 use deino_core::insights::InsightGenerator;
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::people::SqlitePeopleRepo;
@@ -79,6 +80,8 @@ pub(crate) struct StageAdapters {
     pub(crate) insights: Arc<dyn InsightGenerator>,
     /// The automations engine (`automations` stage, AUT-01).
     pub(crate) automations: Arc<dyn AutomationRunner>,
+    /// Suggested follow-up emails (`follow_up_draft` stage, NOT-07).
+    pub(crate) follow_ups: Arc<dyn FollowUpDrafter>,
     /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
     pub(crate) search: Arc<dyn SearchIndexing>,
@@ -117,6 +120,7 @@ fn stage_ports(
         action_items: adapters.ai.adapters.action_items,
         insights: adapters.ai.adapters.insights,
         automations: adapters.ai.adapters.automations,
+        follow_ups: adapters.ai.adapters.follow_ups,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
         search: adapters.ai.adapters.search,

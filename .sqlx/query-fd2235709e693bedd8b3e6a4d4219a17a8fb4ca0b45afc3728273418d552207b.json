@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE follow_up_drafts\n             SET status = 'dismissed', quiet_reason = NULL, subject = '', body = '',\n                 dismissed_at = ?2\n             WHERE meeting_id = ?1 AND status <> 'dismissed'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fd2235709e693bedd8b3e6a4d4219a17a8fb4ca0b45afc3728273418d552207b"
+}

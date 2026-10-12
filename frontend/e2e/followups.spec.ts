@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test';
+
+import { fixtureMeeting } from './fixtures';
+import { shootBothThemes } from './themes';
+
+const SALES = fixtureMeeting('meeting-fixture-sales-discovery');
+
+test('a suggested follow-up goes from Home to the editor, then is dismissed for good', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const section = page.getByRole('region', { name: 'Suggested follow-ups' });
+  await expect(section.getByRole('link', { name: SALES.title })).toBeVisible();
+  await section.scrollIntoViewIfNeeded();
+  await shootBothThemes(page, 'followups-home');
+
+  await section.getByRole('link', { name: SALES.title }).click();
+  const banner = page.getByRole('region', { name: 'Follow-up email ready' });
+  await expect(banner).toBeVisible();
+  await shootBothThemes(page, 'followups-banner');
+
+  await banner.getByRole('button', { name: 'View draft' }).click();
+  const editor = page.getByRole('dialog', { name: 'Follow-up email' });
+  await expect(editor.getByLabel('To')).toHaveValue(
+    'marcus.webb@brightkite-logistics.com, hannah.pike@brightkite-logistics.com',
+  );
+  await expect(editor.getByText('3 gaps to fill')).toBeVisible();
+  await expect(editor.getByRole('button', { name: /Send via Gmail or Outlook/ })).toBeDisabled();
+  await shootBothThemes(page, 'followups-editor');
+
+  await editor.getByRole('button', { name: 'Cc', exact: true }).click();
+  await editor.getByLabel('Cc', { exact: true }).fill('lena@deino.dev');
+  await editor.getByRole('button', { name: 'Open in Mail' }).click();
+  await page.keyboard.press('Escape');
+  await expect(editor).toBeHidden();
+
+  await banner.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(banner.getByText('Dismiss for good?', { exact: false })).toBeVisible();
+  await banner.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(banner).toBeHidden();
+});

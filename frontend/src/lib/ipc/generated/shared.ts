@@ -275,10 +275,17 @@ export type Table =
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
-"example_notes"
+"example_notes" | 
+/**
+ * One suggested follow-up email per meeting (NOT-07): `ready` with a subject
+ * and body, `quiet` when the model decided no follow-up was needed (and
+ * why), or `dismissed`, which is permanent: the stage never drafts for the
+ * meeting again and the text is cleared.
+ */
+"follow_up_drafts"
 
 /** Every `ErrorCode`, for validating errors that arrive over IPC. */
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","calendar_series_choices","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","meeting_views","meeting_merge_parts","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","speaker_tag_spans","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","year_recaps","watched_folders","watched_files","automations","automation_runs","automation_run_steps","clips","comment_threads","comments","briefs","example_notes","follow_up_drafts"] as const satisfies readonly Table[]

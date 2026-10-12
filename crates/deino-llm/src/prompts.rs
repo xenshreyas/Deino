@@ -8,6 +8,7 @@
 
 mod brief;
 mod enhance;
+mod followup;
 mod insights;
 mod recap;
 mod redact;
@@ -18,6 +19,10 @@ pub use brief::{BriefSystem, BriefUser};
 pub use enhance::{
     EnhanceMergeUser, EnhancePartSystem, EnhancePartUser, EnhanceSystem, EnhanceUser,
     TitleNotesUser,
+};
+pub use followup::{
+    FOLLOW_UP_DECIDE_TASK, FOLLOW_UP_DRAFT_TASK, FollowUpDecideSystem, FollowUpDraftSystem,
+    FollowUpUser,
 };
 pub use insights::{InsightsSystem, InsightsUser};
 pub use recap::{RecapSystem, RecapUser};

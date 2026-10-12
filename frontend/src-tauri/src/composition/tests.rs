@@ -87,6 +87,7 @@ fn recorded_adapters() -> (PipelineAdapters, Recorded) {
                 action_items: Arc::new(deino_core::action_items::FakeActionItemExtractor::default()),
                 insights: Arc::new(deino_pipeline::stages::RecordedInsights::default()),
                 automations: Arc::new(deino_pipeline::RecordedAutomations::default()),
+                follow_ups: Arc::new(deino_pipeline::stages::RecordedFollowUps::default()),
                 identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
                 search: Arc::new(deino_pipeline::RecordedIndexing::default()),
                 entities: Arc::new(deino_pipeline::RecordedEntityUpdates::default()),

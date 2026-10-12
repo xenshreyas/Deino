@@ -33,6 +33,7 @@ pub mod developer;
 pub mod enhance;
 pub mod export;
 pub mod folders;
+pub mod followups;
 pub mod import;
 pub mod insights;
 pub mod integrations;

@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                p.id AS \"id!: PersonId\",\n                p.name AS \"name!\",\n                p.email AS \"email: Email\",\n                p.is_me AS \"is_me!: bool\",\n                c.name AS \"company?: String\"\n            FROM people AS p\n            LEFT JOIN companies AS c ON c.id = p.company_id\n            WHERE p.id IN (\n                SELECT person_id FROM meeting_attendees WHERE meeting_id = ?1\n                UNION\n                SELECT person_id FROM speakers\n                WHERE meeting_id = ?1 AND person_id IS NOT NULL\n            )\n            ORDER BY p.is_me DESC, p.name COLLATE NOCASE",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "email: Email",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me!: bool",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "company?: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c9566f350613e2fa0c57456c4826f4f1de648b78a855ae1ff21d9c865161341c"
+}

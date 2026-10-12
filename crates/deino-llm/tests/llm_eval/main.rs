@@ -20,6 +20,9 @@
 //! typed Discovery scorecard checked field by field.
 //! `brief` (NOT-08, `brief.rs`) checks a follow-up's cited bullets and that a
 //! new contact gets `insufficient`.
+//! `followup.email` (NOT-07, `followup.rs`) checks that the discovery call
+//! warrants a follow-up with placeholders and that a colleague's promise to
+//! send it keeps the draft quiet.
 //!
 //! ```sh
 //! DEINO_EVAL=1 ANTHROPIC_API_KEY=… pnpm eval title     # from frontend/
@@ -36,6 +39,7 @@ mod action_items;
 mod brief;
 mod cases;
 mod expectations;
+mod followup;
 mod insights;
 mod live;
 mod notes;
@@ -60,6 +64,7 @@ fn main() {
     trials.extend(notes::trials(live_enabled()));
     trials.extend(insights::trials(live_enabled()));
     trials.extend(brief::trials(live_enabled()));
+    trials.extend(followup::trials(live_enabled()));
     libtest_mimic::run(&args, trials).exit();
 }
 

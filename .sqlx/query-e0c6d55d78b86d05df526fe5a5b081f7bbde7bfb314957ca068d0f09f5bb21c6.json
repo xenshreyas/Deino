@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                meeting_id AS \"meeting_id!: MeetingId\",\n                status AS \"status!: FollowUpStatus\",\n                quiet_reason AS \"quiet_reason: QuietReason\",\n                subject AS \"subject!\",\n                body AS \"body!\",\n                recipients_json AS \"recipients!: Json<Recipients>\",\n                generated_at AS \"generated_at!: DateTime<Utc>\",\n                edited_at AS \"edited_at: DateTime<Utc>\",\n                dismissed_at AS \"dismissed_at: DateTime<Utc>\"\n            FROM follow_up_drafts WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "status!: FollowUpStatus",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "quiet_reason: QuietReason",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "subject!",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "body!",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "recipients!: Json<Recipients>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at!: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "edited_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "dismissed_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "e0c6d55d78b86d05df526fe5a5b081f7bbde7bfb314957ca068d0f09f5bb21c6"
+}
