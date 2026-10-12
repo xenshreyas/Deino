@@ -213,11 +213,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 /// whose auto-tagger the pipeline needs once the gateway is up.
 fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
     Services::build(database, clock).manage(app);
-    let tag_events = Arc::new(features::automations::AutomationTagEvents::new(
-        Arc::new(features::tags::TauriTagEvents::new(app.clone())),
-        app.clone(),
-    ));
-    let organize = Organize::build(database, clock, tag_events);
+    let organize = Organize::build(database, clock, automations::tag_events(app));
     organize.manage(app);
     Speakers::build(database, clock).manage(app);
     Vocabulary::build(database, clock).manage(app);

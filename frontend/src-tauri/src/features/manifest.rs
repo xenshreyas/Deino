@@ -131,41 +131,9 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     // ── AI-06 custom insights (features/insights.rs) ──
-    (
-        "insights",
-        &[
-            "templates",
-            "list",
-            "get",
-            "create",
-            "update",
-            "delete",
-            "for_meeting",
-            "table",
-            "candidates",
-            "run",
-            "export_csv",
-        ],
-    ),
+    ("insights", INSIGHTS_COMMANDS),
     // ── AUT-01 automations (features/automations.rs) ──
-    (
-        "automations",
-        &[
-            "catalog",
-            "list",
-            "get",
-            "create",
-            "update",
-            "delete",
-            "duplicate",
-            "for_meeting",
-            "matching",
-            "recent_runs",
-            "run",
-            "test_latest",
-            "choose_folder",
-        ],
-    ),
+    ("automations", AUTOMATIONS_COMMANDS),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──

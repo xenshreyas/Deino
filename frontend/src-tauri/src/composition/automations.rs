@@ -16,6 +16,7 @@ use deino_core::automations::{
 use deino_core::export::FsVault;
 use deino_core::insights::{InsightGenerator, SqliteInsightRepo};
 use deino_core::meetings::SqliteMeetingRepo;
+use deino_core::tags::TagEvents;
 use deino_db::Database;
 use tauri::{AppHandle, Manager};
 
@@ -23,7 +24,8 @@ use super::Organize;
 use super::action_items::ActionItemWiring;
 use super::export::redacting_assembler;
 use crate::features::action_items::SystemNotifier;
-use crate::features::automations::PipelineScheduler;
+use crate::features::automations::{AutomationTagEvents, PipelineScheduler};
+use crate::features::tags::TauriTagEvents;
 use crate::paths::AppPaths;
 
 /// Builds and manages the automations service, and returns the engine for
@@ -55,6 +57,15 @@ pub(super) fn attach_automations(
         steps,
         clock: wiring.clock.clone(),
     }))
+}
+
+/// The tags service's event port: Tauri's `MeetingTagged` event, and the
+/// automations' tag trigger for every tag newly applied.
+pub(super) fn tag_events(app: &AppHandle) -> Arc<dyn TagEvents> {
+    Arc::new(AutomationTagEvents::new(
+        Arc::new(TauriTagEvents::new(app.clone())),
+        app.clone(),
+    ))
 }
 
 /// Every local step over the app's services and adapters.
