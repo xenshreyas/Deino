@@ -10,6 +10,9 @@ import { ok } from './command-result';
 import { mockAutomations } from './database';
 import { latency } from './latency';
 
+/** The folder the mock folder dialog answers with. */
+const EXPORT_FOLDER = '/Users/you/Documents/Meeting exports';
+
 /** The catalogue as the app's registry reports it (local steps ready). */
 const CATALOG: Generated.StepInfo[] = [
   ['generate_insight', 'Generate insight', 'Run a custom insight; later steps get its answers.'],
@@ -68,6 +71,14 @@ export const commands = {
   async matching(id) {
     await latency();
     return mockAutomations.matching(id);
+  },
+  async recentRuns(id) {
+    await latency();
+    return mockAutomations.recentRuns(id);
+  },
+  async chooseFolder() {
+    await latency();
+    return ok(EXPORT_FOLDER);
   },
   async run(id, meetingIds) {
     await latency();

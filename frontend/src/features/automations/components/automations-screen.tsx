@@ -4,7 +4,7 @@
  * meetings" tabs on the right; "Allow shell scripts" in the header.
  */
 import { Button } from '@/ui/button';
-import { Label, Switch } from '@/ui/controls';
+import { Label, Switch, VisuallyHidden } from '@/ui/controls';
 import { EmptyState } from '@/ui/empty-state';
 import { ICON_PROPS, Plus, Workflow } from '@/ui/icons';
 import { Page, PageHeader } from '@/ui/page-header';
@@ -44,23 +44,48 @@ export function AutomationsScreen({ selected, onSelect }: AutomationsScreenProps
         title={automationsCopy.title}
         description={automationsCopy.description}
         actions={<HeaderActions onCreate={create} />}
+        className="flex-wrap"
       />
       {automations.isPending ? <Skeleton className="h-5 w-48" /> : null}
       {!automations.isPending && list.length === 0 && !creating ? (
         <NoAutomations onCreate={create} />
       ) : null}
       {list.length > 0 || creating ? (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[13rem_minmax(0,1fr)]">
-          <AutomationRail automations={list} selected={current?.id ?? null} onSelect={onSelect} />
-          <Panel
-            current={current}
-            onSelect={(id) => {
-              onSelect(id ?? undefined);
-            }}
-          />
-        </div>
+        <Workspace list={list} current={current} creating={creating} onSelect={onSelect} />
       ) : null}
     </Page>
+  );
+}
+
+/** The rail beside the builder; stacked when the content column is narrow. */
+function Workspace({
+  list,
+  current,
+  creating,
+  onSelect,
+}: {
+  list: readonly Automation[];
+  current: Automation | null;
+  creating: boolean;
+  onSelect: (selection: string | undefined) => void;
+}) {
+  return (
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-8 @2xl:grid-cols-[12rem_minmax(0,1fr)] @2xl:gap-10">
+        <AutomationRail
+          automations={list}
+          selected={current?.id ?? null}
+          creating={creating}
+          onSelect={onSelect}
+        />
+        <Panel
+          current={current}
+          onSelect={(id) => {
+            onSelect(id ?? undefined);
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -85,15 +110,23 @@ function NoAutomations({ onCreate }: { onCreate: () => void }) {
 function HeaderActions({ onCreate }: { onCreate: () => void }) {
   const shell = useShellScripts();
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-5">
+      {/* No tooltip on the switch itself: a tooltip trigger's `data-state`
+          would replace the switch's checked state and its styling. */}
       <div className="flex items-center gap-2" title={automationsCopy.shellToggleHint}>
         <Switch
           id="allow-shell-scripts"
+          aria-describedby="allow-shell-scripts-hint"
           checked={shell.allowed === true}
           disabled={shell.allowed === undefined}
           onCheckedChange={shell.setAllowed}
         />
-        <Label htmlFor="allow-shell-scripts">{automationsCopy.shellToggle}</Label>
+        <Label htmlFor="allow-shell-scripts" className="font-normal text-fg-muted">
+          {automationsCopy.shellToggle}
+        </Label>
+        <VisuallyHidden id="allow-shell-scripts-hint">
+          {automationsCopy.shellToggleHint}
+        </VisuallyHidden>
       </div>
       <Button onClick={onCreate}>
         <Plus {...ICON_PROPS} />

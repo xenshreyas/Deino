@@ -3,10 +3,13 @@
  * export's format and folder, a notification's message, a script's command
  * and the payload fields it receives.
  */
+import { Button } from '@/ui/button';
+import { Folder, ICON_PROPS, TriangleAlert } from '@/ui/icons';
 import { Input } from '@/ui/input';
 import { type Option, OptionSelect } from '@/ui/option-select';
 
 import { builderCopy, formatCopy, payloadCopy } from '../copy';
+import { useChooseFolder } from '../queries';
 import type { Action, ExportFormat, PayloadFields } from '../types';
 import type { StepOptions } from './step-choices';
 
@@ -124,7 +127,7 @@ function ExportFields({
   onChange: (action: Action) => void;
 }) {
   return (
-    <div className="grid grid-cols-[10rem_1fr] gap-2">
+    <div className="grid gap-2 sm:grid-cols-[10rem_minmax(0,1fr)]">
       <OptionSelect
         label={builderCopy.format}
         value={action.format}
@@ -133,14 +136,51 @@ function ExportFields({
           onChange({ ...action, format });
         }}
       />
-      <Input
-        aria-label={builderCopy.folder}
-        placeholder={builderCopy.exportFolder}
-        value={action.folder}
-        onChange={(event) => {
-          onChange({ ...action, folder: event.target.value });
+      <FolderField
+        folder={action.folder}
+        onPick={(folder) => {
+          onChange({ ...action, folder });
         }}
       />
+    </div>
+  );
+}
+
+/** The export folder, chosen in the system folder dialog (never typed). */
+function FolderField({ folder, onPick }: { folder: string; onPick: (folder: string) => void }) {
+  const choose = useChooseFolder();
+  const chosen = folder !== '';
+  return (
+    <div
+      role="group"
+      aria-label={builderCopy.exportFolder}
+      className="flex min-w-0 items-center gap-2"
+    >
+      {chosen ? (
+        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-fg" title={folder}>
+          <Folder {...ICON_PROPS} className="shrink-0 text-fg-muted" />
+          <span className="truncate">{folder}</span>
+        </span>
+      ) : null}
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={choose.isPending}
+        onClick={() => {
+          choose.mutate(undefined, {
+            onSuccess: (picked) => {
+              if (picked !== null) onPick(picked);
+            },
+          });
+        }}
+      >
+        {chosen ? builderCopy.changeFolder : builderCopy.chooseFolder}
+      </Button>
+      {choose.error === null ? null : (
+        <span role="alert" className="text-xs text-danger">
+          {choose.error.message}
+        </span>
+      )}
     </div>
   );
 }
@@ -166,23 +206,47 @@ function ShellFields({
           onChange({ ...action, command: event.target.value });
         }}
       />
-      <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
-        <legend className="sr-only">{builderCopy.payload}</legend>
-        <span>{builderCopy.payload}</span>
-        {FIELD_KEYS.map((key) => (
-          <label key={key} className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={action.fields[key]}
-              onChange={(event) => {
-                onChange({ ...action, fields: { ...action.fields, [key]: event.target.checked } });
-              }}
-            />
-            {payloadCopy[key]}
-          </label>
-        ))}
-      </fieldset>
-      {shellAllowed ? null : <p className="text-xs text-warning-text">{builderCopy.shellOff}</p>}
+      <FieldPicker
+        fields={action.fields}
+        onChange={(fields) => {
+          onChange({ ...action, fields });
+        }}
+      />
+      {shellAllowed ? null : (
+        <p className="flex items-start gap-1.5 text-xs text-warning-text">
+          <TriangleAlert {...ICON_PROPS} size={14} className="mt-px shrink-0" />
+          {builderCopy.shellOff}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** "Payload includes": one checkbox per field a script receives. */
+function FieldPicker({
+  fields,
+  onChange,
+}: {
+  fields: PayloadFields;
+  onChange: (fields: PayloadFields) => void;
+}) {
+  return (
+    <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+      <legend className="sr-only">{builderCopy.payload}</legend>
+      <span>{builderCopy.payload}</span>
+      {FIELD_KEYS.map((key) => (
+        <label key={key} className="flex items-center gap-1.5">
+          <input
+            type="checkbox"
+            className="size-3.5 accent-accent"
+            checked={fields[key]}
+            onChange={(event) => {
+              onChange({ ...fields, [key]: event.target.checked });
+            }}
+          />
+          {payloadCopy[key]}
+        </label>
+      ))}
+    </fieldset>
   );
 }

@@ -20,6 +20,8 @@ type MeetingId = Generated.MeetingId;
 
 /** How long the mock stage takes per run. */
 const RUN_MS = 600;
+/** `deino_core::automations::MAX_RECENT_RUNS`. */
+const MAX_RECENT_RUNS = 10;
 /** What the mock writes report. */
 const TABLES: Table[] = ['automations', 'automation_runs', 'automation_run_steps'];
 
@@ -128,6 +130,22 @@ export class MockAutomations {
             startedAt: meeting.startedAt,
           },
           run: this.runOf(id, meeting.id as MeetingId),
+        })),
+    );
+  }
+
+  /** The run log: the automation's latest runs, newest first. */
+  recentRuns(id: AutomationId): CommandResult<Generated.RecentRun[]> {
+    const found = this.get(id);
+    if (found.status === 'error') return found;
+    return ok(
+      this.runs
+        .filter((run) => run.automationId === id)
+        .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+        .slice(0, MAX_RECENT_RUNS)
+        .map((run) => ({
+          meetingTitle: this.meetings.find((meeting) => meeting.id === run.meetingId)?.title ?? '',
+          run,
         })),
     );
   }

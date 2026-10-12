@@ -12,6 +12,7 @@ import type {
   MatchingMeeting,
   MeetingAutomation,
   MeetingId,
+  RecentRun,
   StepInfo,
 } from './types';
 
@@ -36,6 +37,10 @@ export const automationsApi = {
     unwrap(commands.forMeeting(meetingId)),
   /** The finished meetings an automation matches, with its runs there. */
   matching: (id: AutomationId): Promise<MatchingMeeting[]> => unwrap(commands.matching(id)),
+  /** The automation's latest runs, newest first, with each step's result. */
+  recentRuns: (id: AutomationId): Promise<RecentRun[]> => unwrap(commands.recentRuns(id)),
+  /** Opens the folder dialog for an export step; the folder, or `null` when cancelled. */
+  chooseFolder: (): Promise<string | null> => unwrap(commands.chooseFolder()),
   /** Runs (or reruns) an automation on the picked meetings. */
   run: (id: AutomationId, meetingIds: MeetingId[]): Promise<null> =>
     unwrap(commands.run(id, meetingIds)),

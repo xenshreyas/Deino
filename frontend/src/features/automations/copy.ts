@@ -1,5 +1,6 @@
 /** Visible strings of the automations feature. */
 import type {
+  ActionKind,
   AutomationRunStatus,
   AutomationStepStatus,
   ExportFormat,
@@ -20,11 +21,12 @@ export const automationsCopy = {
   tabs: { builder: 'Builder', matching: 'Matching meetings' },
   shellToggle: 'Allow shell scripts',
   shellToggleHint: 'Scripts run with your permissions. Off until you turn it on.',
+  draft: 'Draft',
 } as const;
 
 export const builderCopy = {
   name: 'Name',
-  namePlaceholder: 'Weekly recap',
+  namePlaceholder: 'Name this automation',
   enabled: 'On',
   autoRun: 'Run automatically after matching meetings',
   stopOnFailure: 'Stop at the first failed step',
@@ -34,6 +36,13 @@ export const builderCopy = {
   noSteps: 'Add the first step.',
   addStep: 'Add step',
   wip: 'WIP',
+  comingLater: 'Coming later',
+  needs: {
+    generate_insight: 'Create an insight first.',
+    add_tag: 'Create a tag first.',
+    add_to_folder: 'Create a folder first.',
+    run_shell: 'Turn on “Allow shell scripts” at the top of the page first.',
+  } satisfies Partial<Record<ActionKind, string>>,
   moveUp: 'Move step up',
   moveDown: 'Move step down',
   removeStep: 'Remove step',
@@ -41,6 +50,7 @@ export const builderCopy = {
   saved: 'Saved',
   test: 'Test on latest meeting',
   tested: 'Running on the latest meeting…',
+  more: 'More actions',
   duplicate: 'Duplicate',
   delete: 'Delete',
   choose: 'Choose…',
@@ -48,12 +58,15 @@ export const builderCopy = {
   tag: 'Tag',
   folder: 'Folder',
   format: 'Format',
-  exportFolder: '/Users/you/Notes/Meetings',
+  chooseFolder: 'Choose folder…',
+  changeFolder: 'Change',
+  exportFolder: 'Export folder',
   message: 'Message (optional)',
   command: 'Command',
   commandPlaceholder: 'jq .meeting.title >> ~/meetings.log',
   payload: 'Payload includes',
-  shellOff: 'Shell scripts are off. Turn on “Allow shell scripts” above for this step to run.',
+  shellOff:
+    'Shell scripts are off, so this step won’t run. Turn on “Allow shell scripts” at the top of the page.',
 } as const;
 
 /** Payload field labels. */
@@ -106,4 +119,8 @@ export const runCopy = {
   menuEmpty: 'No automations yet.',
   more: 'More actions',
   notMatching: 'conditions don’t match',
+  recent: 'Recent runs',
+  noRuns: 'No runs yet. Test it on the latest meeting, or run it from Matching meetings.',
+  openMeeting: (title: string) => `Open ${title}`,
+  untitledMeeting: 'Untitled meeting',
 } as const;

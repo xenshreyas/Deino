@@ -1,24 +1,18 @@
 /**
  * The builder's steps, in order: each with its settings, move up and down
- * and remove; then the step picker, where provider steps show as "WIP"
- * and cannot be added (PARITY_PLAN D12).
+ * and remove; then "Add step" (`step-picker.tsx`).
  */
-import { Button } from '@/ui/button';
 import { IconButton } from '@/ui/icon-button';
-import { ArrowDown, ArrowUp, ICON_PROPS, Plus, X } from '@/ui/icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/ui/menu';
+import { ArrowDown, ArrowUp, ICON_PROPS, X } from '@/ui/icons';
 
 import { builderCopy } from '../copy';
-import { moved, rowKey, startAction, type StepDraft } from '../draft';
+import { moved, rowKey, type StepDraft } from '../draft';
 import { useStepCatalog } from '../queries';
-import type { ActionKind, StepInfo } from '../types';
-import { choicesOf, type StepOptions, useStepOptions } from './step-choices';
+import type { Action, StepInfo } from '../types';
+import { useStepOptions } from './step-choices';
 import { StepFields } from './step-fields';
+import { stepIcon } from './step-icons';
+import { StepPicker } from './step-picker';
 
 /** Props of {@link StepList}. */
 export interface StepListProps {
@@ -31,35 +25,31 @@ export interface StepListProps {
 export function StepList({ steps, shellAllowed, onChange }: StepListProps) {
   const options = useStepOptions();
   const catalog = useStepCatalog().data ?? [];
-  const label = (kind: ActionKind) => catalog.find((entry) => entry.kind === kind)?.label ?? kind;
   return (
-    <div className="grid gap-2">
-      {steps.length === 0 ? <p className="text-sm text-fg-muted">{builderCopy.noSteps}</p> : null}
-      <ol className="grid gap-2">
-        {steps.map((step, index) => (
-          <li key={step.key} className="grid gap-2 rounded-md border border-border p-3">
-            <StepHeader
-              title={`${String(index + 1)}. ${label(step.action.kind)}`}
-              index={index}
-              steps={steps}
-              onChange={onChange}
-            />
-            <StepFields
-              action={step.action}
-              options={options}
-              shellAllowed={shellAllowed}
-              onChange={(action) => {
-                onChange(
-                  steps.map((other) => (other.key === step.key ? { ...other, action } : other)),
-                );
-              }}
-            />
-          </li>
-        ))}
-      </ol>
+    <div className="grid gap-3">
+      {steps.length === 0 ? (
+        <p className="text-sm text-fg-muted">{builderCopy.noSteps}</p>
+      ) : (
+        <ol className="grid gap-2">
+          {steps.map((step, index) => (
+            <li key={step.key} className="grid gap-3 rounded-lg border border-border p-3">
+              <StepHeader catalog={catalog} index={index} steps={steps} onChange={onChange} />
+              <StepFields
+                action={step.action}
+                options={options}
+                shellAllowed={shellAllowed}
+                onChange={(action) => {
+                  onChange(replaced(steps, step.key, action));
+                }}
+              />
+            </li>
+          ))}
+        </ol>
+      )}
       <StepPicker
         catalog={catalog}
         options={options}
+        shellAllowed={shellAllowed}
         onPick={(action) => {
           onChange([...steps, { key: rowKey(), action }]);
         }}
@@ -68,21 +58,48 @@ export function StepList({ steps, shellAllowed, onChange }: StepListProps) {
   );
 }
 
-/** A step's title with move up, move down and remove. */
+/** `steps` with the action of the step keyed `key` replaced. */
+function replaced(steps: StepDraft[], key: string, action: Action): StepDraft[] {
+  return steps.map((other) => (other.key === key ? { ...other, action } : other));
+}
+
+/** A step's number, icon and name, with move up, move down and remove. */
 function StepHeader({
-  title,
+  catalog,
   index,
   steps,
   onChange,
 }: {
-  title: string;
+  catalog: readonly StepInfo[];
+  index: number;
+  steps: StepDraft[];
+  onChange: (steps: StepDraft[]) => void;
+}) {
+  const kind = steps[index]?.action.kind ?? 'notify';
+  const label = catalog.find((entry) => entry.kind === kind)?.label ?? kind;
+  const StepIcon = stepIcon(kind);
+  return (
+    <div className="-my-1 flex items-center gap-2">
+      <span className="w-4 text-sm text-fg-subtle tabular-nums">{String(index + 1)}</span>
+      <StepIcon {...ICON_PROPS} className="shrink-0 text-fg-muted" />
+      <h4 className="flex-1 truncate text-sm font-semibold text-fg">{label}</h4>
+      <StepMoves index={index} steps={steps} onChange={onChange} />
+    </div>
+  );
+}
+
+/** Move up, move down and remove. */
+function StepMoves({
+  index,
+  steps,
+  onChange,
+}: {
   index: number;
   steps: StepDraft[];
   onChange: (steps: StepDraft[]) => void;
 }) {
   return (
-    <div className="flex items-center gap-1">
-      <span className="flex-1 text-sm font-semibold text-fg">{title}</span>
+    <>
       <IconButton
         icon={ArrowUp}
         label={builderCopy.moveUp}
@@ -106,56 +123,6 @@ function StepHeader({
           onChange(steps.filter((_, at) => at !== index));
         }}
       />
-    </div>
-  );
-}
-
-/** "Add step": every kind, provider kinds disabled with a WIP badge. */
-function StepPicker({
-  catalog,
-  options,
-  onPick,
-}: {
-  catalog: StepInfo[];
-  options: StepOptions;
-  onPick: (action: NonNullable<ReturnType<typeof startAction>>) => void;
-}) {
-  const choices = choicesOf(options);
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="justify-self-start">
-          <Plus {...ICON_PROPS} />
-          {builderCopy.addStep}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-80">
-        {catalog.map((entry) => {
-          const action = entry.availability === 'ready' ? startAction(entry.kind, choices) : null;
-          return (
-            <DropdownMenuItem
-              key={entry.kind}
-              disabled={action === null}
-              title={entry.description}
-              onSelect={() => {
-                if (action !== null) onPick(action);
-              }}
-            >
-              <span className="flex-1">{entry.label}</span>
-              {entry.availability === 'wip' ? <WipBadge /> : null}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/** The quiet "WIP" badge of a planned step. */
-function WipBadge() {
-  return (
-    <span className="inline-flex h-5 items-center rounded-sm bg-bg-muted px-1.5 text-xs font-semibold text-fg-muted">
-      {builderCopy.wip}
-    </span>
+    </>
   );
 }

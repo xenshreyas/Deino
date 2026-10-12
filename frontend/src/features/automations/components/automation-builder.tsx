@@ -1,27 +1,24 @@
 /**
- * The builder: name, switches, condition groups and the step list, with
- * Save, Test on latest meeting, Duplicate and Delete. Remount it with a
- * `key` to start over from another automation.
+ * The builder: the name with Save (and, once saved, Test on latest meeting
+ * and ⋯ → Duplicate, Delete), the switches, condition groups, the step
+ * list, and for a saved automation its run log. Remount it with a `key` to
+ * start over from another automation.
  */
 import { type FormEvent, type ReactNode, useState } from 'react';
 
 import { ConditionGroups } from '@/features/conditions';
 import { Button } from '@/ui/button';
 import { Label, Switch } from '@/ui/controls';
-import { IconButton } from '@/ui/icon-button';
-import { CircleAlert, Copy, FlaskConical, ICON_PROPS, Trash2 } from '@/ui/icons';
+import { Check, CircleAlert, ICON_PROPS } from '@/ui/icons';
 import { Input } from '@/ui/input';
 
-import { builderCopy } from '../copy';
+import { builderCopy, runCopy } from '../copy';
 import { blankDraft, type Draft, toDraft, toInput } from '../draft';
 import { useShellScripts } from '../hooks/use-shell-scripts';
-import {
-  useDeleteAutomation,
-  useDuplicateAutomation,
-  useSaveAutomation,
-  useTestAutomation,
-} from '../queries';
+import { useSaveAutomation } from '../queries';
 import type { Automation, AutomationId } from '../types';
+import { SavedActions } from './builder-actions';
+import { RecentRuns } from './recent-runs';
 import { StepList } from './step-list';
 
 /** Props of {@link AutomationBuilder}. */
@@ -34,12 +31,16 @@ export interface AutomationBuilderProps {
 
 /** The form. */
 export function AutomationBuilder({ automation, onSelect }: AutomationBuilderProps) {
-  const { draft, patch, submit, error } = useBuilder(automation, onSelect);
+  const builder = useBuilder(automation, onSelect);
+  const { draft, patch } = builder;
   const shell = useShellScripts();
   return (
-    <form className="grid gap-6" onSubmit={submit}>
-      <NameRow draft={draft} automation={automation} onSelect={onSelect} onChange={patch} />
-      <Switches draft={draft} onChange={patch} />
+    <form className="grid gap-8" onSubmit={builder.submit}>
+      <div className="grid gap-4">
+        <TitleRow builder={builder} automation={automation} onSelect={onSelect} />
+        <Switches draft={draft} onChange={patch} />
+        {builder.error === null ? null : <ErrorLine message={builder.error.message} />}
+      </div>
       <Section title={builderCopy.when}>
         <ConditionGroups
           groups={draft.conditions}
@@ -57,7 +58,11 @@ export function AutomationBuilder({ automation, onSelect }: AutomationBuilderPro
           }}
         />
       </Section>
-      {error === null ? null : <ErrorLine message={error.message} />}
+      {automation === null ? null : (
+        <Section title={runCopy.recent}>
+          <RecentRuns automationId={automation.id} />
+        </Section>
+      )}
     </form>
   );
 }
@@ -71,7 +76,10 @@ function useBuilder(automation: Automation | null, onSelect: (id: AutomationId |
   return {
     draft,
     error: save.error,
+    saving: save.isPending,
+    saved: save.isSuccess,
     patch: (change: Partial<Draft>) => {
+      save.reset();
       setDraft((current) => ({ ...current, ...change }));
     },
     submit: (event: FormEvent) => {
@@ -88,102 +96,47 @@ function useBuilder(automation: Automation | null, onSelect: (id: AutomationId |
   };
 }
 
+type Builder = ReturnType<typeof useBuilder>;
+
 /** A titled part of the form. */
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="grid gap-2">
+    <section className="grid gap-3">
       <h3 className="text-sm font-semibold text-fg">{title}</h3>
       {children}
     </section>
   );
 }
 
-/** The name and the actions. */
-function NameRow({
-  draft,
+/** The name, edited in place like a title, and the actions. */
+function TitleRow({
+  builder,
   automation,
   onSelect,
-  onChange,
 }: {
-  draft: Draft;
+  builder: Builder;
   automation: Automation | null;
   onSelect: (id: AutomationId | null) => void;
-  onChange: (change: Partial<Draft>) => void;
 }) {
   return (
-    <div className="flex items-end gap-2">
-      <div className="grid flex-1 gap-1.5">
-        <Label htmlFor="automation-name">{builderCopy.name}</Label>
-        <Input
-          id="automation-name"
-          placeholder={builderCopy.namePlaceholder}
-          value={draft.name}
-          onChange={(event) => {
-            onChange({ name: event.target.value });
-          }}
-        />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <Input
+        aria-label={builderCopy.name}
+        placeholder={builderCopy.namePlaceholder}
+        value={builder.draft.name}
+        onChange={(event) => {
+          builder.patch({ name: event.target.value });
+        }}
+        className="-ml-2.5 h-10 min-w-[14rem] flex-1 border-transparent bg-transparent text-base font-semibold"
+      />
+      <div className="ml-auto flex items-center gap-2">
+        {automation === null ? null : <SavedActions automation={automation} onSelect={onSelect} />}
+        <Button type="submit" disabled={builder.saving}>
+          {builder.saved ? <Check {...ICON_PROPS} /> : null}
+          {builder.saved ? builderCopy.saved : builderCopy.save}
+        </Button>
       </div>
-      <Button type="submit">{builderCopy.save}</Button>
-      {automation === null ? null : <SavedActions automation={automation} onSelect={onSelect} />}
     </div>
-  );
-}
-
-/** Test on latest meeting, Duplicate and Delete, for a saved automation. */
-function SavedActions({
-  automation,
-  onSelect,
-}: {
-  automation: Automation;
-  onSelect: (id: AutomationId | null) => void;
-}) {
-  const duplicate = useDuplicateAutomation();
-  const remove = useDeleteAutomation();
-  return (
-    <>
-      <TestButton id={automation.id} />
-      <IconButton
-        icon={Copy}
-        label={builderCopy.duplicate}
-        onClick={() => {
-          duplicate.mutate(automation.id, {
-            onSuccess: (copy) => {
-              onSelect(copy.id);
-            },
-          });
-        }}
-      />
-      <IconButton
-        icon={Trash2}
-        label={builderCopy.delete}
-        onClick={() => {
-          remove.mutate(automation.id, {
-            onSuccess: () => {
-              onSelect(null);
-            },
-          });
-        }}
-      />
-    </>
-  );
-}
-
-/** "Test on latest meeting": a manual run on the newest finished meeting. */
-function TestButton({ id }: { id: AutomationId }) {
-  const test = useTestAutomation();
-  return (
-    <Button
-      type="button"
-      variant="secondary"
-      disabled={test.isPending}
-      title={test.isSuccess ? builderCopy.tested : undefined}
-      onClick={() => {
-        test.mutate(id);
-      }}
-    >
-      <FlaskConical {...ICON_PROPS} />
-      {builderCopy.test}
-    </Button>
   );
 }
 
@@ -201,9 +154,9 @@ function Switches({
     { id: 'stopOnFailure', label: builderCopy.stopOnFailure, value: draft.stopOnFailure },
   ] as const;
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2.5">
       {rows.map((row) => (
-        <div key={row.id} className="flex items-center gap-2">
+        <div key={row.id} className="flex items-center gap-2.5">
           <Switch
             id={`automation-${row.id}`}
             checked={row.value}
@@ -211,7 +164,9 @@ function Switches({
               onChange({ [row.id]: checked });
             }}
           />
-          <Label htmlFor={`automation-${row.id}`}>{row.label}</Label>
+          <Label htmlFor={`automation-${row.id}`} className="font-normal text-fg">
+            {row.label}
+          </Label>
         </div>
       ))}
     </div>

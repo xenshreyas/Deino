@@ -11,7 +11,7 @@ import { SkeletonText } from '@/ui/skeleton';
 import { runCopy } from '../copy';
 import { useMatchingMeetings, useRunAutomation } from '../queries';
 import type { AutomationId, MatchingMeeting, MeetingId } from '../types';
-import { RunBadge } from './run-status';
+import { RunBadge, shortDate } from './run-status';
 
 /** Props of {@link MatchingMeetings}. */
 export interface MatchingMeetingsProps {
@@ -76,10 +76,11 @@ function SelectionBar(props: {
   onRun: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <label className="flex items-center gap-2 text-sm text-fg-muted">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <label className="flex items-center gap-3 text-sm text-fg-muted">
         <input
           type="checkbox"
+          className="size-4 accent-accent"
           checked={props.selected === props.total}
           onChange={(event) => {
             props.onSelectAll(event.target.checked);
@@ -106,19 +107,23 @@ function MatchingRow({
   onToggle: (id: MeetingId) => void;
 }) {
   return (
-    <li className="flex items-center gap-3 py-2">
+    <li className="flex min-h-10 items-center gap-3 py-2">
       <input
         type="checkbox"
+        className="size-4 shrink-0 accent-accent"
         aria-label={entry.meeting.title}
         checked={checked}
         onChange={() => {
           onToggle(entry.meeting.id);
         }}
       />
-      <span className="flex-1 truncate text-sm text-fg">{entry.meeting.title}</span>
-      <span className="text-xs text-fg-subtle">
-        {new Date(entry.meeting.startedAt).toLocaleDateString()}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-sm text-fg">{entry.meeting.title}</span>
+      <time
+        dateTime={entry.meeting.startedAt}
+        className="shrink-0 text-xs whitespace-nowrap text-fg-subtle tabular-nums"
+      >
+        {shortDate(entry.meeting.startedAt)}
+      </time>
       <RunBadge run={entry.run} />
     </li>
   );

@@ -29,6 +29,9 @@ const MATCH_TABLES = [
   'meeting_attendees',
 ] as const satisfies readonly Table[];
 
+/** Runs, with the titles of the meetings they ran on. */
+const RUN_LOG_TABLES = [...AUTOMATION_TABLES, 'meetings'] as const satisfies readonly Table[];
+
 /** Query keys; every key starts with `automationKeys.all`. */
 export const automationKeys = {
   all: ['automations'] as const,
@@ -36,6 +39,7 @@ export const automationKeys = {
   list: () => [...automationKeys.all, 'list'] as const,
   meeting: (meetingId: MeetingId) => [...automationKeys.all, 'meeting', meetingId] as const,
   matching: (id: AutomationId) => [...automationKeys.all, 'matching', id] as const,
+  runs: (id: AutomationId) => [...automationKeys.all, 'runs', id] as const,
 };
 
 /** Every automation. Also usable from route loaders. */
@@ -77,6 +81,20 @@ export function useMatchingMeetings(id: AutomationId) {
     queryFn: () => automationsApi.matching(id),
     meta: { tables: MATCH_TABLES },
   });
+}
+
+/** The automation's run log: its latest runs, newest first. */
+export function useRecentRuns(id: AutomationId) {
+  return useQuery({
+    queryKey: automationKeys.runs(id),
+    queryFn: () => automationsApi.recentRuns(id),
+    meta: { tables: RUN_LOG_TABLES },
+  });
+}
+
+/** Asks for an export step's folder (the dialog is Rust's). */
+export function useChooseFolder() {
+  return useMutation({ mutationFn: automationsApi.chooseFolder });
 }
 
 /** Refreshes every automation query once `work` settles. */

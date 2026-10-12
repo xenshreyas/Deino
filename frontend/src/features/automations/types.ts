@@ -21,6 +21,7 @@ export type {
   MeetingAutomation,
   MeetingId,
   PayloadFields,
+  RecentRun,
   RunStep,
   StepAvailability,
   StepInfo,
