@@ -154,6 +154,7 @@ async fn the_cli_and_mcp_read_layer_never_returns_them() {
             zone: Arc::new(FixedZone::utc()),
             clock: Arc::new(FakeClock::new(at("2026-10-09T09:00:00Z"))),
             embedder: None,
+            redactor: Arc::new(crate::redaction::NoRedaction),
         },
     );
     let meeting = MeetingId::new(MEETING);
