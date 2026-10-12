@@ -24,6 +24,7 @@ pub async fn ports() -> ReadPorts {
         zone,
         clock: Arc::new(FakeClock::new(at(SAMPLE_NOW))),
         embedder: None,
+        redactor: Arc::new(crate::redaction::NoRedaction),
     };
     ReadPorts::sqlite(&database, &context)
 }

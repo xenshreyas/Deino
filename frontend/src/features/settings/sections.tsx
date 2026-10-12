@@ -52,6 +52,7 @@ import {
 
 import { CaptureModeSettings } from './components/capture-mode-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
+import { RedactionSettings } from './components/redaction-settings';
 import { settingsCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
 import type { SettingsSectionId } from './search';
@@ -98,10 +99,16 @@ function TranscriptionSection() {
   );
 }
 
-/** Privacy → Network: offline mode, services and the egress log (FND-12). */
+/** Privacy → Network: secrets kept out of notes and exports (NOT-09), then
+ * offline mode, services and the egress log (FND-12). */
 function NetworkSection() {
   const { offlineMode, setOfflineMode } = useOfflineMode();
-  return <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />;
+  return (
+    <div className="flex flex-col gap-8">
+      <RedactionSettings />
+      <NetworkSettings offlineMode={offlineMode} onOfflineModeChange={setOfflineMode} />
+    </div>
+  );
 }
 
 /** Workspace → Integrations: connected apps, planned ones and what was sent (INT-00). */

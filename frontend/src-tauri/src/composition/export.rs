@@ -6,7 +6,8 @@
 //! folder picker) and [`FullExportService`] (the account export). The OS
 //! adapters are the export plugin's (`features/export/platform.rs`); the
 //! dialogs are also managed as ports for the folder picker and the account
-//! export's save dialog.
+//! export's save dialog. Exports are redacted by patterns alone when the
+//! user asks (NOT-09, ADR 0043): no model call on preview, copy or save.
 
 use std::sync::Arc;
 
@@ -16,6 +17,7 @@ use deino_core::export::{
     SystemZone, Vault,
 };
 use deino_core::meetings::SqliteMeetingRepo;
+use deino_core::redaction::{Redactor, SettingRedactor};
 use deino_core::settings::SettingsService;
 use deino_db::Database;
 use deino_domain::Clock;
@@ -39,7 +41,9 @@ impl ExportServices {
         settings: Arc<SettingsService>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        let ports = ExportPorts::sqlite(database, Arc::new(SystemZone));
+        let redactor = SettingRedactor::new(settings.clone(), Arc::new(Redactor::regex_only()));
+        let ports =
+            ExportPorts::sqlite(database, Arc::new(SystemZone)).with_redactor(Arc::new(redactor));
         let assembler = Arc::new(ExportAssembler::new(ports));
         let vault: Arc<dyn Vault> = Arc::new(FsVault);
         let dialogs = Arc::new(TauriDialogs::new(app.clone()));

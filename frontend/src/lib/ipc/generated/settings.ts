@@ -656,9 +656,15 @@ export type OrganizeSettings = {
  */
 autoTag: boolean }
 /**
- * The privacy section of `Settings`. Empty until PRV-01.
+ * The privacy section of `Settings`.
  */
-export type PrivacySettings = Record<string, never>
+export type PrivacySettings = { 
+/**
+ * Replace passwords, API keys, card numbers, SSNs and one-time codes
+ * with `[redacted]` before notes are written and in exports (NOT-09).
+ * The transcript keeps the originals. Off by default.
+ */
+redactSensitive: boolean }
 /**
  * The profile section of `Settings`. Every field may be empty.
  */

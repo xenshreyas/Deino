@@ -12,7 +12,9 @@
 //! The database is opened read-only (`deino_db::Database::open_read_only`):
 //! the binary never creates, migrates or writes it, and it refuses a schema
 //! it was not built for. Its path is `--db`, `DEINO_DB`, or the app's own
-//! ([`db_path`]). Everything it reads comes from `deino_core::query`.
+//! ([`db_path`]). Everything it reads comes from `deino_core::query`. With
+//! the app's "Hide sensitive information" on, secrets in what it prints are
+//! `[redacted]` (NOT-09, [`redaction`]).
 
 mod cli;
 pub mod db_path;
@@ -22,6 +24,7 @@ mod export;
 pub mod markdown;
 pub mod mcp;
 mod open;
+pub mod redaction;
 pub mod request;
 mod status;
 

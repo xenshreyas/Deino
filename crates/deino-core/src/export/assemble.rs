@@ -4,7 +4,9 @@
 //! Names are resolved here, once: attendees and assignees by person, and
 //! transcript speakers by the person they were identified as, "Me" for the
 //! user's voice, or their diarization label. Invitees who declined are not
-//! attendees. Times are converted to the user's zone.
+//! attendees. Times are converted to the user's zone. With redaction on
+//! (NOT-09), secrets in the notes, transcript and action items are
+//! `[redacted]` ([`ExportPorts::with_redactor`]).
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -14,6 +16,7 @@ use deino_export::{ActionItemExport, MeetingExport, Participant, Utterance};
 
 use deino_db::Database;
 
+use super::redacted::{RedactedNotes, redact_items, redact_utterances};
 use super::{DocNoteRenderer, ExportError, LocalZone, NoteRenderer};
 use crate::action_items::{ActionItemRepo, SqliteActionItemRepo};
 use crate::enhance::SqliteEnhancedNotesRepo;
@@ -22,6 +25,7 @@ use crate::insights::{InsightExports, SqliteInsightRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, SqliteMeetingRepo};
 use crate::notes::SqliteNotesRepo;
 use crate::people::{AttendeeRepo, PersonRepo, SqlitePeopleRepo};
+use crate::redaction::{NoRedaction, TextRedactor};
 use crate::segments::{Page, Segment, SegmentReader, Speaker, SpeakerRepo, SqliteSegmentRepo};
 use crate::tags::{MeetingTagRepo, SqliteTagRepo};
 
@@ -59,11 +63,14 @@ pub struct ExportPorts {
     pub notes: Arc<dyn NoteRenderer>,
     /// The user's time zone.
     pub zone: Arc<dyn LocalZone>,
+    /// Hides secrets in the transcript and action items (the notes are
+    /// wrapped by [`Self::with_redactor`]).
+    pub redactor: Arc<dyn TextRedactor>,
 }
 
 impl ExportPorts {
     /// Every port over the SQLite repositories of `database`, the stored
-    /// Markdown notes and `zone`.
+    /// Markdown notes and `zone`, without redaction.
     pub fn sqlite(database: &Database, zone: Arc<dyn LocalZone>) -> Self {
         let meetings = Arc::new(SqliteMeetingRepo::new(database.clone()));
         let people = Arc::new(SqlitePeopleRepo::new(database.clone()));
@@ -84,6 +91,17 @@ impl ExportPorts {
                 Arc::new(SqliteNotesRepo::new(database.clone())),
             )),
             zone,
+            redactor: Arc::new(NoRedaction),
+        }
+    }
+
+    /// These ports with `redactor` hiding secrets in everything they read.
+    #[must_use]
+    pub fn with_redactor(self, redactor: Arc<dyn TextRedactor>) -> Self {
+        Self {
+            notes: Arc::new(RedactedNotes::new(self.notes.clone(), redactor.clone())),
+            redactor,
+            ..self
         }
     }
 }
@@ -182,7 +200,7 @@ impl ExportAssembler {
                 done: item.completed_at.is_some(),
             });
         }
-        Ok(items)
+        Ok(redact_items(self.ports.redactor.as_ref(), items).await)
     }
 
     /// The transcript of `id` in time order, each segment with its
@@ -192,10 +210,11 @@ impl ExportAssembler {
             .speaker_names(&self.ports.speakers.speakers(id).await?)
             .await?;
         let segments = self.ports.segments.list(id, Page::ALL).await?;
-        Ok(segments
+        let utterances = segments
             .into_iter()
             .map(|segment| utterance(segment, &speakers))
-            .collect())
+            .collect();
+        Ok(redact_utterances(self.ports.redactor.as_ref(), utterances).await)
     }
 
     /// Each speaker's name and whether it is the user.
