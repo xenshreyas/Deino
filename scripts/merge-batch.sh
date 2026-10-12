@@ -36,11 +36,16 @@ prepare_tree() {
 
 # Merges branch $1 into the batch; returns 1 (and undoes it) on a real conflict.
 merge_one() {
-    local branch="$1" conflicted
-    if git -C "$TREE" merge -q --no-ff --no-edit "origin/$branch" -m "Merge $branch" 2>/dev/null; then
+    local branch="$1" conflicted output
+    if output="$(git -C "$TREE" merge -q --no-ff --no-edit "origin/$branch" -m "Merge $branch" 2>&1)"; then
         return 0
     fi
     conflicted="$(git -C "$TREE" diff --name-only --diff-filter=U)"
+    if [[ -z "$conflicted" ]]; then
+        echo "skip $branch: merge failed without conflicts: $output"
+        git -C "$TREE" merge --abort 2>/dev/null || true
+        return 1
+    fi
     if grep -qvE "$GENERATED" <<<"$conflicted"; then
         git -C "$TREE" merge --abort
         echo "skip $branch: conflicts in $(grep -vE "$GENERATED" <<<"$conflicted" | tr '\n' ' ')"
