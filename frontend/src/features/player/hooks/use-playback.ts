@@ -31,14 +31,16 @@ export function usePlaybackValue<T>(meetingId: MeetingId, select: (ms: number) =
 }
 
 /**
- * Calls `onTime` with `meetingId`'s position as it changes, while the
- * component is mounted, without re-rendering it (for scrolling to follow
- * playback). `onTime` should read anything it needs through a ref.
+ * Calls `onTime` with `meetingId`'s position as it moves while playing,
+ * while the component is mounted, without re-rendering it (for scrolling
+ * to follow playback). A seek while paused is not reported: the user (or a
+ * link) chose that place and is already looking at it. `onTime` should read
+ * anything it needs through a ref.
  */
 export function usePlaybackListener(meetingId: MeetingId, onTime: (ms: number) => void): void {
   useMountEffect(() =>
     usePlaybackStore.subscribe((state, previous) => {
-      if (state.meetingId !== meetingId || !engaged(state)) return;
+      if (state.meetingId !== meetingId || !state.playing) return;
       if (state.time !== previous.time) onTime(state.time);
     }),
   );

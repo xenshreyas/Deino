@@ -1,8 +1,8 @@
 /**
  * The transcript follows playback (TRN-03), as live mode follows new lines:
- * when the player moves on to a line that is off screen, the list scrolls
- * it into view, but only while the user is watching, that is, while the
- * line played before it was on screen. Someone who scrolled away to read
+ * while the recording plays and moves on to a line that is off screen, the
+ * list scrolls it into view, but only while the user is watching, that is,
+ * while the line played before it was on screen. Someone who scrolled away to read
  * is not pulled back; the next line they scroll to picks following up again.
  */
 import { useRef } from 'react';
