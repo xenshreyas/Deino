@@ -48,6 +48,7 @@ fn material(lines: Vec<TranscriptLine>) -> Material {
         attendee_ids: Vec::new(),
         previous: None,
         vocabulary: Vec::new(),
+        transcript_deleted: false,
     }
 }
 
