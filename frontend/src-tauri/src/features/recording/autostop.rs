@@ -44,13 +44,14 @@ impl<R: Runtime> RecordingProbe for RecorderProbe<R> {
         if !state.is_running() {
             return None;
         }
-        let activity = recorder.activity()?;
-        let speech = SpeechTotals {
-            mic: millis(activity.me.voiced.0),
-            system: millis(activity.them.voiced.0),
-            mic_speaking: activity.me.speaking,
-            system_speaking: activity.them.speaking,
-        };
+        let speech = recorder
+            .activity()
+            .map_or(UNHEARD, |activity| SpeechTotals {
+                mic: millis(activity.me.voiced.0),
+                system: millis(activity.them.voiced.0),
+                mic_speaking: activity.me.speaking,
+                system_speaking: activity.them.speaking,
+            });
         Some(RecordingView {
             meeting: state.meeting_id.clone()?,
             started_at: state.started_at?,
@@ -61,6 +62,18 @@ impl<R: Runtime> RecordingProbe for RecorderProbe<R> {
         })
     }
 }
+
+/// What a record-only recording reports (CAP-08: no lane listens, so who
+/// speaks is unknown): someone always speaking on the microphone. The
+/// silence rules (no speech, the calendar's quiet) then never end it, and
+/// the call app releasing the microphone still does, since only speech on
+/// the call delays that.
+const UNHEARD: SpeechTotals = SpeechTotals {
+    mic: Millis(0),
+    system: Millis(0),
+    mic_speaking: true,
+    system_speaking: false,
+};
 
 /// A lane total in stored milliseconds (saturating past 49 days).
 fn millis(total: u64) -> Millis {

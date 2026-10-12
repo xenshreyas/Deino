@@ -89,11 +89,7 @@ pub(crate) struct Prepared {
 pub(crate) fn prepare(deps: &RecordingDeps, plan: Plan) -> Result<Prepared, RecordingError> {
     let activity = Arc::new(LiveActivity::default());
     let router = start_router(deps, &plan, &activity)?;
-    let transcribers = if plan.preferences.record_only {
-        None
-    } else {
-        Some(open_lanes(deps, &router, lane_start(plan.take.start()))?)
-    };
+    let transcribers = engines_for(deps, &router, &plan)?;
     let (recorder, inputs) = match plan.take {
         Take::New => Recorder::start(&plan.dir, &deps.recorder)?,
         Take::Resume { .. } => Recorder::resume(&plan.dir, &deps.recorder)?,
@@ -192,6 +188,18 @@ fn live_corrector(deps: &RecordingDeps, plan: &Plan) -> Corrector {
             log::warn!(target: "recording", "{error}; live segments are saved as heard");
             Corrector::default()
         })
+}
+
+/// Both lanes' engines, or none for a record-only recording (CAP-08).
+fn engines_for(
+    deps: &RecordingDeps,
+    router: &Router,
+    plan: &Plan,
+) -> Result<Option<PerLane<Box<dyn LaneTranscriber>>>, RecordingError> {
+    if plan.preferences.record_only {
+        return Ok(None);
+    }
+    open_lanes(deps, router, lane_start(plan.take.start())).map(Some)
 }
 
 /// Opens both lanes' engines at once (each may load a model).

@@ -64,9 +64,10 @@ impl RecordingService {
         self.with_session(super::Session::levels).ok()
     }
 
-    /// What each lane has heard so far, while recording.
+    /// What each lane has heard so far, while recording; `None` when nothing
+    /// records or the recording is record-only (no lane listens, CAP-08).
     pub fn activity(&self) -> Option<PerLane<LaneReading>> {
-        self.with_session(super::Session::activity).ok()
+        self.with_session(super::Session::activity).ok().flatten()
     }
 
     /// Fails unless the recorder is in `phase`.

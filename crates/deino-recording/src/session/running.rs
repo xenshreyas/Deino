@@ -149,12 +149,13 @@ impl Session {
         }
     }
 
-    /// What each lane has heard so far.
-    pub fn activity(&self) -> PerLane<LaneReading> {
-        PerLane {
+    /// What each lane has heard so far; `None` for a record-only recording,
+    /// whose lanes do not listen (CAP-08).
+    pub fn activity(&self) -> Option<PerLane<LaneReading>> {
+        self.pipeline.as_ref().map(|_| PerLane {
             me: self.activity.read(Lane::Me),
             them: self.activity.read(Lane::Them),
-        }
+        })
     }
 
     /// Stops capture, closes both tracks at the recording's end, finishes
