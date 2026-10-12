@@ -56,7 +56,7 @@ async fn notes_transcripts_and_attendees_are_imported() {
     // The microphone is the user; others keep Granola's name or label.
     assert_eq!(
         speakers(&world, title).await,
-        ["Ines Duarte", "Me", "Speaker B"]
+        ["Iris Duarte", "Me", "Speaker B"]
     );
     assert_eq!(count_for(&world, "transcript_segments", title).await, 3);
     assert_eq!(count_for(&world, "meeting_attendees", title).await, 2);
