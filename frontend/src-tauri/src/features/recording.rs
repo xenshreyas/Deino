@@ -37,8 +37,10 @@ pub use panel::{PanelHost, RecordPanel};
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Manager, Runtime};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "recording";
+
+super::registry::register_plugin!(Open);
 
 /// The plugin's commands and events, for the invoke handler, event
 /// registration and the TypeScript bindings.

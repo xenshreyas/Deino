@@ -19,6 +19,7 @@ use deino_domain::Clock;
 use deino_recording::{NativeDecoder, OfflineTranscriber};
 use tauri::{AppHandle, Manager};
 
+use super::attach::Phase;
 use super::pipeline::TranscriptStages;
 use crate::stt::{SttBatchEngines, SttRuntime};
 
@@ -67,6 +68,14 @@ impl TrackTranscriber for NoTranscription {
         ))
     }
 }
+
+super::attach::attach!(
+    "transcript-edits",
+    30,
+    Phase::Background(|cx| {
+        attach_transcript_edits(cx.app, cx.database, cx.clock);
+    })
+);
 
 /// Manages `Arc<TranscriptEditService>`; logs and skips it when search (and
 /// so the re-index queue) was not wired.

@@ -39,8 +39,8 @@ seq: number }
  * A table in Deino's database, as named in SQL.
  * 
  * The UI tags each query with the tables it reads, and a `DbChanged` event
- * invalidates the queries whose tables changed. A card that creates a table
- * adds its variant here in the same PR.
+ * invalidates the queries whose tables changed. The variants are generated
+ * from the migrations' `CREATE TABLE` statements (`deino-db/build.rs`).
  */
 export type Table = 
 /**

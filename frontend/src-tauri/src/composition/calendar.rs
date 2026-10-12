@@ -31,6 +31,7 @@ use deino_secrets::SecretStore;
 use tauri::{AppHandle, Manager};
 use tokio_util::sync::CancellationToken;
 
+use super::attach::Phase;
 use super::browser::SystemBrowser;
 use super::network::SettingsServicePolicy;
 use crate::features::calendar::{LiveRecorder, SystemCallOpener, TauriCalendarEvents};
@@ -92,6 +93,14 @@ impl ConnectorKit {
         }))
     }
 }
+
+super::attach::attach!(
+    "calendar",
+    50,
+    Phase::Background(|cx| {
+        attach_calendar(cx.app, cx.database, cx.clock);
+    })
+);
 
 /// Builds the calendar service over `database`, starts its scheduler (which
 /// syncs only active sources) and manages `Arc<CalendarService>` and the

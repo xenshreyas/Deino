@@ -33,6 +33,7 @@ use deino_recording::{
 };
 use tauri::{AppHandle, Manager};
 
+use super::attach::Phase;
 use crate::features::calendar::LinkOnStart;
 use crate::features::recording::{RecordPanel, TauriRecordingEvents};
 use crate::features::speaker_tags::WatchOnStart;
@@ -57,6 +58,14 @@ impl Managed {
         })
     }
 }
+
+super::attach::attach!(
+    "recording",
+    20,
+    Phase::Background(|cx| {
+        attach_recording(cx.app, cx.database, cx.clock);
+    })
+);
 
 /// Builds and manages `Arc<RecordingService>`, and recovers interrupted
 /// recordings. Needs the settings, the STT runtime and the pipeline's

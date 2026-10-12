@@ -30,7 +30,7 @@ use tauri::{AppHandle, Manager};
 use crate::features::action_items::{SystemNotifier, TauriActionItemEvents, start_reminders};
 
 /// What action items need besides the database.
-pub(super) struct ActionItemWiring {
+pub(crate) struct ActionItemWiring {
     /// The gateway, when it could be wired; without it extraction fails as
     /// unavailable and the stage waits.
     pub(super) gateway: Option<Arc<Gateway>>,

@@ -11,11 +11,15 @@
 //! - `events.rs`: typed events, plus the adapter that implements the core's
 //!   event port by emitting them.
 //!
-//! Registering a feature takes one line in each of `features/manifest.rs`,
-//! `lib.rs` (`.plugin(..)`), `capabilities/default.json` and
-//! `features::builders()`, plus its services in `composition.rs`. The example
-//! is compiled into debug builds only, so its manifest entry is in
-//! `DEV_FEATURES` and its capability in `capabilities/dev/`.
+//! A feature registers itself from these files alone: `register_plugin!`
+//! below adds the plugin (and its bindings) to the app, `build.rs` reads
+//! `commands.rs`'s `collect_commands!` for its ACL and capability, and
+//! `composition/example.rs` wires its service with an attach hook. The only
+//! shared lines are its `pub mod` in `features.rs` and `mod` in
+//! `composition.rs`. The example is compiled into debug builds only, which
+//! the `cfg` below declares (and `build.rs` reads).
+
+#![cfg(debug_assertions)]
 
 mod commands;
 #[cfg(test)]
@@ -26,8 +30,10 @@ pub use events::{NoteAdded, TauriExampleEvents};
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "example";
+
+super::registry::register_plugin!(Guarded);
 
 /// The plugin's commands and events, for the invoke handler, event
 /// registration and the TypeScript bindings.

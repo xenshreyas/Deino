@@ -32,8 +32,8 @@ pub(crate) fn run(app: &mut App) -> SetupResult {
     attach_stt(handle, &paths);
     spawn_summary_model_manager(handle.clone());
     tauri::async_runtime::block_on(database::setup::initialize_database_on_startup(handle))?;
-    #[cfg(debug_assertions)]
-    tauri::async_runtime::block_on(composition::attach_example(handle))?;
+    // Features with their own store (the debug-only `_example`) attach last.
+    composition::attach::run_startup(handle)?;
     log::info!("Application setup complete");
     Ok(())
 }

@@ -17,6 +17,16 @@ use deino_db::Database;
 use deino_domain::Clock;
 use tauri::{Manager, Runtime};
 
+use super::attach::Phase;
+
+super::attach::attach!(
+    "vocabulary",
+    20,
+    Phase::Local(|cx| {
+        Vocabulary::build(cx.database, cx.clock).manage(cx.app);
+    })
+);
+
 /// The vocabulary services.
 pub(crate) struct Vocabulary {
     service: Arc<VocabularyService>,

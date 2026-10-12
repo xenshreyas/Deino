@@ -22,6 +22,16 @@ use deino_speaker_tags::{
 use tauri::{AppHandle, Manager, Runtime};
 use tokio::runtime::Handle;
 
+use super::attach::Phase;
+
+super::attach::attach!(
+    "speaker-tags",
+    10,
+    Phase::Background(|cx| {
+        attach_speaker_tags(cx.app, cx.database);
+    })
+);
+
 /// Builds and manages `Arc<SpeakerTags>`.
 pub(crate) fn attach_speaker_tags(app: &AppHandle, database: &Database) {
     let runtime = tauri::async_runtime::handle().inner().clone();

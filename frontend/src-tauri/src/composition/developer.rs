@@ -37,6 +37,15 @@ fn sidecar(links: &dyn Links) -> Option<PathBuf> {
     (links.inspect(&path).ok()? == Entry::File).then_some(path)
 }
 
+#[cfg(debug_assertions)]
+super::attach::attach!(
+    "fixture-seeder",
+    70,
+    super::attach::Phase::Local(|cx| {
+        attach_fixture_seeder(cx.app, cx.database);
+    })
+);
+
 /// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
 /// meetings into the app's database (Settings → Developer).
 #[cfg(debug_assertions)]

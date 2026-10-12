@@ -19,8 +19,17 @@ use deino_net::Net;
 use deino_secrets::KeychainSecretStore;
 use tauri::{AppHandle, Manager};
 
+use super::attach::Phase;
 use super::browser::SystemBrowser;
 use super::network::SettingsServicePolicy;
+
+super::attach::attach!(
+    "integrations",
+    60,
+    Phase::Background(|cx| {
+        attach_integrations(cx.app, cx.database, cx.clock);
+    })
+);
 
 /// Builds the integrations service over `database` and manages
 /// `Arc<IntegrationService>`. Needs the settings and the network.

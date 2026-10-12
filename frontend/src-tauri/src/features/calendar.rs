@@ -43,8 +43,10 @@ pub use start_link::LinkOnStart;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "calendar";
+
+super::registry::register_plugin!(Guarded);
 
 /// The plugin's commands and events, for the invoke handler, event
 /// registration and the TypeScript bindings.

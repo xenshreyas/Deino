@@ -4,7 +4,7 @@
 //! (`deino_db::ChangeNotifier`). [`forward_changes`] turns each one into the
 //! typed event [`DbChanged`] (`plugin:db:db-changed`), and the UI invalidates
 //! every TanStack query tagged with one of its tables (ADR 0008). The plugin
-//! has events only, so it has no manifest entry and no capability.
+//! has events only, so it has no commands, no ACL and no capability.
 
 use deino_db::{ChangeNotifier, Table, TableChanges};
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,8 @@ use tokio::sync::broadcast::{Receiver, error::RecvError};
 
 /// Plugin name, the prefix of its event names.
 pub const NAME: &str = "db";
+
+super::registry::register_plugin!(Guarded);
 
 /// The tables a committed transaction changed.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type, Event)]

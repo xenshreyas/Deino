@@ -16,8 +16,10 @@ pub use events::{LlmStreamEvent, OllamaPull, OllamaPullStatus, PullEvents, Tauri
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "llm";
+
+super::registry::register_plugin!(Guarded);
 
 /// The plugin's commands and events, for the invoke handler and the bindings.
 pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {

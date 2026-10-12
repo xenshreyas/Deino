@@ -18,8 +18,10 @@ pub(crate) use job::start_brief_job;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "briefs";
+
+super::registry::register_plugin!(Guarded);
 
 /// The plugin's commands, for the invoke handler and the TypeScript
 /// bindings.

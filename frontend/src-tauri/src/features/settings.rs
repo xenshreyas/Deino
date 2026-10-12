@@ -23,8 +23,10 @@ pub use events::{SettingsChanged, TauriSettingsEvents};
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{AppHandle, Manager, Runtime};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "settings";
+
+super::registry::register_plugin!(Open);
 
 /// The plugin's commands and events, for the invoke handler and the bindings.
 pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {

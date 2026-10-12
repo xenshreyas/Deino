@@ -47,7 +47,6 @@ legacy_modules! {
 }
 
 use features::privacy::guard::{Guarded, guard_legacy};
-use tauri::plugin::TauriPlugin;
 use tauri::{Builder, Wry};
 
 /// User-visible product name, used for notification titles and the tray tooltip.
@@ -76,75 +75,15 @@ pub fn run() {
         .run(lifecycle::on_run_event);
 }
 
-/// Registers every feature plugin behind the app lock's IPC guard
-/// (`features/privacy/guard.rs`).
+/// Registers every feature plugin (each adds itself to
+/// [`features::registry::PLUGINS`] from its own file) behind the app lock's
+/// IPC guard, with the access it declared (`features/privacy/guard.rs`).
 fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
-    feature_plugins()
+    features::registry::plugins()
         .into_iter()
         .fold(builder, |builder, plugin| {
-            builder.plugin(Guarded::new(plugin))
+            builder.plugin(Guarded::new((plugin.init)(), plugin.access))
         })
-}
-
-/// Every feature plugin: one line per entry in `features/manifest.rs`
-/// and `features/organize_manifest.rs`.
-fn feature_plugins() -> Vec<TauriPlugin<Wry>> {
-    let mut plugins = platform_plugins();
-    plugins.extend(library_plugins());
-    #[cfg(debug_assertions)]
-    plugins.extend([features::_example::init(), features::dev::init()]);
-    plugins
-}
-
-/// The app's own plumbing: the database, settings, models, capture and privacy.
-fn platform_plugins() -> Vec<TauriPlugin<Wry>> {
-    vec![
-        features::db::init(),
-        features::detection::init(),
-        features::developer::init(),
-        features::onboarding::init(),
-        features::network::init(),
-        features::pipeline::init(),
-        features::recording::init(),
-        features::secrets::init(),
-        features::llm::init(),
-        features::settings::init(),
-        features::transcription::init(),
-        features::system::init(),
-        features::integrations::init(),
-        features::import::init(),
-        features::speaker_tags::init(),
-        features::privacy::init(),
-    ]
-}
-
-/// The meeting library: meetings, notes, transcripts and everything organizing them.
-fn library_plugins() -> Vec<TauriPlugin<Wry>> {
-    vec![
-        features::export::init(),
-        features::action_items::init(),
-        features::calendar::init(),
-        features::enhance::init(),
-        features::companies::init(),
-        features::meetings::init(),
-        features::profile::init(),
-        features::search::init(),
-        features::notes::init(),
-        features::people::init(),
-        features::templates::init(),
-        features::folders::init(),
-        features::insights::init(),
-        features::automations::init(),
-        features::briefs::init(),
-        features::tags::init(),
-        features::speakers::init(),
-        features::transcript::init(),
-        features::vocabulary::init(),
-        features::player::init(),
-        features::stats::init(),
-        features::clips::init(),
-        features::comments::init(),
-    ]
 }
 
 /// Registers the third-party Tauri plugins the app depends on.

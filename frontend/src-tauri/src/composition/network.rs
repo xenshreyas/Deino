@@ -21,6 +21,8 @@ use deino_net::{
 };
 use tauri::{AppHandle, Manager, Runtime};
 
+use super::attach::Phase;
+
 /// Builds the network over the managed `Arc<SettingsService>` and manages
 /// [`Net`] and the policy. Runs after [`super::attach_settings`].
 pub(crate) fn attach_network(app: &AppHandle) -> Result<(), NetError> {
@@ -45,6 +47,12 @@ const USER_AGENT: &str = concat!("Deino/", env!("CARGO_PKG_VERSION"));
 pub(crate) fn root_client() -> Result<ReqwestNetClient, NetError> {
     ReqwestNetClient::with_user_agent(USER_AGENT)
 }
+
+super::attach::attach!(
+    "egress-log",
+    60,
+    Phase::Local(|cx| attach_network_log(cx.app, cx.database))
+);
 
 /// Persists the egress log in `database` and manages the Network page's
 /// [`NetworkControls`]. Does nothing if [`attach_network`] did not run.

@@ -12,10 +12,17 @@ use deino_domain::SystemZone;
 use tauri::{AppHandle, Manager};
 
 use super::action_items::ActionItemWiring;
+use super::attach::Phase;
 
 /// The debug flag that opens the year in review outside December, for
 /// testing: `DEINO_RECAP_ANYTIME=1 pnpm run tauri:dev`.
 const RECAP_ANYTIME_VAR: &str = "DEINO_RECAP_ANYTIME";
+
+super::attach::attach!(
+    "stats",
+    10,
+    Phase::ReadModel(|cx, ai| attach_stats(cx.app, cx.database, ai))
+);
 
 /// Builds and manages the stats and recap services.
 pub(super) fn attach_stats(app: &AppHandle, database: &Database, wiring: &ActionItemWiring) {
@@ -45,11 +52,4 @@ fn recap_window() -> RecapWindow {
     } else {
         RecapWindow::December
     }
-}
-
-/// Wires the services that read the library for the user: stats (ORG-09) and
-/// pre-meeting briefs (NOT-08).
-pub(super) fn attach_read_models(app: &AppHandle, database: &Database, wiring: &ActionItemWiring) {
-    attach_stats(app, database, wiring);
-    super::briefs::attach_briefs(app, database, wiring);
 }

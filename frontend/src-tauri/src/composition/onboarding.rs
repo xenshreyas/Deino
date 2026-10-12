@@ -14,6 +14,7 @@ use deino_db::Database;
 use deino_domain::Clock;
 use tauri::{AppHandle, Manager, Runtime};
 
+use super::attach::Phase;
 use crate::permissions::SystemPermissions;
 
 /// Manages `Arc<PermissionService>` over the real permissions.
@@ -21,6 +22,12 @@ pub(crate) fn attach_permissions<R: Runtime>(app: &AppHandle<R>) {
     let gate = Arc::new(SystemPermissions::new(app.clone()));
     app.manage(Arc::new(PermissionService::new(gate)));
 }
+
+super::attach::attach!(
+    "sample",
+    40,
+    Phase::Local(|cx| attach_sample(cx.app, cx.database, cx.clock))
+);
 
 /// Manages `Arc<SampleImporter>` for the `onboarding` plugin.
 pub(crate) fn attach_sample<R: Runtime>(

@@ -7,9 +7,11 @@
 //! the real app with realistic data (Settings → Developer). The seeder writes
 //! on the app's writer connection, so the UI refreshes through `DbChanged`.
 //!
-//! The module, its manifest entry (`DEV_FEATURES`) and its capability
-//! (`capabilities/dev/dev.json`) exist only when debug assertions are on, so
-//! release builds have no such plugin and no such permission.
+//! The module exists only when debug assertions are on (the `cfg` below,
+//! which `build.rs` also reads), so release builds have no such plugin, no
+//! such permission and no capability granting it.
+
+#![cfg(debug_assertions)]
 
 mod commands;
 #[cfg(test)]
@@ -18,8 +20,10 @@ mod contract_tests;
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
 
-/// Plugin name; must match this feature's entry in `features::manifest`.
+/// Plugin name: its commands are `plugin:<NAME>|<command>`.
 pub const NAME: &str = "dev";
+
+super::registry::register_plugin!(Guarded);
 
 /// The plugin's commands, for the invoke handler and the TypeScript bindings.
 pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {

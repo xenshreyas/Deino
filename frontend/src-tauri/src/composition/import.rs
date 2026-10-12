@@ -21,6 +21,7 @@ use deino_recording::NativeIngest;
 use tauri::{AppHandle, Manager, Runtime};
 use tokio_util::sync::CancellationToken;
 
+use super::attach::Phase;
 use crate::features::import::TauriImportDialogs;
 use crate::paths::AppPaths;
 
@@ -81,6 +82,14 @@ impl Imports {
         app.manage(nudge);
     }
 }
+
+super::attach::attach!(
+    "import",
+    40,
+    Phase::Background(|cx| {
+        attach_import(cx.app, cx.database, cx.clock);
+    })
+);
 
 /// Builds and manages the import services and starts the folder scheduler.
 /// Needs the pipeline's lifecycle service to be managed first.

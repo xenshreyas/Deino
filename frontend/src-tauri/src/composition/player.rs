@@ -16,9 +16,16 @@ use deino_db::Database;
 use deino_domain::Clock;
 use tauri::{AppHandle, Manager};
 
+use super::attach::Phase;
 use crate::features::clips::platform::{AvClipCutter, OpenFinder};
 use crate::features::export::TauriDialogs;
 use crate::paths::AppPaths;
+
+super::attach::attach!(
+    "player",
+    50,
+    Phase::Local(|cx| attach_player(cx.app, cx.database, cx.clock))
+);
 
 /// Manages `Arc<PlayerService>`, `Arc<ClipService>` and
 /// `Arc<CommentService>`. Without the app's folders only comments are

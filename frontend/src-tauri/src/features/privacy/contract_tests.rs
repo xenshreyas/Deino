@@ -15,10 +15,11 @@ use tauri::{App, Manager};
 use super::guard::Guarded;
 use super::library::LibraryStatusCell;
 use crate::features::ipc_tests::{invoke, main_window, mock_app};
+use crate::features::registry::access;
 use crate::features::{meetings, recording, system};
 
-/// An app with the guarded `privacy`, `meetings`, `recording` and `system`
-/// plugins and an enabled lock.
+/// An app with the `privacy`, `meetings`, `recording` and `system` plugins,
+/// each behind the guard with the access it registered, and an enabled lock.
 struct Harness {
     app: App<MockRuntime>,
     lock: Arc<LockService>,
@@ -28,10 +29,10 @@ struct Harness {
 fn harness() -> Harness {
     let app = mock_app(
         mock_builder()
-            .plugin(Guarded::new(super::init()))
-            .plugin(Guarded::new(meetings::init()))
-            .plugin(Guarded::new(recording::init()))
-            .plugin(Guarded::new(system::init())),
+            .plugin(Guarded::new(super::init(), access(super::NAME)))
+            .plugin(Guarded::new(meetings::init(), access(meetings::NAME)))
+            .plugin(Guarded::new(recording::init(), access(recording::NAME)))
+            .plugin(Guarded::new(system::init(), access(system::NAME))),
     );
     let auth = Arc::new(FakeAuthenticator::default());
     let policy = AppLockSettings {

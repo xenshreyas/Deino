@@ -22,7 +22,14 @@ use deino_llm::{Gateway, LlmError, Prompt, ProviderId};
 use tauri::{AppHandle, Manager};
 
 use super::action_items::ActionItemWiring;
+use super::attach::Phase;
 use crate::features::briefs::start_brief_job;
+
+super::attach::attach!(
+    "briefs",
+    20,
+    Phase::ReadModel(|cx, ai| attach_briefs(cx.app, cx.database, ai))
+);
 
 /// Manages `Arc<BriefService>` and, with a gateway and the calendar wired,
 /// starts the brief job.

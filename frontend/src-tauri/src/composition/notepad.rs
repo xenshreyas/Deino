@@ -11,6 +11,7 @@ use deino_db::Database;
 use deino_domain::Clock;
 use tauri::{AppHandle, Manager, Runtime};
 
+use super::attach::Phase;
 use crate::features::notes::{DroppedFiles, TauriNotesEvents};
 use crate::paths::AppPaths;
 
@@ -34,6 +35,12 @@ pub(crate) fn notes_services<R: Runtime>(
     ))));
     (notes, people)
 }
+
+super::attach::attach!(
+    "notepad",
+    30,
+    Phase::Local(|cx| attach_notepad(cx.app, cx.database, cx.clock))
+);
 
 /// Builds and manages the notes and people services and the dropped-files
 /// record. The paths come from Tauri's resolver; without them (a broken

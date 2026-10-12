@@ -16,6 +16,16 @@ use deino_db::Database;
 use deino_domain::{Clock, SystemClock};
 use tauri::{Manager, Runtime};
 
+use super::attach::Phase;
+
+super::attach::attach!(
+    "speakers",
+    10,
+    Phase::Local(|cx| {
+        Speakers::build(cx.database, cx.clock).manage(cx.app);
+    })
+);
+
 /// The speaker services, built once over one database.
 pub(crate) struct Speakers {
     speakers: Arc<SpeakerService>,

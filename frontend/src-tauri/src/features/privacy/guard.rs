@@ -5,9 +5,10 @@
 //! [`Plugin`] that forwards everything to the real plugin and checks the
 //! lock in [`Plugin::extend_api`], the one place every plugin command
 //! passes through. Legacy commands are wrapped the same way by
-//! [`guard_legacy`]. Recording keeps working while locked: its plugin, the
-//! meeting prompt (`detection`) and what the lock screen itself needs are
-//! always admitted.
+//! [`guard_legacy`]. Each plugin declares its [`Access`] where it registers
+//! (`features/registry.rs`): recording keeps working while locked, so its
+//! plugin, the meeting prompt (`detection`) and what the lock screen itself
+//! needs are [`Access::Open`]; everything else is refused.
 
 use std::sync::Arc;
 
@@ -19,9 +20,7 @@ use tauri::plugin::Plugin;
 use tauri::webview::PageLoadPayload;
 use tauri::{AppHandle, Manager, RunEvent, Runtime, Url, Webview, Window};
 
-/// Plugins that keep working while locked: the lock itself, app facts,
-/// settings (the theme and the gates), and recording with its prompt.
-const OPEN_WHILE_LOCKED: [&str; 5] = ["privacy", "system", "settings", "recording", "detection"];
+use crate::features::registry::Access;
 
 /// Legacy commands that read or change meetings, refused while locked.
 const LEGACY_LIBRARY_COMMANDS: [&str; 4] = [
@@ -36,9 +35,9 @@ pub(crate) fn locked_error() -> AppError {
     AppError::new(ErrorCode::PermissionDenied, "Deino is locked")
 }
 
-/// True when `plugin`'s commands may run while the app is `locked`.
-pub(crate) fn admits_plugin(locked: bool, plugin: &str) -> bool {
-    !locked || OPEN_WHILE_LOCKED.contains(&plugin)
+/// True when a plugin with `access` may run commands while the app is `locked`.
+pub(crate) fn admits_plugin(locked: bool, access: Access) -> bool {
+    !locked || access == Access::Open
 }
 
 /// True when the legacy `command` may run while the app is `locked`.
@@ -84,12 +83,14 @@ pub(crate) fn guard_legacy<R: Runtime>(
 /// A feature plugin behind the lock check.
 pub(crate) struct Guarded<P> {
     inner: P,
+    access: Access,
 }
 
 impl<P> Guarded<P> {
-    /// Wraps `inner`.
-    pub(crate) fn new(inner: P) -> Self {
-        Self { inner }
+    /// Wraps `inner`, whose commands run while locked only when `access` is
+    /// [`Access::Open`].
+    pub(crate) fn new(inner: P, access: Access) -> Self {
+        Self { inner, access }
     }
 }
 
@@ -133,8 +134,8 @@ impl<R: Runtime, P: Plugin<R>> Plugin<R> for Guarded<P> {
     }
 
     fn extend_api(&mut self, invoke: Invoke<R>) -> bool {
-        let plugin = self.inner.name();
-        match refuse_if_locked(invoke, |locked| admits_plugin(locked, plugin)) {
+        let access = self.access;
+        match refuse_if_locked(invoke, |locked| admits_plugin(locked, access)) {
             Some(invoke) => self.inner.extend_api(invoke),
             None => true,
         }
@@ -145,19 +146,36 @@ impl<R: Runtime, P: Plugin<R>> Plugin<R> for Guarded<P> {
 mod tests {
     use super::*;
 
+    use crate::features::registry::{self, plugins};
+
     #[test]
-    fn library_plugins_are_refused_only_while_locked() {
-        for plugin in ["meetings", "notes", "transcript", "search", "people"] {
-            assert!(admits_plugin(false, plugin));
-            assert!(!admits_plugin(true, plugin), "{plugin}");
-        }
+    fn guarded_plugins_are_refused_only_while_locked() {
+        assert!(admits_plugin(false, Access::Guarded));
+        assert!(!admits_plugin(true, Access::Guarded));
+        assert!(admits_plugin(true, Access::Open));
     }
 
     #[test]
-    fn recording_and_the_lock_itself_always_work() {
-        for plugin in OPEN_WHILE_LOCKED {
-            assert!(admits_plugin(true, plugin), "{plugin}");
+    fn library_plugins_are_guarded() {
+        for plugin in ["meetings", "notes", "transcript", "search", "people"] {
+            assert_eq!(registry::access(plugin), Access::Guarded, "{plugin}");
         }
+    }
+
+    /// The PRV-02 policy: only the lock itself, app facts, settings and
+    /// recording with its prompt work while locked. Opening another plugin
+    /// is a privacy decision, so it changes this test on purpose.
+    #[test]
+    fn recording_and_the_lock_itself_are_the_only_open_plugins() {
+        let open: Vec<&str> = plugins()
+            .into_iter()
+            .filter(|plugin| plugin.access == Access::Open)
+            .map(|plugin| plugin.name)
+            .collect();
+        assert_eq!(
+            open,
+            ["detection", "privacy", "recording", "settings", "system"]
+        );
     }
 
     #[test]
