@@ -37,7 +37,7 @@ EXTRA_STEPS=(check clippy-portable test-portable test-app fmt-fix test-touched)
 # The feature agent's gate (CLAUDE.md "Merge workflow"): formats first, then the
 # checks that catch most problems, testing only the crates the branch touched.
 # The full gate runs once per merge batch, on the batch branch.
-FAST_STEPS=(fmt-fix file-size clippy typecheck vitest test-touched)
+FAST_STEPS=(fmt-fix file-size clippy typecheck lint vitest test-touched)
 
 # ── Steps ────────────────────────────────────────────────────────────────────
 

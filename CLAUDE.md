@@ -29,7 +29,7 @@ The goal: each feature runs the full gate once, not once per rebase.
 
 - **Feature agents never rebase, force-push or merge.** Build on your branch,
   run `cargo fmt --all`, then the **fast gate once**:
-  `scripts/ci-local.sh fast` (fmt-fix, file-size, clippy, typecheck, vitest,
+  `scripts/ci-local.sh fast` (fmt-fix, file-size, clippy, typecheck, lint, vitest,
   and tests for only the crates you touched). Push and report "ready". Do not
   catch up with `main` because it moved; the merger rebases only on a real
   conflict, and will ask you if it needs you.
@@ -78,7 +78,7 @@ no Deino server, and automatic updates are disabled (§8 D6).
 
 ```bash
 # Gates: feature agents run `fast` once; the merger runs the full gate per batch
-scripts/ci-local.sh fast             # fmt-fix, file-size, clippy, typecheck, vitest, touched crates' tests
+scripts/ci-local.sh fast             # fmt-fix, file-size, clippy, typecheck, lint, vitest, touched crates' tests
 scripts/ci-local.sh                  # the full gate, cheapest first, fails fast; --list for steps
 scripts/merge-batch.sh A B C         # merger only: batch-merge ready branches, full gate; --land to ship
 scripts/ci-local.sh rust             # or a group (rust, frontend) or single steps (clippy test)
