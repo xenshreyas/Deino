@@ -26,7 +26,8 @@ test('a suggested follow-up goes from Home to the editor, then is dismissed for 
     'marcus.webb@brightkite-logistics.com, hannah.pike@brightkite-logistics.com',
   );
   await expect(editor.getByText('3 gaps to fill')).toBeVisible();
-  await expect(editor.getByRole('button', { name: /Send via Gmail or Outlook/ })).toBeDisabled();
+  // UX-27: sending from Deino is hidden until the mail integrations ship.
+  await expect(editor.getByRole('button', { name: /Send via Gmail or Outlook/ })).toHaveCount(0);
   await shootBothThemes(page, 'followups-editor');
 
   await editor.getByRole('button', { name: 'Cc', exact: true }).click();

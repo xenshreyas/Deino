@@ -17,10 +17,9 @@ export function useProposeEdit() {
   return useMutation({ mutationFn: noteEditApi.propose });
 }
 
-/** Restores the version an edit was made from: the edit's undo. */
+/** Restores the version an edit was made from: the edit's undo; the notes show it. */
 export async function undoEdit(meetingId: MeetingId, accepted: AcceptedEdit): Promise<void> {
   await enhanceApi.restore(meetingId, accepted.previousVersion);
-  toast(editCopy.undone);
 }
 
 /** Stores an accepted proposal; `DbChanged` shows the new version. */

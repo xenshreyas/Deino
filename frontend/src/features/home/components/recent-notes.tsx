@@ -1,7 +1,14 @@
-/** Home's Recent notes: the five newest meetings, each opening its page. */
+/**
+ * Home's Recent notes: the five newest meetings, each opening its page.
+ * With none yet it offers a test recording and the sample meeting (UX-24),
+ * and keeps offering them for the rest of the visit, so a test that creates
+ * the first meeting does not vanish mid-recording.
+ */
 import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
 
 import { type Meeting, useMeetings } from '@/features/meetings';
+import { TryDeino } from '@/features/onboarding';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { homeCopy } from '../copy';
@@ -37,10 +44,23 @@ function NoteRow({ meeting }: { meeting: Meeting }) {
   );
 }
 
-/** The newest notes, or a one-line empty state. */
+/** No notes yet: one line, then "Record a test" and "Open a sample meeting". */
+function FirstRun() {
+  return (
+    <div className="flex flex-col gap-3 px-3">
+      <p className="text-sm text-fg-muted">{homeCopy.noNotesBody}</p>
+      <TryDeino />
+    </div>
+  );
+}
+
+/** The newest notes, or the first-run rows. */
 export function RecentNotes() {
   const meetings = useMeetings();
   const recent = meetings.data?.slice(0, RECENT_NOTES);
+  const [firstRun, setFirstRun] = useState(false);
+  // Latched while rendering (no effect): once empty, the rows stay for this visit.
+  if (!firstRun && recent?.length === 0) setFirstRun(true);
   return (
     <section aria-labelledby="home-recent" className="flex flex-col gap-1">
       <SectionHeading
@@ -54,9 +74,7 @@ export function RecentNotes() {
         {homeCopy.recentNotes}
       </SectionHeading>
       {recent === undefined ? <SkeletonText lines={3} className="px-3" /> : null}
-      {recent?.length === 0 ? (
-        <p className="px-3 text-sm text-fg-muted">{homeCopy.noNotesBody}</p>
-      ) : null}
+      {firstRun ? <FirstRun /> : null}
       <ul>
         {recent?.map((meeting) => (
           <NoteRow key={meeting.id} meeting={meeting} />

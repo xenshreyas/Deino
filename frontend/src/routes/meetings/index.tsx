@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { useImportDialog } from '@/contexts/ImportDialogContext';
 import { MeetingsListScreen } from '@/features/meetings-list';
 import { meetingsSearchSchema } from '@/features/meetings-list/search';
 import { requestRecordingStart, SHORTCUTS } from '@/features/shell';
@@ -16,9 +17,13 @@ const SCREEN_SHORTCUTS = { newNote: SHORTCUTS.newNote.display, record: SHORTCUTS
 function MeetingsRoute() {
   const navigate = Route.useNavigate();
   const { tags = [] } = Route.useSearch();
+  const { openImportDialog } = useImportDialog();
   return (
     <MeetingsListScreen
       shortcuts={SCREEN_SHORTCUTS}
+      onImport={() => {
+        openImportDialog();
+      }}
       tags={tags.map(asTagId)}
       onStartRecording={() => {
         void requestRecordingStart(() => void navigate({ to: '/' }));

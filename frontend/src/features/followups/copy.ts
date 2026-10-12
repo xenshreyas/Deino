@@ -25,9 +25,6 @@ export const followUpsCopy = {
     openInMail: 'Open in Mail',
     copy: 'Copy message',
     copied: 'Message copied',
-    sendVia: 'Send via Gmail or Outlook',
-    sendViaHint: 'Sending from Deino comes with the Gmail and Outlook integrations.',
-    wip: 'WIP',
     close: 'Close',
   },
   failed: {

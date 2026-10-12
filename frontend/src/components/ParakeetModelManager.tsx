@@ -114,9 +114,6 @@ export function ParakeetModelManager({
                     : model
                 )
               );
-              toast.info(`${getModelDisplayName(modelName)} download cancelled`, {
-                duration: 3000
-              });
               return;
             }
 
@@ -148,8 +145,6 @@ export function ParakeetModelManager({
           'parakeet-model-download-complete',
           (event) => {
             const { modelName } = event.payload;
-            const displayInfo = getModelDisplayInfo(modelName);
-            const displayName = displayInfo?.friendlyName || modelName;
             latestStatusByModelRef.current.set(modelName, 'Available');
             clearCancellingModel(modelName);
 
@@ -170,10 +165,6 @@ export function ParakeetModelManager({
             // Clean up throttle data
             progressThrottleRef.current.delete(modelName);
 
-            toast.success(`${displayInfo?.icon || '✓'} ${displayName} ready!`, {
-              description: 'Model downloaded and ready to use',
-              duration: 4000
-            });
 
             // Auto-select after download using stable refs
             if (onModelSelectRef.current) {
@@ -265,18 +256,9 @@ export function ParakeetModelManager({
   };
 
   const cancelDownload = async (modelName: string) => {
-    const displayInfo = getModelDisplayInfo(modelName);
-    const displayName = displayInfo?.friendlyName || modelName;
-
     setCancellingModels(prev => new Set([...prev, modelName]));
     try {
-      const outcome = await ParakeetAPI.cancelDownload(modelName);
-      if (outcome === 'pending') {
-        toast.info(`Cancelling ${displayName}...`, {
-          description: 'The download is still shutting down. Retry will be available when cleanup completes.',
-          duration: 4000
-        });
-      }
+      await ParakeetAPI.cancelDownload(modelName);
     } catch (err) {
       clearCancellingModel(modelName);
       console.error('Failed to cancel download:', err);
@@ -291,9 +273,6 @@ export function ParakeetModelManager({
     if (downloadingModels.has(modelName) || cancellingModels.has(modelName)) return;
     clearCancellingModel(modelName);
 
-    const displayInfo = getModelDisplayInfo(modelName);
-    const displayName = displayInfo?.friendlyName || modelName;
-
     try {
       setDownloadingModels(prev => new Set([...prev, modelName]));
 
@@ -305,10 +284,6 @@ export function ParakeetModelManager({
         )
       );
 
-      toast.info(`Downloading ${displayName}...`, {
-        description: 'This may take a few minutes',
-        duration: 5000  // Auto-dismiss after 5 seconds
-      });
 
       await ParakeetAPI.downloadModel(modelName);
     } catch (err) {
@@ -336,12 +311,6 @@ export function ParakeetModelManager({
     if (autoSave) {
       await saveModelSelection(modelName);
     }
-
-    const displayInfo = getModelDisplayInfo(modelName);
-    const displayName = displayInfo?.friendlyName || modelName;
-    toast.success(`Switched to ${displayName}`, {
-      duration: 3000
-    });
   };
 
   const deleteModel = async (modelName: string) => {
@@ -355,10 +324,6 @@ export function ParakeetModelManager({
       const modelList = await ParakeetAPI.getAvailableModels();
       setModels(modelList);
 
-      toast.success(`${displayName} deleted`, {
-        description: 'Model removed to free up space',
-        duration: 3000
-      });
 
       // If deleted model was selected, clear selection
       if (selectedModel === modelName && onModelSelect) {

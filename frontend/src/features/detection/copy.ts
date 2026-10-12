@@ -22,13 +22,13 @@ export const detectionCopy = {
       'When another app starts using your microphone, offer to take notes. Nothing is recorded until you choose.',
     autoStartTitle: 'Start recording automatically',
     autoStartDescription: (seconds: number) =>
-      `After a ${seconds}-second countdown, with a Don't record button to cancel.`,
+      `After a ${seconds}-second countdown, with a Don’t record button to cancel.`,
     countdownLabel: 'Countdown',
     countdownUnit: 'seconds',
     ignoredTitle: 'Ignored apps',
     ignoredDescription: 'These apps never prompt, even when they use the microphone.',
     ignoredEmptyTitle: 'No ignored apps',
-    ignoredEmptyBody: 'Choose Always ignore this app on a prompt to add one here.',
+    ignoredEmptyBody: 'Choose “Always ignore this app” on a prompt to add one here.',
     stopIgnoring: (app: string) => `Stop ignoring ${app}`,
     browserHint:
       'Allow Deino in System Settings → Privacy & Security → Accessibility to recognise Meet, Zoom and Teams calls in the browser within seconds.',

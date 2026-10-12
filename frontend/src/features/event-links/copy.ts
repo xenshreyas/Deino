@@ -12,11 +12,8 @@ export const eventLinksCopy = {
   loadFailed: 'Could not load your calendar.',
   linkFailed: 'Could not link the event.',
   unlinkFailed: 'Could not unlink the event.',
-  linkedTo: (title: string) => `Linked to ${title}`,
-  unlinked: 'Unlinked from the calendar event',
   untitled: 'Untitled event',
   people: (count: number) => (count === 1 ? '1 person' : `${count} people`),
-  attendees: (added: number, removed: number) => attendeeSummary(added, removed),
 
   eventSection: 'Calendar event',
   guests: 'Guests',
@@ -29,12 +26,3 @@ export const eventLinksCopy = {
     people: 'Same people',
   },
 } as const;
-
-/** "2 attendees added, 1 removed", or `undefined` when nobody changed. */
-function attendeeSummary(added: number, removed: number): string | undefined {
-  const parts = [
-    added > 0 ? `${added} ${added === 1 ? 'attendee' : 'attendees'} added` : null,
-    removed > 0 ? `${removed} removed` : null,
-  ].filter((part) => part !== null);
-  return parts.length === 0 ? undefined : parts.join(', ');
-}

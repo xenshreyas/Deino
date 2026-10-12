@@ -22,10 +22,10 @@ export function RecordingSettings() {
     queryFn: () => invoke<string>('get_default_recordings_folder_path'),
   });
 
-  const save = async (change: SettingsPatch, success: string, description?: string) => {
+  // UX-31: a saved preference is silent; only a failure says anything.
+  const save = async (change: SettingsPatch) => {
     try {
       await patch(change);
-      toast.success(success, description === undefined ? undefined : { description });
     } catch (error) {
       console.error('Failed to save recording settings:', error);
       toast.error('Failed to save preference', {
@@ -35,11 +35,7 @@ export function RecordingSettings() {
   };
 
   const handleDeviceChange = (devices: SelectedDevices) =>
-    save(
-      { audio: { preferredMicDevice: devices.micDevice, preferredSystemDevice: devices.systemDevice } },
-      'Device preferences saved',
-      `Microphone: ${devices.micDevice || 'Default'}, System Audio: ${devices.systemDevice || 'Default'}`,
-    );
+    save({ audio: { preferredMicDevice: devices.micDevice, preferredSystemDevice: devices.systemDevice } });
 
   const handleOpenFolder = async () => {
     try {
@@ -79,7 +75,7 @@ export function RecordingSettings() {
         </div>
         <Switch
           checked={autoSave}
-          onCheckedChange={(enabled) => save({ recording: { autoSave: enabled } }, 'Preference saved')}
+          onCheckedChange={(enabled) => save({ recording: { autoSave: enabled } })}
           disabled={saving}
         />
       </div>
@@ -129,7 +125,7 @@ export function RecordingSettings() {
         </div>
         <Switch
           checked={settings.audio.usesHeadphones}
-          onCheckedChange={(enabled) => save({ audio: { usesHeadphones: enabled } }, 'Preference saved')}
+          onCheckedChange={(enabled) => save({ audio: { usesHeadphones: enabled } })}
           disabled={saving}
         />
       </div>

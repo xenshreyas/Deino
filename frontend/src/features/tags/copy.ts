@@ -28,12 +28,9 @@ export const tagsCopy = {
   cancel: 'Cancel',
   save: 'Save',
   create: 'Create tag',
-  saved: 'Tag saved',
-  created: 'Tag created',
   deleteTitle: 'Delete this tag?',
   deleteDescription: (name: string) =>
     `“${name}” will be removed from every meeting, along with folder rules that use it. Your meetings stay.`,
-  deleted: 'Tag deleted',
   deleteFailed: 'Could not delete the tag',
   // Meeting header, combobox and filter.
   addTag: 'Add tag',

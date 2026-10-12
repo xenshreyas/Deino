@@ -99,7 +99,9 @@ function CompanyTop({ page }: { page: CompanyPage }) {
         meta={metaOf(page)}
         actions={<CompanyActions company={company} />}
       />
-      <Ask scope={{ kind: 'company', id: company.id }} name={company.name} />
+      {Ask === null ? null : (
+        <Ask scope={{ kind: 'company', id: company.id }} name={company.name} />
+      )}
       <EntitySummary
         summary={company.summaryMd}
         updatedAt={company.summaryUpdatedAt}

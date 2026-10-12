@@ -64,7 +64,10 @@ test('an insight from a template answers on a meeting, fills its table and expor
   await shoot(page, 'meeting-insights');
 
   // Back on the Insights page, the table exports as CSV.
-  await page.getByRole('link', { name: 'Insights' }).first().click();
+  // UX-25: Insights sits under the sidebar's collapsed "More".
+  const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
+  await sidebar.getByRole('button', { name: 'More' }).click();
+  await sidebar.getByRole('link', { name: 'Insights' }).click();
   await page.getByRole('button', { name: 'Export CSV' }).click();
   await expect(page.getByText('Saved Discovery scorecard.csv')).toBeVisible();
 });

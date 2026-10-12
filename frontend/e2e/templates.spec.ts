@@ -29,7 +29,8 @@ test('a new template can be created, then picked for a meeting', async ({ page }
   await page.getByRole('button', { name: 'Add section' }).click();
   await shoot(page, 'templates-editor');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  // UX-32: saving is silent; the editor reopens on the saved template.
+  await expect(page).not.toHaveURL(/template=new/);
 
   // In-app navigation: a reload would reset the mock, and the new template with it.
   await page.getByRole('link', { name: 'Meetings', exact: true }).click();

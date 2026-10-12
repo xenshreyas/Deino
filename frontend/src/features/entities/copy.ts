@@ -2,6 +2,7 @@
 export const entitiesCopy = {
   people: 'People',
   companies: 'Companies',
+  tabsLabel: 'People and companies',
   peopleDescription: 'Everyone you meet, with what was said and what is still open.',
   companiesDescription: 'The organisations behind your meetings.',
   addPerson: 'Add person',
@@ -70,7 +71,6 @@ export const entitiesCopy = {
   refetchLogo: 'Fetch logo again',
   logoOff: 'Company logos are off. Turn on “Company logos” in Settings → Network.',
   logoNone: 'That website has no usable logo.',
-  logoFetched: 'Logo updated',
   website: 'Website',
   // Forms.
   personTitle: 'New person',
@@ -92,7 +92,6 @@ export const entitiesCopy = {
   create: 'Create',
   save: 'Save',
   saved: 'Saved',
-  created: (name: string) => `${name} added`,
   actionFailed: 'That did not work',
   // Merging.
   mergeTitle: (name: string) => `Merge a duplicate into ${name}`,
@@ -102,7 +101,6 @@ export const entitiesCopy = {
     'Pick the duplicate. Its people move here, and its domain keeps pointing to this company.',
   mergeSearch: 'Find the duplicate',
   mergeConfirm: 'Merge',
-  merged: (name: string) => `Merged into ${name}`,
   nothingToMerge: 'No other entries match.',
   // Meeting header.
   attendees: 'Attendees',

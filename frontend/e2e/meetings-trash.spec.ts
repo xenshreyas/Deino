@@ -24,7 +24,7 @@ async function fileInterview(page: Page) {
   const bar = page.getByRole('toolbar', { name: 'Selected meetings' });
   await bar.getByRole('button', { name: 'Add to folder' }).click();
   await page.getByRole('option', { name: 'Customers', exact: true }).click();
-  await expect(page.getByText('Added 1 meeting to the folder')).toBeVisible();
+  // UX-32: filing is silent; the rest of the test checks the folder.
   await page.keyboard.press('Escape');
 }
 
@@ -42,13 +42,13 @@ test('a trashed meeting comes back with its notes, tags, folders and action item
   await expect(page.getByText('Moved 1 meeting to the trash')).toBeVisible();
   await expect(row(page, interview.title)).toBeHidden();
 
-  await sidebar(page).getByRole('link', { name: 'Trash' }).click();
+  // UX-25: Trash lives in the Meetings header, not the sidebar.
+  await page.getByRole('main').getByRole('link', { name: 'Trash' }).click();
   await expect(page.getByRole('heading', { name: 'Trash' })).toBeVisible();
   const trashed = page.getByRole('listitem').filter({ hasText: interview.title });
   await expect(trashed).toContainText('Deleted in 30 days');
   await shootBothThemes(page, 'meetings-trash');
   await trashed.getByRole('button', { name: 'Restore' }).click();
-  await expect(page.getByText('Restored 1 meeting')).toBeVisible();
   await expect(page.getByText('The trash is empty')).toBeVisible();
 
   // In-app navigation: a reload would reset the mock's state.
@@ -59,7 +59,7 @@ test('a trashed meeting comes back with its notes, tags, folders and action item
   await row(page, interview.title).click();
   await expect(page.getByRole('heading', { name: interview.title })).toBeVisible();
   await expect(page.getByText('webhook = hint, cursor = truth')).toBeVisible();
-  await sidebar(page).getByRole('link', { name: 'Action Items' }).click();
+  await sidebar(page).getByRole('link', { name: 'Action items' }).click();
   await expect(page.getByRole('button', { name: JORDAN_DOC, exact: true })).toBeVisible();
 });
 
@@ -70,7 +70,6 @@ test('Undo on the toast takes a deleted meeting straight back', async ({ page })
 
   await page.getByRole('button', { name: 'Undo' }).click();
 
-  await expect(page.getByText('Restored 1 meeting')).toBeVisible();
   await expect(row(page, standup.title)).toBeVisible();
 });
 
@@ -87,7 +86,6 @@ test('two meetings merge into the earliest, which opens', async ({ page }) => {
 
   await dialog.getByRole('button', { name: 'Merge' }).click();
 
-  await expect(page.getByText('Meetings merged')).toBeVisible();
   await expect(page.getByRole('heading', { name: oneOnOne.title })).toBeVisible();
   await sidebar(page).getByRole('link', { name: 'Meetings' }).click();
   await expect(row(page, oneOnOne.title)).toBeVisible();

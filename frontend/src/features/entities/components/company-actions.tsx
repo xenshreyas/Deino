@@ -61,9 +61,9 @@ function useLogoAction(company: Company) {
     fetchLogo.mutate(
       { id: company.id, refresh: true },
       {
+        // A new logo shows on the page; only "no logo" needs saying.
         onSuccess: (path) => {
           if (path === null) toast(entitiesCopy.logoNone);
-          else toast.success(entitiesCopy.logoFetched);
         },
         onError: (error) => {
           const refused = error instanceof IpcError && error.code === 'permission_denied';

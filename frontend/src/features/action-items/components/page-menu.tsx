@@ -3,7 +3,6 @@
  * reminder switch, which is `notifications.preferences.showActionItemReminders`
  * in the settings document.
  */
-import { toast } from 'sonner';
 
 import { usePatchSettings, useSettings } from '@/features/settings';
 import { Bell, Check, CheckCheck, Ellipsis, ICON_PROPS } from '@/ui/icons';
@@ -42,7 +41,8 @@ export function PageMenu() {
       <DropdownMenuContent align="end" className="min-w-[240px]">
         <DropdownMenuItem
           onSelect={() => {
-            markAll.mutate(undefined, { onSuccess: () => toast.success(copy.menu.markedDone) });
+            // The list empties on screen (UX-32: no toast).
+            markAll.mutate(undefined);
           }}
         >
           <CheckCheck {...ICON_PROPS} />

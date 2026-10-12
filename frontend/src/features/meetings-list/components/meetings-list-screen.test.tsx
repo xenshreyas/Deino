@@ -100,11 +100,12 @@ function renderScreen() {
       <MeetingsListScreen
         tags={[]}
         onStartRecording={vi.fn()}
+        onImport={vi.fn()}
         shortcuts={{ newNote: '⌘N', record: '⌘R' }}
       />
     ),
   });
-  const others = ['/meetings/$meetingId', '/meetings/trash', '/'].map((path) =>
+  const others = ['/meetings/$meetingId', '/meetings/trash', '/tags', '/'].map((path) =>
     createRoute({ getParentRoute: () => root, path }),
   );
   const router = createRouter({

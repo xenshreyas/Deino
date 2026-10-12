@@ -8,7 +8,6 @@ import {
   type Icon,
   ICON_PROPS,
   ListChecks,
-  MessageCircle,
   Mic,
   Monitor,
   Moon,
@@ -25,9 +24,11 @@ import { SHORTCUTS } from '../shortcuts';
 import { paletteCopy } from './copy';
 import type { PaletteProviderProps } from './registry';
 
-/** The palette's built-in actions. */
-type ActionId =
-  'new-note' | 'new-action-item' | 'record' | 'chat' | 'sidebar' | 'right-panel' | 'import';
+/**
+ * The palette's built-in actions. Unfinished ones (Ask Deino, D13) are not
+ * listed at all until they ship (UX-27).
+ */
+type ActionId = 'new-note' | 'new-action-item' | 'record' | 'sidebar' | 'right-panel' | 'import';
 
 /** How an action looks in the list. */
 interface ActionView {
@@ -35,8 +36,6 @@ interface ActionView {
   label: string;
   icon: Icon;
   shortcut?: string;
-  /** Unfinished (D13): shown with a "WIP" badge, and cannot be chosen. */
-  wip?: boolean;
 }
 
 const ACTIONS: readonly ActionView[] = [
@@ -52,14 +51,6 @@ const ACTIONS: readonly ActionView[] = [
     label: paletteCopy.startRecording,
     icon: Mic,
     shortcut: SHORTCUTS.record.display,
-  },
-  {
-    id: 'chat',
-    label: paletteCopy.askDeino,
-    icon: MessageCircle,
-    shortcut: SHORTCUTS.chat.display,
-    // D13: the chat agent (AI-02) is deprioritised.
-    wip: true,
   },
   {
     id: 'sidebar',
@@ -94,9 +85,6 @@ function useActionRunners(): Record<ActionId, () => void> {
     record: () => {
       void requestRecordingStart(goHome);
     },
-    chat: () => {
-      layout.setChatOpen(true);
-    },
     sidebar: layout.toggleSidebar,
     'right-panel': layout.toggleRightPanel,
     import: () => {
@@ -115,27 +103,16 @@ function ActionItem({
 }) {
   const ActionIcon = view.icon;
   const shortcut = 'shortcut' in view ? view.shortcut : undefined;
-  const wip = 'wip' in view ? (view.wip ?? false) : false;
   return (
-    <CommandItem
-      value={`action ${view.label}`}
-      keywords={[view.label]}
-      disabled={wip}
-      onSelect={onRun}
-    >
+    <CommandItem value={`action ${view.label}`} keywords={[view.label]} onSelect={onRun}>
       <ActionIcon {...ICON_PROPS} />
       {view.label}
-      {wip ? (
-        <span className="rounded-full border border-border px-1.5 text-[11px] leading-4 text-fg-muted">
-          {paletteCopy.wip}
-        </span>
-      ) : null}
       {shortcut === undefined ? null : <CommandShortcut>{shortcut}</CommandShortcut>}
     </CommandItem>
   );
 }
 
-/** "Actions": new note, recording, chat, panels, import and theme. */
+/** "Actions": new note, recording, panels, import and theme. */
 export function ActionsProvider({ close }: PaletteProviderProps) {
   const runners = useActionRunners();
   const saveTheme = useSaveTheme();

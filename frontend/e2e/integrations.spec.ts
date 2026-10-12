@@ -14,15 +14,13 @@ async function screenshots(page: Page, name: string) {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-test('Settings → Integrations connects the sandbox and lists the planned providers as WIP', async ({
+test('Settings → Integrations connects the sandbox; planned providers stay hidden (UX-27)', async ({
   page,
 }) => {
   await page.goto('/settings?section=integrations');
 
-  const planned = page.getByRole('list', { name: 'On the way' });
-  await expect(planned.getByText('Slack')).toBeVisible();
-  await expect(planned.getByRole('button', { name: 'Connect Notion' })).toBeDisabled();
-  await expect(planned.getByText('WIP').first()).toBeVisible();
+  await expect(page.getByRole('list', { name: 'On the way' })).toHaveCount(0);
+  await expect(page.getByText('WIP')).toHaveCount(0);
   await expect(page.getByText('Recently sent')).toBeVisible();
   await screenshots(page, 'integrations');
 

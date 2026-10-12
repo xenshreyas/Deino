@@ -5,7 +5,6 @@
  */
 import { useNavigate } from '@tanstack/react-router';
 import { type FormEvent, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
 
@@ -32,7 +31,6 @@ function useSaveCompany(target: Target, onClose: () => void) {
     }
     create.mutate(fields, {
       onSuccess: (company) => {
-        toast.success(entitiesCopy.created(company.name));
         onClose();
         void navigate({ to: '/companies/$companyId', params: { companyId: company.id } });
       },

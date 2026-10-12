@@ -20,14 +20,11 @@ export interface MeetingCorrectionsProps {
   meetingId: MeetingId;
 }
 
-/** Undoes corrections, toasting what happened. */
+/** Undoes corrections; the transcript shows them gone, so only a failure toasts. */
 function useUndo(meetingId: MeetingId) {
   const undo = useUndoCorrections(meetingId);
   return (segmentId: SegmentId | null) => {
     undo.mutate(segmentId, {
-      onSuccess: (report) => {
-        if (report.restored > 0) toast.success(copy.undone(report.restored));
-      },
       onError: (error) => toast.error(copy.undoFailed, { description: error.message }),
     });
   };

@@ -1,14 +1,13 @@
 /**
  * The folder page's header: the icon (click to change), the name (click to
  * rename, Enter or blur saves, Escape cancels), where the folder sits, and
- * the actions: Integrations (AUT-01's shortcut, resting) and the ⋯ menu.
+ * the ⋯ menu.
  */
 import { type FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
-import { ICON_PROPS, Plug } from '@/ui/icons';
+import { ICON_PROPS } from '@/ui/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { Hint } from '@/ui/tooltip';
 
@@ -125,20 +124,6 @@ function FolderName({ folder }: { folder: Folder }) {
   );
 }
 
-/** Integrations: a resting button until automations (AUT-01) fill it. */
-function IntegrationsButton() {
-  return (
-    <Hint label={foldersCopy.integrationsSoon}>
-      <span tabIndex={0} className="rounded-md">
-        <Button variant="secondary" size="sm" disabled>
-          <Plug {...ICON_PROPS} />
-          {foldersCopy.integrations}
-        </Button>
-      </span>
-    </Hint>
-  );
-}
-
 /** Icon, name, path and actions. */
 export function FolderHeader({
   folder,
@@ -160,7 +145,6 @@ export function FolderHeader({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1 pt-0.5">
-        <IntegrationsButton />
         <FolderMenu folder={folder} entries={entries} className="size-7" />
       </div>
     </header>

@@ -124,8 +124,7 @@ export function BuiltInModelManager({
             return rest;
           });
           // Refresh models list
-          fetchModels();
-          toast.success(`Model ${model} downloaded successfully`);
+          fetchModels(); // UX-31: the row shows it is ready; no toast
         }
 
         // Handle cancelled status
@@ -230,7 +229,6 @@ export function BuiltInModelManager({
   const cancelDownload = async (modelName: string) => {
     try {
       await invoke('builtin_ai_cancel_download', { modelName });
-      toast.info(`Download of ${modelName} cancelled`);
       setDownloadingModels((prev) => {
         const newSet = new Set(prev);
         newSet.delete(modelName);
@@ -244,7 +242,6 @@ export function BuiltInModelManager({
   const deleteModel = async (modelName: string) => {
     try {
       await invoke('builtin_ai_delete_model', { modelName });
-      toast.success(`Model ${modelName} deleted`);
       fetchModels();
     } catch (error) {
       console.error('Failed to delete model:', error);

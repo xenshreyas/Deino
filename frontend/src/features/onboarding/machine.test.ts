@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FRESH,
   firstUnfinished,
+  isSetupStep,
   type OnboardingAction,
   STEPS,
   transition,
@@ -43,7 +44,7 @@ describe('the onboarding step machine', () => {
     const skipped = run(STEPS.map(() => SKIP));
 
     expect(skipped.completed).toBe(true);
-    expect(skipped.step).toBe('try_it');
+    expect(skipped.step).toBe('profile');
     expect(Object.values(skipped.outcomes)).toEqual(STEPS.map(() => 'skipped'));
   });
 
@@ -95,6 +96,22 @@ describe('the onboarding step machine', () => {
     expect(transition(done, { type: 'resume' }).step).toBe('permissions');
   });
 
+  it('ends after Profile: five steps, no test recording (UX-24)', () => {
+    expect(STEPS).toEqual(['welcome', 'permissions', 'ai_setup', 'calendar', 'profile']);
+    const done = run([CONTINUE, CONTINUE, CONTINUE, CONTINUE, CONTINUE]);
+
+    expect(done.completed).toBe(true);
+    expect(done.step).toBe('profile');
+  });
+
+  it('completes progress an older version left on the retired Try it step', () => {
+    const old: OnboardingSettings = { completed: false, step: 'try_it', outcomes: {} };
+
+    expect(isSetupStep(old.step)).toBe(false);
+    expect(transition(old, CONTINUE).completed).toBe(true);
+    expect(transition(old, { type: 'resume' }).step).toBe('permissions');
+  });
+
   it('never changes the progress it is given', () => {
     const start = run([CONTINUE]);
     const copy = structuredClone(start);
@@ -114,6 +131,6 @@ describe('what is left to do', () => {
   it('is the skipped and unreached steps', () => {
     const progress = run([CONTINUE, CONTINUE, SKIP, CONTINUE]);
 
-    expect(unfinishedSteps(progress)).toEqual(['ai_setup', 'profile', 'try_it']);
+    expect(unfinishedSteps(progress)).toEqual(['ai_setup', 'profile']);
   });
 });

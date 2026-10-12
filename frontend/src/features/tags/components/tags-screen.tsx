@@ -58,10 +58,7 @@ function DeleteTagDialog({ tag, onClose }: { tag: Tag | null; onClose: () => voi
   const confirm = () => {
     if (tag === null) return;
     remove.mutate(tag.id, {
-      onSuccess: () => {
-        toast.success(tagsCopy.deleted);
-        onClose();
-      },
+      onSuccess: onClose,
       onError: (error) => toast.error(tagsCopy.deleteFailed, { description: error.message }),
     });
   };

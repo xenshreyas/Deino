@@ -32,13 +32,14 @@ const RECORD_PATH = '/';
 /** The toast id of the "Ending…" notice, so a new one replaces the old. */
 const ENDING_TOAST = 'recording-ending';
 
-/** Notices that report a recovery rather than a problem. */
+/**
+ * Notices that report a recovery rather than a problem: the pill's warning
+ * clears on its own, so they say nothing (UX-31).
+ */
 const GOOD_NEWS: ReadonlySet<HealthKind> = new Set(['recovered', 'awake']);
 
 function showHealth({ kind }: HealthNotice): void {
-  const message = recordingCopy.health[kind];
-  if (GOOD_NEWS.has(kind)) toast.success(message);
-  else toast.warning(message);
+  if (!GOOD_NEWS.has(kind)) toast.warning(recordingCopy.health[kind]);
 }
 
 /** The "Ending…" notice as a toast with "Keep recording". */

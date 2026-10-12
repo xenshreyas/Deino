@@ -1,14 +1,13 @@
 import { cn } from '@/ui/cn';
 
 import { flowCopy, stepNames } from '../copy';
-import { STEPS, stepIndex } from '../machine';
-import type { OnboardingStep } from '../types';
+import { type SetupStep, STEPS, stepIndex } from '../machine';
 
 /**
- * Where the user is: "Step 2 of 6 · Permissions" over one hairline segment
+ * Where the user is: "Step 2 of 5 · Permissions" over one hairline segment
  * per step, the steps so far in ink.
  */
-export function StepProgress({ step }: { step: OnboardingStep }) {
+export function StepProgress({ step }: { step: SetupStep }) {
   const current = stepIndex(step);
   return (
     <div className="flex flex-col gap-3">
