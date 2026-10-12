@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT person_id AS \"person_id!: PersonId\" FROM meeting_attendees\n               WHERE meeting_id = ?1\n               UNION\n               SELECT person_id AS \"person_id!: PersonId\" FROM speakers\n               WHERE meeting_id = ?1 AND person_id IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "person_id!: PersonId",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a143234acdfc81dcbd63f290b42736b19c617e5fa53022947457b5cbcae59df9"
+}

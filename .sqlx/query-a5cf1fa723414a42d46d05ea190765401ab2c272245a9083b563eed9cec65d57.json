@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO automation_run_steps (run_id, position, kind, status)\n                 VALUES (?1, ?2, ?3, 'pending')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "a5cf1fa723414a42d46d05ea190765401ab2c272245a9083b563eed9cec65d57"
+}

@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: AutomationRunId\", automation_id AS \"automation_id: AutomationId\",\n               meeting_id AS \"meeting_id: MeetingId\", trigger AS \"trigger: AutomationTrigger\",\n               trigger_tag_id AS \"trigger_tag_id: TagId\", status AS \"status: AutomationRunStatus\",\n               requested_at AS \"requested_at: DateTime<Utc>\",\n               finished_at AS \"finished_at: DateTime<Utc>\"\n           FROM automation_runs WHERE automation_id = ?1 ORDER BY requested_at DESC, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: AutomationRunId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "automation_id: AutomationId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "trigger: AutomationTrigger",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "trigger_tag_id: TagId",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: AutomationRunStatus",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "requested_at: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "finished_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d610fe44b059157134349ce862d6d1141da31e5857c09c524f5df45e95384435"
+}

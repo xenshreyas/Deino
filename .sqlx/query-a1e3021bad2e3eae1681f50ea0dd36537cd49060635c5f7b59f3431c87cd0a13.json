@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO automations (id, name, enabled, auto_run, stop_on_failure,\n                 conditions_json, steps_json, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "a1e3021bad2e3eae1681f50ea0dd36537cd49060635c5f7b59f3431c87cd0a13"
+}

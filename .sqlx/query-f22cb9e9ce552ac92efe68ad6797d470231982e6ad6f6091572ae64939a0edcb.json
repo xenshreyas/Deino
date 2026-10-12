@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT s.run_id AS \"run_id: AutomationRunId\", s.position, s.kind AS \"kind: ActionKind\",\n               s.status AS \"status: AutomationStepStatus\",\n               s.error_code AS \"error_code: StepFailure\", s.error,\n               s.output_json AS \"output: Json<StepOutput>\",\n               s.finished_at AS \"finished_at: DateTime<Utc>\"\n           FROM automation_run_steps AS s JOIN automation_runs AS r ON r.id = s.run_id\n           WHERE r.automation_id = ?1 ORDER BY s.run_id, s.position",
+  "describe": {
+    "columns": [
+      {
+        "name": "run_id: AutomationRunId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "position",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "kind: ActionKind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: AutomationStepStatus",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_code: StepFailure",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "error",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "output: Json<StepOutput>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "finished_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "f22cb9e9ce552ac92efe68ad6797d470231982e6ad6f6091572ae64939a0edcb"
+}

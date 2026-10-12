@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE automations SET name = ?1, enabled = ?2, auto_run = ?3,\n                 stop_on_failure = ?4, conditions_json = ?5, steps_json = ?6, updated_at = ?7\n             WHERE id = ?8",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "fc817436a256946948291be29ea321ae0233cd7a19bc1a212b16d1100071b2e3"
+}

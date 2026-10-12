@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id: AutomationId\", name, enabled AS \"enabled: bool\",\n                   auto_run AS \"auto_run: bool\", stop_on_failure AS \"stop_on_failure: bool\",\n                   conditions_json AS \"conditions: Json<ConditionGroups>\",\n                   steps_json AS \"steps: Json<Vec<Action>>\",\n                   created_at AS \"created_at: DateTime<Utc>\",\n                   updated_at AS \"updated_at: DateTime<Utc>\"\n               FROM automations ORDER BY created_at, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: AutomationId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "enabled: bool",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "auto_run: bool",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "stop_on_failure: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "conditions: Json<ConditionGroups>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "steps: Json<Vec<Action>>",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a4bc12295c770e6b51ca02c9d7787f7dbc0f994aa2f9b87d6e4bb32e1b03482a"
+}
