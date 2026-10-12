@@ -99,11 +99,17 @@ async fn importing_twice_adds_nothing() {
     let first = run(&world, &Scripted::default()).await;
     let second = run(&world, &Scripted::default()).await;
 
-    assert_eq!((first.phase, first.total, first.imported), (ImportPhase::Finished, 3, 3));
+    assert_eq!(
+        (first.phase, first.total, first.imported),
+        (ImportPhase::Finished, 3, 3)
+    );
     assert_eq!((second.total, second.imported, second.skipped), (0, 0, 3));
     assert_eq!(world.meeting_count().await, 3);
     let preview = world.runner.preview(&Scripted::default()).await.unwrap();
-    assert_eq!((preview.total, preview.already_imported, preview.new), (3, 3, 0));
+    assert_eq!(
+        (preview.total, preview.already_imported, preview.new),
+        (3, 3, 0)
+    );
 }
 
 #[tokio::test]
@@ -112,7 +118,10 @@ async fn the_preview_counts_without_importing() {
 
     let preview = world.runner.preview(&Scripted::default()).await.unwrap();
 
-    assert_eq!((preview.total, preview.already_imported, preview.new), (3, 0, 3));
+    assert_eq!(
+        (preview.total, preview.already_imported, preview.new),
+        (3, 0, 3)
+    );
     assert_eq!(world.meeting_count().await, 0);
 }
 
@@ -152,15 +161,22 @@ async fn attendees_become_people_and_action_items_are_kept() {
     assert_eq!(roles.len(), 2);
     assert!(roles.contains(&AttendeeRole::Organizer));
     assert_eq!(items.len(), 2);
-    let send = items.iter().find(|item| item.title.starts_with("Send")).unwrap();
-    let book = items.iter().find(|item| item.title.starts_with("Book")).unwrap();
+    let send = items
+        .iter()
+        .find(|item| item.title.starts_with("Send"))
+        .unwrap();
+    let book = items
+        .iter()
+        .find(|item| item.title.starts_with("Book"))
+        .unwrap();
     assert!(send.assignee_person_id.is_some());
     assert_eq!(book.status, ActionItemStatus::Done);
     // Ana is one person across three meetings: keyed by her address.
-    let people: i64 = sqlx::query_scalar("SELECT count(*) FROM people WHERE email = 'ana@acme.com'")
-        .fetch_one(world.database.reader())
-        .await
-        .unwrap();
+    let people: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM people WHERE email = 'ana@acme.com'")
+            .fetch_one(world.database.reader())
+            .await
+            .unwrap();
     assert_eq!(people, 1);
 }
 
@@ -209,7 +225,10 @@ async fn a_cancelled_job_keeps_what_it_imported_and_frees_the_slot() {
 
     let progress = jobs.run(&source, token).await;
 
-    assert_eq!((progress.phase, progress.imported), (ImportPhase::Cancelled, 1));
+    assert_eq!(
+        (progress.phase, progress.imported),
+        (ImportPhase::Cancelled, 1)
+    );
     assert_eq!(jobs.status(), progress);
     assert!(!jobs.cancel());
     assert!(jobs.begin(ImportSource::Circleback).is_ok());

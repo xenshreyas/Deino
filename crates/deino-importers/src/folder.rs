@@ -124,7 +124,9 @@ fn markdown(text: &str, stem: Option<&str>) -> TranscriptImport {
         None => body.to_owned(),
     };
     Parts {
-        title: field("title").or(heading).or_else(|| stem.map(str::to_owned)),
+        title: field("title")
+            .or(heading)
+            .or_else(|| stem.map(str::to_owned)),
         created_at: field("date").as_deref().and_then(date),
         notes: Some(notes.trim().to_owned()),
         ..Parts::default()

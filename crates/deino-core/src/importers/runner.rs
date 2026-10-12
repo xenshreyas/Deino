@@ -9,8 +9,8 @@ use deino_domain::{Clock, ErrorClass, MeetingId};
 use tokio_util::sync::CancellationToken;
 
 use super::{
-    ImportEvents, ImportLedger, ImportPhase, LedgerEntry, ImportPreview, ImportProgress, Importer,
-    ImporterError, SourceItem,
+    ImportEvents, ImportLedger, ImportPhase, ImportPreview, ImportProgress, Importer,
+    ImporterError, LedgerEntry, SourceItem,
 };
 use crate::transcript_import::TranscriptImporter;
 
@@ -117,7 +117,11 @@ impl ImportRunner {
                 break;
             }
             let page = source.page(cursor.as_deref()).await?;
-            for item in page.items.into_iter().filter(|item| seen.insert(item.id.clone())) {
+            for item in page
+                .items
+                .into_iter()
+                .filter(|item| seen.insert(item.id.clone()))
+            {
                 listing.total += 1;
                 if done.contains(&item.id) {
                     listing.skipped += 1;

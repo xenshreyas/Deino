@@ -69,7 +69,10 @@ impl ImportJobs {
     /// Runs the job claimed with [`ImportJobs::begin`] to its end, then
     /// frees the slot.
     pub async fn run(&self, source: &dyn Importer, cancel: CancellationToken) -> ImportProgress {
-        let progress = self.runner.run(source, &cancel, &Relay { jobs: self }).await;
+        let progress = self
+            .runner
+            .run(source, &cancel, &Relay { jobs: self })
+            .await;
         self.slot().cancel = None;
         progress
     }

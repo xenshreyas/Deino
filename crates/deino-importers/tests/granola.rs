@@ -14,7 +14,10 @@ const CURSOR: &str = "eyJjcmVhdGVkX2F0IjoiMjAyNi0wOC0wNVQxMDozMDowMFoifQ%3D%3D";
 
 fn granola() -> Arc<FixtureClient> {
     let client = FixtureClient::default()
-        .route("GET /v1/notes?page_size=30", Recorded::file("granola/notes-page-1.json"))
+        .route(
+            "GET /v1/notes?page_size=30",
+            Recorded::file("granola/notes-page-1.json"),
+        )
         .route(
             &format!("GET /v1/notes?page_size=30&cursor={CURSOR}"),
             Recorded::file("granola/notes-page-2.json"),
@@ -45,18 +48,23 @@ async fn notes_transcripts_and_attendees_are_imported() {
 
     let progress = run(&world, &GranolaImporter::new(shared(&client), "grn_test")).await;
 
-    assert_eq!((progress.phase, progress.imported, progress.failed), (ImportPhase::Finished, 3, 0));
+    assert_eq!(
+        (progress.phase, progress.imported, progress.failed),
+        (ImportPhase::Finished, 3, 0)
+    );
     let title = "Quarterly planning with design";
     // The microphone is the user; others keep Granola's name or label.
-    assert_eq!(speakers(&world, title).await, ["Ines Duarte", "Me", "Speaker B"]);
+    assert_eq!(
+        speakers(&world, title).await,
+        ["Ines Duarte", "Me", "Speaker B"]
+    );
     assert_eq!(count_for(&world, "transcript_segments", title).await, 3);
     assert_eq!(count_for(&world, "meeting_attendees", title).await, 2);
-    let organisers: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM meeting_attendees WHERE role = 'organizer'",
-    )
-    .fetch_one(world.database.reader())
-    .await
-    .unwrap();
+    let organisers: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM meeting_attendees WHERE role = 'organizer'")
+            .fetch_one(world.database.reader())
+            .await
+            .unwrap();
     assert_eq!(organisers, 1);
     assert!(client.requests().iter().all(|r| {
         r.url.host_str() == Some("public-api.granola.ai")
@@ -68,7 +76,11 @@ async fn notes_transcripts_and_attendees_are_imported() {
 async fn a_transcript_too_large_to_inline_still_imports_the_note() {
     let world = ImportWorld::new().await;
 
-    run(&world, &GranolaImporter::new(shared(&granola()), "grn_test")).await;
+    run(
+        &world,
+        &GranolaImporter::new(shared(&granola()), "grn_test"),
+    )
+    .await;
 
     let title = "All-hands rehearsal";
     assert_eq!(count_for(&world, "enhanced_notes", title).await, 1);
@@ -92,7 +104,11 @@ async fn importing_twice_adds_nothing() {
 async fn the_private_notes_follow_the_summary_and_are_searchable() {
     let world = ImportWorld::new().await;
 
-    run(&world, &GranolaImporter::new(shared(&granola()), "grn_test")).await;
+    run(
+        &world,
+        &GranolaImporter::new(shared(&granola()), "grn_test"),
+    )
+    .await;
 
     assert!(!world.search("contractor budget").await.is_empty());
     assert!(!world.search("design system").await.is_empty());

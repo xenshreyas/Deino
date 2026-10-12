@@ -54,7 +54,11 @@ impl Importer for GranolaImporter {
         }
         let list: NoteList = self.api.get(&url).await?.body;
         Ok(SourcePage {
-            items: list.notes.into_iter().map(|note| SourceItem::listed(note.id)).collect(),
+            items: list
+                .notes
+                .into_iter()
+                .map(|note| SourceItem::listed(note.id))
+                .collect(),
             next: list.cursor.filter(|_| list.has_more),
         })
     }
@@ -62,7 +66,11 @@ impl Importer for GranolaImporter {
     async fn fetch(&self, item: SourceItem) -> Result<TranscriptImport, ImporterError> {
         let id = url::form_urlencoded::byte_serialize(item.id.as_bytes()).collect::<String>();
         let url = format!("{BASE_URL}/notes/{id}");
-        match self.api.get::<Note>(&format!("{url}?include=transcript")).await {
+        match self
+            .api
+            .get::<Note>(&format!("{url}?include=transcript"))
+            .await
+        {
             Ok(fetched) => Ok(fetched.body.into_import()),
             Err(ImporterError::Net(NetError::Status(status))) if status.as_u16() == 413 => {
                 log::info!(target: "importers", "a Granola transcript is too large to inline; importing the note alone");
@@ -139,7 +147,10 @@ impl Note {
         Parts {
             title: self.title,
             created_at: self.created_at,
-            notes: notes(self.summary_markdown.or(self.summary_text), self.private_notes_markdown),
+            notes: notes(
+                self.summary_markdown.or(self.summary_text),
+                self.private_notes_markdown,
+            ),
             transcript: transcript(self.transcript.as_deref().unwrap_or_default()),
             attendees: self
                 .attendees

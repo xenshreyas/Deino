@@ -11,7 +11,9 @@ use deino_domain::{ImportSource, ServiceId};
 use deino_net::{Net, ServiceSwitch};
 use deino_secrets::{SecretName, SecretStatus, SecretStore, SecretValue};
 
-use crate::{CirclebackImporter, FathomImporter, FirefliesImporter, FolderImporter, GranolaImporter};
+use crate::{
+    CirclebackImporter, FathomImporter, FirefliesImporter, FolderImporter, GranolaImporter,
+};
 
 /// The network service a source's API is reached through; `None` for a folder.
 pub const fn service(source: ImportSource) -> Option<ServiceId> {
@@ -111,7 +113,9 @@ impl ImportSources {
             ImportSource::Granola => Arc::new(GranolaImporter::new(client, key)),
             ImportSource::Circleback => Arc::new(CirclebackImporter::new(client, key)),
             ImportSource::Fireflies => Arc::new(FirefliesImporter::new(client, key)),
-            ImportSource::Fathom | ImportSource::Folder => Arc::new(FathomImporter::new(client, key)),
+            ImportSource::Fathom | ImportSource::Folder => {
+                Arc::new(FathomImporter::new(client, key))
+            }
         })
     }
 

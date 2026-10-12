@@ -124,7 +124,12 @@ fn role(attendee: &ImportAttendee) -> AttendeeRole {
 
 /// `text` trimmed and cut to `max` characters.
 fn clipped(text: &str, max: usize) -> String {
-    text.trim().chars().take(max).collect::<String>().trim_end().to_owned()
+    text.trim()
+        .chars()
+        .take(max)
+        .collect::<String>()
+        .trim_end()
+        .to_owned()
 }
 
 #[cfg(test)]

@@ -57,9 +57,11 @@ pub trait Importer: Send + Sync {
     /// The whole meeting of `item`. The default returns what the list
     /// carried; adapters whose lists are summaries override it.
     async fn fetch(&self, item: SourceItem) -> Result<TranscriptImport, ImporterError> {
-        item.meeting.map(|meeting| *meeting).ok_or(ImporterError::Unreadable(
-            self.source(),
-            "a meeting without details",
-        ))
+        item.meeting
+            .map(|meeting| *meeting)
+            .ok_or(ImporterError::Unreadable(
+                self.source(),
+                "a meeting without details",
+            ))
     }
 }

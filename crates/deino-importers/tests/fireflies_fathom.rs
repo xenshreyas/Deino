@@ -36,7 +36,10 @@ async fn fireflies_transcripts_summaries_and_owned_action_items_are_imported() {
 
     let progress = run(&world, &FirefliesImporter::new(shared(&client), "ff_test")).await;
 
-    assert_eq!((progress.phase, progress.imported), (ImportPhase::Finished, 2));
+    assert_eq!(
+        (progress.phase, progress.imported),
+        (ImportPhase::Finished, 2)
+    );
     let title = "Pipeline review";
     assert_eq!(speakers(&world, title).await, ["Dana Lee", "Raj Patel"]);
     assert_eq!(count_for(&world, "transcript_segments", title).await, 3);
@@ -51,9 +54,10 @@ async fn fireflies_transcripts_summaries_and_owned_action_items_are_imported() {
 #[tokio::test]
 async fn a_fireflies_auth_error_names_the_key() {
     let world = ImportWorld::new().await;
-    let client = Arc::new(
-        FixtureClient::default().route("POST /graphql skip=0", Recorded::file("fireflies/auth-error.json")),
-    );
+    let client = Arc::new(FixtureClient::default().route(
+        "POST /graphql skip=0",
+        Recorded::file("fireflies/auth-error.json"),
+    ));
 
     let progress = run(&world, &FirefliesImporter::new(shared(&client), "ff_wrong")).await;
 
@@ -68,14 +72,18 @@ async fn fathom_meetings_are_imported_with_the_recorder_as_me() {
 
     let progress = run(&world, &FathomImporter::new(shared(&client), "fathom_test")).await;
 
-    assert_eq!((progress.phase, progress.imported), (ImportPhase::Finished, 3));
+    assert_eq!(
+        (progress.phase, progress.imported),
+        (ImportPhase::Finished, 3)
+    );
     let title = "Kickoff: Beacon migration";
     assert_eq!(speakers(&world, title).await, ["Me", "Morgan Hale"]);
     assert_eq!(count_for(&world, "action_items", title).await, 2);
     assert_eq!(count_for(&world, "meeting_attendees", title).await, 2);
     assert!(!world.search("warehouse").await.is_empty());
     assert!(client.requests().iter().all(|r| {
-        r.url.host_str() == Some("api.fathom.ai") && r.headers.get("x-api-key") == Some("fathom_test")
+        r.url.host_str() == Some("api.fathom.ai")
+            && r.headers.get("x-api-key") == Some("fathom_test")
     }));
 }
 

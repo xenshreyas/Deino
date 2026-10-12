@@ -17,8 +17,8 @@ mod service;
 
 pub use error::TranscriptImportError;
 pub use model::{
-    ImportActionItem, ImportAttendee, ImportTag, ImportUtterance, ImportWord, MAX_UTTERANCES, TimedUtterance, TranscriptImport,
-    WordUtterance,
+    ImportActionItem, ImportAttendee, ImportTag, ImportUtterance, ImportWord, MAX_UTTERANCES,
+    TimedUtterance, TranscriptImport, WordUtterance,
 };
 pub use people::ImportPeoplePorts;
 pub use service::{TranscriptImportPorts, TranscriptImporter};

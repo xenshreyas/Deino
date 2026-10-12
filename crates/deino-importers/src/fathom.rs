@@ -128,7 +128,9 @@ impl Meeting {
         Parts {
             title: self.title.or(self.calendar_title),
             created_at: self.recording_start_time.or(self.created_at),
-            notes: self.default_summary.and_then(|summary| summary.markdown_formatted),
+            notes: self
+                .default_summary
+                .and_then(|summary| summary.markdown_formatted),
             transcript: self
                 .transcript
                 .unwrap_or_default()
@@ -152,13 +154,20 @@ impl Meeting {
 }
 
 impl Line {
-    fn import(&self, recorder: Option<&str>) -> Option<deino_core::transcript_import::ImportUtterance> {
+    fn import(
+        &self,
+        recorder: Option<&str>,
+    ) -> Option<deino_core::transcript_import::ImportUtterance> {
         let mine = self
             .speaker
             .matched_calendar_invitee_email
             .as_deref()
             .is_some_and(|email| Some(email.to_lowercase().as_str()) == recorder);
-        let speaker = if mine { Some(ME) } else { self.speaker.display_name.as_deref() };
+        let speaker = if mine {
+            Some(ME)
+        } else {
+            self.speaker.display_name.as_deref()
+        };
         let start = mapping::clock_seconds(&self.timestamp)?;
         mapping::utterance(speaker, &self.text, start, None)
     }

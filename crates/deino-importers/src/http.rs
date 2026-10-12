@@ -127,13 +127,22 @@ mod tests {
 
     fn api(client: &Arc<FakeNetClient>) -> ProviderApi {
         let client: Arc<dyn NetClient> = client.clone();
-        ProviderApi::new(client, ImportSource::Circleback, "authorization", "Bearer k".into())
+        ProviderApi::new(
+            client,
+            ImportSource::Circleback,
+            "authorization",
+            "Bearer k".into(),
+        )
     }
 
     #[test]
     fn the_next_link_is_found_among_others() {
-        let header = r#"<https://a.test/x?cursor=1>; rel="prev", <https://a.test/x?cursor=2>; rel="next""#;
-        assert_eq!(next_link(header).as_deref(), Some("https://a.test/x?cursor=2"));
+        let header =
+            r#"<https://a.test/x?cursor=1>; rel="prev", <https://a.test/x?cursor=2>; rel="next""#;
+        assert_eq!(
+            next_link(header).as_deref(),
+            Some("https://a.test/x?cursor=2")
+        );
         assert_eq!(next_link(r#"<https://a.test/x>; rel="prev""#), None);
     }
 
@@ -143,7 +152,10 @@ mod tests {
         client.reply(FakeReply::status(Status::new(429)).header("retry-after", "0"));
         client.reply(FakeReply::ok("[1]"));
 
-        let fetched: Fetched<Vec<u8>> = api(&client).get("https://circleback.ai/api/x").await.unwrap();
+        let fetched: Fetched<Vec<u8>> = api(&client)
+            .get("https://circleback.ai/api/x")
+            .await
+            .unwrap();
 
         assert_eq!(fetched.body, vec![1]);
         let requests = client.requests();
@@ -155,13 +167,17 @@ mod tests {
     async fn a_refused_key_and_endless_limits_are_named() {
         let client = Arc::new(FakeNetClient::default());
         client.reply(FakeReply::status(Status::new(401)));
-        let refused = api(&client).get::<Vec<u8>>("https://circleback.ai/api/x").await;
+        let refused = api(&client)
+            .get::<Vec<u8>>("https://circleback.ai/api/x")
+            .await;
         assert!(matches!(refused, Err(ImporterError::Unauthorized(_))));
 
         for _ in 0..ATTEMPTS {
             client.reply(FakeReply::status(Status::new(429)).header("retry-after", "0"));
         }
-        let limited = api(&client).get::<Vec<u8>>("https://circleback.ai/api/x").await;
+        let limited = api(&client)
+            .get::<Vec<u8>>("https://circleback.ai/api/x")
+            .await;
         assert!(matches!(limited, Err(ImporterError::RateLimited(_))));
     }
 }

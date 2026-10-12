@@ -98,10 +98,9 @@ pub(crate) fn attendee(name: Option<&str>, email: Option<&str>) -> Option<Import
 
 /// Seconds in an `HH:MM:SS` (or `MM:SS`) stamp.
 pub(crate) fn clock_seconds(stamp: &str) -> Option<f64> {
-    stamp
-        .trim()
-        .split(':')
-        .try_fold(0.0, |total, part| Some(total * 60.0 + part.parse::<f64>().ok()?))
+    stamp.trim().split(':').try_fold(0.0, |total, part| {
+        Some(total * 60.0 + part.parse::<f64>().ok()?)
+    })
 }
 
 /// A time sent as milliseconds since the Unix epoch.
@@ -150,7 +149,10 @@ mod tests {
         let Some(ImportUtterance::Timed(line)) = utterance(None, " Hi ", 2.0, Some(1.0)) else {
             panic!("a line");
         };
-        assert_eq!((line.speaker.as_str(), line.end_timestamp), (UNKNOWN_SPEAKER, None));
+        assert_eq!(
+            (line.speaker.as_str(), line.end_timestamp),
+            (UNKNOWN_SPEAKER, None)
+        );
     }
 
     #[test]

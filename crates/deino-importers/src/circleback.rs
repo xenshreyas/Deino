@@ -7,7 +7,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use deino_core::importers::{Importer, ImporterError, SourceItem, SourcePage};
-use deino_core::transcript_import::{ImportActionItem, ImportAttendee, ImportTag, TranscriptImport};
+use deino_core::transcript_import::{
+    ImportActionItem, ImportAttendee, ImportTag, TranscriptImport,
+};
 use deino_domain::ImportSource;
 use deino_net::NetClient;
 use serde::Deserialize;
@@ -43,7 +45,12 @@ impl Importer for CirclebackImporter {
         let url = match cursor {
             // The `Link` header's URL, on Circleback's own API only.
             Some(next) if next.starts_with(BASE_URL) => next.to_owned(),
-            Some(_) => return Err(ImporterError::Unreadable(self.source(), "a foreign next link")),
+            Some(_) => {
+                return Err(ImporterError::Unreadable(
+                    self.source(),
+                    "a foreign next link",
+                ));
+            }
             None => format!("{BASE_URL}/meetings"),
         };
         let fetched = self.api.get::<Vec<Listed>>(&url).await?;
@@ -59,7 +66,11 @@ impl Importer for CirclebackImporter {
 
     async fn fetch(&self, item: SourceItem) -> Result<TranscriptImport, ImporterError> {
         let id = url::form_urlencoded::byte_serialize(item.id.as_bytes()).collect::<String>();
-        let meeting: Meeting = self.api.get(&format!("{BASE_URL}/meeting/{id}")).await?.body;
+        let meeting: Meeting = self
+            .api
+            .get(&format!("{BASE_URL}/meeting/{id}"))
+            .await?
+            .body;
         let transcript: Vec<Segment> = self
             .api
             .get(&format!("{BASE_URL}/meeting/{id}/transcript"))
@@ -138,7 +149,11 @@ impl Meeting {
                 })
                 .collect(),
             attendees: self.attendees.iter().filter_map(Attendee::import).collect(),
-            action_items: self.action_items.into_iter().map(ActionItem::import).collect(),
+            action_items: self
+                .action_items
+                .into_iter()
+                .map(ActionItem::import)
+                .collect(),
         };
         let mut import = parts.into_import();
         import.tags = self

@@ -37,9 +37,16 @@ fn window() -> (WebviewWindow<MockRuntime>, Arc<FakeServicePolicy>) {
         egress: Arc::new(EgressLog::default()),
         clock,
     });
-    let sources = ImportSources::new(net, Arc::new(InMemorySecretStore::default()), policy.clone());
+    let sources = ImportSources::new(
+        net,
+        Arc::new(InMemorySecretStore::default()),
+        policy.clone(),
+    );
     app.manage(Arc::new(sources));
-    app.manage(Arc::new(ImportJobs::new(world.runner, Arc::new(NoImportEvents))));
+    app.manage(Arc::new(ImportJobs::new(
+        world.runner,
+        Arc::new(NoImportEvents),
+    )));
     (main_window(&app), policy)
 }
 
@@ -51,7 +58,12 @@ fn call(window: &WebviewWindow<MockRuntime>, command: &str, args: Value) -> Resu
 fn a_saved_key_marks_its_source_ready_and_switches_its_service_on() {
     let (window, policy) = window();
 
-    call(&window, "save_key", json!({ "source": "granola", "key": "grn_abc" })).unwrap();
+    call(
+        &window,
+        "save_key",
+        json!({ "source": "granola", "key": "grn_abc" }),
+    )
+    .unwrap();
     let sources = call(&window, "sources", json!({})).unwrap();
     let enabled = tauri::async_runtime::block_on(policy.grant(ServiceId::Granola)).enabled;
     call(&window, "forget_key", json!({ "source": "granola" })).unwrap();
@@ -69,8 +81,12 @@ fn a_saved_key_marks_its_source_ready_and_switches_its_service_on() {
 fn a_provider_without_a_key_cannot_be_previewed() {
     let (window, _) = window();
 
-    let error = call(&window, "preview", json!({ "target": { "source": "fathom", "folder": null } }))
-        .unwrap_err();
+    let error = call(
+        &window,
+        "preview",
+        json!({ "target": { "source": "fathom", "folder": null } }),
+    )
+    .unwrap_err();
 
     assert_eq!(error["code"], "not_found");
 }
@@ -94,9 +110,15 @@ fn a_folder_is_previewed_then_imported_in_the_background() {
         Value::Null
     });
 
-    assert_eq!(preview, json!({ "source": "folder", "total": 3, "alreadyImported": 0, "new": 3 }));
+    assert_eq!(
+        preview,
+        json!({ "source": "folder", "total": 3, "alreadyImported": 0, "new": 3 })
+    );
     assert_eq!(idle["phase"], "idle");
     assert_eq!(first["phase"], "listing");
-    assert_eq!((done["imported"].clone(), done["failed"].clone()), (json!(2), json!(1)));
+    assert_eq!(
+        (done["imported"].clone(), done["failed"].clone()),
+        (json!(2), json!(1))
+    );
     assert_eq!(call(&window, "cancel", json!({})).unwrap(), json!(false));
 }

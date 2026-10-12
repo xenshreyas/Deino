@@ -74,7 +74,10 @@ impl Importer for FirefliesImporter {
 /// A GraphQL error as an import error.
 fn graphql_error(errors: &[GraphQlError]) -> ImporterError {
     let auth = errors.iter().any(|error| {
-        let code = error.extensions.as_ref().and_then(|ext| ext.code.as_deref());
+        let code = error
+            .extensions
+            .as_ref()
+            .and_then(|ext| ext.code.as_deref());
         code.is_some_and(|code| code.contains("auth") || code.contains("forbidden"))
             || error.message.to_lowercase().contains("api key")
     });
@@ -162,7 +165,12 @@ impl Transcript {
                 .unwrap_or_default()
                 .iter()
                 .filter_map(|line| {
-                    mapping::utterance(line.speaker_name.as_deref(), &line.text, line.start_time, line.end_time)
+                    mapping::utterance(
+                        line.speaker_name.as_deref(),
+                        &line.text,
+                        line.start_time,
+                        line.end_time,
+                    )
                 })
                 .collect(),
             attendees: self
@@ -210,7 +218,10 @@ fn action_items(text: &str) -> Vec<ImportActionItem> {
     let mut owner: Option<String> = None;
     let mut items = Vec::new();
     for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
-        if let Some(name) = line.strip_prefix("**").and_then(|rest| rest.strip_suffix("**")) {
+        if let Some(name) = line
+            .strip_prefix("**")
+            .and_then(|rest| rest.strip_suffix("**"))
+        {
             owner = Some(name.trim().to_owned()).filter(|name| !name.is_empty());
             continue;
         }
@@ -232,7 +243,8 @@ mod tests {
 
     #[test]
     fn action_items_take_their_owner_from_the_heading_above() {
-        let items = action_items("**Dana Lee**\nSend the deck (04:12)\n\n**Raj**\n- Book the venue\n");
+        let items =
+            action_items("**Dana Lee**\nSend the deck (04:12)\n\n**Raj**\n- Book the venue\n");
         let owners: Vec<Option<String>> = items
             .iter()
             .map(|item| item.assignee.as_ref().and_then(|a| a.name.clone()))

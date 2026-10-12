@@ -18,13 +18,29 @@ async fn json_and_markdown_files_become_meetings() {
     let progress = run(&world, &folder()).await;
 
     assert_eq!(
-        (progress.phase, progress.total, progress.imported, progress.failed),
+        (
+            progress.phase,
+            progress.total,
+            progress.imported,
+            progress.failed
+        ),
         (ImportPhase::Finished, 3, 2, 1)
     );
-    let titles: Vec<String> = world.titles().await.into_iter().map(|(_, title)| title).collect();
+    let titles: Vec<String> = world
+        .titles()
+        .await
+        .into_iter()
+        .map(|(_, title)| title)
+        .collect();
     assert_eq!(titles, ["Vendor call: Acme logistics", "Board prep"]);
-    assert_eq!(speakers(&world, "Vendor call: Acme logistics").await, ["Me", "Rosa Diaz"]);
-    assert_eq!(count_for(&world, "meeting_attendees", "Vendor call: Acme logistics").await, 1);
+    assert_eq!(
+        speakers(&world, "Vendor call: Acme logistics").await,
+        ["Me", "Rosa Diaz"]
+    );
+    assert_eq!(
+        count_for(&world, "meeting_attendees", "Vendor call: Acme logistics").await,
+        1
+    );
     assert!(!world.search("retention cohort").await.is_empty());
 }
 
