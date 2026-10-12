@@ -237,36 +237,51 @@ summary() {
     echo "$status"
 }
 
-# ── Machine-wide lock ────────────────────────────────────────────────────────
-# Parallel worktrees each running the full gate overloads the machine (load
-# 100+), and timing-sensitive tests then flake. One gate runs at a time; the
-# others wait. A lock whose owner died is reclaimed. DEINO_GATE_NO_LOCK=1 skips it.
-readonly GATE_LOCK="${HOME}/.cache/deino/gate.lock"
+# ── Machine-wide gate slots ──────────────────────────────────────────────────
+# Parallel worktrees each running the full gate overloaded the machine (load
+# 100+), and timing-sensitive tests then flaked. So the heavy steps run in one
+# of DEINO_GATE_SLOTS slots (default 2); other gates wait for a free one. A
+# slot whose owner died is reclaimed. DEINO_GATE_NO_LOCK=1 skips this.
+# Slot 0 keeps the original lock path, so older copies of this script share it.
+readonly GATE_LOCK_DIR="${HOME}/.cache/deino"
+GATE_SLOT=""
+
+# The lock directory of slot $1.
+slot_path() { (($1 == 0)) && echo "$GATE_LOCK_DIR/gate.lock" || echo "$GATE_LOCK_DIR/gate.lock.$1"; }
+
+# Claims slot $1 if it is free or its owner died; fails otherwise.
+try_slot() {
+    local path owner
+    path="$(slot_path "$1")"
+    mkdir "$path" 2>/dev/null && return 0
+    owner="$(cat "$path/pid" 2>/dev/null || true)"
+    [[ -n "$owner" ]] && ! kill -0 "$owner" 2>/dev/null && rm -rf "$path" && mkdir "$path" 2>/dev/null
+}
 
 acquire_gate_lock() {
-    [[ "${DEINO_GATE_NO_LOCK:-}" == 1 || -n "${GATE_LOCK_HELD:-}" ]] && return 0
-    mkdir -p "$(dirname "$GATE_LOCK")"
-    local waited=0 owner
-    until mkdir "$GATE_LOCK" 2>/dev/null; do
-        owner="$(cat "$GATE_LOCK/pid" 2>/dev/null || true)"
-        if [[ -n "$owner" ]] && ! kill -0 "$owner" 2>/dev/null; then
-            rm -rf "$GATE_LOCK"
-            continue
-        fi
-        ((waited % 60 == 0)) && echo "Waiting for another gate run (pid ${owner:-?}) to finish…"
+    [[ "${DEINO_GATE_NO_LOCK:-}" == 1 || -n "$GATE_SLOT" ]] && return 0
+    mkdir -p "$GATE_LOCK_DIR"
+    local slots="${DEINO_GATE_SLOTS:-2}" waited=0 slot
+    while true; do
+        for ((slot = 0; slot < slots; slot++)); do
+            try_slot "$slot" && GATE_SLOT="$slot" && break 2
+        done
+        ((waited % 60 == 0)) && echo "Waiting for a free gate slot ($slots in use)…"
         sleep 5
         waited=$((waited + 5))
     done
-    echo $$ >"$GATE_LOCK/pid"
-    GATE_LOCK_HELD=1
+    echo $$ >"$(slot_path "$GATE_SLOT")/pid"
     trap release_gate_lock EXIT
-    # The lock holder is the only full gate on the machine, and other agents
-    # queue behind it, so it gets more compile jobs than an ordinary build.
-    export CARGO_BUILD_JOBS="${DEINO_GATE_JOBS:-12}"
+    # Gates holding a slot are what the queue waits on, so they get more
+    # compile jobs than an ordinary build.
+    export CARGO_BUILD_JOBS="${DEINO_GATE_JOBS:-8}"
 }
 
 release_gate_lock() {
-    [[ "$(cat "$GATE_LOCK/pid" 2>/dev/null)" == "$$" ]] && rm -rf "$GATE_LOCK"
+    [[ -z "$GATE_SLOT" ]] && return 0
+    local path
+    path="$(slot_path "$GATE_SLOT")"
+    [[ "$(cat "$path/pid" 2>/dev/null)" == "$$" ]] && rm -rf "$path"
     return 0
 }
 
