@@ -58,7 +58,8 @@ the SQLite adapters behind those ports.
   `SpeakerService` (participants, candidates, rename one segment or all,
   merge, suggestions; action items follow the voice).
 - `segments`: `SegmentReader`, `SegmentWriter` (batched, one transaction per
-    batch) and `SpeakerRepo`;
+    batch), `SegmentEditor` (TRN-02: one segment in any state, batched text
+    edits, the find and replace pre-filter) and `SpeakerRepo`;
   - `people`: `PersonRepo` (with `search` by name, word or email prefix),
     `AttendeeRepo` and `MeRepo` (the one person who is the user, moved in one
     transaction); `PeopleService::search` feeds the notepad's @mentions;
@@ -165,11 +166,20 @@ the SQLite adapters behind those ports.
   (`GatewayEmbedder`, nomic task prefixes; `NoEmbedder`), `SqliteEmbeddingStore`
   (`MeetingSourceReader`, `EmbeddingStore`), `VectorIndex` behind
   `SharedVectors`, `SemanticIndexer`, `SemanticIndex` (`SemanticSearch`), the
-  `Backfill` and `SemanticAdmin`. Fakes: `FakeEmbedder`, `FakeSemanticSearch`.
+  `Backfill` and `SemanticAdmin`. `ReindexQueue` (TRN-02) re-indexes
+  meetings after transcript edits, one at a time on a tracked task. Fakes:
+  `FakeEmbedder`, `FakeSemanticSearch`.
 - `transcript` (TRN-01, ADR 0033): `TranscriptService::transcript`, one
   meeting's whole `Transcript` (segments in spoken order, each with its
   `speaker_id`) over `SegmentReader`; the view names speakers from
-  `speakers` (CAP-04). No SQL of its own; TRN-02 adds the segment edits here.
+  `speakers` (CAP-04). No SQL of its own. TRN-02 (ADR 0036):
+  `TranscriptEditService` edits a line (`original_text` keeps the engine's
+  text), soft-deletes and restores one, and finds and replaces across one
+  meeting or all (a `ReplacePlan` that is both the preview and the edit),
+  then queues the meetings on its `TranscriptIndexer` port.
+- `player` (TRN-03, ADR 0036): `PlayerService` lists a meeting's playable
+  recording files inside the recordings folder (`MediaFiles`,
+  `FsMediaFiles`) and downloads one through the export's `SaveDialog`.
 - `query` (DEV-02/04, ADR 0035): the read side the `deino` CLI and its MCP
   server answer from. `Library` bundles `MeetingQueries` (list by date, tag,
   folder, person and company; read one with its notes, the newest enhanced
@@ -252,3 +262,6 @@ Each feature is `<feature>.rs` plus `<feature>/`:
 - Settings never hold a secret; keys go through `deino-secrets`. A settings
   file from an older build always loads (every section is `#[serde(default)]`).
 - Fakes honour their port's whole contract, ordering included.
+- A transcript line the user deleted (`is_deleted`) is read by nobody: every
+  reader goes through `SegmentReader::list` or SQL that skips it, and its
+  semantic windows leave `embeddings` in the deleting transaction.
