@@ -74,7 +74,8 @@ ollamaEndpoint: string | null;
  */
 customOpenai: CustomOpenAiSettings | null; 
 /**
- * Generate notes automatically when a recording stops.
+ * Generate notes automatically when a recording stops (on by default,
+ * as in Granola; off sends nothing until the user presses Enhance).
  */
 autoSummary: boolean; 
 /**

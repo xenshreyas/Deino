@@ -80,10 +80,11 @@ describe('Settings → General → Notifications', () => {
   it('keeps automatic notes reachable in Advanced', async () => {
     renderSections();
 
+    // On by default; the switch turns it off.
     fireEvent.click(await screen.findByRole('switch', { name: 'Write notes after each meeting' }));
 
     await waitFor(() => {
-      expect(bindings.settings.patch).toHaveBeenCalledWith({ ai: { autoSummary: true } });
+      expect(bindings.settings.patch).toHaveBeenCalledWith({ ai: { autoSummary: false } });
     });
   });
 });

@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
     "providerModels": {},
     "ollamaEndpoint": null,
     "customOpenai": null,
-    "autoSummary": false,
+    "autoSummary": true,
     "routes": {}
   },
   "audio": {
