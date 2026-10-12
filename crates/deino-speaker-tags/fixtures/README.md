@@ -58,3 +58,30 @@ indicator in the dump and update the adapter's vocabulary: the `GRAMMAR`
 words in `src/adapters/zoom.rs` and `teams.rs`, the `CLASSES` in
 `src/adapters/meet.rs`, or a call-window rule. Keep the old dumps: the
 adapters should read both versions while users update the app.
+
+## Chat dumps (CAP-13)
+
+`deino-consent` reads these dumps too, to find each app's meeting chat
+(`crates/deino-consent/tests/chat_views.rs` and `tests/notice.rs`). The
+call dumps above show the chat **closed** (its "Chat" button beside the
+call's leave button); `chat-*.json` add the chat panel:
+
+| Dump | What it shows |
+|---|---|
+| `<app>/chat-open-empty.json` | the call with the chat panel open: an empty composer and its send button. Zoom's also has a Team Chat composer in its home window, and Teams' its main chat window: neither is a call, so neither may be used |
+| `<app>/chat-open-drafting.json` | the same, with the user's own text in the composer |
+
+They were modelled on each app's chat panel (Zoom's "Type message here..."
+and "Send", Teams' "Type a message" and "Send", Meet's "Send a message"
+field and button). To capture real ones, follow the steps above with the
+call's chat panel open:
+
+1. Open the meeting chat (Zoom: Chat; Teams: Chat in the meeting controls;
+   Meet: Chat with everyone) and leave the composer empty, or type a
+   draft for a `chat-open-drafting` dump. **Do not send anything.**
+2. Run the capture tool as above. It records the composer's text, so
+   replace a real draft with fictional text when anonymising.
+3. Save it as `<app>/chat-open-<state>.json` and run
+   `cargo test -p deino-consent`. When a test fails, update the app's
+   `ChatVocabulary` in `crates/deino-consent/src/apps.rs` (the composer's
+   label, the send and chat buttons, the leave button) and keep the old dump.

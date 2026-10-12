@@ -4,9 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     AiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings, CalendarSettings,
-    DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings, NotificationSettings,
-    OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings, RecordingSettings,
-    SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
+    ConsentSettings, DetectionSettings, ExportSettings, IntegrationSettings, NetworkSettings,
+    NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings, ProfileSettings,
+    RecordingSettings, SettingsError, SpeakerSettings, TemplateSettings, TranscriptionSettings,
+    UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -36,6 +37,8 @@ pub struct Settings {
     pub detection: DetectionSettings,
     /// Naming speakers by voice (CAP-04).
     pub speakers: SpeakerSettings,
+    /// The meeting-chat notice and the consent reminder (CAP-13).
+    pub consent: ConsentSettings,
     /// Privacy controls (PRV-01).
     pub privacy: PrivacySettings,
     /// Which outside services may send data, and offline mode (FND-12).
@@ -75,6 +78,7 @@ impl Default for Settings {
             notifications: NotificationSettings::default(),
             detection: DetectionSettings::default(),
             speakers: SpeakerSettings::default(),
+            consent: ConsentSettings::default(),
             privacy: PrivacySettings::default(),
             network: NetworkSettings::default(),
             profile: ProfileSettings::default(),
@@ -102,6 +106,7 @@ impl Settings {
         self.export.validate()?;
         self.calendar.validate()?;
         self.speakers.validate()?;
+        self.consent.validate()?;
         self.integrations.validate()?;
         self.privacy.validate()?;
         self.ui.validate()

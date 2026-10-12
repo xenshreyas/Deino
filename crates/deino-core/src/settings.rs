@@ -19,6 +19,7 @@ mod audio;
 mod automations;
 mod briefs;
 mod calendar;
+mod consent;
 mod detection;
 mod error;
 mod events;
@@ -50,6 +51,9 @@ pub use briefs::{BriefAudience, BriefSettings};
 pub use calendar::{
     AutoRecordSettings, CalendarSettings, ConnectorSettings, MAX_CLIENT_ID_CHARS,
     MAX_HIDDEN_CALENDARS, ReminderSettings,
+};
+pub use consent::{
+    ChatMessageSettings, ConsentSettings, DEFAULT_CHAT_MESSAGE, MAX_CHAT_MESSAGE_CHARS,
 };
 pub use detection::{
     AutoStartSettings, DetectionSettings, IgnoredApp, MAX_AUTO_START_SECONDS,

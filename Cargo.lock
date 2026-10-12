@@ -1865,6 +1865,7 @@ dependencies = [
  "dasp",
  "deino-audio",
  "deino-connect",
+ "deino-consent",
  "deino-core",
  "deino-db",
  "deino-detect",
@@ -2015,6 +2016,19 @@ dependencies = [
  "tokio",
  "tokio-util",
  "url",
+]
+
+[[package]]
+name = "deino-consent"
+version = "0.1.0"
+dependencies = [
+ "cidre",
+ "deino-consent",
+ "deino-domain",
+ "deino-speaker-tags",
+ "log",
+ "serde_json",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

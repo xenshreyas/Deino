@@ -80,6 +80,10 @@ export const settingsCopy = {
       description:
         'Name speakers from Zoom, Teams and Meet, read from the call window on this Mac.',
     },
+    consent: {
+      label: 'Consent',
+      description: 'A reminder to tell people, and an automatic message in the meeting chat.',
+    },
     ai: {
       label: 'AI models',
       description: 'Which provider and model serve each AI task, and a quick test for each.',

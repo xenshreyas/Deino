@@ -290,6 +290,26 @@ autoRecord: AutoRecordSettings;
  */
 reminders: ReminderSettings }
 /**
+ * The automatic notice: one switch per meeting app, and the message.
+ */
+export type ChatMessageSettings = { 
+/**
+ * Post in the Zoom desktop app's meeting chat.
+ */
+zoom: boolean; 
+/**
+ * Post in the Microsoft Teams desktop app's meeting chat.
+ */
+teams: boolean; 
+/**
+ * Post in Google Meet's in-call messages, in Chrome.
+ */
+meet: boolean; 
+/**
+ * What is posted, once per meeting.
+ */
+message: string }
+/**
  * Identifies a company.
  */
 export type CompanyId = string & { readonly __brand: "CompanyId" }
@@ -302,6 +322,19 @@ export type ConnectorSettings = {
  * they set one up (docs/setup/google-calendar.md, microsoft-graph.md).
  */
 clientId: string }
+/**
+ * The consent section of `Settings`.
+ */
+export type ConsentSettings = { 
+/**
+ * The automatic notice in the meeting chat. Off for every app by default.
+ */
+chatMessage: ChatMessageSettings; 
+/**
+ * Show the consent reminder card when a recording starts. On by
+ * default; "Don't show again" turns it off.
+ */
+reminder: boolean }
 /**
  * An OpenAI-compatible endpoint. Its key is the Keychain secret
  * [`SecretName::CustomOpenAiApiKey`].
@@ -1207,6 +1240,10 @@ detection: DetectionSettings;
  * Naming speakers by voice (CAP-04).
  */
 speakers: SpeakerSettings; 
+/**
+ * The meeting-chat notice and the consent reminder (CAP-13).
+ */
+consent: ConsentSettings; 
 /**
  * Privacy controls (PRV-01).
  */

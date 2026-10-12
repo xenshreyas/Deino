@@ -1,0 +1,37 @@
+[package]
+name = "deino-consent"
+version = "0.1.0"
+description = "Deino's consent tools: the automatic notice posted in the meeting chat through Accessibility"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_consent.rs"
+
+[features]
+# Fakes of this crate's ports (`FakeChat`, `ScriptedKeys`, ...) for other
+# crates' tests. Never enable outside dev-dependencies.
+test-support = ["deino-speaker-tags/test-support"]
+
+[dependencies]
+deino-domain.workspace = true
+# The window reader, the platform ports and each app's call-window rules
+# (CAP-05): the chat notice reads the same trees the speaker tags do.
+deino-speaker-tags.workspace = true
+log.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# The Accessibility API (AXUIElement) and CGEventSource, the same git rev as
+# deino-speaker-tags and the app, so all share one build.
+cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa" }
+
+[dev-dependencies]
+deino-consent = { path = ".", features = ["test-support"] }
+deino-speaker-tags = { workspace = true, features = ["test-support"] }
+# Reads the fixture dumps.
+serde_json.workspace = true
+
+[lints]
+workspace = true

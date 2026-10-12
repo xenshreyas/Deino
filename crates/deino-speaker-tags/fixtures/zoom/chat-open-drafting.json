@@ -1,0 +1,453 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Zoom Workplace",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Tab bar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Home"
+     },
+     {
+      "role": "AXButton",
+      "description": "Team Chat"
+     },
+     {
+      "role": "AXButton",
+      "description": "Meetings"
+     },
+     {
+      "role": "AXButton",
+      "description": "Contacts"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "New meeting"
+     },
+     {
+      "role": "AXButton",
+      "description": "Join"
+     },
+     {
+      "role": "AXButton",
+      "description": "Schedule"
+     },
+     {
+      "role": "AXButton",
+      "description": "Share screen"
+     }
+    ]
+   },
+   {
+    "role": "AXStaticText",
+    "value": "No upcoming meetings today"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Team Chat",
+    "children": [
+     {
+      "role": "AXTextArea",
+      "description": "Type message here...",
+      "value": ""
+     },
+     {
+      "role": "AXButton",
+      "description": "Send"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Zoom Meeting",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting top bar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Meeting information"
+     },
+     {
+      "role": "AXStaticText",
+      "value": "Zoom Meeting"
+     },
+     {
+      "role": "AXButton",
+      "description": "View"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Gallery view",
+    "identifier": "ZMGalleryView",
+    "children": [
+     {
+      "role": "AXGroup",
+      "description": "Alex Chen, Computer audio unmuted, Video on, Talking",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Alex Chen"
+       },
+       {
+        "role": "AXImage",
+        "description": "Computer audio unmuted"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Bea Ruiz (Co-host), Computer audio unmuted, Video on",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Bea Ruiz"
+       },
+       {
+        "role": "AXImage",
+        "description": "Computer audio unmuted"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Cleo Martin, Computer audio muted, Video off",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Cleo Martin"
+       },
+       {
+        "role": "AXImage",
+        "description": "Computer audio muted"
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Shreyas (Host, me), Computer audio unmuted, Video on",
+      "children": [
+       {
+        "role": "AXGroup",
+        "description": "Video",
+        "identifier": "ZMVideoView"
+       },
+       {
+        "role": "AXStaticText",
+        "value": "Shreyas"
+       },
+       {
+        "role": "AXImage",
+        "description": "Computer audio unmuted"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Participants panel",
+    "children": [
+     {
+      "role": "AXStaticText",
+      "value": "Participants (4)"
+     },
+     {
+      "role": "AXTextField",
+      "description": "Search participants"
+     },
+     {
+      "role": "AXScrollArea",
+      "children": [
+       {
+        "role": "AXOutline",
+        "description": "Participants list",
+        "children": [
+         {
+          "role": "AXRow",
+          "description": "Alex Chen, Computer audio unmuted, Video on, Talking",
+          "children": [
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Alex Chen"
+             },
+             {
+              "role": "AXImage",
+              "description": "Computer audio unmuted"
+             }
+            ]
+           },
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXButton",
+              "description": "More options for Alex Chen"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXRow",
+          "description": "Bea Ruiz (Co-host), Computer audio unmuted, Video on",
+          "children": [
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Bea Ruiz (Co-host)"
+             },
+             {
+              "role": "AXImage",
+              "description": "Computer audio unmuted"
+             }
+            ]
+           },
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXButton",
+              "description": "More options for Bea Ruiz"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXRow",
+          "description": "Cleo Martin, Computer audio muted, Video off",
+          "children": [
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Cleo Martin"
+             },
+             {
+              "role": "AXImage",
+              "description": "Computer audio muted"
+             }
+            ]
+           },
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXButton",
+              "description": "More options for Cleo Martin"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXRow",
+          "description": "Shreyas (Host, me), Computer audio unmuted, Video on",
+          "children": [
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Shreyas (Host, me)"
+             },
+             {
+              "role": "AXImage",
+              "description": "Computer audio unmuted"
+             }
+            ]
+           },
+           {
+            "role": "AXCell",
+            "children": [
+             {
+              "role": "AXButton",
+              "description": "More options for Shreyas"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "role": "AXButton",
+      "description": "Invite"
+     },
+     {
+      "role": "AXButton",
+      "description": "Mute All"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Chat panel",
+    "children": [
+     {
+      "role": "AXStaticText",
+      "value": "Meeting Chat"
+     },
+     {
+      "role": "AXScrollArea",
+      "children": [
+       {
+        "role": "AXList",
+        "description": "Chat messages",
+        "children": [
+         {
+          "role": "AXGroup",
+          "description": "Alex Chen to Everyone, 12:02, Can everyone see my screen?"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "role": "AXGroup",
+      "description": "Chat input",
+      "children": [
+       {
+        "role": "AXPopUpButton",
+        "description": "To: Everyone"
+       },
+       {
+        "role": "AXScrollArea",
+        "children": [
+         {
+          "role": "AXTextArea",
+          "description": "Type message here...",
+          "value": "one sec, sharing the doc"
+         }
+        ]
+       },
+       {
+        "role": "AXButton",
+        "description": "Emoji"
+       },
+       {
+        "role": "AXButton",
+        "description": "Send"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Meeting controls",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Mute my audio"
+     },
+     {
+      "role": "AXButton",
+      "description": "Stop my video"
+     },
+     {
+      "role": "AXButton",
+      "description": "Security"
+     },
+     {
+      "role": "AXButton",
+      "description": "Participants"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chat"
+     },
+     {
+      "role": "AXButton",
+      "description": "Share Screen"
+     },
+     {
+      "role": "AXButton",
+      "description": "Record"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reactions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Apps"
+     },
+     {
+      "role": "AXButton",
+      "description": "End"
+     }
+    ]
+   }
+  ]
+ }
+]
