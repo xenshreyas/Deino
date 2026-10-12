@@ -75,7 +75,7 @@ impl LlmProvider {
 }
 
 /// The AI section of `Settings`.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, specta::Type)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AiSettings {
     /// The provider that writes notes.
@@ -90,11 +90,26 @@ pub struct AiSettings {
     pub ollama_endpoint: Option<String>,
     /// The custom OpenAI-compatible endpoint, once configured.
     pub custom_openai: Option<CustomOpenAiSettings>,
-    /// Generate notes automatically when a recording stops.
+    /// Generate notes automatically when a recording stops (on by default,
+    /// as in Granola; off sends nothing until the user presses Enhance).
     pub auto_summary: bool,
     /// The provider and model the user pinned per LLM task route (Settings →
     /// AI); routes not listed use the defaults of PARITY_PLAN §4.3.
     pub routes: BTreeMap<Route, Target>,
+}
+
+impl Default for AiSettings {
+    fn default() -> Self {
+        Self {
+            provider: LlmProvider::default(),
+            model: String::new(),
+            provider_models: BTreeMap::new(),
+            ollama_endpoint: None,
+            custom_openai: None,
+            auto_summary: true,
+            routes: BTreeMap::new(),
+        }
+    }
 }
 
 impl AiSettings {
