@@ -1,16 +1,17 @@
 /**
- * One step's settings, by kind: the insight, tag or folder it names, an
- * export's format and folder, a notification's message, a script's command
- * and the payload fields it receives.
+ * One step's settings, by kind: the insight, tag, folder or webhook it
+ * names, an export's format and folder, a notification's message, a
+ * script's command and the payload fields it receives.
  */
 import { Button } from '@/ui/button';
 import { Folder, ICON_PROPS, TriangleAlert } from '@/ui/icons';
+import { FieldPicker as WebhookFieldPicker } from '@/features/webhooks';
 import { Input } from '@/ui/input';
 import { type Option, OptionSelect } from '@/ui/option-select';
 
 import { builderCopy, formatCopy, payloadCopy } from '../copy';
 import { useChooseFolder } from '../queries';
-import type { Action, ExportFormat, PayloadFields } from '../types';
+import type { Action, ExportFormat, PayloadFields, WebhookId } from '../types';
 import type { StepOptions } from './step-choices';
 
 /** Props of {@link StepFields}. */
@@ -37,7 +38,8 @@ const FIELD_KEYS = [
 ] as const satisfies readonly (keyof PayloadFields)[];
 
 /** The controls for `action`'s kind. */
-export function StepFields({ action, options, shellAllowed, onChange }: StepFieldsProps) {
+export function StepFields(props: StepFieldsProps) {
+  const { action, options, onChange } = props;
   switch (action.kind) {
     case 'generate_insight':
       return (
@@ -73,13 +75,15 @@ export function StepFields({ action, options, shellAllowed, onChange }: StepFiel
         />
       );
     default:
-      return <LocalFields action={action} shellAllowed={shellAllowed} onChange={onChange} />;
+      return <LocalFields {...props} />;
   }
 }
 
-/** Export, notification and script settings. */
-function LocalFields({ action, shellAllowed, onChange }: Omit<StepFieldsProps, 'options'>) {
+/** Webhook, export, notification and script settings. */
+function LocalFields({ action, options, shellAllowed, onChange }: StepFieldsProps) {
   switch (action.kind) {
+    case 'webhook':
+      return <WebhookStepFields action={action} options={options.webhooks} onChange={onChange} />;
     case 'export_file':
       return <ExportFields action={action} onChange={onChange} />;
     case 'notify':
@@ -115,6 +119,33 @@ function Pick<T extends string>(props: {
       placeholder={builderCopy.choose}
       onChange={props.onPick}
     />
+  );
+}
+
+/** A webhook step's endpoint (from Settings → Developer) and payload fields. */
+function WebhookStepFields(props: {
+  action: Extract<Action, { kind: 'webhook' }>;
+  options: readonly Option<WebhookId>[];
+  onChange: (action: Action) => void;
+}) {
+  const { action, onChange } = props;
+  return (
+    <div className="grid gap-2">
+      <Pick
+        label={builderCopy.webhook}
+        value={action.webhookId}
+        options={props.options}
+        onPick={(webhookId) => {
+          onChange({ ...action, webhookId });
+        }}
+      />
+      <WebhookFieldPicker
+        fields={action.fields}
+        onChange={(fields) => {
+          onChange({ ...action, fields });
+        }}
+      />
+    </div>
   );
 }
 
