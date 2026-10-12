@@ -10,9 +10,13 @@ type Factory = Awaited<ReturnType<typeof loadNoteExtensions>>;
 let noteExtensions: Factory;
 let editor: Editor | null = null;
 
+// The first lazy import of the editor bundle transforms all of TipTap; under
+// a loaded machine that alone took more than Vitest's 10 s hook default.
+const IMPORT_TIMEOUT_MS = 60_000;
+
 beforeAll(async () => {
   noteExtensions = await loadNoteExtensions();
-});
+}, IMPORT_TIMEOUT_MS);
 
 afterEach(() => {
   editor?.destroy();
