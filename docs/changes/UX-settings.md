@@ -9,9 +9,9 @@ field, migration or Rust code changed.
 | Item | What shipped |
 |---|---|
 | UX-09 | Speaker names: no per-app permission rows. The section lists the apps as plain text (an app marked only when unsupported) and links to the one Accessibility row. |
-| UX-10 | Settings → Recording → Permissions: microphone, system audio, notifications, Accessibility, Screen Recording and Calendar, once each, with onboarding's rows (`onboarding/components/permission-rows.tsx`, shared with the Permissions step). Detection, consent, screen capture and speaker names show `PermissionLink` ("Needs Accessibility") instead of their own rows; screen's `permission-card.tsx` and consent's permission row are deleted. |
+| UX-10 | Settings → Recording → Permissions (rows and icons shared with onboarding: `permission-rows.tsx`, `permission-icons.ts`, `calendarPermission`): microphone, system audio, notifications, Accessibility, Screen Recording and Calendar, once each, with onboarding's rows (`onboarding/components/permission-rows.tsx`, shared with the Permissions step). Detection, consent, screen capture and speaker names show `PermissionLink` ("Needs Accessibility") instead of their own rows; screen's `permission-card.tsx` and consent's permission row are deleted. |
 | UX-11 | Notes → AI: onboarding's three choices and one key check (`onboarding/components/notes-provider.tsx`, shared with the AI step); Groq, OpenRouter, Ollama and custom endpoints under "Other providers" (the legacy model panel, `OtherProviders`). Per-task models: Advanced → AI per task, collapsed. Auto Summary left Notes; it is Advanced → Notes after meetings (see Follow-ups). |
-| UX-13 | Recording: "Save audio recordings", "Recording start notification", "I use headphones" and the file-format box are gone (`components/RecordingSettings.tsx` deleted). Typed microphone select over `recording.microphones`. Fields kept: `recording.autoSave`, `recording.showRecordingNotice`, `audio.usesHeadphones`, `audio.preferredSystemDevice`. |
+| UX-13 | Recording (saves are silent; a failure toasts, `useSaveSettings`): "Save audio recordings", "Recording start notification", "I use headphones" and the file-format box are gone (`components/RecordingSettings.tsx` deleted). Typed microphone select over `recording.microphones`. Fields kept: `recording.autoSave`, `recording.showRecordingNotice`, `audio.usesHeadphones`, `audio.preferredSystemDevice`. |
 | UX-14 | Advanced → Network services lists only services in use (in the activity log, or with a saved switch); "Show all N services" reveals the rest. Offline mode and the log stay in Privacy. |
 | UX-15 | `ui/more-options.tsx`. One primary control per feature, the rest closed: screen capture (snapshots, video, smoothness), auto-export (names, contents), detection (auto-start, countdown, ignored apps), auto-stop, consent's chat message, calendar auto-record rules. |
 | UX-16 | Search maintenance is Advanced → Search, in plain words (no "index", "embeddings", "keyword index"). The download already starts the backfill. |
@@ -21,7 +21,7 @@ field, migration or Rust code changed.
 | UX-20 | General (theme, notifications, recordings folder, setup), Recording and About on the settings primitives; "Loading Preferences..." and the storage note are gone. |
 
 Counts on `pnpm dev:mock` fixture data: **27 pages → 9**; visible switches
-**77 → 29** (19 outside Advanced; Network page alone was 34).
+**77 → 28** (19 outside Advanced; Network page alone was 34). Measured after merging `main` (1fb6f960) and `feat/UX-nav-onboarding-copy`.
 
 New pages: General (Theme, Notifications, Recordings folder, Setup) ·
 Recording (Permissions, Recording, Meeting detection, End automatically,
@@ -30,7 +30,7 @@ Tell people, Screen capture, Speakers, Speaker names from call apps) · Notes
 apps, Auto-export, Export everything, Import, Watched folders) · Privacy
 (Encryption, App lock, Retention, Sensitive information, Network, What left
 this Mac) · Advanced (Notes after meetings, AI per task, Transcription,
-Search, Voices, Shortcuts, Network services, Developer, Beta) · About.
+Search, Voices, Shortcuts, Network services, Developer) · About. Beta is gone (UX-12, on `main`).
 
 ## Follow-ups (PARITY_PLAN §7.2)
 
@@ -39,12 +39,6 @@ Search, Voices, Shortcuts, Network services, Developer, Beta) · About.
   in Advanced → Notes after meetings so nobody is stuck; flipping the
   default (a manual `Default` for `AiSettings`, then regenerating bindings)
   is a Rust change left out of this branch.
-- UX-12 (other agent): the Beta page is now an Advanced section in
-  `features/settings/settings-page.tsx`; delete that entry with the flag.
-- UX-28 (other agent): the "Recording start notification" switch is gone;
-  `lib/recordingNotification.tsx` still reads `recording.showRecordingNotice`
-  (default on) until UX-28 removes the toast.
-- UX-27 (other agent): Connections still shows "On the way" WIP integrations.
 - UX-11: `ModelSettingsModal` (legacy, untyped) still backs "Other
   providers"; retire it behind the typed `llm` settings.
 - UX-16: surface a failed search-model download outside Settings ("Search by
@@ -54,12 +48,6 @@ Search, Voices, Shortcuts, Network services, Developer, Beta) · About.
   General → Notifications.
 - `audio.usesHeadphones` is hidden; a user who turned it on keeps echo
   removal off until the field is cleared.
-- Merge: `fix/engine-setting-source-of-truth` conflicts in
-  `features/settings/settings-page.tsx` (take its `EngineSettings` inside
-  `TranscriptionSection`), `features/settings/copy.ts` (keep its `engine`
-  block; `groups` is deleted here) and `sections.test.ts` (take this
-  branch's; mock `./components/engine-settings` instead of
-  `@/components/TranscriptSettings`).
 - ElevenLabs (CAP-14): add its card inside `TranscriptionSection`, or
   register a section `{ page: 'advanced', order: 25 }`; its service shows in
   Network services once it has a saved switch or traffic.

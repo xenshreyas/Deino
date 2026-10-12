@@ -10,6 +10,7 @@ export const settingsCopy = {
 
   title: 'Settings',
   navLabel: 'Settings pages',
+  saveFailed: 'Couldn’t save the setting',
 
   /** Settings → Network: secrets hidden from notes and exports (NOT-09). */
   redaction: {
@@ -34,6 +35,18 @@ export const settingsCopy = {
       'After each meeting, the whole recording is transcribed again with full context and replaces the live transcript. Speakers are kept.',
     repassOff: 'Not needed: with live transcription off, every transcript already gets this pass.',
     saveFailed: 'Could not save the transcription setting',
+  },
+  /** Settings → Transcription: the engine recordings use, as saved. */
+  engine: {
+    label: 'Transcription engine',
+    advanced: 'Advanced',
+    loading: 'Loading the transcription settings…',
+    loadFailed: 'The transcription settings could not be loaded.',
+    names: {
+      parakeet_unified: 'Parakeet Unified EN (Recommended, live)',
+      parakeet: 'Parakeet TDT v3 (ONNX)',
+      whisper: 'Whisper',
+    },
   },
 } as const;
 

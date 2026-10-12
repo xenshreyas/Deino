@@ -134,9 +134,8 @@ export function RetranscribeDialog({
         async (event) => {
           if (event.payload.meeting_id === meetingId) {
             setIsProcessing(false);
-            toast.success(
-              `Retranscription complete! ${event.payload.segments_count} segments created.`
-            );
+            // The dialog closes; the transcript may be off-screen, so say it is done (UX-32).
+            toast.success('Re-transcription finished');
             onCompleteRef.current?.();
             onOpenChangeRef.current(false);
           }
@@ -177,7 +176,7 @@ export function RetranscribeDialog({
 
   const handleStartRetranscription = async () => {
     if (!meetingFolderPath) {
-      setError('Meeting folder path not available');
+      setError('This meeting has no recording on this Mac.');
       return;
     }
 
@@ -205,7 +204,6 @@ export function RetranscribeDialog({
         await invoke('cancel_retranscription_command');
         setIsProcessing(false);
         setProgress(null);
-        toast.info('Retranscription cancelled');
       } catch (err) {
         console.error('Failed to cancel retranscription:', err);
       }
@@ -245,26 +243,26 @@ export function RetranscribeDialog({
             {isProcessing ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                Retranscribing...
+                Re-transcribing…
               </>
             ) : error ? (
               <>
                 <AlertCircle className="h-5 w-5 text-danger" />
-                Retranscription Failed
+                Re-transcription failed
               </>
             ) : (
               <>
                 <RefreshCw className="h-5 w-5 text-accent" />
-                Retranscribe Meeting
+                Re-transcribe this meeting
               </>
             )}
           </DialogTitle>
           <DialogDescription>
             {isProcessing
-              ? progress?.message || 'Processing audio...'
+              ? progress?.message || 'Processing the audio…'
               : error
-                ? 'An error occurred during retranscription'
-                : 'Re-process the audio with a different transcription model'}
+                ? 'Something went wrong while re-transcribing.'
+                : 'Transcribe the recording again with the model you choose. The new transcript replaces the old one.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -277,7 +275,7 @@ export function RetranscribeDialog({
               </div>
               <Select value={selectedModelKey} onValueChange={setSelectedModelKey} disabled={loadingModels}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loadingModels ? "Loading models..." : "Select model"} />
+                  <SelectValue placeholder={loadingModels ? "Loading models…" : "Choose a model"} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableModels.map((model) => (
@@ -288,7 +286,7 @@ export function RetranscribeDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-fg-muted">
-                Choose a transcription model
+                The transcription model to use
               </p>
             </div>
           )}
@@ -332,7 +330,7 @@ export function RetranscribeDialog({
                 disabled={!meetingFolderPath}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Start Retranscription
+                Re-transcribe
               </Button>
             </>
           )}
@@ -354,7 +352,7 @@ export function RetranscribeDialog({
                 }}
                 variant="secondary"
               >
-                Try Again
+                Try again
               </Button>
             </>
           )}

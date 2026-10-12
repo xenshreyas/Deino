@@ -29,7 +29,8 @@ test('a new template can be created, then picked for a meeting', async ({ page }
   await page.getByRole('button', { name: 'Add section' }).click();
   await shoot(page, 'templates-editor');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  // UX-32: saving is silent; the editor reopens on the saved template.
+  await expect(page).not.toHaveURL(/template=new/);
 
   // In-app navigation: a reload would reset the mock, and the new template with it.
   await page.getByRole('link', { name: 'Meetings', exact: true }).click();
@@ -37,11 +38,12 @@ test('a new template can be created, then picked for a meeting', async ({ page }
   await expect(page).toHaveURL(`/meetings/${oneOnOne.id}`);
   const picker = page.getByRole('button', { name: 'Note template' });
   await expect(picker).toHaveText(/1:1/);
-  await expect(page.getByText('Matched rule: 1:1 in the title')).toBeVisible();
+  // The reason is not on the page, only in the menu's header (UX-06).
+  await expect(page.getByText('Matched rule: 1:1 in the title')).toHaveCount(0);
   await picker.click();
+  await expect(page.getByRole('menu').getByText('Matched rule: 1:1 in the title')).toBeVisible();
   await page.getByRole('menuitem', { name: 'Board prep' }).click();
   await expect(picker).toHaveText(/Board prep/);
-  await expect(page.getByText('Chosen for this meeting')).toBeVisible();
   await shoot(page, 'meeting-template-picker');
 });
 

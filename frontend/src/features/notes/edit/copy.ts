@@ -29,6 +29,5 @@ export const editCopy = {
   reject: 'Reject',
   accepted: 'Notes edited',
   undo: 'Undo',
-  undone: 'Edit undone',
   failed: 'The edit could not be made',
 } as const;

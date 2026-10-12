@@ -3,6 +3,10 @@
 
 use serde::{Deserialize, Serialize};
 
+mod heal;
+
+pub use heal::{InstalledModels, healed_transcription};
+
 /// The Parakeet TDT model used when that engine has no model configured.
 pub const DEFAULT_PARAKEET_MODEL: &str = "parakeet-tdt-0.6b-v3-int8";
 
@@ -14,7 +18,7 @@ pub const DEFAULT_PARAKEET_MODEL: &str = "parakeet-tdt-0.6b-v3-int8";
 #[serde(rename_all = "snake_case")]
 pub enum TranscriptionEngine {
     /// NVIDIA Parakeet Unified EN 0.6B over transcribe.cpp (CAP-01): streams
-    /// live text while recording. Its `model` is a catalog file name, or empty
+    /// live text while recording. Its `model` is a catalog file ID, or empty
     /// for the quant this Mac's memory suits.
     #[default]
     #[serde(alias = "parakeetUnified")]
@@ -27,6 +31,15 @@ pub enum TranscriptionEngine {
 }
 
 impl TranscriptionEngine {
+    /// The engine's name as Settings → Transcription shows it.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::ParakeetUnified => "Parakeet Unified",
+            Self::Parakeet => "Parakeet TDT v3",
+            Self::Whisper => "Whisper",
+        }
+    }
+
     /// The model this engine uses when none is set: Parakeet TDT names its
     /// model; empty lets the others pick (Parakeet Unified by memory size).
     pub fn default_model(self) -> &'static str {
@@ -43,9 +56,12 @@ impl TranscriptionEngine {
 pub struct TranscriptionSettings {
     /// The engine that transcribes recordings.
     pub engine: TranscriptionEngine,
-    /// The engine's model, for example `parakeet-unified-en-0.6b-Q8_0.gguf`,
-    /// `parakeet-tdt-0.6b-v3-int8` or `large-v3-turbo`; empty means the
-    /// engine's recommended model.
+    /// The engine's model; empty means the engine's recommended model.
+    /// Parakeet Unified takes a catalog file ID such as
+    /// `parakeet-unified-en-0.6b-Q8_0` (the file name without `.gguf`; the
+    /// file name itself is accepted too, see `ModelFileId::from_setting`);
+    /// Parakeet TDT a model folder such as `parakeet-tdt-0.6b-v3-int8`;
+    /// Whisper a model name such as `large-v3-turbo`.
     pub model: String,
     /// "Live transcription" (CAP-08): on, the transcript appears while the
     /// meeting is recorded; off, only audio is recorded (no engine runs) and

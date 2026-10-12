@@ -21,6 +21,11 @@ const bindings = await vi.hoisted(async () =>
 );
 vi.mock('@/lib/ipc/generated/calendar', () => bindings);
 const mocked = bindings.commands;
+const permissions = vi.hoisted(() => ({
+  permissions: vi.fn(),
+  requestPermission: vi.fn(),
+}));
+vi.mock('@/lib/ipc/generated/onboarding', () => ({ commands: permissions }));
 
 const LAST = 'meeting-last' as MeetingId;
 
@@ -70,6 +75,10 @@ describe('Home Coming up', () => {
       data: { id: LAST, title: 'Pricing review', happenedAt: event.startAt, by: 'series' },
     });
     mocked.openInCalendar.mockResolvedValue({ status: 'ok', data: null });
+    permissions.permissions.mockResolvedValue({
+      status: 'ok',
+      data: [{ kind: 'notifications', state: 'granted', optional: false }],
+    });
   });
 
   afterEach(() => {
@@ -110,5 +119,31 @@ describe('Home Coming up', () => {
     await waitFor(() => {
       expect(mocked.openInCalendar).toHaveBeenCalledWith('Pricing review');
     });
+  });
+
+  it('asks for notifications beside the first upcoming meeting, once (UX-22)', async () => {
+    permissions.permissions.mockResolvedValue({
+      status: 'ok',
+      data: [{ kind: 'notifications', state: 'not_determined', optional: false }],
+    });
+    permissions.requestPermission.mockResolvedValue({
+      status: 'ok',
+      data: { kind: 'notifications', state: 'granted', optional: false },
+    });
+    renderSection();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Allow' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Allow' })).toBeNull();
+    });
+    expect(permissions.requestPermission).toHaveBeenCalledWith('notifications');
+  });
+
+  it('says nothing about notifications once they are allowed', async () => {
+    renderSection();
+
+    expect(await screen.findByText('Pricing review')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Allow' })).toBeNull();
   });
 });

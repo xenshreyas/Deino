@@ -9,11 +9,12 @@ export const detectionCopy = {
   } satisfies Record<MeetingKind, string>,
   takeNotes: 'Take notes',
   ignore: 'Ignore',
-  dontRecord: "Don't record",
+  dontRecord: 'Don’t record',
   alwaysIgnore: 'Always ignore this app',
+  moreIgnore: 'More ways to ignore',
   promptLabel: 'Meeting prompt',
   countdown: (seconds: number) => `Recording in ${seconds}s`,
-  failed: 'That did not work. Try again from the main window.',
+  failed: 'That didn’t work. Try again from the main window.',
 
   settings: {
     sectionTitle: 'Meeting detection',
@@ -29,7 +30,7 @@ export const detectionCopy = {
     ignoredTitle: 'Ignored apps',
     ignoredDescription: 'These apps never prompt, even when they use the microphone.',
     ignoredEmptyTitle: 'No ignored apps',
-    ignoredEmptyBody: 'Choose Always ignore this app on a prompt to add one here.',
+    ignoredEmptyBody: 'Choose “Always ignore this app” on a prompt to add one here.',
     stopIgnoring: (app: string) => `Stop ignoring ${app}`,
     unsupported: 'Meeting detection is available on macOS.',
   },

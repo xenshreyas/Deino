@@ -4,7 +4,6 @@
  */
 import { useNavigate } from '@tanstack/react-router';
 import { type FormEvent, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Label } from '@/ui/controls';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
@@ -43,7 +42,6 @@ function useSavePerson(target: Target, onClose: () => void) {
     }
     create.mutate(fields, {
       onSuccess: (person) => {
-        toast.success(entitiesCopy.created(person.name));
         onClose();
         void navigate({ to: '/people/$personId', params: { personId: person.id } });
       },

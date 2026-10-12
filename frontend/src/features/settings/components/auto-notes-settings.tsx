@@ -8,13 +8,14 @@ import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { autoNotesCopy as copy } from '../copy';
-import { usePatchSettings, useSettings } from '../queries';
+import { useSettings } from '../queries';
+import { useSaveSettings } from './save-settings';
 import { SwitchRow } from './switch-row';
 
 /** The section. */
 export function AutoNotesSettings() {
   const { data: settings } = useSettings();
-  const patch = usePatchSettings();
+  const { save } = useSaveSettings();
   return (
     <SettingsSection title={copy.title} description={copy.description}>
       {settings === undefined ? (
@@ -27,7 +28,7 @@ export function AutoNotesSettings() {
             description={settings.ai.autoSummary ? copy.on : copy.off}
             checked={settings.ai.autoSummary}
             onChange={(autoSummary) => {
-              patch.mutate({ ai: { autoSummary } });
+              save({ ai: { autoSummary } });
             }}
           />
         </SettingsCard>

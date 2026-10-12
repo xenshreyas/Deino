@@ -10,13 +10,14 @@ import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { notificationsCopy as copy } from '../copy';
-import { usePatchSettings, useSettings } from '../queries';
+import { useSettings } from '../queries';
 import type { Settings } from '../types';
+import { useSaveSettings } from './save-settings';
 import { SwitchRow } from './switch-row';
 
 /** The three switches over the saved settings. */
 function NotificationRows({ settings }: { settings: Settings }) {
-  const patch = usePatchSettings();
+  const { save } = useSaveSettings();
   const { preferences } = settings.notifications;
   return (
     <SettingsCard label={copy.title}>
@@ -27,7 +28,7 @@ function NotificationRows({ settings }: { settings: Settings }) {
         checked={preferences.showRecordingStarted && preferences.showRecordingStopped}
         onChange={(on) => {
           const both = { showRecordingStarted: on, showRecordingStopped: on };
-          patch.mutate({ notifications: { preferences: both } });
+          save({ notifications: { preferences: both } });
         }}
       />
       <SwitchRow
@@ -36,7 +37,7 @@ function NotificationRows({ settings }: { settings: Settings }) {
         description={copy.remindersDescription}
         checked={settings.calendar.reminders.enabled}
         onChange={(enabled) => {
-          patch.mutate({ calendar: { reminders: { enabled } } });
+          save({ calendar: { reminders: { enabled } } });
         }}
       />
       <SwitchRow
@@ -45,7 +46,7 @@ function NotificationRows({ settings }: { settings: Settings }) {
         description={copy.actionItemsDescription}
         checked={preferences.showActionItemReminders}
         onChange={(showActionItemReminders) => {
-          patch.mutate({ notifications: { preferences: { showActionItemReminders } } });
+          save({ notifications: { preferences: { showActionItemReminders } } });
         }}
       />
     </SettingsCard>

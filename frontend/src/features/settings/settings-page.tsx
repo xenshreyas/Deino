@@ -5,10 +5,7 @@
  * Other sections register from their feature's `settings-page.tsx`.
  */
 import { About } from '@/components/About';
-import { BetaSettings } from '@/components/BetaSettings';
 import { RecordingsFolderSettings } from '@/components/RecordingsFolderSettings';
-import { TranscriptSettings } from '@/components/TranscriptSettings';
-import { useConfig } from '@/contexts/ConfigContext';
 import { IntegrationsSettings } from '@/features/integrations';
 import { NetworkServices, NetworkSettings } from '@/features/network';
 import {
@@ -28,6 +25,7 @@ import { SettingsSection } from '@/ui/settings-section';
 import { AppearanceSection } from './components/appearance-section';
 import { AutoNotesSettings } from './components/auto-notes-settings';
 import { CaptureModeSettings } from './components/capture-mode-settings';
+import { EngineSettings } from './components/engine-settings';
 import { DetectionSettingsPage } from './components/detection-settings';
 import { NotificationsSettings } from './components/notifications-settings';
 import { AutoStopSettings, RecordingBehaviour } from './components/recording-behaviour';
@@ -36,17 +34,13 @@ import { transcriptionSectionCopy } from './copy';
 import { useOfflineMode } from './offline-mode';
 import type { SettingsPage, SettingsPageSection } from './sections';
 
-/** Transcription: live or after the meeting (CAP-08), then the inherited
- * engine picker over the config context. */
+/** Transcription: live or after the meeting (CAP-08), then the engine and
+ * its model, read from and saved to the settings the recorder uses. */
 function TranscriptionSection() {
-  const { transcriptModelConfig, setTranscriptModelConfig } = useConfig();
   return (
     <div className="flex flex-col gap-8">
       <CaptureModeSettings />
-      <TranscriptSettings
-        transcriptModelConfig={transcriptModelConfig}
-        setTranscriptModelConfig={setTranscriptModelConfig}
-      />
+      <EngineSettings />
     </div>
   );
 }
@@ -160,7 +154,6 @@ export const settingsSections = [
   { id: 'auto-notes', page: 'advanced', order: 5, Component: AutoNotesSettings },
   { id: 'transcription', page: 'advanced', order: 20, Component: TranscriptionPage },
   { id: 'network-services', page: 'advanced', order: 60, Component: NetworkServices },
-  { id: 'beta', page: 'advanced', order: 90, Component: BetaSettings },
   { id: 'about', page: 'about', order: 10, Component: About },
 ] satisfies readonly SettingsPageSection[];
 
@@ -185,6 +178,5 @@ declare module '@/features/settings/search' {
     'auto-notes': true;
     transcription: true;
     'network-services': true;
-    beta: true;
   }
 }

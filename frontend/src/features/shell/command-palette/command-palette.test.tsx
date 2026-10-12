@@ -40,7 +40,7 @@ const commands = vi.hoisted(
 );
 vi.mock('@/lib/ipc/generated/meetings', () => ({ commands }));
 vi.mock('@/contexts/ConfigContext', () => ({
-  useConfig: () => ({ betaFeatures: { importAndRetranscribe: false } }),
+  useConfig: () => ({}),
 }));
 vi.mock('@/contexts/ImportDialogContext', () => ({
   useImportDialog: () => ({ openImportDialog: vi.fn() }),
@@ -97,17 +97,16 @@ describe('command palette', () => {
     expect(await screen.findByText('Q4 roadmap alignment')).toBeDefined();
   });
 
-  test('shows the unfinished chat action as WIP and disabled (D13)', async () => {
+  test('lists every page, including those kept out of the sidebar, and hides Ask Deino', async () => {
     renderPalette();
     act(() => {
       useShellLayout.getState().setPaletteOpen(true);
     });
 
-    const chat = await screen.findByRole('option', { name: /Ask Deino/ });
-    expect(chat.textContent).toContain('WIP');
-    expect(chat.getAttribute('aria-disabled')).toBe('true');
-    fireEvent.click(chat);
-    expect(useShellLayout.getState().chatOpen).toBe(false);
+    for (const name of ['Companies', 'Tags', 'Stats', 'Trash', 'Insights', 'Automations']) {
+      expect(await screen.findByRole('option', { name })).toBeDefined();
+    }
+    expect(screen.queryByRole('option', { name: /Ask Deino/ })).toBeNull();
   });
 
   test('choosing a destination navigates there and closes the palette', async () => {

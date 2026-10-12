@@ -11,18 +11,19 @@ import { SettingsCard, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { recordingSettingsCopy as copy } from '../copy';
-import { usePatchSettings, useSettings } from '../queries';
+import { useSettings } from '../queries';
 import type { Settings } from '../types';
 import { MicrophoneRow } from './microphone-row';
+import { useSaveSettings } from './save-settings';
 import { SwitchRow } from './switch-row';
 
 type AutoStop = Settings['recording']['autoStop'];
 
 /** Saves part of `recording.autoStop`. */
 function useSaveAutoStop(autoStop: AutoStop) {
-  const patch = usePatchSettings();
+  const { save } = useSaveSettings();
   return (change: Partial<AutoStop>) => {
-    patch.mutate({ recording: { autoStop: { ...autoStop, ...change } } });
+    save({ recording: { autoStop: { ...autoStop, ...change } } });
   };
 }
 
@@ -94,7 +95,7 @@ export function AutoStopSettings() {
 /** The microphone and the record panel. */
 export function RecordingBehaviour() {
   const { data: settings } = useSettings();
-  const patch = usePatchSettings();
+  const { save } = useSaveSettings();
   return (
     <SettingsSection title={copy.heading} description={copy.headingDescription}>
       {settings === undefined ? (
@@ -108,7 +109,7 @@ export function RecordingBehaviour() {
             description={copy.panelDescription}
             checked={settings.recording.showPanel}
             onChange={(showPanel) => {
-              patch.mutate({ recording: { showPanel } });
+              save({ recording: { showPanel } });
             }}
           />
         </SettingsCard>

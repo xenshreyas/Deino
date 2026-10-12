@@ -9,6 +9,7 @@ import {
   useIndexStatus,
   useModelDownloadProgress,
 } from '@/features/search';
+import { usePatchSettings } from '@/features/settings';
 import { activeModel, useDownloadModel, useModelEvents, useModels } from '@/features/transcription';
 
 import { type DownloadView, downloadView } from '../download-view';
@@ -24,18 +25,28 @@ export interface LocalModel {
   error: string | null;
 }
 
-/** Parakeet Unified at the quant recommended for this Mac. */
+/**
+ * Parakeet Unified at the quant recommended for this Mac. A finished
+ * download also makes it the transcription engine, so the "Try it" step
+ * records with the model just fetched (whatever engine was saved before).
+ */
 export function useTranscriptionModel(): LocalModel {
   useModelEvents();
   const models = useModels();
   const download = useDownloadModel();
+  const { mutate: patchSettings } = usePatchSettings();
   const model =
     models.data === undefined ? undefined : (activeModel(models.data, undefined) ?? null);
   return {
     view: downloadView(model, null, download.isPending),
     sizeBytes: model?.sizeBytes ?? null,
     download: () => {
-      if (model) download.mutate(model.id);
+      if (!model) return;
+      download.mutate(model.id, {
+        onSuccess: () => {
+          patchSettings({ transcription: { engine: 'parakeet_unified', model: model.id } });
+        },
+      });
     },
     error: download.error?.message ?? null,
   };

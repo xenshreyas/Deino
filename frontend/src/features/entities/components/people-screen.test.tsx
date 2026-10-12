@@ -110,4 +110,16 @@ describe('People page', () => {
 
     expect(await screen.findByText('No people yet')).toBeDefined();
   });
+
+  test('Companies is a tab beside People, since it left the sidebar (UX-25)', async () => {
+    renderAt('/people', PeopleScreen);
+    await listed();
+
+    const tabs = screen.getByRole('navigation', { name: 'People and companies' });
+    const peopleTab = within(tabs).getByRole('link', { name: 'People' });
+    expect(peopleTab.getAttribute('data-status')).toBe('active');
+    expect(within(tabs).getByRole('link', { name: 'Companies' }).getAttribute('href')).toBe(
+      '/companies',
+    );
+  });
 });

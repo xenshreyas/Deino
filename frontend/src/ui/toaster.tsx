@@ -3,6 +3,24 @@
  * 360px, raised surface, r12, popover shadow, a 16px status icon in its
  * semantic colour, at most three visible. `richColors` stays off so success
  * and error never flood the card with colour.
+ *
+ * **When to toast (UX-32).** A toast confirms only what the user cannot see.
+ * Toast for:
+ * - a copy to the clipboard;
+ * - background work that finishes off-screen (a file saved, an export, an
+ *   automation started, a model update the user did not ask for);
+ * - a destructive action that can be undone (with an Undo action);
+ * - a failure that has nowhere inline to go, and an ask that needs an answer
+ *   while the user is elsewhere (a permission at the start of a call).
+ *
+ * Never toast:
+ * - a setting saved: switches and fields save silently and show an inline
+ *   error if the save fails;
+ * - a change the user can see on screen (a tag, folder, person or template
+ *   created, renamed, moved or deleted; a list updated);
+ * - a recovery the recording pill already showed, or a download whose
+ *   progress was on screen;
+ * - anything unfinished ("coming soon").
  */
 import { Toaster as Sonner } from 'sonner';
 

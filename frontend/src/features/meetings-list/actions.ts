@@ -2,8 +2,8 @@
  * The page's actions on many meetings: trash (with Undo), restore, delete
  * forever, tag, file, export, merge and run an automation (AUT-01). Plain functions over the API rather than
  * mutation hooks, so the keyboard shortcuts (a window listener) can run them
- * too; `DbChanged` refreshes every query they touch, and each reports its
- * outcome as a toast.
+ * too; `DbChanged` refreshes every query they touch. A toast reports only
+ * what the list cannot show (UX-32): a trash with Undo, an export, a run.
  */
 import { toast } from 'sonner';
 
@@ -25,10 +25,9 @@ function failed(reason: unknown): undefined {
   return undefined;
 }
 
-/** Takes `ids` back out of the trash. */
+/** Takes `ids` back out of the trash; the rows come back on their own. */
 export async function restoreMeetings(ids: MeetingId[]): Promise<void> {
-  const outcome = await meetingsListApi.restore(ids).catch(failed);
-  if (outcome !== undefined) toast.success(copy.trash.restored(outcome.changed.length));
+  await meetingsListApi.restore(ids).catch(failed);
 }
 
 /** Moves `ids` to the trash, offering Undo. */
@@ -57,22 +56,19 @@ export async function selectAllMatching(): Promise<void> {
   }
 }
 
-/** Deletes trashed `ids` for good. */
+/** Deletes trashed `ids` for good; the confirm dialog already said so. */
 export async function deleteForever(ids: MeetingId[]): Promise<void> {
-  const outcome = await meetingsListApi.deleteForever(ids).catch(failed);
-  if (outcome !== undefined) toast.success(copy.trash.deleted(outcome.changed.length));
+  await meetingsListApi.deleteForever(ids).catch(failed);
 }
 
-/** Puts `tag` on `ids`. */
+/** Puts `tag` on `ids`; the rows show it. */
 export async function tagMeetings(ids: MeetingId[], tag: TagId): Promise<void> {
-  const outcome = await meetingsListApi.tagMany(ids, tag).catch(failed);
-  if (outcome !== undefined) toast.success(copy.bulk.tagged(ids.length));
+  await meetingsListApi.tagMany(ids, tag).catch(failed);
 }
 
-/** Files `ids` into `folder`. */
+/** Files `ids` into `folder`; the sidebar's count shows it. */
 export async function fileMeetings(ids: MeetingId[], folder: FolderId): Promise<void> {
-  const outcome = await meetingsListApi.fileMany(ids, folder).catch(failed);
-  if (outcome !== undefined) toast.success(copy.bulk.filed(ids.length));
+  await meetingsListApi.fileMany(ids, folder).catch(failed);
 }
 
 /** Runs `automation` on `ids` now, whatever its conditions (a run each, in the pipeline). */
@@ -89,7 +85,6 @@ export async function mergeMeetings(ids: MeetingId[]): Promise<MergeOutcome | nu
   const outcome = await meetingsListApi.merge(ids).catch(failed);
   if (outcome === undefined) return null;
   usePageStore.getState().clearSelection();
-  toast.success(copy.merge.done);
   return outcome;
 }
 

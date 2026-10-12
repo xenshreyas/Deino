@@ -124,7 +124,6 @@ function RebuildRow() {
   const reindex = useReindexAll();
   const rebuild = () => {
     reindex.mutate(undefined, {
-      onSuccess: (report) => toast.success(copy.rebuilt(report.documents)),
       onError: (error) => toast.error(error.message),
     });
   };

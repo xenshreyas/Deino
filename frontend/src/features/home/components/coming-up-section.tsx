@@ -16,6 +16,7 @@ import {
   useNow,
   useRecordPlan,
 } from '@/features/calendar';
+import { PermissionNudge } from '@/features/onboarding';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { homeCopy } from '../copy';
@@ -75,6 +76,8 @@ function PlannedComingUp() {
   return (
     <section aria-labelledby="home-coming-up" className="flex flex-col gap-1">
       <SectionHeading id="home-coming-up">{homeCopy.comingUp}</SectionHeading>
+      {/* UX-22: reminders are where Notifications matter, so it is asked here. */}
+      <PermissionNudge kind="notifications" />
       <Agenda plan={plan.data} now={now} />
     </section>
   );

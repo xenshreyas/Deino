@@ -1,13 +1,10 @@
 /** Every visible string of suggested follow-up emails (NOT-07). */
 export const followUpsCopy = {
-  banner: {
+  chip: {
     title: 'Follow-up email ready',
-    body: 'A draft to the people you met, with gaps marked for you to fill.',
+    hint: 'A draft to the people you met, with gaps marked for you to fill.',
     view: 'View draft',
-    dismiss: 'Dismiss',
-    confirm: 'Dismiss for good? It won’t come back.',
-    keep: 'Keep',
-    confirmDismiss: 'Dismiss',
+    dismiss: 'Dismiss for good',
   },
   editor: {
     title: 'Follow-up email',
@@ -28,16 +25,12 @@ export const followUpsCopy = {
     openInMail: 'Open in Mail',
     copy: 'Copy message',
     copied: 'Message copied',
-    sendVia: 'Send via Gmail or Outlook',
-    sendViaHint: 'Sending from Deino comes with the Gmail and Outlook integrations.',
-    wip: 'WIP',
     close: 'Close',
   },
-  dismissed: 'Follow-up dismissed',
   failed: {
-    save: 'Could not save the draft',
-    mail: 'Could not open Mail',
-    copy: 'Could not copy the message',
-    dismiss: 'Could not dismiss the follow-up',
+    save: 'Couldn’t save the draft',
+    mail: 'Couldn’t open Mail',
+    copy: 'Couldn’t copy the message',
+    dismiss: 'Couldn’t dismiss the follow-up',
   },
 } as const;

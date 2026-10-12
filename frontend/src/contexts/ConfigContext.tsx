@@ -17,9 +17,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import type { ModelConfig } from '@/components/ModelSettingsModal';
 import { legacyOllamaModels } from '@/features/llm';
-import type { TranscriptModelProps } from '@/components/TranscriptSettings';
 import type { SelectedDevices } from '@/components/DeviceSelection';
-import { BetaFeatures, BetaFeatureKey, DEFAULT_BETA_FEATURES } from '@/types/betaFeatures';
 import {
   type AiSettings,
   type ModelSelection,
@@ -31,9 +29,16 @@ import {
   useSaveModelSelection,
   useSettings,
 } from '@/features/settings';
-import { PARAKEET_UNIFIED_PROVIDER, engineOf, providerOf } from '@/features/transcription';
+import { PARAKEET_UNIFIED_PROVIDER, providerOf, type TranscriptProviderName } from '@/features/transcription';
 
 export type { NotificationSettings } from '@/features/settings';
+
+/** The saved engine and model under their legacy provider names, for the
+ * retranscribe dialog. Settings → Transcription reads the settings itself. */
+export interface TranscriptModelProps {
+  provider: TranscriptProviderName;
+  model: string;
+}
 
 export interface OllamaModel {
   name: string;
@@ -58,16 +63,12 @@ interface ConfigContextType {
   isModelConfigLoading: boolean;
 
   transcriptModelConfig: TranscriptModelProps;
-  setTranscriptModelConfig: (config: TranscriptModelProps) => void;
 
   selectedDevices: SelectedDevices;
   setSelectedDevices: (devices: SelectedDevices) => void;
 
   showConfidenceIndicator: boolean;
   toggleConfidenceIndicator: (checked: boolean) => void;
-
-  betaFeatures: BetaFeatures;
-  toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => void;
 
   models: OllamaModel[];
   modelOptions: Record<ModelConfig['provider'], string[]>;
@@ -192,14 +193,6 @@ function derivedSettings(
 ) {
   return {
     transcriptModelConfig: settings ? toTranscriptConfig(settings.transcription) : FALLBACK_TRANSCRIPT_CONFIG,
-    setTranscriptModelConfig: (config: TranscriptModelProps) => {
-      persist({
-        transcription: {
-          engine: engineOf(config.provider),
-          model: config.model,
-        },
-      });
-    },
     selectedDevices: {
       micDevice: settings?.audio.preferredMicDevice ?? null,
       systemDevice: settings?.audio.preferredSystemDevice ?? null,
@@ -212,10 +205,6 @@ function derivedSettings(
     showConfidenceIndicator: settings?.ui.showConfidenceIndicator ?? true,
     toggleConfidenceIndicator: (checked: boolean) => {
       persist({ ui: { showConfidenceIndicator: checked } });
-    },
-    betaFeatures: settings ? { importAndRetranscribe: settings.beta.importAndRetranscribe } : DEFAULT_BETA_FEATURES,
-    toggleBetaFeature: (featureKey: BetaFeatureKey, enabled: boolean) => {
-      persist({ beta: { [featureKey]: enabled } });
     },
     isAutoSummary: settings?.ai.autoSummary ?? false,
     toggleIsAutoSummary: (checked: boolean) => {

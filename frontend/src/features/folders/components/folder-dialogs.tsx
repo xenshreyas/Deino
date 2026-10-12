@@ -42,10 +42,7 @@ function reportFailure(error: Error) {
 /** Moves `folder` under a parent (`null`: the top level), then closes. */
 function useMoveTo(folder: Folder | null, onClose: () => void) {
   const move = useMoveFolder();
-  const done = () => {
-    toast.success(foldersCopy.moved);
-    onClose();
-  };
+  const done = onClose;
   return (parentId: Folder['id'] | null) => {
     if (folder === null) return;
     move.mutate({ id: folder.id, parentId }, { onSuccess: done, onError: reportFailure });
@@ -137,7 +134,6 @@ export function DeleteFolderDialog({
     if (folder === null) return;
     remove.mutate(folder.id, {
       onSuccess: () => {
-        toast.success(foldersCopy.deleted);
         onClose();
         onDeleted();
       },

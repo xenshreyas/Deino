@@ -14,7 +14,7 @@ import { TooltipProvider } from '@/ui/tooltip';
 
 import { calendarEvent } from '../test-event-links';
 import type { CalendarEvent, MeetingId } from '../types';
-import { MeetingCalendarChips } from './meeting-calendar-chips';
+import { MeetingLinksPanel } from './meeting-links-panel';
 
 const bindings = await vi.hoisted(async () => (await import('../test-event-links')).linkBindings());
 vi.mock('@/lib/ipc/generated/calendar', () => bindings);
@@ -31,13 +31,13 @@ function linkedTo(event: CalendarEvent | null) {
   commands().meetingEvent.mockResolvedValue({ status: 'ok', data: event });
 }
 
-/** The chips at `/`, with meeting pages to open. */
+/** The Details sections at `/`, with meeting pages to open. */
 function renderChips() {
   const root = createRootRoute();
   const home = createRoute({
     getParentRoute: () => root,
     path: '/',
-    component: () => <MeetingCalendarChips meetingId={MEETING} />,
+    component: () => <MeetingLinksPanel meetingId={MEETING} />,
   });
   const meeting = createRoute({
     getParentRoute: () => root,
@@ -57,7 +57,7 @@ function renderChips() {
   );
 }
 
-describe('the meeting header’s calendar chips', () => {
+describe('the Details panel’s calendar sections', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     linkedTo(design);
@@ -125,7 +125,7 @@ describe('the meeting header’s calendar chips', () => {
     expect(commands().eventSuggestions).toHaveBeenCalledWith(MEETING);
   });
 
-  test('shows "Previous" when an earlier meeting of the series exists', async () => {
+  test('shows "Previous in series" when an earlier meeting of the series exists', async () => {
     commands().relatedMeetings.mockResolvedValue({
       status: 'ok',
       data: {
@@ -140,8 +140,8 @@ describe('the meeting header’s calendar chips', () => {
     });
     renderChips();
 
-    expect(
-      await screen.findByRole('link', { name: 'Open the previous meeting, Design review' }),
-    ).toBeDefined();
+    const previous = await screen.findByRole('region', { name: 'Previous in series' });
+    expect(previous.querySelector('a')?.getAttribute('href')).toBe('/meetings/meeting-0');
+    expect(previous.textContent).toContain('Design review');
   });
 });

@@ -1,20 +1,21 @@
 import { SkeletonText } from '@/ui/skeleton';
 
 import { permissionsCopy } from '../../copy';
-import { missingRequired } from '../../permission-actions';
+import { missingRequired, upfront } from '../../permission-actions';
 import { usePermissions } from '../../queries';
-import { CalendarPermission, SystemPermission } from '../permission-rows';
+import { SystemPermission } from '../permission-rows';
 import { SetupList } from '../setup-row';
 import { StepFrame, type StepProps } from '../step-frame';
 
 /**
- * Step 2: microphone, system audio, notifications, Accessibility and
- * Screen Recording (both optional) and Calendar, each with its live state and the one button that moves it.
- * The list re-reads itself, so a switch flipped in System Settings shows up.
+ * Step 2: the microphone and system audio, each with its live state and the
+ * one button that moves it (UX-22). Calendar has its own step (UX-21), and
+ * the optional permissions are asked where they matter. The list re-reads
+ * itself, so a switch flipped in System Settings shows up.
  */
 export function PermissionsStep({ dispatch }: StepProps) {
   const permissions = usePermissions();
-  const statuses = permissions.data;
+  const statuses = permissions.data === undefined ? undefined : upfront(permissions.data);
   return (
     <StepFrame
       step="permissions"
@@ -23,13 +24,12 @@ export function PermissionsStep({ dispatch }: StepProps) {
       dispatch={dispatch}
     >
       {statuses === undefined ? (
-        <SkeletonText lines={5} />
+        <SkeletonText lines={2} />
       ) : (
         <SetupList label={permissionsCopy.title}>
           {statuses.map((status) => (
             <SystemPermission key={status.kind} status={status} />
           ))}
-          <CalendarPermission />
         </SetupList>
       )}
       {statuses !== undefined && missingRequired(statuses) ? (

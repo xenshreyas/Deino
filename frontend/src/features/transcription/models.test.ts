@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { activeModel, downloadedBytes, isReady } from './models';
+import { activeModel, downloadedBytes, fileIdOf, isReady } from './models';
 import type { ModelFileId, ModelFileView, ModelState, Quant } from './types';
 
 function file(quant: Quant, state: ModelState, recommended = false): ModelFileView {
@@ -25,6 +25,17 @@ describe('activeModel', () => {
   it('falls back to the recommended file when nothing or an unknown file is selected', () => {
     expect(activeModel([q5, q8], undefined)).toBe(q8);
     expect(activeModel([q5, q8], 'parakeet-tdt-0.6b-v3-int8')).toBe(q8);
+  });
+
+  it('accepts the selected file by its .gguf file name too', () => {
+    expect(activeModel([q5, q8], `${q5.id}.gguf`)).toBe(q5);
+  });
+});
+
+describe('fileIdOf', () => {
+  it('reads a setting as the file ID, with or without .gguf', () => {
+    expect(fileIdOf('parakeet-unified-en-0.6b-Q8_0.gguf')).toBe('parakeet-unified-en-0.6b-Q8_0');
+    expect(fileIdOf(' parakeet-unified-en-0.6b-Q8_0 ')).toBe('parakeet-unified-en-0.6b-Q8_0');
   });
 });
 

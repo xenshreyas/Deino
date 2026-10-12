@@ -14,10 +14,9 @@ import {
 
 // The inherited settings panels pull in Tauri and contexts; only the registry is under test.
 vi.mock('@/components/About', () => ({ About: () => null }));
-vi.mock('@/components/BetaSettings', () => ({ BetaSettings: () => null }));
 vi.mock('@/components/RecordingsFolderSettings', () => ({ RecordingsFolderSettings: () => null }));
 vi.mock('@/components/SummaryModelSettings', () => ({ OtherProviders: () => null }));
-vi.mock('@/components/TranscriptSettings', () => ({ TranscriptSettings: () => null }));
+vi.mock('./components/engine-settings', () => ({ EngineSettings: () => null }));
 vi.mock('@/contexts/ConfigContext', () => ({ useConfig: () => ({}) }));
 
 /** The nine pages of the target IA (UX-19), in nav order. */
@@ -34,7 +33,7 @@ const PAGES = [
 ] as const;
 
 /**
- * Every page id from before UX-19 (27 pages), and where a link to it lands
+ * Every page id from before UX-19 (27 pages; Beta was deleted by UX-12), and where a link to it lands
  * now: the host page and the section it scrolls to (none for a page's top).
  */
 const OLD_IDS = [
@@ -62,7 +61,6 @@ const OLD_IDS = [
   ['network', 'privacy', 'network'],
   ['import', 'connections', 'import'],
   ['export', 'connections', 'export'],
-  ['beta', 'advanced', 'beta'],
   ['about', 'about', undefined],
   ['developer', 'advanced', 'developer'],
 ] as const;

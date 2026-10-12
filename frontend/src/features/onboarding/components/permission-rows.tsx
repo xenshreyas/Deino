@@ -4,22 +4,14 @@
  * its live state and the one button that moves it.
  */
 import { useCalendarStatus, useOpenAccessSettings, useSetCalendarSync } from '@/features/calendar';
-import { AudioLines, Bell, Calendar, type Icon, Mic, Monitor, Users } from '@/ui/icons';
+import { Calendar } from '@/ui/icons';
 
 import { permissionsCopy } from '../copy';
 import { calendarPermission } from '../permission-actions';
+import { PERMISSION_ICONS } from '../permission-icons';
 import { useOpenPermissionSettings, useRequestPermission } from '../queries';
-import type { PermissionKind, PermissionStatus } from '../types';
+import type { PermissionStatus } from '../types';
 import { PermissionRow } from './permission-row';
-
-/** Each permission's icon. */
-const ICONS: Record<PermissionKind, Icon> = {
-  microphone: Mic,
-  system_audio: AudioLines,
-  notifications: Bell,
-  accessibility: Users,
-  screen_recording: Monitor,
-};
 
 /** Props of {@link SystemPermission}. */
 export interface SystemPermissionProps {
@@ -35,7 +27,7 @@ export function SystemPermission({ status, showOptional = true }: SystemPermissi
   const copy = permissionsCopy.kinds[status.kind];
   return (
     <PermissionRow
-      icon={ICONS[status.kind]}
+      icon={PERMISSION_ICONS[status.kind]}
       name={copy.name}
       why={copy.why}
       state={status.state}

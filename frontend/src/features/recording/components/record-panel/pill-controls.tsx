@@ -1,13 +1,13 @@
 /**
  * What the pill reveals on hover (ui.md, Record pill, Expanded): pause or
- * resume, stop, the microphone menu, the screen picker (CAP-09), the
- * call-audio switch and "Open notes"; and, while auto-stop counts down, "Keep recording" instead.
+ * resume, stop, "Open notes", and ⋯ for the rare device switches (UX-29:
+ * microphone, screen to capture, the call's audio); and, while auto-stop
+ * counts down, "Keep recording" instead.
  * Presentational: props in, events out.
  */
 import { Button } from '@/ui/button';
-import { cn } from '@/ui/cn';
 import { IconButton } from '@/ui/icon-button';
-import { Mic, Monitor, NotebookPen, Pause, Play, Volume2, VolumeX } from '@/ui/icons';
+import { Ellipsis, NotebookPen, Pause, Play } from '@/ui/icons';
 import { Hint } from '@/ui/tooltip';
 
 import { panelCopy } from '../../copy';
@@ -17,10 +17,8 @@ export interface PillActions {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
-  onMicrophone: () => void;
-  /** The window or screen picker (CAP-09). */
-  onScreen: () => void;
-  onSystemAudio: () => void;
+  /** The ⋯ menu: microphone, screen to capture, the call's audio. */
+  onMore: () => void;
   onOpenNotes: () => void;
   onKeep: () => void;
 }
@@ -49,12 +47,11 @@ function StopButton({ onStop }: { onStop: () => void }) {
 /** Props of {@link PillControls}. */
 export interface PillControlsProps {
   paused: boolean;
-  systemAudio: boolean;
   actions: PillActions;
 }
 
 /** The running recording's controls. */
-export function PillControls({ paused, systemAudio, actions }: PillControlsProps) {
+export function PillControls({ paused, actions }: PillControlsProps) {
   return (
     <span className="flex items-center gap-0.5">
       <Divider />
@@ -64,15 +61,6 @@ export function PillControls({ paused, systemAudio, actions }: PillControlsProps
         onClick={paused ? actions.onResume : actions.onPause}
       />
       <StopButton onStop={actions.onStop} />
-      <IconButton icon={Mic} label={panelCopy.microphone} onClick={actions.onMicrophone} />
-      <IconButton icon={Monitor} label={panelCopy.screen} onClick={actions.onScreen} />
-      <IconButton
-        icon={systemAudio ? Volume2 : VolumeX}
-        label={systemAudio ? panelCopy.systemAudioOn : panelCopy.systemAudioOff}
-        aria-pressed={systemAudio}
-        onClick={actions.onSystemAudio}
-        className={cn(systemAudio ? 'text-accent' : 'text-fg-subtle')}
-      />
       <Hint label={panelCopy.openNotesHint} side="bottom">
         <Button
           variant="ghost"
@@ -84,6 +72,7 @@ export function PillControls({ paused, systemAudio, actions }: PillControlsProps
           {panelCopy.openNotes}
         </Button>
       </Hint>
+      <IconButton icon={Ellipsis} label={panelCopy.more} onClick={actions.onMore} />
     </span>
   );
 }

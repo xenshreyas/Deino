@@ -1,5 +1,7 @@
 import { useSettings } from '@/features/settings';
 
+import { isSetupStep } from '../machine';
+
 /** What the shell renders in front of the routes. */
 export type OnboardingGate =
   /** Settings are loading: render nothing yet, so neither screen flashes. */
@@ -18,5 +20,7 @@ export function useOnboardingGate(): OnboardingGate {
   const settings = useSettings();
   if (settings.isError) return 'app';
   if (settings.data === undefined) return 'pending';
-  return settings.data.onboarding.completed ? 'app' : 'onboarding';
+  const { completed, step } = settings.data.onboarding;
+  // Progress left on a retired step (Try it, UX-24) had nothing left to do.
+  return completed || !isSetupStep(step) ? 'app' : 'onboarding';
 }

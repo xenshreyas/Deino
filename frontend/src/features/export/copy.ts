@@ -13,7 +13,6 @@ export const exportCopy = {
   copiedRich: 'Notes copied with formatting',
   copiedMarkdown: 'Notes copied as Markdown',
   copiedTranscript: 'Transcript copied',
-  emailOpened: 'Draft opened in Mail',
   saved: (fileName: string) => `Saved ${fileName}`,
 
   dialogTitle: 'Export meeting',

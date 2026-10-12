@@ -7,7 +7,6 @@ export const copy = {
   title: 'Action items',
   loadError: 'Action items could not be loaded.',
   retry: 'Try again',
-  saved: 'Saved',
   tabs: {
     label: 'Views',
     mine: 'My items',
@@ -126,7 +125,6 @@ export const copy = {
   menu: {
     label: 'Action items options',
     markAllMineDone: 'Mark all mine done',
-    markedDone: 'All your open items are done',
     reminder: 'Remind me at 9:00',
     reminderHint: 'A notification for what is due today',
   },

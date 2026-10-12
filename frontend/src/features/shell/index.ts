@@ -1,6 +1,6 @@
 /**
  * The app shell: providers, sidebar (from the `nav.ts` registry), title bar,
- * ⌘K palette (provider registry), ⌘J chat bar, global shortcuts, onboarding
+ * ⌘K palette (provider registry), global shortcuts, onboarding
  * gate and drop import.
  */
 export { AppShell } from './app-shell';

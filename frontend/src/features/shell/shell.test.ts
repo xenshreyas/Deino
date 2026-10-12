@@ -14,6 +14,10 @@ const press = (key: string, modifiers: Partial<KeyPress> = {}): KeyPress => ({
 });
 
 describe('shortcuts', () => {
+  test('an unshipped feature’s shortcut does nothing (UX-27: ⌘J is Ask Deino)', () => {
+    expect(findShortcut(press('j', { metaKey: true }))).toBeUndefined();
+  });
+
   test('each global shortcut matches its keys exactly', () => {
     expect(findShortcut(press('k', { metaKey: true }))).toBe('palette');
     expect(findShortcut(press('R', { metaKey: true, shiftKey: true }))).toBe('record');
@@ -39,13 +43,34 @@ describe('nav registry', () => {
     expect(new Set(NAV_ITEMS.map((item) => item.to)).size).toBe(NAV_ITEMS.length);
   });
 
-  test('sections list their items in order, with Settings pinned to the footer', () => {
+  test('the sidebar shows five entries, a collapsed More, and Settings in the footer (UX-25)', () => {
     expect(navItemsIn('primary').map((item) => item.id)).toEqual([
       'home',
       'meetings',
       'action-items',
+      'people',
+      'folders',
+    ]);
+    expect(navItemsIn('more').map((item) => item.id)).toEqual([
+      'insights',
+      'recipes',
+      'automations',
     ]);
     expect(navItemsIn('footer').map((item) => item.id)).toEqual(['settings']);
+  });
+
+  test('pages reached from other pages leave the sidebar but stay in the registry for ⌘K', () => {
+    const inSidebar = new Set(
+      (['primary', 'more', 'footer'] as const).flatMap((section) =>
+        navItemsIn(section).map((item) => item.id),
+      ),
+    );
+    const hidden = NAV_ITEMS.filter((item) => !inSidebar.has(item.id)).map((item) => item.id);
+    expect(hidden).toEqual(['companies', 'tags', 'stats', 'trash']);
+  });
+
+  test('labels are sentence case (UX-33)', () => {
+    expect(navItem('action-items').label).toBe('Action items');
   });
 
   test('Home is active only on its own page; others stay active on child pages', () => {

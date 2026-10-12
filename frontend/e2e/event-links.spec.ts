@@ -21,7 +21,9 @@ test('re-linking a meeting to another event updates its attendees and offers to 
   await page.goto(`/meetings/${board.id}`);
   await expect(page.getByRole('heading', { name: board.title })).toBeVisible();
 
-  // The header shows the linked event; its picker suggests the day before.
+  // Details shows the linked event; its picker suggests the day before.
+  await page.getByRole('button', { name: 'Toggle right panel' }).click();
+  await page.getByRole('tab', { name: 'Details' }).click();
   await page.getByRole('button', { name: `Change calendar event: ${board.title}` }).click();
   const picker = page.getByRole('dialog');
   await expect(picker.getByText('Around this meeting')).toBeVisible();
@@ -39,11 +41,6 @@ test('re-linking a meeting to another event updates its attendees and offers to 
   await expect(banner.getByRole('button', { name: 'Regenerate' })).toBeVisible();
 
   // Same title and people as the planning meeting the day before: "Previous in series".
-  await expect(
-    page.getByRole('link', { name: `Open the previous meeting, ${planning.title}` }),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Toggle right panel' }).click();
-  await page.getByRole('tab', { name: 'Details' }).click();
   const event = page.getByRole('region', { name: 'Calendar event' });
   await expect(event.getByText(planning.attendees[0]?.name ?? '')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Previous in series' })).toContainText(

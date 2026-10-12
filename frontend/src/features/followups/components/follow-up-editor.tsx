@@ -2,9 +2,9 @@
  * The follow-up editor (NOT-07): To/Cc/Bcc pre-filled with the external
  * attendees, the subject, and the message with its `[gaps]` highlighted.
  * It sends through the user's mail app (`mailto:`) or the clipboard; both
- * save the edit first. Sending from Deino through Gmail or Outlook is shown
- * disabled with a WIP badge until INT-07 (§8 D12). Closing with changes
- * saves them.
+ * save the edit first. Sending from Deino through Gmail or Outlook joins
+ * them with INT-07 (§8 D12); until then it is not shown (UX-27). Closing
+ * with changes saves them.
  */
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -21,7 +21,6 @@ import {
 } from '@/ui/dialog';
 import { Copy, ICON_PROPS, Mail } from '@/ui/icons';
 import { Input } from '@/ui/input';
-import { Hint } from '@/ui/tooltip';
 
 import { followUpsCopy } from '../copy';
 import { editOf, fieldsOf, isDirty, placeholderCount } from '../draft-text';
@@ -65,22 +64,6 @@ function useEditorActions(meeting: MeetingId, fields: DraftFields) {
   };
 }
 
-/** The disabled "Send via Gmail or Outlook" with its WIP badge. */
-function SendViaWip() {
-  return (
-    <Hint label={copy.sendViaHint}>
-      <span tabIndex={0} className="mr-auto inline-flex rounded-md">
-        <Button variant="ghost" disabled>
-          {copy.sendVia}
-          <span className="inline-flex h-5 items-center rounded-sm bg-bg-muted px-1.5 text-xs font-semibold text-fg-muted">
-            {copy.wip}
-          </span>
-        </Button>
-      </span>
-    </Hint>
-  );
-}
-
 /** How many gaps are left, next to a swatch of the highlight. */
 function GapCount({ fields }: { fields: DraftFields }) {
   const count = placeholderCount(fields.subject) + placeholderCount(fields.body);
@@ -96,7 +79,6 @@ function GapCount({ fields }: { fields: DraftFields }) {
 function Footer({ actions }: { actions: ReturnType<typeof useEditorActions> }) {
   return (
     <DialogFooter className="flex-wrap items-center">
-      <SendViaWip />
       <Button variant="secondary" disabled={actions.busy} onClick={actions.copy}>
         <Copy {...ICON_PROPS} />
         {copy.copy}

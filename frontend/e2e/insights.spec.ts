@@ -55,16 +55,19 @@ test('an insight from a template answers on a meeting, fills its table and expor
   await expect(page.getByRole('status')).toHaveCount(0, { timeout: 15_000 });
   await shoot(page, 'insights-table');
 
-  // The meeting's Insights tab shows the same answer, attributed.
+  // The meeting's notes end with the same answer, attributed.
   await salesRow.click();
-  await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery\?tab=insights/);
+  await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery\?tab=notes/);
   const section = page.getByRole('region', { name: 'Discovery scorecard' });
   await expect(section).toBeVisible();
   await expect(section.getByRole('link', { name: /where Marcus Webb said this/ })).toBeVisible();
   await shoot(page, 'meeting-insights');
 
   // Back on the Insights page, the table exports as CSV.
-  await page.getByRole('link', { name: 'Insights' }).first().click();
+  // UX-25: Insights sits under the sidebar's collapsed "More".
+  const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
+  await sidebar.getByRole('button', { name: 'More' }).click();
+  await sidebar.getByRole('link', { name: 'Insights' }).click();
   await page.getByRole('button', { name: 'Export CSV' }).click();
   await expect(page.getByText('Saved Discovery scorecard.csv')).toBeVisible();
 });

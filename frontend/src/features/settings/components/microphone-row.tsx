@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SettingsRow } from '@/ui/settings-section';
 
 import { recordingSettingsCopy as copy } from '../copy';
-import { usePatchSettings } from '../queries';
+import { useSaveSettings } from './save-settings';
 
 /** The select's value for "the Mac's default". */
 const DEFAULT = '__default__';
@@ -32,7 +32,7 @@ export interface MicrophoneRowProps {
 /** "Microphone" and its select. */
 export function MicrophoneRow({ preferred }: MicrophoneRowProps) {
   const microphones = useMicrophones();
-  const patch = usePatchSettings();
+  const { save, saving } = useSaveSettings();
   const recording = useRecordingState().phase !== 'idle';
   const names = (microphones.data ?? []).map((microphone) => microphone.name);
   const known = preferred === null || names.includes(preferred) ? names : [...names, preferred];
@@ -43,10 +43,10 @@ export function MicrophoneRow({ preferred }: MicrophoneRowProps) {
     >
       <Select
         value={preferred ?? DEFAULT}
-        disabled={recording || patch.isPending}
+        disabled={recording || saving}
         onValueChange={(value) => {
           const name = value === DEFAULT ? null : value;
-          patch.mutate({ audio: { preferredMicDevice: name } });
+          save({ audio: { preferredMicDevice: name } });
         }}
       >
         <SelectTrigger aria-label={copy.microphoneTitle} className="w-[220px]">

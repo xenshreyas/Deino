@@ -7,6 +7,7 @@ import type * as Generated from '@/lib/ipc/generated/speakers';
 import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
 
+import { speakersCopy } from '../copy';
 import type { MeetingId, Participant, PersonId, SpeakerId } from '../types';
 import { ParticipantsPanel } from './participants-panel';
 
@@ -121,6 +122,6 @@ describe('the participants panel', () => {
     commands.participants.mockResolvedValue({ status: 'ok', data: [] });
     renderPanel();
 
-    expect(await screen.findByText('No speakers yet')).toBeDefined();
+    expect(await screen.findByText(speakersCopy.emptyBody)).toBeDefined();
   });
 });

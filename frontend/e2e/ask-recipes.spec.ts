@@ -40,7 +40,8 @@ test('a meeting answers questions with citations and runs a / recipe', async ({ 
 test('the Recipes page lists built-ins, remixes one and previews it', async ({ page }) => {
   await page.goto('/recipes');
   await expect(page.getByRole('heading', { name: 'Recipes', level: 1 })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Weekly recap/ })).toContainText('WIP');
+  // UX-27: built-ins that need several meetings are hidden until they can run.
+  await expect(page.getByRole('button', { name: /Weekly recap/ })).toHaveCount(0);
   await shootBothThemes(page, 'recipes-built-in');
 
   await page.getByRole('button', { name: 'Remix' }).click();

@@ -50,7 +50,7 @@ function sidebar(page: Page) {
   return page.getByRole('complementary', { name: 'Sidebar' });
 }
 
-test('a fresh install walks all six steps, skipping some, and lands in the app', async ({
+test('a fresh install walks all five steps, skipping some, and lands in the app', async ({
   page,
 }) => {
   await page.goto('/?onboarding');
@@ -59,12 +59,16 @@ test('a fresh install walks all six steps, skipping some, and lands in the app',
   await page.getByRole('button', { name: 'Get started' }).click();
 
   await atStep(page, 'Permissions', '2-permissions', 'Microphone');
+  // UX-21, UX-22: only what recording needs; Calendar has its own step.
+  await expect(page.getByRole('list', { name: 'Permissions' }).getByRole('listitem')).toHaveCount(
+    2,
+  );
   const systemAudio = page.getByRole('listitem').filter({ hasText: 'System audio' });
   await systemAudio.getByRole('button', { name: 'Allow' }).click();
   await expect(systemAudio.getByText('Allowed')).toBeVisible();
   await press(page, 'Continue');
 
-  await atStep(page, 'AI setup', '3-ai-setup', 'Ready');
+  await atStep(page, 'AI setup', '3-ai-setup', 'Transcription is ready');
   await press(page, 'Skip');
 
   await atStep(page, 'Calendar', '4-calendar', 'Sync calendars');
@@ -73,9 +77,6 @@ test('a fresh install walks all six steps, skipping some, and lands in the app',
   await atStep(page, 'About you', '5-profile');
   await page.getByLabel('Company').fill('Deino');
   await press(page, 'Continue');
-
-  await atStep(page, 'Try it', '6-try-it');
-  await press(page, 'Finish');
 
   await expect(page.getByRole('heading', { name: 'Welcome to Deino' })).toHaveCount(0);
   await expect(sidebar(page)).toBeVisible();
@@ -95,21 +96,16 @@ test('Back returns to the previous step, and Skip setup goes straight to the app
   await expect(sidebar(page)).toBeVisible();
 });
 
-test('the sample meeting opens from the last step', async ({ page }) => {
+test('setup ends after About you, with no Try it step (UX-24)', async ({ page }) => {
   await page.goto('/?onboarding');
   await page.getByRole('button', { name: 'Get started' }).click();
   for (const title of ['Permissions', 'AI setup', 'Calendar', 'About you']) {
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await expect(page.getByRole('list', { name: /Step \d of 5/ })).toBeVisible();
     await press(page, 'Skip');
   }
 
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'sample meeting' })
-    .getByRole('button')
-    .click();
-
-  await expect(page).toHaveURL(/\/meetings\/meeting-fixture-standup/);
+  await expect(sidebar(page)).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Try it' })).toHaveCount(0);
 });
 
@@ -119,9 +115,9 @@ test('Settings → Setup resumes at the first step left undone', async ({ page }
   await press(page, 'Continue');
   await expect(page.getByRole('heading', { level: 1, name: 'AI setup' })).toBeVisible();
   await press(page, 'Skip');
-  for (const title of ['Calendar', 'About you', 'Try it']) {
+  for (const title of ['Calendar', 'About you']) {
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await press(page, title === 'Try it' ? 'Finish' : 'Continue');
+    await press(page, 'Continue');
   }
 
   await sidebar(page).getByRole('link', { name: 'Settings', exact: true }).click();

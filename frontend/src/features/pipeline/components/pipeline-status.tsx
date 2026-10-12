@@ -1,0 +1,94 @@
+/**
+ * The meeting header's processing line (UX-01): silent when every stage
+ * worked or was skipped; one quiet line ("Writing notes…") while work runs;
+ * and one plain-words row per failed stage, with its reason and Retry.
+ * Every stage, done or not, is in Processing details (the ⋯ menu).
+ */
+import { CircleAlert, ICON_PROPS } from '@/ui/icons';
+
+import { copy, stageFailed, stageLabel, stageRunning } from '../copy';
+import { usePipelineProgress } from '../hooks/use-pipeline-progress';
+import { usePipelineStatus, useRerunStage } from '../queries';
+import type { MeetingId, StageId, StageStatus } from '../types';
+import { isStopped, RetryButton } from './stage-item';
+
+interface PipelineStatusProps {
+  meetingId: MeetingId;
+}
+
+/** The stage the "working" line names: the running one, else the next to run. */
+export function activeStage(stages: readonly StageStatus[]): StageStatus | undefined {
+  return (
+    stages.find((stage) => stage.status === 'running') ??
+    stages.find((stage) => stage.status === 'pending')
+  );
+}
+
+/** One failed stage: what didn't happen, why, and Retry. */
+function FailedRow(props: {
+  stage: StageStatus;
+  retrying: boolean;
+  onRetry: (id: StageId) => void;
+}) {
+  const { stage } = props;
+  return (
+    <li className="flex min-w-0 items-center gap-1.5 text-xs">
+      <CircleAlert {...ICON_PROPS} size={14} className="shrink-0 text-danger" />
+      <span className="shrink-0 text-danger">{stageFailed(stage.stage)}</span>
+      {stage.message === null ? null : (
+        <span className="min-w-0 truncate text-fg-muted" title={stage.message}>
+          {stage.message}
+        </span>
+      )}
+      <RetryButton
+        label={stageLabel(stage.stage)}
+        disabled={props.retrying}
+        onRetry={() => {
+          props.onRetry(stage.stage);
+        }}
+      />
+    </li>
+  );
+}
+
+/**
+ * Container: the stages come from a query that `PipelineProgress` events
+ * refresh, and retrying is a mutation.
+ */
+export function PipelineStatus({ meetingId }: PipelineStatusProps) {
+  const status = usePipelineStatus(meetingId);
+  const rerun = useRerunStage(meetingId);
+  usePipelineProgress(meetingId);
+  const stages = status.data ?? [];
+  const failed = stages.filter(isStopped);
+  const active = activeStage(stages);
+  if (failed.length === 0 && active === undefined && !rerun.isError) return null;
+  return (
+    <section aria-label={copy.label} className="flex flex-col gap-1">
+      {failed.length > 0 ? (
+        <ul className="flex flex-col gap-0.5">
+          {failed.map((stage) => (
+            <FailedRow
+              key={stage.stage}
+              stage={stage}
+              retrying={rerun.isPending}
+              onRetry={(id) => {
+                rerun.mutate(id);
+              }}
+            />
+          ))}
+        </ul>
+      ) : null}
+      {failed.length === 0 && active !== undefined ? (
+        <p role="status" className="animate-pulse-soft text-xs text-fg-muted">
+          {stageRunning(active.stage)}
+        </p>
+      ) : null}
+      {rerun.isError ? (
+        <p role="alert" className="text-xs text-danger">
+          {rerun.error.message || copy.retryFailed}
+        </p>
+      ) : null}
+    </section>
+  );
+}

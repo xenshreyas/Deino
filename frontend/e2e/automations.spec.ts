@@ -20,8 +20,7 @@ const SALES = fixtureMeeting('meeting-fixture-sales-discovery');
 const BOARD = fixtureMeeting('meeting-fixture-board-update');
 const STANDUP = fixtureMeeting('meeting-fixture-standup');
 
-/** The provider steps the picker lists as "WIP" (PARITY_PLAN D12). */
-/** Provider steps still WIP (D12); the webhook step is live since DEV-01. */
+/** Provider steps not shipped yet (D12), so the picker hides them (UX-27); webhooks are live. */
 const WIP_STEPS = ['Slack', 'Notion', 'Task tools', 'CRM', 'Google Docs or Apple Notes', 'Email'];
 
 /** The Automations page's list of automations. */
@@ -102,18 +101,18 @@ test('an automation with conditions and two steps saves, duplicates, runs and re
   await rerunFromMeeting(page);
 });
 
-/** On the sales meeting: ⋯ → Automations shows each run's status, and Rerun runs it again. */
+/** On the sales meeting: ⋯ → Run automation shows each run's status, and Rerun runs it again. */
 async function rerunFromMeeting(page: Page) {
   await expect(page).toHaveURL(/\/meetings\/meeting-fixture-sales-discovery/);
   await expect(page.getByRole('heading', { name: SALES.title, level: 1 })).toBeVisible();
   // The header settles as the meeting's queries land; open the menu once it holds.
   await expect(async () => {
     await page.getByRole('button', { name: 'More actions' }).click();
-    await expect(page.getByRole('menuitem', { name: 'Automations' })).toBeVisible({
+    await expect(page.getByRole('menuitem', { name: 'Run automation' })).toBeVisible({
       timeout: 1_000,
     });
   }).toPass();
-  await page.getByRole('menuitem', { name: 'Automations' }).click();
+  await page.getByRole('menuitem', { name: 'Run automation' }).click();
   const rerun = page.getByRole('menuitem').filter({ hasText: 'Rerun' });
   await expect(rerun).toContainText('Discovery recap');
   await expect(rerun).toContainText('Done');
@@ -125,7 +124,7 @@ async function rerunFromMeeting(page: Page) {
   await expect(rerun).toContainText('Done', { timeout: 10_000 });
 }
 
-test('a script step is blocked until shell scripts are allowed; provider steps are WIP, webhooks live', async ({
+test('a script step is blocked until shell scripts are allowed; unshipped provider steps are hidden, webhooks live', async ({
   page,
 }) => {
   await page.goto('/automations?automation=new');
@@ -139,7 +138,7 @@ test('a script step is blocked until shell scripts are allowed; provider steps a
   await expect(page.getByRole('menuitem', { name: 'Notification', exact: true })).toBeEnabled();
   await expect(page.getByRole('menuitem', { name: 'Webhook', exact: true })).toBeEnabled();
   for (const name of WIP_STEPS) {
-    await expect(page.getByRole('menuitem', { name, exact: true })).toBeDisabled();
+    await expect(page.getByRole('menuitem', { name, exact: true })).toHaveCount(0);
   }
   await shoot(page, 'automations-step-picker');
   await page.keyboard.press('Escape');

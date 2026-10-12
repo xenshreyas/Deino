@@ -15,6 +15,7 @@
 mod batch;
 pub mod cli;
 mod http_source;
+mod installed;
 pub mod lanes;
 mod provider;
 mod runtime;
@@ -30,6 +31,7 @@ use tauri::{AppHandle, Manager, Runtime};
 
 pub use batch::SttBatchEngines;
 pub use http_source::NetByteSource;
+pub use installed::InstalledSnapshot;
 pub use lanes::SttLanes;
 pub use provider::ParakeetUnifiedProvider;
 pub use runtime::{SttParts, SttRuntime, SttSetupError};

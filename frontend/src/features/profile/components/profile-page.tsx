@@ -1,5 +1,4 @@
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
 
 import { useSettings } from '@/features/settings';
 import type { ProfileSettings } from '@/lib/ipc/generated/profile';
@@ -37,7 +36,8 @@ function ProfileFields({ saved }: { saved: ProfileSettings }) {
   const profile = useProfileForm(saved);
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    profile.save(() => toast.success(profileCopy.saved));
+    // Saved silently (UX-31); a failure shows under the form.
+    profile.save(() => undefined);
   };
   return (
     <form onSubmit={submit} className="flex flex-col gap-8">

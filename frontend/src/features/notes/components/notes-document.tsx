@@ -4,7 +4,7 @@
  * table of contents. While new notes are being written the old ones stay,
  * dimmed, under a quiet status line.
  */
-import { type UIEvent, useRef, useState } from 'react';
+import { type ReactNode, type UIEvent, useRef, useState } from 'react';
 
 import type { MeetingId } from '@/features/meetings';
 import type { SaveStatus } from '@/features/notepad';
@@ -29,6 +29,8 @@ export interface NotesDocumentProps {
   /** Total versions, for the older-version bar. */
   versions: number;
   busy: boolean;
+  /** What follows the notes inside their scroll (insight answers, images). */
+  footer?: ReactNode;
   /** Writes the notes again; `null` when they cannot be (PRV-01). */
   onRegenerate: (() => void) | null;
   onRestore: () => void;
@@ -96,6 +98,7 @@ export function NotesDocument(props: NotesDocumentProps) {
           view={view}
           onStatus={props.onStatus}
         />
+        {props.footer}
       </div>
       {rightPanelOpen ? null : (
         <NotesToc entries={tocEntries(view.doc)} active={active} onJump={jump} />

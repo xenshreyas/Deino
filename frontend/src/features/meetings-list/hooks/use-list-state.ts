@@ -1,9 +1,7 @@
-import { toast } from 'sonner';
 import { useState } from 'react';
 
 import { usePatchSettings } from '@/features/settings';
 
-import { copy } from '../copy';
 import { filterKey } from '../filters';
 import { usePageStore } from '../page-store';
 import { useDeleteView, useSaveView } from '../queries';
@@ -71,8 +69,8 @@ export function useListState(
         view: { name, filter: kept ?? prefs.filter },
       });
       // The new view is not in `views` until they refetch: open it from the reply.
+      // The new tab shows it was saved (UX-32: no toast).
       if (kept === undefined) persist({ view: saved.id, filter: saved.filter });
-      toast.success(copy.saved);
       return saved;
     },
     remove: (id) => {

@@ -73,16 +73,12 @@ describe('IntegrationsSettings', () => {
     integrations.deliveries.mockResolvedValue({ status: 'ok', data: [] });
   });
 
-  it('lists planned providers as WIP with a Connect button that cannot be pressed', async () => {
+  it('lists only shipped providers; planned ones stay hidden (UX-27)', async () => {
     render(<IntegrationsSettings offlineMode={false} />, { wrapper });
 
-    const planned = await screen.findByRole('list', { name: 'On the way' });
-    expect(within(planned).getByText('Slack')).toBeTruthy();
-    expect(within(planned).getByText('WIP')).toBeTruthy();
-    expect(within(planned).getByRole('button', { name: 'Connect Slack' })).toHaveProperty(
-      'disabled',
-      true,
-    );
+    expect(await screen.findByRole('group', { name: 'Sandbox' })).toBeTruthy();
+    expect(screen.queryByText('Slack')).toBeNull();
+    expect(screen.queryByText('WIP')).toBeNull();
     expect(screen.getByText('Nothing sent yet.')).toBeTruthy();
   });
 
