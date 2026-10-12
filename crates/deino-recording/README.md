@@ -17,6 +17,11 @@ spoken. The UI only watches.
   `pause`, `resume`, `stop` (both tracks end together, lanes flush, timing
   set, `StopRecording` → `processing`, which starts the pipeline), `state`.
   The saved transcript is read through `deino_core::transcript` (TRN-01).
+  `StartRequest` carries the title and the calendar event a recording is
+  for. CAP-07/CAP-10 (ADR 0039): `resume_meeting` (`service/resume.rs`: a
+  finished meeting back to `recording`, new audio after the recorded
+  length), and in `service/controls.rs` the microphone switch, the
+  system-audio toggle, the levels and the lanes' activity.
 - `Session` (`session.rs`, `session/`): a recording's parts, started and
   stopped in order (router → engines → recorder → capture → meeting row →
   live pipeline).
@@ -48,8 +53,15 @@ spoken. The UI only watches.
   `ExtAudioFile`) and `BatchEngines` ports; VAD utterances of at most 30 s,
   runs that stopped early read again in halves.
 - Launch recovery (`recovery.rs`): meetings left in `recording`.
-- The events port (`events.rs`): `RecordingSnapshot`, `SegmentUpdate`,
-  `HealthNotice`.
+- Recording health (`monitor.rs`, `monitor/watch.rs`, CAP-10): the pure
+  `HealthMonitor` (no audio 5 s per track, a speaking microphone with no
+  transcript 30 s, the engine lost its stream, disk under 2 GiB or
+  256 MiB) and the watcher thread that puts the open issues in the
+  snapshot; `activity.rs` (what each lane hears and transcribes, also read
+  by auto-stop); `state.rs` (the snapshot cell, announced under its lock).
+- The events port (`events.rs`): `RecordingSnapshot` (with the open
+  `issues`, the microphone, the call-audio switch and the calendar event),
+  `SegmentUpdate`, `HealthNotice`, `AudioLevels`.
 - The start observer port (`observer.rs`): `StartObserver`, told of each
   start once the meeting exists (the app links its calendar event, ORG-03),
   set with `RecordingService::observing_starts`; its title replaces the
@@ -63,7 +75,10 @@ spoken. The UI only watches.
 - Engines and worker processes: `deino-stt`; the app's `stt/lanes.rs`
   implements `LaneEngines` over its engine pool and settings.
 - The post-meeting work (finalize, diarize, summary): `deino-pipeline`.
-- Tauri events, the tray and notifications: the app's `features/recording`.
+- Tauri events, the tray, the record panel and notifications: the app's
+  `features/recording` and `tray.rs`.
+- When to stop on its own: `deino-detect::autostop` (CAP-07) asks the app,
+  which calls `stop`.
 
 ## Invariants
 
@@ -77,12 +92,16 @@ spoken. The UI only watches.
   and its lane's speaker.
 - Nothing is dropped as echo on audio correlation alone.
 - Logs carry IDs, counts and states, never transcript text or titles.
+- The holdback decides on transcript progress (the Them lane's watermark),
+  not on wall time; a 20 s wall-clock cap is only a safety net.
+- Only a track that is not delivering (capture status) is padded with
+  silence; a late one is waited for.
 
 ## Tests
 
 ```bash
 cargo test -p deino-recording                     # unit tests, service, fixture end to end
-cargo test -p deino-recording --test live_fixture -- --ignored   # ten minutes on speakers (~2.5 min)
+cargo test -p deino-recording --test live_fixture -- --ignored   # ten minutes on speakers (~70 s)
 cargo test -p deino-recording --test record_only_cpu -- --ignored --nocapture   # CAP-08 CPU (macOS, ~1 min)
 ```
 
@@ -95,6 +114,10 @@ line corrected, every original kept).
 through mock capture, the real writers (fake encoder), the echo canceller,
 both lanes (scripted fake engine) and the router into SQLite, and checks
 channels, timing and the echo rate (speakers: the system track mixed into
-the microphone 40 ms late at −9 dB). `tests/aec_allocations.rs` pins the
+the microphone 40 ms late at −9 dB). It is paced by sample count
+(`tests/support/paced.rs`: host time advances only as far as the lanes have
+taken audio, sources stop exactly at the clip's length), so a loaded machine
+gives the same transcript as an idle one. `tests/controls.rs` covers Resume,
+device switches and the disk-full issue. `tests/aec_allocations.rs` pins the
 canceller's per-frame allocations; `tests/service.rs` covers the state
 machine and launch recovery.

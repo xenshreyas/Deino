@@ -40,6 +40,14 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
   conditioner per track (native rate → 48 kHz with rubato, pause ledger),
   and `Capture`, whose supervisor thread restarts sources on device
   changes (1 s debounce), stalls (watchdog with backoff), sleep and wake.
+  While recording it also switches the microphone (`set_microphone`) and
+  suspends or restores the tap (`set_system_audio`) without stopping the
+  track writers, and publishes each track's status (`TrackStates`: live,
+  recovering, absent, off) and its peak level for the health monitor and
+  the record panel (CAP-10, ADR 0039).
+- Resuming a stopped recording (`Recorder::resume`, CAP-07): a new manifest
+  segment per track at the recorded length, and `TrackTimeline::resuming`
+  so the new take continues the old timeline.
 - The writer's tee of placed audio (`PlacedAudio`, position-stamped) that
   the live recorder transcribes.
 

@@ -372,7 +372,10 @@ and ignoring `com.apple.CoreSpeech` (`macos/processes.rs`, `reader.rs`).
 `bleed/overlap.rs`); the
 capture supervisor's sleep detection by a wall-clock tick gap
 (`crates/deino-audio/src/capture/supervisor/actor.rs`) follows its
-recording watchdog.
+recording watchdog. `crates/deino-detect/src/autostop/policy.rs` (CAP-07)
+reimplements the shape of its meeting auto-end controller
+(`meetingAutoEndController`: tick-driven, no timers, a minimum microphone
+ownership before a release counts) with Deino's own rules.
 
 Copyright (c) 2024 OpenWhispr Team. Licensed under the MIT License (the
 same terms as the Anarlog notice above).
