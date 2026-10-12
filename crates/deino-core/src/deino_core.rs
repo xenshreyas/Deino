@@ -48,6 +48,9 @@
 //!
 //! ORG-04 added [`entities`]: the rules over people and companies (upserts,
 //! merges, pages, AI summaries, company logos).
+//!
+//! NOT-09 added [`redaction`]: passwords, keys, card numbers, SSNs and
+//! one-time codes replaced by `[redacted]` before notes and exports.
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -71,6 +74,7 @@ pub mod people;
 pub mod permissions;
 pub mod profile;
 pub mod query;
+pub mod redaction;
 pub mod sample;
 pub mod search;
 pub mod segments;
