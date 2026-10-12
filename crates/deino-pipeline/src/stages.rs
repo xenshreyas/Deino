@@ -16,6 +16,7 @@
 //! | 80 | [`IndexStage`] (`index`) | ORG-08, AI-01 |
 //! | 85 | [`InsightsStage`] (`insights`) | AI-06 |
 //! | 90 | [`UpdateEntitiesStage`] (`update_entities`) | ORG-04 |
+//! | 95 | [`AutomationsStage`] (`automations`) | AUT-01 |
 //! | 99 | [`AutoExportStage`] (`auto_export`) | EXP-02 |
 //!
 //! PARITY_PLAN §4.2 lists the orders the later cards' stages take.
@@ -26,6 +27,7 @@ mod auto_folder;
 mod auto_folder_tests;
 mod auto_tag;
 mod auto_title;
+mod automations;
 mod diarize;
 mod enhance_notes;
 mod extract_action_items;
@@ -49,6 +51,9 @@ pub use auto_tag::RecordedAutoTags;
 #[cfg(any(test, feature = "test-support"))]
 pub use auto_title::RecordedTitler;
 pub use auto_title::{AutoTitleStage, MeetingTitler};
+pub use automations::AutomationsStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use automations::RecordedAutomations;
 pub use diarize::DiarizeStage;
 pub use enhance_notes::{
     AUTOMATIC_NOTES_OFF, AutomaticNotes, EnhanceNotesStage, NotesEnhancer, stage_error,

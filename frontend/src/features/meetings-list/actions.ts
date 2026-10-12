@@ -1,12 +1,13 @@
 /**
  * The page's actions on many meetings: trash (with Undo), restore, delete
- * forever, tag, file, export and merge. Plain functions over the API rather than
+ * forever, tag, file, export, merge and run an automation (AUT-01). Plain functions over the API rather than
  * mutation hooks, so the keyboard shortcuts (a window listener) can run them
  * too; `DbChanged` refreshes every query they touch, and each reports its
  * outcome as a toast.
  */
 import { toast } from 'sonner';
 
+import { type AutomationId, automationsApi } from '@/features/automations';
 import { type ExportFormat, exportApi } from '@/features/export';
 import type { FolderId, TagId } from '@/lib/ipc/generated/meetings';
 import { IpcError } from '@/lib/ipc/result';
@@ -72,6 +73,15 @@ export async function tagMeetings(ids: MeetingId[], tag: TagId): Promise<void> {
 export async function fileMeetings(ids: MeetingId[], folder: FolderId): Promise<void> {
   const outcome = await meetingsListApi.fileMany(ids, folder).catch(failed);
   if (outcome !== undefined) toast.success(copy.bulk.filed(ids.length));
+}
+
+/** Runs `automation` on `ids` now, whatever its conditions (a run each, in the pipeline). */
+export async function runAutomation(
+  ids: MeetingId[],
+  automation: { id: AutomationId; name: string },
+): Promise<void> {
+  const outcome = await automationsApi.run(automation.id, ids).catch(failed);
+  if (outcome !== undefined) toast.success(copy.bulk.running(automation.name, ids.length));
 }
 
 /** Merges `ids` into the earliest; resolves to the outcome, or `null` on failure. */

@@ -168,6 +168,10 @@ export type ApplyWhen =
  */
 { mode: "manual" }
 /**
+ * Identifies one calendar inside a calendar account ("Work", "Family").
+ */
+export type CalendarId = string & { readonly __brand: "CalendarId" }
+/**
  * How many answers an insight keeps per meeting.
  */
 export type Cardinality = 
@@ -181,7 +185,26 @@ export type Cardinality =
  */
 { kind: "fixed"; count: number }
 /**
+ * How a number in a condition compares.
+ */
+export type Comparison = 
+/**
+ * Exactly.
+ */
+"equal" | 
+/**
+ * Strictly more than.
+ */
+"greater" | 
+/**
+ * Strictly fewer than.
+ */
+"less"
+/**
  * One test of a meeting.
+ * 
+ * Variant names and fields are stored inside insight and automation
+ * definitions: rename them only with a data migration.
  */
 export type Condition = 
 /**
@@ -193,27 +216,92 @@ export type Condition =
  */
 { kind: "has_tag"; tagId: TagId } | 
 /**
+ * The meeting does not carry this tag.
+ */
+{ kind: "lacks_tag"; tagId: TagId } | 
+/**
  * The meeting sits in this folder.
  */
 { kind: "in_folder"; folderId: FolderId } | 
 /**
+ * This person took part (invited, or heard speaking).
+ */
+{ kind: "has_participant"; personId: PersonId } | 
+/**
+ * This person did not take part.
+ */
+{ kind: "lacks_participant"; personId: PersonId } | 
+/**
  * An attendee's email is at this domain (`acme.com`).
  */
 { kind: "attendee_domain"; domain: string } | 
+/**
+ * An invitee has exactly this address.
+ */
+{ kind: "invitee_email"; email: Email } | 
+/**
+ * Every invitee's domain is one of these ("internal only"). A meeting
+ * without invitees has no evidence either way and does not match.
+ */
+{ kind: "domains_are_all"; domains: string[] } | 
+/**
+ * Some invitee's domain is none of these ("someone external"). A meeting
+ * without invitees does not match.
+ */
+{ kind: "domains_not_all"; domains: string[] } | 
+/**
+ * How many invitees the meeting had, compared with `count`.
+ */
+{ kind: "invitee_count"; comparison: Comparison; count: number } | 
 /**
  * The meeting has (`true`) or has no (`false`) external attendees:
  * people outside the user's own email domains.
  */
 { kind: "external"; external: boolean } | 
 /**
+ * The title is exactly this text, ignoring case.
+ */
+{ kind: "title_is"; text: string } | 
+/**
+ * The title is anything but this text, ignoring case.
+ */
+{ kind: "title_is_not"; text: string } | 
+/**
  * The title contains this text, ignoring case.
  */
-{ kind: "title_contains"; text: string }
+{ kind: "title_contains"; text: string } | 
+/**
+ * The title does not contain this text, ignoring case.
+ */
+{ kind: "title_lacks"; text: string } | 
+/**
+ * The title matches this regular expression (Rust `regex` syntax).
+ */
+{ kind: "title_matches"; pattern: string } | 
+/**
+ * The meeting recorded for longer than this many minutes.
+ */
+{ kind: "duration_over"; minutes: number } | 
+/**
+ * The meeting's calendar event is on this calendar.
+ */
+{ kind: "calendar_is"; calendarId: CalendarId }
 /**
  * Conditions in groups: all of a group (AND), any group (OR); no groups
  * matches every meeting.
  */
 export type ConditionGroups = Condition[][]
+/**
+ * An email address in canonical form: lower case, no surrounding
+ * whitespace, one `@` between a non-empty local part and a dotted domain.
+ * 
+ * [`Email::parse`] normalises user input into this form. Deserializing and
+ * [`TryFrom<String>`] accept only the canonical form and never rewrite a
+ * value, so stored and fixture data are checked rather than silently
+ * changed. Stored as TEXT; `people.email` is UNIQUE, which the lower case
+ * makes case-insensitive.
+ */
+export type Email = string
 /**
  * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
  * in the `last_error_code` and `error_code` columns of the integration tables.
@@ -607,6 +695,10 @@ title: string;
  * When it started (or was saved).
  */
 startedAt: string }
+/**
+ * Identifies a person.
+ */
+export type PersonId = string & { readonly __brand: "PersonId" }
 /**
  * A past meeting, as "Run on past meetings" offers it.
  */

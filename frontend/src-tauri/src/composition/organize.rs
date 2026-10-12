@@ -77,6 +77,16 @@ impl Organize {
         MeetingBulkService::new(Arc::clone(&self.tags), Arc::clone(&self.filing))
     }
 
+    /// The tag service, for automations' "add tag" step (AUT-01).
+    pub(crate) fn tags(&self) -> Arc<TagService> {
+        Arc::clone(&self.tags)
+    }
+
+    /// The filing service, for automations' "add to folder" step (AUT-01).
+    pub(crate) fn filing(&self) -> Arc<FilingService> {
+        Arc::clone(&self.filing)
+    }
+
     /// Registers each service as Tauri state, where commands find it.
     pub(crate) fn manage<R: Runtime>(&self, app: &impl Manager<R>) {
         app.manage(Arc::clone(&self.folders));

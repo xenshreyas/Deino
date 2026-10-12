@@ -1,8 +1,8 @@
 /**
- * A select over a fixed list of typed options: the editor's field types,
- * condition kinds and condition values all pick from one.
+ * A select over a fixed list of typed options (insight field types, condition
+ * kinds and values, automation step settings all pick from one).
  */
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 /** One choice. */
 export interface Option<T extends string> {

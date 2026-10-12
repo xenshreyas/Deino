@@ -10,7 +10,7 @@ import { Input } from '@/ui/input';
 import { editorCopy } from '../copy';
 import type { FieldKind } from '../types';
 import { emptyField, type FieldDraft } from './draft';
-import { type Option, OptionSelect } from './option-select';
+import { type Option, OptionSelect } from '@/ui/option-select';
 
 /** Props of {@link FieldRows}. */
 export interface FieldRowsProps {

@@ -41,8 +41,12 @@ crate and across IPC. No I/O, no Tauri.
 - `Condition` and `ConditionGroups` (`conditions.rs`, AI-06, shared with
   AUT-01): which meetings something applies to, and `MeetingFacts`, what
   they test; pure evaluation (AND within a group, OR across, none = every
-  meeting) and `normalized`. `InsightId` (`id.rs`), `InsightStatus` and
-  `InsightApplyMode` (`enums.rs`).
+  meeting) and `normalized`; AUT-01's kinds (participants, title is, is not
+  and regex, invitee emails and count, domains all or not all, duration,
+  calendar) are here too. `InsightId` (`id.rs`), `InsightStatus` and
+  `InsightApplyMode` (`enums.rs`); `AutomationId` and `AutomationRunId`,
+  and `AutomationRunStatus`, `AutomationStepStatus` and `AutomationTrigger`
+  (`automation.rs`, AUT-01).
 
 ## Does Not Own
 

@@ -1,31 +1,47 @@
 /**
- * Which meetings an automatic insight runs after: groups of conditions,
- * all of a group (and), any group (or), as AUT-01's automations will use.
+ * Which meetings something applies to: groups of conditions, all of a
+ * group (and), any group (or). Insights (AI-06) and automations (AUT-01)
+ * both edit their conditions here, each offering its own kinds.
  */
 import { Button } from '@/ui/button';
 import { ICON_PROPS, Plus, X } from '@/ui/icons';
+import { type Option, OptionSelect } from '@/ui/option-select';
 
-import { editorCopy } from '../copy';
-import type { Condition } from '../types';
-import { type ConditionOptions, startCondition, useConditionOptions } from './condition-options';
 import { ConditionValue } from './condition-value';
-import { type Option, OptionSelect } from './option-select';
+import { conditionsCopy } from './copy';
+import { type ConditionOptions, startCondition, useConditionOptions } from './options';
+import type { Condition, ConditionKind } from './types';
+
+/** Every kind, in the order the menu lists them. */
+export const ALL_CONDITION_KINDS = [
+  'title_contains',
+  'title_lacks',
+  'title_is',
+  'title_is_not',
+  'title_matches',
+  'external',
+  'attendee_domain',
+  'domains_are_all',
+  'domains_not_all',
+  'invitee_email',
+  'invitee_count',
+  'has_participant',
+  'lacks_participant',
+  'has_tag',
+  'lacks_tag',
+  'in_folder',
+  'template_is',
+  'duration_over',
+  'calendar_is',
+] as const satisfies readonly ConditionKind[];
 
 /** Props of {@link ConditionGroups}. */
 export interface ConditionGroupsProps {
   groups: Condition[][];
   onChange: (groups: Condition[][]) => void;
+  /** The kinds offered, in menu order; every kind by default. */
+  kinds?: readonly ConditionKind[];
 }
-
-/** The kinds, in the order the menu lists them. */
-const KINDS = [
-  'title_contains',
-  'external',
-  'attendee_domain',
-  'has_tag',
-  'in_folder',
-  'template_is',
-] as const satisfies readonly Condition['kind'][];
 
 /** `list` with item `index` replaced by `next`, or removed when `next` is `null`. */
 function replaced<T>(list: readonly T[], index: number, next: T | null): T[] {
@@ -35,21 +51,25 @@ function replaced<T>(list: readonly T[], index: number, next: T | null): T[] {
 }
 
 /** The groups, each with its conditions, then "Or another group". */
-export function ConditionGroups({ groups, onChange }: ConditionGroupsProps) {
+export function ConditionGroups({
+  groups,
+  onChange,
+  kinds = ALL_CONDITION_KINDS,
+}: ConditionGroupsProps) {
   const options = useConditionOptions();
   const shown = groups.length === 0 ? [[]] : groups;
   const fresh = startCondition('title_contains', options);
   return (
     <div className="grid gap-2">
-      <p className="text-xs text-fg-muted">{editorCopy.conditionsHint}</p>
+      <p className="text-xs text-fg-muted">{conditionsCopy.hint}</p>
       {shown.map((group, index) => (
         <div key={index} className="grid gap-2">
           {index > 0 ? (
-            <p className="text-xs font-semibold text-fg-subtle">{editorCopy.or}</p>
+            <p className="text-xs font-semibold text-fg-subtle">{conditionsCopy.or}</p>
           ) : null}
           <Group
             group={group}
-            options={options}
+            menu={{ options, kinds }}
             onChange={(next) => {
               onChange(replaced(shown, index, next));
             }}
@@ -58,7 +78,7 @@ export function ConditionGroups({ groups, onChange }: ConditionGroupsProps) {
       ))}
       {fresh === null ? null : (
         <AddButton
-          label={editorCopy.addGroup}
+          label={conditionsCopy.addGroup}
           onClick={() => {
             onChange([...shown, [fresh]]);
           }}
@@ -66,6 +86,12 @@ export function ConditionGroups({ groups, onChange }: ConditionGroupsProps) {
       )}
     </div>
   );
+}
+
+/** What a row's menus offer. */
+interface Menu {
+  options: ConditionOptions;
+  kinds: readonly ConditionKind[];
 }
 
 /** A ghost "+ …" button. */
@@ -83,21 +109,21 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 /** One group's conditions and "Add condition". */
 function Group({
   group,
-  options,
+  menu,
   onChange,
 }: {
   group: Condition[];
-  options: ConditionOptions;
+  menu: Menu;
   onChange: (group: Condition[]) => void;
 }) {
-  const fresh = startCondition('title_contains', options);
+  const fresh = startCondition('title_contains', menu.options);
   return (
     <div className="grid gap-2">
       {group.map((condition, index) => (
         <ConditionRow
           key={index}
           condition={condition}
-          options={options}
+          menu={menu}
           onChange={(next) => {
             onChange(replaced(group, index, next));
           }}
@@ -105,7 +131,7 @@ function Group({
       ))}
       {fresh === null ? null : (
         <AddButton
-          label={editorCopy.addCondition}
+          label={conditionsCopy.addCondition}
           onClick={() => {
             onChange([...group, fresh]);
           }}
@@ -118,35 +144,35 @@ function Group({
 /** A condition: its kind, its value, and remove (`null`). */
 function ConditionRow({
   condition,
-  options,
+  menu,
   onChange,
 }: {
   condition: Condition;
-  options: ConditionOptions;
+  menu: Menu;
   onChange: (condition: Condition | null) => void;
 }) {
-  const kinds: Option<Condition['kind']>[] = KINDS.map((kind) => ({
+  const kinds: Option<ConditionKind>[] = menu.kinds.map((kind) => ({
     value: kind,
-    label: editorCopy.conditions[kind],
-    disabled: startCondition(kind, options) === null,
+    label: conditionsCopy.kinds[kind],
+    disabled: startCondition(kind, menu.options) === null,
   }));
   return (
-    <div className="grid grid-cols-[10rem_1fr_auto] items-center gap-2">
+    <div className="grid grid-cols-[12rem_1fr_auto] items-center gap-2">
       <OptionSelect
-        label={editorCopy.conditions[condition.kind]}
+        label={conditionsCopy.kinds[condition.kind]}
         value={condition.kind}
         options={kinds}
         onChange={(kind) => {
-          const next = startCondition(kind, options);
+          const next = startCondition(kind, menu.options);
           if (next !== null) onChange(next);
         }}
       />
-      <ConditionValue condition={condition} options={options} onChange={onChange} />
+      <ConditionValue condition={condition} options={menu.options} onChange={onChange} />
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        aria-label={editorCopy.removeCondition}
+        aria-label={conditionsCopy.removeCondition}
         onClick={() => {
           onChange(null);
         }}

@@ -118,6 +118,18 @@ the SQLite adapters behind those ports.
     types every field, repairing close values; `Attribution` resolves `s12`
     references to speaker, time and segment). Fakes: `FakeInsightStore`,
     `ScriptedInsightModel`, `RecordedScheduler`, `FixedDomains`.
+  - `automations` (AUT-01, ADR 0042): `AutomationRepo` and `RunRepo` on
+    `SqliteAutomationRepo` (`automations`, `automation_runs`,
+    `automation_run_steps`); the `Step` trait and `StepRegistry` (one step per
+    `ActionKind`, the picker's `catalog` with provider kinds as WIP); the
+    local steps (`steps/`: insight, tag, folder, export, notification, shell
+    script behind the `ShellSwitch`, 60 s, killed as a process group);
+    `AutomationPayload`; `AutomationEngine` (the `automations` stage's
+    rules: idempotent per automation and meeting, resumes after done steps,
+    stop on failure, retryable vs stored failures); `AutomationService`
+    (definitions, duplicate, Run on selected, Test on latest, the tag
+    trigger, the meeting menu, matching meetings, the run log). Fakes:
+    `ScriptedStep`, `RecordedAutomationScheduler`.
 - `stats` (ORG-09, ADR 0049): `StatsRepo` / `SqliteStatsRepo` (four reads over
   the `stats_meetings` view and `llm_calls`), `StatsService` (a period's
   numbers and the last year's heatmap, aggregated on read in the user's
@@ -296,3 +308,6 @@ Each feature is `<feature>.rs` plus `<feature>/`:
 - A transcript line the user deleted (`is_deleted`) is read by nobody: every
   reader goes through `SegmentReader::list` or SQL that skips it, and its
   semantic windows leave `embeddings` in the deleting transaction.
+- An automation runs at most once per meeting on its own; only a manual run
+  replaces a run. A shell script runs only while `automations.shellScripts`
+  is on, read at every run.

@@ -25,6 +25,7 @@
 //! [`Services::build`] and one in [`Services::manage`].
 
 mod action_items;
+mod automations;
 mod background;
 pub(crate) mod browser;
 mod calendar;
@@ -213,8 +214,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
 /// whose auto-tagger the pipeline needs once the gateway is up.
 fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) -> Organize {
     Services::build(database, clock).manage(app);
-    let tag_events = Arc::new(features::tags::TauriTagEvents::new(app.clone()));
-    let organize = Organize::build(database, clock, tag_events);
+    let organize = Organize::build(database, clock, automations::tag_events(app));
     organize.manage(app);
     Speakers::build(database, clock).manage(app);
     Vocabulary::build(database, clock).manage(app);
@@ -247,11 +247,15 @@ fn attach_stage_services(
     );
     let auto_export = exports.auto_exporter();
     exports.manage(app);
+    let insights = insights::attach_insights(app, database, wiring);
+    let automations =
+        automations::attach_automations(app, database, wiring, (organize, insights.clone()));
     StageAdapters {
         auto_tagger,
         auto_export,
         action_items: action_items::attach_action_items(app, database, wiring),
-        insights: insights::attach_insights(app, database, wiring),
+        insights,
+        automations,
         identifier: speakers::identifier(database, wiring.settings.clone()),
         search,
         entities: entities::attach_entities(app, database, wiring.gateway.clone(), &wiring.clock),
@@ -381,6 +385,7 @@ mod tests {
                         deino_core::action_items::FakeActionItemExtractor::default(),
                     ),
                     insights: Arc::new(deino_pipeline::stages::RecordedInsights::default()),
+                    automations: Arc::new(deino_pipeline::RecordedAutomations::default()),
                     identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
                     search: Arc::new(deino_pipeline::RecordedIndexing::default()),
                     entities: Arc::new(deino_pipeline::RecordedEntityUpdates::default()),

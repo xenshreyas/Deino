@@ -267,6 +267,16 @@ uuid_id!(
     WatchedFileId
 );
 
+uuid_id!(
+    /// Identifies an automation (AUT-01): conditions and the steps to run.
+    AutomationId
+);
+
+uuid_id!(
+    /// Identifies one automation's run on one meeting (AUT-01).
+    AutomationRunId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

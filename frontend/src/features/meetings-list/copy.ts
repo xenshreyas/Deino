@@ -71,7 +71,9 @@ export const copy = {
       `Exported ${plural(count, 'meeting', 'meetings')} to ${folder}`,
     merge: 'Merge',
     automation: 'Run automation',
-    wip: 'WIP',
+    noAutomations: 'No automations yet',
+    running: (name: string, count: number) =>
+      `Running “${name}” on ${plural(count, 'meeting', 'meetings')}`,
     delete: 'Delete',
     clear: 'Clear selection',
     tagged: (count: number) => `Tagged ${plural(count, 'meeting', 'meetings')}`,

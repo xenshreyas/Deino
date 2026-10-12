@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
+use deino_core::automations::AutomationRunner;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
@@ -23,10 +24,10 @@ use deino_core::voiceprints::ExemplarReader;
 use deino_domain::{Clock, StageId};
 
 use crate::stages::{
-    AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
-    EnhanceNotesStage, ExtractActionItemsStage, FinalTranscriptionStage, FinalizeAudioStage,
-    IdentifySpeakersStage, IndexStage, InsightsStage, MeetingTitler, NotesEnhancer, RepassSetting,
-    UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
+    AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes,
+    AutomationsStage, DiarizeStage, EnhanceNotesStage, ExtractActionItemsStage,
+    FinalTranscriptionStage, FinalizeAudioStage, IdentifySpeakersStage, IndexStage, InsightsStage,
+    MeetingTitler, NotesEnhancer, RepassSetting, UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
 };
 use crate::{Job, PipelineStage};
 
@@ -58,6 +59,8 @@ pub struct StagePorts {
     pub action_items: Arc<dyn ActionItemExtractor>,
     /// Custom insights over the LLM gateway (AI-06).
     pub insights: Arc<dyn InsightGenerator>,
+    /// The user's automations (AUT-01).
+    pub automations: Arc<dyn AutomationRunner>,
     /// Voice exemplars the engine merges known voices with (CAP-04).
     pub voiceprints: Arc<dyn ExemplarReader>,
     /// Names speakers from voice profiles and the calendar (CAP-04).
@@ -110,6 +113,7 @@ impl StagePorts {
             auto_export: Arc::new(crate::stages::ScriptedAutoExporter::default()),
             action_items: Arc::new(FakeActionItemExtractor::default()),
             insights: Arc::new(crate::stages::RecordedInsights::default()),
+            automations: Arc::new(crate::stages::RecordedAutomations::default()),
             voiceprints: Arc::new(FakeVoiceprintRepo::default()),
             identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
@@ -154,6 +158,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(InsightsStage::new(ports)),
         // 90 · ORG-04: people and company summaries, logos.
         Arc::new(UpdateEntitiesStage::new(ports)),
+        // 95 · AUT-01: the user's automations, once the meeting is settled.
+        Arc::new(AutomationsStage::new(ports)),
         // 99 · EXP-02: the notes into the user's folder, last.
         Arc::new(AutoExportStage::new(ports)),
     ])
@@ -244,6 +250,7 @@ mod tests {
                 "index",
                 "insights",
                 "update_entities",
+                "automations",
                 "auto_export"
             ]
             .map(StageId::new)

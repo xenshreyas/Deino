@@ -47,6 +47,7 @@
         "integrations:default",
         "insights:default",
         "import:default",
+        "automations:default",
         "tags:default",
         "speakers:default",
         "stats:default",

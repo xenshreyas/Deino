@@ -41,10 +41,7 @@ impl ExportServices {
         settings: Arc<SettingsService>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        let redactor = SettingRedactor::new(settings.clone(), Arc::new(Redactor::regex_only()));
-        let ports =
-            ExportPorts::sqlite(database, Arc::new(SystemZone)).with_redactor(Arc::new(redactor));
-        let assembler = Arc::new(ExportAssembler::new(ports));
+        let assembler = redacting_assembler(database, settings.clone());
         let vault: Arc<dyn Vault> = Arc::new(FsVault);
         let dialogs = Arc::new(TauriDialogs::new(app.clone()));
         let export = ExportService::new(ExportServiceDeps {
@@ -83,4 +80,18 @@ impl ExportServices {
         app.manage(folder_dialog);
         app.manage(save_dialog);
     }
+}
+
+/// An export assembler with NOT-09's rule: what it assembles is redacted
+/// by patterns alone while "Hide sensitive information" is on. Every path
+/// that writes a meeting out (exports, auto-export, the account zip,
+/// AUT-01's export step and script payloads) assembles through one.
+pub(crate) fn redacting_assembler(
+    database: &Database,
+    settings: Arc<SettingsService>,
+) -> Arc<ExportAssembler> {
+    let redactor = SettingRedactor::new(settings, Arc::new(Redactor::regex_only()));
+    let ports =
+        ExportPorts::sqlite(database, Arc::new(SystemZone)).with_redactor(Arc::new(redactor));
+    Arc::new(ExportAssembler::new(ports))
 }

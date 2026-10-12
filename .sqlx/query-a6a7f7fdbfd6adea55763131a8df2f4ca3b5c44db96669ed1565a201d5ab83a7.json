@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE automation_runs SET status = ?1, finished_at = ?2, updated_at = ?2\n             WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "a6a7f7fdbfd6adea55763131a8df2f4ca3b5c44db96669ed1565a201d5ab83a7"
+}

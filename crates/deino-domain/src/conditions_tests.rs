@@ -5,6 +5,9 @@ use super::*;
 const SALES_TAG: &str = "01920000-0000-7000-8000-000000000001";
 const OTHER_TAG: &str = "01920000-0000-7000-8000-000000000002";
 const CUSTOMERS: &str = "01920000-0000-7000-8000-000000000003";
+const ALICE: &str = "01920000-0000-7000-8000-000000000004";
+const BOB: &str = "01920000-0000-7000-8000-000000000005";
+const WORK: &str = "01920000-0000-7000-8000-000000000006";
 
 fn tag(id: &str) -> TagId {
     id.parse().unwrap()
@@ -14,6 +17,18 @@ fn folder(id: &str) -> FolderId {
     id.parse().unwrap()
 }
 
+fn person(id: &str) -> PersonId {
+    id.parse().unwrap()
+}
+
+fn calendar(id: &str) -> CalendarId {
+    id.parse().unwrap()
+}
+
+fn email(address: &str) -> Email {
+    Email::parse(address).unwrap()
+}
+
 /// A discovery call with Acme: external, tagged Sales, in Customers.
 fn discovery() -> MeetingFacts {
     MeetingFacts {
@@ -21,8 +36,12 @@ fn discovery() -> MeetingFacts {
         template_id: Some(TemplateId::new("sales_discovery")),
         tag_ids: BTreeSet::from([tag(SALES_TAG)]),
         folder_ids: BTreeSet::from([folder(CUSTOMERS)]),
+        participant_ids: BTreeSet::from([person(ALICE)]),
+        invitee_emails: BTreeSet::from([email("wile@acme.com"), email("me@deino.dev")]),
         attendee_domains: BTreeSet::from(["acme.com".to_owned(), "deino.dev".to_owned()]),
         has_external: true,
+        duration_s: Some(45 * 60),
+        calendar_id: Some(calendar(WORK)),
     }
 }
 
@@ -166,4 +185,170 @@ fn conditions_serialize_as_tagged_camel_case_objects() {
         serde_json::from_value::<ConditionGroups>(json).unwrap(),
         groups
     );
+}
+
+fn text_condition(kind: fn(String) -> Condition, text: &str) -> Condition {
+    kind(text.to_owned())
+}
+
+fn domains(names: &[&str]) -> Vec<String> {
+    names.iter().map(|name| (*name).to_owned()).collect()
+}
+
+fn count(comparison: Comparison, count: u32) -> Condition {
+    Condition::InviteeCount { comparison, count }
+}
+
+fn lacks_tag(id: &str) -> Condition {
+    Condition::LacksTag { tag_id: tag(id) }
+}
+
+fn has_person(id: &str) -> Condition {
+    Condition::HasParticipant {
+        person_id: person(id),
+    }
+}
+
+fn lacks_person(id: &str) -> Condition {
+    Condition::LacksParticipant {
+        person_id: person(id),
+    }
+}
+
+fn invitee(address: &str) -> Condition {
+    Condition::InviteeEmail {
+        email: email(address),
+    }
+}
+
+fn all_from(names: &[&str]) -> Condition {
+    Condition::DomainsAreAll {
+        domains: domains(names),
+    }
+}
+
+fn not_all_from(names: &[&str]) -> Condition {
+    Condition::DomainsNotAll {
+        domains: domains(names),
+    }
+}
+
+fn on_calendar(id: &str) -> Condition {
+    Condition::CalendarIs {
+        calendar_id: calendar(id),
+    }
+}
+
+/// Tags, participants and titles: each condition once true, once false.
+fn tag_person_and_title_cases() -> Vec<(Condition, bool)> {
+    let is = |text: &str| text_condition(|text| Condition::TitleIs { text }, text);
+    let is_not = |text: &str| text_condition(|text| Condition::TitleIsNot { text }, text);
+    let lacks = |text: &str| text_condition(|text| Condition::TitleLacks { text }, text);
+    let matches = |text: &str| text_condition(|pattern| Condition::TitleMatches { pattern }, text);
+    vec![
+        (lacks_tag(OTHER_TAG), true),
+        (lacks_tag(SALES_TAG), false),
+        (has_person(ALICE), true),
+        (has_person(BOB), false),
+        (lacks_person(BOB), true),
+        (lacks_person(ALICE), false),
+        (is("acme DISCOVERY call"), true),
+        (is("Acme discovery"), false),
+        (is_not("Weekly sync"), true),
+        (is_not("Acme discovery call"), false),
+        (lacks("standup"), true),
+        (lacks("acme"), false),
+        (matches(r"^acme\s+\w+ call$"), true),
+        (matches(r"^\d{4}-"), false),
+    ]
+}
+
+/// Invitees, their domains and count, duration and calendar.
+fn invitee_duration_and_calendar_cases() -> Vec<(Condition, bool)> {
+    vec![
+        (invitee("wile@acme.com"), true),
+        (invitee("road@acme.com"), false),
+        (all_from(&["acme.com", "deino.dev"]), true),
+        (all_from(&["deino.dev"]), false),
+        (not_all_from(&["deino.dev"]), true),
+        (not_all_from(&["acme.com", "deino.dev"]), false),
+        (count(Comparison::Equal, 2), true),
+        (count(Comparison::Equal, 3), false),
+        (count(Comparison::Greater, 1), true),
+        (count(Comparison::Greater, 2), false),
+        (count(Comparison::Less, 3), true),
+        (count(Comparison::Less, 2), false),
+        (Condition::DurationOver { minutes: 30 }, true),
+        (Condition::DurationOver { minutes: 45 }, false),
+        (on_calendar(WORK), true),
+        (on_calendar(CUSTOMERS), false),
+    ]
+}
+
+/// AUT-01's conditions, tabled against the discovery call: two invitees
+/// (acme.com, deino.dev), Alice taking part, 45 minutes, the Work calendar.
+#[test]
+fn every_automation_condition_tests_its_own_fact() {
+    let mut cases = tag_person_and_title_cases();
+    cases.extend(invitee_duration_and_calendar_cases());
+
+    assert_eq!(cases.len(), 30);
+    for (condition, expected) in cases {
+        assert_eq!(condition.holds(&discovery()), expected, "{condition:?}");
+    }
+}
+
+#[test]
+fn a_meeting_without_invitees_duration_or_calendar_matches_none_of_their_tests() {
+    let bare = MeetingFacts {
+        title: "Notes".into(),
+        ..MeetingFacts::default()
+    };
+    let conditions = [
+        Condition::DomainsAreAll {
+            domains: domains(&["deino.dev"]),
+        },
+        Condition::DomainsNotAll {
+            domains: domains(&["deino.dev"]),
+        },
+        Condition::DurationOver { minutes: 0 },
+        Condition::CalendarIs {
+            calendar_id: calendar(WORK),
+        },
+        count(Comparison::Greater, 0),
+    ];
+
+    for condition in conditions {
+        assert!(!condition.holds(&bare), "{condition:?}");
+    }
+    assert!(count(Comparison::Equal, 0).holds(&bare));
+}
+
+#[test]
+fn normalising_refuses_bad_patterns_and_cleans_domain_lists() {
+    let bad = Condition::TitleMatches {
+        pattern: "(unclosed".into(),
+    };
+    assert_eq!(bad.normalized(), Err(InvalidCondition::Pattern));
+    let list = Condition::DomainsAreAll {
+        domains: domains(&[" @Deino.dev", "acme.com", "deino.dev"]),
+    };
+    assert_eq!(
+        list.normalized(),
+        Ok(Condition::DomainsAreAll {
+            domains: domains(&["acme.com", "deino.dev"])
+        })
+    );
+    let empty = Condition::DomainsNotAll {
+        domains: Vec::new(),
+    };
+    assert_eq!(empty.normalized(), Err(InvalidCondition::DomainCount));
+}
+
+#[test]
+fn groups_know_when_a_tag_could_have_made_them_match() {
+    let groups = ConditionGroups(vec![vec![has_tag(SALES_TAG)], vec![title("acme")]]);
+
+    assert!(groups.mentions_tag(&tag(SALES_TAG)));
+    assert!(!groups.mentions_tag(&tag(OTHER_TAG)));
 }

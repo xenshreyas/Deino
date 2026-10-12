@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting outside the trash: its title, the template its notes were\n-- written with (the newest enhanced notes' own), else the one chosen for it,\n-- how long it recorded and the calendar its event is on (AUT-01).\nSELECT\n    m.title,\n    coalesce(\n        (SELECT e.template_id FROM enhanced_notes AS e\n         WHERE e.meeting_id = m.id ORDER BY e.version DESC LIMIT 1),\n        m.template_id\n    ) AS \"template_id: TemplateId\",\n    m.duration_s,\n    (SELECT c.calendar_id FROM calendar_events AS c\n     WHERE c.id = m.calendar_event_id) AS \"calendar_id: CalendarId\"\nFROM meetings AS m\nWHERE m.id = ?1 AND m.deleted_at IS NULL\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "template_id: TemplateId",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "duration_s",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "calendar_id: CalendarId",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null,
+      true,
+      true
+    ]
+  },
+  "hash": "a377cc02e4fbd750aa5dc3dbe7face70a5cfc75330295f1987db4e18ee674f89"
+}

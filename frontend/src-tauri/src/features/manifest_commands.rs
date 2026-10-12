@@ -26,3 +26,35 @@ pub const IMPORT_COMMANDS: &[&str] = &[
     "retry_failure",
     "dismiss_failure",
 ];
+
+/// The `insights` plugin's commands (AI-06, `features/insights.rs`).
+pub const INSIGHTS_COMMANDS: &[&str] = &[
+    "templates",
+    "list",
+    "get",
+    "create",
+    "update",
+    "delete",
+    "for_meeting",
+    "table",
+    "candidates",
+    "run",
+    "export_csv",
+];
+
+/// The `automations` plugin's commands (AUT-01, `features/automations.rs`).
+pub const AUTOMATIONS_COMMANDS: &[&str] = &[
+    "catalog",
+    "list",
+    "get",
+    "create",
+    "update",
+    "delete",
+    "duplicate",
+    "for_meeting",
+    "matching",
+    "recent_runs",
+    "run",
+    "test_latest",
+    "choose_folder",
+];

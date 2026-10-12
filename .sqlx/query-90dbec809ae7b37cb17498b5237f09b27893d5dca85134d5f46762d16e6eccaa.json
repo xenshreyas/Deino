@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE automation_run_steps SET status = ?1, error_code = ?2, error = ?3,\n                 output_json = ?4, finished_at = ?5\n             WHERE run_id = ?6 AND position = ?7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "90dbec809ae7b37cb17498b5237f09b27893d5dca85134d5f46762d16e6eccaa"
+}

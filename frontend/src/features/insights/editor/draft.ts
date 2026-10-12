@@ -103,18 +103,12 @@ export function toInput(draft: Draft): InsightInput {
   };
 }
 
-/** A starting condition of each kind. */
-export function blankCondition(kind: Condition['kind']): Condition | null {
-  switch (kind) {
-    case 'attendee_domain':
-      return { kind, domain: '' };
-    case 'external':
-      return { kind, external: true };
-    case 'title_contains':
-      return { kind, text: '' };
-    case 'template_is':
-    case 'has_tag':
-    case 'in_folder':
-      return null;
-  }
-}
+/** The condition kinds the insight editor offers (AI-06's original six). */
+export const INSIGHT_CONDITION_KINDS = [
+  'title_contains',
+  'external',
+  'attendee_domain',
+  'has_tag',
+  'in_folder',
+  'template_is',
+] as const satisfies readonly Condition['kind'][];

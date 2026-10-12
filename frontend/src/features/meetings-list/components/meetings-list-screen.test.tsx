@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { currentSettings as defaultSettings } from '@/dev/mock-ipc/settings-store';
 import type * as ActionItems from '@/lib/ipc/generated/action-items';
+import type * as Automations from '@/lib/ipc/generated/automations';
 import type * as Generated from '@/lib/ipc/generated/meetings';
 import type * as SettingsBindings from '@/lib/ipc/generated/settings';
 import { createQueryClient } from '@/lib/ipc';
@@ -47,6 +48,23 @@ const itemCommands = vi.hoisted(() => ({
   filterOptions: vi.fn<typeof ActionItems.commands.filterOptions>(),
 }));
 vi.mock('@/lib/ipc/generated/action-items', () => ({ commands: itemCommands, events: {} }));
+const automationCommands = vi.hoisted(() => ({
+  list: vi.fn<typeof Automations.commands.list>(),
+  run: vi.fn<typeof Automations.commands.run>(),
+}));
+vi.mock('@/lib/ipc/generated/automations', () => ({ commands: automationCommands }));
+
+const RECAP: Automations.Automation = {
+  id: '01920000-0000-7000-8000-0000000000a1' as Automations.AutomationId,
+  name: 'Recap',
+  enabled: true,
+  autoRun: true,
+  stopOnFailure: false,
+  conditions: [],
+  steps: [{ kind: 'notify', message: '' }],
+  createdAt: '2026-10-12T09:00:00Z',
+  updatedAt: '2026-10-12T09:00:00Z',
+};
 const settingsCommands = vi.hoisted(() => ({
   get: vi.fn<typeof SettingsBindings.commands.get>(),
   patch: vi.fn<typeof SettingsBindings.commands.patch>(),
@@ -122,6 +140,8 @@ describe('Meetings page', () => {
       data: ['m-2', 'm-1', 'm-0'] as MeetingId[],
     });
     commands.trash.mockResolvedValue({ status: 'ok', data: { changed: ['m-2'] as MeetingId[] } });
+    automationCommands.list.mockResolvedValue({ status: 'ok', data: [RECAP] });
+    automationCommands.run.mockResolvedValue({ status: 'ok', data: null });
   });
 
   test('rows sit under today with their tag, avatar and length', async () => {
@@ -154,8 +174,17 @@ describe('Meetings page', () => {
     fireEvent.keyDown(window, { key: 'a', metaKey: true });
 
     expect(await screen.findByText('3 meetings selected')).toBeDefined();
-    expect(screen.getByRole('button', { name: /Run automation/ }).hasAttribute('disabled')).toBe(
-      true,
-    );
+  });
+
+  test('Run automation runs the picked automation on the selection', async () => {
+    renderScreen();
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Select Pricing call' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run automation' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Recap' }));
+
+    await waitFor(() => {
+      expect(automationCommands.run).toHaveBeenCalledWith(RECAP.id, ['m-2']);
+    });
   });
 });

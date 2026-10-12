@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
+use deino_core::automations::AutomationRunner;
 use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
@@ -76,6 +77,8 @@ pub(crate) struct StageAdapters {
     pub(crate) action_items: Arc<dyn ActionItemExtractor>,
     /// The insights generator (`insights` stage, AI-06).
     pub(crate) insights: Arc<dyn InsightGenerator>,
+    /// The automations engine (`automations` stage, AUT-01).
+    pub(crate) automations: Arc<dyn AutomationRunner>,
     /// Over the settings' thresholds (`Speakers::identifier`, CAP-04).
     pub(crate) identifier: Arc<dyn SpeakerIdentifier>,
     pub(crate) search: Arc<dyn SearchIndexing>,
@@ -113,6 +116,7 @@ fn stage_ports(
         auto_export: adapters.ai.adapters.auto_export,
         action_items: adapters.ai.adapters.action_items,
         insights: adapters.ai.adapters.insights,
+        automations: adapters.ai.adapters.automations,
         auto_filer: Arc::new(AutoFileService::new(&folders)),
         recordings: adapters.recordings,
         search: adapters.ai.adapters.search,

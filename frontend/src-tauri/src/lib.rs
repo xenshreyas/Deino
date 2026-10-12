@@ -134,6 +134,7 @@ fn library_plugins() -> Vec<TauriPlugin<Wry>> {
         features::templates::init(),
         features::folders::init(),
         features::insights::init(),
+        features::automations::init(),
         features::tags::init(),
         features::speakers::init(),
         features::transcript::init(),

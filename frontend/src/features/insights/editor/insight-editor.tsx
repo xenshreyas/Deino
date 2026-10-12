@@ -5,6 +5,7 @@
  */
 import { type FormEvent, type ReactNode, useState } from 'react';
 
+import { ConditionGroups } from '@/features/conditions';
 import { Button } from '@/ui/button';
 import { Label } from '@/ui/controls';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog';
@@ -15,8 +16,7 @@ import { SegmentedControl } from '@/ui/segmented-control';
 import { editorCopy } from '../copy';
 import { useSaveInsight } from '../queries';
 import type { InsightDef, InsightId, InsightInput } from '../types';
-import { ConditionGroups } from './condition-groups';
-import { type Draft, toDraft, toInput, type WhenMode } from './draft';
+import { type Draft, INSIGHT_CONDITION_KINDS, toDraft, toInput, type WhenMode } from './draft';
 import { FieldRows } from './field-rows';
 
 /** What the editor edits; `null` when closed. */
@@ -213,7 +213,11 @@ function WhenField({
         className="self-start"
       />
       {draft.when === 'matching' ? (
-        <ConditionGroups groups={draft.groups} onChange={onGroups} />
+        <ConditionGroups
+          groups={draft.groups}
+          onChange={onGroups}
+          kinds={INSIGHT_CONDITION_KINDS}
+        />
       ) : null}
     </div>
   );

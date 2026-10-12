@@ -155,10 +155,6 @@ export const NAV_ITEMS = [
     to: '/automations',
     order: 30,
     section: 'intelligence',
-    comingSoon: {
-      card: 'AUT-01',
-      description: 'Send notes and tasks where they belong after each meeting.',
-    },
   },
   {
     id: 'settings',

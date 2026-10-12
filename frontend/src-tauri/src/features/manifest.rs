@@ -131,22 +131,9 @@ pub const FEATURES: &[(&str, &[&str])] = &[
         ],
     ),
     // ── AI-06 custom insights (features/insights.rs) ──
-    (
-        "insights",
-        &[
-            "templates",
-            "list",
-            "get",
-            "create",
-            "update",
-            "delete",
-            "for_meeting",
-            "table",
-            "candidates",
-            "run",
-            "export_csv",
-        ],
-    ),
+    ("insights", INSIGHTS_COMMANDS),
+    // ── AUT-01 automations (features/automations.rs) ──
+    ("automations", AUTOMATIONS_COMMANDS),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── CAP-11 imports and watched folders (features/import.rs) ──

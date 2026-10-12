@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM automation_run_steps WHERE run_id =\n                     (SELECT id FROM automation_runs WHERE automation_id = ?1 AND meeting_id = ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4f1f23f28f2e2cc51a9f711b7d440b8d597f26b8439b971d6dc289a697732df0"
+}
