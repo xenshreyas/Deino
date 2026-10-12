@@ -24,6 +24,7 @@ function fixtureSegments(fixture: FixtureMeeting): Generated.Segment[] {
     words: segment.words.map((word) => ({ text: word.text, start: word.startMs, end: word.endMs })),
     isDeleted: false,
     editedAt: null,
+    originalText: null,
   }));
 }
 
@@ -38,9 +39,10 @@ export class MockTranscripts {
     for (const fixture of fixtures) this.segments.set(fixture.id, fixtureSegments(fixture));
   }
 
-  /** `transcript|get`, each segment on its current speaker (`speakerOf`). */
+  /** `transcript|get`, each segment on its current speaker (`speakerOf`); deleted ones left out. */
   get(meetingId: MeetingId, speakerOf: SpeakerOf = () => undefined): Generated.Transcript {
-    const segments = (this.segments.get(meetingId) ?? []).map((segment) => ({
+    const saved = (this.segments.get(meetingId) ?? []).filter((segment) => !segment.isDeleted);
+    const segments = saved.map((segment) => ({
       ...segment,
       speakerId: speakerOf(segment.id) ?? segment.speakerId,
     }));
@@ -50,6 +52,22 @@ export class MockTranscripts {
   /** Stores a whole transcript (a generated meeting). */
   put(meetingId: MeetingId, transcript: Generated.Transcript): void {
     this.segments.set(meetingId, [...transcript.segments]);
+  }
+
+  /** Every stored segment of every meeting, deleted ones included. */
+  all(): Generated.Segment[] {
+    return [...this.segments.values()].flat();
+  }
+
+  /** Replaces the stored segment with `segment.id`; `false` when there is none. */
+  update(segment: Generated.Segment): boolean {
+    const saved = this.segments.get(segment.meetingId) ?? [];
+    const index = saved.findIndex((one) => one.id === segment.id);
+    if (index < 0) return false;
+    const next = [...saved];
+    next[index] = segment;
+    this.segments.set(segment.meetingId, next);
+    return true;
   }
 
   /** Saves a finished live line; the mock recorder stores no speakers. */

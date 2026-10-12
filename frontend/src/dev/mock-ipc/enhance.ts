@@ -11,6 +11,7 @@ import { fixtureUuid } from './fixture-ids';
 import type { FixtureMeeting } from './fixture-schema';
 import { latency } from './latency';
 import { failure, ok } from './mock-database';
+import { transcriptEditedAt } from './mock-transcript-edits';
 
 /** How long the mock "writes" notes. */
 const WRITING_MS = 1600;
@@ -40,7 +41,27 @@ function cited(fixture: FixtureMeeting, ids: readonly string[]): Generated.Cited
 
 function view(meetingId: Generated.MeetingId, version: number | null) {
   const notesSavedAt = mockNotes.get(meetingId).updatedAt;
-  return mockEnhanced.view(meetingId, version, notesSavedAt, mockEventLinks.change(meetingId));
+  const shown = mockEnhanced.view(
+    meetingId,
+    version,
+    notesSavedAt,
+    mockEventLinks.change(meetingId),
+  );
+  return withTranscriptEdits(shown, transcriptEditedAt(meetingId));
+}
+
+/** Adds "the transcript was edited" when it was, after the version was written (TRN-02). */
+function withTranscriptEdits<T extends Generated.EnhancedNotesView | null | undefined>(
+  shown: T,
+  editedAt: string | null,
+): T {
+  if (!shown?.isLatest || editedAt === null || editedAt <= shown.version.createdAt) return shown;
+  // Rust's order: the calendar's reasons, then the transcript, then the notes.
+  const isCalendar = (reason: Generated.RegenerateReason) =>
+    reason === 'eventChanged' || reason === 'attendeesChanged';
+  const calendar = shown.reasons.filter(isCalendar);
+  const rest = shown.reasons.filter((reason) => !isCalendar(reason));
+  return { ...shown, reasons: [...calendar, 'transcriptEdited', ...rest] };
 }
 
 export const commands = {

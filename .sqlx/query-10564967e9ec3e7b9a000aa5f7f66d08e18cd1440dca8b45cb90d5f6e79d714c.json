@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Segments find and replace (TRN-02) may change: not deleted, in a meeting\n-- outside the trash, in one meeting (?1) or all (?1 IS NULL), whose text is\n-- LIKE ?2 (`%needle%`, `\\` escapes; case-insensitive for ASCII, so a\n-- superset of a case-sensitive match that the caller narrows). Newest\n-- meeting first, then spoken order. One meeting uses\n-- idx_transcript_segments_meeting_id_start_ms; all meetings scan the table,\n-- which a deliberate, rare bulk edit can afford.\nSELECT\n    s.id AS \"id: SegmentId\",\n    s.meeting_id AS \"meeting_id: MeetingId\",\n    m.title AS \"meeting_title\",\n    s.text\nFROM transcript_segments AS s\nJOIN meetings AS m ON m.id = s.meeting_id\nWHERE s.is_deleted = 0\n    AND m.deleted_at IS NULL\n    AND (?1 IS NULL OR s.meeting_id = ?1)\n    AND s.text LIKE ?2 ESCAPE '\\'\nORDER BY coalesce(m.started_at, m.created_at) DESC, s.meeting_id, s.start_ms, s.id\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: SegmentId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "text",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "10564967e9ec3e7b9a000aa5f7f66d08e18cd1440dca8b45cb90d5f6e79d714c"
+}

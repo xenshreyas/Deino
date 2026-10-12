@@ -95,6 +95,7 @@ mod tests {
             words: Vec::new(),
             is_deleted: false,
             edited_at: None,
+            original_text: None,
         }
     }
 

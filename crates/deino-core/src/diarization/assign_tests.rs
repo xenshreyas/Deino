@@ -32,6 +32,7 @@ fn segment(words: Vec<WordTiming>) -> Segment {
         words,
         is_deleted: false,
         edited_at: None,
+        original_text: None,
     }
 }
 

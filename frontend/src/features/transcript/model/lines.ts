@@ -9,6 +9,9 @@
  */
 import type { Segment, SegmentId, SegmentUpdate, TranscriptLine } from '../types';
 
+/** A live line has no word timings until it is saved. */
+const NO_WORDS: TranscriptLine['words'] = [];
+
 /** Live lines by ID; `null` marks a discarded one. */
 export type LiveLines = ReadonlyMap<SegmentId, TranscriptLine | null>;
 
@@ -21,6 +24,8 @@ export function lineOfSegment(segment: Segment): TranscriptLine {
     start: segment.start,
     end: segment.end,
     text: segment.text,
+    words: segment.words,
+    editedAt: segment.editedAt,
     open: false,
   };
 }
@@ -39,6 +44,8 @@ export function applyUpdate(live: LiveLines, update: SegmentUpdate): LiveLines {
     start: update.start,
     end: update.end,
     text: update.text,
+    words: NO_WORDS,
+    editedAt: null,
     open: update.state === 'open',
   });
   return next;

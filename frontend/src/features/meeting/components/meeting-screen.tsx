@@ -125,7 +125,7 @@ export function MeetingScreen({
             <MeetingHeader meetingId={id} />
             <MeetingTabs meetingId={id} tab={tab} onTabChange={onTabChange} moment={shown} />
           </div>
-          <Player meetingId={id} />
+          <Player meetingId={id} moment={shown} />
         </div>
         <MeetingSidePanel meetingId={id} open={rightPanelOpen} />
       </div>

@@ -147,7 +147,9 @@ impl SegmentWriter for SqliteSegmentRepo {
         at: DateTime<Utc>,
     ) -> Result<bool, DbError> {
         let result = sqlx::query!(
-            "UPDATE transcript_segments SET text = ?1, edited_at = ?2 WHERE id = ?3",
+            "UPDATE transcript_segments
+             SET original_text = coalesce(original_text, text), text = ?1, edited_at = ?2
+             WHERE id = ?3",
             text,
             at,
             id,
@@ -251,18 +253,19 @@ async fn insert(connection: &mut SqliteConnection, segment: &NewSegment) -> Resu
     Ok(())
 }
 
-/// One `transcript_segments` row as the list query reads it.
-struct SegmentRow {
-    id: SegmentId,
-    meeting_id: MeetingId,
-    channel: Channel,
-    speaker_id: Option<SpeakerId>,
-    start: Millis,
-    end: Millis,
-    text: String,
-    words: Json<Vec<WordTiming>>,
-    is_deleted: bool,
-    edited_at: Option<DateTime<Utc>>,
+/// One `transcript_segments` row as the list and one-row queries read it.
+pub(super) struct SegmentRow {
+    pub(super) id: SegmentId,
+    pub(super) meeting_id: MeetingId,
+    pub(super) channel: Channel,
+    pub(super) speaker_id: Option<SpeakerId>,
+    pub(super) start: Millis,
+    pub(super) end: Millis,
+    pub(super) text: String,
+    pub(super) words: Json<Vec<WordTiming>>,
+    pub(super) is_deleted: bool,
+    pub(super) edited_at: Option<DateTime<Utc>>,
+    pub(super) original_text: Option<String>,
 }
 
 impl From<SegmentRow> for Segment {
@@ -278,6 +281,7 @@ impl From<SegmentRow> for Segment {
             words: row.words.0,
             is_deleted: row.is_deleted,
             edited_at: row.edited_at,
+            original_text: row.original_text,
         }
     }
 }

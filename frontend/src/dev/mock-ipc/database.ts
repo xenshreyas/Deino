@@ -19,6 +19,7 @@ import { MockEntities } from './mock-entities';
 import { MockEntityPages } from './mock-entity-pages';
 import { MockEventLinks } from './mock-event-links';
 import { MockInsights } from './mock-insights';
+import { MockMedia } from './mock-media';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
 import { MockTranscripts } from './mock-transcripts';
@@ -46,6 +47,9 @@ export const mockEnhanced = new MockEnhanced(fixtureMeetings);
 
 /** The fixtures' people, as the Rust seeder writes them. */
 export const mockPeople = fixturePeople(fixtureMeetings);
+
+/** The fixtures' recordings (the player's files). */
+export const mockMedia = new MockMedia(fixtureMeetings);
 
 /** The mock `transcript_segments` table. */
 export const mockTranscripts = new MockTranscripts(fixtureMeetings);

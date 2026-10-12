@@ -129,6 +129,7 @@ fn segments(meeting: &FixtureMeeting) -> Vec<Segment> {
                 words: Vec::new(),
                 is_deleted: false,
                 edited_at: None,
+                original_text: None,
             })
         })
         .collect()

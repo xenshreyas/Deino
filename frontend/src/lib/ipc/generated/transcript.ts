@@ -17,6 +17,64 @@ async get(meetingId: MeetingId) : Promise<Result<Transcript, AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Sets a line's text (trimmed, not blank) and returns the line; the first
+ * edit keeps what the engine heard in `originalText`.
+ */
+async edit(segmentId: SegmentId, text: string) : Promise<Result<Segment, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|edit", { segmentId, text }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes a line: it leaves the transcript, the notes' input, search and
+ * exports, and can be restored.
+ */
+async delete(segmentId: SegmentId) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|delete", { segmentId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Brings a deleted line back (the delete toast's Undo).
+ */
+async restore(segmentId: SegmentId) : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|restore", { segmentId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * What replacing `request.find` would change: matches, lines and meetings.
+ */
+async preview(request: ReplaceRequest) : Promise<Result<ReplacePreview, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|preview", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Replaces every match of `request.find` with `replacement`, in one
+ * transaction.
+ */
+async replace(request: ReplaceRequest, replacement: string) : Promise<Result<ReplaceOutcome, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|replace", { request, replacement }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -114,9 +172,85 @@ export type ErrorCode =
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
 /**
+ * One meeting's share of a find and replace.
+ */
+export type MeetingMatches = { 
+/**
+ * The meeting.
+ */
+meetingId: MeetingId; 
+/**
+ * Its title.
+ */
+title: string; 
+/**
+ * How many matches it has.
+ */
+matches: number }
+/**
  * A count of milliseconds, for example a segment's offset in a recording.
  */
 export type Millis = number
+/**
+ * What a find and replace changed.
+ */
+export type ReplaceOutcome = { 
+/**
+ * Matches replaced.
+ */
+matches: number; 
+/**
+ * Lines changed.
+ */
+segments: number; 
+/**
+ * Meetings changed.
+ */
+meetings: number }
+/**
+ * What a find and replace would change, before it does.
+ */
+export type ReplacePreview = { 
+/**
+ * Every match.
+ */
+matches: number; 
+/**
+ * The lines holding them.
+ */
+segments: number; 
+/**
+ * Each meeting with matches, newest first.
+ */
+meetings: MeetingMatches[] }
+/**
+ * What to find, and where.
+ */
+export type ReplaceRequest = { 
+/**
+ * The literal text to find; not blank.
+ */
+find: string; 
+/**
+ * Where to look.
+ */
+scope: ReplaceScope; 
+/**
+ * Compare letters' case exactly; otherwise ASCII case is ignored.
+ */
+matchCase: boolean }
+/**
+ * Where find and replace looks.
+ */
+export type ReplaceScope = 
+/**
+ * One meeting's transcript.
+ */
+{ kind: "meeting"; meetingId: MeetingId } | 
+/**
+ * Every meeting outside the trash.
+ */
+{ kind: "all" }
 /**
  * One utterance of a meeting's transcript.
  */
@@ -160,7 +294,12 @@ isDeleted: boolean;
 /**
  * When the user last edited `text`.
  */
-editedAt: string | null }
+editedAt: string | null; 
+/**
+ * What the engine heard, kept by the first edit (TRN-02); `None` while
+ * the segment was never edited.
+ */
+originalText: string | null }
 /**
  * Identifies a transcript segment. Segments migrated from the legacy
  * `transcripts` table keep their UUIDv4.

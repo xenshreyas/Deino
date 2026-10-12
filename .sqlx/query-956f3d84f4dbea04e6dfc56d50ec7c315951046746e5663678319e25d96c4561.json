@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE transcript_segments\n                 SET original_text = coalesce(original_text, text), text = ?1, edited_at = ?2\n                 WHERE id = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "956f3d84f4dbea04e6dfc56d50ec7c315951046746e5663678319e25d96c4561"
+}

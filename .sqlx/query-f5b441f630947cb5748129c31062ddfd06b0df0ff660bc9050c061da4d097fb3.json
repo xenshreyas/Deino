@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "-- A meeting's (?1) transcript in time order, without deleted segments,\n-- windowed by LIMIT ?2 OFFSET ?3. Served by\n-- idx_transcript_segments_meeting_id_start_ms (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: SegmentId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    channel AS \"channel: Channel\",\n    speaker_id AS \"speaker_id: SpeakerId\",\n    start_ms AS \"start: Millis\",\n    end_ms AS \"end: Millis\",\n    text,\n    words_json AS \"words: Json<Vec<WordTiming>>\",\n    is_deleted AS \"is_deleted: bool\",\n    edited_at AS \"edited_at: DateTime<Utc>\",\n    original_text\nFROM transcript_segments\nWHERE meeting_id = ?1 AND is_deleted = 0\nORDER BY start_ms, id\nLIMIT ?2 OFFSET ?3\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: SegmentId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "meeting_id: MeetingId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "channel: Channel",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "speaker_id: SpeakerId",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "start: Millis",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end: Millis",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "text",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "words: Json<Vec<WordTiming>>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_deleted: bool",
+        "ordinal": 8,
+        "type_info": "Integer"
+      },
+      {
+        "name": "edited_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "original_text",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "f5b441f630947cb5748129c31062ddfd06b0df0ff660bc9050c061da4d097fb3"
+}

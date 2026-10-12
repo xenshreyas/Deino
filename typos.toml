@@ -41,6 +41,8 @@ Lokal = "Lokal"
 trun = "trun"
 # The numerator field of mach_timebase_info.
 numer = "numer"
+# The HTML media element's `seeked` event (the player waits for it).
+seeked = "seeked"
 
 [default.extend-identifiers]
 # A module name misspelt upstream in cidre (`av::audio::settings`).

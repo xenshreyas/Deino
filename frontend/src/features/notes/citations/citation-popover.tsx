@@ -1,13 +1,15 @@
 /**
  * The magnifier and its popover (NOT-03, Granola §3.2): beside an AI line
  * that cites the transcript, a quiet 🔍 that opens the cited excerpts, each
- * with its speaker and time, a Play button (playback arrives with TRN-03's
- * player) and "Show in transcript". Keyboard: the magnifier is a button in
+ * with its speaker and time, a Play button (TRN-03: plays the meeting's
+ * recording from the excerpt's start, disabled without one) and "Show in
+ * transcript". Keyboard: the magnifier is a button in
  * the tab order, the popover traps nothing and closes on Escape.
  */
 import { useNavigate } from '@tanstack/react-router';
 
 import type { MeetingId } from '@/features/meetings';
+import { playerActions, usePlayerReady } from '@/features/player';
 import { cn } from '@/ui/cn';
 import { ICON_PROPS, Play, ScrollText, Search } from '@/ui/icons';
 import { IconButton } from '@/ui/icon-button';
@@ -102,6 +104,7 @@ function Excerpts({
 /** One excerpt: who, when, what, and where to go from it. */
 function Excerpt({ meetingId, segment }: { meetingId: MeetingId; segment: CitedSegment }) {
   const navigate = useNavigate();
+  const playable = usePlayerReady(meetingId);
   const showInTranscript = () => {
     void navigate({
       to: '/meetings/$meetingId',
@@ -117,11 +120,10 @@ function Excerpt({ meetingId, segment }: { meetingId: MeetingId; segment: CitedS
         <span className="ml-auto flex items-center">
           <IconButton
             icon={Play}
-            label={notesCopy.playSoon}
-            aria-disabled
-            className="opacity-40"
-            onClick={(event) => {
-              event.preventDefault();
+            label={playable ? notesCopy.play : notesCopy.noRecording}
+            disabled={!playable}
+            onClick={() => {
+              playerActions.playFrom(meetingId, segment.start);
             }}
           />
           <IconButton

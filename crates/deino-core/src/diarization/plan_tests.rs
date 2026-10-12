@@ -25,6 +25,7 @@ fn said(channel: Channel, start: u32, end: u32) -> Segment {
         }],
         is_deleted: false,
         edited_at: None,
+        original_text: None,
     }
 }
 

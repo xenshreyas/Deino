@@ -30,6 +30,15 @@ const enhance = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/ipc/generated/enhance', () => ({ commands: enhance }));
 
+const player = vi.hoisted(() => ({
+  ready: false,
+  playFrom: vi.fn<(meeting: string, ms: number) => void>(),
+}));
+vi.mock('@/features/player', () => ({
+  usePlayerReady: () => player.ready,
+  playerActions: { playFrom: player.playFrom, seek: vi.fn() },
+}));
+
 const SECOND = '0192f3a0-6c1e-7b2a-9d4e-000000000002';
 
 const CITATIONS: CitationRef[] = [
@@ -112,14 +121,27 @@ describe('CitationPopover', () => {
     expect(enhance.cited).toHaveBeenCalledWith(TEST_MEETING, [CITED_SEGMENT, SECOND]);
   });
 
-  it('keeps Play disabled until the player exists', async () => {
+  it('disables Play without a recording in the player', async () => {
+    player.ready = false;
     renderPopover();
     fireEvent.click(await screen.findByRole('button', { name: notesCopy.sourcesLabel }));
     await screen.findByText('You come off on-call.');
 
-    for (const play of screen.getAllByRole('button', { name: notesCopy.playSoon })) {
-      expect(play.getAttribute('aria-disabled')).toBe('true');
+    for (const play of screen.getAllByRole('button', { name: notesCopy.noRecording })) {
+      expect(play.hasAttribute('disabled')).toBe(true);
     }
+  });
+
+  it('plays each excerpt from its cited moment', async () => {
+    player.ready = true;
+    renderPopover();
+    fireEvent.click(await screen.findByRole('button', { name: notesCopy.sourcesLabel }));
+    await screen.findByText('I am off Friday.');
+
+    const plays = screen.getAllByRole('button', { name: notesCopy.play });
+    fireEvent.click(plays[1] ?? plays[0] ?? document.body);
+
+    expect(player.playFrom).toHaveBeenCalledWith(TEST_MEETING, 248_000);
   });
 
   it('shows the excerpt in the transcript', async () => {

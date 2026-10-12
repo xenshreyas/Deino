@@ -14,7 +14,9 @@ use deino_core::search::semantic::{
     AdminParts, Backfill, Embedder, GatewayEmbedder, IndexerParts, NoEmbedder, SemanticAdmin,
     SemanticIndex, SemanticIndexer, SharedVectors, SqliteEmbeddingStore,
 };
-use deino_core::search::{MeetingIndexer, SearchIndexing, SearchService, SqliteSearchIndex};
+use deino_core::search::{
+    MeetingIndexer, ReindexQueue, SearchIndexing, SearchService, SqliteSearchIndex,
+};
 use deino_core::settings::SettingsService;
 use deino_db::Database;
 use deino_domain::Clock;
@@ -26,8 +28,9 @@ use crate::paths::AppPaths;
 use crate::stt::NetByteSource;
 
 /// The LLM gateway, which embeds with the local embedding model when it is
-/// installed, and the search services over it; returns the gateway (`None`
-/// when AI is unavailable) and the `index` stage's indexer.
+/// installed, and the search services over it, with the transcript edits'
+/// `ReindexQueue`; returns the gateway (`None` when AI is unavailable) and
+/// the `index` stage's indexer.
 pub(super) fn attach_gateway_and_search(
     app: &AppHandle,
     database: &Database,
@@ -38,6 +41,8 @@ pub(super) fn attach_gateway_and_search(
     let gateway =
         super::llm::attach_llm(app, database, settings, (Arc::clone(clock), models.clone()));
     let search = attach_search(app, database, (gateway.clone(), models), clock);
+    // Transcript edits (TRN-02) re-index their meetings through this queue.
+    app.manage(Arc::new(ReindexQueue::start(Arc::clone(&search))));
     (gateway, search)
 }
 

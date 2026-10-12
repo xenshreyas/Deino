@@ -167,7 +167,6 @@ tauri-specta.workspace = true
 
 # Common Tauri configuration
 tauri = { version = "2.6.2", features = [ "macos-private-api", "protocol-asset", "tray-icon"] }
-tauri-plugin-fs = "2.4.0"
 tauri-plugin-dialog = "2.3.0"
 # Rich-text copies (HTML with a plain-text fallback) for the export plugin.
 arboard = { version = "=3.6.1", default-features = false }

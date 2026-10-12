@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "-- A meeting's (?1) transcript in time order, without deleted segments,\n-- windowed by LIMIT ?2 OFFSET ?3. Served by\n-- idx_transcript_segments_meeting_id_start_ms (asserted in repo_tests.rs).\nSELECT\n    id AS \"id: SegmentId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    channel AS \"channel: Channel\",\n    speaker_id AS \"speaker_id: SpeakerId\",\n    start_ms AS \"start: Millis\",\n    end_ms AS \"end: Millis\",\n    text,\n    words_json AS \"words: Json<Vec<WordTiming>>\",\n    is_deleted AS \"is_deleted: bool\",\n    edited_at AS \"edited_at: DateTime<Utc>\"\nFROM transcript_segments\nWHERE meeting_id = ?1 AND is_deleted = 0\nORDER BY start_ms, id\nLIMIT ?2 OFFSET ?3\n",
+  "query": "-- One segment by ID (?1), deleted or not: the transcript edits read it to\n-- learn its meeting and current text, and to restore a deleted one.\nSELECT\n    id AS \"id: SegmentId\",\n    meeting_id AS \"meeting_id: MeetingId\",\n    channel AS \"channel: Channel\",\n    speaker_id AS \"speaker_id: SpeakerId\",\n    start_ms AS \"start: Millis\",\n    end_ms AS \"end: Millis\",\n    text,\n    words_json AS \"words: Json<Vec<WordTiming>>\",\n    is_deleted AS \"is_deleted: bool\",\n    edited_at AS \"edited_at: DateTime<Utc>\",\n    original_text\nFROM transcript_segments\nWHERE id = ?1\n",
   "describe": {
     "columns": [
       {
@@ -52,10 +52,15 @@
         "name": "edited_at: DateTime<Utc>",
         "ordinal": 9,
         "type_info": "Text"
+      },
+      {
+        "name": "original_text",
+        "ordinal": 10,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 1
     },
     "nullable": [
       false,
@@ -67,8 +72,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "812be000ce99a18489b3612c90c5f2ddd4730bd1aaac4ac8475930ccd84629f8"
+  "hash": "2d97cee1db7562232d223c3a8efbfd5a0879f7054504d844aaedcbfae468840d"
 }

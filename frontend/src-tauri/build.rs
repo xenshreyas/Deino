@@ -63,6 +63,7 @@ const RELEASE_CAPABILITIES: &str = "./capabilities/*.json";
 /// their capabilities are only registered when debug assertions are on.
 fn tauri_attributes() -> tauri_build::Attributes {
     println!("cargo:rerun-if-changed=src/features/manifest.rs");
+    println!("cargo:rerun-if-changed=src/features/manifest_commands.rs");
     println!("cargo:rerun-if-changed=src/features/dev_manifest.rs");
     let debug = std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_some();
     let dev_features: &[(&str, &[&str])] = if debug { DEV_FEATURES } else { &[] };

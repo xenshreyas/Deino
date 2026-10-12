@@ -1,29 +1,23 @@
-import { ICON_PROPS, Play } from '@/ui/icons';
-
-import { meetingCopy } from '../copy';
-
 /**
- * The bottom player slot, resting until TRN-03 adds synced playback: a quiet
- * bar with a disabled play control and a 0:00 scrubber.
+ * The bottom player slot (TRN-03): the meeting's recording in the docked
+ * player, its scrubber painted with who spoke when from the transcript, and
+ * seeking to a linked moment (`?t=`). Nothing shows for a meeting without a
+ * recording on this Mac.
  */
-export function PlayerPlaceholder() {
+import { MeetingPlayer } from '@/features/player';
+import { useSpeakerBands } from '@/features/transcript';
+
+import type { MeetingSlotProps } from '../types';
+
+/** The slot. */
+export function PlayerSlot({ meetingId, moment }: MeetingSlotProps) {
+  const bands = useSpeakerBands(meetingId);
+  const target = moment?.target;
   return (
-    <div
-      aria-label={meetingCopy.playerLabel}
-      role="group"
-      className="flex h-11 items-center gap-3 border-t border-border px-4 text-xs text-fg-subtle"
-    >
-      <button
-        type="button"
-        disabled
-        aria-label={meetingCopy.playerSoon}
-        className="flex size-7 items-center justify-center rounded-full bg-bg-muted text-fg-subtle"
-      >
-        <Play {...ICON_PROPS} size={14} />
-      </button>
-      <span className="tabular-nums">0:00</span>
-      <div className="h-1 flex-1 rounded-full bg-bg-muted" />
-      <span>{meetingCopy.playerSoon}</span>
-    </div>
+    <MeetingPlayer
+      meetingId={meetingId}
+      bands={bands}
+      seekTo={target?.kind === 'time' ? target.at : undefined}
+    />
   );
 }
