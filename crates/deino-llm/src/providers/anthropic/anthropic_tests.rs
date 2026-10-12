@@ -70,12 +70,29 @@ async fn the_request_body_is_a_streamed_messages_request() {
         http.json_body(0),
         json!({
             "model": "claude-sonnet-5-5",
-            "max_tokens": 256,
+            "max_tokens": wire::ANTHROPIC_MIN_TOKENS,
             "system": "Be brief.",
             "messages": [{ "role": "user", "content": [{ "type": "text", "text": "Hi" }] }],
             "stream": true,
         })
     );
+}
+
+#[tokio::test]
+async fn a_40_token_title_request_goes_out_with_the_floor_and_answers_with_text_only() {
+    let fixture = include_str!("../../../tests/fixtures/anthropic_text.sse");
+    let (provider, http) = provider(FakeHttp::new().reply(200, fixture));
+    let mut title = request(OutputFormat::Text);
+    title.route = Route::Title;
+    title.model = CLAUDE_FAST_MODEL.to_owned();
+    title.max_tokens = 40;
+
+    let completion = provider.complete(title).await.unwrap();
+
+    let body = http.json_body(0);
+    assert_eq!(body["max_tokens"], wire::ANTHROPIC_MIN_TOKENS);
+    assert_eq!(body["model"], "claude-haiku-5-5");
+    assert_eq!(completion.text, "Hello, Shreyas.", "thinking is not text");
 }
 
 #[tokio::test]
@@ -181,7 +198,7 @@ async fn a_json_answer_is_a_structured_output_without_tools_or_temperature() {
         http.json_body(0),
         json!({
             "model": "claude-sonnet-5-5",
-            "max_tokens": wire::JSON_ANSWER_MIN_TOKENS,
+            "max_tokens": wire::ANTHROPIC_MIN_TOKENS,
             "system": "Be brief.",
             "messages": [{ "role": "user", "content": [{ "type": "text", "text": "Hi" }] }],
             "output_config": {
@@ -315,7 +332,7 @@ async fn text_and_tool_requests_never_send_a_temperature() {
     assert!(body.get("temperature").is_none());
     assert!(body.get("tool_choice").is_none());
     assert!(body.get("output_config").is_none());
-    assert_eq!(body["max_tokens"], 256);
+    assert_eq!(body["max_tokens"], wire::ANTHROPIC_MIN_TOKENS);
     assert_eq!(
         body["tools"][0]["input_schema"],
         json!({ "type": "object" })

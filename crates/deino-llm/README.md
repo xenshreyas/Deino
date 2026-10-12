@@ -20,7 +20,8 @@ and model, streams the answer, and meters the call into `llm_calls`.
   adapters in `providers/`: Anthropic (Messages API; JSON answers are
   structured outputs, `output_config.format`, under a schema rewritten to
   the subset the API accepts by `providers/anthropic/schema.rs`; never a
-  forced `tool_choice`, never `temperature`),
+  forced `tool_choice`, never `temperature`; `max_tokens` at least 16 000,
+  since 5.5 models think first),
   OpenAI-compatible (`Flavor`: OpenAI, Groq, OpenRouter, custom; Ollama's
   `/v1`), Ollama (models, context windows, pulls), BuiltIn (llama-helper,
   `providers/builtin/protocol.rs` is the app's half of its protocol).

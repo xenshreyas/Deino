@@ -10,7 +10,8 @@
 //! `tool_choice`), so no request sends one. No request sends `temperature`
 //! either: Haiku 5.5 refuses any value but its default and Sonnet 5.5 asks
 //! callers to drop non-default sampling, so every Claude model samples at
-//! its own default.
+//! its own default. Every request's `max_tokens` is at least
+//! [`ANTHROPIC_MIN_TOKENS`], since 5.5 models think before they answer.
 
 use std::borrow::Cow;
 
@@ -20,11 +21,14 @@ use serde_json::Value;
 use super::schema::{OutputSchema, output_schema};
 use crate::{CompletionRequest, JsonOutput, OutputFormat, Part, Role};
 
-/// A JSON answer's `max_tokens`, at least. Sonnet and Haiku 5.5 think
-/// adaptively by default and thinking counts against `max_tokens`, so a cap
-/// sized for the JSON alone could cut the answer off. The request streams,
-/// so a large cap is no timeout risk, and it is a ceiling, not a spend.
-pub(super) const JSON_ANSWER_MIN_TOKENS: u32 = 16_000;
+/// Every request's `max_tokens`, at least. Sonnet and Haiku 5.5 think
+/// adaptively by default and thinking counts against `max_tokens`, so a
+/// route cap sized for the answer alone (a 40-token title, a JSON answer)
+/// could be spent on thinking and leave the answer empty or cut off. The
+/// request streams, so a large cap is no timeout risk, and it is a ceiling,
+/// not a spend: the prompts still ask for short answers. Other providers
+/// keep the route's cap.
+pub(super) const ANTHROPIC_MIN_TOKENS: u32 = 16_000;
 
 /// What a schema the API cannot constrain asks for in the system prompt.
 const JSON_INSTRUCTION: &str = "Reply with only one JSON value that matches this JSON schema, with no Markdown fence and no other text.";
@@ -106,7 +110,7 @@ impl<'a> MessagesRequest<'a> {
     pub(super) fn new(request: &'a CompletionRequest) -> Self {
         let mut body = Self {
             model: &request.model,
-            max_tokens: request.max_tokens,
+            max_tokens: request.max_tokens.max(ANTHROPIC_MIN_TOKENS),
             system: request.system.as_deref().map(Cow::Borrowed),
             messages: request.messages.iter().map(message).collect(),
             tools: Vec::new(),
@@ -123,7 +127,6 @@ impl<'a> MessagesRequest<'a> {
     /// A JSON answer: a structured output when the schema allows one, the
     /// schema in the system prompt otherwise; no tools either way.
     fn answer_in_json(&mut self, json: &JsonOutput) {
-        self.max_tokens = self.max_tokens.max(JSON_ANSWER_MIN_TOKENS);
         match output_schema(&json.schema) {
             OutputSchema::Constrained(schema) => {
                 let format = JsonSchemaFormat {

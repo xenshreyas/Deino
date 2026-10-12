@@ -47,13 +47,20 @@ changed; OpenAI-compatible, Ollama and the built-in model are untouched.
   `LlmError::Truncated` (retryable) instead of reaching the parser and the
   repair turn; a text answer cut off still ends with `Stop(MaxTokens)`.
   `refusal` keeps mapping to `StopReason::Refusal`.
-- **`max_tokens` floor for JSON answers: 16 000** (`JSON_ANSWER_MIN_TOKENS`).
-  Thinking counts against `max_tokens`, and the route caps were sized for the
-  JSON alone (template pick 200, tagging 300, redaction check
-  24/candidate, follow-up decide/draft, action items/insights/notes edit
-  4 096, notes 8 192). A larger route cap is kept. The request streams, so
-  there is no timeout risk, and the cap is a ceiling, not a spend. No route
-  needs less: a small cap only buys a truncation.
+- **`max_tokens` floor for every Anthropic request: 16 000**
+  (`ANTHROPIC_MIN_TOKENS`, applied in the Anthropic wire builder, so other
+  providers keep the route caps). Thinking counts against `max_tokens`, and
+  the route caps were sized for the answer alone: JSON routes (template pick
+  200, tagging 300, redaction check 24/candidate, follow-up decide/draft,
+  action items/insights/notes edit 4 096, notes 8 192) and text routes
+  (`Route::Title` 40, `vision.describe` 400, the Settings → AI route test 64).
+  With automatic notes on, titles run after every meeting, and a thinking
+  block could spend the whole 40 tokens and leave a silent empty title
+  (`clean_title` → `None`). A larger route cap is kept. The request streams,
+  so there is no timeout risk, and the cap is a ceiling, not a spend: the
+  prompts still ask for short answers, and `clean_title` still trims the
+  answer. Only text blocks become answer text (thinking is dropped by the
+  decoder). No route needs less: a small cap only buys a truncation.
 - **Effort is not sent.** Sonnet 5.5 defaults to `high`, Haiku 5.5 to
   `medium`. `output_config.effort` would trim latency on extraction routes,
   but Haiku 4.5 (which a user can still pick, and which takes structured
@@ -67,7 +74,10 @@ changed; OpenAI-compatible, Ollama and the built-in model are untouched.
   text deltas after a thinking block (`anthropic_json_answer.sse`, re-recorded
   in the structured-output shape); `anthropic_json_max_tokens.sse` gives
   `Text, Usage, Err(Truncated)` for JSON and `Stop(MaxTokens)` for text; text
-  and tool bodies are unchanged except that `temperature` is gone.
+  and tool bodies are unchanged except that `temperature` is gone and
+  `max_tokens` has the floor; a 40-token `Route::Title` request on Haiku 5.5
+  goes out with the floor and its answer is the text block only, not the
+  thinking before it.
   `schema_tests.rs`: nested objects, `$defs`/`definitions`/`$ref`, arrays
   and tuple items, `anyOf`/`oneOf`, stripped keywords and formats,
   keyword-named properties, recursion through definitions and the root,
@@ -89,13 +99,6 @@ changed; OpenAI-compatible, Ollama and the built-in model are untouched.
   speaker identification are not structured calls.
 
 ## Follow-ups (PARITY_PLAN §7.2)
-- AI owner: small text caps with adaptive thinking on. `Route::Title`
-  (`TITLE_MAX_TOKENS` 40), `vision.describe` (400) and the Settings → AI route
-  test (64) are plain text routes, left unchanged here; on Sonnet/Haiku 5.5 a
-  thinking block can use the whole cap and the title comes back empty
-  (`clean_title` → `None`, so no error, just no auto title). Consider an
-  Anthropic floor for text routes too, or `output_config.effort: "low"` gated
-  on models that accept it.
 - AI owner: optional per-route `effort` (`low` for extraction/classification
   routes on Sonnet/Haiku 5.5) once there is a model-capability table, since
   Haiku 4.5 and Sonnet 4.5 refuse the parameter.
@@ -114,8 +117,9 @@ changed; OpenAI-compatible, Ollama and the built-in model are untouched.
   outputs (`output_config.format`) under a schema rewritten to the API's
   subset (`providers/anthropic/schema.rs`); a schema it cannot take
   (recursive, open map) is asked for in the system prompt. Anthropic never
-  receives `tool_choice` or `temperature`; JSON answers get `max_tokens` ≥
-  16 000 because 5.5 models think by default."
+  receives `tool_choice` or `temperature`; every Anthropic request gets
+  `max_tokens` ≥ 16 000 because 5.5 models think by default (other providers
+  keep the route caps)."
 - ADR 0017 (line 39, "forced tool (the tool trick)") and PARITY_PLAN card
   FND-09 (`structured<T>()`, "Anthropic tool trick") describe the old
   mechanism; update both to structured outputs.

@@ -5,8 +5,9 @@
 //! rewritten to the subset the API accepts ([`schema`]); the answer arrives as
 //! text and the gateway still parses it. `temperature` is never sent. Thinking
 //! is not configured: Sonnet and Haiku 5.5 think adaptively by default (and
-//! refuse `thinking: disabled`), so JSON answers get a larger `max_tokens`
-//! floor and the decoder drops whatever reasoning comes back. Effort is left
+//! refuse `thinking: disabled`), so every request gets a `max_tokens` floor
+//! (a 40-token title cap could otherwise go entirely to thinking) and the
+//! decoder drops whatever reasoning comes back: only text blocks are answer. Effort is left
 //! at each model's default, since older models refuse the parameter.
 
 mod decode;
