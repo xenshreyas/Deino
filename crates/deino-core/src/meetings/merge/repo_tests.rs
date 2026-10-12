@@ -10,14 +10,19 @@ use deino_testkit::{at, seed};
 
 use super::*;
 use crate::meetings::test_seed as rows;
-use crate::meetings::{MeetingError, SqliteMeetingRepo};
+use crate::meetings::{MeetingError, RecordedWork, SqliteMeetingRepo};
 use crate::notes::SqliteNotesRepo;
 
 fn merger(database: &Database) -> MeetingMergeService {
+    merger_with(database, Arc::new(RecordedWork::default()))
+}
+
+fn merger_with(database: &Database, work: Arc<RecordedWork>) -> MeetingMergeService {
     MeetingMergeService::new(MergeDeps {
         repo: Arc::new(SqliteMeetingRepo::new(database.clone())),
         notes: Arc::new(SqliteNotesRepo::new(database.clone())),
         clock: Arc::new(FakeClock::new(at("2026-10-12T09:00:00Z"))),
+        work,
     })
 }
 
@@ -192,4 +197,23 @@ async fn unknown_or_unfinished_meetings_are_refused_and_nothing_changes() {
     assert!(matches!(unknown, MeetingError::NotFound(_)));
     assert!(matches!(single, MeetingError::MergeNeedsTwo));
     assert_eq!(scalar::<i64>(&db, "SELECT COUNT(*) FROM meetings").await, 2);
+}
+
+#[tokio::test]
+async fn the_merged_meeting_is_reindexed_and_a_refused_merge_reindexes_nothing() {
+    let (db, ..) = two_meetings().await;
+    let work = Arc::new(RecordedWork::default());
+    let merger = merger_with(&db, work.clone());
+
+    merger
+        .merge(&[MeetingId::new("m0"), MeetingId::new("mx")])
+        .await
+        .unwrap_err();
+    merger
+        .merge(&[MeetingId::new("m1"), MeetingId::new("m0")])
+        .await
+        .unwrap();
+
+    assert_eq!(work.reindexed(), [MeetingId::new("m0")]);
+    assert!(work.cancelled().is_empty());
 }

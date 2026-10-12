@@ -6,7 +6,7 @@ use std::sync::Arc;
 use deino_domain::{Clock, MeetingId};
 
 use super::{MeetingMergeRepo, MergeOutcome, MergePlan, PartNotes, combine, timeline};
-use crate::meetings::MeetingError;
+use crate::meetings::{MeetingError, MeetingWork};
 use crate::notes::NotesRepo;
 
 /// What a merge works through.
@@ -17,6 +17,8 @@ pub struct MergeDeps {
     pub notes: Arc<dyn NotesRepo>,
     /// When the merge happened.
     pub clock: Arc<dyn Clock>,
+    /// The pipeline, which re-indexes the merged meeting.
+    pub work: Arc<dyn MeetingWork>,
 }
 
 /// Merges meetings.
@@ -33,8 +35,22 @@ impl MeetingMergeService {
     /// Merges `ids` into the earliest of them: transcripts concatenated with
     /// time offsets, attendees united with the stronger role, tags, folders,
     /// action items and notes combined, and each absorbed recording kept
-    /// reachable as a part. The absorbed meetings are deleted.
+    /// reachable as a part. The absorbed meetings are deleted and the merged
+    /// one re-indexed. Only finished meetings merge, so none has a running
+    /// pipeline stage to cancel.
     pub async fn merge(&self, ids: &[MeetingId]) -> Result<MergeOutcome, MeetingError> {
+        let (plan, absorbed) = self.plan(ids).await?;
+        self.deps.repo.apply_merge(&plan).await?;
+        log::info!(target: "meetings", "merged {} meetings into {}", plan.parts.len(), plan.target);
+        self.deps.work.reindex(&plan.target).await;
+        Ok(MergeOutcome {
+            absorbed,
+            meeting_id: plan.target,
+        })
+    }
+
+    /// The merge of `ids`, and the meetings it absorbs in timeline order.
+    async fn plan(&self, ids: &[MeetingId]) -> Result<(MergePlan, Vec<MeetingId>), MeetingError> {
         let mut unique = ids.to_vec();
         unique.sort();
         unique.dedup();
@@ -61,12 +77,7 @@ impl MeetingMergeService {
             length: timeline.length,
             merged_at,
         };
-        self.deps.repo.apply_merge(&plan).await?;
-        log::info!(target: "meetings", "merged {} meetings into {}", plan.parts.len(), plan.target);
-        Ok(MergeOutcome {
-            absorbed: ordered.split_off(1),
-            meeting_id: plan.target,
-        })
+        Ok((plan, ordered.split_off(1)))
     }
 
     /// Each meeting's notes with its title, in timeline order.

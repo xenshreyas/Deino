@@ -13,7 +13,7 @@ use deino_testkit::{at, seed};
 
 use super::*;
 use crate::meetings::test_seed as rows;
-use crate::meetings::{MeetingRepo, SqliteMeetingRepo};
+use crate::meetings::{MeetingRepo, RecordedWork, SqliteMeetingRepo};
 
 /// Records which files would be deleted.
 #[derive(Default)]
@@ -32,6 +32,7 @@ struct World {
     repo: SqliteMeetingRepo,
     files: Arc<RecordedFiles>,
     clock: Arc<FakeClock>,
+    work: Arc<RecordedWork>,
 }
 
 async fn world(ids: &[&str]) -> World {
@@ -42,16 +43,19 @@ async fn world(ids: &[&str]) -> World {
     let repo = SqliteMeetingRepo::new(database);
     let files = Arc::new(RecordedFiles::default());
     let clock = Arc::new(FakeClock::new(at("2026-10-05T09:00:00Z")));
+    let work = Arc::new(RecordedWork::default());
     let trash = TrashService::new(TrashDeps {
         bin: Arc::new(repo.clone()),
         files: files.clone(),
         clock: clock.clone(),
+        work: work.clone(),
     });
     World {
         trash,
         repo,
         files,
         clock,
+        work,
     }
 }
 
@@ -83,6 +87,7 @@ async fn trashing_hides_meetings_everywhere_and_restoring_brings_back_everything
         .await
         .unwrap();
     assert_eq!(trashed.changed, ids(&["m0"]));
+    assert_eq!(world.work.cancelled(), ids(&["m0"]), "its pipeline stops");
     assert_eq!(world.repo.find(&MeetingId::new("m0")).await.unwrap(), None);
     assert_eq!(
         world.trash.list().await.unwrap()[0].purges_at,

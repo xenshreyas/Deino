@@ -7,7 +7,7 @@ use std::sync::Arc;
 use deino_core::folders::{FilingService, FolderPorts, SqliteFolderRepo};
 use deino_core::meetings::{
     DiskMeetingFiles, MeetingBulkService, MeetingListDeps, MeetingListService, MeetingMergeService,
-    MeetingViewService, MergeDeps, SqliteMeetingRepo, TrashDeps, TrashService,
+    MeetingViewService, MergeDeps, NoMeetingWork, SqliteMeetingRepo, TrashDeps, TrashService,
 };
 use deino_core::notes::SqliteNotesRepo;
 use deino_core::settings::{FakeSettingsStore, RecordedSettingsEvents, SettingsService};
@@ -31,6 +31,7 @@ fn window() -> WebviewWindow<MockRuntime> {
         repo: repo.clone(),
         notes: Arc::new(SqliteNotesRepo::new(database.clone())),
         clock: Arc::clone(&clock),
+        work: Arc::new(NoMeetingWork),
     });
     let builder = mock_builder()
         .plugin(super::init())
@@ -80,6 +81,7 @@ fn trash(repo: Arc<SqliteMeetingRepo>, clock: &Arc<dyn Clock>) -> TrashService {
             data.join("meetings"),
         )),
         clock: Arc::clone(clock),
+        work: Arc::new(NoMeetingWork),
     })
 }
 

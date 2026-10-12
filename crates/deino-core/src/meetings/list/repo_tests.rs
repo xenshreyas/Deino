@@ -230,7 +230,8 @@ async fn the_page_walks_the_live_index_without_sorting() {
 #[ignore = "benchmark: run on demand in release mode"]
 #[allow(
     clippy::disallowed_methods,
-    reason = "a benchmark measures wall-clock time"
+    clippy::print_stderr,
+    reason = "a benchmark measures wall-clock time and reports it"
 )]
 async fn filtering_2000_meetings_takes_under_150_ms() {
     let repo = repo_with(2_000).await;
@@ -251,6 +252,7 @@ async fn filtering_2000_meetings_takes_under_150_ms() {
     let all = repo.page(&query, None, RowLimit::All).await.unwrap();
     let page = repo.page(&query, None, RowLimit::At(50)).await.unwrap();
     let elapsed = started.elapsed();
+    eprintln!("filtering 2,000 meetings (all matches + first page): {elapsed:?}");
 
     assert_eq!((all.len(), page.len()), (667, 50));
     assert!(elapsed.as_millis() < 150, "took {elapsed:?}");

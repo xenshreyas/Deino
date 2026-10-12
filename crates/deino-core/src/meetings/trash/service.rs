@@ -9,7 +9,7 @@ use std::sync::Arc;
 use deino_domain::{Clock, MeetingId};
 
 use super::{MeetingFiles, TRASH_RETENTION, TrashBin, TrashOutcome, TrashedMeeting};
-use crate::meetings::MeetingError;
+use crate::meetings::{MeetingError, MeetingWork};
 
 /// What the trash works through.
 pub struct TrashDeps {
@@ -19,6 +19,8 @@ pub struct TrashDeps {
     pub files: Arc<dyn MeetingFiles>,
     /// The time trashing is stamped with and the purge counts from.
     pub clock: Arc<dyn Clock>,
+    /// The pipeline, whose running stage trashing a meeting cancels.
+    pub work: Arc<dyn MeetingWork>,
 }
 
 /// Trashes, restores and deletes meetings.
@@ -32,10 +34,14 @@ impl TrashService {
         Self { deps }
     }
 
-    /// Moves `ids` to the trash. Search, exports, the CLI, related meetings
-    /// and people's "last met" all skip trashed meetings at read time.
+    /// Moves `ids` to the trash and cancels their running pipeline stage.
+    /// Search, exports, the CLI, related meetings and people's "last met"
+    /// all skip trashed meetings at read time.
     pub async fn trash(&self, ids: &[MeetingId]) -> Result<TrashOutcome, MeetingError> {
         let changed = self.deps.bin.trash_all(ids, self.deps.clock.now()).await?;
+        for meeting in &changed {
+            self.deps.work.cancel(meeting);
+        }
         log::info!(target: "meetings", "moved {} meetings to the trash", changed.len());
         Ok(TrashOutcome { changed })
     }

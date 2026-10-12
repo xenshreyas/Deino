@@ -24,6 +24,9 @@
 //! | `bulk` | the tag and folder services | [`MeetingBulkService`] |
 //!
 //! The ports stay separate so each caller depends only on what it uses.
+//! The trash and the merge reach the post-meeting pipeline through
+//! [`MeetingWork`]: trashing cancels a meeting's running stage, a merge
+//! re-indexes the merged meeting.
 //! Features that react to the lifecycle implement [`MeetingStatusObserver`]
 //! and subscribe to the service (FND-08's pipeline starts on `processing`).
 
@@ -50,6 +53,7 @@ mod trash_repo;
 mod trash_repo_tests;
 mod view_service;
 mod views;
+mod work;
 
 pub use bulk::{BulkError, BulkOutcome, MeetingBulkService};
 pub use error::MeetingError;
@@ -76,3 +80,6 @@ pub use trash::{
 pub use trash_repo::MeetingTrashRepo;
 pub use view_service::{MAX_VIEW_NAME_CHARS, MeetingViewService};
 pub use views::{MeetingView, MeetingViewInput, MeetingViewRepo};
+#[cfg(any(test, feature = "test-support"))]
+pub use work::RecordedWork;
+pub use work::{MeetingWork, NoMeetingWork};
