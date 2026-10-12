@@ -11,6 +11,8 @@ use deino_recording::engine::{EngineError, LaneRequest, StreamingLane, Streaming
 use deino_stt::clock::MonotonicClock;
 use deino_stt::{BackendChoice, EnginePool, EngineSlot, LoadSpec, SttError};
 
+use super::InstalledSnapshot;
+
 /// Engines unused this long are unloaded (Handy's default), which returns
 /// their worker's memory. A recording pins its engines, so they never unload.
 const IDLE_UNLOAD: Duration = Duration::from_mins(5);
@@ -29,6 +31,17 @@ pub enum SttSetupError {
     Engine(#[from] SttError),
 }
 
+impl SttSetupError {
+    /// Whether the model is simply not on this Mac (not downloaded, or a
+    /// setting naming no catalog file), rather than broken.
+    pub fn is_model_missing(&self) -> bool {
+        matches!(
+            self,
+            Self::Model(ModelError::NotDownloaded(_) | ModelError::UnknownModel(_))
+        )
+    }
+}
+
 /// What the runtime is built from.
 pub struct SttParts {
     /// The engines.
@@ -39,6 +52,8 @@ pub struct SttParts {
     pub monotonic: Arc<dyn MonotonicClock>,
     /// A model file to use instead of the downloaded one (debug builds).
     pub model_override: Option<PathBuf>,
+    /// The models folder, where the Advanced engines keep theirs.
+    pub models_dir: PathBuf,
 }
 
 /// The app's speech-to-text state, managed as `Arc<SttRuntime>`.
@@ -47,6 +62,7 @@ pub struct SttRuntime {
     models: Arc<ModelService>,
     monotonic: Arc<dyn MonotonicClock>,
     model_override: Option<PathBuf>,
+    models_dir: PathBuf,
     /// Dropping it stops the idle-unload thread.
     idle_stop: Mutex<Option<Sender<()>>>,
 }
@@ -63,8 +79,14 @@ impl SttRuntime {
             models: parts.models,
             monotonic: parts.monotonic,
             model_override: parts.model_override,
+            models_dir: parts.models_dir,
             idle_stop: Mutex::new(None),
         }
+    }
+
+    /// Which models every engine has on this Mac, read now.
+    pub async fn installed(&self) -> InstalledSnapshot {
+        InstalledSnapshot::read(&self.models, &self.models_dir).await
     }
 
     /// The engine pool.
@@ -78,7 +100,7 @@ impl SttRuntime {
         let id = if model.trim().is_empty() {
             self.models.recommended()?
         } else {
-            ModelFileId::new(model.trim())
+            ModelFileId::from_setting(model)
         };
         let path = match &self.model_override {
             Some(path) => path.clone(),

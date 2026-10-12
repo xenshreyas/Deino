@@ -59,6 +59,22 @@ impl ModelFileId {
         Self(id.into())
     }
 
+    /// The ID a `transcription.model` setting names. It may be the ID
+    /// (`parakeet-unified-en-0.6b-Q8_0`) or the file name
+    /// (`parakeet-unified-en-0.6b-Q8_0.gguf`); only a `.gguf` suffix is cut,
+    /// since IDs themselves contain dots (`0.6b`).
+    pub fn from_setting(value: &str) -> Self {
+        let value = value.trim();
+        let is_gguf = std::path::Path::new(value)
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("gguf"));
+        if is_gguf {
+            Self::of_filename(value)
+        } else {
+            Self::new(value)
+        }
+    }
+
     /// The ID of `filename`.
     pub fn of_filename(filename: &str) -> Self {
         let stem = filename.rsplit_once('.').map_or(filename, |(stem, _)| stem);
@@ -258,6 +274,15 @@ mod tests {
         let id = ModelFileId::of_filename("parakeet-unified-en-0.6b-Q8_0.gguf");
 
         assert_eq!(id.as_str(), "parakeet-unified-en-0.6b-Q8_0");
+    }
+
+    #[test]
+    fn a_setting_names_a_file_by_its_id_or_its_gguf_file_name() {
+        let by_name = ModelFileId::from_setting("parakeet-unified-en-0.6b-Q8_0.gguf");
+        let by_id = ModelFileId::from_setting(" parakeet-unified-en-0.6b-Q8_0 ");
+
+        assert_eq!(by_name.as_str(), "parakeet-unified-en-0.6b-Q8_0");
+        assert_eq!(by_id, by_name);
     }
 
     #[test]

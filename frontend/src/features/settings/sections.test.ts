@@ -9,7 +9,7 @@ vi.mock('@/components/BetaSettings', () => ({ BetaSettings: () => null }));
 vi.mock('@/components/PreferenceSettings', () => ({ PreferenceSettings: () => null }));
 vi.mock('@/components/RecordingSettings', () => ({ RecordingSettings: () => null }));
 vi.mock('@/components/SummaryModelSettings', () => ({ SummaryModelSettings: () => null }));
-vi.mock('@/components/TranscriptSettings', () => ({ TranscriptSettings: () => null }));
+vi.mock('./components/engine-settings', () => ({ EngineSettings: () => null }));
 vi.mock('@/contexts/ConfigContext', () => ({ useConfig: () => ({}) }));
 
 /** The pages and their nav order before pages registered themselves (REG-02). */

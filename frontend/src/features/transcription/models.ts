@@ -4,15 +4,28 @@
  */
 import type { ModelFileView } from './types';
 
+const GGUF = '.gguf';
+
 /**
- * The file recordings will use: the selected one, or the recommended one
- * when nothing (or an unknown file) is selected.
+ * The file ID a `transcription.model` setting names: the ID itself
+ * (`parakeet-unified-en-0.6b-Q8_0`) or its file name (`….gguf`), as Rust's
+ * `ModelFileId::from_setting` reads it.
+ */
+export function fileIdOf(setting: string): string {
+  const value = setting.trim();
+  return value.toLowerCase().endsWith(GGUF) ? value.slice(0, -GGUF.length) : value;
+}
+
+/**
+ * The file recordings will use: the selected one (by ID or file name), or
+ * the recommended one when nothing (or an unknown file) is selected.
  */
 export function activeModel(
   models: readonly ModelFileView[],
   selected: string | undefined,
 ): ModelFileView | undefined {
-  return models.find((model) => model.id === selected) ?? models.find((model) => model.recommended);
+  const id = selected === undefined ? undefined : fileIdOf(selected);
+  return models.find((model) => model.id === id) ?? models.find((model) => model.recommended);
 }
 
 /** Whether `model` is downloaded and verified. */

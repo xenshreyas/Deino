@@ -11,10 +11,13 @@
 
 use std::sync::Arc;
 
-use deino_core::settings::{SettingsService, TranscriptionEngine};
+use deino_core::settings::{
+    InstalledModels, SettingsService, TranscriptionEngine, TranscriptionSettings,
+};
 use deino_recording::Lane;
 use deino_recording::engine::{
-    EngineError, LaneEngines, LaneRequest, LaneTranscriber, UtteranceLane, UtteranceTranscriber,
+    EngineError, LaneEngines, LaneRequest, LaneTranscriber, ModelMissing, UtteranceLane,
+    UtteranceTranscriber,
 };
 use tauri::{AppHandle, Runtime};
 use tokio::runtime::Handle;
@@ -54,24 +57,51 @@ impl<R: Runtime> SttLanes<R> {
         request: LaneRequest,
         model: &str,
     ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+        let lane = request.lane;
         self.runtime
             .block_on(self.stt.select_model(model))
-            .map_err(|source| failed(request.lane, source))?;
+            .map_err(|source| {
+                if source.is_model_missing() {
+                    missing(lane, TranscriptionEngine::ParakeetUnified)
+                } else {
+                    failed(lane, source)
+                }
+            })?;
         Ok(Box::new(self.stt.open_lane(request)?))
     }
 
-    fn utterances(&self, request: LaneRequest) -> Result<Box<dyn LaneTranscriber>, EngineError> {
+    fn utterances(
+        &self,
+        request: LaneRequest,
+        settings: &TranscriptionSettings,
+    ) -> Result<Box<dyn LaneTranscriber>, EngineError> {
         let lane = request.lane;
         let engine = self.runtime.block_on(async {
             validate_transcription_model_ready(&self.app).await?;
             get_or_init_transcription_engine(&self.app).await
         });
-        let engine = engine.map_err(|message| failed(lane, std::io::Error::other(message)))?;
+        let engine = engine.map_err(|message| self.utterance_failure(lane, settings, message))?;
         let transcriber = Arc::new(LegacyUtterances {
             engine,
             runtime: self.runtime.clone(),
         });
         Ok(Box::new(UtteranceLane::start(request, transcriber)?))
+    }
+
+    /// Why an Advanced engine did not start: its model is missing (asked of
+    /// the installed models, not read from `message`), or anything else.
+    fn utterance_failure(
+        &self,
+        lane: Lane,
+        settings: &TranscriptionSettings,
+        message: String,
+    ) -> EngineError {
+        let installed = self.runtime.block_on(self.stt.installed());
+        if installed.is_installed(settings.engine, &settings.model) {
+            failed(lane, std::io::Error::other(message))
+        } else {
+            missing(lane, settings.engine)
+        }
     }
 }
 
@@ -81,7 +111,7 @@ impl<R: Runtime> LaneEngines for SttLanes<R> {
         match transcription.engine {
             TranscriptionEngine::ParakeetUnified => self.streaming(request, &transcription.model),
             TranscriptionEngine::Parakeet | TranscriptionEngine::Whisper => {
-                self.utterances(request)
+                self.utterances(request, &transcription)
             }
         }
     }
@@ -104,6 +134,20 @@ impl UtteranceTranscriber for LegacyUtterances {
                 Box::new(std::io::Error::other(message)) as Box<dyn std::error::Error + Send + Sync>
             })
     }
+}
+
+/// `engine`'s model is not downloaded; the message names it and, for an
+/// Advanced engine, offers Parakeet Unified instead.
+fn missing(lane: Lane, engine: TranscriptionEngine) -> EngineError {
+    let alternative = (engine != TranscriptionEngine::ParakeetUnified)
+        .then(|| TranscriptionEngine::ParakeetUnified.label().to_owned());
+    EngineError::model_missing(
+        lane,
+        ModelMissing {
+            model: engine.label().to_owned(),
+            alternative,
+        },
+    )
 }
 
 fn failed(lane: Lane, source: impl std::error::Error + Send + Sync + 'static) -> EngineError {

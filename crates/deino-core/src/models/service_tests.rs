@@ -98,6 +98,21 @@ async fn a_download_makes_the_file_ready_and_announces_its_progress() {
 }
 
 #[tokio::test]
+async fn a_setting_resolves_by_the_file_id_or_the_gguf_file_name() {
+    let Harness { service, .. } = harness(FakeServer::Ranged, 64 * GIB);
+    service.download(&q8()).await.unwrap();
+
+    let by_name = service
+        .ready_path(&ModelFileId::from_setting("tiny-Q8_0.gguf"))
+        .await;
+    let by_id = service
+        .ready_path(&ModelFileId::from_setting("tiny-Q8_0"))
+        .await;
+
+    assert_eq!(by_name.unwrap(), by_id.unwrap());
+}
+
+#[tokio::test]
 async fn a_missing_file_has_no_ready_path() {
     let Harness { service, .. } = harness(FakeServer::Ranged, 64 * GIB);
 

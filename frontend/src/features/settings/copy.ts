@@ -35,6 +35,18 @@ export const settingsCopy = {
     repassOff: 'Not needed: with live transcription off, every transcript already gets this pass.',
     saveFailed: 'Could not save the transcription setting',
   },
+  /** Settings → Transcription: the engine recordings use, as saved. */
+  engine: {
+    label: 'Transcription engine',
+    advanced: 'Advanced',
+    loading: 'Loading the transcription settings…',
+    loadFailed: 'The transcription settings could not be loaded.',
+    names: {
+      parakeet_unified: 'Parakeet Unified EN (Recommended, live)',
+      parakeet: 'Parakeet TDT v3 (ONNX)',
+      whisper: 'Whisper',
+    },
+  },
   groups: {
     app: 'App',
     capture: 'Capture',
