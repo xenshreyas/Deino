@@ -13,8 +13,18 @@ import { mockDatabase, mockTranscripts } from './database';
 
 let seq = 3_000_000;
 
-/** Tells the UI the transcript changed. */
-function changed(): void {
+/** When each meeting's transcript was last edited, for the notes' regenerate reasons. */
+const editedAt = new Map<string, string>();
+
+/** When the user last edited `meetingId`'s transcript in this tab, if ever. */
+export function transcriptEditedAt(meetingId: string): string | null {
+  return editedAt.get(meetingId) ?? null;
+}
+
+/** Records an edit of `meetings` and tells the UI the transcript changed. */
+function changed(meetings: readonly string[]): void {
+  const now = new Date().toISOString();
+  for (const meeting of meetings) editedAt.set(meeting, now);
   seq += 1;
   void events.dbChanged.emit({ tables: ['transcript_segments'], seq });
 }
@@ -45,7 +55,7 @@ export function editLine(id: Generated.SegmentId, raw: string) {
     originalText: segment.originalText ?? segment.text,
   };
   mockTranscripts.update(edited);
-  changed();
+  changed([segment.meetingId]);
   return ok(edited);
 }
 
@@ -55,7 +65,7 @@ export function setDeleted(id: Generated.SegmentId, isDeleted: boolean) {
   if (segment === undefined) return notFound();
   if (segment.isDeleted !== isDeleted) {
     mockTranscripts.update({ ...segment, isDeleted });
-    changed();
+    changed([segment.meetingId]);
   }
   return ok(null);
 }
@@ -137,7 +147,7 @@ export function replaceAll(request: Generated.ReplaceRequest, by: string) {
       originalText: segment.originalText ?? segment.text,
     });
   }
-  if (preview.data.segments > 0) changed();
+  if (preview.data.segments > 0) changed(preview.data.meetings.map((one) => one.meetingId));
   const { matches, segments, meetings } = preview.data;
   return ok<Generated.ReplaceOutcome>({ matches, segments, meetings: meetings.length });
 }

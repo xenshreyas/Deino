@@ -128,7 +128,7 @@ describe('CitationPopover', () => {
     await screen.findByText('You come off on-call.');
 
     for (const play of screen.getAllByRole('button', { name: notesCopy.noRecording })) {
-      expect((play as HTMLButtonElement).disabled).toBe(true);
+      expect(play.hasAttribute('disabled')).toBe(true);
     }
   });
 
