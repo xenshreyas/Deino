@@ -6,9 +6,9 @@
 //! so it never sees the app's real keys.
 
 use crate::{
-    CredentialKey, CredentialStore, InMemoryCredentialStore, InMemorySecretStore,
-    KeychainSecretStore, MAX_SECRET_CHARS, SecretError, SecretName, SecretStatus, SecretStore,
-    SecretValue,
+    CredentialKey, CredentialStore, DatabaseKeyStore, InMemoryCredentialStore,
+    InMemoryDatabaseKeyStore, InMemorySecretStore, KeychainSecretStore, MAX_SECRET_CHARS,
+    SecretError, SecretName, SecretStatus, SecretStore, SecretValue,
 };
 
 /// Checks every rule of the `SecretStore` contract except access denial,
@@ -111,4 +111,57 @@ async fn a_denied_secret_is_locked_until_it_is_entered_again() {
     assert!(store.get(name).await.is_err());
     store.set(name, value("sk-2")).await.unwrap();
     assert_eq!(store.status(name).await.unwrap(), SecretStatus::Stored);
+}
+
+/// The `DatabaseKeyStore` contract (PRV-02): save replaces, a missing key
+/// reads as `None`, forget is idempotent.
+async fn database_keys_honour_the_contract(store: &dyn DatabaseKeyStore) {
+    store.forget_database_key().await.unwrap();
+    assert!(store.load_database_key().await.unwrap().is_none());
+    store.forget_database_key().await.unwrap();
+
+    let first = "0f".repeat(32);
+    let second = "a1".repeat(32);
+    store.save_database_key(value(&first)).await.unwrap();
+    store.save_database_key(value(&second)).await.unwrap();
+    let loaded = store.load_database_key().await.unwrap().unwrap();
+    assert_eq!(loaded.expose(), second);
+
+    store.forget_database_key().await.unwrap();
+    assert!(store.load_database_key().await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn the_in_memory_database_key_store_honours_the_contract() {
+    database_keys_honour_the_contract(&InMemoryDatabaseKeyStore::default()).await;
+}
+
+#[tokio::test]
+#[ignore = "reads and writes the login keychain; run by hand on a Mac"]
+async fn the_keychain_database_key_store_honours_the_contract() {
+    // A service of its own: never the app's real database key.
+    let store = KeychainSecretStore::new("dev.deino.prv02.contract-tests");
+    database_keys_honour_the_contract(&store).await;
+}
+
+#[tokio::test]
+async fn a_denied_database_key_fails_until_it_is_saved_again() {
+    let store = InMemoryDatabaseKeyStore::default();
+    store
+        .save_database_key(value(&"0f".repeat(32)))
+        .await
+        .unwrap();
+
+    store.deny();
+
+    let denied = store.load_database_key().await.unwrap_err();
+    assert!(
+        matches!(denied, SecretError::DatabaseKeyDenied),
+        "{denied:?}"
+    );
+    store
+        .save_database_key(value(&"a1".repeat(32)))
+        .await
+        .unwrap();
+    assert!(store.load_database_key().await.unwrap().is_some());
 }

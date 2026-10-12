@@ -16,12 +16,15 @@
 //!   credentials (INT-00), whose keychain account is decided at run time.
 //!   [`KeychainSecretStore`] implements both ports, and
 //!   `InMemoryCredentialStore` (feature `test-support`) is its fake.
+//! - [`DatabaseKeyStore`]: the database encryption key (PRV-02), one item
+//!   under [`DATABASE_KEY_ACCOUNT`]; `InMemoryDatabaseKeyStore` is its fake.
 //!
 //! A [`SecretStatus::Locked`] secret exists but the OS refused to hand it
 //! over, which happens to ad-hoc-signed builds after the signature changes.
 //! The UI shows it as "re-enter this key" instead of failing later.
 
 mod credential;
+mod database_key;
 mod error;
 mod keychain;
 #[cfg(any(test, feature = "test-support"))]
@@ -31,10 +34,11 @@ mod store;
 mod value;
 
 pub use credential::{CredentialKey, CredentialStore, MAX_CREDENTIAL_CHARS};
+pub use database_key::{DATABASE_KEY_ACCOUNT, DatabaseKeyStore};
 pub use error::SecretError;
 pub use keychain::KeychainSecretStore;
 #[cfg(any(test, feature = "test-support"))]
-pub use memory::{InMemoryCredentialStore, InMemorySecretStore};
+pub use memory::{InMemoryCredentialStore, InMemoryDatabaseKeyStore, InMemorySecretStore};
 pub use name::SecretName;
 pub use store::{SecretStatus, SecretStore};
 pub use value::{MAX_SECRET_CHARS, SecretValue};

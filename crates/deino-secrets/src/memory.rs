@@ -1,4 +1,5 @@
-//! [`InMemorySecretStore`] and [`InMemoryCredentialStore`]: the fakes for
+//! [`InMemorySecretStore`], [`InMemoryCredentialStore`] and
+//! [`InMemoryDatabaseKeyStore`]: the fakes for
 //! tests, behind `test-support`.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -6,7 +7,10 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use async_trait::async_trait;
 
-use crate::{CredentialKey, CredentialStore, SecretError, SecretName, SecretStore, SecretValue};
+use crate::{
+    CredentialKey, CredentialStore, DatabaseKeyStore, SecretError, SecretName, SecretStore,
+    SecretValue,
+};
 
 /// Keeps secrets in a map and can simulate a keychain that refuses access.
 #[derive(Debug, Default)]
@@ -103,6 +107,50 @@ impl CredentialStore for InMemoryCredentialStore {
     async fn remove(&self, key: &CredentialKey) -> Result<(), SecretError> {
         lock(&self.values).remove(key);
         lock(&self.denied).remove(key);
+        Ok(())
+    }
+}
+
+/// Keeps the database key in memory and can simulate a refusing keychain.
+#[derive(Debug, Default)]
+pub struct InMemoryDatabaseKeyStore {
+    value: Mutex<Option<String>>,
+    denied: Mutex<bool>,
+}
+
+impl InMemoryDatabaseKeyStore {
+    /// Makes reads fail with `DatabaseKeyDenied` until the key is saved again.
+    pub fn deny(&self) {
+        *lock(&self.denied) = true;
+    }
+
+    /// The raw saved value, for tests that assert what was stored.
+    pub fn stored(&self) -> Option<String> {
+        lock(&self.value).clone()
+    }
+}
+
+#[async_trait]
+impl DatabaseKeyStore for InMemoryDatabaseKeyStore {
+    async fn save_database_key(&self, key: SecretValue) -> Result<(), SecretError> {
+        *lock(&self.value) = Some(key.expose().to_owned());
+        *lock(&self.denied) = false;
+        Ok(())
+    }
+
+    async fn load_database_key(&self) -> Result<Option<SecretValue>, SecretError> {
+        let Some(value) = lock(&self.value).clone() else {
+            return Ok(None);
+        };
+        if *lock(&self.denied) {
+            return Err(SecretError::DatabaseKeyDenied);
+        }
+        SecretValue::parse(&value).map(Some)
+    }
+
+    async fn forget_database_key(&self) -> Result<(), SecretError> {
+        *lock(&self.value) = None;
+        *lock(&self.denied) = false;
         Ok(())
     }
 }
