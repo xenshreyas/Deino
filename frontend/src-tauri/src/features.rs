@@ -89,6 +89,16 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (llm::NAME, llm::specta()),
         (profile::NAME, profile::specta()),
         (search::NAME, search::specta()),
+    ];
+    builders.extend(more_builders());
+    builders.extend(dev_builders());
+    builders
+}
+
+/// The second half of [`builders`], split to keep each function short.
+#[cfg(test)]
+fn more_builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>)> {
+    vec![
         (settings::NAME, settings::specta()),
         (templates::NAME, templates::specta()),
         (transcription::NAME, transcription::specta()),
@@ -108,9 +118,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (privacy::NAME, privacy::specta()),
         (clips::NAME, clips::specta()),
         (comments::NAME, comments::specta()),
-    ];
-    builders.extend(dev_builders());
-    builders
+    ]
 }
 
 /// The debug-only features' bindings builders (none in release builds).
