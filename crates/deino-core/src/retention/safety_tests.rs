@@ -50,16 +50,7 @@ async fn hostile_meeting(world: &World) -> Outside {
     for path in outside.all() {
         touch(path);
     }
-    let climbing = world.path("recordings/../Desktop/escape.m4a");
-    let inside = world.path("recordings/m0/screen.mp4");
-    touch(&inside);
-    let paths = [&outside.original, &climbing, &inside].map(|p| p.display().to_string());
-    world
-        .exec(
-            "UPDATE meetings SET audio_path = ?2, audio_mic_path = ?3, video_path = ?4 WHERE id = ?1",
-            &["m0", &paths[0], &paths[1], &paths[2]],
-        )
-        .await;
+    record_paths(world, &outside.original).await;
     world.clip("m0", 1, &outside.clip).await;
     let part = outside.part.display().to_string();
     world
@@ -77,6 +68,21 @@ async fn hostile_meeting(world: &World) -> Outside {
     deino_testkit::seed::meeting(&world.database, "m1", "Later", at("2026-10-07T09:00:00Z")).await;
     world.record("m1", &outside.neighbour).await;
     outside
+}
+
+/// `m0`'s recording: the import's `original`, a path that climbs out of
+/// the recordings folder with `..`, and a screen recording inside it.
+async fn record_paths(world: &World, original: &Path) {
+    let climbing = world.path("recordings/../Desktop/escape.m4a");
+    let inside = world.path("recordings/m0/screen.mp4");
+    touch(&inside);
+    let paths = [original, &climbing, &inside].map(|p| p.display().to_string());
+    world
+        .exec(
+            "UPDATE meetings SET audio_path = ?2, audio_mic_path = ?3, video_path = ?4 WHERE id = ?1",
+            &["m0", &paths[0], &paths[1], &paths[2]],
+        )
+        .await;
 }
 
 #[cfg(unix)]

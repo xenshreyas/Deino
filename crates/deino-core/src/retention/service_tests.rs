@@ -74,7 +74,7 @@ async fn transcripts_go_with_their_search_entries_and_the_notes_stay() {
     world.line("m0", 1, "the launch slips").await;
     world.line("m0", 2, "to friday").await;
     seed::notes(&world.database, "m0", "- launch on friday").await;
-    world.embed("m0", "note", "m0", "launch on friday").await;
+    world.embed("m0", ("note", "m0"), "launch on friday").await;
 
     world.days_pass(30);
     let outcome = world.service.sweep().await.unwrap();

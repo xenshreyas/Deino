@@ -152,11 +152,12 @@ impl World {
             &[&id, meeting, text],
         )
         .await;
-        self.embed(meeting, "transcript", &id, text).await;
+        self.embed(meeting, ("transcript", &id), text).await;
     }
 
-    /// An embedding of `text` from `kind` (`transcript`, `note`, `summary`).
-    pub async fn embed(&self, meeting: &str, kind: &str, reference: &str, text: &str) {
+    /// An embedding of `text` from `kind` (`transcript`, `note`, `summary`)
+    /// and its reference.
+    pub async fn embed(&self, meeting: &str, (kind, reference): (&str, &str), text: &str) {
         self.exec(
             "INSERT INTO embeddings (meeting_id, ref_kind, ref_id, chunk_ix, text, model, vector, created_at)
              VALUES (?1, ?2, ?3, (SELECT count(*) FROM embeddings WHERE meeting_id = ?1 AND ref_kind = ?2),
