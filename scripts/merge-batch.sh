@@ -46,8 +46,10 @@ merge_one() {
         echo "skip $branch: conflicts in $(grep -vE "$GENERATED" <<<"$conflicted" | tr '\n' ' ')"
         return 1
     fi
-    git -C "$TREE" checkout -q --ours -- $conflicted
-    git -C "$TREE" add -- $conflicted
+    local files=()
+    mapfile -t files <<<"$conflicted"
+    git -C "$TREE" checkout -q --ours -- "${files[@]}"
+    git -C "$TREE" add -- "${files[@]}"
     git -C "$TREE" commit -q --no-edit
 }
 
@@ -73,9 +75,12 @@ main() {
     # shellcheck source=scripts/dev-env.sh
     (cd "$TREE" && source scripts/dev-env.sh && regenerate)
     echo "batch: ${merged[*]}"
-    (cd "$TREE" && MOCK_PORT="${MOCK_PORT:-3400}" scripts/ci-local.sh) &&
-        echo "GATE PASSED: run scripts/merge-batch.sh --land" ||
-        { echo "GATE FAILED: bisect by re-running with half the branches"; return 1; }
+    if (cd "$TREE" && MOCK_PORT="${MOCK_PORT:-3400}" scripts/ci-local.sh); then
+        echo "GATE PASSED: run scripts/merge-batch.sh --land"
+    else
+        echo "GATE FAILED: bisect by re-running with half the branches"
+        return 1
+    fi
 }
 
 main "$@"; exit
