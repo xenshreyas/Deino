@@ -130,7 +130,7 @@ fn a_resumed_recording_appends_a_segment_after_its_length() {
     clock.advance(Duration::from_secs(1));
     recorder.stop().unwrap();
     // Time passes between the takes; the timeline does not.
-    clock.advance(Duration::from_secs(3_600));
+    clock.advance(Duration::from_hours(1));
 
     let (recorder, mut inputs) = Recorder::resume(dir.path(), &deps).unwrap();
     assert!(inputs.microphone.push(&[0.2; 480], clock.now()));
