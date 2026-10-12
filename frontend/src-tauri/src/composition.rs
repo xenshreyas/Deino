@@ -28,6 +28,7 @@ mod automations;
 mod briefs;
 pub(crate) mod browser;
 mod calendar;
+mod consent;
 mod detection;
 mod developer;
 mod diarize;

@@ -1,6 +1,6 @@
 /**
  * The record panel's page (CAP-10): the pill, wired to the recorder, and
- * auto-stop's offer under it (CAP-07). The window is transparent and a
+ * auto-stop's offer and the consent reminder under it (CAP-07, CAP-13). The window is transparent and a
  * little larger than the pill; the pill hugs the screen edge the panel is
  * snapped to and grows away from it. During the first recording, PRV-01's
  * "Pause for sensitive discussions" tip sits under the pill once.
@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
 import { PauseTipSlot } from '@/features/retention';
+import { ConsentReminder } from '@/features/consent';
 import { useIpcEvent } from '@/lib/ipc';
 import { events } from '@/lib/ipc/generated/recording';
 import { cn } from '@/ui/cn';
@@ -153,6 +154,7 @@ export function RecordPanel() {
         )}
         <NextMeetingOffer autoStop={autoStop} />
         {snapshot.phase === 'recording' && autoStop.split === null ? <PauseTipSlot /> : null}
+        <ConsentReminder meetingId={snapshot.phase === 'idle' ? null : snapshot.meetingId} />
       </div>
     </main>
   );

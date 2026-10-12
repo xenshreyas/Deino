@@ -45,6 +45,9 @@ zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 deino-audio = { path = "crates/deino-audio" }
 deino-core = { path = "crates/deino-core" }
 deino-connect = { path = "crates/deino-connect" }
+# The chat notice of the consent tools (CAP-13); tests add
+# `features = ["test-support"]` for its fakes.
+deino-consent = { path = "crates/deino-consent" }
 deino-db = { path = "crates/deino-db" }
 # Tests add `features = ["test-support"]` for the fakes of its ports.
 deino-detect = { path = "crates/deino-detect" }

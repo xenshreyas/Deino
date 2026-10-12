@@ -27,6 +27,7 @@ pub mod calendar;
 pub mod clips;
 pub mod comments;
 pub mod companies;
+pub mod consent;
 pub mod db;
 pub mod detection;
 pub mod dev;

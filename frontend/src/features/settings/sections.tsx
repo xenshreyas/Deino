@@ -16,6 +16,7 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
 import { BriefSettingsSection } from '@/features/briefs';
 import { CalendarSettings } from '@/features/calendar';
+import { ConsentSettings } from '@/features/consent';
 import { DeveloperSettings } from '@/features/developer';
 import { ExportSettingsPage } from '@/features/export';
 import { HotkeySettings } from '@/features/hotkeys';
@@ -44,6 +45,7 @@ import {
   Keyboard,
   LayoutTemplate,
   Lock,
+  Megaphone,
   Mic,
   Palette,
   Plug,
@@ -165,6 +167,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   },
   { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
   { id: 'speaker-tags', group: 'capture', icon: Contact, Component: SpeakerTagsSettings },
+  { id: 'consent', group: 'capture', icon: Megaphone, Component: ConsentSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },

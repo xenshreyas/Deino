@@ -1,7 +1,7 @@
 {
     "$schema": "../gen/schemas/desktop-schema.json",
     "identifier": "record-panel",
-    "description": "The floating record panel (CAP-10): the recording plugin's commands and events, window dragging, the microphone menu, and its theme; the settings plugin for the once-shown pause tip (PRV-01)",
+    "description": "The floating record panel (CAP-10): the recording plugin's commands and events, window dragging, the microphone menu, its theme, the consent reminder (CAP-13), and the settings plugin for the once-shown pause tip (PRV-01)",
     "windows": [
         "record_panel"
     ],
@@ -10,6 +10,7 @@
         "core:menu:default",
         "core:window:allow-start-dragging",
         "core:window:allow-set-theme",
+        "consent:default",
         "recording:default",
         "settings:default"
     ]
