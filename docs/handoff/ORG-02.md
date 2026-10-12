@@ -20,14 +20,13 @@ reminder bookkeeping and Home. This is what is left, in order.
 - UI: `features/home/` (Home while idle), `features/calendar/plan.ts`,
   mock in `dev/mock-ipc/calendar-rules.ts`.
 
-## 1. Rebase on CAP-10 (do first)
+## 1. CAP-10 follow-through
 
-- `LiveRecorder::record` calls `RecordingService::start(title)` today and
-  relies on `LinkOnStart`. After CAP-10, build
-  `StartRequest { title, link: Some(MeetingLink { calendar_event_id, series_id }) }`.
-- Make the tray's `meeting_action` (`tray/menu.rs`, "join"/"record") call
-  `Arc<JoinService>::join` with `JoinOnly`/`RecordOnly`, deleting its own
-  `join()` helper, so the menu bar, Home and the reminder share one path.
+- Done: rebased on CAP-10; `LiveRecorder` starts with
+  `StartRequest { title, link: MeetingLink { calendar_event_id, series_id } }`.
+- Left: make the tray's `meeting_action` (`tray/menu.rs`, "join"/"record")
+  call `Arc<JoinService>::join` with `JoinOnly`/`RecordOnly`, deleting its
+  own `join()` helper, so the menu bar, Home and the reminder share one path.
 
 ## 2. Reminder window
 

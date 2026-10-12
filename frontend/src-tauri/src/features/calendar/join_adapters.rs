@@ -4,18 +4,18 @@
 //!
 //! The recorder is found in Tauri state at each Join, like
 //! [`LinkOnStart`](super::LinkOnStart): it is built before or after the
-//! calendar depending on startup order. The recording is titled after the
-//! event, and `LinkOnStart` links it to the event nearest to now, which is
-//! the one being joined. After CAP-10 merges, pass the event in its
-//! `StartRequest` link instead (PARITY_PLAN §7.2).
+//! calendar depending on startup order. The recording starts through the
+//! same `RecordingService::start(StartRequest)` path as the menu bar's
+//! Record (CAP-10), titled after the event and linked to it and its series.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::calendar::CalendarEvent;
 use deino_core::calendar::join::{CallOpener, EventRecorder, PortError};
+use deino_core::meetings::MeetingLink;
 use deino_domain::MeetingId;
-use deino_recording::RecordingService;
+use deino_recording::{RecordingService, StartRequest};
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::system_open::open_external_url;
@@ -50,7 +50,13 @@ impl<R: Runtime> EventRecorder for LiveRecorder<R> {
             .try_state::<Arc<RecordingService>>()
             .map(|state| Arc::clone(&state))
             .ok_or("the recorder is not ready yet")?;
-        let title = Some(event.title.clone()).filter(|title| !title.trim().is_empty());
-        Ok(recorder.start(title).await?)
+        let request = StartRequest {
+            title: Some(event.title.clone()).filter(|title| !title.trim().is_empty()),
+            link: Some(MeetingLink {
+                calendar_event_id: Some(event.id),
+                series_id: event.series_id.clone(),
+            }),
+        };
+        Ok(recorder.start(request).await?)
     }
 }
