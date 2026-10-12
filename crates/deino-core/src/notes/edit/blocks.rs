@@ -86,9 +86,8 @@ pub fn origin_label(content: &[Inline]) -> &'static str {
             continue;
         }
         match author(inline.marks()) {
-            Some(Author::User) => user = true,
+            Some(Author::User) | None => user = true,
             Some(Author::Ai) => ai = true,
-            None => user = true,
         }
     }
     match (user, ai) {

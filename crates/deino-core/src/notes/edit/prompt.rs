@@ -32,6 +32,10 @@ pub struct PromptBlock {
 }
 
 /// For `skip_serializing_if`, which passes a reference.
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's skip_serializing_if passes a reference"
+)]
 fn is_false(value: &bool) -> bool {
     !*value
 }
@@ -117,7 +121,7 @@ mod tests {
         }
         .render();
 
-        insta::assert_snapshot!(prompt.messages.first().map(|message| message.text()).unwrap_or_default(), @r#"
+        insta::assert_snapshot!(prompt.messages[0].text(), @r#"
         <request>
         make it shorter
         </request>

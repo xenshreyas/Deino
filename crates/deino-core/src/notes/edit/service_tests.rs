@@ -73,22 +73,10 @@ struct Harness {
 
 /// The one-on-one fixture with version 1 of its notes ([`first_notes`]).
 async fn harness(mock: MockProvider) -> Harness {
-    let database = test_db().await;
-    seed_fixtures(&database).await.unwrap();
-    let meeting = Fixtures::load()
-        .unwrap()
-        .meeting(MeetingKind::OneOnOne)
-        .unwrap()
-        .id
-        .clone();
+    let (sources, repo, meeting, first) = seeded().await;
     let clock = Arc::new(FakeClock::new(at("2026-10-12T09:00:00Z")));
     let mock = Arc::new(mock);
     let gateway = Arc::new(mock_gateway(mock.clone()).gateway);
-    let repo = Arc::new(SqliteEnhancedNotesRepo::new(database.clone()));
-    let sources = MaterialSources::sqlite(&database);
-    let lines = sources.transcript_of(&meeting).await.unwrap();
-    let first = first_notes(&lines);
-    repo.insert(&version_one(&meeting, &first)).await.unwrap();
     let redactor = Arc::new(Hide::default());
     let edits = NoteEditService::new(
         NoteEditPorts {
@@ -117,6 +105,25 @@ async fn harness(mock: MockProvider) -> Harness {
         meeting,
         first,
     }
+}
+
+/// The seeded library, the one-on-one with version 1 of its notes stored.
+async fn seeded() -> (
+    MaterialSources,
+    Arc<SqliteEnhancedNotesRepo>,
+    MeetingId,
+    Doc,
+) {
+    let database = test_db().await;
+    seed_fixtures(&database).await.unwrap();
+    let fixtures = Fixtures::load().unwrap();
+    let meeting = fixtures.meeting(MeetingKind::OneOnOne).unwrap().id.clone();
+    let repo = Arc::new(SqliteEnhancedNotesRepo::new(database.clone()));
+    let sources = MaterialSources::sqlite(&database);
+    let lines = sources.transcript_of(&meeting).await.unwrap();
+    let first = first_notes(&lines);
+    repo.insert(&version_one(&meeting, &first)).await.unwrap();
+    (sources, repo, meeting, first)
 }
 
 /// b1 Pricing; b2 the user's line with a mention; b3 AI text with a link

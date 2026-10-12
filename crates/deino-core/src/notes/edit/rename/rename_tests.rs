@@ -8,36 +8,36 @@ use crate::notes::edit::test_support::{
     NIALL, ai, ai_link, bullets, cite, doc, heading, mention, para, user,
 };
 
-fn rename(from: &str, to: &str) -> Option<Rename> {
-    Some(Rename {
+fn rename(from: &str, to: &str) -> Rename {
+    Rename {
         from: from.into(),
         to: to.into(),
-    })
+    }
 }
 
 #[test]
 fn plain_renames_are_recognized() {
     assert_eq!(
         Rename::parse("Niall is spelled Nyal"),
-        rename("Niall", "Nyal")
+        Some(rename("Niall", "Nyal"))
     );
     assert_eq!(
         Rename::parse("niall is actually spelt Nyal."),
-        rename("niall", "Nyal")
+        Some(rename("niall", "Nyal"))
     );
     assert_eq!(
         Rename::parse("Rename Acme to Acme Corp everywhere"),
-        rename("Acme", "Acme Corp")
+        Some(rename("Acme", "Acme Corp"))
     );
     assert_eq!(
         Rename::parse("replace \"Jon\" with “John” throughout"),
-        rename("Jon", "John")
+        Some(rename("Jon", "John"))
     );
     assert_eq!(
         Rename::parse("it's Nyal, not Niall"),
-        rename("Niall", "Nyal")
+        Some(rename("Niall", "Nyal"))
     );
-    assert_eq!(Rename::parse("Q3 → Q4"), rename("Q3", "Q4"));
+    assert_eq!(Rename::parse("Q3 → Q4"), Some(rename("Q3", "Q4")));
 }
 
 #[test]
@@ -73,9 +73,7 @@ fn notes() -> deino_doc::Doc {
 
 #[test]
 fn every_occurrence_is_renamed_but_no_target_moves() {
-    let (renamed, count) = rename("Niall", "Nyal")
-        .unwrap()
-        .apply(&notes(), &Scope::whole());
+    let (renamed, count) = rename("Niall", "Nyal").apply(&notes(), &Scope::whole());
 
     assert_eq!(count, 5);
     let markdown = deino_doc::to_markdown(&renamed, deino_doc::Flavor::Lossless);
@@ -113,7 +111,7 @@ fn every_occurrence_is_renamed_but_no_target_moves() {
 #[test]
 fn a_selection_limits_the_rename() {
     let scope = Scope::of(&[1], 4);
-    let (renamed, count) = rename("Niall", "Nyal").unwrap().apply(&notes(), &scope);
+    let (renamed, count) = rename("Niall", "Nyal").apply(&notes(), &scope);
 
     assert_eq!(count, 1);
     let markdown = deino_doc::to_markdown(&renamed, deino_doc::Flavor::Readable);
@@ -124,7 +122,6 @@ fn a_selection_limits_the_rename() {
 #[test]
 fn a_lower_case_name_keeps_the_capital_of_the_occurrence() {
     let (renamed, count) = rename("acme", "globex")
-        .unwrap()
         .apply(&doc(vec![para(vec![ai("Acme and acme")])]), &Scope::whole());
 
     assert_eq!(count, 2);

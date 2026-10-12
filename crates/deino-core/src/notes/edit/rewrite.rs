@@ -110,7 +110,7 @@ fn tokens(content: &[Inline], refs: &Refs) -> Vec<Token> {
             }
             Inline::HardBreak { .. } => tokens.push(node("\n", inline)),
             Inline::Mention { attrs, .. } => {
-                tokens.push(node(&format!("@{}", attrs.label), inline))
+                tokens.push(node(&format!("@{}", attrs.label), inline));
             }
             Inline::Citation { attrs, .. } => {
                 if let Some(label) = refs.label(attrs) {

@@ -19,7 +19,7 @@ use deino_llm::{Gateway, LlmError, ProviderId, Route};
 
 use super::EditError;
 use super::apply::apply;
-use super::blocks::{TextBlock, text_blocks};
+use super::blocks::text_blocks;
 use super::diff::diff;
 use super::model::{AcceptedEdit, EditMethod, EditProposal, EditRequest};
 use super::plan::{Checks, plan, prompt_blocks, redact_blocks};
@@ -91,7 +91,7 @@ impl NoteEditService {
                 return proposal(&notes, doc, EditMethod::Rename, Some(count));
             }
         }
-        let doc = self.ask(&notes, &blocks, &scope, instruction).await?;
+        let doc = self.ask(&notes, &scope, instruction).await?;
         proposal(&notes, doc, EditMethod::Ai, None)
     }
 
@@ -138,10 +138,10 @@ impl NoteEditService {
     async fn ask(
         &self,
         notes: &EnhancedNotes,
-        blocks: &[TextBlock],
         scope: &Scope,
         instruction: &str,
     ) -> Result<Doc, EditError> {
+        let blocks = &text_blocks(&notes.doc);
         let lines = self.ports.transcript.lines(&notes.meeting_id).await?;
         let refs = Refs::new(&lines);
         let mut shown = prompt_blocks(blocks, &refs, scope);
