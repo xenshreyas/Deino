@@ -255,6 +255,9 @@ acquire_gate_lock() {
     done
     echo $$ >"$GATE_LOCK/pid"
     trap release_gate_lock EXIT
+    # The lock holder is the only full gate on the machine, and other agents
+    # queue behind it, so it gets more compile jobs than an ordinary build.
+    export CARGO_BUILD_JOBS="${DEINO_GATE_JOBS:-12}"
 }
 
 release_gate_lock() {
