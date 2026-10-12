@@ -9,8 +9,10 @@
 use std::sync::Arc;
 
 use deino_core::automations::{
-    Automation, AutomationInput, AutomationService, MatchingMeeting, MeetingAutomation, StepInfo,
+    Automation, AutomationInput, AutomationService, MatchingMeeting, MeetingAutomation, RecentRun,
+    StepInfo,
 };
+use deino_core::export::FolderDialog;
 use deino_domain::{AppError, AutomationId, MeetingId};
 use tauri::{Runtime, State};
 
@@ -31,8 +33,10 @@ pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
         duplicate,
         for_meeting,
         matching,
+        recent_runs,
         run,
-        test_latest
+        test_latest,
+        choose_folder
     ]
 }
 
@@ -111,6 +115,28 @@ async fn matching(
     id: AutomationId,
 ) -> Result<Vec<MatchingMeeting>, AppError> {
     automations.matching(&id).await.into_ipc()
+}
+
+/// The automation's latest runs, newest first, with each step's result.
+#[tauri::command]
+#[specta::specta]
+async fn recent_runs(
+    automations: Automations<'_>,
+    id: AutomationId,
+) -> Result<Vec<RecentRun>, AppError> {
+    automations.recent_runs(&id).await.into_ipc()
+}
+
+/// Asks for an export step's folder; `null` when the user cancelled.
+#[tauri::command]
+#[specta::specta]
+async fn choose_folder(
+    dialog: State<'_, Arc<dyn FolderDialog>>,
+) -> Result<Option<String>, AppError> {
+    Ok(dialog
+        .pick_folder()
+        .await
+        .map(|folder| folder.to_string_lossy().into_owned()))
 }
 
 /// Runs (or reruns) an automation on the picked meetings.

@@ -1,12 +1,14 @@
 //! Contract tests: the JSON the UI sends to and receives from each
 //! `automations` command, through the real plugin, ACL and error mapping.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_core::automations::{
     ActionKind, AutomationPorts, AutomationService, FactsSource, RecordedAutomationScheduler,
     ScriptedStep, SqliteAutomationRepo, StepRegistry,
 };
+use deino_core::export::{FolderDialog, ScriptedDialog};
 use deino_core::insights::{FixedDomains, SqliteInsightRepo};
 use deino_core::meetings::SqliteMeetingRepo;
 use deino_domain::MeetingId;
@@ -44,9 +46,13 @@ fn contract() -> Contract {
         scheduler: scheduler.clone(),
         clock: Arc::new(FakeClock::new(at("2026-10-12T09:00:00Z"))),
     });
+    let dialog: Arc<dyn FolderDialog> = Arc::new(ScriptedDialog::answering(Some(PathBuf::from(
+        "/Users/me/Exports",
+    ))));
     let builder = mock_builder()
         .plugin(super::init())
-        .manage(Arc::new(service));
+        .manage(Arc::new(service))
+        .manage(dialog);
     Contract {
         window: main_window(&mock_app(builder)),
         scheduler,
@@ -183,4 +189,37 @@ fn the_meeting_menu_and_matching_meetings_carry_runs() {
     assert!(entry["meeting"]["startedAt"].is_string());
     let missing = call(&contract, "for_meeting", json!({ "meetingId": "nope" }));
     assert_eq!(missing.unwrap_err()["code"], "not_found");
+}
+
+#[test]
+fn the_run_log_carries_the_meeting_title_and_the_run() {
+    let contract = contract();
+    let recap = create(&contract);
+    call(
+        &contract,
+        "run",
+        json!({ "id": recap["id"], "meetingIds": [SALES] }),
+    )
+    .unwrap();
+
+    let log = call(&contract, "recent_runs", json!({ "id": recap["id"] })).unwrap();
+
+    assert!(log[0]["meetingTitle"].is_string());
+    assert_eq!(log[0]["run"]["meetingId"], SALES);
+    assert_eq!(log[0]["run"]["status"], "pending");
+    let unknown = call(
+        &contract,
+        "recent_runs",
+        json!({ "id": "01920000-0000-7000-8000-000000000999" }),
+    );
+    assert_eq!(unknown.unwrap_err()["code"], "not_found");
+}
+
+#[test]
+fn choose_folder_returns_the_folder_the_dialog_picked() {
+    let contract = contract();
+
+    let folder = call(&contract, "choose_folder", Value::Null).unwrap();
+
+    assert_eq!(folder, "/Users/me/Exports");
 }

@@ -106,6 +106,17 @@ async matching(id: AutomationId) : Promise<Result<MatchingMeeting[], AppError>> 
 }
 },
 /**
+ * The automation's latest runs, newest first, with each step's result.
+ */
+async recentRuns(id: AutomationId) : Promise<Result<RecentRun[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:automations|recent_runs", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Runs (or reruns) an automation on the picked meetings.
  */
 async run(id: AutomationId, meetingIds: MeetingId[]) : Promise<Result<null, AppError>> {
@@ -122,6 +133,17 @@ async run(id: AutomationId, meetingIds: MeetingId[]) : Promise<Result<null, AppE
 async testLatest(id: AutomationId) : Promise<Result<MeetingId, AppError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("plugin:automations|test_latest", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Asks for an export step's folder; `null` when the user cancelled.
+ */
+async chooseFolder() : Promise<Result<string | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:automations|choose_folder") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -771,6 +793,18 @@ audioPath: boolean }
  * Identifies a person.
  */
 export type PersonId = string & { readonly __brand: "PersonId" }
+/**
+ * One of an automation's latest runs, for the builder's run log.
+ */
+export type RecentRun = { 
+/**
+ * The title of the meeting it ran on.
+ */
+meetingTitle: string; 
+/**
+ * The run, with each step's result and error.
+ */
+run: AutomationRun }
 /**
  * One step of a run.
  */

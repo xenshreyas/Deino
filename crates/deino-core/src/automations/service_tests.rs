@@ -1,7 +1,7 @@
 //! [`AutomationService`]: definitions, the catalogue, manual and
 //! tag-triggered runs, the meeting menu and matching meetings.
 
-use deino_domain::{AutomationRunStatus, Condition, ConditionGroups};
+use deino_domain::{AutomationId, AutomationRunStatus, Condition, ConditionGroups, MeetingId};
 
 use super::harness::{Harness, SALES, STANDUP, add_tag, meeting, notify, sales_tag};
 use super::{
@@ -201,4 +201,27 @@ async fn the_meeting_menu_lists_every_automation_matching_ones_first_with_runs()
             .unwrap()
             .is_empty()
     );
+}
+
+#[tokio::test]
+async fn the_run_log_lists_the_latest_runs_with_their_meetings_newest_first() {
+    let harness = Harness::new(vec![], vec![]).await;
+    let service = harness.service();
+    let recap = harness
+        .add("Recap", ConditionGroups::every_meeting(), vec![notify()])
+        .await;
+    service.run(&recap.id, &[meeting(SALES)]).await.unwrap();
+    harness.clock.advance(chrono::TimeDelta::seconds(5));
+    service.run(&recap.id, &[meeting(STANDUP)]).await.unwrap();
+
+    let log = service.recent_runs(&recap.id).await.unwrap();
+
+    let ran: Vec<&MeetingId> = log.iter().map(|entry| &entry.run.meeting_id).collect();
+    assert_eq!(ran, [&meeting(STANDUP), &meeting(SALES)]);
+    assert!(log.iter().all(|entry| !entry.meeting_title.is_empty()));
+    let unknown = AutomationId::generate(harness.clock.as_ref());
+    assert!(matches!(
+        service.recent_runs(&unknown).await,
+        Err(AutomationError::NotFound(_))
+    ));
 }

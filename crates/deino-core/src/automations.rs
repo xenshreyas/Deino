@@ -17,7 +17,7 @@
 //! | `payload.rs` | [`AutomationPayload`], the JSON a script (or a webhook, later) receives |
 //! | `run.rs` | [`AutomationRun`], [`RunStep`], [`StepOutput`], [`Trigger`] |
 //! | `engine.rs` | [`AutomationEngine`], the `automations` pipeline stage's rules |
-//! | `service.rs`, `triggers.rs`, `views.rs` | [`AutomationService`]: definitions, manual and tag-triggered runs, the meeting menu, matching meetings |
+//! | `service.rs`, `triggers.rs`, `views.rs` | [`AutomationService`]: definitions, manual and tag-triggered runs, the meeting menu, matching meetings, the run log |
 //! | `facts.rs` | [`FactsSource`]: AI-06's facts loader, judged against the user's domains |
 //! | `repo.rs`, `runs_repo.rs`, `rows.rs` | [`AutomationRepo`], [`RunRepo`] on [`SqliteAutomationRepo`] |
 //!
@@ -73,4 +73,4 @@ pub use testing::{
     FixedShellSwitch, RecordedAutomationScheduler, RecordedNotices, Script, ScriptedStep,
 };
 pub use triggers::MAX_RUN_MEETINGS;
-pub use views::{MatchingMeeting, MeetingAutomation};
+pub use views::{MAX_RECENT_RUNS, MatchingMeeting, MeetingAutomation, RecentRun};

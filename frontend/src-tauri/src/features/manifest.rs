@@ -160,8 +160,10 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "duplicate",
             "for_meeting",
             "matching",
+            "recent_runs",
             "run",
             "test_latest",
+            "choose_folder",
         ],
     ),
     // ── NOT-05 profile (features/profile.rs) ──
