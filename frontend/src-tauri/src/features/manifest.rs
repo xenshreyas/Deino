@@ -8,9 +8,10 @@
 //   that every feature is granted in `capabilities/` and that these command
 //   lists equal the commands in the generated TypeScript bindings.
 //
-// Append-only: adding a feature is one line here, one `.plugin(..)` call in
-// `lib.rs`, one entry in `features::builders()` and one `"<name>:default"`
-// entry in `capabilities/default.json`.
+// Append-only: adding a feature is one line here (or in
+// `organize_manifest.rs` for the organization features), one `.plugin(..)`
+// call in `lib.rs`, one entry in `features::builders()` and one
+// `"<name>:default"` entry in `capabilities/default.json`.
 
 /// Every inline feature plugin as `(plugin name, command names)`.
 ///
@@ -19,29 +20,6 @@
 pub const FEATURES: &[(&str, &[&str])] = &[
     // ── FND-02 system ──
     ("system", &["app_version"]),
-    // ── FND-13 meetings; ORG-07 the list, views, trash, bulk actions, merge ──
-    (
-        "meetings",
-        &[
-            "list",
-            "get",
-            "rename",
-            "page",
-            "matching_ids",
-            "views",
-            "create_view",
-            "update_view",
-            "delete_view",
-            "trash",
-            "restore",
-            "trashed",
-            "delete_forever",
-            "tag_many",
-            "untag_many",
-            "file_many",
-            "merge",
-        ],
-    ),
     // ── NOT-01 notepad and @mention search ──
     (
         "notes",
@@ -70,20 +48,6 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "attendees",
             "add_attendee",
             "remove_attendee",
-        ],
-    ),
-    // ── ORG-04 companies ──
-    (
-        "companies",
-        &[
-            "list",
-            "page",
-            "create",
-            "update",
-            "set_notes",
-            "merge",
-            "refresh_summary",
-            "fetch_logo",
         ],
     ),
     // ── NOT-02/NOT-03 enhanced notes and citations (features/enhance.rs) ──
@@ -183,53 +147,10 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
-    // ── ORG-08 / AI-01 search (features/search.rs) ──
-    (
-        "search",
-        &[
-            "search",
-            "suggest_filters",
-            "reindex_all",
-            "index_status",
-            "download_model",
-            "cancel_download",
-            "delete_model",
-            "start_backfill",
-        ],
-    ),
     // ── TRN-05 custom vocabulary (features/vocabulary.rs) ──
     (
         "vocabulary",
         &["list", "create", "update", "delete", "corrections", "undo"],
-    ),
-    // ── ORG-05 folders ──
-    (
-        "folders",
-        &[
-            "tree",
-            "get",
-            "create",
-            "rename",
-            "set_icon",
-            "set_description",
-            "move_to",
-            "delete",
-            "meetings",
-            "unfiled",
-            "folders_of",
-            "add_meeting",
-            "remove_meeting",
-            "rules",
-            "add_rule",
-            "remove_rule",
-        ],
-    ),
-    // ── ORG-06 tags ──
-    (
-        "tags",
-        &[
-            "list", "create", "update", "delete", "tags_of", "links", "apply", "remove",
-        ],
     ),
     // ── EXP-01/EXP-02 export (features/export.rs) ──
     (
@@ -248,29 +169,6 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     ),
     // ── FND-05b / CAP-02 live recorder (features/recording.rs) ──
     ("recording", &["start", "stop", "pause", "resume", "state"]),
-    // ── ORG-01 calendar sync (features/calendar.rs) ──
-    (
-        "calendar",
-        &[
-            "status",
-            "enable",
-            "disable",
-            "refresh",
-            "open_access_settings",
-            "list_calendars",
-            "set_calendar_visible",
-            "upcoming",
-            "event",
-            "connect",
-            "disconnect",
-            // ── ORG-03 event linking and related meetings ──
-            "meeting_event",
-            "event_suggestions",
-            "link_event",
-            "unlink_event",
-            "related_meetings",
-        ],
-    ),
     // ── DEV-02/04 Settings → Developer: the CLI and Claude setup ──
     ("developer", &["cli_status", "install_cli"]),
     // ── CAP-04 speaker naming and voice profiles ──

@@ -73,7 +73,8 @@ pub fn run() {
         .run(lifecycle::on_run_event);
 }
 
-/// Registers every feature plugin: one line per entry in `features/manifest.rs`.
+/// Registers every feature plugin: one line per entry in `features/manifest.rs`
+/// and `features/organize_manifest.rs`.
 fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     let builder = builder
         .plugin(features::db::init())
