@@ -279,7 +279,11 @@ export type Table =
  * why), or `dismissed`, which is permanent: the stage never drafts for the
  * meeting again and the text is cleared.
  */
-"follow_up_drafts"
+"follow_up_drafts" | 
+/**
+ * Keys for the local REST API: a name, read or read-write, and only an argon2 hash of the secret.
+ */
+"api_keys"
 
 /** tauri-specta globals **/
 
