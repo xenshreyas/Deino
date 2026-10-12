@@ -6,7 +6,7 @@ use std::thread::JoinHandle;
 
 use deino_audio::capture::{Capture, OutputRoute};
 use deino_audio::{Frames, HealthEvent, HostClock, PlacedAudio, Recorder};
-use deino_domain::MeetingId;
+use deino_domain::{MeetingId, Millis};
 
 use super::Prepared;
 use crate::echo::SonoraAec;
@@ -60,6 +60,15 @@ impl Session {
     /// The meeting being recorded.
     pub fn meeting(&self) -> &MeetingId {
         &self.meeting
+    }
+
+    /// How far the recording is on its own timeline now: host time since
+    /// the epoch, minus the pauses (which the timeline skips). Segment times
+    /// are measured on the same timeline.
+    pub fn position(&self, host_clock: &dyn HostClock) -> Millis {
+        let elapsed = host_clock.now().since(self.recorder.epoch());
+        let at = elapsed.saturating_sub(self.capture.paused());
+        Millis(u32::try_from(at.as_millis()).unwrap_or(u32::MAX))
     }
 
     /// Stops the sources; the timeline skips the pause.

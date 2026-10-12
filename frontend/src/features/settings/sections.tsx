@@ -23,12 +23,14 @@ import { NetworkSettings } from '@/features/network';
 import { ResumeSetup } from '@/features/onboarding';
 import { ProfilePage } from '@/features/profile';
 import { IndexSettings } from '@/features/search';
+import { SpeakerTagsSettings } from '@/features/speaker-tags';
 import { PeopleSettings } from '@/features/speakers';
 import { TemplatesPage } from '@/features/templates';
 import { VocabularySettings } from '@/features/vocabulary';
 import {
   AudioLines,
   Calendar,
+  Contact,
   Cpu,
   Download,
   FlaskConical,
@@ -127,6 +129,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'transcription', group: 'capture', icon: AudioLines, Component: TranscriptionSection },
   { id: 'vocabulary', group: 'capture', icon: SpellCheck, Component: VocabularySettings },
   { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
+  { id: 'speaker-tags', group: 'capture', icon: Contact, Component: SpeakerTagsSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },

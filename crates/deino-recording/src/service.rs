@@ -20,6 +20,9 @@
 //! [`crate::events::SegmentUpdate`] events and reads the stored segments.
 
 pub(crate) mod meeting;
+mod playhead;
+
+pub use playhead::Playhead;
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 

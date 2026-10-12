@@ -31,6 +31,7 @@
 //! | [`vad`] | Per-lane voice activity (earshot + hangover) |
 //! | [`events`] | `RecordingSnapshot`, `SegmentUpdate`, `HealthNotice` and the `RecordingEvents` port |
 //! | [`observer`] | The `StartObserver` port: who hears that a recording started (ORG-03 auto-links its event) |
+//! | [`Playhead`] | Where the recorder is on a recording's timeline, for observers that stamp in recording time (CAP-05) |
 //! | [`lane`] | `Lane`: Me (microphone) and Them (system audio) |
 //! | [`backend`] | `DeviceCapture` (the Mac's devices) and `MockCapture` (`DEINO_MOCK_AUDIO`) |
 //!
@@ -65,7 +66,7 @@ pub use events::{
     SegmentUpdateKind,
 };
 pub use lane::Lane;
-pub use observer::{NoStartObserver, StartObserver};
+pub use observer::{NoStartObserver, StartObserver, StartObservers};
 pub use offline::{BatchEngines, NativeDecoder, OfflineTranscriber, TrackDecoder};
 pub use recovery::{RecoveryReport, recover_interrupted};
-pub use service::RecordingService;
+pub use service::{Playhead, RecordingService};

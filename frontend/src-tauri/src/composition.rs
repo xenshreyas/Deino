@@ -44,6 +44,7 @@ mod organize;
 mod pipeline;
 mod recording;
 mod search;
+mod speaker_tags;
 mod speakers;
 mod stt;
 mod transcript;
@@ -218,10 +219,11 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     organize
 }
 
-/// Wires the services that run on their own once the pipeline is up: the
-/// live recorder, calendar sync (its scheduler starts here) and the
-/// integrations service.
+/// Wires the services that run on their own once the pipeline is up: speaker
+/// tags (CAP-05), the live recorder, calendar sync (its scheduler starts
+/// here) and the integrations service.
 fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
+    speaker_tags::attach_speaker_tags(app, database);
     recording::attach_recording(app, database);
     calendar::attach_calendar(app, database, clock);
     integrations::attach_integrations(app, database, clock);

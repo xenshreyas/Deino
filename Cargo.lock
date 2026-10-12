@@ -1878,6 +1878,7 @@ dependencies = [
  "deino-pipeline",
  "deino-recording",
  "deino-secrets",
+ "deino-speaker-tags",
  "deino-stt",
  "deino-testkit",
  "dirs 5.0.1",
@@ -2025,6 +2026,7 @@ dependencies = [
  "deino-llm",
  "deino-net",
  "deino-secrets",
+ "deino-speaker-tags",
  "deino-testkit",
  "futures-util",
  "insta",
@@ -2319,6 +2321,22 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "zeroize",
+]
+
+[[package]]
+name = "deino-speaker-tags"
+version = "0.1.0"
+dependencies = [
+ "cidre",
+ "deino-domain",
+ "deino-speaker-tags",
+ "log",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "serde",
+ "serde_json",
+ "specta",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

@@ -27,13 +27,14 @@ mod rename;
 mod repo;
 #[cfg(test)]
 mod repo_tests;
+mod seating_sql;
 mod service;
 
 pub use error::SpeakerError;
 pub use model::{
     Identification, MAX_NAME_CHARS, MergeSpeakers, NameCandidate, NameSpeaker, Participant,
-    ParticipantRow, PersonRef, Rename, RenameScope, Renamed, SegmentTarget, SpeakerName,
-    SuggestedName, Suggestion,
+    ParticipantRow, PersonRef, Rename, RenameScope, Renamed, Seating, SegmentMove, SegmentTarget,
+    SpeakerName, SuggestedName, Suggestion,
 };
 pub use repo::{IdentificationWriter, NamingRepo, ParticipantReader, SqliteNamingRepo};
 pub use service::{CANDIDATE_LIMIT, SpeakerPorts, SpeakerService, share_percent};

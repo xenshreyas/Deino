@@ -71,6 +71,11 @@ export const settingsCopy = {
       label: 'People',
       description: 'Recognise speakers by voice, and the voice profiles Deino knows.',
     },
+    'speaker-tags': {
+      label: 'Speaker tags',
+      description:
+        'Name speakers from Zoom, Teams and Meet, read from the call window on this Mac.',
+    },
     ai: {
       label: 'AI models',
       description: 'Which provider and model serve each AI task, and a quick test for each.',

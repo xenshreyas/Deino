@@ -71,6 +71,9 @@ deino-domain = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }
 deino-net = { workspace = true, features = ["test-support"] }
 deino-secrets = { workspace = true, features = ["test-support"] }
+# Fixture call windows through the speaker-tag watcher, aligned by
+# `speaker_tags::align` (tests/speaker_tags_fixtures.rs).
+deino-speaker-tags = { workspace = true, features = ["test-support"] }
 deino-testkit = { workspace = true, features = ["test-support"] }
 # Snapshot tests of rendered prompts (profile context, template prompts).
 insta = { version = "=1.43.1", features = ["json"] }

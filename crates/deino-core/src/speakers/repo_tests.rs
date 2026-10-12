@@ -1,12 +1,17 @@
 //! What only the real schema and transactions can check.
 
-use deino_db::test_db;
-use deino_domain::{FakeClock, MeetingId, PaletteColor, PersonId, SegmentId, SpeakerId};
+use deino_db::{Database, test_db};
+use deino_domain::{
+    Channel, DisplayName, FakeClock, MeetingId, Millis, PaletteColor, PersonId, SegmentId,
+    SpeakerId,
+};
 use deino_testkit::{at, seed};
 
 use super::*;
 use crate::people::{Person, PersonRepo, SqlitePeopleRepo};
-use crate::segments::{Speaker, SpeakerRepo, SqliteSegmentRepo};
+use crate::segments::{
+    NewSegment, Page, SegmentReader, SegmentWriter, Speaker, SpeakerRepo, SqliteSegmentRepo,
+};
 use crate::testing::query_plan;
 
 const MEETING: &str = "meeting-a";
@@ -90,10 +95,12 @@ async fn the_stage_never_renames_a_speaker_the_user_named_and_replaces_suggestio
     let first = Identification {
         named: vec![(named.id, alex)],
         suggested: vec![suggest(alex)],
+        ..Identification::default()
     };
     let second = Identification {
         named: Vec::new(),
         suggested: vec![suggest(maya)],
+        ..Identification::default()
     };
 
     repo.apply(&meeting, &first).await.unwrap();
@@ -105,6 +112,73 @@ async fn the_stage_never_renames_a_speaker_the_user_named_and_replaces_suggestio
     let suggestion = by_label("Speaker 2").suggestion.clone().unwrap();
     assert_eq!(suggestion.person.id, maya);
     assert!((suggestion.score - 0.6).abs() < 1e-6);
+}
+
+/// A system-track segment of `speaker` in the meeting.
+async fn segment_of(segments: &SqliteSegmentRepo, speaker: &Speaker) -> SegmentId {
+    let id = SegmentId::generate(&clock());
+    let segment = NewSegment {
+        id,
+        meeting_id: MeetingId::new(MEETING),
+        channel: Channel::System,
+        speaker_id: Some(speaker.id),
+        start: Millis(0),
+        end: Millis(1_000),
+        text: "…".into(),
+        words: Vec::new(),
+    };
+    segments.append(&[segment]).await.unwrap();
+    id
+}
+
+/// A meeting with an unnamed speaker, a stray one with a segment, and one
+/// the user named with a segment.
+async fn seating_room(database: &Database) -> ([Speaker; 3], [SegmentId; 2]) {
+    seed::meeting(database, MEETING, "Standup", at(T0)).await;
+    let maya = person(&SqlitePeopleRepo::new(database.clone()), "Maya").await;
+    let segments = SqliteSegmentRepo::new(database.clone());
+    let (open, stray) = (speaker("Speaker 1", None), speaker("Speaker 2", None));
+    let named = speaker("Speaker 3", Some(maya));
+    for each in [&open, &stray, &named] {
+        segments.add_speaker(each).await.unwrap();
+    }
+    let on_stray = segment_of(&segments, &stray).await;
+    let on_named = segment_of(&segments, &named).await;
+    ([open, stray, named], [on_stray, on_named])
+}
+
+#[tokio::test]
+async fn seating_creates_labels_moves_and_empties_but_never_touches_named_speakers() {
+    let database = test_db().await;
+    let ([open, stray, named], [on_stray, on_named]) = seating_room(&database).await;
+    let created = speaker("Cleo", None);
+    let to_created = |segment| SegmentMove {
+        segment,
+        to: created.id,
+    };
+    let label = |text| DisplayName::parse(text).unwrap();
+    let decided = Identification {
+        seating: Seating {
+            created: vec![created.clone()],
+            labelled: vec![(open.id, label("Alex")), (named.id, label("Not Maya"))],
+            moved: vec![to_created(on_stray), to_created(on_named)],
+            emptied: vec![stray.id, named.id],
+        },
+        ..Identification::default()
+    };
+
+    let meeting = MeetingId::new(MEETING);
+    let repo = SqliteNamingRepo::new(database.clone());
+    repo.apply(&meeting, &decided).await.unwrap();
+
+    let segments = SqliteSegmentRepo::new(database);
+    let after = segments.speakers(&meeting).await.unwrap();
+    let labels: Vec<&str> = after.iter().map(|s| s.label.as_str()).collect();
+    assert_eq!(labels, ["Alex", "Cleo", "Speaker 3"]);
+    let listed = segments.list(&meeting, Page::ALL).await.unwrap();
+    let owner = |id| listed.iter().find(|s| s.id == id).unwrap().speaker_id;
+    assert_eq!(owner(on_stray), Some(created.id));
+    assert_eq!(owner(on_named), Some(named.id));
 }
 
 #[tokio::test]

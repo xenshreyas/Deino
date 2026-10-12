@@ -6,7 +6,12 @@
 //! ([`IdentificationWriter::apply`]):
 //!
 //! - the user's microphone speaker is the "Me" person (`people.is_me`);
-//! - each unnamed voice is scored against every candidate's exemplars
+//! - **speaker tags first** (CAP-05): the names the meeting app showed for
+//!   its active speaker ([`TagPriors`], `crate::speaker_tags`) seat the
+//!   system track's segments and name or label their speakers; those
+//!   speakers are then out of voice matching, so a name from the window
+//!   always overrides a voiceprint;
+//! - each still unnamed voice is scored against every candidate's exemplars
 //!   (the max over up to five), then named by voice, by elimination, or
 //!   suggested ("Is this Alex?") for the user to confirm.
 //!
@@ -26,6 +31,7 @@ pub use decide::{Ballot, Decisions, MIN_IDENTIFIABLE_SPEECH, NamedBy, Naming, Ro
 pub use lineup::{IdentifyPorts, Lineup};
 
 use crate::settings::{IdentifyThresholds, SettingsService};
+use crate::speaker_tags::{NoSpeakerTags, TagPlan, TagPriors};
 use crate::speakers::{Identification, IdentificationWriter, SuggestedName};
 
 /// Whether to identify speakers, and with which thresholds
@@ -89,11 +95,13 @@ pub struct IdentifyService {
     ports: IdentifyPorts,
     policy: Arc<dyn IdentifyPolicy>,
     writer: Arc<dyn IdentificationWriter>,
+    tags: Arc<dyn TagPriors>,
 }
 
 impl IdentifyService {
     /// Creates the service: `ports` to read the meeting, `policy` for the
-    /// thresholds, `writer` for the result.
+    /// thresholds, `writer` for the result. No speaker tags until
+    /// [`with_speaker_tags`](Self::with_speaker_tags).
     pub fn new(
         ports: IdentifyPorts,
         policy: Arc<dyn IdentifyPolicy>,
@@ -103,7 +111,16 @@ impl IdentifyService {
             ports,
             policy,
             writer,
+            tags: Arc::new(NoSpeakerTags),
         }
+    }
+
+    /// The same service, seating segments by the meeting app's names
+    /// (CAP-05) before it matches voices.
+    #[must_use]
+    pub fn with_speaker_tags(mut self, tags: Arc<dyn TagPriors>) -> Self {
+        self.tags = tags;
+        self
     }
 }
 
@@ -113,11 +130,16 @@ impl SpeakerIdentifier for IdentifyService {
         let Some(thresholds) = self.policy.thresholds().await else {
             return Ok(Identified::Disabled);
         };
-        let Some(lineup) = Lineup::read(&self.ports, meeting).await? else {
+        let speakers = self.ports.speakers.speakers(meeting).await?;
+        if speakers.is_empty() {
             return Ok(Identified::NoSpeakers);
-        };
+        }
+        let tags = self.tags.plan(meeting, &speakers).await?;
+        let claimed = tags.claimed.clone();
+        let speakers = tags.overlay(speakers);
+        let lineup = Lineup::read(&self.ports, meeting, speakers, &claimed).await?;
         let decisions = decide(&lineup.ballot, &thresholds);
-        let identification = identification(&lineup, &decisions);
+        let identification = identification(&lineup, &decisions, tags);
         self.writer.apply(meeting, &identification).await?;
         log::info!(
             target: "deino_core::diarization",
@@ -133,17 +155,22 @@ impl SpeakerIdentifier for IdentifyService {
     }
 }
 
-/// The decisions as rows to write: the user's microphone first.
-fn identification(lineup: &Lineup, decisions: &Decisions<SpeakerId, PersonId>) -> Identification {
+/// The decisions as rows to write: the user's microphone first, then the
+/// speaker tags' names, then the voices'.
+fn identification(
+    lineup: &Lineup,
+    decisions: &Decisions<SpeakerId, PersonId>,
+    tags: TagPlan,
+) -> Identification {
+    let by_voice = decisions
+        .named
+        .iter()
+        .map(|naming| (naming.speaker, naming.person));
     let named = lineup
         .me
         .into_iter()
-        .chain(
-            decisions
-                .named
-                .iter()
-                .map(|naming| (naming.speaker, naming.person)),
-        )
+        .chain(tags.named)
+        .chain(by_voice)
         .collect();
     let suggested = decisions
         .suggested
@@ -154,7 +181,11 @@ fn identification(lineup: &Lineup, decisions: &Decisions<SpeakerId, PersonId>) -
             score,
         })
         .collect();
-    Identification { named, suggested }
+    Identification {
+        named,
+        suggested,
+        seating: tags.seating,
+    }
 }
 
 #[cfg(test)]

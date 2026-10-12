@@ -66,6 +66,8 @@ pub enum Table {
     Voiceprints,
     /// "Is this Alex?" suggestions for unnamed speakers (CAP-04).
     SpeakerSuggestions,
+    /// Who the meeting app showed as the active speaker, and when (CAP-05).
+    SpeakerTagSpans,
     /// Connected integration accounts, without their tokens (INT-00).
     IntegrationConnections,
     /// The scopes each integration connection was granted.
@@ -94,7 +96,7 @@ pub enum Table {
 
 impl Table {
     /// Every table, for consumers that must assume everything changed.
-    pub const ALL: [Self; 37] = [
+    pub const ALL: [Self; 38] = [
         Self::Meetings,
         Self::TranscriptSegments,
         Self::Speakers,
@@ -121,6 +123,7 @@ impl Table {
         Self::TemplateSections,
         Self::Voiceprints,
         Self::SpeakerSuggestions,
+        Self::SpeakerTagSpans,
         Self::IntegrationConnections,
         Self::IntegrationConnectionScopes,
         Self::IntegrationDeliveries,
@@ -139,6 +142,11 @@ impl Table {
     /// Runs inside SQLite's update hook for every changed row, so it neither
     /// allocates nor logs.
     pub fn from_name(name: &str) -> Option<Self> {
+        Self::core_table(name).or_else(|| Self::feature_table(name))
+    }
+
+    /// A table of the core schema (FND-07, FND-08, FND-09, FND-12).
+    fn core_table(name: &str) -> Option<Self> {
         Some(match name {
             "meetings" => Self::Meetings,
             "transcript_segments" => Self::TranscriptSegments,
@@ -162,10 +170,18 @@ impl Table {
             "jobs" => Self::Jobs,
             "job_runs" => Self::JobRuns,
             "egress_log" => Self::EgressLog,
+            _ => return None,
+        })
+    }
+
+    /// A table a feature card added (NOT-04 onwards).
+    fn feature_table(name: &str) -> Option<Self> {
+        Some(match name {
             "templates" => Self::Templates,
             "template_sections" => Self::TemplateSections,
             "voiceprints" => Self::Voiceprints,
             "speaker_suggestions" => Self::SpeakerSuggestions,
+            "speaker_tag_spans" => Self::SpeakerTagSpans,
             "integration_connections" => Self::IntegrationConnections,
             "integration_connection_scopes" => Self::IntegrationConnectionScopes,
             "integration_deliveries" => Self::IntegrationDeliveries,

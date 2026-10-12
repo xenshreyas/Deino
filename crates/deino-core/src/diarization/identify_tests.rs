@@ -3,12 +3,20 @@
 use std::sync::Arc;
 
 use deino_db::Database;
-use deino_domain::{AttendeeRole, FakeClock, Millis, PaletteColor, PersonId, Rsvp, SpeakerId};
+use deino_domain::{
+    AttendeeRole, CallApp, Channel, DisplayName, FakeClock, Millis, PaletteColor, PersonId, Rsvp,
+    SegmentId, SpeakerId, TagSpan,
+};
 use deino_testkit::{at, seed, test_db};
 
 use super::*;
 use crate::people::{Attendee, AttendeeRepo, Person, PersonRepo, SqlitePeopleRepo};
-use crate::segments::{NewSpeaker, Speaker, SpeakerRepo, SpeakerVoice, SqliteSegmentRepo};
+use crate::segments::{
+    NewSegment, NewSpeaker, SegmentWriter, Speaker, SpeakerRepo, SpeakerVoice, SqliteSegmentRepo,
+};
+use crate::speaker_tags::{
+    SpeakerTagPriors, SpeakerTagWriter, SqliteSpeakerTagRepo, TagPriorPorts,
+};
 use crate::speakers::{ParticipantReader, SqliteNamingRepo};
 use crate::voiceprints::{
     Quality, SqliteVoiceprintRepo, VOICEPRINT_DIM, VoiceEmbedding, Voiceprint, VoiceprintRepo,
@@ -272,4 +280,70 @@ async fn identification_can_be_switched_off_and_needs_speakers() {
     world.speakers(&[(voice(&[(0, 0.9)]), 60_000)]).await;
     let off = world.service(None);
     assert_eq!(off.identify(&meeting).await.unwrap(), Identified::Disabled);
+}
+
+/// The world's identifier with speaker tags read from the database.
+fn tagged_service(world: &World) -> IdentifyService {
+    let priors = SpeakerTagPriors::new(TagPriorPorts {
+        tags: Arc::new(SqliteSpeakerTagRepo::new(world.database.clone())),
+        segments: world.segments.clone(),
+        attendees: world.people.clone(),
+        people: world.people.clone(),
+        clock: Arc::new(clock()),
+    });
+    world
+        .service(Some(IdentifyThresholds::default()))
+        .with_speaker_tags(Arc::new(priors))
+}
+
+/// A system-track segment of `speaker`, and the window's name for that time.
+async fn tagged(world: &World, speaker: SpeakerId, (start, end): (u32, u32), name: &str) {
+    let meeting = MeetingId::new(MEETING);
+    let segment = NewSegment {
+        id: SegmentId::generate(&clock()),
+        meeting_id: meeting.clone(),
+        channel: Channel::System,
+        speaker_id: Some(speaker),
+        start: Millis(start),
+        end: Millis(end),
+        text: "…".into(),
+        words: Vec::new(),
+    };
+    world.segments.append(&[segment]).await.unwrap();
+    let span = TagSpan {
+        start: Millis(start),
+        end: Millis(end),
+        name: DisplayName::parse(name).unwrap(),
+        app: CallApp::Zoom,
+    };
+    let tags = SqliteSpeakerTagRepo::new(world.database.clone());
+    tags.append(&meeting, &[span]).await.unwrap();
+}
+
+#[tokio::test]
+async fn the_meeting_apps_names_override_a_matching_voiceprint() {
+    let world = World::new().await;
+    let alex = world.person("Alex", false, Some(0)).await;
+    let maya = world.person("Maya Patel", false, Some(1)).await;
+    world.invite(alex).await;
+    world.invite(maya).await;
+    let ids = world
+        .speakers(&[(voice(&[(0, 0.9)]), 30_000), (voice(&[(2, 0.9)]), 30_000)])
+        .await;
+    // Speaker 1's voice matches Alex, but the window says Maya spoke.
+    tagged(&world, ids[0], (0, 30_000), "Maya Patel").await;
+    tagged(&world, ids[1], (30_000, 60_000), "Sam Okafor").await;
+
+    let service = tagged_service(&world);
+    service.identify(&MeetingId::new(MEETING)).await.unwrap();
+    service.identify(&MeetingId::new(MEETING)).await.unwrap();
+
+    assert_eq!(
+        world.names().await,
+        [
+            ("Me".into(), None, None),
+            ("Sam Okafor".into(), None, None),
+            named("Speaker 1", "Maya Patel"),
+        ]
+    );
 }

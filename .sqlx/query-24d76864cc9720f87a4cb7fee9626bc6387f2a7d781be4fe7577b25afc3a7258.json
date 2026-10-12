@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO speaker_tag_spans (meeting_id, start_ms, end_ms, display_name, app)\n                 VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "24d76864cc9720f87a4cb7fee9626bc6387f2a7d781be4fe7577b25afc3a7258"
+}

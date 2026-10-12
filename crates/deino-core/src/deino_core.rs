@@ -51,6 +51,10 @@
 //!
 //! NOT-09 added [`redaction`]: passwords, keys, card numbers, SSNs and
 //! one-time codes replaced by `[redacted]` before notes and exports.
+//!
+//! CAP-05 added [`speaker_tags`]: the names a meeting app's window showed
+//! for its active speaker, stored while recording and used by
+//! `identify_speakers` before voices are matched.
 
 #[cfg(debug_assertions)]
 pub mod _example;
@@ -80,6 +84,7 @@ pub mod sample;
 pub mod search;
 pub mod segments;
 pub mod settings;
+pub mod speaker_tags;
 pub mod speakers;
 pub mod tags;
 pub mod templates;

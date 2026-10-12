@@ -65,6 +65,7 @@
         "tags:default",
         "speakers:default",
         "transcript:default",
-        "vocabulary:default"
+        "vocabulary:default",
+        "speaker-tags:default"
     ]
 }

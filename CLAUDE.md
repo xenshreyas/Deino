@@ -110,6 +110,7 @@ Optional local hooks: `lefthook install` (`lefthook.yml`).
 | `crates/deino-pipeline` | Post-meeting pipeline: `PipelineStage`, `registry.rs` (one line per stage), durable `jobs`/`job_runs` runner (retries, cancellation, startup reconciliation), `PipelineService`, `PipelineTrigger` (ADR 0018) |
 | `crates/deino-net` | The only HTTP client (FND-12, ADR 0019): `Net::scoped(ServiceId)` → `ScopedClient` (registered hosts, user switches, offline mode), the egress log (`egress_log`), `HttpDownloader` (resume, size cap, SHA-256). Audio and STT never depend on it |
 | `crates/deino-detect` | Meeting detection (ADR 0023): Core Audio process-object, default-input and CoreMediaIO camera listeners, outermost-`.app` attribution, Accessibility browser URLs, the bundle tables, Muesli's resolver, the `Clock`-driven `DetectionPolicy`, `DetectionService` and the `Detector` thread; no network |
+| `crates/deino-speaker-tags` | Speaker tags (CAP-05, ADR 0045): the meeting app's active speaker through Accessibility every 250 ms while recording; one `SpeakerAdapter` per app (Zoom, Teams, Meet in Chrome) tested on fixture AX dumps (`fixtures/`), the `Timeline` of spans, the `Watcher` thread, `SpeakerTags`; the spans are priors in `identify_speakers` (`deino-core::speaker_tags`); no network |
 | `crates/deino-eventkit` | macOS Calendar through EventKit (ADR 0027): `EventKitSource` (the core's `CalendarSource`), the worker thread that owns the `EKEventStore`, store-changed and wake observers; no network |
 | `crates/deino-integrations` | The integrations framework (INT-00, ADR 0031): `Integration` + capability traits (`PostMessage`, `CreatePage`, `CreateTask`, `LogActivity`, `ReadContext`), `registry` (one line per provider; the sandbox in debug builds), `oauth` (the one OAuth layer: PKCE over a loopback redirect, per-provider redirect and client-auth rules, refresh, revocation, device code), `CredentialVault` (one Keychain item per connection), `integration_connections`/`integration_deliveries`, `IntegrationService` (connect, token paste, check, disconnect, idempotent `deliver` with rate limits and retries) |
 | `crates/deino-connect` | Online calendar accounts (ADR 0027): the Google Calendar and Microsoft Graph calendar sources over `deino-net`, signed in through `deino_integrations::oauth`, refresh tokens in the Keychain |
@@ -132,7 +133,7 @@ Does Not Own, Invariants); read it before editing the crate.
   services and `app.manage`s them. `paths.rs` (`AppPaths`) resolves every app
   folder once.
 - `features.rs`, `features/`: one inline plugin per feature (`system`,
-  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `search`, `insights`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
+  `meetings`, `notes`, `enhance`, `people`, `companies`, `settings`, `secrets`, `llm`, `network`, `pipeline`, `recording`, `detection`, `calendar`, `integrations`, `folders`, `tags`, `export`, `speakers`, `speaker-tags`, `search`, `insights`, `developer`, `onboarding`, `db`, and `example`/`dev` in debug builds). `features/manifest.rs`
   lists them for the ACL.
 - `error.rs`: `into_ipc()`, the command boundary (log the chain, return
   `AppError`).

@@ -1,0 +1,523 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Inbox (3) - Gmail - Google Chrome",
+  "document": "https://mail.google.com/mail/u/0/#inbox",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXTabGroup",
+    "description": "Tab strip",
+    "children": [
+     {
+      "role": "AXRadioButton",
+      "title": "Inbox (3) - Gmail"
+     },
+     {
+      "role": "AXRadioButton",
+      "title": "Inbox (3) - Gmail"
+     },
+     {
+      "role": "AXButton",
+      "description": "New Tab"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Toolbar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Back"
+     },
+     {
+      "role": "AXButton",
+      "description": "Forward"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reload"
+     },
+     {
+      "role": "AXTextField",
+      "description": "Address and search bar",
+      "value": "mail.google.com/mail/u/0/#inbox"
+     },
+     {
+      "role": "AXButton",
+      "description": "Bookmark this tab"
+     },
+     {
+      "role": "AXButton",
+      "description": "Extensions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chrome"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXGroup",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Inbox (3) - Gmail",
+        "domClasses": [
+         "glue-flexbox"
+        ],
+        "children": [
+         {
+          "role": "AXGroup",
+          "domClasses": [
+           "nH",
+           "bkK"
+          ],
+          "children": [
+           {
+            "role": "AXStaticText",
+            "value": "Inbox"
+           },
+           {
+            "role": "AXStaticText",
+            "value": "Weekly sync notes"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Meet - abc-defg-hij - Google Chrome",
+  "document": "https://meet.google.com/abc-defg-hij",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXTabGroup",
+    "description": "Tab strip",
+    "children": [
+     {
+      "role": "AXRadioButton",
+      "title": "Meet - abc-defg-hij"
+     },
+     {
+      "role": "AXRadioButton",
+      "title": "Inbox (3) - Gmail"
+     },
+     {
+      "role": "AXButton",
+      "description": "New Tab"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "description": "Toolbar",
+    "children": [
+     {
+      "role": "AXButton",
+      "description": "Back"
+     },
+     {
+      "role": "AXButton",
+      "description": "Forward"
+     },
+     {
+      "role": "AXButton",
+      "description": "Reload"
+     },
+     {
+      "role": "AXTextField",
+      "description": "Address and search bar",
+      "value": "meet.google.com/abc-defg-hij"
+     },
+     {
+      "role": "AXButton",
+      "description": "Bookmark this tab"
+     },
+     {
+      "role": "AXButton",
+      "description": "Extensions"
+     },
+     {
+      "role": "AXButton",
+      "description": "Chrome"
+     }
+    ]
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXGroup",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Meet - abc-defg-hij",
+        "domClasses": [
+         "glue-flexbox"
+        ],
+        "children": [
+         {
+          "role": "AXGroup",
+          "domClasses": [
+           "lefKC"
+          ],
+          "children": [
+           {
+            "role": "AXStaticText",
+            "value": "abc-defg-hij"
+           },
+           {
+            "role": "AXStaticText",
+            "value": "12:04"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Meeting stage",
+          "domClasses": [
+           "T4LgNb"
+          ],
+          "children": [
+           {
+            "role": "AXGroup",
+            "domClasses": [
+             "dkjMxf",
+             "axUSnc"
+            ],
+            "children": [
+             {
+              "role": "AXGroup",
+              "domClasses": [
+               "oZRSLe"
+              ],
+              "children": [
+               {
+                "role": "AXGroup",
+                "description": "Video",
+                "domClasses": [
+                 "koV58",
+                 "Zi94Db"
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "IisKdb",
+                 "kT2pkb",
+                 "sMVRZe",
+                 "Oaajhc"
+                ],
+                "children": [
+                 {
+                  "role": "AXGroup",
+                  "domClasses": [
+                   "DYfzY",
+                   "kssMZb"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "XEazBc",
+                 "adnwBd"
+                ],
+                "children": [
+                 {
+                  "role": "AXStaticText",
+                  "value": "Alex Chen",
+                  "domClasses": [
+                   "notranslate"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXButton",
+                "description": "More options for Alex Chen",
+                "domClasses": [
+                 "VfPpkd-Bz112c-LgbsSe"
+                ]
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "domClasses": [
+               "oZRSLe"
+              ],
+              "children": [
+               {
+                "role": "AXGroup",
+                "description": "Video",
+                "domClasses": [
+                 "koV58",
+                 "Zi94Db"
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "IisKdb",
+                 "kT2pkb",
+                 "sMVRZe"
+                ],
+                "children": [
+                 {
+                  "role": "AXGroup",
+                  "domClasses": [
+                   "DYfzY",
+                   "kssMZb"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "XEazBc",
+                 "adnwBd"
+                ],
+                "children": [
+                 {
+                  "role": "AXStaticText",
+                  "value": "Bea Ruiz",
+                  "domClasses": [
+                   "notranslate"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXButton",
+                "description": "More options for Bea Ruiz",
+                "domClasses": [
+                 "VfPpkd-Bz112c-LgbsSe"
+                ]
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "domClasses": [
+               "oZRSLe"
+              ],
+              "children": [
+               {
+                "role": "AXGroup",
+                "description": "Video",
+                "domClasses": [
+                 "koV58",
+                 "Zi94Db"
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "IisKdb",
+                 "kT2pkb",
+                 "sMVRZe"
+                ],
+                "children": [
+                 {
+                  "role": "AXGroup",
+                  "domClasses": [
+                   "DYfzY",
+                   "kssMZb"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "XEazBc",
+                 "adnwBd"
+                ],
+                "children": [
+                 {
+                  "role": "AXStaticText",
+                  "value": "Cleo Martin",
+                  "domClasses": [
+                   "notranslate"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXButton",
+                "description": "More options for Cleo Martin",
+                "domClasses": [
+                 "VfPpkd-Bz112c-LgbsSe"
+                ]
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "domClasses": [
+               "oZRSLe"
+              ],
+              "children": [
+               {
+                "role": "AXGroup",
+                "description": "Video",
+                "domClasses": [
+                 "koV58",
+                 "Zi94Db"
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "IisKdb",
+                 "kT2pkb",
+                 "sMVRZe"
+                ],
+                "children": [
+                 {
+                  "role": "AXGroup",
+                  "domClasses": [
+                   "DYfzY",
+                   "kssMZb"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXGroup",
+                "domClasses": [
+                 "XEazBc",
+                 "adnwBd"
+                ],
+                "children": [
+                 {
+                  "role": "AXStaticText",
+                  "value": "You",
+                  "domClasses": [
+                   "notranslate"
+                  ]
+                 }
+                ]
+               },
+               {
+                "role": "AXButton",
+                "description": "More options for You",
+                "domClasses": [
+                 "VfPpkd-Bz112c-LgbsSe"
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Call controls",
+          "domClasses": [
+           "Tmb7Fd"
+          ],
+          "children": [
+           {
+            "role": "AXButton",
+            "description": "Turn off microphone",
+            "domClasses": [
+             "VfPpkd-Bz112c-LgbsSe"
+            ]
+           },
+           {
+            "role": "AXButton",
+            "description": "Turn off camera",
+            "domClasses": [
+             "VfPpkd-Bz112c-LgbsSe"
+            ]
+           },
+           {
+            "role": "AXButton",
+            "description": "Raise hand"
+           },
+           {
+            "role": "AXButton",
+            "description": "Present now"
+           },
+           {
+            "role": "AXButton",
+            "description": "More options"
+           },
+           {
+            "role": "AXButton",
+            "description": "Leave call",
+            "domClasses": [
+             "VfPpkd-Bz112c-LgbsSe",
+             "gV3Svc"
+            ]
+           },
+           {
+            "role": "AXButton",
+            "description": "Meeting details"
+           },
+           {
+            "role": "AXButton",
+            "description": "Show everyone"
+           },
+           {
+            "role": "AXButton",
+            "description": "Chat with everyone"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

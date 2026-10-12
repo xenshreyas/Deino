@@ -210,6 +210,7 @@ impl World {
         let decided = Identification {
             named: Vec::new(),
             suggested,
+            ..Identification::default()
         };
         self.naming.apply(&meeting(), &decided).await.unwrap();
     }

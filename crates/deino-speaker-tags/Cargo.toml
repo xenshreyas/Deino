@@ -1,0 +1,40 @@
+[package]
+name = "deino-speaker-tags"
+version = "0.1.0"
+description = "Deino's speaker tags: who the meeting app shows as the active speaker, read through Accessibility while recording"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_speaker_tags.rs"
+
+[features]
+# Fakes of this crate's ports (`FakePlatform`, `ScriptedClock`, `MemorySink`)
+# for other crates' tests. Never enable outside dev-dependencies.
+test-support = []
+
+[dependencies]
+deino-domain.workspace = true
+log.workspace = true
+serde.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# The Accessibility API (AXUIElement), the same git rev and features as
+# deino-detect and the app, so all share one build.
+cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa" }
+# NSRunningApplication (which meeting apps run) and NSWorkspace (opening the
+# Accessibility page of System Settings). Versions match the objc2 set
+# already in the tree.
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSString", "NSURL"] }
+
+[dev-dependencies]
+deino-speaker-tags = { path = ".", features = ["test-support"] }
+# Reads the fixture dumps, and writes new ones in the capture tool.
+serde_json.workspace = true
+
+[lints]
+workspace = true

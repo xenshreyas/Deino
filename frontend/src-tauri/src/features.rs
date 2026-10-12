@@ -46,6 +46,7 @@ pub mod recording;
 pub mod search;
 pub mod secrets;
 pub mod settings;
+pub mod speaker_tags;
 pub mod speakers;
 pub mod system;
 pub mod tags;
@@ -89,6 +90,7 @@ pub(crate) fn builders() -> Vec<(&'static str, tauri_specta::Builder<tauri::Wry>
         (speakers::NAME, speakers::specta()),
         (transcript::NAME, transcript::specta()),
         (vocabulary::NAME, vocabulary::specta()),
+        (speaker_tags::NAME, speaker_tags::specta()),
     ];
     #[cfg(debug_assertions)]
     builders.push((_example::NAME, _example::specta()));

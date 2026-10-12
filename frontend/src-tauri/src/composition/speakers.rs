@@ -1,6 +1,7 @@
 //! Wiring for speaker naming and voice profiles (CAP-04): the services the
 //! `speakers` plugin calls, and the identifier the `identify_speakers`
-//! pipeline stage runs, all over the SQLite repositories.
+//! pipeline stage runs (with CAP-05's speaker tags as priors), all over the
+//! SQLite repositories.
 
 use std::sync::Arc;
 
@@ -12,7 +13,7 @@ use deino_core::segments::SqliteSegmentRepo;
 use deino_core::speakers::{SpeakerPorts, SpeakerService, SqliteNamingRepo};
 use deino_core::voiceprints::{SqliteVoiceprintRepo, VoiceprintDeps, VoiceprintService};
 use deino_db::Database;
-use deino_domain::Clock;
+use deino_domain::{Clock, SystemClock};
 use tauri::{Manager, Runtime};
 
 /// The speaker services, built once over one database.
@@ -62,7 +63,8 @@ impl Speakers {
 }
 
 /// The `identify_speakers` stage's identifier over `database`, with
-/// thresholds from `policy` (the settings in the app).
+/// thresholds from `policy` (the settings in the app) and the meeting app's
+/// speaker tags as priors (CAP-05).
 pub(crate) fn identifier(
     database: &Database,
     policy: Arc<dyn IdentifyPolicy>,
@@ -75,7 +77,8 @@ pub(crate) fn identifier(
         exemplars: Arc::new(SqliteVoiceprintRepo::new(database.clone())),
     };
     let writer = Arc::new(SqliteNamingRepo::new(database.clone()));
-    Arc::new(IdentifyService::new(ports, policy, writer))
+    let tags = super::speaker_tags::tag_priors(database, Arc::new(SystemClock));
+    Arc::new(IdentifyService::new(ports, policy, writer).with_speaker_tags(tags))
 }
 
 #[cfg(test)]

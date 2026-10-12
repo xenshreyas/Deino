@@ -58,6 +58,9 @@ deino-net = { path = "crates/deino-net" }
 deino-pipeline = { path = "crates/deino-pipeline" }
 deino-recording = { path = "crates/deino-recording" }
 deino-secrets = { path = "crates/deino-secrets" }
+# Speaker tags from the meeting app's window (CAP-05); tests add
+# `features = ["test-support"]` for its fakes.
+deino-speaker-tags = { path = "crates/deino-speaker-tags" }
 deino-stt = { path = "crates/deino-stt" }
 # Tests add `features = ["test-support"]` for its fakes; the app's debug-only
 # `dev` plugin uses only its fixture seeder.

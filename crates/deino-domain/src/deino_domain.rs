@@ -13,6 +13,8 @@
 //! - [`units`]: [`Millis`] and [`Seconds`], so durations carry their unit;
 //! - [`email`]: [`Email`], a normalised address (people, attendees, fixtures);
 //! - [`bundle_id`]: [`BundleId`], a macOS app identifier (meeting detection);
+//! - [`speaker_tag`]: [`CallApp`], [`DisplayName`] and [`TagSpan`], the names
+//!   a meeting app's window shows for its active speaker (CAP-05);
 //! - [`error`]: [`AppError`], the only error that crosses IPC, its
 //!   [`ErrorCode`] and the [`ErrorClass`] trait that module errors implement;
 //! - [`service`]: [`ServiceId`], every outside service Deino may talk to
@@ -40,6 +42,7 @@ pub mod id;
 pub mod integration;
 pub mod job;
 pub mod service;
+pub mod speaker_tag;
 pub mod status;
 pub mod units;
 pub mod zone;
@@ -70,6 +73,7 @@ pub use integration::{
 };
 pub use job::{JobStatus, RunOutcome};
 pub use service::{ServiceId, ServiceKind};
+pub use speaker_tag::{CallApp, DisplayName, InvalidDisplayName, MAX_DISPLAY_NAME_CHARS, TagSpan};
 pub use status::{InvalidTransition, MeetingEvent, MeetingStatus};
 pub use units::{Millis, Seconds};
 pub use zone::{FixedZone, LocalZone, NOON, SystemZone};

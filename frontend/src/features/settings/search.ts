@@ -14,6 +14,7 @@ export const settingsSectionSchema = z.enum([
   'transcription',
   'vocabulary',
   'people',
+  'speaker-tags',
   'ai',
   'models',
   'templates',

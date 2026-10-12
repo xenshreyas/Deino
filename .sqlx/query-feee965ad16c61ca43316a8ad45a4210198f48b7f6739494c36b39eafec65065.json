@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM speakers\n         WHERE id = ?1 AND meeting_id = ?2 AND person_id IS NULL AND is_me = 0\n           AND NOT EXISTS (SELECT 1 FROM transcript_segments WHERE speaker_id = ?1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "feee965ad16c61ca43316a8ad45a4210198f48b7f6739494c36b39eafec65065"
+}

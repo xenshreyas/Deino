@@ -459,3 +459,14 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+## Vexa (Google Meet speaker classes)
+
+Source: https://github.com/Vexa-ai/vexa (v0.12.18, `core/meetings/modules/gmeet-capture/`),
+Apache License 2.0.
+
+`crates/deino-speaker-tags/src/adapters/meet.rs` (CAP-05) uses the CSS class
+names Vexa's Meet speaker detection lists for a speaking tile (`Oaajhc`,
+`HX2H7`, `wEsLMd`, `OgVli` and the semantic `speaking`, `active-speaker`,
+`speaker-active`, `speaking-indicator`) and its observation that a tile's
+name is a `span.notranslate`. No Vexa code is included; Deino reads these
+classes through Chromium's Accessibility `AXDOMClassList` instead of the DOM.

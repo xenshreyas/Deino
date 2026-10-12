@@ -295,4 +295,6 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "import_sample",
         ],
     ),
+    // ── CAP-05 speaker tags (features/speaker_tags.rs) ──
+    ("speaker-tags", &["status", "open_accessibility_settings"]),
 ];

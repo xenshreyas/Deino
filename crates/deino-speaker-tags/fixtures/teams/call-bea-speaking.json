@@ -1,0 +1,414 @@
+[
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Chat | Microsoft Teams",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXScrollArea",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Chat | Microsoft Teams",
+        "children": [
+         {
+          "role": "AXGroup",
+          "description": "App bar",
+          "children": [
+           {
+            "role": "AXButton",
+            "description": "Activity"
+           },
+           {
+            "role": "AXButton",
+            "description": "Chat"
+           },
+           {
+            "role": "AXButton",
+            "description": "Teams"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calendar"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calls"
+           },
+           {
+            "role": "AXButton",
+            "description": "OneDrive"
+           },
+           {
+            "role": "AXButton",
+            "description": "Apps"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Search",
+          "children": [
+           {
+            "role": "AXTextField",
+            "description": "Search"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Chat list",
+          "children": [
+           {
+            "role": "AXGroup",
+            "description": "Alex Chen, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Alex Chen"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Bea Ruiz, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Bea Ruiz"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Design review, last message Yesterday",
+            "children": [
+             {
+              "role": "AXStaticText",
+              "value": "Design review"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Yesterday"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Compose",
+          "children": [
+           {
+            "role": "AXTextArea",
+            "description": "Type a message"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "role": "AXWindow",
+  "subrole": "AXStandardWindow",
+  "title": "Weekly sync | Microsoft Teams",
+  "children": [
+   {
+    "role": "AXButton",
+    "subrole": "AXCloseButton",
+    "description": "close button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXFullScreenButton",
+    "description": "full screen button"
+   },
+   {
+    "role": "AXButton",
+    "subrole": "AXMinimizeButton",
+    "description": "minimize button"
+   },
+   {
+    "role": "AXGroup",
+    "children": [
+     {
+      "role": "AXScrollArea",
+      "children": [
+       {
+        "role": "AXWebArea",
+        "title": "Weekly sync | Microsoft Teams",
+        "children": [
+         {
+          "role": "AXGroup",
+          "description": "App bar",
+          "children": [
+           {
+            "role": "AXButton",
+            "description": "Activity"
+           },
+           {
+            "role": "AXButton",
+            "description": "Chat"
+           },
+           {
+            "role": "AXButton",
+            "description": "Teams"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calendar"
+           },
+           {
+            "role": "AXButton",
+            "description": "Calls"
+           },
+           {
+            "role": "AXButton",
+            "description": "OneDrive"
+           },
+           {
+            "role": "AXButton",
+            "description": "Apps"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Search",
+          "children": [
+           {
+            "role": "AXTextField",
+            "description": "Search"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "children": [
+           {
+            "role": "AXStaticText",
+            "value": "Weekly sync"
+           },
+           {
+            "role": "AXStaticText",
+            "value": "12:04"
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Meeting stage",
+          "children": [
+           {
+            "role": "AXGroup",
+            "description": "Alex Chen (Organizer), Unmuted, Video on",
+            "children": [
+             {
+              "role": "AXGroup",
+              "description": "Video"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Alex Chen (Organizer)"
+             },
+             {
+              "role": "AXImage"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Bea Ruiz, Unmuted, Video off, Speaking",
+            "children": [
+             {
+              "role": "AXGroup",
+              "description": "Video"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Bea Ruiz"
+             },
+             {
+              "role": "AXImage"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Dev Patel (External), Muted, Video on",
+            "children": [
+             {
+              "role": "AXGroup",
+              "description": "Video"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Dev Patel (External)"
+             },
+             {
+              "role": "AXImage",
+              "description": "Muted"
+             }
+            ]
+           },
+           {
+            "role": "AXGroup",
+            "description": "Shreyas (You), Unmuted, Video on",
+            "children": [
+             {
+              "role": "AXGroup",
+              "description": "Video"
+             },
+             {
+              "role": "AXStaticText",
+              "value": "Shreyas (You)"
+             },
+             {
+              "role": "AXImage"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "People pane",
+          "children": [
+           {
+            "role": "AXStaticText",
+            "value": "Participants"
+           },
+           {
+            "role": "AXGroup",
+            "description": "In this meeting (4)",
+            "children": [
+             {
+              "role": "AXGroup",
+              "description": "Alex Chen (Organizer), Unmuted, In this meeting",
+              "children": [
+               {
+                "role": "AXStaticText",
+                "value": "Alex Chen (Organizer)"
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "description": "Bea Ruiz, Unmuted, In this meeting",
+              "children": [
+               {
+                "role": "AXStaticText",
+                "value": "Bea Ruiz"
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "description": "Dev Patel (External), Muted, In this meeting",
+              "children": [
+               {
+                "role": "AXStaticText",
+                "value": "Dev Patel (External)"
+               }
+              ]
+             },
+             {
+              "role": "AXGroup",
+              "description": "Shreyas (You), Unmuted, In this meeting",
+              "children": [
+               {
+                "role": "AXStaticText",
+                "value": "Shreyas (You)"
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "role": "AXGroup",
+          "description": "Meeting controls",
+          "children": [
+           {
+            "role": "AXButton",
+            "description": "Chat"
+           },
+           {
+            "role": "AXButton",
+            "description": "People"
+           },
+           {
+            "role": "AXButton",
+            "description": "Raise"
+           },
+           {
+            "role": "AXButton",
+            "description": "React"
+           },
+           {
+            "role": "AXButton",
+            "description": "View"
+           },
+           {
+            "role": "AXButton",
+            "description": "More"
+           },
+           {
+            "role": "AXButton",
+            "description": "Camera"
+           },
+           {
+            "role": "AXButton",
+            "description": "Mic"
+           },
+           {
+            "role": "AXButton",
+            "description": "Share"
+           },
+           {
+            "role": "AXButton",
+            "description": "Leave (⌘⇧H)"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]
