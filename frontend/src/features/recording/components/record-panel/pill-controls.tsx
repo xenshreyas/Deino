@@ -1,13 +1,13 @@
 /**
  * What the pill reveals on hover (ui.md, Record pill, Expanded): pause or
- * resume, stop, the microphone menu, the call-audio switch and "Open
- * notes"; and, while auto-stop counts down, "Keep recording" instead.
+ * resume, stop, the microphone menu, the screen picker (CAP-09), the
+ * call-audio switch and "Open notes"; and, while auto-stop counts down, "Keep recording" instead.
  * Presentational: props in, events out.
  */
 import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
 import { IconButton } from '@/ui/icon-button';
-import { Mic, NotebookPen, Pause, Play, Volume2, VolumeX } from '@/ui/icons';
+import { Mic, Monitor, NotebookPen, Pause, Play, Volume2, VolumeX } from '@/ui/icons';
 import { Hint } from '@/ui/tooltip';
 
 import { panelCopy } from '../../copy';
@@ -18,6 +18,8 @@ export interface PillActions {
   onResume: () => void;
   onStop: () => void;
   onMicrophone: () => void;
+  /** The window or screen picker (CAP-09). */
+  onScreen: () => void;
   onSystemAudio: () => void;
   onOpenNotes: () => void;
   onKeep: () => void;
@@ -63,6 +65,7 @@ export function PillControls({ paused, systemAudio, actions }: PillControlsProps
       />
       <StopButton onStop={actions.onStop} />
       <IconButton icon={Mic} label={panelCopy.microphone} onClick={actions.onMicrophone} />
+      <IconButton icon={Monitor} label={panelCopy.screen} onClick={actions.onScreen} />
       <IconButton
         icon={systemAudio ? Volume2 : VolumeX}
         label={systemAudio ? panelCopy.systemAudioOn : panelCopy.systemAudioOff}

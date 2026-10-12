@@ -86,6 +86,34 @@ function VideoRows({
   );
 }
 
+/** "Keep snapshots", and describing them with Claude (off by default). */
+function SnapshotRows({ screen, saving, onChange }: CaptureCardProps) {
+  return (
+    <>
+      <SwitchRow
+        id="screen-snapshots"
+        label={copy.snapshots}
+        description={copy.snapshotsHint}
+        checked={screen.snapshots}
+        disabled={saving || !screen.detectedMeetings}
+        onChange={(snapshots) => {
+          onChange({ snapshots });
+        }}
+      />
+      <SwitchRow
+        id="screen-describe"
+        label={copy.describe}
+        description={copy.describeHint}
+        checked={screen.describeSnapshots}
+        disabled={saving || !screen.snapshots}
+        onChange={(describeSnapshots) => {
+          onChange({ describeSnapshots });
+        }}
+      />
+    </>
+  );
+}
+
 /** The capture settings. */
 export function CaptureCard({ screen, saving, onChange }: CaptureCardProps) {
   const on = screen.detectedMeetings;
@@ -102,16 +130,7 @@ export function CaptureCard({ screen, saving, onChange }: CaptureCardProps) {
             onChange({ detectedMeetings });
           }}
         />
-        <SwitchRow
-          id="screen-snapshots"
-          label={copy.snapshots}
-          description={copy.snapshotsHint}
-          checked={screen.snapshots}
-          disabled={saving || !on}
-          onChange={(snapshots) => {
-            onChange({ snapshots });
-          }}
-        />
+        <SnapshotRows screen={screen} saving={saving} onChange={onChange} />
         <VideoRows screen={screen} disabled={saving || !on} onChange={onChange} />
       </SettingsCard>
       {on ? <p className="px-1 text-xs text-fg-muted">{copy.consent}</p> : null}

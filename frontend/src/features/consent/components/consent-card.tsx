@@ -8,17 +8,31 @@ import { Button } from '@/ui/button';
 
 import { consentCopy } from '../copy';
 
-const copy = consentCopy.reminder;
+/** The card's words. */
+export interface ReminderCopy {
+  label: string;
+  title: string;
+  body: string;
+  dismiss: string;
+  never: string;
+}
 
 /** Props of {@link ConsentCard}. */
 export interface ConsentCardProps {
+  /** The words; CAP-13's consent reminder by default. */
+  copy?: ReminderCopy;
   busy: boolean;
   onDismiss: () => void;
   onNever: () => void;
 }
 
 /** The reminder, with its two answers. */
-export function ConsentCard({ busy, onDismiss, onNever }: ConsentCardProps) {
+export function ConsentCard({
+  copy = consentCopy.reminder,
+  busy,
+  onDismiss,
+  onNever,
+}: ConsentCardProps) {
   return (
     <section
       aria-label={copy.label}
