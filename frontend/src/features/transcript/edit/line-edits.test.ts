@@ -14,7 +14,7 @@ const transcript = vi.hoisted(() => ({
   edit: vi.fn<typeof Generated.commands.edit>(),
   delete: vi.fn<typeof Generated.commands.delete>(),
   restore: vi.fn<typeof Generated.commands.restore>(),
-  previewReplace: vi.fn<typeof Generated.commands.previewReplace>(),
+  preview: vi.fn<typeof Generated.commands.preview>(),
   replace: vi.fn<typeof Generated.commands.replace>(),
 }));
 vi.mock('@/lib/ipc/generated/transcript', () => ({ commands: transcript }));

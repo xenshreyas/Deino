@@ -23,8 +23,7 @@ export const transcriptApi = {
   /** Brings a deleted line back. */
   restore: (segmentId: SegmentId): Promise<null> => unwrap(commands.restore(segmentId)),
   /** What a find and replace would change, with counts per meeting. */
-  previewReplace: (request: ReplaceRequest): Promise<ReplacePreview> =>
-    unwrap(commands.previewReplace(request)),
+  preview: (request: ReplaceRequest): Promise<ReplacePreview> => unwrap(commands.preview(request)),
   /** Replaces every match, in one transaction. */
   replace: (request: ReplaceRequest, replacement: string): Promise<ReplaceOutcome> =>
     unwrap(commands.replace(request, replacement)),

@@ -33,7 +33,7 @@ export function replaceRequest(
 export const replacePreviewQuery = (request: ReplaceRequest) =>
   queryOptions({
     queryKey: [...transcriptKeys.all, 'replace-preview', request] as const,
-    queryFn: () => transcriptApi.previewReplace(request),
+    queryFn: () => transcriptApi.preview(request),
     meta: { tables: PREVIEW_TABLES },
   });
 

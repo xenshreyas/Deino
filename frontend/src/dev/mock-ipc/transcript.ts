@@ -30,7 +30,7 @@ export const commands = {
     await latency();
     return setDeleted(segmentId, false);
   },
-  async previewReplace(request) {
+  async preview(request) {
     await latency();
     return previewReplace(request);
   },

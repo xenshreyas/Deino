@@ -56,9 +56,9 @@ async restore(segmentId: SegmentId) : Promise<Result<null, AppError>> {
 /**
  * What replacing `request.find` would change: matches, lines and meetings.
  */
-async previewReplace(request: ReplaceRequest) : Promise<Result<ReplacePreview, AppError>> {
+async preview(request: ReplaceRequest) : Promise<Result<ReplacePreview, AppError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|preview_replace", { request }) };
+    return { status: "ok", data: await TAURI_INVOKE("plugin:transcript|preview", { request }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

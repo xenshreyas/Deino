@@ -1,4 +1,4 @@
-//! Wires the meeting player (TRN-03, ADR 0038): `PlayerService` over the
+//! Wires the meeting player (TRN-03, ADR 0040): `PlayerService` over the
 //! meetings, the recordings folder (the same folder the asset protocol is
 //! scoped to) and the Rust-side save dialog.
 

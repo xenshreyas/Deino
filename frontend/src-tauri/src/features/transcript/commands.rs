@@ -19,7 +19,7 @@ use crate::error::IntoIpc;
 
 /// The plugin's commands, collected here so they can stay private.
 pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
-    tauri_specta::collect_commands![get, edit, delete, restore, preview_replace, replace]
+    tauri_specta::collect_commands![get, edit, delete, restore, preview, replace]
 }
 
 /// The saved transcript of `meeting_id`: its segments in spoken order,
@@ -70,7 +70,7 @@ async fn restore(
 /// What replacing `request.find` would change: matches, lines and meetings.
 #[tauri::command]
 #[specta::specta]
-async fn preview_replace(
+async fn preview(
     edits: State<'_, Arc<TranscriptEditService>>,
     request: ReplaceRequest,
 ) -> Result<ReplacePreview, AppError> {

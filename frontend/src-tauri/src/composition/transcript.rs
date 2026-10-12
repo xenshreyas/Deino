@@ -2,7 +2,7 @@
 //! `deino-recording`'s `OfflineTranscriber` (the finished tracks decoded
 //! with `ExtAudioFile`, the batch engine chosen in Settings), its re-pass
 //! setting, and `vocab_fixups` (TRN-05) over the vocabulary's fixups; and
-//! the user's transcript edits (TRN-02, ADR 0038), re-indexed through the
+//! the user's transcript edits (TRN-02, ADR 0040), re-indexed through the
 //! `ReindexQueue` that `search::attach_gateway_and_search` manages.
 
 use std::sync::Arc;

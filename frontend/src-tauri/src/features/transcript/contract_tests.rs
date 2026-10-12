@@ -131,10 +131,10 @@ fn delete_and_restore_take_a_segment_id_and_return_nothing() {
 }
 
 #[test]
-fn preview_replace_takes_a_tagged_scope_and_counts_per_meeting() {
+fn preview_takes_a_tagged_scope_and_counts_per_meeting() {
     let request = json!({ "find": "monday", "scope": scope(), "matchCase": false });
 
-    let preview = calls(&[("preview_replace", json!({ "request": request }))]).unwrap();
+    let preview = calls(&[("preview", json!({ "request": request }))]).unwrap();
 
     assert_eq!(
         preview,

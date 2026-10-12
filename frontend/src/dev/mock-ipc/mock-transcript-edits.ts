@@ -118,7 +118,7 @@ function plan(request: Generated.ReplaceRequest, by: string) {
   );
 }
 
-/** `transcript|preview_replace`. */
+/** `transcript|preview`. */
 export function previewReplace(request: Generated.ReplaceRequest) {
   if (request.find.trim() === '')
     return failure<Generated.ReplacePreview>({ code: 'invalid', message: 'type the text to find' });

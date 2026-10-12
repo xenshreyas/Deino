@@ -14,7 +14,7 @@ const transcript = vi.hoisted(() => ({
   edit: vi.fn<typeof Generated.commands.edit>(),
   delete: vi.fn<typeof Generated.commands.delete>(),
   restore: vi.fn<typeof Generated.commands.restore>(),
-  previewReplace: vi.fn<typeof Generated.commands.previewReplace>(),
+  preview: vi.fn<typeof Generated.commands.preview>(),
   replace: vi.fn<typeof Generated.commands.replace>(),
 }));
 vi.mock('@/lib/ipc/generated/transcript', () => ({ commands: transcript }));
@@ -30,7 +30,7 @@ function renderBar(find: string) {
 }
 
 beforeEach(() => {
-  transcript.previewReplace.mockResolvedValue({
+  transcript.preview.mockResolvedValue({
     status: 'ok',
     data: {
       matches: 3,
@@ -58,7 +58,7 @@ describe('ReplaceBar', () => {
       matchCase: false,
       scope: { kind: 'meeting', meetingId: MEETING },
     };
-    expect(transcript.previewReplace).toHaveBeenCalledWith(request);
+    expect(transcript.preview).toHaveBeenCalledWith(request);
     expect(transcript.replace).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Replace 3 matches' }));
@@ -75,7 +75,7 @@ describe('ReplaceBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Replace all' }));
 
     expect(await screen.findByText(/across 1 meeting/)).toBeTruthy();
-    expect(transcript.previewReplace).toHaveBeenLastCalledWith({
+    expect(transcript.preview).toHaveBeenLastCalledWith({
       find: 'Dino',
       matchCase: true,
       scope: { kind: 'all' },

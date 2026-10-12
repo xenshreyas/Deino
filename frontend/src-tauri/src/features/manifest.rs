@@ -10,8 +10,9 @@
 //
 // Append-only: adding a feature is one line here, one `.plugin(..)` call in
 // `lib.rs`, one entry in `features::builders()` and one `"<name>:default"`
-// entry in `capabilities/default.json`.
+// entry in `capabilities/default.json` (long command lists: `manifest_commands.rs`).
 
+include!("manifest_commands.rs");
 /// Every inline feature plugin as `(plugin name, command names)`.
 ///
 /// The plugin name must equal the feature module's `NAME`, and the command
@@ -283,19 +284,8 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "deliveries",
         ],
     ),
-    // ── TRN-01 / TRN-02 transcript view and edits (features/transcript.rs) ──
-    (
-        "transcript",
-        &[
-            "get",
-            "edit",
-            "delete",
-            "restore",
-            "preview_replace",
-            "replace",
-        ],
-    ),
-    // ── TRN-03 meeting player (features/player.rs) ──
+    // ── TRN-01/02 transcript view and edits, TRN-03 player (features/{transcript,player}.rs) ──
+    ("transcript", TRANSCRIPT_COMMANDS),
     ("player", &["media", "download"]),
     // ── FND-11 onboarding: the permissions it asks for ──
     (
