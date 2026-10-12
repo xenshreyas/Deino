@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (\n                   SELECT 1 FROM watched_files\n                   WHERE folder_id = ?1 AND path = ?2 AND size_bytes = ?3 AND modified_ms = ?4\n               ) AS \"handled!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "handled!: bool",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8895cb22a39a6c2af6bf77c283ba55fa948102e420f7d5f896648972c63b0e28"
+}

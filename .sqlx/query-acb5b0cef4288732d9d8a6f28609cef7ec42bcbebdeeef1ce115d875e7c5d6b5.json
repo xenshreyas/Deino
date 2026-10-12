@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE watched_files SET dismissed_at = ?1\n             WHERE id = ?2 AND failure IS NOT NULL AND dismissed_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "acb5b0cef4288732d9d8a6f28609cef7ec42bcbebdeeef1ce115d875e7c5d6b5"
+}
