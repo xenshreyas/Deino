@@ -97,6 +97,7 @@ const DEFAULT_SETTINGS: Settings = {
     microsoft: { clientId: '' },
   },
   integrations: { apps: {} },
+  automations: { shellScripts: false },
   ui: {
     theme: 'system',
     showConfidenceIndicator: true,

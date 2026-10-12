@@ -15,6 +15,7 @@ import {
 } from './long-meeting';
 import { MockDatabase } from './mock-database';
 import { MockEnhanced } from './mock-enhanced';
+import { MockAutomations } from './mock-automations';
 import { MockEntities } from './mock-entities';
 import { MockEntityPages } from './mock-entity-pages';
 import { MockEventLinks } from './mock-event-links';
@@ -83,3 +84,6 @@ export const mockEntityPages = new MockEntityPages(mockEntities, fixtureMeetings
 
 /** The mock `insight_defs` and `insight_results` tables (AI-06). */
 export const mockInsights = new MockInsights(fixtureMeetings, committed);
+
+/** The mock `automations` and `automation_runs` tables (AUT-01). */
+export const mockAutomations = new MockAutomations(fixtureMeetings, committed);

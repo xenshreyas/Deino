@@ -1,5 +1,6 @@
 import { format, isSameDay, subDays } from 'date-fns';
 
+import { MeetingAutomationsMenu } from '@/features/automations';
 import { MeetingCalendarChips } from '@/features/event-links';
 import { MeetingAttendees } from '@/features/entities';
 import { MeetingFolders } from '@/features/folders';
@@ -43,7 +44,13 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
   }
   return (
     <header className="group/header flex flex-col gap-2 pt-8">
-      <MeetingTitle meeting={meeting.data} />
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <MeetingTitle meeting={meeting.data} />
+        </div>
+        {/* AUT-01: the meeting's ⋯ menu, Automations first. */}
+        <MeetingAutomationsMenu meetingId={meetingId} />
+      </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <MetaChip icon={Calendar}>{meetingDateLabel(meeting.data.createdAt, new Date())}</MetaChip>
         <MeetingCalendarChips meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />

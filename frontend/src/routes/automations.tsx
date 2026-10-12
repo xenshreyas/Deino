@@ -1,10 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ComingSoonScreen } from '@/features/shell';
+import { automationListQuery, AutomationsScreen } from '@/features/automations';
+import { automationsSearchSchema } from '@/features/automations/search';
 
-/** `/automations`: Automations, a placeholder until its feature card ships (see `nav.ts`). */
-export const Route = createFileRoute('/automations')({ component: Placeholder });
+/** `/automations?automation=<id|new>`: every automation, one builder at a time. */
+export const Route = createFileRoute('/automations')({
+  validateSearch: automationsSearchSchema,
+  // Warm the list; the page shows its own loading state.
+  loader: async ({ context }) => {
+    await context.queryClient.query(automationListQuery()).catch(() => undefined);
+  },
+  component: AutomationsRoute,
+});
 
-function Placeholder() {
-  return <ComingSoonScreen navId="automations" />;
+function AutomationsRoute() {
+  const { automation } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  return (
+    <AutomationsScreen
+      selected={automation}
+      onSelect={(selection) => void navigate({ search: { automation: selection }, replace: true })}
+    />
+  );
 }

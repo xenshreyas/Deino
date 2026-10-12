@@ -1,0 +1,48 @@
+/** Visible strings of the condition editor. */
+import type { Comparison, ConditionKind } from './types';
+
+export const conditionsCopy = {
+  hint: 'All conditions in a group must match; any group may.',
+  addCondition: 'Add condition',
+  addGroup: 'Or another group',
+  or: 'or',
+  removeCondition: 'Remove condition',
+  choose: 'Choose…',
+  kinds: {
+    title_contains: 'Title contains',
+    title_lacks: 'Title does not contain',
+    title_is: 'Title is',
+    title_is_not: 'Title is not',
+    title_matches: 'Title matches',
+    external: 'Attendees',
+    attendee_domain: 'Attendee from',
+    invitee_email: 'Invitee email is',
+    domains_are_all: 'Invitee domains are all',
+    domains_not_all: 'Invitee domains are not all',
+    invitee_count: 'Number of invitees',
+    has_participant: 'Participant includes',
+    lacks_participant: 'Participant excludes',
+    has_tag: 'Has tag',
+    lacks_tag: 'Does not have tag',
+    in_folder: 'In folder',
+    template_is: 'Template is',
+    duration_over: 'Longer than',
+    calendar_is: 'Calendar is',
+  } satisfies Record<ConditionKind, string>,
+  comparisons: {
+    equal: 'is',
+    greater: 'more than',
+    less: 'fewer than',
+  } satisfies Record<Comparison, string>,
+  externalYes: 'include someone external',
+  externalNo: 'are all internal',
+  placeholders: {
+    title: 'interview',
+    pattern: '^1:1 ',
+    domain: 'acme.com',
+    domains: 'acme.com, acme.io',
+    email: 'name@acme.com',
+  },
+  minutes: 'minutes',
+  count: 'Count',
+} as const;
