@@ -34,7 +34,7 @@ pub const VISIBILITY_EVERY: Millis = Millis(2_000);
 pub const VIDEO_PART: &str = "video.part.mp4";
 /// The finished video, which the `screen_video` stage gives sound.
 pub const VIDEO_FILE: &str = "video.mp4";
-/// The folder of snapshot PNGs inside the meeting's recording folder.
+/// The folder of snapshot PNG files inside the meeting's recording folder.
 pub const SNAPSHOTS: &str = "snapshots";
 /// The log target.
 const TARGET: &str = "deino_screen";
