@@ -1,11 +1,13 @@
 /**
  * Settings → Advanced → Network services (UX-14): one card per kind, one
  * row per service with its hosts and an on/off switch. Only the services
- * in use show (ones that sent something, or that the user switched off);
- * the full allow-list waits behind "Show all services".
+ * in use show (ones that sent something, or that the user, or a connection
+ * they made, switched); the full allow-list waits behind "Show all
+ * services".
  */
 import { useState } from 'react';
 
+import { useSettings } from '@/features/settings';
 import { Button } from '@/ui/button';
 import { Switch } from '@/ui/controls';
 import { SettingsCard, SettingsSection } from '@/ui/settings-section';
@@ -87,14 +89,22 @@ export function ServiceGroups({ services, onToggle, busy = false }: ServiceGroup
 
 /**
  * The services in use: any that appears in the recent activity log, and any
- * the user switched off (so it can be switched back on).
+ * with a saved switch (`network.services`: the user, or a connection they
+ * made, turned it on or off). Services nobody set up stay out.
  */
 export function servicesInUse(
   services: readonly ServiceStatus[],
   log: readonly EgressEntry[],
+  switched: readonly ServiceId[],
 ): ServiceStatus[] {
-  const used = new Set(log.map((entry) => entry.service));
-  return services.filter((service) => !service.enabled || used.has(service.id));
+  const used = new Set<ServiceId>([...log.map((entry) => entry.service), ...switched]);
+  return services.filter((service) => used.has(service.id));
+}
+
+/** Which of `services` have a saved switch. */
+function useSwitchedServices(services: readonly ServiceStatus[]): ServiceId[] {
+  const saved = useSettings().data?.network.services ?? {};
+  return services.filter((service) => saved[service.id] !== undefined).map((s) => s.id);
 }
 
 /**
@@ -105,7 +115,7 @@ function VisibleServices({ services, onToggle, busy = false }: ServiceGroupsProp
   const [showAll, setShowAll] = useState(false);
   const [touched, setTouched] = useState<ReadonlySet<ServiceId>>(new Set());
   const log = useEgressLog();
-  const inUse = servicesInUse(services, log.data ?? []);
+  const inUse = servicesInUse(services, log.data ?? [], useSwitchedServices(services));
   const shown = showAll
     ? services
     : services.filter((service) => touched.has(service.id) || inUse.includes(service));

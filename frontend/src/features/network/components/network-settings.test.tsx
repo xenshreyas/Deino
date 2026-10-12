@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as Generated from '@/lib/ipc/generated/network';
+import { DEFAULT_SETTINGS } from '@/lib/ipc/generated/settings-defaults';
 import { createQueryClient } from '@/lib/ipc';
 
 import { NetworkSettings } from './network-settings';
@@ -16,6 +17,10 @@ const network = vi.hoisted(() => ({
   egressLog: vi.fn<typeof Generated.commands.egressLog>(),
 }));
 vi.mock('@/lib/ipc/generated/network', () => ({ commands: network }));
+
+// Slack has a saved switch (off); Groq was never set up.
+const settings = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/lib/ipc/generated/settings', () => ({ commands: settings, events: {} }));
 
 const ANTHROPIC: Generated.ServiceStatus = {
   id: 'llm_anthropic',
@@ -62,15 +67,23 @@ function renderServices() {
 }
 
 describe('servicesInUse', () => {
-  it('keeps services that sent something or that were switched off', () => {
-    expect(servicesInUse([ANTHROPIC, SLACK, GROQ], [REQUEST])).toEqual([ANTHROPIC, SLACK]);
-    expect(servicesInUse([GROQ], [])).toEqual([]);
+  it('keeps services that sent something or have a saved switch', () => {
+    expect(servicesInUse([ANTHROPIC, SLACK, GROQ], [REQUEST], ['slack'])).toEqual([
+      ANTHROPIC,
+      SLACK,
+    ]);
+    expect(servicesInUse([SLACK, GROQ], [], [])).toEqual([]);
   });
 });
 
 describe('Network services', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const saved = structuredClone(DEFAULT_SETTINGS);
+    settings.get.mockResolvedValue({
+      status: 'ok',
+      data: { ...saved, network: { ...saved.network, services: { slack: false } } },
+    });
     network.services.mockResolvedValue({ status: 'ok', data: [ANTHROPIC, SLACK, GROQ] });
     network.egressLog.mockResolvedValue({ status: 'ok', data: [REQUEST] });
   });
@@ -79,9 +92,8 @@ describe('Network services', () => {
     renderServices();
 
     expect(await screen.findByRole('switch', { name: 'Allow Anthropic' })).toBeTruthy();
-    await waitFor(() => {
-      expect(screen.queryByRole('switch', { name: 'Allow Groq' })).toBeNull();
-    });
+    expect(await screen.findByRole('switch', { name: 'Allow Slack' })).toBeTruthy();
+    expect(screen.queryByRole('switch', { name: 'Allow Groq' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Show all 3 services' }));
 
     expect(screen.getByRole('switch', { name: 'Allow Groq' })).toBeTruthy();

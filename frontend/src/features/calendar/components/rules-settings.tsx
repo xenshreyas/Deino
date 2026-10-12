@@ -14,6 +14,7 @@ import {
   useSettings,
 } from '@/features/settings';
 import { Switch } from '@/ui/controls';
+import { MoreOptions } from '@/ui/more-options';
 import { SettingsCard, SettingsRow, SettingsSection } from '@/ui/settings-section';
 import { SkeletonText } from '@/ui/skeleton';
 
@@ -79,7 +80,7 @@ function AutoRecordCard({ rules }: { rules: AutoRecord }) {
   );
 }
 
-/** "Auto-record", once the settings are loaded. */
+/** "Auto-record", its four rules under a closed disclosure (UX-15). */
 export function AutoRecordSection() {
   const settings = useSettings();
   const rules = settings.data?.calendar.autoRecord;
@@ -88,7 +89,13 @@ export function AutoRecordSection() {
       title={rulesCopy.autoRecord.title}
       description={rulesCopy.autoRecord.description}
     >
-      {rules === undefined ? <SkeletonText lines={4} /> : <AutoRecordCard rules={rules} />}
+      {rules === undefined ? (
+        <SkeletonText lines={1} />
+      ) : (
+        <MoreOptions label={rulesCopy.autoRecord.choose}>
+          <AutoRecordCard rules={rules} />
+        </MoreOptions>
+      )}
     </SettingsSection>
   );
 }

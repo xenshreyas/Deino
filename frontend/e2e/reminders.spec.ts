@@ -38,6 +38,7 @@ test('Settings → Calendar has the auto-record switches, General the per-calend
   await page.goto('/settings');
   const nav = page.getByRole('navigation', { name: 'Settings pages' });
   await nav.getByRole('link', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Choose which meetings' }).click();
 
   const external = page.getByRole('switch', { name: 'External meetings' });
   await external.scrollIntoViewIfNeeded();
