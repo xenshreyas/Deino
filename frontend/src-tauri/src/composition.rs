@@ -56,6 +56,7 @@ mod player;
 pub(crate) mod privacy;
 mod recording;
 mod retention;
+mod screen;
 mod search;
 mod services;
 mod settings;

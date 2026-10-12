@@ -88,6 +88,10 @@ export const settingsCopy = {
       label: 'Consent',
       description: 'A reminder to tell people, and an automatic message in the meeting chat.',
     },
+    screen: {
+      label: 'Screen capture',
+      description: 'Snapshots and video of the meeting window, kept on this Mac.',
+    },
     ai: {
       label: 'AI models',
       description: 'Which provider and model serve each AI task, and a quick test for each.',

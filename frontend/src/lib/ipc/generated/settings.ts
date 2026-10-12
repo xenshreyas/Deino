@@ -1146,6 +1146,28 @@ export type Route =
  */
 "embed"
 /**
+ * The screen section of `Settings`.
+ */
+export type ScreenSettings = { 
+/**
+ * Capture the meeting window when a detected meeting is recorded.
+ * Off by default: it needs Screen Recording and the other side's
+ * consent.
+ */
+detectedMeetings: boolean; 
+/**
+ * Record the window as a video beside the audio.
+ */
+video: boolean; 
+/**
+ * The video's frames per second (1–30; 1 suits a shared screen).
+ */
+videoFps: number; 
+/**
+ * Keep a snapshot when the shared screen changes (every 10 s at most).
+ */
+snapshots: boolean }
+/**
  * An outside service. Stored in `egress_log.service`; keys the
  * `network.services` switches in the settings.
  */
@@ -1338,6 +1360,10 @@ calendar: CalendarSettings;
  * Pre-meeting briefs (NOT-08).
  */
 briefs: BriefSettings; 
+/**
+ * Screen capture of detected meetings (CAP-09).
+ */
+screen: ScreenSettings; 
 /**
  * The user's own OAuth apps for integrations (INT-00).
  */

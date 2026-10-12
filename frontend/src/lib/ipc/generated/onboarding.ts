@@ -150,7 +150,12 @@ export type PermissionKind =
  * Accessibility: speaker names from the meeting app's window (CAP-05)
  * and browser meeting URLs (CAP-06).
  */
-"accessibility"
+"accessibility" | 
+/**
+ * Screen Recording: the meeting window's video and snapshots (CAP-09),
+ * only used once the user turns screen capture on.
+ */
+"screen_recording"
 /**
  * Where a permission stands.
  */

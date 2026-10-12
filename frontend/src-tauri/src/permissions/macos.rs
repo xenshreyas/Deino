@@ -1,5 +1,6 @@
 //! macOS permissions: `AVFoundation` for the microphone, the process-tap
-//! probe for system audio, `AXIsProcessTrusted` for Accessibility, and the
+//! probe for system audio, `AXIsProcessTrusted` for Accessibility,
+//! `CGPreflightScreenCaptureAccess` for Screen Recording (CAP-09), and the
 //! System Settings privacy pages (§3C).
 
 use cidre::av::{self, capture::AuthorizationStatus};
@@ -69,11 +70,26 @@ pub(super) fn request_accessibility() -> PermissionState {
     trust(cidre::ax::is_process_trusted_with_prompt(true))
 }
 
+/// Whether Screen Recording is granted (`CGPreflightScreenCaptureAccess`,
+/// which never prompts). macOS cannot tell "never asked" from "refused".
+pub(super) fn screen_recording() -> PermissionState {
+    trust(deino_screen::platform().is_some_and(|platform| platform.permission.granted()))
+}
+
+/// Asks for Screen Recording from the user's click (CAP-09): the macOS
+/// prompt the first time, which leads to System Settings.
+pub(super) fn request_screen_recording() -> PermissionState {
+    trust(deino_screen::request_screen_recording())
+}
+
 /// Opens the System Settings page where `kind` is granted.
 pub(super) fn open_settings(kind: PermissionKind) -> bool {
     let page = match kind {
         PermissionKind::Microphone => format!("{PRIVACY}Privacy_Microphone"),
-        PermissionKind::SystemAudio => format!("{PRIVACY}Privacy_ScreenCapture"),
+        // Both live on "Screen & System Audio Recording".
+        PermissionKind::SystemAudio | PermissionKind::ScreenRecording => {
+            format!("{PRIVACY}Privacy_ScreenCapture")
+        }
         PermissionKind::Accessibility => format!("{PRIVACY}Privacy_Accessibility"),
         PermissionKind::Notifications => NOTIFICATIONS_PAGE.to_owned(),
     };

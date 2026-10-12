@@ -107,6 +107,7 @@ pub mod recipes;
 pub mod redaction;
 pub mod retention;
 pub mod sample;
+pub mod screen;
 pub mod search;
 pub mod segments;
 pub mod settings;

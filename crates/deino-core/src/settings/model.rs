@@ -6,8 +6,8 @@ use super::{
     AiSettings, ApiSettings, AudioSettings, AutomationSettings, BetaSettings, BriefSettings,
     CalendarSettings, ConsentSettings, DetectionSettings, ExportSettings, IntegrationSettings,
     NetworkSettings, NotificationSettings, OnboardingSettings, OrganizeSettings, PrivacySettings,
-    ProfileSettings, RecordingSettings, SettingsError, ShortcutSettings, SpeakerSettings,
-    TemplateSettings, TranscriptionSettings, UiSettings,
+    ProfileSettings, RecordingSettings, ScreenSettings, SettingsError, ShortcutSettings,
+    SpeakerSettings, TemplateSettings, TranscriptionSettings, UiSettings,
 };
 
 /// The settings format this build writes. Bump it, and add the upgrade to
@@ -55,6 +55,8 @@ pub struct Settings {
     pub calendar: CalendarSettings,
     /// Pre-meeting briefs (NOT-08).
     pub briefs: BriefSettings,
+    /// Screen capture of detected meetings (CAP-09).
+    pub screen: ScreenSettings,
     /// The user's own OAuth apps for integrations (INT-00).
     pub integrations: IntegrationSettings,
     /// What automations may do on the Mac (AUT-01).
@@ -92,6 +94,7 @@ impl Default for Settings {
             calendar: CalendarSettings::default(),
             automations: AutomationSettings::default(),
             briefs: BriefSettings::default(),
+            screen: ScreenSettings::default(),
             integrations: IntegrationSettings::default(),
             shortcuts: ShortcutSettings::default(),
             ui: UiSettings::default(),

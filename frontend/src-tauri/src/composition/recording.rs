@@ -5,8 +5,9 @@
 //! STT lanes, the Mac's devices (or `DEINO_MOCK_AUDIO` mocks in debug
 //! builds), the `AVAssetWriter` track encoder and the Tauri event adapter;
 //! each start watches the meeting app's speaker names (CAP-05's
-//! `WatchOnStart`) and links the nearest calendar event (ORG-03's
-//! `LinkOnStart`), one `StartObservers` fan-out. Then it recovers meetings a
+//! `WatchOnStart`), captures the meeting window when screen capture is on
+//! (CAP-09's `CaptureOnStart`) and links the nearest calendar event
+//! (ORG-03's `LinkOnStart`), one `StartObservers` fan-out. Then it recovers meetings a
 //! crash left in `recording`, in the background, and starts auto-stop over
 //! the recorder (`autostop.rs`, CAP-07).
 
@@ -36,6 +37,7 @@ use tauri::{AppHandle, Manager};
 use super::attach::Phase;
 use crate::features::calendar::LinkOnStart;
 use crate::features::recording::{RecordPanel, TauriRecordingEvents};
+use crate::features::screen::CaptureOnStart;
 use crate::features::speaker_tags::WatchOnStart;
 use crate::paths::AppPaths;
 use crate::stt::{SttLanes, SttRuntime};
@@ -84,6 +86,7 @@ pub(crate) fn attach_recording(app: &AppHandle, database: &Database, clock: &Arc
     spawn_recovery(deps.clone());
     let on_start = StartObservers::new(vec![
         Arc::new(WatchOnStart::new(app.clone())),
+        Arc::new(CaptureOnStart::new(app.clone())),
         Arc::new(LinkOnStart::new(app.clone())),
     ]);
     app.manage(Arc::new(

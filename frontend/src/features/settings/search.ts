@@ -18,6 +18,7 @@ export const settingsSectionSchema = z.enum([
   'people',
   'speaker-tags',
   'consent',
+  'screen',
   'ai',
   'models',
   'templates',

@@ -22,6 +22,8 @@ deino-core.workspace = true
 deino-db.workspace = true
 deino-domain.workspace = true
 deino-llm.workspace = true
+# The screen recording's file names (CAP-09's `screen_video` stage).
+deino-screen.workspace = true
 # Stages register themselves from their own files (registry.rs).
 linkme.workspace = true
 log.workspace = true

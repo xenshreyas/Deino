@@ -57,6 +57,7 @@ pub mod recipes;
 pub mod recording;
 pub mod registry;
 pub mod retention;
+pub mod screen;
 pub mod search;
 pub mod secrets;
 pub mod settings;

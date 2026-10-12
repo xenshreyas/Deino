@@ -1,5 +1,5 @@
 import { useOpenAccessSettings, useCalendarStatus, useSetCalendarSync } from '@/features/calendar';
-import { AudioLines, Bell, Calendar, type Icon, Mic, Users } from '@/ui/icons';
+import { AudioLines, Bell, Calendar, type Icon, Mic, Monitor, Users } from '@/ui/icons';
 import { SkeletonText } from '@/ui/skeleton';
 
 import { permissionsCopy } from '../../copy';
@@ -16,11 +16,12 @@ const ICONS: Record<PermissionKind, Icon> = {
   system_audio: AudioLines,
   notifications: Bell,
   accessibility: Users,
+  screen_recording: Monitor,
 };
 
 /**
- * Step 2: microphone, system audio, notifications, Accessibility (optional)
- * and Calendar, each with its live state and the one button that moves it.
+ * Step 2: microphone, system audio, notifications, Accessibility and
+ * Screen Recording (both optional) and Calendar, each with its live state and the one button that moves it.
  * The list re-reads itself, so a switch flipped in System Settings shows up.
  */
 export function PermissionsStep({ dispatch }: StepProps) {

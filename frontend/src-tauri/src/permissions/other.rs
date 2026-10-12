@@ -27,6 +27,14 @@ pub(super) const fn request_accessibility() -> PermissionState {
     PermissionState::Unsupported
 }
 
+pub(super) const fn screen_recording() -> PermissionState {
+    PermissionState::Unsupported
+}
+
+pub(super) const fn request_screen_recording() -> PermissionState {
+    PermissionState::Unsupported
+}
+
 pub(super) const fn open_settings(_kind: PermissionKind) -> bool {
     false
 }

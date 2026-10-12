@@ -166,6 +166,8 @@ deino-detect.workspace = true
 deino-speaker-tags.workspace = true
 # The chat notice of the consent tools (CAP-13).
 deino-consent.workspace = true
+# The meeting window's video and snapshots, through ScreenCaptureKit (CAP-09).
+deino-screen.workspace = true
 # `serde_json` types the settings merge patch (`plugin:settings|patch`).
 specta = { workspace = true, features = ["serde_json"] }
 tauri-specta.workspace = true
@@ -229,6 +231,7 @@ deino-core = { workspace = true, features = ["test-support"] }
 deino-detect = { workspace = true, features = ["test-support"] }
 deino-speaker-tags = { workspace = true, features = ["test-support"] }
 deino-consent = { workspace = true, features = ["test-support"] }
+deino-screen = { workspace = true, features = ["test-support"] }
 deino-integrations = { workspace = true, features = ["test-support"] }
 deino-recording = { workspace = true, features = ["test-support"] }
 deino-llm = { workspace = true, features = ["test-support"] }

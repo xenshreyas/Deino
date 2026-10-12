@@ -242,6 +242,7 @@ mod tests {
             Registry::new(stages).ids(),
             [
                 "finalize_audio",
+                "screen_video",
                 "final_transcription",
                 "diarize",
                 "identify_speakers",

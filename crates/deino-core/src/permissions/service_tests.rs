@@ -27,7 +27,13 @@ fn every_permission_is_listed_in_order_with_accessibility_optional() {
         .filter(|s| s.optional)
         .map(|s| s.kind)
         .collect();
-    assert_eq!(optional, [PermissionKind::Accessibility]);
+    assert_eq!(
+        optional,
+        [
+            PermissionKind::Accessibility,
+            PermissionKind::ScreenRecording
+        ]
+    );
 }
 
 #[tokio::test]
