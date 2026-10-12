@@ -13,13 +13,9 @@
 //! 2. [`attach_network`]: the one network client (`deino_net::Net`), whose
 //!    policy reads the settings (FND-12);
 //! 3. [`attach_database`]: the database-backed [`Services`], the
-//!    post-meeting [`Pipeline`] (started in the background) and the live
-//!    recorder (`recording.rs`, which also recovers interrupted recordings), once
-//!    `deino.sqlite` is open (its legacy settings are imported on the way
-//!    by [`legacy_settings_import`]), the egress log's table, the LLM
-//!    gateway (`llm.rs`), templates and the profile (`notes.rs`: the
-//!    built-in catalogue is synced before the pipeline starts), and the
-//!    enhanced notes (`enhance.rs`, NOT-02).
+//!    post-meeting [`Pipeline`] and the live recorder, once `deino.sqlite` is
+//!    open (legacy settings imported by [`legacy_settings_import`]), the LLM
+//!    gateway, templates, the profile and the enhanced notes.
 //!
 //! A new feature adds its service to [`Services`]: one field, one line in
 //! [`Services::build`] and one in [`Services::manage`].
