@@ -111,6 +111,12 @@ the SQLite adapters behind those ports.
     types every field, repairing close values; `Attribution` resolves `s12`
     references to speaker, time and segment). Fakes: `FakeInsightStore`,
     `ScriptedInsightModel`, `RecordedScheduler`, `FixedDomains`.
+- `stats` (ORG-09, ADR 0039): `StatsRepo` / `SqliteStatsRepo` (four reads over
+  the `stats_meetings` view and `llm_calls`), `StatsService` (a period's
+  numbers and the last year's heatmap, aggregated on read in the user's
+  `LocalZone`; `pricing.rs` estimates cost from list prices) and
+  `RecapService` (the year in review on route `recap`, from numbers and
+  titles only, kept once per year in `year_recaps` through `RecapRepo`).
 - `models` (CAP-01, AI-01): the bundled model catalog (`catalog.json`: Parakeet
   Unified EN 0.6B, six quants, and Nomic Embed Text v1.5 Q8_0, each pinned to a
   revision, size and SHA-256, each with a purpose; a `ModelService` serves one
