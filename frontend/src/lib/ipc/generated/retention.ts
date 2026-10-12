@@ -16,6 +16,30 @@ async status(meeting: MeetingId) : Promise<Result<MeetingRetention, AppError>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Whether the record panel shows the "pause for sensitive discussions" tip:
+ * until it has been seen once. The panel reads only this, never the whole
+ * settings document (least privilege, as CAP-13's consent reminder).
+ */
+async pauseTip() : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:retention|pause_tip") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Records that the pause tip was seen, so it never shows again.
+ */
+async pauseTipSeen() : Promise<Result<null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:retention|pause_tip_seen") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 

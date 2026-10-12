@@ -11,4 +11,8 @@ import type { MeetingId, MeetingRetention } from './types';
 export const retentionApi = {
   /** When retention deleted the meeting's recording and transcript. */
   status: (meeting: MeetingId): Promise<MeetingRetention> => unwrap(commands.status(meeting)),
+  /** Whether the record panel still shows the pause tip (not yet seen). */
+  pauseTip: (): Promise<boolean> => unwrap(commands.pauseTip()),
+  /** Records that the pause tip was seen. */
+  pauseTipSeen: (): Promise<null> => unwrap(commands.pauseTipSeen()),
 };

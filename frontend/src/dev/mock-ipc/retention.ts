@@ -24,9 +24,21 @@ function demoStatus(): Generated.MeetingRetention {
   };
 }
 
+/** Whether the demo's pause tip was seen (in memory). */
+let pauseTipSeen = false;
+
 export const commands = {
   async status() {
     await latency();
     return ok(demoStatus());
+  },
+  async pauseTip() {
+    await latency();
+    return ok(!pauseTipSeen);
+  },
+  async pauseTipSeen() {
+    await latency();
+    pauseTipSeen = true;
+    return ok(null);
   },
 } satisfies typeof Generated.commands;

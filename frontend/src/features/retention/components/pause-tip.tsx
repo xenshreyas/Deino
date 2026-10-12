@@ -4,11 +4,13 @@
  * (`privacy.pauseTipSeen`) when the user dismisses it or that recording
  * ends, so it never comes back.
  */
-import { settingsApi, usePatchSettings, useSettings } from '@/features/settings';
+import { useQuery } from '@tanstack/react-query';
+
 import { useMountEffect } from '@/hooks/useMountEffect';
 import { Button } from '@/ui/button';
 import { ICON_PROPS, Pause } from '@/ui/icons';
 
+import { retentionApi } from '../api';
 import { retentionCopy } from '../copy';
 
 const copy = retentionCopy.tip;
@@ -39,19 +41,19 @@ export function PauseTip({ onDismiss }: PauseTipProps) {
 
 /** Records that the tip was seen; it is a hint, so a failure is only logged. */
 function markSeen(): void {
-  settingsApi.patch({ privacy: { pauseTipSeen: true } }).catch((error: unknown) => {
+  retentionApi.pauseTipSeen().catch((error: unknown) => {
     console.error('[retention] Could not save that the pause tip was seen', error);
   });
 }
 
 /** The tip while it is up: seen once this recording ends. */
-function ShownTip() {
-  const patch = usePatchSettings();
+function ShownTip({ onDismiss }: PauseTipProps) {
   useMountEffect(() => markSeen);
   return (
     <PauseTip
       onDismiss={() => {
-        patch.mutate({ privacy: { pauseTipSeen: true } });
+        markSeen();
+        onDismiss();
       }}
     />
   );
@@ -59,7 +61,9 @@ function ShownTip() {
 
 /** The tip, until it has been seen once. Mount it only while recording. */
 export function PauseTipSlot() {
-  const settings = useSettings();
-  if (settings.data === undefined || settings.data.privacy.pauseTipSeen) return null;
-  return <ShownTip />;
+  // The panel reads only this flag through `retention|pause_tip`, never the
+  // settings document (its capability grants just the two tip commands).
+  const tip = useQuery({ queryKey: ['retention', 'pause-tip'], queryFn: retentionApi.pauseTip });
+  if (tip.data !== true) return null;
+  return <ShownTip onDismiss={() => void tip.refetch()} />;
 }

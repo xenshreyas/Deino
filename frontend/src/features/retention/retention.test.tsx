@@ -20,7 +20,11 @@ const settings = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/ipc/generated/settings', () => ({ commands: settings }));
 
-const retention = vi.hoisted(() => ({ status: vi.fn<typeof Retention.commands.status>() }));
+const retention = vi.hoisted(() => ({
+  status: vi.fn<typeof Retention.commands.status>(),
+  pauseTip: vi.fn<typeof Retention.commands.pauseTip>(),
+  pauseTipSeen: vi.fn<typeof Retention.commands.pauseTipSeen>(),
+}));
 vi.mock('@/lib/ipc/generated/retention', () => ({ commands: retention }));
 
 const MEETING = 'meeting-1' as MeetingId;
@@ -88,6 +92,15 @@ describe('TranscriptGate', () => {
 });
 
 describe('PauseTipSlot', () => {
+  beforeEach(() => {
+    let seen = false;
+    retention.pauseTip.mockImplementation(() => Promise.resolve({ status: 'ok', data: !seen }));
+    retention.pauseTipSeen.mockImplementation(() => {
+      seen = true;
+      return Promise.resolve({ status: 'ok', data: null });
+    });
+  });
+
   test('shows the tip until it is dismissed, then saves that it was seen', async () => {
     render(<PauseTipSlot />, { wrapper });
 
@@ -96,7 +109,8 @@ describe('PauseTipSlot', () => {
     await waitFor(() => {
       expect(screen.queryByText(retentionCopy.tip.title)).toBeNull();
     });
-    expect(settings.patch).toHaveBeenCalledWith({ privacy: { pauseTipSeen: true } });
+    expect(retention.pauseTipSeen).toHaveBeenCalled();
+    expect(settings.patch).not.toHaveBeenCalled();
   });
 
   test('a recording that ends with the tip up marks it seen', async () => {
@@ -105,15 +119,15 @@ describe('PauseTipSlot', () => {
 
     view.unmount();
 
-    expect(settings.patch).toHaveBeenCalledWith({ privacy: { pauseTipSeen: true } });
+    expect(retention.pauseTipSeen).toHaveBeenCalled();
   });
 
   test('never shows again once seen', async () => {
-    settings.get.mockResolvedValue({ status: 'ok', data: withPrivacy({}, true) });
+    retention.pauseTip.mockResolvedValue({ status: 'ok', data: false });
     render(<PauseTipSlot />, { wrapper });
 
     await waitFor(() => {
-      expect(settings.get).toHaveBeenCalled();
+      expect(retention.pauseTip).toHaveBeenCalled();
     });
     expect(screen.queryByText(retentionCopy.tip.title)).toBeNull();
   });
