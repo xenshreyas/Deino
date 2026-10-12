@@ -10,7 +10,9 @@ use std::time::Duration;
 use serde_json::{Value, json};
 
 /// How long one response may take.
-const RESPONSE_TIMEOUT: Duration = Duration::from_secs(20);
+/// Generous: the first launch of a freshly built binary waits on macOS's
+/// security scan, which can take far longer than the server itself.
+const RESPONSE_TIMEOUT: Duration = Duration::from_secs(90);
 /// The protocol version Claude Code offers.
 pub const PROTOCOL: &str = "2025-06-18";
 
