@@ -21,11 +21,16 @@ const states = new Map<PermissionKind, Generated.PermissionState>([
   ['system_audio', 'unknown'],
   ['notifications', 'not_determined'],
   ['accessibility', 'not_determined'],
+  ['screen_recording', 'not_determined'],
 ]);
 
 /** The status the real service would report for `kind`. */
 function status(kind: PermissionKind): PermissionStatus {
-  return { kind, state: states.get(kind) ?? 'unknown', optional: kind === 'accessibility' };
+  return {
+    kind,
+    state: states.get(kind) ?? 'unknown',
+    optional: kind === 'accessibility' || kind === 'screen_recording',
+  };
 }
 
 export const commands = {

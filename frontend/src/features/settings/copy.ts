@@ -80,6 +80,10 @@ export const settingsCopy = {
       description:
         'Name speakers from Zoom, Teams and Meet, read from the call window on this Mac.',
     },
+    screen: {
+      label: 'Screen capture',
+      description: 'Snapshots and video of the meeting window, kept on this Mac.',
+    },
     ai: {
       label: 'AI models',
       description: 'Which provider and model serve each AI task, and a quick test for each.',

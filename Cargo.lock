@@ -1878,6 +1878,7 @@ dependencies = [
  "deino-net",
  "deino-pipeline",
  "deino-recording",
+ "deino-screen",
  "deino-secrets",
  "deino-speaker-tags",
  "deino-stt",
@@ -2277,6 +2278,7 @@ dependencies = [
  "deino-db",
  "deino-domain",
  "deino-llm",
+ "deino-screen",
  "deino-testkit",
  "linkme",
  "log",
@@ -2312,6 +2314,24 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "deino-screen"
+version = "0.1.0"
+dependencies = [
+ "block2",
+ "cidre",
+ "deino-domain",
+ "deino-screen",
+ "log",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "png 0.18.1",
+ "serde",
+ "specta",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

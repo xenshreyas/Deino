@@ -36,6 +36,7 @@ mod finalize_audio;
 mod identify_speakers;
 mod index;
 mod insights;
+mod screen_video;
 mod update_entities;
 mod vocab_fixups;
 

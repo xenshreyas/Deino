@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT capture AS \"capture: bool\" FROM screen_capture_choices WHERE meeting_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "capture: bool",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e02e4bb67d79f490bd316e538f79cd237a909746c5d7a23f44338d0a12176afd"
+}

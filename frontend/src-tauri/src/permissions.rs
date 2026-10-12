@@ -1,7 +1,7 @@
 //! The operating system's permissions: the app's [`PermissionGate`] adapter
 //! behind `deino_core::permissions::PermissionService` (FND-11).
 //!
-//! The microphone, system audio and Accessibility go through macOS
+//! The microphone, system audio, Accessibility and Screen Recording go through macOS
 //! (`permissions/macos.rs`); elsewhere they are not needed
 //! (`permissions/other.rs`). Notifications go through the notification
 //! plugin the app already sends them with, on every platform.
@@ -55,6 +55,7 @@ impl<R: Runtime> PermissionGate for SystemPermissions<R> {
             PermissionKind::SystemAudio => platform::system_audio(),
             PermissionKind::Notifications => self.notifications(),
             PermissionKind::Accessibility => platform::accessibility(),
+            PermissionKind::ScreenRecording => platform::screen_recording(),
         }
     }
 
@@ -64,6 +65,7 @@ impl<R: Runtime> PermissionGate for SystemPermissions<R> {
             PermissionKind::SystemAudio => platform::request_system_audio().await,
             PermissionKind::Notifications => self.request_notifications(),
             PermissionKind::Accessibility => platform::request_accessibility(),
+            PermissionKind::ScreenRecording => platform::request_screen_recording(),
         }
     }
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO snapshots (meeting_id, at_ms, file_name, width, height, phash, created_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)\n             ON CONFLICT (meeting_id, file_name) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "d5a9b0eed20a67d02d476fa8c0bdfb0c6eb3ffe0e4adcedab4bba2f475b5f2c8"
+}

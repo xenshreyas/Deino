@@ -16,6 +16,7 @@ export const settingsSectionSchema = z.enum([
   'watched-folders',
   'people',
   'speaker-tags',
+  'screen',
   'ai',
   'models',
   'templates',

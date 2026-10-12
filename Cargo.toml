@@ -61,6 +61,8 @@ deino-llm = { path = "crates/deino-llm" }
 deino-net = { path = "crates/deino-net" }
 deino-pipeline = { path = "crates/deino-pipeline" }
 deino-recording = { path = "crates/deino-recording" }
+# Screen capture and snapshots (CAP-09); tests add `features = ["test-support"]`.
+deino-screen = { path = "crates/deino-screen" }
 deino-secrets = { path = "crates/deino-secrets" }
 # Speaker tags from the meeting app's window (CAP-05); tests add
 # `features = ["test-support"]` for its fakes.

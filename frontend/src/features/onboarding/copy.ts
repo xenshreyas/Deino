@@ -57,6 +57,10 @@ export const permissionsCopy = {
       name: 'Accessibility',
       why: 'Speaker names from Zoom, Meet and Teams, and meeting links in your browser.',
     },
+    screen_recording: {
+      name: 'Screen Recording',
+      why: 'Optional: snapshots and video of the meeting window, once you turn screen capture on.',
+    },
   } satisfies Record<PermissionKind, { name: string; why: string }>,
   calendar: { name: 'Calendar', why: 'Titles and attendees for your meetings.' },
   missingRequired: 'Recording needs the microphone and system audio.',

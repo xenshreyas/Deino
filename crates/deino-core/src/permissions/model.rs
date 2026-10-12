@@ -18,20 +18,25 @@ pub enum PermissionKind {
     /// Accessibility: speaker names from the meeting app's window (CAP-05)
     /// and browser meeting URLs (CAP-06).
     Accessibility,
+    /// Screen Recording: the meeting window's video and snapshots (CAP-09),
+    /// only used once the user turns screen capture on.
+    ScreenRecording,
 }
 
 impl PermissionKind {
     /// Every kind, in the order onboarding lists them.
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::Microphone,
         Self::SystemAudio,
         Self::Notifications,
         Self::Accessibility,
+        Self::ScreenRecording,
     ];
 
-    /// Whether recording works without it (only Accessibility is optional).
+    /// Whether recording works without it (Accessibility and Screen
+    /// Recording only add features).
     pub const fn optional(self) -> bool {
-        matches!(self, Self::Accessibility)
+        matches!(self, Self::Accessibility | Self::ScreenRecording)
     }
 }
 

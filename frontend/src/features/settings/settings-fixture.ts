@@ -95,6 +95,7 @@ const DEFAULT_SETTINGS: Settings = {
     obsidian: false,
   },
   briefs: { enabled: true, audience: 'external' },
+  screen: { detectedMeetings: false, video: true, videoFps: 1, snapshots: true },
   calendar: {
     syncEnabled: false,
     hiddenCalendars: [],

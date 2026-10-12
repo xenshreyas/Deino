@@ -1,0 +1,43 @@
+[package]
+name = "deino-screen"
+version = "0.1.0"
+description = "Deino's screen capture: the meeting window's video and its shared-screen snapshots through ScreenCaptureKit"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_screen.rs"
+
+[features]
+# Fakes of this crate's ports (`FakeScreen`, `ScriptedClock`, `MemoryStore`,
+# `FakeEncoders`) for other crates' tests. Never enable outside dev-dependencies.
+test-support = []
+
+[dependencies]
+deino-domain.workspace = true
+log.workspace = true
+# Snapshots are written as PNG, encoded in Rust (no ImageIO); the version
+# already in the tree. MIT/Apache-2.0.
+png = "=0.18.1"
+serde.workspace = true
+specta.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# ScreenCaptureKit (SCStream, SCShareableContent), AVAssetWriter and Core
+# Video, the same git rev as deino-audio and the app, so all share one build.
+cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
+# -[AVAssetWriter finishWritingWithCompletionHandler:], which cidre a9587fa
+# does not bind. The objc2 set already in the tree.
+block2 = "=0.6.2"
+objc2 = "=0.6.4"
+# NSWorkspace, to open the Screen Recording page of System Settings.
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWorkspace"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSString", "NSURL"] }
+
+[dev-dependencies]
+deino-screen = { path = ".", features = ["test-support"] }
+
+[lints]
+workspace = true

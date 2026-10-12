@@ -26,6 +26,7 @@ import { PrivacySettings } from '@/features/privacy';
 import { ProfilePage } from '@/features/profile';
 import { WatchedFoldersSettings } from '@/features/import';
 import { IndexSettings } from '@/features/search';
+import { ScreenCaptureSettings } from '@/features/screen';
 import { SpeakerTagsSettings } from '@/features/speaker-tags';
 import { PeopleSettings } from '@/features/speakers';
 import { TemplatesPage } from '@/features/templates';
@@ -43,6 +44,7 @@ import {
   LayoutTemplate,
   Lock,
   Mic,
+  Monitor,
   Palette,
   Plug,
   Rocket,
@@ -162,6 +164,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   },
   { id: 'people', group: 'capture', icon: Users, Component: PeopleSettings },
   { id: 'speaker-tags', group: 'capture', icon: Contact, Component: SpeakerTagsSettings },
+  { id: 'screen', group: 'capture', icon: Monitor, Component: ScreenCaptureSettings },
   { id: 'ai', group: 'ai', icon: Sparkles, Component: AiSettings },
   { id: 'models', group: 'ai', icon: Cpu, Component: () => <SummaryModelSettings /> },
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },

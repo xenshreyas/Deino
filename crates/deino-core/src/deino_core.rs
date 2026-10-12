@@ -100,6 +100,7 @@ pub mod profile;
 pub mod query;
 pub mod redaction;
 pub mod sample;
+pub mod screen;
 pub mod search;
 pub mod segments;
 pub mod settings;

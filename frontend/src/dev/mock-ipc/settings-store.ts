@@ -105,6 +105,7 @@ let settings: Generated.Settings = {
     obsidian: false,
   },
   briefs: { enabled: true, audience: 'external' },
+  screen: { detectedMeetings: false, video: true, videoFps: 1, snapshots: true },
   calendar: {
     syncEnabled: true,
     hiddenCalendars: [],

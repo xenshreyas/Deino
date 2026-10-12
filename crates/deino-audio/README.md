@@ -35,6 +35,9 @@ fragmented AAC files that survive `kill -9` (≤ 1 s lost) and power loss
 - `clip::cut_clip` (TRN-04, ADR 0048): a range of a finished file copied
   into a new `.m4a`/`.mp4` by an `AVAssetExportSession` Passthrough export
   with a `timeRange` (no re-encode, no FFmpeg; a stub off macOS).
+- `mux::add_audio` (CAP-09): a silent screen recording given the meeting's
+  mixed audio through an `AVMutableComposition` Passthrough export, and
+  `mux::has_audio` (a stub off macOS).
 - `HealthEvent` (`Stalled`, `Resumed`, `FramesDropped`, `DiskLow`,
   `StorageFailed`, and from capture `Recovering`, `Recovered`, `DeviceLost`,
   `BluetoothCallMode`, `SystemAudioUnavailable`, `Asleep`, `Awake`) on a
