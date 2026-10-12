@@ -112,8 +112,8 @@ lastUsedAt: string | null;
  */
 revokedAt: string | null }
 /**
- * Identifies a key of the local REST API (DEV-03); also the public
- * half of the key's token.
+ * Identifies a key of the local REST API; also the public half of the
+ * key's token.
  */
 export type ApiKeyId = string & { readonly __brand: "ApiKeyId" }
 /**
