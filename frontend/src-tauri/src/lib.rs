@@ -108,7 +108,8 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::transcript::init())
         .plugin(features::vocabulary::init())
         .plugin(features::speaker_tags::init())
-        .plugin(features::player::init());
+        .plugin(features::player::init())
+        .plugin(features::briefs::init());
     #[cfg(debug_assertions)]
     let builder = builder
         .plugin(features::_example::init())

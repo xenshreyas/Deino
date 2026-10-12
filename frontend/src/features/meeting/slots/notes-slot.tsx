@@ -1,5 +1,6 @@
 /**
- * The Notes tab: the meeting's template (NOT-04), its action items (AI-05),
+ * The Notes tab: the pre-meeting brief of its calendar event (NOT-08), the
+ * meeting's template (NOT-04), its action items (AI-05),
  * then the enhanced notes (NOT-02) and "My notes" (NOT-01) behind a
  * segmented pill (ui.md §3 Tabs, "Notes sub-switch"); ⌘E switches between
  * them. The tab opens on Enhanced when the meeting has enhanced notes or
@@ -9,6 +10,7 @@
 import { useState } from 'react';
 
 import { MeetingActionItems } from '@/features/action-items';
+import { MeetingBrief } from '@/features/briefs';
 import {
   EnhancedNotes,
   notesCopy,
@@ -83,6 +85,7 @@ export function NotesSlot({ meetingId }: MeetingSlotProps) {
   const toggle = <ViewSwitch view={view} onChange={choose} />;
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <MeetingBrief meetingId={meetingId} />
       <MeetingTemplatePicker
         meetingId={meetingId}
         onRegenerate={hasNotes ? regenerate.run : null}

@@ -26,6 +26,7 @@
 
 mod action_items;
 mod background;
+mod briefs;
 pub(crate) mod browser;
 mod calendar;
 mod detection;
@@ -200,6 +201,7 @@ pub(crate) async fn attach_database(app: &AppHandle, manager: DatabaseManager) {
     };
     attach_pipeline(app, &database, &clock, ai);
     background::attach_background(app, &database, &clock);
+    briefs::attach_briefs(app, &database, &wiring);
 }
 
 /// Wires the services that need only the database: [`Services`], folders and

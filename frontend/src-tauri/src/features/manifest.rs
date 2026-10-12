@@ -291,5 +291,10 @@ pub const FEATURES: &[(&str, &[&str])] = &[
     // ── CAP-05 speaker tags (features/speaker_tags.rs) ──
     ("speaker-tags", &["status", "open_accessibility_settings"]),
     ("stats", &["overview", "heatmap", "recap", "write_recap"]), // ORG-09 (features/stats.rs)
+    // ── NOT-08 pre-meeting briefs (features/briefs.rs) ──
+    (
+        "briefs",
+        &["for_event", "for_meeting", "mark_read", "give_feedback"],
+    ),
 ];
 include!("recording_manifest.rs"); // `RECORDING_COMMANDS`, beside this file

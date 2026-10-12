@@ -100,6 +100,7 @@ let settings: Generated.Settings = {
     transcriptSidecar: false,
     obsidian: false,
   },
+  briefs: { enabled: true, audience: 'external' },
   calendar: {
     syncEnabled: true,
     hiddenCalendars: [],

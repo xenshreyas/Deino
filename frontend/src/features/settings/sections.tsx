@@ -14,6 +14,7 @@ import { SummaryModelSettings } from '@/components/SummaryModelSettings';
 import { TranscriptSettings } from '@/components/TranscriptSettings';
 import { useConfig } from '@/contexts/ConfigContext';
 import { appearanceCopy, ThemePicker } from '@/features/appearance';
+import { BriefSettingsSection } from '@/features/briefs';
 import { CalendarSettings } from '@/features/calendar';
 import { DeveloperSettings } from '@/features/developer';
 import { ExportSettingsPage } from '@/features/export';
@@ -124,6 +125,16 @@ function NetworkSection() {
   );
 }
 
+/** Workspace → Calendar: sync and calendars (ORG-01), then pre-meeting briefs (NOT-08). */
+function CalendarSection() {
+  return (
+    <div className="flex flex-col gap-8">
+      <CalendarSettings />
+      <BriefSettingsSection />
+    </div>
+  );
+}
+
 /** Workspace → Integrations: connected apps, planned ones and what was sent (INT-00). */
 function IntegrationsSection() {
   const { offlineMode } = useOfflineMode();
@@ -146,7 +157,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: 'templates', group: 'ai', icon: LayoutTemplate, Component: TemplatesPage },
   { id: 'profile', group: 'ai', icon: UserRound, Component: ProfilePage },
   { id: 'search', group: 'ai', icon: Search, Component: IndexSettings },
-  { id: 'calendar', group: 'workspace', icon: Calendar, Component: CalendarSettings },
+  { id: 'calendar', group: 'workspace', icon: Calendar, Component: CalendarSection },
   { id: 'integrations', group: 'workspace', icon: Plug, Component: IntegrationsSection },
   { id: 'network', group: 'privacy', icon: ShieldCheck, Component: NetworkSection },
   { id: 'export', group: 'data', icon: Download, Component: ExportSettingsPage },

@@ -51,6 +51,7 @@
         "transcript:default",
         "vocabulary:default",
         "speaker-tags:default",
-        "player:default"
+        "player:default",
+        "briefs:default"
     ]
 }
