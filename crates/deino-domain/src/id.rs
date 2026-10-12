@@ -8,6 +8,8 @@
 //!
 //! New entities get UUIDv7 IDs declared with `uuid_id!` in this file; their
 //! time-ordered prefix keeps B-tree inserts local and sorts by creation time.
+//! The crate root re-exports every ID with `pub use id::*`, so a new one is
+//! declared here and nowhere else.
 
 use std::fmt;
 use std::str::FromStr;
