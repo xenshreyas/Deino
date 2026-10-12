@@ -34,7 +34,19 @@ describe('SpeakerTagsSettings', () => {
     vi.clearAllMocks();
   });
 
-  it('shows a row per app with its state', async () => {
+  it('shows one Accessibility row and the apps as plain text', async () => {
+    mocked.status.mockResolvedValue({ status: 'ok', data: rows('enabled') });
+    renderPage();
+
+    expect(await screen.findByText('Accessibility')).toBeTruthy();
+    expect(screen.getByText('Allowed')).toBeTruthy();
+    expect(
+      screen.getByText('Works with Zoom, Microsoft Teams and Google Meet.', { exact: false }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('marks an app only when it is unsupported', async () => {
     mocked.status.mockResolvedValue({
       status: 'ok',
       data: [
@@ -45,23 +57,25 @@ describe('SpeakerTagsSettings', () => {
     });
     renderPage();
 
-    expect(await screen.findByText('Zoom')).toBeTruthy();
-    expect(screen.getByText('Microsoft Teams')).toBeTruthy();
-    expect(screen.getByText('Google Meet')).toBeTruthy();
-    expect(screen.getAllByText('Enabled')).toHaveLength(2);
-    expect(screen.getByText('Unsupported')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(
+      await screen.findByText(
+        'Works with Zoom, Microsoft Teams (not supported here) and Google Meet.',
+        { exact: false },
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Allowed')).toBeTruthy();
   });
 
-  it('offers System Settings when permission is missing, without asking macOS itself', async () => {
+  it('offers System Settings once, without asking macOS itself', async () => {
     mocked.status.mockResolvedValue({ status: 'ok', data: rows('needsPermission') });
     mocked.openAccessibilitySettings.mockResolvedValue({ status: 'ok', data: null });
     renderPage();
 
     const open = await screen.findByRole('button', {
-      name: 'Open System Settings to allow speaker tags for Zoom',
+      name: 'Open System Settings to allow Accessibility',
     });
-    expect(screen.getAllByText('Needs permission')).toHaveLength(3);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getAllByText('Needs permission')).toHaveLength(1);
     fireEvent.click(open);
 
     await waitFor(() => {
@@ -78,9 +92,7 @@ describe('SpeakerTagsSettings', () => {
     renderPage();
 
     fireEvent.click(
-      await screen.findByRole('button', {
-        name: 'Open System Settings to allow speaker tags for Microsoft Teams',
-      }),
+      await screen.findByRole('button', { name: 'Open System Settings to allow Accessibility' }),
     );
 
     expect((await screen.findByRole('alert')).textContent).toContain(
@@ -96,7 +108,7 @@ describe('SpeakerTagsSettings', () => {
     renderPage();
 
     expect((await screen.findByRole('alert')).textContent).toBe(
-      'Could not read the speaker-tag status.',
+      'Couldn’t read the speaker-name status.',
     );
   });
 });

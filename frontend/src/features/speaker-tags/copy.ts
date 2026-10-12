@@ -3,7 +3,7 @@ import type { CallApp, TagState } from './types';
 /** Every visible string of the speaker-tags feature. */
 export const speakerTagsCopy = {
   section: {
-    title: 'Meeting apps',
+    title: 'Speaker names from call apps',
     description:
       'While Deino records, it reads who the call window shows as speaking and names the transcript after them. Names stay on this Mac.',
   },
@@ -12,17 +12,23 @@ export const speakerTagsCopy = {
     teams: { name: 'Microsoft Teams', where: 'The Teams desktop app' },
     meet: { name: 'Google Meet', where: 'Meet in Google Chrome, as the active tab of its window' },
   } satisfies Record<CallApp, { name: string; where: string }>,
+  /** The one Accessibility row (UX-09): one permission, one row. */
+  permission: {
+    name: 'Accessibility',
+    why: 'Needed to read speaker names from Zoom, Teams and Meet.',
+  },
   states: {
-    enabled: 'Enabled',
+    enabled: 'Allowed',
     needsPermission: 'Needs permission',
-    unsupported: 'Unsupported',
+    unsupported: 'Not available here',
   } satisfies Record<TagState, string>,
-  unsupportedHint:
-    'Not available here, or this version of the app is not recognised yet. Speakers are named by voice.',
+  /** The apps, as plain text under the row. */
+  worksWith: (apps: string) => `Works with ${apps}.`,
+  unsupportedApp: (app: string) => `${app} (not supported here)`,
   openSettings: 'Open System Settings',
-  openSettingsLabel: (app: string) => `Open System Settings to allow speaker tags for ${app}`,
+  openSettingsLabel: 'Open System Settings to allow Accessibility',
   permissionHint:
     'Allow Deino under Privacy & Security → Accessibility. Deino never turns this on by itself; this page updates when you come back.',
-  settingsFailed: 'Could not open System Settings. Open Privacy & Security → Accessibility there.',
-  loadFailed: 'Could not read the speaker-tag status.',
+  settingsFailed: 'Couldn’t open System Settings. Open Privacy & Security → Accessibility there.',
+  loadFailed: 'Couldn’t read the speaker-name status.',
 } as const;
