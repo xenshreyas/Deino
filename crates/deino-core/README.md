@@ -14,6 +14,12 @@ the SQLite adapters behind those ports.
   `MeetingStatusObserver`s (the pipeline's trigger, FND-08);
   `MeetingTrashRepo` (trash, restore, delete). One
   `SqliteMeetingRepo` and one `FakeMeetingRepo` implement all three ports.
+  The Meetings page (ORG-07, ADR 0046): `MeetingListService` (filtered
+  cursor pages, `matching_ids`), `MeetingViewService` (saved views),
+  `TrashService` and `TrashPurger` (batch trash and restore, delete
+  forever with the files, the 30-day purge), `MeetingMergeService`,
+  `MeetingBulkService`, and the `MeetingWork` port through which trashing
+  cancels a meeting's pipeline and a merge re-indexes.
 - `settings`: the typed, versioned `Settings` document and its sections
   (including `network`: offline mode and the per-service switches that
   `deino-net`'s policy reads, FND-12);
