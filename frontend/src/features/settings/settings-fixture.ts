@@ -60,7 +60,11 @@ const DEFAULT_SETTINGS: Settings = {
     autoIdentify: true,
     thresholds: { autoAssign: 0.72, autoAssignNonAttendee: 0.77, margin: 0.08, suggest: 0.55 },
   },
-  privacy: { redactSensitive: false },
+  privacy: {
+    redactSensitive: false,
+    encryptDatabase: false,
+    appLock: { enabled: false, idleMinutes: 5, lockOnWake: true },
+  },
   network: { offlineMode: false, services: {} },
   profile: {
     name: '',

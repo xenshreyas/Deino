@@ -2,12 +2,14 @@
  * The app shell around every route (PARITY_PLAN §4.6): providers, the
  * first-run onboarding gate, the sidebar and title bar, the ⌘K palette, the
  * ⌘J chat bar, global shortcuts, audio drag-and-drop import, and the
- * meeting-detection listener that opens the record screen.
+ * meeting-detection listener that opens the record screen, and the app lock
+ * (PRV-02) around the main layout.
  */
 import { type ReactNode, Suspense } from 'react';
 
 import { DownloadProgressToastProvider } from '@/components/shared/DownloadProgressToast';
 import { OnboardingFlow, useOnboardingGate } from '@/features/onboarding';
+import { LockGate } from '@/features/privacy';
 import { Toaster } from '@/ui/toaster';
 
 import { AppProviders } from './app-providers';
@@ -66,7 +68,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Suspense>
         ) : null}
         {gate === 'app' ? (
-          <MainLayout onAudioFile={importDialog.openWith}>{children}</MainLayout>
+          <LockGate>
+            <MainLayout onAudioFile={importDialog.openWith}>{children}</MainLayout>
+          </LockGate>
         ) : null}
         <ImportDialogGate
           open={importDialog.open}
