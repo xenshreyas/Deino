@@ -32,6 +32,7 @@ export {
   CircleCheck,
   Clock,
   Code,
+  Contact,
   Copy,
   CornerDownLeft,
   Cpu,
