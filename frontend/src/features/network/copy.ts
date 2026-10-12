@@ -8,17 +8,19 @@ export const networkCopy = {
       'Send nothing from this Mac. Model downloads you start still work, and notes use the built-in model.',
   },
   services: {
-    title: 'Services',
+    title: 'Network services',
     description:
-      'Deino talks only to these services, and only to their hosts. A service that is off sends nothing.',
-    error: 'Could not load the services. Close and reopen Settings to try again.',
-    switchError: 'Could not save that change. Try again.',
+      'Deino talks only to these services, and only to their hosts. A service that is off sends nothing. Shown here: the ones in use.',
+    noneInUse: 'No service has sent anything yet.',
+    showAll: (count: number) => `Show all ${count} services`,
+    error: 'Couldn’t load the services. Close and reopen Settings to try again.',
+    switchError: 'Couldn’t save that change. Try again.',
   },
   log: {
-    title: 'Recent activity',
+    title: 'What left this Mac',
     description: 'Every request Deino made: when, where and how big. Never what it carried.',
     empty: 'Nothing has left this Mac yet.',
-    error: 'Could not load the activity log.',
+    error: 'Couldn’t load the activity log.',
     columns: { time: 'Time', service: 'Service', host: 'Host', size: 'Sent / received' },
   },
   kinds: {

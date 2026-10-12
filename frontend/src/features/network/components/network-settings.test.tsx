@@ -7,6 +7,7 @@ import type * as Generated from '@/lib/ipc/generated/network';
 import { createQueryClient } from '@/lib/ipc';
 
 import { NetworkSettings } from './network-settings';
+import { ServicesSection, servicesInUse } from './service-list';
 
 // Typed against the generated bindings: a Rust signature change breaks this mock.
 const network = vi.hoisted(() => ({
@@ -27,6 +28,12 @@ const SLACK: Generated.ServiceStatus = {
   kind: 'integration',
   hosts: ['slack.com', '*.slack.com'],
   enabled: false,
+};
+const GROQ: Generated.ServiceStatus = {
+  id: 'llm_groq',
+  kind: 'llm',
+  hosts: ['api.groq.com'],
+  enabled: true,
 };
 const REQUEST: Generated.EgressEntry = {
   at: '2026-10-09T09:30:05Z',
@@ -50,15 +57,38 @@ function renderPage(onOfflineModeChange = vi.fn()) {
   return onOfflineModeChange;
 }
 
-describe('NetworkSettings', () => {
+function renderServices() {
+  render(<ServicesSection />, { wrapper });
+}
+
+describe('servicesInUse', () => {
+  it('keeps services that sent something or that were switched off', () => {
+    expect(servicesInUse([ANTHROPIC, SLACK, GROQ], [REQUEST])).toEqual([ANTHROPIC, SLACK]);
+    expect(servicesInUse([GROQ], [])).toEqual([]);
+  });
+});
+
+describe('Network services', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    network.services.mockResolvedValue({ status: 'ok', data: [ANTHROPIC, SLACK] });
+    network.services.mockResolvedValue({ status: 'ok', data: [ANTHROPIC, SLACK, GROQ] });
     network.egressLog.mockResolvedValue({ status: 'ok', data: [REQUEST] });
   });
 
+  it('shows only the services in use until all are asked for', async () => {
+    renderServices();
+
+    expect(await screen.findByRole('switch', { name: 'Allow Anthropic' })).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.queryByRole('switch', { name: 'Allow Groq' })).toBeNull();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 3 services' }));
+
+    expect(screen.getByRole('switch', { name: 'Allow Groq' })).toBeTruthy();
+  });
+
   it('groups services by kind, with their hosts and switches', async () => {
-    renderPage();
+    renderServices();
 
     const providers = await screen.findByRole('group', { name: 'AI providers' });
     expect(within(providers).getByText('api.anthropic.com')).toBeTruthy();
@@ -74,7 +104,7 @@ describe('NetworkSettings', () => {
       status: 'ok',
       data: { ...SLACK, enabled: true },
     });
-    renderPage();
+    renderServices();
 
     fireEvent.click(await screen.findByRole('switch', { name: 'Allow Slack' }));
 
@@ -83,6 +113,21 @@ describe('NetworkSettings', () => {
       expect(slack.getAttribute('aria-checked')).toBe('true');
     });
     expect(network.setServiceEnabled).toHaveBeenCalledWith('slack', true);
+  });
+});
+
+describe('NetworkSettings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    network.egressLog.mockResolvedValue({ status: 'ok', data: [REQUEST] });
+  });
+
+  it('shows offline mode and the activity log, not the services', async () => {
+    renderPage();
+
+    expect(await screen.findByText('What left this Mac')).toBeTruthy();
+    expect(screen.queryByText('Network services')).toBeNull();
+    expect(network.services).not.toHaveBeenCalled();
   });
 
   it('lists each request with its host, status and sizes', async () => {
