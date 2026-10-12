@@ -1,24 +1,15 @@
 /** Every visible string of the screen feature. */
 export const screenCopy = {
   section: {
-    title: 'Meeting window',
+    title: 'Screen capture',
     description:
       'While Deino records a detected meeting, it can keep snapshots of what is shared in the meeting window and a video of it. Everything stays on this Mac.',
   },
-  permission: {
-    title: 'Permission',
-    name: 'Screen Recording',
-    granted: 'Allowed',
-    missing: 'Not allowed',
-    unsupported: 'Not available on this computer.',
-    why: 'macOS asks for it before any app can see a window.',
-    hint: 'Allow Deino under Privacy & Security → Screen & System Audio Recording. Deino never asks on its own during a meeting; this page updates when you come back.',
-    openSettings: 'Open System Settings',
-    settingsFailed:
-      'Could not open System Settings. Open Privacy & Security → Screen & System Audio Recording there.',
-  },
+  /** The permission, as the Permissions card and its link name it. */
+  permission: 'Screen Recording',
   capture: {
     title: 'Capture',
+    more: 'Snapshots and video',
     detected: 'Capture detected meetings',
     detectedOn: 'The meeting window of Zoom, Teams, Meet and other detected calls.',
     detectedOff: 'Off: nothing on screen is captured.',
@@ -27,8 +18,8 @@ export const screenCopy = {
     snapshotsHint: 'A picture when the shared screen changes, at most every 10 seconds.',
     video: 'Record video',
     videoHint: 'The meeting window beside the audio, with its sound, for playback and clips.',
-    frameRate: 'Frame rate',
-    rates: { 1: '1 fps', 2: '2 fps', 5: '5 fps' },
+    frameRate: 'Video smoothness',
+    rates: { 1: 'Once a second', 2: 'Twice a second', 5: '5 times a second' },
     describe: 'Describe snapshots with Claude',
     describeHint:
       'Sends each snapshot to Claude after the meeting so the notes can say what a chart or design showed. Off: only text read on this Mac reaches the notes.',
@@ -44,13 +35,13 @@ export const screenCopy = {
     title: 'Deino is capturing the shared screen',
     body: 'Let everyone know their shared screen is being saved.',
     dismiss: 'Got it',
-    never: "Don't show again",
+    never: 'Don’t show again',
   },
   picker: {
     label: 'Screen to capture',
     none: 'Nothing to capture: allow Screen Recording in Settings.',
     failed: 'Could not capture that window.',
   },
-  saveFailed: 'Could not save the screen capture setting.',
-  loadFailed: 'Could not read the screen capture status.',
+  saveFailed: 'Couldn’t save the screen capture setting.',
+  loadFailed: 'Couldn’t read the screen capture status.',
 } as const;

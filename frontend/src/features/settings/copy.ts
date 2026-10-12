@@ -63,6 +63,12 @@ export const recordingSettingsCopy = {
     'If you are still recording when a meeting with other people begins, ask whether to start a new note for it.',
 } as const;
 
+/** The one-line link a feature shows while a permission it needs is missing (UX-10). */
+export const permissionLinkCopy = {
+  needs: (permission: string) => `Needs ${permission}`,
+  accessibility: 'Accessibility',
+} as const;
+
 /** The placeholder for an API key field: a typed key replaces a saved one. */
 export function apiKeyPlaceholder(status: SecretStatus | undefined): string {
   return status === 'stored'

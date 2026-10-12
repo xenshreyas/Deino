@@ -10,6 +10,7 @@
  */
 export { secretsApi, settingsApi } from './api';
 export { ApiKeyStatus } from './components/api-key-status';
+export { PermissionLink, type PermissionLinkProps } from './components/permission-link';
 export { SettingsSync } from './components/settings-sync';
 export { apiKeyPlaceholder } from './copy';
 export {
