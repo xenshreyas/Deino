@@ -99,6 +99,18 @@ the SQLite adapters behind those ports.
     `extract.action_items`, and the pure `resolve_due`, `Roster` and
     `Transcript` that turn the model's phrases, names and citations into
     days, people and segments). Fakes: `FakeActionItemExtractor`.
+  - `insights` (AI-06, ADR 0038): `InsightRepo`, `InsightResultRepo`,
+    `SpeakerNames`, `MeetingRecords` and `InsightExports`, all on
+    `SqliteInsightRepo` (`insight_defs`, `insight_results`); `InsightService`
+    (definitions with revisions, the 12-template `gallery`, a meeting's tab,
+    an insight's table, run candidates, runs on past meetings through the
+    `RunScheduler` port, CSV through `deino_export::csv::insight_table`) and
+    `GenerateService` (the `insights` stage's rules: requested runs, else
+    matching automatic insights; `InsightModel` with `GatewayInsightModel`
+    on route `extract.insights` and a per-insight JSON schema; `validate`
+    types every field, repairing close values; `Attribution` resolves `s12`
+    references to speaker, time and segment). Fakes: `FakeInsightStore`,
+    `ScriptedInsightModel`, `RecordedScheduler`, `FixedDomains`.
 - `models` (CAP-01, AI-01): the bundled model catalog (`catalog.json`: Parakeet
   Unified EN 0.6B, six quants, and Nomic Embed Text v1.5 Q8_0, each pinned to a
   revision, size and SHA-256, each with a purpose; a `ModelService` serves one

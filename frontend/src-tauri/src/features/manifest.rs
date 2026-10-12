@@ -143,6 +143,23 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "delete_view",
         ],
     ),
+    // ── AI-06 custom insights (features/insights.rs) ──
+    (
+        "insights",
+        &[
+            "templates",
+            "list",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "for_meeting",
+            "table",
+            "candidates",
+            "run",
+            "export_csv",
+        ],
+    ),
     // ── NOT-05 profile (features/profile.rs) ──
     ("profile", &["update", "context"]),
     // ── ORG-08 / AI-01 search (features/search.rs) ──
@@ -278,13 +295,4 @@ pub const FEATURES: &[(&str, &[&str])] = &[
             "import_sample",
         ],
     ),
-];
-
-/// Feature plugins compiled into debug builds only. `build.rs` registers
-/// them, and `capabilities/dev/` grants them, only when debug assertions are on.
-pub const DEV_FEATURES: &[(&str, &[&str])] = &[
-    // ── FND-13 reference feature (features/_example.rs) ──
-    ("example", &["list", "add"]),
-    // ── FND-04 developer tools (features/dev.rs) ──
-    ("dev", &["seed_fixtures"]),
 ];

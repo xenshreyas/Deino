@@ -36,7 +36,10 @@ it enters `processing`, then moves the meeting to `ready` or `failed`.
   over `deino_core::tags::AutoTagger`; `auto_folder` (order 75, ORG-05) over
   `deino_core::folders::AutoFiler`; `index` (order 80, ORG-08 and AI-01) over
   `deino_core::search::SearchIndexing` (keyword refresh and embeddings; skipped
-  with a reason while the embedding model is not downloaded); `update_entities`
+  with a reason while the embedding model is not downloaded); `insights` (order 85,
+  AI-06) over `deino_core::insights::InsightGenerator` (skipped with a reason when
+  no insight applies; the last attempt stores failures on the runs);
+  `update_entities`
   (order 90, ORG-04) over `deino_core::entities::EntityUpdater` (links named
   speakers, refreshes attendees' and companies' briefings); `auto_export`
   (order 99, EXP-02) over `deino_core::export::AutoExporter`.

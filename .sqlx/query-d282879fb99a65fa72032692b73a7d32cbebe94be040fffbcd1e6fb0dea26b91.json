@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO insight_results (insight_id, meeting_id, status, requested_at, updated_at)\n                 VALUES (?1, ?2, 'pending', ?3, ?3)\n                 ON CONFLICT (insight_id, meeting_id) DO UPDATE SET\n                     status = 'pending', error = NULL,\n                     requested_at = excluded.requested_at, updated_at = excluded.updated_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d282879fb99a65fa72032692b73a7d32cbebe94be040fffbcd1e6fb0dea26b91"
+}

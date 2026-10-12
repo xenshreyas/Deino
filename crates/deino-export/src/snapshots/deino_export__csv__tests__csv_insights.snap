@@ -1,0 +1,54 @@
+---
+source: crates/deino-export/src/csv.rs
+expression: insights(&exports)
+---
+meeting_id,meeting_title,insight,answer,speaker,time
+meeting-fixture-board-update,Deino Q3 board update,Decisions,The board approved two engineering hires: a senior backend engineer and a mobile engineer.,Shreyas,00:00
+meeting-fixture-board-update,Deino Q3 board update,Decisions,Series A conversations are held until March 2027; no fundraising process or insider extension now.,,
+meeting-fixture-board-update,Deino Q3 board update,Decisions,"Deino will launch a hosted, customer-facing status page by the end of October 2026.",,
+meeting-fixture-board-update,Deino Q3 board update,Decisions,"The next board meeting is on 15 December 2026, same time.",,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,"The top three onboarding ideas from the dot vote are CSV import, a guided setup checklist (with an internal stuck-customer view for Tom), and admin-consent bulk calendar connect.",Shreyas,00:00
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,The in-app chat widget is rejected because of the support load it would put on Tom.,,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,CSV import v1 covers technicians only; job import waits until Priya's threat model is done.,,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,"CSV import will parse server-side with a 5,000-row / 5 MB cap, accept CSV only (no Excel), import allow-listed columns only, delete raw uploads after 24 hours, and escape formula-leading characters on export.",,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,"Admin-consent calendar connect is designed now but built only after the Calendar Sync v2 beta (13 November), without pulling in Maya before then.",,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,"Templates per trade and the sample-data sandbox are parked for later, not built this quarter.",,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,Interim target of 10 days to first dispatch for customers onboarded in October and November; 7 days is the target once admin-consent connect ships.,,
+meeting-fixture-brainstorm,Onboarding revamp brainstorm,Decisions,The under-seven-days target is measured in calendar days.,,
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,"Fernhollow receives a service credit of one month of fees for all sixty technicians ($2,700 at $45 per technician), applied to the November invoice, covering the three double dispatches.",Tom Becker,00:00
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,Owen and his two dispatch leads are added to Deino's release-notes email list.,,
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,Deino will send Fernhollow a notice forty-eight hours before any release that touches calendar sync; the office manager is left off that list.,,
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,Shreyas will deliver a written postmortem to Fernhollow by Friday 9 October.,,
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,Fernhollow will not join the Calendar Sync v2 beta and will wait for general availability.,,
+meeting-fixture-customer-support,Fernhollow: duplicate jobs follow-up,Decisions,Any support ticket about duplicate or missing jobs is now high priority by default.,,
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),Decisions,"The design exercise was scoped to Google and Microsoft 365 only (no iCloud or CalDAV), focusing on the inbound direction.",Shreyas,00:01
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),Decisions,Deino will give Jordan an answer by Wednesday 7 October.,,
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),Decisions,Shreyas and Priya will each submit written feedback before debriefing together.,,
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),Decisions,No take-home assignment will be added for the Senior Backend Engineer role.,,
+meeting-fixture-interview,Interview: Jordan Ellis (Senior Backend Engineer),Decisions,References will only be requested from Jordan if the process moves forward.,,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,"Maya comes off the on-call rotation for the next two weeks, starting 7 October and returning on 21 October, with Shreyas as primary and Diego as secondary for sync.",Shreyas,00:01
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,Maya takes Friday 9 October off.,,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,Maya is paused from phone screens until the end of the month but will do final-round interviews for the senior backend role.,,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,No contractor for the Microsoft side of Calendar Sync v2; hiring energy goes into the senior backend hire instead.,,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,"Calendar Sync v2 dates hold (beta 13 November, GA 4 December); a Google-only beta is a fallback to revisit in two weeks, not the plan.",,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,The Microsoft subscription renewal design adds an hourly reconciliation sweep for unhealthy subscriptions and an alert when more than one percent of subscriptions are expired.,,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,"The recurring-event test harness (moved occurrences, cancelled occurrences, series time zone changes) is part of Calendar Sync v2 scope.",,
+meeting-fixture-one-on-one,Shreyas / Maya 1:1,Decisions,"For customer-impacting incidents, Tom owns customer updates, Shreyas owns internal updates with an hourly cadence, and the person fixing it only talks in the incident channel.",,
+meeting-fixture-planning,Q4 planning,Decisions,Calendar Sync v1 is bug-fix only for Q4; all new sync work goes into Calendar Sync v2.,Shreyas,00:01
+meeting-fixture-planning,Q4 planning,Decisions,"The Q4 priorities are, in order: Calendar Sync v2, SOC 2 Type II (observation window starting 1 November), offline mode for the technician mobile app, and the new-customer onboarding revamp.",,
+meeting-fixture-planning,Q4 planning,Decisions,"Route optimisation is cut from Q4, with no work on it at all, not even a spike.",,
+meeting-fixture-planning,Q4 planning,Decisions,The Salesforce integration is cut from Q4 and will be revisited in the January planning; in the meantime Lena can offer a Zapier recipe as a stopgap to the two enterprise prospects.,,
+meeting-fixture-planning,Q4 planning,Decisions,Offline mode for Q4 is reduced to a read-only offline job list; full offline editing is pushed to Q1.,,
+meeting-fixture-planning,Q4 planning,Decisions,Deino will use a hosted status page rather than building one; Priya sets it up out of the SOC 2 budget.,,
+meeting-fixture-planning,Q4 planning,Decisions,"There will be a production change freeze from 18 December to 4 January, with only emergency fixes deployed.",,
+meeting-fixture-planning,Q4 planning,Decisions,Aisha will propose two engineering hires to the board on 29 September: a senior backend engineer and a mobile engineer.,,
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,Decisions,"The pilot will cover one Brightkite region with about 70 technicians for 60 days, instead of all three regions at once.",Lena Okafor,00:00
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,Decisions,The pilot proposal will be priced on the enterprise tier ($60 per technician per month) because Brightkite needs Okta SSO and SCIM.,,
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,Decisions,"The pilot will be paid (no free pilot), with the pilot fee credited against the first year if Brightkite signs an annual contract.",,
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,Decisions,No real Brightkite data goes into Deino until Hannah signs off on the security review; an anonymised sample sent via Brightkite's secure file share is allowed before that.,,
+meeting-fixture-sales-discovery,Deino × Brightkite Logistics: discovery,Decisions,"Deino will run a tailored demo for Brightkite's dispatchers on Wednesday 7 October at 2pm Brightkite time, focused on drag-and-drop rescheduling.",,
+meeting-fixture-standup,Eng standup,Decisions,The Fernhollow duplicate-jobs incident is closed after two days with zero new duplicates since the fix shipped on Tuesday.,Shreyas,00:00
+meeting-fixture-standup,Eng standup,Decisions,"The read-only offline job list will ship in next week's release, not in today's release cut.",,
+meeting-fixture-standup,Eng standup,Decisions,The flaky webhook retry integration test is quarantined so it does not gate merges or the release cut.,,
+meeting-fixture-standup,Eng standup,Decisions,The release cut happens today (Thursday 8 October) at four o'clock; anything that needs to be in must be merged by three thirty.,,
+meeting-fixture-standup,Eng standup,Decisions,The Outlook time-zone ticket is taken offline to a separate call between Maya and Tom right after standup.,,

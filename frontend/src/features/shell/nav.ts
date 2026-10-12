@@ -117,10 +117,6 @@ export const NAV_ITEMS = [
     to: '/insights',
     order: 10,
     section: 'intelligence',
-    comingSoon: {
-      card: 'AI-06',
-      description: 'Track the questions you care about across every meeting.',
-    },
   },
   {
     id: 'recipes',

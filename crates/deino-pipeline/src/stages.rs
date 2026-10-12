@@ -14,6 +14,7 @@
 //! | 70 | [`AutoTagStage`] (`auto_tag`) | ORG-06 |
 //! | 75 | [`AutoFolderStage`] (`auto_folder`) | ORG-05 |
 //! | 80 | [`IndexStage`] (`index`) | ORG-08, AI-01 |
+//! | 85 | [`InsightsStage`] (`insights`) | AI-06 |
 //! | 90 | [`UpdateEntitiesStage`] (`update_entities`) | ORG-04 |
 //! | 99 | [`AutoExportStage`] (`auto_export`) | EXP-02 |
 //!
@@ -32,6 +33,7 @@ mod final_transcription;
 mod finalize_audio;
 mod identify_speakers;
 mod index;
+mod insights;
 mod update_entities;
 mod vocab_fixups;
 
@@ -64,6 +66,9 @@ pub use identify_speakers::RecordedIdentifications;
 pub use index::IndexStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use index::RecordedIndexing;
+pub use insights::InsightsStage;
+#[cfg(any(test, feature = "test-support"))]
+pub use insights::RecordedInsights;
 #[cfg(any(test, feature = "test-support"))]
 pub use update_entities::RecordedEntityUpdates;
 pub use update_entities::UpdateEntitiesStage;

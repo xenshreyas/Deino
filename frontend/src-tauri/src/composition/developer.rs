@@ -1,6 +1,6 @@
-//! Wiring for Settings → Developer (DEV-02/04): the command-line setup over
+//! Wiring for Settings → Developer: the command-line setup (DEV-02/04) over
 //! the real file system, the sidecar beside the app's executable and the
-//! user's home folder.
+//! user's home folder, and the fixture seeder of debug builds (FND-04).
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -35,4 +35,12 @@ fn sidecar(links: &dyn Links) -> Option<PathBuf> {
     let executable = std::env::current_exe().ok()?;
     let path = executable.parent()?.join(SIDECAR);
     (links.inspect(&path).ok()? == Entry::File).then_some(path)
+}
+
+/// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
+/// meetings into the app's database (Settings → Developer).
+#[cfg(debug_assertions)]
+pub(super) fn attach_fixture_seeder(app: &AppHandle, database: &deino_db::Database) {
+    let seeder = deino_testkit::FixtureSeeder::new(database.clone());
+    app.manage(Arc::new(seeder));
 }

@@ -100,6 +100,7 @@ fn register_feature_plugins(builder: Builder<Wry>) -> Builder<Wry> {
         .plugin(features::templates::init())
         .plugin(features::folders::init())
         .plugin(features::integrations::init())
+        .plugin(features::insights::init())
         .plugin(features::tags::init())
         .plugin(features::speakers::init())
         .plugin(features::transcript::init())

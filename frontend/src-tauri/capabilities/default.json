@@ -61,6 +61,7 @@
         "transcription:default",
         "folders:default",
         "integrations:default",
+        "insights:default",
         "tags:default",
         "speakers:default",
         "transcript:default",

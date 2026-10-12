@@ -120,3 +120,16 @@ Monday, September 28, 2026 at 10:01 · 1 h 22 min
 - [ ] Draft job descriptions for the senior backend and mobile engineer roles — Shreyas, due Oct 2, 2026
 - [ ] Add the two-role hiring proposal to the board deck — Aisha Rahman, due Sep 28, 2026
 - [ ] Send a recurring Monday invite for the weekly Q4 priorities check-in — Aisha Rahman
+
+## Insights
+
+### Decisions
+
+- Calendar Sync v1 is bug-fix only for Q4; all new sync work goes into Calendar Sync v2. — Shreyas, 00:01
+- The Q4 priorities are, in order: Calendar Sync v2, SOC 2 Type II (observation window starting 1 November), offline mode for the technician mobile app, and the new-customer onboarding revamp.
+- Route optimisation is cut from Q4, with no work on it at all, not even a spike.
+- The Salesforce integration is cut from Q4 and will be revisited in the January planning; in the meantime Lena can offer a Zapier recipe as a stopgap to the two enterprise prospects.
+- Offline mode for Q4 is reduced to a read-only offline job list; full offline editing is pushed to Q1.
+- Deino will use a hosted status page rather than building one; Priya sets it up out of the SOC 2 budget.
+- There will be a production change freeze from 18 December to 4 January, with only emergency fixes deployed.
+- Aisha will propose two engineering hires to the board on 29 September: a senior backend engineer and a mobile engineer.

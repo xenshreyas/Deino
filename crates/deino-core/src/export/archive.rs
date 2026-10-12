@@ -93,6 +93,7 @@ impl Archive {
     fn complete(mut self) -> Result<(), ExportError> {
         self.file("meetings.csv", csv::meetings(&self.rows).as_bytes())?;
         self.file("action_items.csv", csv::action_items(&self.rows).as_bytes())?;
+        self.file("insights.csv", csv::insights(&self.rows).as_bytes())?;
         self.file("people.csv", csv::people(&self.rows).as_bytes())?;
         self.zip
             .finish()

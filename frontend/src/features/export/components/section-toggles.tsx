@@ -6,12 +6,13 @@ import { Check, ICON_PROPS } from '@/ui/icons';
 import { exportCopy, sectionCopy } from '../copy';
 import type { ExportSections, SectionKey } from '../types';
 
-/** The switches shown, in document order. Insights joins with AI-06. */
+/** The switches shown, in document order. */
 export const SECTION_KEYS: readonly SectionKey[] = [
   'attendees',
   'notes',
   'myNotes',
   'actionItems',
+  'insights',
   'transcript',
 ];
 
@@ -25,7 +26,7 @@ export interface SectionTogglesProps {
   label?: string;
 }
 
-/** `value` with exactly the keys in `chosen` switched on (insights untouched). */
+/** `value` with exactly the keys in `chosen` switched on. */
 function withChosen(value: ExportSections, chosen: readonly string[]): ExportSections {
   const next = { ...value };
   for (const key of SECTION_KEYS) next[key] = chosen.includes(key);

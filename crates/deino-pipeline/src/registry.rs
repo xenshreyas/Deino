@@ -13,6 +13,7 @@ use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::TrackTranscriber;
 use deino_core::folders::AutoFiler;
+use deino_core::insights::InsightGenerator;
 use deino_core::meetings::MeetingLifecycleRepo;
 use deino_core::people::AttendeeRepo;
 use deino_core::search::SearchIndexing;
@@ -24,7 +25,7 @@ use deino_domain::{Clock, StageId};
 use crate::stages::{
     AutoExportStage, AutoFolderStage, AutoTagStage, AutoTitleStage, AutomaticNotes, DiarizeStage,
     EnhanceNotesStage, ExtractActionItemsStage, FinalTranscriptionStage, FinalizeAudioStage,
-    IdentifySpeakersStage, IndexStage, MeetingTitler, NotesEnhancer, RepassSetting,
+    IdentifySpeakersStage, IndexStage, InsightsStage, MeetingTitler, NotesEnhancer, RepassSetting,
     UpdateEntitiesStage, VocabFixer, VocabFixupsStage,
 };
 use crate::{Job, PipelineStage};
@@ -55,6 +56,8 @@ pub struct StagePorts {
     pub auto_export: Arc<dyn AutoExporter>,
     /// Action item extraction over the LLM gateway (AI-05).
     pub action_items: Arc<dyn ActionItemExtractor>,
+    /// Custom insights over the LLM gateway (AI-06).
+    pub insights: Arc<dyn InsightGenerator>,
     /// Voice exemplars the engine merges known voices with (CAP-04).
     pub voiceprints: Arc<dyn ExemplarReader>,
     /// Names speakers from voice profiles and the calendar (CAP-04).
@@ -106,6 +109,7 @@ impl StagePorts {
             diarizer: Arc::new(FakeTrackDiarizer::default()),
             auto_export: Arc::new(crate::stages::ScriptedAutoExporter::default()),
             action_items: Arc::new(FakeActionItemExtractor::default()),
+            insights: Arc::new(crate::stages::RecordedInsights::default()),
             voiceprints: Arc::new(FakeVoiceprintRepo::default()),
             identifier: Arc::new(crate::stages::RecordedIdentifications::default()),
             clock: Arc::new(FakeClock::new(chrono::DateTime::UNIX_EPOCH)),
@@ -146,6 +150,8 @@ pub fn stages(ports: &StagePorts) -> Vec<Arc<dyn PipelineStage>> {
         Arc::new(AutoFolderStage::new(ports)),
         // 80 · ORG-08 / AI-01: keyword documents and embeddings.
         Arc::new(IndexStage::new(ports)),
+        // 85 · AI-06: the user's insights, once tags and folders are settled.
+        Arc::new(InsightsStage::new(ports)),
         // 90 · ORG-04: people and company summaries, logos.
         Arc::new(UpdateEntitiesStage::new(ports)),
         // 99 · EXP-02: the notes into the user's folder, last.
@@ -236,6 +242,7 @@ mod tests {
                 "auto_tag",
                 "auto_folder",
                 "index",
+                "insights",
                 "update_entities",
                 "auto_export"
             ]

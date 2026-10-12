@@ -16,6 +16,8 @@ pub(crate) mod heading {
     pub const MY_NOTES: &str = "My notes";
     /// The action items.
     pub const ACTION_ITEMS: &str = "Action items";
+    /// The insights (AI-06).
+    pub const INSIGHTS: &str = "Insights";
     /// The transcript.
     pub const TRANSCRIPT: &str = "Transcript";
 }
@@ -80,6 +82,16 @@ impl Clock {
     }
 }
 
+/// One moment on its own, as "04:31", or "1:04:31" from the first hour on.
+pub(crate) fn moment(at: Millis) -> String {
+    let clock = if at.get() >= HOUR {
+        Clock::Hours
+    } else {
+        Clock::Minutes
+    };
+    clock.format(at)
+}
+
 /// `at` as a subtitle timestamp: "00:04:07,250" (`separator` ',') for SRT
 /// or "00:04:07.250" ('.') for WebVTT.
 pub(crate) fn subtitle_time(at: Millis, separator: char) -> String {
@@ -113,6 +125,8 @@ mod tests {
     fn transcript_clocks_switch_to_hours_past_the_first_hour() {
         assert_eq!(Clock::Minutes.format(Millis(247_250)), "04:07");
         assert_eq!(Clock::Hours.format(Millis(3_847_000)), "1:04:07");
+        assert_eq!(moment(Millis(271_000)), "04:31");
+        assert_eq!(moment(Millis(3_847_000)), "1:04:07");
     }
 
     #[test]

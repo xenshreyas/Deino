@@ -208,6 +208,14 @@ export type Table =
  */
 "vocab_corrections" | 
 /**
+ * Insights the user defined: what to extract from meetings (AI-06).
+ */
+"insight_defs" | 
+/**
+ * Each insight's latest run on each meeting, with its answers (AI-06).
+ */
+"insight_results" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */
@@ -217,4 +225,4 @@ export type Table =
 export const ERROR_CODES = ["not_found","invalid","conflict","unavailable","permission_denied","network","llm","cancelled","internal"] as const satisfies readonly ErrorCode[]
 
 /** Every `Table`, for invalidating everything at once. */
-export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","example_notes"] as const satisfies readonly Table[]
+export const TABLES = ["meetings","transcript_segments","speakers","meeting_notes","enhanced_notes","people","companies","meeting_attendees","calendar_accounts","calendar_events","calendars","folders","meeting_folders","folder_rules","tags","meeting_tags","action_items","action_item_views","llm_calls","jobs","job_runs","egress_log","templates","template_sections","voiceprints","speaker_suggestions","integration_connections","integration_connection_scopes","integration_deliveries","search_documents","embeddings","vocab_terms","vocab_variants","vocab_corrections","insight_defs","insight_results","example_notes"] as const satisfies readonly Table[]

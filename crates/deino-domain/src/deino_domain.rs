@@ -19,6 +19,8 @@
 //!   (FND-12), so settings, the egress log and `deino-net` name it alike;
 //! - [`integration`]: the integrations framework's closed sets
 //!   ([`IntegrationProvider`], [`Capability`], [`ConnectionStatus`], ...; INT-00);
+//! - [`conditions`]: [`Condition`] and [`ConditionGroups`], which meetings
+//!   an insight or an automation applies to (AI-06, AUT-01);
 //! - [`clock`]: the [`Clock`] port, so time-dependent logic is testable.
 //!
 //! Feature models and services live in `deino-core`; persistence lives in
@@ -30,6 +32,7 @@ mod db_enum;
 pub mod bundle_id;
 pub mod clock;
 pub mod color;
+pub mod conditions;
 pub mod email;
 pub mod enums;
 pub mod error;
@@ -46,19 +49,21 @@ pub use bundle_id::{BundleId, InvalidBundleId};
 pub use clock::FakeClock;
 pub use clock::{Clock, SystemClock};
 pub use color::{InvalidPaletteColor, PaletteColor};
+pub use conditions::{Condition, ConditionGroups, InvalidCondition, MeetingFacts};
 pub use email::{Email, InvalidEmail};
 pub use enums::{
     ActionItemOrigin, ActionItemPriority, ActionItemStatus, AttendeeRole, Audience,
-    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, MeetingSource, Rsvp,
-    SectionFormat, TagSource, VocabKind,
+    CalendarProvider, Channel, ConferencePlatform, FolderRuleKind, InsightApplyMode, InsightStatus,
+    MeetingSource, Rsvp, SectionFormat, TagSource, VocabKind,
 };
 pub use error::{AppError, ErrorClass, ErrorCode};
 #[cfg(debug_assertions)]
 pub use id::ExampleNoteId;
 pub use id::{
     ActionItemId, ActionItemViewId, CalendarAccountId, CalendarEventId, CalendarId, CompanyId,
-    ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, LlmCallId, MeetingId, PersonId,
-    SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId, VoiceprintId,
+    ConnectionId, DeliveryId, FolderId, FolderRuleId, IdError, InsightId, LlmCallId, MeetingId,
+    PersonId, SegmentId, SeriesId, SpeakerId, StageId, TagId, TemplateId, VocabTermId,
+    VoiceprintId,
 };
 pub use integration::{
     AuthMethod, Capability, ConnectionStatus, DeliveryStatus, IntegrationProvider,

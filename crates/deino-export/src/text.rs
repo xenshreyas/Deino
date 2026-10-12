@@ -10,9 +10,7 @@ use crate::{MeetingExport, RenderOptions, Section, doc};
 pub fn render(export: &MeetingExport, options: &RenderOptions) -> String {
     let mut parts = vec![header(export)];
     for section in export.sections(options.sections) {
-        if let Some(body) = section_body(export, section) {
-            parts.push(body);
-        }
+        parts.push(section_body(export, section));
     }
     let mut text = parts.join("\n\n");
     text.push('\n');
@@ -28,17 +26,17 @@ fn header(export: &MeetingExport) -> String {
     format!("{}\n{meta}", export.title)
 }
 
-fn section_body(export: &MeetingExport, section: Section) -> Option<String> {
+fn section_body(export: &MeetingExport, section: Section) -> String {
     let (title, body) = match section {
         Section::Attendees => (heading::ATTENDEES, attendees(export)),
         Section::Notes => (heading::NOTES, notes(export.notes.as_deref())),
         Section::MyNotes => (heading::MY_NOTES, notes(export.my_notes.as_deref())),
         Section::ActionItems => (heading::ACTION_ITEMS, action_items(export)),
+        Section::Insights => (heading::INSIGHTS, insights(export)),
         Section::Transcript => (heading::TRANSCRIPT, transcript(export)),
-        Section::Insights => return None,
     };
     let rule = "-".repeat(title.chars().count());
-    Some(format!("{title}\n{rule}\n{body}"))
+    format!("{title}\n{rule}\n{body}")
 }
 
 fn attendees(export: &MeetingExport) -> String {
@@ -80,6 +78,29 @@ fn action_items(export: &MeetingExport) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// Each insight's name over its answers, `- answer — Speaker, 04:31`.
+fn insights(export: &MeetingExport) -> String {
+    export
+        .insights
+        .iter()
+        .map(|insight| {
+            let answers: Vec<String> = insight
+                .answers
+                .iter()
+                .map(|answer| {
+                    let line = answer.line().replace('\n', "\n  ");
+                    match answer.attribution() {
+                        Some(source) => format!("- {line} — {source}"),
+                        None => format!("- {line}"),
+                    }
+                })
+                .collect();
+            format!("{}\n{}", insight.name, answers.join("\n"))
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
 
 fn transcript(export: &MeetingExport) -> String {

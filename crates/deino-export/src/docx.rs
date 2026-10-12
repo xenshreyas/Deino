@@ -10,8 +10,8 @@ mod styles;
 use std::io::Cursor;
 
 use docx_rs::{
-    Docx, Paragraph, Shading, ShdType, Table, TableCell, TableCellBorder, TableCellBorderPosition,
-    TableCellBorders, TableRow, WidthType,
+    Docx, IndentLevel, NumberingId, Paragraph, Shading, ShdType, Table, TableCell, TableCellBorder,
+    TableCellBorderPosition, TableCellBorders, TableRow, WidthType,
 };
 
 use self::blocks::Writer;
@@ -54,8 +54,8 @@ fn write_section(writer: &mut Writer, export: &MeetingExport, section: Section) 
         Section::Notes => heading::NOTES,
         Section::MyNotes => heading::MY_NOTES,
         Section::ActionItems => heading::ACTION_ITEMS,
+        Section::Insights => heading::INSIGHTS,
         Section::Transcript => heading::TRANSCRIPT,
-        Section::Insights => return,
     };
     writer.paragraph(text_paragraph(title).style("Heading2"));
     match section {
@@ -70,8 +70,8 @@ fn write_section(writer: &mut Writer, export: &MeetingExport, section: Section) 
         Section::Notes => notes(writer, export.notes.as_deref()),
         Section::MyNotes => notes(writer, export.my_notes.as_deref()),
         Section::ActionItems => action_items(writer, export),
+        Section::Insights => insights(writer, export),
         Section::Transcript => writer.table(transcript(export)),
-        Section::Insights => {}
     }
 }
 
@@ -103,6 +103,27 @@ fn action_items(writer: &mut Writer, export: &MeetingExport) {
             );
         }
         writer.paragraph(paragraph);
+    }
+}
+
+/// Each insight's name as a `Heading 3` over a bulleted list of its
+/// answers, each followed by who said it and when, muted.
+fn insights(writer: &mut Writer, export: &MeetingExport) {
+    for insight in &export.insights {
+        writer.paragraph(text_paragraph(&insight.name).style("Heading3"));
+        for answer in &insight.answers {
+            let mut paragraph = Paragraph::new()
+                .numbering(NumberingId::new(styles::BULLETS), IndentLevel::new(0))
+                .add_run(styles::text(answer.line()));
+            if let Some(source) = answer.attribution() {
+                paragraph = paragraph.add_run(
+                    styles::text_run()
+                        .add_text(format!(" — {source}"))
+                        .color(MUTED),
+                );
+            }
+            writer.paragraph(paragraph);
+        }
     }
 }
 

@@ -183,6 +183,29 @@ db_enum! {
     }
 }
 
+db_enum! {
+    /// Where an insight's run on a meeting stands (AI-06). Stored in
+    /// `insight_results.status`.
+    InsightStatus {
+        /// Asked for; the `insights` pipeline stage has not answered yet.
+        Pending = "pending",
+        /// Answered: the stored answers are this run's.
+        Done = "done",
+        /// The last run failed; earlier answers, if any, are kept.
+        Failed = "failed",
+    }
+}
+
+db_enum! {
+    /// When an insight runs (AI-06). Stored in `insight_defs.apply_mode`.
+    InsightApplyMode {
+        /// After every meeting its conditions match.
+        Automatic = "automatic",
+        /// Only when the user runs it.
+        Manual = "manual",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,6 +227,8 @@ mod tests {
         assert_names_agree(CalendarProvider::ALL, CalendarProvider::as_str);
         assert_names_agree(ConferencePlatform::ALL, ConferencePlatform::as_str);
         assert_names_agree(VocabKind::ALL, VocabKind::as_str);
+        assert_names_agree(InsightStatus::ALL, InsightStatus::as_str);
+        assert_names_agree(InsightApplyMode::ALL, InsightApplyMode::as_str);
     }
 
     #[test]

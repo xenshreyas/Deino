@@ -10,7 +10,10 @@ use chrono::FixedOffset;
 use deino_domain::Seconds;
 use deino_testkit::fixture::{FixtureMeeting, Fixtures, Rsvp, USER_EMAIL};
 
-use crate::{ActionItemExport, MeetingExport, Participant, Utterance};
+use crate::{
+    ActionItemExport, InsightAnswerExport, InsightExport, InsightExportValue, MeetingExport,
+    Participant, Utterance,
+};
 
 /// Pacific daylight time, the zone the goldens are written in.
 const ZONE_SECONDS: i32 = -7 * 3_600;
@@ -51,8 +54,38 @@ fn export_of(meeting: &FixtureMeeting) -> MeetingExport {
         notes: Some(notes(meeting)),
         my_notes: meeting.user_notes.clone(),
         action_items: action_items(meeting),
+        insights: insights(meeting),
         transcript: transcript(meeting),
     }
+}
+
+/// A "Decisions" insight from the ground truth's decisions, the first one
+/// attributed to the meeting's first line, so goldens show both forms.
+fn insights(meeting: &FixtureMeeting) -> Vec<InsightExport> {
+    let transcript = transcript(meeting);
+    let first = transcript.first();
+    let answers: Vec<InsightAnswerExport> = meeting
+        .ground_truth
+        .decisions
+        .iter()
+        .enumerate()
+        .map(|(index, decision)| InsightAnswerExport {
+            value: InsightExportValue::Text {
+                text: decision.clone(),
+            },
+            speaker: first
+                .filter(|_| index == 0)
+                .map(|line| line.speaker.clone()),
+            at: first.filter(|_| index == 0).map(|line| line.start),
+        })
+        .collect();
+    if answers.is_empty() {
+        return Vec::new();
+    }
+    vec![InsightExport {
+        name: "Decisions".to_owned(),
+        answers,
+    }]
 }
 
 fn notes(meeting: &FixtureMeeting) -> String {

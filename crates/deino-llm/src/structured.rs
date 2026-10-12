@@ -42,11 +42,26 @@ impl Gateway {
         route: Route,
         prompt: Prompt,
     ) -> Result<T, LlmError> {
+        let output = JsonOutput {
+            name: schema_name::<T>(),
+            schema: json_schema_for::<T>(),
+        };
+        self.structured_as(route, prompt, output).await
+    }
+
+    /// A `T` for `route` under a schema built at run time, for answers whose
+    /// shape the user defines (AI-06's insight fields). `output` constrains
+    /// the provider; `T` is the typed wire value the answer parses into, which
+    /// the caller still validates. The same repair retry as
+    /// [`Gateway::structured`].
+    pub async fn structured_as<T: DeserializeOwned>(
+        &self,
+        route: Route,
+        prompt: Prompt,
+        output: JsonOutput,
+    ) -> Result<T, LlmError> {
         let shape = Shape {
-            output: OutputFormat::Json(JsonOutput {
-                name: schema_name::<T>(),
-                schema: json_schema_for::<T>(),
-            }),
+            output: OutputFormat::Json(output),
             tools: Vec::new(),
         };
         let first = self

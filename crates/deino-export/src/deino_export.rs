@@ -15,7 +15,8 @@
 //!   rich format walks;
 //! - [`naming`]: file and folder names from user templates
 //!   (`{date} {title}.md`, `{yyyy}/{mm}`), safe on every file system;
-//! - [`csv`]: the full account export's tables;
+//! - [`csv`]: the full account export's tables, and one insight's answers
+//!   across meetings ([`insights`], AI-06);
 //! - [`mailto`]: an email draft URL with the notes in its body.
 //!
 //! Notes arrive as Markdown. When the notepad stores TipTap JSON (NOT-01),
@@ -26,6 +27,7 @@ pub mod doc;
 pub mod docx;
 mod error;
 pub mod html;
+pub mod insights;
 pub mod json;
 mod labels;
 pub mod mailto;
@@ -42,6 +44,10 @@ pub mod text;
 
 pub use doc::{Block, Inline, ListItem};
 pub use error::RenderError;
+pub use insights::{
+    ExportField, InsightAnswerExport, InsightExport, InsightExportValue, InsightRowExport,
+    InsightTableExport,
+};
 pub use model::{ActionItemExport, MeetingExport, Participant, Utterance};
 pub use options::{ExportFormat, ExportSections, LinkStyle, RenderOptions, Section};
 pub use render::{Rendered, render};

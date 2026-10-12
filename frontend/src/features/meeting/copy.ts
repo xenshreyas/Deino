@@ -14,8 +14,6 @@ export const meetingCopy = {
   editTitle: 'Rename meeting',
   loadError: 'This meeting could not be opened.',
   backToMeetings: 'Back to Meetings',
-  insightsTitle: 'No insights yet',
-  insightsBody: 'Answers to the questions you track across meetings will appear here.',
   clipsTitle: 'No clips yet',
   clipsBody: 'Save the moments worth sharing from the transcript and recording.',
   chatTitle: 'Ask about this meeting',

@@ -33,6 +33,7 @@ mod diarize;
 mod enhance;
 mod entities;
 mod export;
+mod insights;
 mod integrations;
 mod llm;
 mod network;
@@ -212,7 +213,7 @@ fn attach_local(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) ->
     onboarding::attach_sample(app, database, clock);
     network::attach_network_log(app, database);
     #[cfg(debug_assertions)]
-    attach_fixture_seeder(app, database);
+    developer::attach_fixture_seeder(app, database);
     features::db::forward_changes(app, database.changes());
     organize
 }
@@ -228,8 +229,8 @@ fn attach_background(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock
 
 /// Builds and manages the services behind the pipeline's AI and export
 /// stages: the auto-tagger, the exports (EXP-01/02), action items (AI-05),
-/// the speaker identifier (CAP-04) and people and companies (ORG-04); the
-/// search indexer (ORG-08) is already built.
+/// insights (AI-06), the speaker identifier (CAP-04) and people and companies
+/// (ORG-04); the search indexer (ORG-08) is already built.
 fn attach_stage_services(
     app: &AppHandle,
     database: &Database,
@@ -249,6 +250,7 @@ fn attach_stage_services(
         auto_tagger,
         auto_export,
         action_items: action_items::attach_action_items(app, database, wiring),
+        insights: insights::attach_insights(app, database, wiring),
         identifier: speakers::identifier(database, wiring.settings.clone()),
         search,
         entities: entities::attach_entities(app, database, wiring.gateway.clone(), &wiring.clock),
@@ -270,14 +272,6 @@ async fn attach_notes(
     let templates = notes.template_source();
     notes.manage(app);
     templates
-}
-
-/// Debug builds only: gives the `dev` plugin a seeder that writes the fixture
-/// meetings into the app's database (Settings → Developer).
-#[cfg(debug_assertions)]
-fn attach_fixture_seeder(app: &AppHandle, database: &Database) {
-    let seeder = deino_testkit::FixtureSeeder::new(database.clone());
-    app.manage(Arc::new(seeder));
 }
 
 /// Wires the debug-only reference feature over its private in-memory database.
@@ -385,6 +379,7 @@ mod tests {
                     action_items: Arc::new(
                         deino_core::action_items::FakeActionItemExtractor::default(),
                     ),
+                    insights: Arc::new(deino_pipeline::stages::RecordedInsights::default()),
                     identifier: Arc::new(deino_pipeline::RecordedIdentifications::default()),
                     search: Arc::new(deino_pipeline::RecordedIndexing::default()),
                     entities: Arc::new(deino_pipeline::RecordedEntityUpdates::default()),

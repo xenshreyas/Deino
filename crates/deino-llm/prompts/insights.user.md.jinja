@@ -1,0 +1,21 @@
+<meeting>
+{{ meeting }}
+</meeting>
+
+<attendees>
+{{ attendees }}
+</attendees>
+
+<insight>
+Name: {{ name }}
+Description: {{ description }}
+{% if let Some(fields) = fields %}Fields:
+{{ fields }}
+{% endif %}Answers: {{ count }}
+</insight>
+
+<transcript>
+{{ transcript }}
+</transcript>
+
+Now answer the insight for this meeting.

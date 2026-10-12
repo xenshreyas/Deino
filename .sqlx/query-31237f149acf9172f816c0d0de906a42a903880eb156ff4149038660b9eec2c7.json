@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE insight_defs SET name = ?1, description = ?2, fields_json = ?3,\n                 max_answers = ?4, apply_mode = ?5, conditions_json = ?6, revision = ?7,\n                 updated_at = ?8\n             WHERE id = ?9",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "31237f149acf9172f816c0d0de906a42a903880eb156ff4149038660b9eec2c7"
+}

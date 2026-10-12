@@ -246,6 +246,12 @@ uuid_id!(
     VocabTermId
 );
 
+uuid_id!(
+    /// Identifies an insight the user defined (AI-06): what to extract from
+    /// meetings, and when.
+    InsightId
+);
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};

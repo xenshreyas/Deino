@@ -1,10 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ComingSoonScreen } from '@/features/shell';
+import { asInsightId, insightListQuery, InsightsScreen } from '@/features/insights';
+import { insightsSearchSchema } from '@/features/insights/search';
 
-/** `/insights`: Insights, a placeholder until its feature card ships (see `nav.ts`). */
-export const Route = createFileRoute('/insights')({ component: Placeholder });
+/** `/insights?insight=<id>`: every insight, one table of answers at a time. */
+export const Route = createFileRoute('/insights')({
+  validateSearch: insightsSearchSchema,
+  // Warm the list; the page shows its own loading state.
+  loader: async ({ context }) => {
+    await context.queryClient.query(insightListQuery()).catch(() => undefined);
+  },
+  component: InsightsRoute,
+});
 
-function Placeholder() {
-  return <ComingSoonScreen navId="insights" />;
+function InsightsRoute() {
+  const { insight } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  return (
+    <InsightsScreen
+      selected={insight === undefined ? undefined : asInsightId(insight)}
+      onSelect={(id) => void navigate({ search: { insight: id }, replace: true })}
+    />
+  );
 }

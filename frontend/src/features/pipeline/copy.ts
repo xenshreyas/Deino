@@ -31,6 +31,7 @@ const stageLabels: Partial<Record<string, string>> = {
   auto_title: 'Title',
   auto_tag: 'Tags',
   auto_folder: 'Folders',
+  insights: 'Insights',
   auto_export: 'Export',
 };
 

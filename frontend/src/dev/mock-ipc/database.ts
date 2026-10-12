@@ -18,6 +18,7 @@ import { MockEnhanced } from './mock-enhanced';
 import { MockEntities } from './mock-entities';
 import { MockEntityPages } from './mock-entity-pages';
 import { MockEventLinks } from './mock-event-links';
+import { MockInsights } from './mock-insights';
 import { MockNotes } from './mock-notes';
 import { fixturePeople } from './mock-people';
 import { MockTranscripts } from './mock-transcripts';
@@ -28,11 +29,14 @@ let seq = 0;
 /** The fixture meetings every mock serves. */
 export const fixtureMeetings = loadFixtureMeetings();
 
-/** The shared mock database. */
-export const mockDatabase = new MockDatabase(fixtureMeetings, (tables) => {
+/** Announces a write to `tables`, like a SQLite commit. */
+function committed(tables: Parameters<typeof events.dbChanged.emit>[0]['tables']) {
   seq += 1;
   void events.dbChanged.emit({ tables, seq });
-});
+}
+
+/** The shared mock database. */
+export const mockDatabase = new MockDatabase(fixtureMeetings, committed);
 
 /** The mock `meeting_notes` table (persisted per tab). */
 export const mockNotes = new MockNotes(fixtureMeetings);
@@ -72,3 +76,6 @@ export const mockEntities = new MockEntities(fixtureMeetings, mockPeople);
 
 /** The People and Companies pages over `mockEntities`. */
 export const mockEntityPages = new MockEntityPages(mockEntities, fixtureMeetings);
+
+/** The mock `insight_defs` and `insight_results` tables (AI-06). */
+export const mockInsights = new MockInsights(fixtureMeetings, committed);

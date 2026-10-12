@@ -18,6 +18,7 @@ use super::{DocNoteRenderer, ExportError, LocalZone, NoteRenderer};
 use crate::action_items::{ActionItemRepo, SqliteActionItemRepo};
 use crate::enhance::SqliteEnhancedNotesRepo;
 use crate::folders::{MeetingFolderRepo, SqliteFolderRepo};
+use crate::insights::{InsightExports, SqliteInsightRepo};
 use crate::meetings::{MeetingLifecycleRepo, MeetingRepo, SqliteMeetingRepo};
 use crate::notes::SqliteNotesRepo;
 use crate::people::{AttendeeRepo, PersonRepo, SqlitePeopleRepo};
@@ -48,6 +49,8 @@ pub struct ExportPorts {
     pub folders: Arc<dyn MeetingFolderRepo>,
     /// The meeting's action items.
     pub action_items: Arc<dyn ActionItemRepo>,
+    /// The meeting's insights (AI-06).
+    pub insights: Arc<dyn InsightExports>,
     /// The transcript.
     pub segments: Arc<dyn SegmentReader>,
     /// The transcript's speakers.
@@ -73,6 +76,7 @@ impl ExportPorts {
             tags: Arc::new(SqliteTagRepo::new(database.clone())),
             folders: Arc::new(SqliteFolderRepo::new(database.clone())),
             action_items: Arc::new(SqliteActionItemRepo::new(database.clone())),
+            insights: Arc::new(SqliteInsightRepo::new(database.clone())),
             segments: segments.clone(),
             speakers: segments,
             notes: Arc::new(DocNoteRenderer::new(
@@ -138,6 +142,7 @@ impl ExportAssembler {
             notes: notes.enhanced,
             my_notes: notes.mine,
             action_items: self.action_items(id).await?,
+            insights: ports.insights.insights_of(id).await?,
             transcript: self.transcript(id).await?,
         })
     }
