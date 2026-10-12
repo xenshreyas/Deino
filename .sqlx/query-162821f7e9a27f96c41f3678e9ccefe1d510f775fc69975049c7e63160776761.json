@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO year_recaps (year, markdown, generated_at) VALUES (?1, ?2, ?3)\n               ON CONFLICT (year) DO UPDATE SET year = year\n               RETURNING year AS \"year!: i32\", markdown, generated_at AS \"generated_at: _\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "year!: i32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "markdown",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at: _",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "162821f7e9a27f96c41f3678e9ccefe1d510f775fc69975049c7e63160776761"
+}

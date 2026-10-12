@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT year AS \"year!: i32\", markdown, generated_at AS \"generated_at: _\"\n               FROM year_recaps WHERE year = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "year!: i32",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "markdown",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "generated_at: _",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "303a6da3cbd4cc8309013aeeb81d4dd2e224d579b8613962e725a2b8e806dfce"
+}

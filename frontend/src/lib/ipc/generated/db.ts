@@ -195,6 +195,10 @@ export type Table =
  */
 "insight_results" | 
 /**
+ * Cached year-in-review recaps, one per year (ORG-09).
+ */
+"year_recaps" | 
+/**
  * Notes of the `_example` reference feature, which lives in an in-memory
  * database in debug builds only.
  */

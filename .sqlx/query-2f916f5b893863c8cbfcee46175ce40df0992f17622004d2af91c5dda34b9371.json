@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "-- Who attended the counted meetings that started at or after ?1 (every\n-- meeting when NULL), one row per meeting and person. Declined invitees did\n-- not take part and are left out. Attendance is read through the\n-- meeting_attendees primary key and each person through theirs.\nSELECT\n    a.meeting_id AS \"meeting_id!: MeetingId\",\n    p.id AS \"person_id!: PersonId\",\n    p.name AS \"name!\",\n    p.email AS \"email: Email\",\n    p.is_me AS \"is_me!: bool\"\nFROM stats_meetings AS m\nJOIN meeting_attendees AS a ON a.meeting_id = m.id\nJOIN people AS p ON p.id = a.person_id\nWHERE (?1 IS NULL OR julianday(m.at) >= julianday(?1))\n    AND (a.rsvp IS NULL OR a.rsvp <> 'declined')\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "meeting_id!: MeetingId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id!: PersonId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "email: Email",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_me!: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "2f916f5b893863c8cbfcee46175ce40df0992f17622004d2af91c5dda34b9371"
+}
