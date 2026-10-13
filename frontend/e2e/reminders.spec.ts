@@ -2,18 +2,19 @@ import { expect, test } from '@playwright/test';
 
 import { shootBothThemes } from './themes';
 
-test('the reminder window offers Join & record and closes once recording starts (ORG-02)', async ({
+test('the reminder window offers Join meeting and closes once recording starts (ORG-02)', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 376, height: 176 });
   await page.goto('/meeting-reminder.html');
 
   const card = page.getByRole('region', { name: 'Meeting starting soon' });
-  await expect(card.getByRole('button', { name: 'Join & record' })).toBeVisible();
-  await expect(card.getByRole('button', { name: 'Record only' })).toBeVisible();
+  await expect(card.getByRole('button', { name: /Join meeting/ })).toBeVisible();
   await shootBothThemes(page, 'reminder');
 
-  await card.getByRole('button', { name: 'Record only' }).click();
+  // Notes without joining are in the caret's menu; the card slides out, then closes.
+  await card.getByRole('button', { name: 'More options' }).click();
+  await page.getByRole('menuitem', { name: 'Take notes without joining' }).click();
   await expect(card).toHaveCount(0);
 });
 
