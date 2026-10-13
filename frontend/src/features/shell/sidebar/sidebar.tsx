@@ -17,7 +17,7 @@ import { NavLink, SidebarNav } from './sidebar-nav';
 /** Settings and the record block. */
 function SidebarFooter() {
   return (
-    <div className="flex shrink-0 flex-col gap-px px-2 pt-2 pb-3">
+    <div className="flex shrink-0 flex-col gap-px p-2">
       {navItemsIn('footer').map((item) => (
         <NavLink key={item.id} item={item} />
       ))}
