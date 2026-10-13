@@ -26,12 +26,13 @@ use chrono::{DateTime, TimeDelta, Utc};
 use deino_domain::MeetingId;
 use serde::Serialize;
 
-/// How long the meeting app must have released the microphone.
-pub const MIC_RELEASE: TimeDelta = TimeDelta::seconds(20);
+/// How long the meeting app must have released the microphone (owner, Oct
+/// 2026: 20 s plus the notice felt like it never stopped).
+pub const MIC_RELEASE: TimeDelta = TimeDelta::seconds(10);
 
 /// How long the app must have held the microphone for its release to count
 /// (OpenWhispr: a Siri request or a permission prompt is not a call).
-pub const MIN_OWNERSHIP: TimeDelta = TimeDelta::seconds(30);
+pub const MIN_OWNERSHIP: TimeDelta = TimeDelta::seconds(10);
 
 /// How long nobody may speak before the recording ends (Granola: 15 min).
 pub const NO_SPEECH: TimeDelta = TimeDelta::minutes(15);

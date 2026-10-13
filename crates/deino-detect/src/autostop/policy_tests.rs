@@ -69,33 +69,33 @@ fn a_released_microphone_ends_the_recording_after_the_notice() {
     let decisions = rig.run(40);
 
     assert_eq!(decisions.len(), 2, "{decisions:?}");
-    // Released at the first tick; 20 s later the notice, 15 s after it the stop.
-    assert_eq!(decisions[0].0, 21, "the release must hold for 20 s");
+    // Released at the first tick; 10 s later the notice, 15 s after it the stop.
+    assert_eq!(decisions[0].0, 11, "the release must hold for 10 s");
     assert!(ending(StopReason::MicReleased)(&decisions[0].1));
-    assert_eq!(decisions[1], (36, Decision::Stop(StopReason::MicReleased)));
+    assert_eq!(decisions[1], (26, Decision::Stop(StopReason::MicReleased)));
 }
 
 #[test]
 fn a_short_hold_never_arms_the_release_rule() {
     let mut rig = Rig::new();
-    rig.call_then_release(29);
+    rig.call_then_release(9);
 
-    assert!(rig.run(120).is_empty(), "a 29 s hold is not a call");
+    assert!(rig.run(120).is_empty(), "a 9 s hold is not a call");
 }
 
 #[test]
 fn speech_on_the_call_restarts_the_release_wait() {
     let mut rig = Rig::new();
     rig.call_then_release(60);
-    rig.run(15);
+    rig.run(5);
     rig.seen.heard.system = true;
     rig.tick();
     rig.seen.heard.system = false;
 
-    let decisions = rig.run(25);
+    let decisions = rig.run(20);
 
     assert_eq!(decisions.len(), 1);
-    assert_eq!(decisions[0].0, 20, "20 s after the call last spoke");
+    assert_eq!(decisions[0].0, 10, "10 s after the call last spoke");
 }
 
 #[test]

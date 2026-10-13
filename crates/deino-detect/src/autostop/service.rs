@@ -189,13 +189,10 @@ impl AutoStopService {
                 self.follow(armed, view, now)
             }
         };
-        // Recording can start before the call does (Record, then join): keep
-        // looking until detection sees which app the meeting is in.
         if followed.app.is_none() {
-            followed.app = self.ports.microphone.meeting_app();
-            if let Some(app) = &followed.app {
-                log::info!(target: "detect", "auto-stop: following {app} for {}", view.meeting);
-            }
+            // Recording can start before the call: look until detection sees it.
+            followed.app = (self.ports.microphone.meeting_app())
+                .inspect(|app| log::info!(target: "detect", "auto-stop: following {app}"));
         }
         let heard = speech_since(&followed.speech, &view.speech);
         followed.speech = view.speech;
@@ -224,7 +221,8 @@ impl AutoStopService {
         let events = self.ports.calendar.events_near(now);
         Followed {
             meeting: view.meeting.clone(),
-            app: armed.or_else(|| self.ports.microphone.meeting_app()),
+            app: (armed.or_else(|| self.ports.microphone.meeting_app()))
+                .inspect(|app| log::info!(target: "detect", "auto-stop: following {app}")),
             event: current_event(&events, view.event, view.started_at),
             speech: view.speech,
         }
@@ -254,8 +252,10 @@ impl AutoStopService {
     fn act(&self, mut state: MutexGuard<'_, State>, decision: Decision) {
         self.publish(&mut state);
         drop(state);
+        if decision != Decision::None {
+            log::info!(target: "detect", "auto-stop: {decision:?}");
+        }
         if let Decision::Stop(reason) = decision {
-            log::info!(target: "detect", "auto-stop: {reason:?}");
             self.ports.actions.stop(reason);
         }
     }
