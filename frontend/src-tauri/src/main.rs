@@ -18,10 +18,7 @@ fn main() {
         std::process::exit(code);
     }
 
-    std::env::set_var("RUST_LOG", "info");
-    env_logger::init();
-
-    // Async logger will be initialized lazily when first needed (after Tauri runtime starts)
+    deino_lib::logging::init();
     log::info!("Starting application...");
     deino_lib::run();
 }

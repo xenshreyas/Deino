@@ -189,6 +189,14 @@ impl AutoStopService {
                 self.follow(armed, view, now)
             }
         };
+        // Recording can start before the call does (Record, then join): keep
+        // looking until detection sees which app the meeting is in.
+        if followed.app.is_none() {
+            followed.app = self.ports.microphone.meeting_app();
+            if let Some(app) = &followed.app {
+                log::info!(target: "detect", "auto-stop: following {app} for {}", view.meeting);
+            }
+        }
         let heard = speech_since(&followed.speech, &view.speech);
         followed.speech = view.speech;
         let observation = Observation {

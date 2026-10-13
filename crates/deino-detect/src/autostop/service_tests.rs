@@ -169,6 +169,21 @@ fn an_ad_hoc_recording_follows_the_meeting_app_detection_sees() {
 }
 
 #[test]
+fn a_recording_started_before_the_call_finds_its_app_later() {
+    let rig = rig();
+    rig.record("meeting-a");
+    rig.run(10, false);
+
+    *locked(&rig.fakes.meeting_app) = Some(zoom());
+    rig.hold(true);
+    rig.run(40, true);
+    rig.hold(false);
+    rig.run(36, false);
+
+    assert_eq!(rig.stops(), [StopReason::MicReleased]);
+}
+
+#[test]
 fn keep_recording_withdraws_the_notice() {
     let rig = rig();
     rig.service.arm(zoom());

@@ -24,6 +24,7 @@ mod error;
 pub mod features;
 mod lifecycle;
 mod llm;
+pub mod logging;
 mod onnx_runtime;
 mod paths;
 mod permissions;
