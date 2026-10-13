@@ -48,7 +48,9 @@ if (platform === 'linux' && feature === 'cuda') {
 }
 
 // Build the tauri command
-let tauriCmd = `tauri ${command}`;
+// Extra Tauri arguments (e.g. `--bundles app`) pass through before cargo's.
+const extra = process.argv.slice(3).join(' ');
+let tauriCmd = `tauri ${command}${extra ? ` ${extra}` : ''}`;
 if (feature && feature !== 'none') {
   tauriCmd += ` -- --features ${feature}`;
   console.log(`🚀 Running: tauri ${command} with features: ${feature}`);

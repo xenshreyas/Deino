@@ -28,6 +28,9 @@ readonly TRIPLE
 SIGN_ID="${DEINO_SIGN_IDENTITY:-Deino Local Signing}"
 security find-certificate -c "$SIGN_ID" >/dev/null 2>&1 || SIGN_ID="-"
 readonly SIGN_ID
+# Local builds recompile only what changed (release builds are otherwise
+# from scratch per crate); the app crate dominates, so this is the big win.
+export CARGO_PROFILE_RELEASE_INCREMENTAL="${CARGO_PROFILE_RELEASE_INCREMENTAL:-true}"
 
 # The local LLM and the `deino` CLI, built for real (not the gate's placeholders).
 stage_sidecars() {
@@ -36,9 +39,19 @@ stage_sidecars() {
     scripts/stage-cli.sh --release >/dev/null
 }
 
-# Tauri's build; its own signing step is expected to fail here (see above).
+# Tauri's build of the .app only (no installer). Its own signing step is
+# expected to fail here (see above), so success means a binary newer than
+# the build's start, never a stale bundle from an earlier run.
 build_bundle() {
-    (cd frontend && pnpm run tauri:build) || [[ -d "$BUNDLE/Contents/MacOS" ]]
+    local stamp
+    stamp="$(mktemp)"
+    (cd frontend && pnpm run tauri:build --bundles app) || true
+    [[ "$BUNDLE/Contents/MacOS/deino" -nt "$stamp" ]] || {
+        echo "The app did not build; see the output above." >&2
+        rm -f "$stamp"
+        return 1
+    }
+    rm -f "$stamp"
 }
 
 # Copies the bundle without extended attributes and signs every executable.
