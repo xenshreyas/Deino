@@ -1,4 +1,22 @@
-import type { MeetingKind } from './types';
+import type { Detection, MeetingKind } from './types';
+
+/** The services Deino recognises, by name; `other` falls back to the app. */
+const SERVICES: Record<Exclude<Detection['platform'], 'other'>, string> = {
+  zoom: 'Zoom',
+  teams: 'Teams',
+  googleMeet: 'Google Meet',
+  webex: 'Webex',
+  slack: 'Slack',
+  faceTime: 'FaceTime',
+  phone: 'Phone',
+  whatsApp: 'WhatsApp',
+  discord: 'Discord',
+};
+
+/** "17:30" in the user's own clock format. */
+function clock(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
 
 /** Every visible string of the detection feature (Granola §2.3, Circleback §3.5). */
 export const detectionCopy = {
@@ -7,6 +25,15 @@ export const detectionCopy = {
     huddle: 'Huddle detected',
     call: 'Call detected',
   } satisfies Record<MeetingKind, string>,
+  /** The service: "Google Meet", or the app when the service is unknown. */
+  service: (detection: Detection) =>
+    detection.platform === 'other' ? detection.app.name : SERVICES[detection.platform],
+  /** Under the title: the event's start and service, or the app. */
+  subtitle: (detection: Detection) =>
+    detection.event === null
+      ? detection.app.name
+      : `${clock(detection.event.startsAt)} · ${detectionCopy.service(detection)}`,
+  alwaysIgnoreApp: (app: string) => `Always ignore ${app}`,
   takeNotes: 'Take notes',
   ignore: 'Ignore',
   dontRecord: 'Don’t record',

@@ -20,7 +20,9 @@ const PROMPT_PAGE: &str = "detection-prompt.html";
 const WIDTH: f64 = 376.0;
 const HEIGHT: f64 = 184.0;
 
-/// The gap to the top-right corner of the work area, minus the shadow room.
+/// The gap below the menu bar, minus the shadow room. There is none on the
+/// right: the window reaches the screen's edge so the card can slide in from
+/// off-screen (its page keeps the card inset from that edge).
 const INSET: f64 = 8.0;
 
 /// Shows the prompt window, creating it the first time. Runs on the main
@@ -54,7 +56,7 @@ fn top_right(app: &AppHandle<Wry>) -> Option<LogicalPosition<f64>> {
     let area = monitor.work_area();
     let right = f64::from(area.position.x) / scale + f64::from(area.size.width) / scale;
     let top = f64::from(area.position.y) / scale;
-    Some(LogicalPosition::new(right - WIDTH - INSET, top + INSET))
+    Some(LogicalPosition::new(right - WIDTH, top + INSET))
 }
 
 /// Moves the existing window to `position`.

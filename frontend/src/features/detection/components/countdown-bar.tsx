@@ -1,5 +1,5 @@
 /**
- * A 2px accent line along the prompt's bottom edge that drains to the
+ * A 2px brand line along the prompt's bottom edge that drains to the
  * auto-start moment (ui.md: progress is a 2px accent bar). It runs once,
  * from the duration it mounts with; with reduced motion it stays still and
  * the seconds label carries the countdown alone.
@@ -32,7 +32,7 @@ export function CountdownBar({ durationMs }: CountdownBarProps) {
     <span
       ref={drain}
       aria-hidden="true"
-      className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-accent"
+      className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand"
     />
   );
 }

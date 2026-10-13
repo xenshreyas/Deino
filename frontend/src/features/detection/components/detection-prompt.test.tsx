@@ -67,6 +67,14 @@ function renderPrompt() {
   );
 }
 
+/** Opens the caret menu beside Take notes (Radix opens on pointer down). */
+async function openIgnoreMenu(): Promise<void> {
+  fireEvent.pointerDown(await screen.findByRole('button', { name: 'More ways to ignore' }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 describe('DetectionPrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,8 +104,8 @@ describe('DetectionPrompt', () => {
     });
     renderPrompt();
 
-    expect(await screen.findByRole('heading', { name: 'Huddle detected' })).toBeTruthy();
-    expect(screen.getByText('Design review')).toBeTruthy();
+    // A calendar meeting is titled after its event; the kind titles the rest.
+    expect(await screen.findByRole('heading', { name: 'Design review' })).toBeTruthy();
 
     deliver('meetingDetected', { detection: detection({ id: 2, kind: 'call' }) });
     expect(await screen.findByRole('heading', { name: 'Call detected' })).toBeTruthy();
@@ -112,19 +120,16 @@ describe('DetectionPrompt', () => {
       expect(screen.queryByRole('heading')).toBeNull();
     });
     deliver('meetingDetected', { detection: detection({ id: 8 }) });
-    fireEvent.click(await screen.findByRole('button', { name: 'Ignore' }));
+    // One button on the card; Ignore and the permanent answer are in its caret menu.
+    expect(screen.queryByRole('button', { name: 'Ignore' })).toBeNull();
+    await openIgnoreMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Ignore' }));
     await waitFor(() => {
       expect(screen.queryByRole('heading')).toBeNull();
     });
     deliver('meetingDetected', { detection: detection({ id: 9 }) });
-    // Two buttons on the card; the permanent answer is in Ignore's menu (UX-30).
-    expect(await screen.findByRole('button', { name: 'Ignore' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Always ignore this app' })).toBeNull();
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'More ways to ignore' }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Always ignore this app' }));
+    await openIgnoreMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Always ignore zoom.us' }));
 
     await waitFor(() => {
       expect(bindings.commands.ignoreApp).toHaveBeenCalledWith(9);
@@ -142,8 +147,9 @@ describe('DetectionPrompt', () => {
     renderPrompt();
 
     expect(await screen.findByText(/Recording in 10s/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Ignore' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Don’t record' }));
+    await openIgnoreMenu();
+    expect(screen.queryByRole('menuitem', { name: 'Ignore' })).toBeNull();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Don’t record' }));
 
     await waitFor(() => {
       expect(bindings.commands.dismiss).toHaveBeenCalledWith(1);
