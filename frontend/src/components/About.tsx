@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UpdateDialog } from './UpdateDialog';
 import { updateService, UpdateInfo } from '@/services/updateService';
+import { BrandMark, Wordmark } from '@/ui/brand';
 import { Button } from '@/ui/button';
 
 /** Short statements about where data lives, shown under the version. */
@@ -33,9 +34,11 @@ export function About() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <img src="/icon_128x128.png" alt="" width={48} height={48} />
+        <BrandMark size={40} />
         <div className="flex flex-col gap-0.5">
-          <h3 className="text-sm font-semibold text-fg">Deino</h3>
+          <h3 className="pb-1">
+            <Wordmark size={16} />
+          </h3>
           {currentVersion && <p className="text-xs text-fg-muted">Version {currentVersion}</p>}
           <p className="text-xs text-fg-muted">A private, local-first AI meeting notepad.</p>
         </div>

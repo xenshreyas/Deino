@@ -67,11 +67,12 @@ const TEXT_PAIRS: readonly [string, string][] = [
   ['bg', 'fg'],
 ];
 
-/** Non-text pairs (placeholders, the record dot, focus ring) need 3:1. */
+/** Non-text pairs (placeholders, the record dot, focus ring, the brand mark) need 3:1. */
 const NON_TEXT_PAIRS: readonly [string, string][] = [
   ['fg-subtle', 'bg'],
   ['recording', 'bg'],
   ['focus-ring', 'bg'],
+  ['brand', 'bg'],
 ];
 
 describe('design tokens', () => {
