@@ -53,6 +53,8 @@ next-env.d.ts
 
 # Audio files
 *.wav
+# The app's own notification sound (scripts/brand/make-marimba.py).
+!frontend/src-tauri/sounds/*.wav
 
 # Large media files
 docs/demo.mov
