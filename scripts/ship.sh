@@ -4,9 +4,9 @@
 #   scripts/ship.sh            # quick checks, build, install, relaunch
 #   scripts/ship.sh --no-check # skip the quick checks (assets only)
 #
-# Only the checks that cover what changed run here (seconds): type-check,
-# lint and Vitest for frontend changes; clippy and the touched crates' tests
-# when Rust changed. The full gate (scripts/ci-local.sh) runs afterwards, off
+# Only the checks that cover what changed run here: type-check, lint and
+# Vitest for frontend changes (seconds); clippy when Rust changed (tests are
+# minutes, so they wait for the full gate). The full gate (scripts/ci-local.sh) runs afterwards, off
 # the critical path, and anything it finds is fixed forward.
 #
 # Deino is quit and reopened only when no meeting is recording.
@@ -27,7 +27,7 @@ quick_checks() {
     local files steps=(fmt-fix)
     files="$(changed_files)"
     grep -q '^frontend/src/' <<<"$files" && steps+=(typecheck lint vitest)
-    grep -qE '\.rs$|Cargo\.toml$' <<<"$files" && steps+=(clippy test-touched)
+    grep -qE '\.rs$|Cargo\.toml$' <<<"$files" && steps+=(clippy)
     [[ ${#steps[@]} -eq 1 ]] && return 0
     scripts/ci-local.sh "${steps[@]}"
 }
