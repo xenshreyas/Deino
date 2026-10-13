@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { addMinutes } from 'date-fns';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -29,25 +29,54 @@ function renderCard(conferenceUrl: string | null = 'https://zoom.us/j/1') {
   return { onJoin, onDismiss };
 }
 
+/** Opens the caret menu beside the main button (Radix opens on pointer down). */
+function openMore() {
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'More options' }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 describe('ReminderCard', () => {
-  it('shows the lead, title and people with both buttons for a call', () => {
-    const { onJoin, onDismiss } = renderCard();
+  it('joins the call and opens Deino from one button', async () => {
+    const { onJoin } = renderCard();
 
     expect(screen.getByRole('region', { name: 'Meeting starting soon' })).toBeTruthy();
-    expect(screen.getByText('Starts in a minute')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Pricing review' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Join & record' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Record only' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(onJoin.mock.calls).toEqual([['joinAndRecord'], ['recordOnly']]);
-    expect(onDismiss).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: /Join meeting/ }));
+    // The card slides out first, then answers.
+    await waitFor(() => {
+      expect(onJoin).toHaveBeenCalledWith('joinAndRecord');
+    });
   });
 
-  it('offers only Record only without a call link', () => {
+  it('takes notes without joining, or dismisses, from the caret menu', async () => {
+    const { onJoin } = renderCard();
+
+    openMore();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Take notes without joining' }));
+    await waitFor(() => {
+      expect(onJoin).toHaveBeenCalledWith('recordOnly');
+    });
+  });
+
+  it('just takes notes without a call link', async () => {
+    const { onJoin, onDismiss } = renderCard(null);
+
+    expect(screen.queryByRole('button', { name: /Join meeting/ })).toBeNull();
+    openMore();
+    expect(screen.queryByRole('menuitem', { name: 'Take notes without joining' })).toBeNull();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Dismiss' }));
+    await waitFor(() => {
+      expect(onDismiss).toHaveBeenCalledOnce();
+    });
+    expect(onJoin).not.toHaveBeenCalled();
+  });
+
+  it('says Take notes on the button without a call link', () => {
     renderCard(null);
 
-    expect(screen.queryByRole('button', { name: 'Join & record' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Record only' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Take notes' })).toBeTruthy();
   });
 });
 
@@ -55,9 +84,7 @@ describe('reminder helpers', () => {
   it('says "Starting now" once the meeting has started', () => {
     const event = meetingIn('Standup', 0);
     expect(reminderLead(event, addMinutes(new Date(event.startAt), 1))).toBe('Starting now');
-    expect(reminderLead(event, addMinutes(new Date(event.startAt), -3))).toBe(
-      'Starts in 3 minutes',
-    );
+    expect(reminderLead(event, addMinutes(new Date(event.startAt), -3))).toBe('In 3 min');
   });
 
   it('names three people, then counts the rest', () => {

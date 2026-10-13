@@ -1,23 +1,32 @@
 /**
- * The meeting reminder card (ORG-02, presentational): "starts in a
- * minute", the title, time and people, then Join & record (with a call
- * link), Record only, and dismiss. Props in, events out; `MeetingReminder`
- * wires it to Rust.
+ * The meeting reminder card (ORG-02, presentational), design R of
+ * `docs/mockups/meeting-prompt.html`, after Granola's: one row with a solid
+ * bar, the title over "17:30 – 18:00", and one split button.
+ * With a call link it is "Join meeting & open Deino" with the service's
+ * logo; without, "Take notes" with the Deino mark. The caret holds "Take
+ * notes without joining" (with a link) and Dismiss. Props in, events out;
+ * `MeetingReminder` wires it to Rust.
  *
- * It floats in its own transparent, non-activating window, so it carries
- * the floating-layer recipe of CAP-06's prompt (raised surface, r12,
- * popover shadow, entering from the top edge).
+ * It floats in its own transparent, non-activating window that reaches the
+ * screen's right edge, so it slides in from off-screen (`ui/edge-card`).
  */
 import { differenceInMinutes, format } from 'date-fns';
 
-import { Button } from '@/ui/button';
 import { cn } from '@/ui/cn';
-import { Calendar, ICON_PROPS, X } from '@/ui/icons';
+import { EDGE_MOTION, type EdgeLeave, useEdgeExit } from '@/ui/edge-card';
+import { ChevronDown, ICON_PROPS } from '@/ui/icons';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/menu';
 
 import { calendarCopy } from '../copy';
-import { rulesCopy } from '../rules-copy';
 import type { JoinMode } from '../plan';
+import { rulesCopy } from '../rules-copy';
 import type { CalendarEvent } from '../types';
+import { ServiceLogo } from './service-logo';
 
 const copy = rulesCopy.reminder;
 
@@ -36,14 +45,14 @@ export interface ReminderCardProps {
   onDismiss: () => void;
 }
 
-/** "Starts in a minute", or "Starting now" once it has. */
+/** "In 1 min", or "Starting now" once it has. */
 export function reminderLead(event: CalendarEvent, now: Date): string {
   const start = new Date(event.startAt);
   if (start <= now) return copy.started;
   return copy.startsIn(differenceInMinutes(start, now, { roundingMethod: 'ceil' }));
 }
 
-/** The first invitees by name (else address), then "+N". */
+/** The first invitees by name (else address), then "+N"; the title's tooltip. */
 export function peopleLine(event: CalendarEvent): string {
   const names = event.attendees
     .map((attendee) => attendee.name ?? attendee.email ?? '')
@@ -53,85 +62,115 @@ export function peopleLine(event: CalendarEvent): string {
   return rest > 0 ? `${shown} ${copy.others(rest)}` : shown;
 }
 
+/**
+ * The title over its time, as Granola does; the lead ("In 1 min") and the
+ * people are in the tooltip, so the time never truncates.
+ */
 function Heading({ event, now }: { event: CalendarEvent; now: Date }) {
   const title = event.title === '' ? calendarCopy.untitled : event.title;
-  const time = `${format(new Date(event.startAt), 'HH:mm')}–${format(new Date(event.endAt), 'HH:mm')}`;
+  const time = `${format(new Date(event.startAt), 'HH:mm')} – ${format(new Date(event.endAt), 'HH:mm')}`;
+  const details = [reminderLead(event, now), peopleLine(event)].filter((part) => part !== '');
   return (
-    <div className="flex min-w-0 flex-1 flex-col">
-      <p className="text-xs font-medium text-accent">{reminderLead(event, now)}</p>
-      <h1 className="truncate text-sm font-semibold text-fg" title={title}>
-        {title}
-      </h1>
-      <p className="truncate text-xs text-fg-muted">
-        <span className="tabular-nums">{time}</span>
-        {` · ${peopleLine(event)}`}
-      </p>
+    <div className="min-w-0 flex-1 pr-1" title={[title, ...details].join('\n')}>
+      <h1 className="truncate text-sm font-semibold text-fg">{title}</h1>
+      <p className="text-xs text-fg-muted tabular-nums">{time}</p>
     </div>
   );
 }
 
-function Actions({ props }: { props: ReminderCardProps }) {
-  const { busy, event, onJoin } = props;
+/** Props shared by the split button's halves. */
+interface PartProps {
+  props: ReminderCardProps;
+  leave: EdgeLeave;
+}
+
+/** The caret's menu: Take notes without joining (with a link), Dismiss. */
+function MoreMenu({ props, leave }: PartProps) {
+  const hasCall = props.event.conferenceUrl !== null;
   return (
-    <footer className="flex items-center justify-end gap-1 border-t border-border px-2 py-2">
-      <Button
-        variant={event.conferenceUrl === null ? 'primary' : 'ghost'}
-        size="sm"
-        disabled={busy}
-        onClick={() => {
-          onJoin('recordOnly');
-        }}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={props.busy}
+        aria-label={copy.more}
+        className="flex w-8 items-center justify-center border-l border-border text-fg-muted hover:bg-bg-muted disabled:opacity-50"
       >
-        {copy.recordOnly}
-      </Button>
-      {event.conferenceUrl === null ? null : (
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={busy}
-          onClick={() => {
-            onJoin('joinAndRecord');
+        <ChevronDown {...ICON_PROPS} className="size-3.5" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="bottom" align="end">
+        {hasCall ? (
+          <DropdownMenuItem
+            onSelect={() => {
+              leave(() => {
+                props.onJoin('recordOnly');
+              });
+            }}
+          >
+            {copy.withoutJoining}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          onSelect={() => {
+            leave(props.onDismiss);
           }}
         >
-          {copy.joinAndRecord}
-        </Button>
-      )}
-    </footer>
+          {copy.dismiss}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Join meeting & open Deino (with a link), or Take notes; and the caret. */
+function SplitButton({ props, leave }: PartProps) {
+  const { event } = props;
+  const hasCall = event.conferenceUrl !== null;
+  const mode: JoinMode = hasCall ? 'joinAndRecord' : 'recordOnly';
+  return (
+    <div className="flex h-10 shrink-0 overflow-hidden rounded-lg border border-border bg-bg shadow-xs">
+      <button
+        type="button"
+        disabled={props.busy}
+        onClick={() => {
+          leave(() => {
+            props.onJoin(mode);
+          });
+        }}
+        className="flex items-center gap-2.5 pr-3 pl-2.5 text-left hover:bg-bg-muted disabled:opacity-50"
+      >
+        <ServiceLogo platform={hasCall ? event.platform : null} />
+        <span className="flex flex-col leading-tight">
+          <span className="text-sm font-medium text-fg">
+            {hasCall ? copy.join : copy.takeNotes}
+          </span>
+          {hasCall ? <span className="text-xs text-fg-muted">{copy.andOpenDeino}</span> : null}
+        </span>
+      </button>
+      <MoreMenu props={props} leave={leave} />
+    </div>
   );
 }
 
 /** The reminder card. */
 export function ReminderCard(props: ReminderCardProps) {
+  const [leaving, leave] = useEdgeExit(props.failed);
   return (
     <section
       aria-label={copy.label}
       className={cn(
-        'relative flex flex-col overflow-hidden rounded-lg bg-surface-raised text-fg shadow-popover',
-        'animate-in duration-(--dur-slow) ease-out fade-in-0 slide-in-from-top-1',
+        'relative overflow-hidden rounded-xl bg-surface-raised text-fg shadow-popover',
+        leaving ? EDGE_MOTION.exit : EDGE_MOTION.enter,
       )}
     >
-      <div className="flex items-start gap-3 px-4 pt-3.5 pb-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent">
-          <Calendar {...ICON_PROPS} />
-        </span>
+      <div className="flex items-center gap-2.5 py-2.5 pr-2.5 pl-3">
+        <span aria-hidden className="my-0.5 w-[3px] shrink-0 self-stretch rounded-full bg-brand" />
         <Heading event={props.event} now={props.now} />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="-mt-1 -mr-2"
-          aria-label={copy.dismiss}
-          disabled={props.busy}
-          onClick={props.onDismiss}
-        >
-          <X {...ICON_PROPS} />
-        </Button>
+        <SplitButton props={props} leave={leave} />
       </div>
       {props.failed ? (
-        <p role="alert" className="px-4 pb-2 text-xs text-danger">
+        <p role="alert" className="px-3 pb-2 text-xs text-danger">
           {copy.failed}
         </p>
       ) : null}
-      <Actions props={props} />
     </section>
   );
 }

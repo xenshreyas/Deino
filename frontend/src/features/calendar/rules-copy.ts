@@ -2,19 +2,21 @@
 export const rulesCopy = {
   reminder: {
     label: 'Meeting starting soon',
-    startsIn: (minutes: number) =>
-      minutes <= 1 ? 'Starts in a minute' : `Starts in ${minutes} minutes`,
+    startsIn: (minutes: number) => `In ${minutes} min`,
     started: 'Starting now',
     others: (count: number) => `+${count}`,
-    joinAndRecord: 'Join & record',
-    recordOnly: 'Record only',
+    join: 'Join meeting',
+    andOpenDeino: '& open Deino',
+    takeNotes: 'Take notes',
+    withoutJoining: 'Take notes without joining',
+    more: 'More options',
     dismiss: 'Dismiss',
     failed: 'Could not start. Try again from Home.',
   },
   reminders: {
     title: 'Meeting reminders',
     description:
-      'A small window a minute before each meeting with two or more people, with Join & record.',
+      'A small window a minute before each meeting with two or more people, with Join meeting.',
     enabled: 'Remind me a minute before meetings',
     enabledOn: 'Deino’s Do Not Disturb keeps it quiet.',
     enabledOff: 'No reminder windows.',

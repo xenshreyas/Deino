@@ -11,10 +11,9 @@
  * reaches the screen's right edge, so it slides in from off-screen and back
  * out when answered (a fade only with Reduce Motion).
  */
-import { useState } from 'react';
-
 import { BrandMark } from '@/ui/brand';
 import { cn } from '@/ui/cn';
+import { EDGE_MOTION, type EdgeLeave as Leave, useEdgeExit } from '@/ui/edge-card';
 import { ChevronDown, ICON_PROPS } from '@/ui/icons';
 import {
   DropdownMenu,
@@ -26,9 +25,6 @@ import {
 import { detectionCopy } from '../copy';
 import type { Detection } from '../types';
 import { CountdownBar } from './countdown-bar';
-
-/** How long the card takes to slide out before the answer goes to Rust. */
-export const EXIT_MS = 200;
 
 /** Props of {@link MeetingPrompt}. */
 export interface MeetingPromptProps {
@@ -45,9 +41,6 @@ export interface MeetingPromptProps {
   onDismiss: () => void;
   onAlwaysIgnore: () => void;
 }
-
-/** Plays the exit, then sends `answer`. */
-type Leave = (answer: () => void) => void;
 
 /** The bar on the left: solid for a calendar meeting, dashed otherwise. */
 function Bar({ scheduled }: { scheduled: boolean }) {
@@ -135,38 +128,16 @@ function SplitButton({ props, leave }: { props: MeetingPromptProps; leave: Leave
   );
 }
 
-/**
- * Plays the exit, then answers; a second answer during it does nothing. A
- * failed answer brings the card back (with its error) and allows another.
- */
-function useLeave(failed: boolean): [boolean, Leave] {
-  const [leaving, setLeaving] = useState(false);
-  const out = leaving && !failed;
-  const leave: Leave = (answer) => {
-    if (out) return;
-    setLeaving(true);
-    window.setTimeout(answer, EXIT_MS);
-  };
-  return [out, leave];
-}
-
-/** The slide in from off-screen right, and back out. */
-const MOTION = {
-  enter:
-    'animate-in fade-in-0 duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:slide-in-from-right-[calc(100%+1rem)]',
-  exit: 'animate-out fill-mode-forwards fade-out-0 duration-200 ease-in motion-safe:slide-out-to-right-[calc(100%+1rem)]',
-} as const;
-
 /** The meeting prompt card. */
 export function MeetingPrompt(props: MeetingPromptProps) {
   const { detection, secondsLeft, millisecondsLeft } = props;
-  const [leaving, leave] = useLeave(props.failed);
+  const [leaving, leave] = useEdgeExit(props.failed);
   return (
     <section
       aria-label={detectionCopy.promptLabel}
       className={cn(
         'relative overflow-hidden rounded-xl bg-surface-raised text-fg shadow-popover',
-        leaving ? MOTION.exit : MOTION.enter,
+        leaving ? EDGE_MOTION.exit : EDGE_MOTION.enter,
       )}
     >
       <div className="flex items-center gap-2.5 py-2.5 pr-2.5 pl-3">
