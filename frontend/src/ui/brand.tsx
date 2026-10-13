@@ -1,6 +1,6 @@
 /**
  * Deino's brand (BRAND-01): the mark and the wordmark, each a span painted
- * with a design token through a CSS mask over the committed alpha PNGs
+ * with a design token through a CSS mask over the committed alpha masks
  * (`scripts/brand/make-brand-assets.py` writes `ui/brand-masks/`). The mark
  * takes `--brand`, the wordmark `--fg`, so both follow the theme.
  */
