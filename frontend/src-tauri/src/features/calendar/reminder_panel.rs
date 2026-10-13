@@ -62,8 +62,10 @@ fn build(
         .level(PanelLevel::Status)
         .has_shadow(false)
         .transparent(true)
-        .no_activate(true)
         .hides_on_deactivate(false)
+        // Never `no_activate(true)`: tauri-nspanel implements it by switching the
+        // app to background-only while building, which hides every Deino window
+        // (this panel too) until the user reopens the app. The style keeps focus.
         .style_mask(StyleMask::empty().borderless().nonactivating_panel())
         .collection_behavior(
             CollectionBehavior::new()
@@ -78,6 +80,7 @@ fn build(
                 .skip_taskbar(true)
                 .shadow(false)
                 .visible(false)
+                .focused(false)
         });
     if let Some(position) = position {
         builder = builder.position(Position::Logical(position));
