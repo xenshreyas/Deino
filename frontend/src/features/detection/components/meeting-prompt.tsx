@@ -1,10 +1,10 @@
 /**
  * The meeting prompt card (presentational), design E2 of
- * `docs/mockups/meeting-prompt.html`, after Granola's: one row with a bar
- * (solid for a calendar meeting, dashed for a call that isn't on it), the
- * event (or "Meeting detected") over its time or app, and one split button,
- * Take notes with the Deino mark and a caret menu holding Ignore and
- * "Always ignore <app>". The auto-start countdown drains along the bottom.
+ * `docs/mockups/meeting-prompt.html`, after Granola's: one row with a solid
+ * brand bar, the event (or "Meeting detected") over its time or app, and one
+ * split button, Take notes with the Deino mark and a caret menu holding
+ * Ignore and "Always ignore <app>". The time it has left (until it closes,
+ * or until auto-start) drains along the bottom.
  * Props in, events out; `DetectionPrompt` wires it to Rust.
  *
  * The card floats in its own transparent, non-activating window that
@@ -13,6 +13,7 @@
  */
 import { BrandMark } from '@/ui/brand';
 import { cn } from '@/ui/cn';
+import { DrainBar } from '@/ui/drain-bar';
 import { EDGE_MOTION, type EdgeLeave as Leave, useEdgeExit } from '@/ui/edge-card';
 import { ChevronDown, ICON_PROPS } from '@/ui/icons';
 import {
@@ -24,15 +25,14 @@ import {
 
 import { detectionCopy } from '../copy';
 import type { Detection } from '../types';
-import { CountdownBar } from './countdown-bar';
 
 /** Props of {@link MeetingPrompt}. */
 export interface MeetingPromptProps {
   detection: Detection;
   /** Seconds until recording starts on its own, or `null` without auto-start. */
   secondsLeft: number | null;
-  /** Milliseconds until then, for the draining bar. */
-  millisecondsLeft: number | null;
+  /** Milliseconds until the prompt closes or recording starts, for the line. */
+  millisecondsLeft: number;
   /** An answer is on its way to Rust; the buttons wait. */
   busy: boolean;
   /** The last answer failed. */
@@ -40,21 +40,6 @@ export interface MeetingPromptProps {
   onTakeNotes: () => void;
   onDismiss: () => void;
   onAlwaysIgnore: () => void;
-}
-
-/** The bar on the left: solid for a calendar meeting, dashed otherwise. */
-function Bar({ scheduled }: { scheduled: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'my-0.5 w-[3px] shrink-0 self-stretch rounded-full',
-        scheduled
-          ? 'bg-brand'
-          : 'bg-[repeating-linear-gradient(to_bottom,var(--brand)_0_4px,transparent_4px_7px)]',
-      )}
-    />
-  );
 }
 
 /** The event (or "Meeting detected") over its time or app, and the countdown. */
@@ -141,7 +126,7 @@ export function MeetingPrompt(props: MeetingPromptProps) {
       )}
     >
       <div className="flex items-center gap-2.5 py-2.5 pr-2.5 pl-3">
-        <Bar scheduled={detection.event !== null} />
+        <span aria-hidden className="my-0.5 w-[3px] shrink-0 self-stretch rounded-full bg-brand" />
         <Heading detection={detection} secondsLeft={secondsLeft} />
         <SplitButton props={props} leave={leave} />
       </div>
@@ -150,7 +135,7 @@ export function MeetingPrompt(props: MeetingPromptProps) {
           {detectionCopy.failed}
         </p>
       ) : null}
-      {millisecondsLeft === null ? null : <CountdownBar durationMs={millisecondsLeft} />}
+      <DrainBar durationMs={millisecondsLeft} />
     </section>
   );
 }

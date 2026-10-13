@@ -59,6 +59,7 @@ function EventReminder({ event }: { event: CalendarEvent }) {
       now={now}
       busy={join.isPending || dismiss.isPending}
       failed={join.isError}
+      openForMs={REMINDER_OPEN_MS}
       onJoin={onJoin}
       onDismiss={() => {
         dismiss.mutate();

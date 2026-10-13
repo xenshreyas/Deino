@@ -13,6 +13,7 @@
 import { differenceInMinutes, format } from 'date-fns';
 
 import { cn } from '@/ui/cn';
+import { DrainBar } from '@/ui/drain-bar';
 import { EDGE_MOTION, type EdgeLeave, useEdgeExit } from '@/ui/edge-card';
 import { ChevronDown, ICON_PROPS } from '@/ui/icons';
 import {
@@ -41,6 +42,8 @@ export interface ReminderCardProps {
   busy: boolean;
   /** The last call failed. */
   failed: boolean;
+  /** How long the card stays up unanswered, drained along its bottom. */
+  openForMs: number;
   onJoin: (mode: JoinMode) => void;
   onDismiss: () => void;
 }
@@ -171,6 +174,7 @@ export function ReminderCard(props: ReminderCardProps) {
           {copy.failed}
         </p>
       ) : null}
+      <DrainBar durationMs={props.openForMs} />
     </section>
   );
 }

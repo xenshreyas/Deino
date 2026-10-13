@@ -1,8 +1,8 @@
 /**
- * A 2px brand line along the prompt's bottom edge that drains to the
- * auto-start moment (ui.md: progress is a 2px accent bar). It runs once,
- * from the duration it mounts with; with reduced motion it stays still and
- * the seconds label carries the countdown alone.
+ * A 2px brand line along a floating card's bottom edge that drains over the
+ * time the card has left (the meeting prompt's 30 s or its auto-start, the
+ * reminder's minute), as Granola's pop-ups do. It runs once, from the
+ * duration it mounts with; with reduced motion it stays still.
  */
 import { useCallback, useRef } from 'react';
 
@@ -11,14 +11,14 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Props of {@link CountdownBar}. */
-export interface CountdownBarProps {
-  /** Milliseconds until recording starts. */
+/** Props of {@link DrainBar}. */
+export interface DrainBarProps {
+  /** Milliseconds until the card's moment: it closes, or recording starts. */
   durationMs: number;
 }
 
 /** The draining countdown line. */
-export function CountdownBar({ durationMs }: CountdownBarProps) {
+export function DrainBar({ durationMs }: DrainBarProps) {
   const duration = useRef(durationMs);
   const drain = useCallback((bar: HTMLSpanElement | null) => {
     if (bar === null || typeof bar.animate !== 'function' || prefersReducedMotion()) return;

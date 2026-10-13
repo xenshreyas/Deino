@@ -22,6 +22,7 @@ function renderCard(conferenceUrl: string | null = 'https://zoom.us/j/1') {
       now={NOW}
       busy={false}
       failed={false}
+      openForMs={60_000}
       onJoin={onJoin}
       onDismiss={onDismiss}
     />,

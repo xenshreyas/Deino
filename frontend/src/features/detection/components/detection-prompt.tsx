@@ -13,6 +13,14 @@ import { type PromptAnswer, useAnswerPrompt, usePromptDetection } from '../queri
 import type { Detection } from '../types';
 import { MeetingPrompt } from './meeting-prompt';
 
+/** How long a prompt stays up unanswered; Rust's `PROMPT_TIMEOUT`. */
+export const PROMPT_OPEN_MS = 30_000;
+
+/** When an unanswered prompt closes on its own. */
+function promptClosesAt(detection: Detection): string {
+  return new Date(Date.parse(detection.detectedAt) + PROMPT_OPEN_MS).toISOString();
+}
+
 /** Applies the theme the main window last saved. */
 function syncTheme(): void {
   try {
@@ -28,6 +36,7 @@ function PromptCard({ detection }: { detection: Detection }) {
   const now = useNow();
   useMountEffect(syncTheme);
   const deadline = detection.autoStartAt;
+  const closesAt = deadline ?? promptClosesAt(detection);
   const send = (choice: PromptAnswer) => () => {
     answer.mutate({ id: detection.id, answer: choice });
   };
@@ -35,7 +44,7 @@ function PromptCard({ detection }: { detection: Detection }) {
     <MeetingPrompt
       detection={detection}
       secondsLeft={deadline === null ? null : secondsLeft(deadline, now)}
-      millisecondsLeft={deadline === null ? null : millisecondsLeft(deadline, now)}
+      millisecondsLeft={millisecondsLeft(closesAt, now)}
       busy={answer.isPending}
       failed={answer.isError}
       onTakeNotes={send('takeNotes')}
