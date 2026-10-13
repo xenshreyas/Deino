@@ -17,6 +17,7 @@ mod legacy_lints;
 mod app_lock;
 #[cfg(test)]
 mod bindings;
+mod chime;
 mod composition;
 pub mod config;
 mod error;

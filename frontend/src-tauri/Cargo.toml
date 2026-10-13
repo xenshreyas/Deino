@@ -209,8 +209,8 @@ reqwest = { version = "0.11", features = ["multipart", "json"] }
 core-graphics = "0.23"
 cidre = { git = "https://github.com/yury/cidre", rev = "a9587fa", features = ["av"] }
 # NSWorkspace.openURL for OAuth sign-in pages (ORG-01); the objc2 release in the tree.
-objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWorkspace"] }
-objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "block2", "NSDistributedNotificationCenter", "NSError", "NSNotification", "NSOperation", "NSString", "NSURL"] }
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSSound", "NSWorkspace"] }
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "block2", "NSData", "NSDistributedNotificationCenter", "NSError", "NSNotification", "NSOperation", "NSString", "NSURL"] }
 # The app lock (PRV-02): LAContext by message send, its reply block, and the
 # wake and screen-lock observers. The objc2 set already in the tree.
 block2 = "=0.6.2"

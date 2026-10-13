@@ -77,6 +77,18 @@ describe('Settings → General → Notifications', () => {
     });
   });
 
+  it('turns the prompt and reminder chime off', async () => {
+    renderSections();
+
+    fireEvent.click(await screen.findByRole('switch', { name: copy.soundTitle }));
+
+    await waitFor(() => {
+      expect(bindings.settings.patch).toHaveBeenCalledWith({
+        notifications: { notificationSound: false },
+      });
+    });
+  });
+
   it('keeps automatic notes reachable in Advanced', async () => {
     renderSections();
 

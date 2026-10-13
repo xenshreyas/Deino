@@ -46,6 +46,7 @@ impl DetectionSink for TauriDetectionSink {
                     auto_record::record_now(&self.app, &detection);
                 } else {
                     prompt::show(&self.app);
+                    crate::chime::play(&self.app);
                 }
                 emitted
             }

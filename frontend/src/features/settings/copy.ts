@@ -86,6 +86,8 @@ export const notificationsCopy = {
     'A small window a minute before each meeting with two or more people, with Join and record.',
   actionItemsTitle: 'Action items due today',
   actionItemsDescription: 'One notification at 9:00 for what is due that day.',
+  soundTitle: 'Play a sound',
+  soundDescription: 'A short chime when a meeting prompt or reminder slides in.',
   moreLabel: 'Which calendars remind',
 } as const;
 

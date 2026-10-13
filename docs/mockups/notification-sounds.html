@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notification sounds</title>
+<style>
+:root{--bg:#f4f4f1;--fg:#1f1f1c;--muted:#65655f;--card:#fff;--line:rgba(0,0,0,.1);--brand:#6b89bc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:860px;margin:0 auto;padding:36px 20px 80px}
+h1{font-size:22px;font-weight:600;margin:0 0 6px}
+.lede{color:var(--muted);margin:0 0 22px;max-width:620px}
+.stage{position:relative;height:110px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#dfe7f1,#eef0ea 55%,#e9e2d6);margin:0 0 22px}
+.menubar{position:absolute;inset:0 0 auto 0;height:22px;background:rgba(255,255,255,.55);display:flex;justify-content:flex-end;gap:14px;padding:3px 14px;font-size:12px;color:#2a2a28}
+.toast{position:absolute;top:34px;right:16px;width:340px;background:rgba(255,255,255,.95);border-radius:14px;padding:9px 9px 9px 10px;display:flex;align-items:center;gap:10px;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 10px 30px rgba(20,25,35,.16);transform:translateX(calc(100% + 32px));opacity:0}
+.toast.in{animation:slide 380ms cubic-bezier(.22,1,.36,1) forwards}
+@keyframes slide{from{transform:translateX(calc(100% + 32px));opacity:0}to{transform:none;opacity:1}}
+.bar{width:3px;align-self:stretch;border-radius:2px;background:var(--brand)}
+.t1{font-size:13px;font-weight:600}.t2{font-size:12px;color:var(--muted)}
+.btn{margin-left:auto;height:40px;border-radius:9px;box-shadow:0 0 0 .5px rgba(0,0,0,.14);display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:500;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px}
+button.opt{all:unset;cursor:pointer;background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:0 0 0 .5px var(--line);display:flex;gap:12px;align-items:flex-start}
+button.opt:hover{box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+button.opt:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+button.opt.playing{box-shadow:0 0 0 1.5px var(--brand)}
+.play{flex:none;width:30px;height:30px;border-radius:50%;background:var(--fg);color:#fff;display:grid;place-items:center;font-size:11px}
+.name{font-weight:600}.desc{color:var(--muted);font-size:12.5px}
+.vol{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:0 0 16px}
+</style>
+</head>
+<body>
+<main>
+<h1>Notification sounds</h1>
+<p class="lede">Click a sound to hear it with the pop-up sliding in, as it would in the app. Each one is short (a second at most) and quiet by design. Tell me the name of the one you like (or "none").</p>
+<div class="stage" aria-hidden="true">
+  <div class="menubar"><span>Wi-Fi</span><span>Mon 17:42</span></div>
+  <div class="toast" id="toast"><span class="bar"></span><div><div class="t1">Design review</div><div class="t2">17:30 – 18:00</div></div><div class="btn">Join meeting</div></div>
+</div>
+<label class="vol">Volume <input id="vol" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+<div class="grid" id="grid"></div>
+</main>
+<script>
+const SOUNDS = [
+  ["Soft chime", "Two gentle bell notes, rising. Calm, like macOS's own.", chime],
+  ["Glass", "A single bright, airy ping.", glass],
+  ["Marimba", "A short wooden two-note pluck. Warm and friendly.", marimba],
+  ["Droplet", "A tiny water-drop blip. The most minimal tone.", droplet],
+  ["Pop", "A soft bubble pop, almost a click.", pop],
+  ["Rising pair", "Two quick notes going up: 'something's starting'.", rising],
+  ["Hum", "A low, rounded tone. Present but unobtrusive.", hum],
+  ["Tick", "A crisp tap. Barely there.", tick],
+  ["None", "Silent. Only the slide-in.", null],
+];
+let ctx;
+function ac(){ ctx ??= new AudioContext(); return ctx; }
+function out(){ const c=ac(); const g=c.createGain(); g.gain.value=+document.getElementById('vol').value; g.connect(c.destination); return g; }
+function tone(dest, {f, t=0, d=0.4, type="sine", a=0.005, peak=0.3, f2}){
+  const c=ac(), o=c.createOscillator(), g=c.createGain(), s=c.currentTime+t;
+  o.type=type; o.frequency.setValueAtTime(f,s); if(f2) o.frequency.exponentialRampToValueAtTime(f2,s+d);
+  g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(peak,s+a); g.gain.exponentialRampToValueAtTime(0.0001,s+d);
+  o.connect(g).connect(dest); o.start(s); o.stop(s+d+0.05);
+}
+function chime(o){ tone(o,{f:880,d:0.6,peak:.22}); tone(o,{f:1760,d:0.4,peak:.05}); tone(o,{f:1318.5,t:0.12,d:0.8,peak:.22}); tone(o,{f:2637,t:0.12,d:0.5,peak:.04}); }
+function glass(o){ tone(o,{f:2093,d:0.9,peak:.18}); tone(o,{f:3136,d:0.6,peak:.06}); tone(o,{f:4186,d:0.3,peak:.03}); }
+function marimba(o){ for (const [f,t] of [[523.25,0],[783.99,0.09]]) { tone(o,{f,t,d:0.35,peak:.28,a:0.002}); tone(o,{f:f*4,t,d:0.08,peak:.08,a:0.001}); } }
+function droplet(o){ tone(o,{f:1400,f2:700,d:0.14,peak:.25,a:0.002}); }
+function pop(o){ tone(o,{f:420,f2:180,d:0.09,peak:.4,a:0.001,type:"triangle"}); }
+function rising(o){ tone(o,{f:659.25,d:0.18,peak:.2,type:"triangle"}); tone(o,{f:987.77,t:0.09,d:0.3,peak:.2,type:"triangle"}); }
+function hum(o){ tone(o,{f:392,d:0.7,peak:.22,a:0.03}); tone(o,{f:587.33,d:0.6,peak:.07,a:0.03}); }
+function tick(o){ const c=ac(), n=c.sampleRate*0.03, b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+  for (let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,4);
+  const s=c.createBufferSource(), f=c.createBiquadFilter(); f.type="bandpass"; f.frequency.value=3200; f.Q.value=2;
+  const g=c.createGain(); g.gain.value=.9; s.buffer=b; s.connect(f).connect(g).connect(o); s.start(); }
+function slideIn(){ const el=document.getElementById('toast'); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+const grid=document.getElementById('grid');
+for (const [name, desc, fn] of SOUNDS) {
+  const b=document.createElement('button'); b.className='opt'; b.type='button';
+  b.innerHTML=`<span class="play" aria-hidden="true">&#9654;</span><span><span class="name">${name}</span><br><span class="desc">${desc}</span></span>`;
+  b.addEventListener('click',()=>{ document.querySelectorAll('.opt').forEach(x=>x.classList.remove('playing')); b.classList.add('playing'); slideIn(); if (fn) { ac().resume(); fn(out()); } });
+  grid.appendChild(b);
+}
+</script>
+</body>
+</html>

@@ -97,6 +97,7 @@ impl ReminderWindow for TauriReminderWindow {
                 log::error!(target: "calendar", "could not show the reminder: {error}");
             }
         });
+        crate::chime::play(&self.app);
     }
 
     fn close(&self) {

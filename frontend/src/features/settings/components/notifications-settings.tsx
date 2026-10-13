@@ -15,7 +15,7 @@ import type { Settings } from '../types';
 import { useSaveSettings } from './save-settings';
 import { SwitchRow } from './switch-row';
 
-/** The three switches over the saved settings. */
+/** The switches over the saved settings. */
 function NotificationRows({ settings }: { settings: Settings }) {
   const { save } = useSaveSettings();
   const { preferences } = settings.notifications;
@@ -49,7 +49,24 @@ function NotificationRows({ settings }: { settings: Settings }) {
           save({ notifications: { preferences: { showActionItemReminders } } });
         }}
       />
+      <SoundRow settings={settings} />
     </SettingsCard>
+  );
+}
+
+/** The chime the meeting prompt and reminder play as they slide in. */
+function SoundRow({ settings }: { settings: Settings }) {
+  const { save } = useSaveSettings();
+  return (
+    <SwitchRow
+      id="notify-sound"
+      label={copy.soundTitle}
+      description={copy.soundDescription}
+      checked={settings.notifications.notificationSound}
+      onChange={(notificationSound) => {
+        save({ notifications: { notificationSound } });
+      }}
+    />
   );
 }
 
