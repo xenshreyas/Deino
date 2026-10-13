@@ -39,7 +39,7 @@ pub(crate) fn attach_autostop(app: &AppHandle, clock: &Arc<dyn Clock>) {
             microphone: detection,
             calendar: Arc::new(SyncedWindows::new(app.clone(), Arc::clone(&settings))),
             settings: Arc::new(SettingsAutoStop(settings)),
-            actions: Arc::new(TauriAutoStopActions(app.clone())),
+            actions: Arc::new(TauriAutoStopActions::new(app.clone(), ending_card)),
         },
         Arc::clone(clock),
     ));
@@ -53,6 +53,16 @@ pub(crate) fn attach_autostop(app: &AppHandle, clock: &Arc<dyn Clock>) {
         _ticker: ticker,
         _power: Mutex::new(power),
     });
+}
+
+/// The "Ending…" card shares the meeting prompt's top-right window, whose
+/// page shows it while no prompt is up.
+fn ending_card(app: &AppHandle, showing: bool) {
+    if showing {
+        crate::features::detection::prompt::show(app);
+    } else {
+        crate::features::detection::prompt::hide(app);
+    }
 }
 
 /// Tells the ticker when the Mac is about to sleep.

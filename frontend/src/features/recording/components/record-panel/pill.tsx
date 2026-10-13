@@ -16,7 +16,7 @@ import { LoaderCircle } from '@/ui/icons';
 import { panelCopy } from '../../copy';
 import type { AudioLevels, RecordingPhase } from '../../types';
 import { LevelMeter, type MeterState } from './level-meter';
-import { EndingControls, type PillActions, PillControls } from './pill-controls';
+import { type PillActions, PillControls } from './pill-controls';
 
 /** What the pill shows. */
 export interface PillView {
@@ -28,8 +28,6 @@ export interface PillView {
   expanded: boolean;
   /** The first open health issue, short, if any. */
   warning: string | null;
-  /** Auto-stop's countdown, if one runs. */
-  ending: { seconds: number; reason: string } | null;
 }
 
 /** Props of {@link Pill}. */
@@ -83,17 +81,8 @@ function Status({ view }: { view: PillView }) {
   );
 }
 
-/** The part that grows on hover, or the countdown. */
+/** The part that grows on hover (auto-stop's notice is a top-right card). */
 function Reveal({ view, actions }: { view: PillView; actions: PillActions }) {
-  if (view.ending !== null) {
-    return (
-      <EndingControls
-        seconds={view.ending.seconds}
-        reason={view.ending.reason}
-        onKeep={actions.onKeep}
-      />
-    );
-  }
   const running = view.phase === 'recording' || view.phase === 'paused';
   const open = running && view.expanded;
   return (
@@ -112,7 +101,7 @@ function Reveal({ view, actions }: { view: PillView; actions: PillActions }) {
 
 /** The record pill. */
 export function Pill({ view, actions, onPointerDown }: PillProps) {
-  const tall = view.expanded || view.ending !== null;
+  const tall = view.expanded;
   return (
     <div
       role="group"

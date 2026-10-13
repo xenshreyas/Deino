@@ -20,7 +20,6 @@ export interface PillActions {
   /** The ⋯ menu: microphone, screen to capture, the call's audio. */
   onMore: () => void;
   onOpenNotes: () => void;
-  onKeep: () => void;
 }
 
 /** A hairline between the status and the controls. */
@@ -73,29 +72,6 @@ export function PillControls({ paused, actions }: PillControlsProps) {
         </Button>
       </Hint>
       <IconButton icon={Ellipsis} label={panelCopy.more} onClick={actions.onMore} />
-    </span>
-  );
-}
-
-/** Auto-stop's countdown and "Keep recording". */
-export function EndingControls({
-  seconds,
-  reason,
-  onKeep,
-}: {
-  seconds: number;
-  reason: string;
-  onKeep: () => void;
-}) {
-  return (
-    <span className="flex items-center gap-2" role="status" aria-live="polite">
-      <Divider />
-      <span className="text-xs whitespace-nowrap text-fg-muted tabular-nums" title={reason}>
-        {panelCopy.ending(seconds)}
-      </span>
-      <Button variant="primary" size="sm" className="h-7 px-2.5 text-xs" onClick={onKeep}>
-        {panelCopy.keepRecording}
-      </Button>
     </span>
   );
 }

@@ -6,6 +6,7 @@
  * since the last prompt, and only its first-paint cache reaches this window.
  */
 import { applyTheme, parseThemePreference, THEME_STORAGE_KEY } from '@/features/appearance';
+import { EndingCard } from '@/features/recording';
 import { useMountEffect } from '@/hooks/useMountEffect';
 
 import { millisecondsLeft, secondsLeft, useNow } from '../countdown';
@@ -54,8 +55,12 @@ function PromptCard({ detection }: { detection: Detection }) {
   );
 }
 
-/** The prompt for the detection on screen; nothing between prompts. */
+/**
+ * The prompt for the detection on screen; between prompts, auto-stop's
+ * "Ending…" card, which shares this top-right window (Rust shows it).
+ */
 export function DetectionPrompt() {
   const detection = usePromptDetection();
-  return detection === null ? null : <PromptCard key={detection.id} detection={detection} />;
+  if (detection === null) return <EndingCard />;
+  return <PromptCard key={detection.id} detection={detection} />;
 }

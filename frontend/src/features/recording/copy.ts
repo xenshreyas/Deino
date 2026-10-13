@@ -2,6 +2,12 @@
 import type { HealthIssue, StopReason } from './types';
 
 export const recordingCopy = {
+  /** Auto-stop's top-right card. */
+  endingLabel: 'Recording ending',
+  endsIn: (seconds: number) => `Recording ends in ${String(seconds)}s`,
+  keepRecording: 'Keep recording',
+  stopNow: 'Stop now',
+  endingMore: 'More ways to end',
   start: 'Start recording',
   starting: 'Starting…',
   pause: 'Pause',

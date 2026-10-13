@@ -14,6 +14,7 @@
  * | {@link ResumeRecordingButton} | the meeting header: record more of a finished meeting (CAP-07) |
  */
 export { recordingApi } from './api';
+export { EndingCard } from './components/ending-card';
 export { RecordPanel } from './components/record-panel/record-panel';
 export { RecordingControls } from './components/recording-controls';
 export { RecordingSync } from './components/recording-sync';

@@ -5,13 +5,15 @@
 //!   whether its disk is full;
 //! - [`SyncedWindows`], the calendar's in-memory events around now;
 //! - [`SettingsAutoStop`], the `Settings::recording.auto_stop` section;
-//! - [`TauriAutoStopActions`], the notice and offer as `auto-stop-changed`,
-//!   and the stop and the split on the recorder, in the background.
+//! - [`TauriAutoStopActions`], the notice and offer as `auto-stop-changed`
+//!   (the notice also as a top-right card), and the stop and the split on
+//!   the recorder, in the background.
 //!
 //! Each looks its service up in Tauri state on every call: the recorder
 //! and the calendar are attached with the database, after auto-stop.
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use chrono::{DateTime, Utc};
 use deino_core::calendar::{CalendarEvent, CalendarService};
@@ -151,20 +153,42 @@ impl AutoStopSettings for SettingsAutoStop {
 }
 
 /// Auto-stop's decisions, carried out on the recorder.
-pub struct TauriAutoStopActions<R: Runtime>(pub AppHandle<R>);
+pub struct TauriAutoStopActions<R: Runtime> {
+    app: AppHandle<R>,
+    /// Shows (`true`) or hides the top-right "Ending…" card's window.
+    ending_card: fn(&AppHandle<R>, bool),
+    /// Whether the card is up, so it is shown and hidden once per notice.
+    showing: AtomicBool,
+}
+
+impl<R: Runtime> TauriAutoStopActions<R> {
+    /// The actions on `app`, with the window that shows the "Ending…" card.
+    pub fn new(app: AppHandle<R>, ending_card: fn(&AppHandle<R>, bool)) -> Self {
+        let showing = AtomicBool::new(false);
+        Self {
+            app,
+            ending_card,
+            showing,
+        }
+    }
+}
 
 impl<R: Runtime> AutoStopActions for TauriAutoStopActions<R> {
     fn changed(&self, state: &AutoStopState) {
         let event = AutoStopChanged {
             state: state.clone(),
         };
-        if let Err(error) = event.emit(&self.0) {
+        if let Err(error) = event.emit(&self.app) {
             log::warn!(target: "recording", "could not emit auto-stop-changed: {error}");
+        }
+        let ending = state.ending.is_some();
+        if self.showing.swap(ending, Ordering::Relaxed) != ending {
+            (self.ending_card)(&self.app, ending);
         }
     }
 
     fn stop(&self, reason: StopReason) {
-        let Some(recorder) = recorder(&self.0) else {
+        let Some(recorder) = recorder(&self.app) else {
             return;
         };
         tauri::async_runtime::spawn(async move {
@@ -175,7 +199,7 @@ impl<R: Runtime> AutoStopActions for TauriAutoStopActions<R> {
     }
 
     fn split(&self, event: &EventWindow) {
-        let Some(recorder) = recorder(&self.0) else {
+        let Some(recorder) = recorder(&self.app) else {
             return;
         };
         let request = StartRequest {

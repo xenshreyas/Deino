@@ -17,7 +17,7 @@ import { events } from '@/lib/ipc/generated/recording';
 import { cn } from '@/ui/cn';
 
 import { recordingApi } from '../../api';
-import { endingReason, issueLabel } from '../../copy';
+import { issueLabel } from '../../copy';
 import { formatElapsed } from '../../elapsed';
 import { useAutoStop, useAutoStopAnswers } from '../../hooks/use-auto-stop';
 import { useDeviceControls } from '../../hooks/use-device-controls';
@@ -28,7 +28,6 @@ import {
   usePanelRegion,
   usePanelTheme,
   usePressOrDrag,
-  useSecondsUntil,
 } from '../../hooks/use-record-panel';
 import { showPillMenu } from '../../panel-window';
 import { recordingKeys, useRecordingActions, useRecordingState } from '../../queries';
@@ -84,12 +83,11 @@ async function openMoreMenu(
   });
 }
 
-/** The pill's actions over the recorder, the devices and auto-stop. */
+/** The pill's actions over the recorder and the devices. */
 function usePillActions(snapshot: RecordingSnapshot): PillActions {
   const recorder = useRecordingActions();
   const picked = useRef<CaptureSource | null>(null);
   const devices = useDeviceControls();
-  const answers = useAutoStopAnswers();
   return {
     onPause: () => {
       recorder.pause.mutate();
@@ -106,9 +104,6 @@ function usePillActions(snapshot: RecordingSnapshot): PillActions {
       });
     },
     onOpenNotes: openNotes,
-    onKeep: () => {
-      answers.keep.mutate();
-    },
   };
 }
 
@@ -120,7 +115,6 @@ function usePillView(
 ): PillView {
   const seconds = useElapsed(snapshot);
   const levels = usePanelLevels();
-  const endingIn = useSecondsUntil(autoStop.ending?.stopAt ?? null);
   const issue = snapshot.issues[0];
   return {
     phase: snapshot.phase,
@@ -128,10 +122,6 @@ function usePillView(
     levels,
     expanded,
     warning: issue === undefined ? null : issueLabel(issue),
-    ending:
-      autoStop.ending === null || endingIn === null
-        ? null
-        : { seconds: endingIn, reason: endingReason[autoStop.ending.reason] },
   };
 }
 

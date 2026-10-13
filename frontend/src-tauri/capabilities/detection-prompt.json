@@ -1,13 +1,16 @@
 {
     "$schema": "../gen/schemas/desktop-schema.json",
     "identifier": "detection-prompt",
-    "description": "The meeting prompt window (CAP-06): its own commands and events, and its theme",
+    "description": "The top-right window (CAP-06): the meeting prompt's commands and events, auto-stop's Ending card, and its theme",
     "windows": [
         "detection_prompt"
     ],
     "permissions": [
         "core:event:default",
         "core:window:allow-set-theme",
-        "detection:default"
+        "detection:default",
+        "recording:allow-auto-stop",
+        "recording:allow-keep-recording",
+        "recording:allow-stop"
     ]
 }

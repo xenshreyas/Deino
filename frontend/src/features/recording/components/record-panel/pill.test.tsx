@@ -17,7 +17,6 @@ const LIVE: PillView = {
   levels: { microphone: 0.2, system: 0.1 },
   expanded: false,
   warning: null,
-  ending: null,
 };
 
 function actions(): PillActions {
@@ -27,7 +26,6 @@ function actions(): PillActions {
     onStop: vi.fn(),
     onMore: vi.fn(),
     onOpenNotes: vi.fn(),
-    onKeep: vi.fn(),
   };
 }
 
@@ -82,15 +80,6 @@ describe('Pill', () => {
     renderPill({ warning: 'No mic audio' });
 
     expect(screen.getByRole('alert').textContent).toBe('No mic audio');
-  });
-
-  it('replaces the controls with the countdown and keep recording', () => {
-    const handlers = renderPill({ expanded: true, ending: { seconds: 11, reason: 'Call ended' } });
-
-    expect(screen.getByText(panelCopy.ending(11))).toBeTruthy();
-    expect(screen.queryByRole('button', { name: panelCopy.stop })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: panelCopy.keepRecording }));
-    expect(handlers.onKeep).toHaveBeenCalledOnce();
   });
 
   it('says it is saving while the recording stops', () => {
