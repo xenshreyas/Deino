@@ -19,16 +19,24 @@ export const notesKeys = {
   meeting: (id: MeetingId) => [...notesKeys.all, 'meeting', id] as const,
 };
 
+/** Retries of a meeting that is not there yet, a moment apart. */
+const NOT_YET_RETRIES = 4;
+const NOT_YET_DELAY_MS = 500;
+
 /**
  * One meeting's notes. The editor reads them once when it mounts and owns
  * the document after that, so a refetch never moves the caret; it is kept
- * fresh for other readers (a second window).
+ * fresh for other readers (a second window). A meeting being recorded is
+ * announced a moment before it is saved, so `not_found` is retried briefly.
  */
 export const meetingNotesQuery = (id: MeetingId) =>
   queryOptions({
     queryKey: notesKeys.meeting(id),
     queryFn: () => notesApi.get(id),
     meta: { tables: NOTES_TABLES },
+    retry: (failures, error) =>
+      ['not_found', 'unavailable', 'network'].includes(error.code) && failures < NOT_YET_RETRIES,
+    retryDelay: NOT_YET_DELAY_MS,
   });
 
 /** One meeting's notes. */

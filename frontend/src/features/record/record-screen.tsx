@@ -12,12 +12,33 @@ import type { MeetingId } from '@/features/meetings';
 import { Notepad, notepadCopy } from '@/features/notepad';
 import { RecordingControls, useRecordingState } from '@/features/recording';
 import { TranscriptPanel } from '@/features/transcript';
+import { Skeleton, SkeletonText } from '@/ui/skeleton';
+
+/** The notes' shape while the recorder is still creating the meeting. */
+function NotesStarting() {
+  return (
+    <div className="flex flex-col gap-4 pt-9" role="status" aria-label="Loading">
+      <Skeleton className="h-3 w-1/3" />
+      <SkeletonText lines={3} />
+    </div>
+  );
+}
+
+/** Props of {@link LiveMeeting}. */
+interface LiveMeetingProps {
+  meetingId: MeetingId;
+  /**
+   * The recorder announces the meeting's ID before it saves the meeting, so
+   * its notes are not there yet; asking for them then fails.
+   */
+  starting: boolean;
+}
 
 /**
  * The notes and transcript of the meeting being recorded; the event chip
  * above the notes changes the linked calendar event mid-recording (ORG-03).
  */
-function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
+function LiveMeeting({ meetingId, starting }: LiveMeetingProps) {
   return (
     <>
       <section
@@ -25,7 +46,11 @@ function LiveMeeting({ meetingId }: { meetingId: MeetingId }) {
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto"
       >
         <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-6 pb-24">
-          <Notepad meetingId={meetingId} toolbar={<MeetingEventChip meetingId={meetingId} />} />
+          {starting ? (
+            <NotesStarting />
+          ) : (
+            <Notepad meetingId={meetingId} toolbar={<MeetingEventChip meetingId={meetingId} />} />
+          )}
         </div>
       </section>
       <aside
@@ -49,11 +74,15 @@ function IdleHome() {
 
 /** The record screen: idle, or the live meeting; the controls float below. */
 export function RecordScreen() {
-  const { meetingId } = useRecordingState();
+  const { meetingId, phase } = useRecordingState();
   return (
     <div className="relative flex h-full flex-col bg-bg">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {meetingId === null ? <IdleHome /> : <LiveMeeting key={meetingId} meetingId={meetingId} />}
+        {meetingId === null ? (
+          <IdleHome />
+        ) : (
+          <LiveMeeting key={meetingId} meetingId={meetingId} starting={phase === 'starting'} />
+        )}
       </div>
       <div className="absolute inset-x-0 bottom-6 z-(--z-chatbar) flex justify-center px-6">
         <RecordingControls />
