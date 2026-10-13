@@ -31,17 +31,37 @@ const TITLE_TICK: Duration = Duration::from_secs(20);
 /// Creates the menu bar item and starts its title ticker.
 pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let menu = menu::build(app, &menu::Contents::default())?;
-    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
+    let builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .tooltip(crate::APP_NAME)
         .on_menu_event(|app, event| menu::handle(app, event.id.as_ref()));
-    if let Some(icon) = app.default_window_icon() {
-        builder = builder.icon(icon.clone());
-    }
-    builder.build(app)?;
+    with_icon(builder, app).build(app)?;
     refresh(app);
     start_ticker(app.clone());
     Ok(())
+}
+
+/// The menu bar mark (BRAND-01): black plus alpha, 36 px tall, which the
+/// tray shows 18 pt tall (crisp on Retina).
+#[cfg(target_os = "macos")]
+const TEMPLATE_ICON: tauri::image::Image<'static> =
+    tauri::include_image!("icons/tray/tray-icon@2x.png");
+
+/// On macOS the mark as a template image, which the system tints for light
+/// and dark menu bars (and while the menu is open).
+#[cfg(target_os = "macos")]
+fn with_icon<R: Runtime>(builder: TrayIconBuilder<R>, _app: &AppHandle<R>) -> TrayIconBuilder<R> {
+    builder.icon(TEMPLATE_ICON).icon_as_template(true)
+}
+
+/// Elsewhere the full-colour app icon: a black template would vanish on a
+/// dark taskbar.
+#[cfg(not(target_os = "macos"))]
+fn with_icon<R: Runtime>(builder: TrayIconBuilder<R>, app: &AppHandle<R>) -> TrayIconBuilder<R> {
+    match app.default_window_icon() {
+        Some(icon) => builder.icon(icon.clone()),
+        None => builder,
+    }
 }
 
 /// Rebuilds the menu and the title from the recorder and today's calendar.

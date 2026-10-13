@@ -48,6 +48,9 @@
   --selection: #d4e6da;
   --highlight: #fff3b0;
 
+  /* Brand: the mark's blue, sampled from the owner's art (BRAND-01). */
+  --brand: #6b89bc;
+
   /* Status */
   --recording: #e5484d;
   --danger: #c4362c;
@@ -134,6 +137,8 @@
     --selection: #2b4a38;
     --highlight: #4d4413;
 
+    --brand: #6b89bc;
+
     --recording: #f2555a;
     --danger: #f2786c;
     --danger-soft: #3a1f1c;
@@ -187,6 +192,8 @@
   --focus-ring: #7cc39a;
   --selection: #2b4a38;
   --highlight: #4d4413;
+
+  --brand: #6b89bc;
 
   --recording: #f2555a;
   --danger: #f2786c;
@@ -249,6 +256,7 @@
   --color-focus-ring: var(--focus-ring);
   --color-selection: var(--selection);
   --color-highlight: var(--highlight);
+  --color-brand: var(--brand);
   --color-recording: var(--recording);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);

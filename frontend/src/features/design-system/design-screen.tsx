@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { ExampleNotes } from '@/features/_example';
 import { Page, PageHeader } from '@/ui/page-header';
 
+import { BrandGallery } from './brand-gallery';
 import { ControlGallery } from './control-gallery';
 import { FeedbackGallery } from './feedback-gallery';
 import { TokenGallery } from './token-gallery';
@@ -48,6 +49,11 @@ export function DesignScreen() {
         title="Design system"
         description="Tokens and primitives from docs/references/ui.md, in both themes."
       />
+      <Band title="Brand">
+        <ThemeColumns>
+          <BrandGallery />
+        </ThemeColumns>
+      </Band>
       <Band title="Tokens">
         <ThemeColumns>
           <TokenGallery />
