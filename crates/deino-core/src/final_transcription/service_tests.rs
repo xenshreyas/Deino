@@ -354,3 +354,40 @@ async fn a_run_that_keeps_the_live_transcript_reports_no_progress() {
 
     assert!(seen.lock().unwrap().is_empty());
 }
+
+#[tokio::test]
+async fn them_heard_on_the_microphone_is_removed_and_the_mic_gets_the_echo_reference() {
+    let world = World::split().await;
+    world.tracks.say(
+        SYSTEM,
+        vec![heard(500, 2_500, "we should ship it on Friday")],
+    );
+    world.tracks.say(
+        MIC,
+        vec![
+            heard(540, 2_540, "we should ship it on Friday"),
+            heard(4_000, 4_800, "Sounds good"),
+        ],
+    );
+
+    world.run(false).await.unwrap();
+
+    let lines: Vec<(Channel, String)> = world
+        .transcript()
+        .await
+        .into_iter()
+        .map(|s| (s.channel, s.text))
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            (Channel::System, "we should ship it on Friday".to_owned()),
+            (Channel::Mic, "Sounds good".to_owned()),
+        ]
+    );
+    assert_eq!(
+        world.tracks.echo_references(),
+        [Some(SYSTEM.into()), None],
+        "the microphone is heard against the system track"
+    );
+}

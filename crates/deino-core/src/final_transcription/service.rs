@@ -7,16 +7,21 @@
 //!    re-transcribed only when the high-accuracy re-pass is on and the user
 //!    edited nothing; otherwise the live transcript stays.
 //! 3. Transcribe each track through the [`TrackTranscriber`] port.
-//! 4. Replace the transcript in one transaction, each utterance keeping the
+//!    The microphone track carries the system track as its echo reference,
+//!    so the transcriber can cancel the call's echo first.
+//! 4. Remove what the microphone heard of the call ([`without_echo`]): Me
+//!    words and lines that repeat Them at the same moment.
+//! 5. Replace the transcript in one transaction, each utterance keeping the
 //!    speaker the old segments gave its time ([`carried_speaker`]).
 //!
 //! When the run has a cloud service (CAP-14, [`FinalPass::cloud`]), steps 2
-//! and 3 are the cloud branch's instead (`cloud_run.rs`): the cloud
+//! to 4 are the cloud branch's instead (`cloud_run.rs`): the cloud
 //! transcript replaces the live one unless the user edited it, and the
 //! replaced one is kept ([`OriginalTranscripts`]).
 //!
 //! Replacing makes a retry or a re-run safe.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use deino_db::DbError;
@@ -28,7 +33,7 @@ use super::carried_speaker;
 use super::progress::TrackShares;
 use super::{
     ChannelSpeakers, CloudError, CloudPass, HeardSpan, OriginalTranscripts, TrackError,
-    TrackProgress, TrackRequest, TrackTranscriber, carried_segment,
+    TrackProgress, TrackRequest, TrackTranscriber, carried_segment, without_echo,
 };
 use crate::meetings::{MeetingAudio, MeetingLifecycleRepo};
 use crate::segments::{NewSegment, Page, Segment, SegmentReader, SegmentWriter, SpeakerRepo};
@@ -168,6 +173,7 @@ impl FinalTranscriptionService {
                 FinalTranscriptionError::Repass(error)
             }
         })?;
+        let heard = without_echo(heard);
         if heard.is_empty() {
             return Ok(FinalOutcome::Skipped(FinalSkip::NoSpeech));
         }
@@ -187,9 +193,11 @@ impl FinalTranscriptionService {
     ) -> Result<Vec<(Channel, HeardSpan)>, TrackError> {
         let mut heard = Vec::new();
         let shares = TrackShares::new(pass.progress.clone(), tracks.len());
+        let system = track_of(&tracks, Channel::System);
         for (index, (channel, path)) in tracks.into_iter().enumerate() {
             let request = TrackRequest {
                 audio: path.into(),
+                echo_reference: system.clone().filter(|_| channel == Channel::Mic),
                 cancel: pass.cancel.clone(),
                 progress: shares.track(index),
             };
@@ -234,6 +242,14 @@ pub(super) fn tracks(audio: &MeetingAudio) -> Vec<(Channel, String)> {
         .clone()
         .map(|path| vec![(Channel::Mixed, path)])
         .unwrap_or_default()
+}
+
+/// The file of `channel`'s track, if the meeting has one.
+fn track_of(tracks: &[(Channel, String)], channel: Channel) -> Option<PathBuf> {
+    tracks
+        .iter()
+        .find(|(track, _)| *track == channel)
+        .map(|(_, path)| PathBuf::from(path))
 }
 
 /// Why a meeting with transcript `old` is left alone, if it is.

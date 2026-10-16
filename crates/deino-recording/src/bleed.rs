@@ -25,7 +25,9 @@
 //! holdback is pure; the transcript router feeds it and acts on its verdicts.
 
 mod evidence;
-pub mod overlap;
+/// Whether two transcript texts say the same thing; shared with the
+/// after-meeting echo rule, so it lives in `deino-core`.
+pub use deino_core::final_transcription::overlap;
 
 use std::collections::VecDeque;
 use std::time::Duration;

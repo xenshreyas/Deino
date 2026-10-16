@@ -24,9 +24,11 @@
 mod carry;
 mod cloud;
 mod cloud_run;
+mod echo_text;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
 mod originals;
+pub mod overlap;
 mod port;
 mod progress;
 mod restore;
@@ -37,6 +39,9 @@ pub use carry::{ChannelSpeakers, carried_segment, carried_speaker};
 pub use cloud::{
     CLOUD_FAILED, CloudChoice, CloudError, CloudPass, CloudRequest, CloudSpan, CloudTranscriber,
     LocalOnly,
+};
+pub use echo_text::{
+    MERGE, MIN_RUN, RISK_MARGIN, SEGMENT_WINDOW, Spoken, WORD_WINDOW, without_echo,
 };
 #[cfg(any(test, feature = "test-support"))]
 pub use fake::{SCRIPTED_PROGRESS, ScriptedCloud, ScriptedTracks};

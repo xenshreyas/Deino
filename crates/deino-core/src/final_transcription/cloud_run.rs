@@ -5,7 +5,9 @@
 //! 2. Send each track to the service: the microphone as the user, system
 //!    audio (or the mixed file) diarized, so a call with several people
 //!    keeps them apart. Any failure returns before anything is written.
-//!    Progress moves a track's share once its upload comes back.
+//!    Progress moves a track's share once its upload comes back. The
+//!    microphone's echo of the call is then removed on the text side
+//!    ([`without_echo`]): the cloud hears the raw track.
 //! 3. Keep the transcript in place ([`OriginalTranscripts`]), store the
 //!    cloud's voices as speakers ([`CloudVoices`]), and replace the
 //!    transcript: the microphone keeps the user, other lines take their
@@ -19,7 +21,7 @@ use super::progress::TrackShares;
 use super::{
     ChannelSpeakers, CloudError, CloudPass, CloudRequest, CloudSpan, CloudVoices, FinalOutcome,
     FinalPass, FinalSkip, FinalTranscriptionError, FinalTranscriptionService, KeptLine,
-    carried_segment,
+    carried_segment, without_echo,
 };
 use crate::segments::{NewSegment, Segment};
 
@@ -43,6 +45,7 @@ impl FinalTranscriptionService {
         let heard = hear(cloud, tracks, &pass.cancel, &shares)
             .await
             .map_err(FinalTranscriptionError::Cloud)?;
+        let heard = without_echo(heard);
         if heard.is_empty() {
             return Ok(FinalOutcome::Skipped(FinalSkip::NoSpeech));
         }

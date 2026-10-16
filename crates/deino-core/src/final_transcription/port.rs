@@ -19,6 +19,11 @@ pub type EngineError = Box<dyn std::error::Error + Send + Sync>;
 pub struct TrackRequest {
     /// The finalized file (`mic.m4a`, `system.m4a` or `audio.mp4`).
     pub audio: PathBuf,
+    /// The system track, on the same timeline, when this is the microphone
+    /// track of a meeting that has one: what the speakers played, whose
+    /// echo the microphone may hold. The transcriber may cancel that echo
+    /// from its copy of the audio first; the file is never changed.
+    pub echo_reference: Option<PathBuf>,
     /// Fires when the stage is cancelled; checked between utterances.
     pub cancel: CancellationToken,
     /// How far through the track the transcriber is: the audio position

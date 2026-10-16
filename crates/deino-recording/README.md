@@ -32,8 +32,10 @@ spoken. The UI only watches.
   headphones or with "I use headphones"), the `EchoCanceller` port and
   `SonoraAec` (WebRTC AEC3 through `sonora`, 10 ms frames, system track as
   reference).
-- The bleed holdback (`bleed.rs`, `bleed/overlap.rs`): OpenWhispr's
-  `meetingMicHoldback`, ported; drops a Me segment only on a text match.
+- The bleed holdback (`bleed.rs`): OpenWhispr's `meetingMicHoldback`,
+  ported; drops a Me segment only on a text match (`bleed::overlap`,
+  re-exported from `deino_core::final_transcription::overlap`, which the
+  after-meeting echo rule shares).
 - Lanes (`engine/`, `lane.rs`): the `LaneEngines` / `LaneTranscriber`
   ports, `StreamingLane` (a `deino-stt` live session fed continuous audio)
   and `UtteranceLane` (the "Advanced" engines, cut at VAD boundaries).
@@ -51,7 +53,10 @@ spoken. The UI only watches.
   CAP-08): `OfflineTranscriber` (the `final_transcription` stage's
   `TrackTranscriber`) over the `TrackDecoder` (`NativeDecoder`:
   `ExtAudioFile`) and `BatchEngines` ports; VAD utterances of at most 30 s,
-  runs that stopped early read again in halves.
+  runs that stopped early read again in halves. A microphone track with an
+  echo reference has the system track's echo cancelled from its decoded
+  copy first (`offline/echo.rs`: `cancel_echo` over `SonoraAec`), unless
+  `HeadphonesSetting` says headphones; the stored file is never changed.
 - Imported files (`import.rs`, CAP-11): `NativeIngest`, `deino-core`'s
   `MediaIngest` over `deino-audio::media` (`audio.m4a`, and a video kept as
   `video.<ext>`). `examples/import_bench.rs` times a watched-folder import

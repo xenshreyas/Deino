@@ -75,6 +75,9 @@ pub use import::NativeIngest;
 pub use lane::Lane;
 pub use monitor::{HealthIssue, IssueKind};
 pub use observer::{NoStartObserver, StartObserver, StartObservers};
-pub use offline::{BatchEngines, NativeDecoder, OfflineTranscriber, TrackDecoder};
+pub use offline::{
+    BatchEngines, FixedHeadphones, HeadphonesSetting, NativeDecoder, OfflineTranscriber,
+    TrackDecoder,
+};
 pub use recovery::{RecoveryReport, recover_interrupted};
 pub use service::{Playhead, RecordingService, StartRequest};

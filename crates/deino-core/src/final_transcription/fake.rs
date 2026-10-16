@@ -25,6 +25,7 @@ pub struct ScriptedTracks {
     spans: Mutex<HashMap<PathBuf, Vec<HeardSpan>>>,
     missing_model: Mutex<bool>,
     heard: Mutex<Vec<PathBuf>>,
+    references: Mutex<Vec<Option<PathBuf>>>,
 }
 
 impl ScriptedTracks {
@@ -42,6 +43,11 @@ impl ScriptedTracks {
     pub fn heard(&self) -> Vec<PathBuf> {
         lock(&self.heard).clone()
     }
+
+    /// The echo reference each file came with, in the same order.
+    pub fn echo_references(&self) -> Vec<Option<PathBuf>> {
+        lock(&self.references).clone()
+    }
 }
 
 #[async_trait]
@@ -55,6 +61,7 @@ impl TrackTranscriber for ScriptedTracks {
             return Err(TrackError::Unavailable(Box::new(missing)));
         }
         lock(&self.heard).push(request.audio.clone());
+        lock(&self.references).push(request.echo_reference.clone());
         for fraction in SCRIPTED_PROGRESS {
             request.progress.report(fraction);
         }

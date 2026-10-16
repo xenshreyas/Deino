@@ -1,6 +1,7 @@
 //! Wiring for the transcript stages: `final_transcription` (CAP-08) over
 //! `deino-recording`'s `OfflineTranscriber` (the finished tracks decoded
-//! with `ExtAudioFile`, the batch engine chosen in Settings), its re-pass
+//! with `ExtAudioFile`, the batch engine chosen in Settings, the microphone's
+//! echo cancelled unless "I use headphones" is on), its re-pass
 //! setting, and `vocab_fixups` (TRN-05) over the vocabulary's fixups; and
 //! the user's transcript edits (TRN-02, ADR 0040), re-indexed through the
 //! `ReindexQueue` that `search::attach_gateway_and_search` manages.
@@ -16,7 +17,7 @@ use deino_core::transcript::{TranscriptEditDeps, TranscriptEditService, Transcri
 use deino_core::vocabulary::FixupService;
 use deino_db::Database;
 use deino_domain::Clock;
-use deino_recording::{NativeDecoder, OfflineTranscriber};
+use deino_recording::{HeadphonesSetting, NativeDecoder, OfflineTranscriber};
 use tauri::{AppHandle, Manager};
 
 use super::attach::Phase;
@@ -52,10 +53,11 @@ fn track_transcriber(
         Arc::clone(settings),
         tauri::async_runtime::handle().inner().clone(),
     );
-    Arc::new(OfflineTranscriber::new(
-        Arc::new(engines),
-        Arc::new(NativeDecoder),
-    ))
+    let headphones: Arc<dyn HeadphonesSetting> = Arc::clone(settings);
+    Arc::new(
+        OfflineTranscriber::new(Arc::new(engines), Arc::new(NativeDecoder))
+            .with_headphones(headphones),
+    )
 }
 
 /// Transcription without an STT runtime: always unavailable.

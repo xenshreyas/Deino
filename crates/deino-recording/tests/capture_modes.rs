@@ -32,8 +32,8 @@ use deino_core::vocabulary::{Corrector, Lexicon, RecordedLiveVocabulary, VocabTe
 use deino_domain::{Channel, Clock, FakeClock, MeetingId, MeetingStatus, VocabKind, VocabTermId};
 use deino_recording::engine::{EngineError, LaneEngines, LaneRequest, LaneTranscriber};
 use deino_recording::{BatchEngines, OfflineTranscriber, Preferences, StartRequest, TrackDecoder};
-use deino_stt::BatchTranscriber;
 use deino_stt::transcriber::FakeTranscriber;
+use deino_stt::{BatchTranscriber, BatchTranscript};
 use deino_testkit::Fixtures;
 use deino_testkit::fixture::{MeetingKind, PcmTrack, Segment as TruthSegment};
 use rig::{FastClock, FixtureCapture, RigOptions, rig_over};
@@ -137,7 +137,28 @@ struct Scripted;
 
 impl BatchEngines for Scripted {
     fn open(&self) -> Result<Arc<dyn BatchTranscriber>, TrackError> {
-        Ok(Arc::new(FakeTranscriber::new()))
+        Ok(Arc::new(Distinct(FakeTranscriber::new())))
+    }
+}
+
+/// The scripted engine names words after their place in the clip ("w0",
+/// "w1", …), so any two clips of a length read the same, and the echo rule
+/// would take a Me line beside a Them line for an echo. This one tags each
+/// word with a hash of the clip, so different audio reads differently.
+struct Distinct(FakeTranscriber);
+
+impl BatchTranscriber for Distinct {
+    fn transcribe(&self, pcm: Vec<f32>) -> Result<BatchTranscript, deino_stt::SttError> {
+        let tag = pcm
+            .iter()
+            .fold(0_u32, |hash, sample| hash.rotate_left(5) ^ sample.to_bits())
+            % 1_000;
+        let mut transcript = self.0.transcribe(pcm)?;
+        for token in &mut transcript.tokens {
+            token.text = format!("{}x{tag}", token.text);
+        }
+        transcript.text = deino_stt::words::text_of(&transcript.tokens);
+        Ok(transcript)
     }
 }
 

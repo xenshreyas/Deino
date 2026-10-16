@@ -6,6 +6,9 @@
 //! [`MIN_TOKENS`] tokens in the shorter, when the share of the shorter's
 //! tokens found in the longer, or their longest common token subsequence,
 //! is above [`SIMILARITY`] (CAP-02: "normalized similarity > 0.6").
+//!
+//! Shared by the live bleed holdback (`deino-recording`'s `bleed`) and the
+//! after-meeting echo rule ([`super::echo_text`]).
 
 /// The share of matching tokens above which two texts are the same speech.
 pub const SIMILARITY: f32 = 0.6;
@@ -50,6 +53,11 @@ pub fn similarity(a: &[String], b: &[String]) -> f32 {
 /// Whether `a` and `b` are the same speech.
 pub fn overlaps(a: &[String], b: &[String]) -> bool {
     similarity(a, b) > SIMILARITY
+}
+
+/// The share of `of`'s tokens found (one-for-one) in `within`, in `[0, 1]`.
+pub fn coverage(of: &[String], within: &[String]) -> f32 {
+    ratio(common(of, within), of.len())
 }
 
 /// Whether `needle` appears as a contiguous token run in `haystack`.
@@ -145,6 +153,14 @@ mod tests {
         assert!(!same("yeah sure", "sure yeah"));
         assert!(same("okay", "okay"));
         assert!(!same("", "anything"));
+    }
+
+    #[test]
+    fn coverage_is_the_share_of_the_first_texts_tokens() {
+        let (short, long) = (tokens("ship it friday"), tokens("we ship it on friday ok"));
+        assert!((coverage(&short, &long) - 1.0).abs() < 1e-6);
+        assert!((coverage(&long, &short) - 0.5).abs() < 1e-6);
+        assert!(coverage(&[], &long).abs() < 1e-6);
     }
 
     #[test]

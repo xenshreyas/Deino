@@ -368,8 +368,9 @@ rules, from `src/helpers/liveSpeakerIdentifier.js`). `crates/deino-detect/`
 each process object, a reconcile that skips objects that vanished mid-read,
 and ignoring `com.apple.CoreSpeech` (`macos/processes.rs`, `reader.rs`).
 `crates/deino-recording/` (CAP-02) ports the meeting-mode bleed holdback from
-`meetingMicHoldback.js`, with its text-match test (`bleed.rs`,
-`bleed/overlap.rs`); the
+`meetingMicHoldback.js`, with its text-match test (`bleed.rs`, and
+`crates/deino-core/src/final_transcription/overlap.rs`, shared with the
+after-meeting echo rule); the
 capture supervisor's sleep detection by a wall-clock tick gap
 (`crates/deino-audio/src/capture/supervisor/actor.rs`) follows its
 recording watchdog. `crates/deino-detect/src/autostop/policy.rs` (CAP-07)
