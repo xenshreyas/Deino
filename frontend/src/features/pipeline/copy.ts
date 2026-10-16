@@ -6,6 +6,7 @@ export const copy = {
   retry: 'Retry',
   retryStage: (stage: string) => `Retry ${stage.toLowerCase()}`,
   retryFailed: 'That step couldn’t be restarted.',
+  retranscribeFailed: 'Couldn’t re-transcribe this meeting',
   loadFailed: 'Processing status is unavailable.',
   retrying: 'Retrying soon',
   detailsTitle: 'Processing details',

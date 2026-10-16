@@ -188,6 +188,7 @@ impl MeetingStatusObserver for Transcribe {
         self.timings.mark();
         let pass = FinalPass {
             repass: false,
+            requested: false,
             cloud: None,
             cancel: CancellationToken::new(),
             progress: deino_core::final_transcription::TrackProgress::default(),

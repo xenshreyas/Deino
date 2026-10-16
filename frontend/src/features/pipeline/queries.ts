@@ -16,10 +16,12 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import type { Table } from '@/lib/ipc/generated/shared';
 
 import { pipelineApi } from './api';
+import { copy } from './copy';
 import type { MeetingId, StageId } from './types';
 
 /** The tables the pipeline's queries read. */
@@ -69,6 +71,23 @@ export function useRerunStage(meetingId: MeetingId) {
     mutationFn: (stage: StageId | null) => pipelineApi.rerun(meetingId, stage),
     onSuccess: (stages) => {
       client.setQueryData(pipelineKeys.status(meetingId), stages);
+    },
+  });
+}
+
+/**
+ * Re-transcribes a meeting and re-runs the steps after it. The status line
+ * shows the run, so success is silent; a failure is a toast (UX-32).
+ */
+export function useRetranscribe(meetingId: MeetingId) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => pipelineApi.retranscribe(meetingId),
+    onSuccess: (stages) => {
+      client.setQueryData(pipelineKeys.status(meetingId), stages);
+    },
+    onError: (error) => {
+      toast.error(copy.retranscribeFailed, { description: error.message });
     },
   });
 }

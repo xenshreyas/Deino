@@ -17,7 +17,8 @@
 //! through `ctx.events` ([`StageFraction`]: a running event with a
 //! fraction, once per whole percent). Only numbers, never what was said.
 
-use std::sync::Arc;
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use async_trait::async_trait;
 use deino_core::final_transcription::{
@@ -51,12 +52,57 @@ const REPASS_FAILED: &str = "The re-pass could not run, so the live transcript i
 pub trait RepassSetting: Send + Sync {
     /// True when live transcripts are transcribed again after the meeting.
     async fn enabled(&self) -> bool;
+
+    /// True once when the user asked to re-transcribe `meeting` (the run
+    /// then transcribes whatever the setting says); false otherwise.
+    fn take_request(&self, _meeting: &MeetingId) -> bool {
+        false
+    }
 }
 
 #[async_trait]
 impl RepassSetting for SettingsService {
     async fn enabled(&self) -> bool {
         self.get().await.transcription.high_accuracy_repass
+    }
+}
+
+/// The re-pass setting plus "Re-transcribe" requests: a requested meeting
+/// is transcribed again once, whatever the setting says.
+pub struct RequestedRepass {
+    setting: Arc<dyn RepassSetting>,
+    requested: Mutex<HashSet<MeetingId>>,
+}
+
+impl RequestedRepass {
+    /// The requests over `setting`.
+    pub fn new(setting: Arc<dyn RepassSetting>) -> Self {
+        let requested = Mutex::new(HashSet::new());
+        Self { setting, requested }
+    }
+
+    /// Asks for `meeting` to be transcribed again on its next run.
+    pub fn request(&self, meeting: &MeetingId) {
+        let mut requested = self
+            .requested
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        requested.insert(meeting.clone());
+    }
+}
+
+#[async_trait]
+impl RepassSetting for RequestedRepass {
+    async fn enabled(&self) -> bool {
+        self.setting.enabled().await
+    }
+
+    fn take_request(&self, meeting: &MeetingId) -> bool {
+        let mut requested = self
+            .requested
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        requested.remove(meeting)
     }
 }
 
@@ -140,8 +186,10 @@ impl PipelineStage for FinalTranscriptionStage {
     }
 
     async fn run(&self, ctx: &StageCtx, meeting: MeetingId) -> Result<StageOutcome, StageError> {
+        let requested = self.repass.take_request(&meeting);
         let pass = FinalPass {
-            repass: self.repass.enabled().await,
+            repass: requested || self.repass.enabled().await,
+            requested,
             cloud: self.cloud.for_meeting(&meeting).await,
             cancel: ctx.cancel.child_token(),
             progress: progress(ctx, &meeting),

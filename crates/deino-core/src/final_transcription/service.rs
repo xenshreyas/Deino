@@ -123,6 +123,9 @@ pub struct FinalTranscriptionDeps {
 pub struct FinalPass {
     /// Settings → Transcription → "High-accuracy re-pass after meeting".
     pub repass: bool,
+    /// The user asked for this run (Re-transcribe): transcribe again even
+    /// over a live transcript they edited.
+    pub requested: bool,
     /// The cloud service that transcribes this run instead of the Mac
     /// (CAP-14), if the user turned one on or asked for it.
     pub cloud: Option<CloudPass>,
@@ -163,7 +166,7 @@ impl FinalTranscriptionService {
         if let Some(cloud) = &pass.cloud {
             return self.run_cloud(meeting, (tracks, old), (cloud, pass)).await;
         }
-        if let Some(skip) = skip(&old, pass.repass) {
+        if let Some(skip) = skip(&old, pass) {
             return Ok(FinalOutcome::Skipped(skip));
         }
         let heard = self.hear(tracks, pass).await.map_err(|error| {
@@ -253,10 +256,10 @@ fn track_of(tracks: &[(Channel, String)], channel: Channel) -> Option<PathBuf> {
 }
 
 /// Why a meeting with transcript `old` is left alone, if it is.
-fn skip(old: &[Segment], repass: bool) -> Option<FinalSkip> {
-    if old.is_empty() {
+fn skip(old: &[Segment], pass: &FinalPass) -> Option<FinalSkip> {
+    if old.is_empty() || pass.requested {
         None
-    } else if !repass {
+    } else if !pass.repass {
         Some(FinalSkip::LiveTranscriptKept)
     } else if old.iter().any(|segment| segment.edited_at.is_some()) {
         Some(FinalSkip::EditedByUser)

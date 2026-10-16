@@ -194,6 +194,7 @@ async fn transcribe_after(rig: &rig::Rig, meeting: &MeetingId, fixture: &Fixture
     });
     let pass = FinalPass {
         repass: false,
+        requested: false,
         cloud: None,
         cancel: CancellationToken::new(),
         progress: deino_core::final_transcription::TrackProgress::default(),

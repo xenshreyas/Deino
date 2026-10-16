@@ -17,6 +17,7 @@ use deino_core::transcript::{TranscriptEditDeps, TranscriptEditService, Transcri
 use deino_core::vocabulary::FixupService;
 use deino_db::Database;
 use deino_domain::Clock;
+use deino_pipeline::RequestedRepass;
 use deino_recording::{HeadphonesSetting, NativeDecoder, OfflineTranscriber};
 use tauri::{AppHandle, Manager};
 
@@ -29,9 +30,12 @@ use crate::stt::{SttBatchEngines, SttRuntime};
 pub(super) fn stages(app: &AppHandle) -> Option<TranscriptStages> {
     let settings = Arc::clone(&*app.try_state::<Arc<SettingsService>>()?);
     let fixups = Arc::clone(&*app.try_state::<Arc<FixupService>>()?);
+    // "Re-transcribe" (`pipeline|retranscribe`) asks through this one.
+    let repass = Arc::new(RequestedRepass::new(Arc::clone(&settings) as _));
+    app.manage(Arc::clone(&repass));
     Some(TranscriptStages {
         transcriber: track_transcriber(app, &settings),
-        repass: settings,
+        repass,
         cloud: super::cloud_transcription::cloud_choice(app),
         vocab_fixer: fixups,
     })

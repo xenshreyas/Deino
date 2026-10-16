@@ -317,3 +317,26 @@ async fn a_skipped_run_reports_no_fraction() {
 
     assert!(events.events().is_empty());
 }
+
+/// The re-pass setting, fixed.
+struct FixedRepass(bool);
+
+#[async_trait::async_trait]
+impl RepassSetting for FixedRepass {
+    async fn enabled(&self) -> bool {
+        self.0
+    }
+}
+
+#[tokio::test]
+async fn a_re_transcribe_request_is_taken_once_and_the_setting_still_reads() {
+    let requests = RequestedRepass::new(Arc::new(FixedRepass(false)));
+    let meeting = MeetingId::new("meeting-a");
+
+    requests.request(&meeting);
+
+    assert!(requests.take_request(&meeting));
+    assert!(!requests.take_request(&meeting), "a request is used once");
+    assert!(!requests.take_request(&MeetingId::new("meeting-b")));
+    assert!(!requests.enabled().await);
+}

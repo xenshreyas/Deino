@@ -101,6 +101,7 @@ impl World {
     async fn run(&self, requested: bool) -> Result<FinalOutcome, FinalTranscriptionError> {
         let pass = FinalPass {
             repass: false,
+            requested: false,
             cloud: Some(CloudPass {
                 transcriber: self.cloud.clone(),
                 requested,

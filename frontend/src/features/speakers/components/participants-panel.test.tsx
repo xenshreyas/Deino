@@ -32,6 +32,7 @@ const pipeline = vi.hoisted(
     ({
       status: vi.fn<typeof Pipeline.commands.status>(),
       rerun: vi.fn<typeof Pipeline.commands.rerun>(),
+      retranscribe: vi.fn<typeof Pipeline.commands.retranscribe>(),
     }) satisfies typeof Pipeline.commands,
 );
 vi.mock('@/lib/ipc/generated/pipeline', () => ({ commands: pipeline, events: {} }));

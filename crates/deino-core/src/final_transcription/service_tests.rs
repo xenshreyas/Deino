@@ -92,6 +92,7 @@ impl World {
     async fn run(&self, repass: bool) -> Result<FinalOutcome, FinalTranscriptionError> {
         let pass = FinalPass {
             repass,
+            requested: false,
             cloud: None,
             cancel: CancellationToken::new(),
             progress: TrackProgress::default(),
@@ -258,6 +259,34 @@ async fn a_re_pass_never_replaces_the_users_edits() {
 }
 
 #[tokio::test]
+async fn re_transcribe_runs_over_edits_and_with_the_re_pass_off() {
+    let world = World::split().await;
+    let me = world.speaker("Me", true).await;
+    world.live(Channel::Mic, (0, 1_000), me).await;
+    let id = world.transcript().await[0].id;
+    world
+        .segments
+        .edit_text(&id, "mine", at("2026-10-11T10:05:00Z"))
+        .await
+        .unwrap();
+    world.tracks.say(MIC, vec![heard(0, 900, "again")]);
+    let pass = FinalPass {
+        repass: false,
+        requested: true,
+        cloud: None,
+        cancel: CancellationToken::new(),
+        progress: TrackProgress::default(),
+    };
+
+    let outcome = world.service.run(&meeting(), &pass).await.unwrap();
+
+    assert!(
+        matches!(outcome, FinalOutcome::Written { .. }),
+        "{outcome:?}"
+    );
+}
+
+#[tokio::test]
 async fn silence_and_missing_audio_are_skipped() {
     let silent = World::split().await;
     let unrecorded = World::new(MeetingAudio::default()).await;
@@ -294,6 +323,7 @@ async fn a_missing_model_is_unavailable_and_a_missing_meeting_not_found() {
     world.tracks.without_model();
     let missing = FinalPass {
         repass: false,
+        requested: false,
         cloud: None,
         cancel: CancellationToken::new(),
         progress: TrackProgress::default(),
@@ -326,6 +356,7 @@ async fn both_tracks_progress_is_reported_as_one_fraction_of_the_run() {
     let (progress, seen) = recorded();
     let pass = FinalPass {
         repass: false,
+        requested: false,
         cloud: None,
         cancel: CancellationToken::new(),
         progress,
@@ -345,6 +376,7 @@ async fn a_run_that_keeps_the_live_transcript_reports_no_progress() {
     let (progress, seen) = recorded();
     let pass = FinalPass {
         repass: false,
+        requested: false,
         cloud: None,
         cancel: CancellationToken::new(),
         progress,

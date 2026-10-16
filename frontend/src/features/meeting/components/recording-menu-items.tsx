@@ -1,14 +1,13 @@
 /**
- * The ⋯ menu's recording actions (UX-05): re-transcribe the recording and
- * show it in Finder. Both need the recording folder, which the inherited
- * session publishes (`legacy/panels-context.tsx`); they stay disabled until
- * it has loaded, and for a meeting with no recording on this Mac.
+ * The ⋯ menu's recording actions (UX-05): re-transcribe the recording
+ * (`pipeline|retranscribe`: the engine in Settings, echo removed, then every
+ * later step) and show it in Finder, which needs the recording folder the
+ * inherited session publishes (`legacy/panels-context.tsx`).
  *
  * Every re-transcribe action lives here, one item each, so another engine
  * (for example "Re-transcribe with ElevenLabs") slots in next to
  * "Re-transcribe…".
  */
-import { RetranscribeDialog } from '@/components/MeetingDetails/RetranscribeDialog';
 import { CloudTranscriptMenuItems } from '@/features/cloud-transcription';
 import type { MeetingId } from '@/features/meetings';
 import { FolderOpen, ICON_PROPS, RotateCw } from '@/ui/icons';
@@ -43,7 +42,7 @@ export function RecordingMenuItems({
   const missing = recording === null;
   return (
     <>
-      <DropdownMenuItem disabled={missing} onSelect={onRetranscribe}>
+      <DropdownMenuItem onSelect={onRetranscribe}>
         <RotateCw {...ICON_PROPS} />
         {meetingCopy.retranscribe}
       </DropdownMenuItem>
@@ -58,34 +57,5 @@ export function RecordingMenuItems({
         {meetingCopy.showRecording}
       </DropdownMenuItem>
     </>
-  );
-}
-
-/** Props of {@link RetranscribeDialogSlot}. */
-export interface RetranscribeDialogSlotProps {
-  meetingId: string;
-  recording: LegacyRecording | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-/** The re-transcribe dialog, while the meeting has a recording to re-transcribe. */
-export function RetranscribeDialogSlot({
-  meetingId,
-  recording,
-  open,
-  onOpenChange,
-}: RetranscribeDialogSlotProps) {
-  if (recording === null) return null;
-  return (
-    <RetranscribeDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      meetingId={meetingId}
-      meetingFolderPath={recording.folderPath}
-      onComplete={() => {
-        void recording.refetchTranscripts();
-      }}
-    />
   );
 }

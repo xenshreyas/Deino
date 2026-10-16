@@ -69,7 +69,7 @@ pub use enhance_notes::{FixedAutomaticNotes, RecordedEnhancer};
 pub use extract_action_items::ExtractActionItemsStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use final_transcription::FixedRepass;
-pub use final_transcription::{FinalTranscriptionStage, RepassSetting};
+pub use final_transcription::{FinalTranscriptionStage, RepassSetting, RequestedRepass};
 pub use finalize_audio::FinalizeAudioStage;
 pub use follow_up_draft::FollowUpDraftStage;
 #[cfg(any(test, feature = "test-support"))]

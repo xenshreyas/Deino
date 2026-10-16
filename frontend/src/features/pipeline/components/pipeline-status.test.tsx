@@ -20,6 +20,7 @@ const bindings = vi.hoisted(() => {
   const commands = {
     status: vi.fn<typeof Generated.commands.status>(),
     rerun: vi.fn<typeof Generated.commands.rerun>(),
+    retranscribe: vi.fn<typeof Generated.commands.retranscribe>(),
   } satisfies typeof Generated.commands;
   const listen = vi.fn((handler: EventCallback<Generated.PipelineProgress>) => {
     progress.handler = handler;

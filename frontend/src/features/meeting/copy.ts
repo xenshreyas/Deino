@@ -13,7 +13,7 @@ export const meetingCopy = {
   loadError: 'This meeting couldn’t be opened.',
   backToMeetings: 'Back to Meetings',
   more: 'More actions',
-  retranscribe: 'Re-transcribe…',
+  retranscribe: 'Re-transcribe',
   showRecording: 'Show recording in Finder',
   processingDetails: 'Processing details',
   moveToTrash: 'Move to trash',

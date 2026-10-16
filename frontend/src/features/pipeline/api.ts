@@ -13,4 +13,10 @@ export const pipelineApi = {
   /** Runs `stage` again, or every stage when `stage` is `null`; resolves to the stages. */
   rerun: (meetingId: MeetingId, stage: StageId | null): Promise<StageStatus[]> =>
     unwrap(commands.rerun(meetingId, stage)),
+  /**
+   * Transcribes the meeting again with the engine in Settings (echo removed),
+   * then runs every later step; resolves to the stages.
+   */
+  retranscribe: (meetingId: MeetingId): Promise<StageStatus[]> =>
+    unwrap(commands.retranscribe(meetingId)),
 };

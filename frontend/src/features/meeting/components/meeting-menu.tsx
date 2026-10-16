@@ -11,7 +11,7 @@ import { MeetingAutomationsSubmenu } from '@/features/automations';
 import { MeetingInsightsSubmenu } from '@/features/insights';
 import type { MeetingId } from '@/features/meetings';
 import { trashMeetings } from '@/features/meetings-list';
-import { ProcessingDetailsDialog } from '@/features/pipeline';
+import { ProcessingDetailsDialog, useRetranscribe } from '@/features/pipeline';
 import { Button } from '@/ui/button';
 import { Ellipsis, ICON_PROPS, ListChecks, Trash2 } from '@/ui/icons';
 import {
@@ -24,10 +24,10 @@ import {
 
 import { meetingCopy } from '../copy';
 import type { LegacyRecording } from '../legacy/panels-context';
-import { RecordingMenuItems, RetranscribeDialogSlot, useRecording } from './recording-menu-items';
+import { RecordingMenuItems, useRecording } from './recording-menu-items';
 
 /** The dialog a menu item opened, if any. */
-type MenuDialog = 'retranscribe' | 'details' | null;
+type MenuDialog = 'details' | null;
 
 /** Moves the meeting to the trash (with Undo), then goes back to Meetings. */
 function useTrash(meetingId: MeetingId) {
@@ -45,13 +45,14 @@ function MenuItems(props: {
 }) {
   const { meetingId, onOpen } = props;
   const trash = useTrash(meetingId);
+  const retranscribe = useRetranscribe(meetingId);
   return (
     <DropdownMenuContent align="end" className="w-60">
       <RecordingMenuItems
         meetingId={meetingId}
         recording={props.recording}
         onRetranscribe={() => {
-          onOpen('retranscribe');
+          retranscribe.mutate();
         }}
       />
       <DropdownMenuSeparator />
@@ -95,12 +96,6 @@ export function MeetingMenu({ meetingId }: { meetingId: MeetingId }) {
       <ProcessingDetailsDialog
         meetingId={meetingId}
         open={dialog === 'details'}
-        onOpenChange={closeIf}
-      />
-      <RetranscribeDialogSlot
-        meetingId={meetingId}
-        recording={recording}
-        open={dialog === 'retranscribe'}
         onOpenChange={closeIf}
       />
     </>

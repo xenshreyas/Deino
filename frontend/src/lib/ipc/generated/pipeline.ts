@@ -29,6 +29,19 @@ async rerun(meetingId: MeetingId, stage: StageId | null) : Promise<Result<StageS
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Transcribes the meeting again with the engine in Settings (echo removed,
+ * edits overwritten), then runs every later step on the new transcript;
+ * returns the meeting's stages. `conflict` while it is recording.
+ */
+async retranscribe(meetingId: MeetingId) : Promise<Result<StageStatus[], AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:pipeline|retranscribe", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 

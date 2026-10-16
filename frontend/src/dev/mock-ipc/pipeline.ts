@@ -60,6 +60,13 @@ export const commands = {
     }
     return ok(stagesOf(meetingId));
   },
+  async retranscribe(meetingId) {
+    await latency();
+    const meeting = mockDatabase.meeting(meetingId);
+    if (meeting.status === 'error') return failure(meeting.error);
+    retranscribe(meetingId, false);
+    return ok(stagesOf(meetingId));
+  },
 } satisfies typeof Generated.commands;
 
 /** The stages after the notes (AI-05, NOT-02's title, ORG-06, ORG-05), as processed. */
