@@ -1,7 +1,8 @@
 //! Pipeline progress: the event port and the event itself.
 //!
 //! The runner reports every change of a stage's status as a
-//! [`PipelineProgress`] through the [`ProgressSink`] port. The app
+//! [`PipelineProgress`] through the [`ProgressSink`] port; a long stage
+//! may also report how far it has got ([`StageFraction`]). The app
 //! implements the port with the typed `PipelineProgress` Tauri event, which
 //! the meeting page's status strip listens to; tests use
 //! [`RecordedProgress`]. The `jobs` table is the truth: a missed event costs
@@ -9,8 +10,12 @@
 
 use deino_domain::{JobStatus, MeetingId, StageId};
 
-/// A stage of a meeting's pipeline changed status.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg(doc)]
+use crate::StageFraction;
+
+/// A stage of a meeting's pipeline changed status, or a running stage got
+/// further.
+#[derive(Clone, Debug, PartialEq)]
 pub struct PipelineProgress {
     /// The meeting being processed.
     pub meeting_id: MeetingId,
@@ -18,6 +23,38 @@ pub struct PipelineProgress {
     pub stage: StageId,
     /// Its new status.
     pub status: JobStatus,
+    /// How far the running stage is, 0.0 to 1.0, when it reports that
+    /// ([`StageFraction`]); `None` on a plain status change.
+    pub fraction: Option<f32>,
+}
+
+impl PipelineProgress {
+    /// A plain status change, with no fraction.
+    pub fn status(meeting_id: MeetingId, stage: StageId, status: JobStatus) -> Self {
+        Self {
+            meeting_id,
+            stage,
+            status,
+            fraction: None,
+        }
+    }
+
+    /// The fraction as a whole percent, 0 to 100, rounded down so a stage
+    /// reads 100% only once it is done.
+    pub fn percent(&self) -> Option<u8> {
+        self.fraction.map(whole_percent)
+    }
+}
+
+/// `fraction` (clamped to 0.0–1.0) as a whole percent, rounded down.
+pub(crate) fn whole_percent(fraction: f32) -> u8 {
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "clamped to 0.0..=100.0 first; NaN becomes 0"
+    )]
+    let percent = (fraction.clamp(0.0, 1.0) * 100.0).floor() as u8;
+    percent
 }
 
 /// Receives pipeline progress. Implementations must not block: they are

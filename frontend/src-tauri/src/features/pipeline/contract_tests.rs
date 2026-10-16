@@ -1,4 +1,5 @@
-//! Contract tests: the JSON of `status`, `rerun` and `PipelineProgress`,
+//! Contract tests: the JSON of `status`, `rerun` and `PipelineProgress`
+//! (with and without a running stage's percent),
 //! through the real plugin and ACL, over the real registry with recorded
 //! AI services in place of the gateway-backed ones.
 
@@ -7,8 +8,10 @@ use std::time::Duration;
 
 use deino_core::meetings::{MeetingLifecycleService, SqliteMeetingRepo};
 use deino_core::segments::SqliteSegmentRepo;
+use deino_domain::{JobStatus, MeetingId, StageId};
 use deino_pipeline::{
-    FakeSleeper, PipelineDeps, PipelineService, SqliteJobRepo, StagePorts, registry,
+    FakeSleeper, PipelineDeps, PipelineProgress, PipelineService, ProgressSink, SqliteJobRepo,
+    StagePorts, registry,
 };
 use deino_testkit::{FakeClock, at, seed, test_db};
 use serde_json::{Value, json};
@@ -131,7 +134,42 @@ fn rerun_emits_pipeline_progress_with_the_meeting_stage_and_status() {
         serde_json::from_str(&received.recv_timeout(EVENT_TIMEOUT).unwrap()).unwrap();
     assert_eq!(
         payload,
-        json!({ "meetingId": "meeting-1", "stage": "enhance_notes", "status": "pending" })
+        json!({
+            "meetingId": "meeting-1",
+            "stage": "enhance_notes",
+            "status": "pending",
+            "percent": null
+        })
+    );
+}
+
+#[test]
+fn a_running_stage_s_fraction_arrives_as_a_whole_percent() {
+    let app = pipeline_app();
+    let (sender, received) = mpsc::channel();
+    app.listen_any("plugin:pipeline:pipeline-progress", move |event| {
+        sender
+            .send(event.payload().to_owned())
+            .expect("the test is still listening");
+    });
+
+    TauriPipelineProgress::new(app.handle().clone()).progress(&PipelineProgress {
+        meeting_id: MeetingId::new("meeting-1"),
+        stage: StageId::new("final_transcription"),
+        status: JobStatus::Running,
+        fraction: Some(0.407),
+    });
+
+    let payload: Value =
+        serde_json::from_str(&received.recv_timeout(EVENT_TIMEOUT).unwrap()).unwrap();
+    assert_eq!(
+        payload,
+        json!({
+            "meetingId": "meeting-1",
+            "stage": "final_transcription",
+            "status": "running",
+            "percent": 40
+        })
     );
 }
 

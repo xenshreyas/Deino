@@ -14,8 +14,12 @@ use super::{
 };
 use crate::testing::lock;
 
+/// The fractions [`ScriptedTracks`] reports for each file, in order.
+pub const SCRIPTED_PROGRESS: [f32; 2] = [0.5, 1.0];
+
 /// Hears the spans scripted for each file; an unscripted file is silent.
-/// A file scripted to fail reports the engine as unavailable.
+/// A file scripted to fail reports the engine as unavailable. Each file it
+/// hears reports progress halfway, then done ([`SCRIPTED_PROGRESS`]).
 #[derive(Debug, Default)]
 pub struct ScriptedTracks {
     spans: Mutex<HashMap<PathBuf, Vec<HeardSpan>>>,
@@ -51,6 +55,9 @@ impl TrackTranscriber for ScriptedTracks {
             return Err(TrackError::Unavailable(Box::new(missing)));
         }
         lock(&self.heard).push(request.audio.clone());
+        for fraction in SCRIPTED_PROGRESS {
+            request.progress.report(fraction);
+        }
         Ok(lock(&self.spans)
             .get(&request.audio)
             .cloned()

@@ -59,9 +59,13 @@ function stages(list: StageStatus[]) {
   bindings.commands.status.mockResolvedValue({ status: 'ok', data: list });
 }
 
-function announce(meetingId: string, status: JobStatus) {
+function announce(
+  meetingId: string,
+  status: JobStatus,
+  { stage: id = NOTES, percent = null }: { stage?: StageId; percent?: number | null } = {},
+) {
   act(() => {
-    const payload = { meetingId: meetingId as MeetingId, stage: NOTES, status };
+    const payload = { meetingId: meetingId as MeetingId, stage: id, status, percent };
     bindings.progress.handler?.({ event: 'plugin:pipeline:pipeline-progress', id: 1, payload });
   });
 }
@@ -96,6 +100,39 @@ describe('PipelineStatus', () => {
       expect(container.textContent).toBe('');
     });
     expect(bindings.commands.status).toHaveBeenCalledTimes(2);
+  });
+
+  it('adds how far the transcript is while it runs, without refetching', async () => {
+    const transcript = 'final_transcription' as StageId;
+    stages([stage('running', null, transcript), stage('pending')]);
+    wrap(<PipelineStatus meetingId={MEETING} />);
+    const line = await screen.findByRole('status');
+    expect(line.textContent).toBe('Transcribing…');
+
+    announce(MEETING, 'running', { stage: transcript, percent: 40 });
+
+    await waitFor(() => {
+      expect(line.textContent).toBe('Transcribing… · 40%');
+    });
+    expect(bindings.commands.status).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the percent once the stage moves on', async () => {
+    const transcript = 'final_transcription' as StageId;
+    stages([stage('running', null, transcript)]);
+    wrap(<PipelineStatus meetingId={MEETING} />);
+    const line = await screen.findByRole('status');
+    announce(MEETING, 'running', { stage: transcript, percent: 99 });
+    await waitFor(() => {
+      expect(line.textContent).toBe('Transcribing… · 99%');
+    });
+    stages([stage('succeeded', null, transcript), stage('running')]);
+
+    announce(MEETING, 'succeeded', { stage: transcript });
+
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).toBe('Writing notes…');
+    });
   });
 
   it('names a failed stage in plain words, with its reason, and retries it alone', async () => {

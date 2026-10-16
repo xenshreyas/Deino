@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use deino_domain::{ErrorClass, ErrorCode, Millis};
 use tokio_util::sync::CancellationToken;
 
+use super::TrackProgress;
 use crate::segments::WordTiming;
 
 /// A boxed engine error (the engine's own types stay in its crate).
@@ -20,6 +21,9 @@ pub struct TrackRequest {
     pub audio: PathBuf,
     /// Fires when the stage is cancelled; checked between utterances.
     pub cancel: CancellationToken,
+    /// How far through the track the transcriber is: the audio position
+    /// done over the track's length, ending at 1.0.
+    pub progress: TrackProgress,
 }
 
 /// One utterance heard on a track, on the recording's timeline.

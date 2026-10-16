@@ -7,14 +7,18 @@ import { pipelineKeys } from '../queries';
 import type { MeetingId } from '../types';
 
 /**
- * Refetches the meeting's pipeline status whenever Rust's typed
- * `PipelineProgress` event reports one of its stages changing, so the strip
- * moves from pending to running to done without waiting for anything else.
+ * Follows Rust's typed `PipelineProgress` event for the meeting. A running
+ * stage's percent only goes into the cache (`useStagePercent`), with no
+ * refetch; a status change clears that stage's percent and refetches the
+ * status, so the strip moves from pending to running to done without
+ * waiting for anything else.
  */
 export function usePipelineProgress(meetingId: MeetingId): void {
   const client = useQueryClient();
   useIpcEvent(events.pipelineProgress, (progress) => {
     if (progress.meetingId !== meetingId) return;
+    client.setQueryData(pipelineKeys.percent(meetingId, progress.stage), progress.percent);
+    if (progress.percent !== null) return;
     void client.invalidateQueries({ queryKey: pipelineKeys.status(meetingId) });
   });
 }

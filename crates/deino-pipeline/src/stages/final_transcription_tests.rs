@@ -7,7 +7,7 @@ use deino_core::meetings::{
     FakeMeetingRepo, MeetingAudio, MeetingLifecycleRepo, MeetingTitle, NewMeeting,
 };
 use deino_core::segments::{FakeSegmentRepo, Page, SegmentReader};
-use deino_domain::{ErrorCode, FakeClock, MeetingSource, MeetingStatus, Millis};
+use deino_domain::{ErrorCode, FakeClock, JobStatus, MeetingSource, MeetingStatus, Millis};
 use deino_testkit::at;
 use tokio_util::sync::CancellationToken;
 
@@ -269,4 +269,51 @@ async fn a_cancelled_stage_stops() {
         world.stage.run(&cancelled, meeting()).await,
         Err(StageError::Cancelled)
     );
+}
+
+#[tokio::test]
+async fn the_run_reports_its_fraction_once_per_whole_percent() {
+    let world = world(Some(MIC), false).await;
+    world.tracks.say(MIC, vec![said("Hello Sreyas")]);
+    let events = Arc::new(RecordedProgress::default());
+    let ctx = StageCtx {
+        events: events.clone(),
+        ..ctx(1)
+    };
+
+    world.stage.run(&ctx, meeting()).await.unwrap();
+
+    // The track says 50% then 100%; the service's own "done" repeats 100%.
+    let reported: Vec<(JobStatus, Option<u8>)> = events
+        .events()
+        .iter()
+        .map(|event| (event.status, event.percent()))
+        .collect();
+    assert_eq!(
+        reported,
+        [
+            (JobStatus::Running, Some(50)),
+            (JobStatus::Running, Some(100))
+        ]
+    );
+    assert!(
+        events
+            .events()
+            .iter()
+            .all(|event| event.stage.as_str() == ID)
+    );
+}
+
+#[tokio::test]
+async fn a_skipped_run_reports_no_fraction() {
+    let world = world(None, false).await;
+    let events = Arc::new(RecordedProgress::default());
+    let ctx = StageCtx {
+        events: events.clone(),
+        ..ctx(1)
+    };
+
+    world.stage.run(&ctx, meeting()).await.unwrap();
+
+    assert!(events.events().is_empty());
 }

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use deino_core::final_transcription::TrackProgress;
 use deino_domain::Channel;
 use deino_stt::transcriber::FakeTranscriber;
 use deino_stt::{BatchTranscript, SttError, TimedToken};
@@ -36,7 +37,22 @@ fn request() -> TrackRequest {
     TrackRequest {
         audio: PathBuf::from("mic.m4a"),
         cancel: CancellationToken::new(),
+        progress: TrackProgress::default(),
     }
+}
+
+/// A request whose progress is kept in the returned list.
+fn recorded_request() -> (TrackRequest, Arc<Mutex<Vec<f32>>>) {
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let sink = Arc::clone(&seen);
+    let progress = TrackProgress::new(move |fraction| sink.lock().unwrap().push(fraction));
+    (
+        TrackRequest {
+            progress,
+            ..request()
+        },
+        seen,
+    )
 }
 
 fn transcriber(samples: Vec<f32>) -> (OfflineTranscriber, Arc<Engines>) {
@@ -139,4 +155,30 @@ fn a_run_that_stopped_early_is_read_again_in_halves() {
     assert_eq!(heard.len(), 2);
     assert_eq!(words, 30, "every 400 ms block of both halves");
     assert_eq!(heard[1].start, deino_domain::Millis(6_000));
+}
+
+#[tokio::test]
+async fn progress_rises_with_each_utterance_and_ends_at_one() {
+    let (track, _) = fixture_microphone();
+    let (offline, _) = transcriber(track.samples);
+    let (request, seen) = recorded_request();
+
+    let heard = offline.transcribe(request).await.unwrap();
+
+    let seen = seen.lock().unwrap().clone();
+    assert!(heard.len() >= 2 && seen.len() > heard.len() / 2, "{seen:?}");
+    assert!(seen.windows(2).all(|pair| pair[0] <= pair[1]), "{seen:?}");
+    assert!(seen.iter().all(|f| (0.0..=1.0).contains(f)));
+    assert_eq!(seen.last(), Some(&1.0));
+    assert!(seen[0] < 1.0, "the first utterance is not the whole track");
+}
+
+#[tokio::test]
+async fn a_silent_track_is_done_at_once() {
+    let (silent, _) = transcriber(vec![0.0; 48_000]);
+    let (request, seen) = recorded_request();
+
+    silent.transcribe(request).await.unwrap();
+
+    assert_eq!(*seen.lock().unwrap(), [1.0]);
 }

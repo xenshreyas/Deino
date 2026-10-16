@@ -143,7 +143,8 @@ export type JobStatus =
  */
 export type MeetingId = string & { readonly __brand: "MeetingId" }
 /**
- * A stage of a meeting's pipeline changed status.
+ * A stage of a meeting's pipeline changed status, or a running stage got
+ * further.
  */
 export type PipelineProgress = { 
 /**
@@ -157,7 +158,13 @@ stage: StageId;
 /**
  * Its new status.
  */
-status: JobStatus }
+status: JobStatus; 
+/**
+ * How far the running stage is, as a whole percent from 0 to 100
+ * (rounded down), when it reports that (`final_transcription` does);
+ * null on a plain status change. Sent at most once per percent.
+ */
+percent: number | null }
 /**
  * Identifies a stage of the post-meeting pipeline (FND-08), for example
  * `enhance_notes`. Stages name themselves in code

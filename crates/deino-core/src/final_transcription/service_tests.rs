@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use deino_domain::{
     ErrorCode, FakeClock, MeetingSource, MeetingStatus, Millis, PaletteColor, SegmentId, SpeakerId,
@@ -94,6 +94,7 @@ impl World {
             repass,
             cloud: None,
             cancel: CancellationToken::new(),
+            progress: TrackProgress::default(),
         };
         self.service.run(&meeting(), &pass).await
     }
@@ -295,6 +296,7 @@ async fn a_missing_model_is_unavailable_and_a_missing_meeting_not_found() {
         repass: false,
         cloud: None,
         cancel: CancellationToken::new(),
+        progress: TrackProgress::default(),
     };
 
     let error = world.run(false).await.unwrap_err();
@@ -307,4 +309,48 @@ async fn a_missing_model_is_unavailable_and_a_missing_meeting_not_found() {
     assert_eq!(error.code(), ErrorCode::Unavailable);
     assert_eq!(gone.code(), ErrorCode::NotFound);
     assert!(world.meetings.state(&meeting()).await.unwrap().is_some());
+}
+
+/// Progress that keeps every fraction it is given.
+fn recorded() -> (TrackProgress, Arc<Mutex<Vec<f32>>>) {
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let sink = Arc::clone(&seen);
+    let progress = TrackProgress::new(move |fraction| sink.lock().unwrap().push(fraction));
+    (progress, seen)
+}
+
+#[tokio::test]
+async fn both_tracks_progress_is_reported_as_one_fraction_of_the_run() {
+    let world = World::split().await;
+    world.tracks.say(MIC, vec![heard(0, 800, "Hello")]);
+    let (progress, seen) = recorded();
+    let pass = FinalPass {
+        repass: false,
+        cloud: None,
+        cancel: CancellationToken::new(),
+        progress,
+    };
+
+    world.service.run(&meeting(), &pass).await.unwrap();
+
+    // Each track says half, then done; the service marks it done as well.
+    assert_eq!(*seen.lock().unwrap(), [0.25, 0.5, 0.5, 0.75, 1.0, 1.0]);
+}
+
+#[tokio::test]
+async fn a_run_that_keeps_the_live_transcript_reports_no_progress() {
+    let world = World::split().await;
+    let me = world.speaker("Me", true).await;
+    world.live(Channel::Mic, (0, 1_000), me).await;
+    let (progress, seen) = recorded();
+    let pass = FinalPass {
+        repass: false,
+        cloud: None,
+        cancel: CancellationToken::new(),
+        progress,
+    };
+
+    world.service.run(&meeting(), &pass).await.unwrap();
+
+    assert!(seen.lock().unwrap().is_empty());
 }

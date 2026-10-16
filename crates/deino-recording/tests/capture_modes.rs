@@ -175,6 +175,7 @@ async fn transcribe_after(rig: &rig::Rig, meeting: &MeetingId, fixture: &Fixture
         repass: false,
         cloud: None,
         cancel: CancellationToken::new(),
+        progress: deino_core::final_transcription::TrackProgress::default(),
     };
     service.run(meeting, &pass).await.unwrap()
 }

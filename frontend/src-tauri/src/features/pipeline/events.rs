@@ -1,8 +1,9 @@
 //! The `pipeline` plugin's typed event and the adapter that emits it.
 //!
 //! The runner reports every stage status change through its `ProgressSink`
-//! port; [`TauriPipelineProgress`] implements the port by emitting
-//! [`PipelineProgress`] (`plugin:pipeline:pipeline-progress`).
+//! port, and a long stage how far it has got; [`TauriPipelineProgress`]
+//! implements the port by emitting [`PipelineProgress`]
+//! (`plugin:pipeline:pipeline-progress`).
 
 use deino_domain::{JobStatus, MeetingId, StageId};
 use deino_pipeline::ProgressSink;
@@ -10,7 +11,8 @@ use serde::Serialize;
 use tauri::{AppHandle, Runtime};
 use tauri_specta::Event;
 
-/// A stage of a meeting's pipeline changed status.
+/// A stage of a meeting's pipeline changed status, or a running stage got
+/// further.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type, Event)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineProgress {
@@ -20,6 +22,10 @@ pub struct PipelineProgress {
     pub stage: StageId,
     /// Its new status.
     pub status: JobStatus,
+    /// How far the running stage is, as a whole percent from 0 to 100
+    /// (rounded down), when it reports that (`final_transcription` does);
+    /// null on a plain status change. Sent at most once per percent.
+    pub percent: Option<u8>,
 }
 
 impl From<&deino_pipeline::PipelineProgress> for PipelineProgress {
@@ -28,6 +34,7 @@ impl From<&deino_pipeline::PipelineProgress> for PipelineProgress {
             meeting_id: progress.meeting_id.clone(),
             stage: progress.stage.clone(),
             status: progress.status,
+            percent: progress.percent(),
         }
     }
 }

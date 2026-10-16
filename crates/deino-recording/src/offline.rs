@@ -7,7 +7,8 @@
 //! times placed on the recording's timeline. Batch decoding can stop early on
 //! some clips (the STT spike), so an utterance that comes back with far too
 //! few words for its length is run again as two halves, keeping whichever
-//! reading heard more.
+//! reading heard more. It reports how far through the track it is after
+//! each utterance.
 
 pub mod utterances;
 
@@ -16,7 +17,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use deino_core::final_transcription::{HeardSpan, TrackError, TrackRequest, TrackTranscriber};
+use deino_core::final_transcription::{
+    HeardSpan, TrackError, TrackRequest, TrackTranscriber, fraction_of,
+};
 use deino_core::segments::WordTiming;
 use deino_stt::words::{TimedWord, words_from_tokens};
 use deino_stt::{BatchTranscriber, Millis};
@@ -68,12 +71,14 @@ impl OfflineTranscriber {
     }
 
     /// Transcribes one track, blocking; checks for cancellation between
-    /// utterances.
+    /// utterances and reports progress after each one, as the end of the
+    /// audio done over the track's length, then 1.0 once it is finished.
     fn run(&self, request: &TrackRequest) -> Result<Vec<HeardSpan>, TrackError> {
         let pcm = self.decoder.decode(&request.audio)?;
         let length = Millis::from_samples(pcm.len());
         let pieces = utterances(&voice_spans(&pcm), length);
         if pieces.is_empty() {
+            request.progress.report(1.0);
             return Ok(Vec::new());
         }
         let engine = self.engines.open()?;
@@ -82,8 +87,11 @@ impl OfflineTranscriber {
             if request.cancel.is_cancelled() {
                 return Err(TrackError::Cancelled);
             }
+            let done = piece.end;
             heard.extend(checked(engine.as_ref(), &pcm, piece)?);
+            request.progress.report(fraction_of(done.0, length.0));
         }
+        request.progress.report(1.0);
         Ok(heard)
     }
 }

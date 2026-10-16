@@ -17,7 +17,9 @@
 //! [`FinalTranscriptionService`] holds the rules over the
 //! [`TrackTranscriber`] port, which `deino-recording`'s `OfflineTranscriber`
 //! implements (decode, VAD utterances of at most 30 s, the `deino-stt` batch
-//! engine); [`carried_speaker`] is the speaker carry-over.
+//! engine); [`carried_speaker`] is the speaker carry-over. Each track
+//! reports how far it has got through [`TrackProgress`], and the service
+//! turns that into the whole run's fraction ([`FinalPass::progress`]).
 
 mod carry;
 mod cloud;
@@ -26,6 +28,7 @@ mod cloud_run;
 mod fake;
 mod originals;
 mod port;
+mod progress;
 mod restore;
 mod service;
 mod voices;
@@ -36,11 +39,12 @@ pub use cloud::{
     LocalOnly,
 };
 #[cfg(any(test, feature = "test-support"))]
-pub use fake::{ScriptedCloud, ScriptedTracks};
+pub use fake::{SCRIPTED_PROGRESS, ScriptedCloud, ScriptedTracks};
 #[cfg(any(test, feature = "test-support"))]
 pub use originals::FakeOriginalTranscripts;
 pub use originals::{KeptLine, OriginalTranscripts, SqliteOriginalTranscripts};
 pub use port::{EngineError, HeardSpan, TrackError, TrackRequest, TrackTranscriber};
+pub use progress::{TrackProgress, fraction_of};
 pub use restore::{OriginalTranscriptDeps, OriginalTranscriptService};
 pub use service::{
     FinalOutcome, FinalPass, FinalSkip, FinalTranscriptionDeps, FinalTranscriptionError,

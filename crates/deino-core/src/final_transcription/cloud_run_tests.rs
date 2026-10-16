@@ -1,7 +1,7 @@
 //! The cloud branch (CAP-14) over fakes: what replaces what, which speakers
 //! the lines get, what is kept, and that a failure writes nothing.
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use deino_domain::{FakeClock, MeetingSource, MeetingStatus, Millis, PaletteColor, SegmentId};
 use deino_testkit::at;
@@ -9,7 +9,7 @@ use deino_testkit::at;
 use super::*;
 use crate::final_transcription::{
     FakeOriginalTranscripts, FinalPass, FinalTranscriptionDeps, HeardSpan, OriginalTranscriptDeps,
-    OriginalTranscriptService, OriginalTranscripts, ScriptedCloud, ScriptedTracks,
+    OriginalTranscriptService, OriginalTranscripts, ScriptedCloud, ScriptedTracks, TrackProgress,
 };
 use crate::meetings::{
     FakeMeetingRepo, MeetingAudio, MeetingLifecycleRepo, MeetingTitle, NewMeeting,
@@ -25,6 +25,7 @@ struct World {
     cloud: Arc<ScriptedCloud>,
     clock: Arc<FakeClock>,
     service: FinalTranscriptionService,
+    fractions: Arc<Mutex<Vec<f32>>>,
 }
 
 impl World {
@@ -59,7 +60,14 @@ impl World {
             cloud,
             clock,
             service,
+            fractions: Arc::default(),
         }
+    }
+
+    /// Progress that keeps every fraction in `fractions`.
+    fn progress(&self) -> TrackProgress {
+        let fractions = Arc::clone(&self.fractions);
+        TrackProgress::new(move |fraction| fractions.lock().unwrap().push(fraction))
     }
 
     async fn speaker(&self, label: &str, is_me: bool) -> SpeakerId {
@@ -98,6 +106,7 @@ impl World {
                 requested,
             }),
             cancel: CancellationToken::new(),
+            progress: self.progress(),
         };
         self.service.run(&meeting(), &pass).await
     }
@@ -186,6 +195,11 @@ async fn the_cloud_replaces_the_live_transcript_and_keeps_it() {
     );
     let sent = world.cloud.sent();
     assert_eq!(sent, [(MIC.into(), false), (SYSTEM.into(), true)]);
+    assert_eq!(
+        *world.fractions.lock().unwrap(),
+        [0.5, 1.0],
+        "a share per upload"
+    );
     let kept = world.originals.kept(&meeting()).await.unwrap().unwrap();
     assert_eq!(
         kept.iter().map(|l| l.text.as_str()).collect::<Vec<_>>(),
@@ -231,6 +245,7 @@ async fn a_failure_writes_nothing_and_keeps_nothing() {
     ));
     assert_eq!(world.lines().await, [line(Channel::Mic, "Me", "live")]);
     assert_eq!(world.originals.kept(&meeting()).await.unwrap(), None);
+    assert!(world.fractions.lock().unwrap().is_empty());
 }
 
 #[tokio::test]

@@ -130,10 +130,10 @@ impl Inner {
 
     /// Reports `job`'s new status.
     pub(super) fn report(&self, job: &Job, status: JobStatus) {
-        self.deps.progress.progress(&PipelineProgress {
-            meeting_id: job.meeting_id.clone(),
-            stage: job.stage.clone(),
+        self.deps.progress.progress(&PipelineProgress::status(
+            job.meeting_id.clone(),
+            job.stage.clone(),
             status,
-        });
+        ));
     }
 }

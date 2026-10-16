@@ -184,11 +184,11 @@ impl PipelineService {
             .schedule(meeting, stages, self.clock.now())
             .await?;
         for stage in stages {
-            self.progress.progress(&PipelineProgress {
-                meeting_id: meeting.clone(),
-                stage: stage.clone(),
-                status: JobStatus::Pending,
-            });
+            self.progress.progress(&PipelineProgress::status(
+                meeting.clone(),
+                stage.clone(),
+                JobStatus::Pending,
+            ));
         }
         Ok(())
     }

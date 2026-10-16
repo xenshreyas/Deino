@@ -5,6 +5,7 @@
 //! 2. Send each track to the service: the microphone as the user, system
 //!    audio (or the mixed file) diarized, so a call with several people
 //!    keeps them apart. Any failure returns before anything is written.
+//!    Progress moves a track's share once its upload comes back.
 //! 3. Keep the transcript in place ([`OriginalTranscripts`]), store the
 //!    cloud's voices as speakers ([`CloudVoices`]), and replace the
 //!    transcript: the microphone keeps the user, other lines take their
@@ -14,16 +15,18 @@ use deino_db::DbError;
 use deino_domain::{Channel, MeetingId, SpeakerId};
 use tokio_util::sync::CancellationToken;
 
+use super::progress::TrackShares;
 use super::{
     ChannelSpeakers, CloudError, CloudPass, CloudRequest, CloudSpan, CloudVoices, FinalOutcome,
-    FinalSkip, FinalTranscriptionError, FinalTranscriptionService, KeptLine, carried_segment,
+    FinalPass, FinalSkip, FinalTranscriptionError, FinalTranscriptionService, KeptLine,
+    carried_segment,
 };
 use crate::segments::{NewSegment, Segment};
 
 /// A meeting's tracks and its transcript before the run.
 type Before = (Vec<(Channel, String)>, Vec<Segment>);
-/// The cloud service for the run, and the stage's cancellation.
-type Cloud<'a> = (&'a CloudPass, &'a CancellationToken);
+/// The cloud service for the run, and the run's cancellation and progress.
+type Cloud<'a> = (&'a CloudPass, &'a FinalPass);
 
 impl FinalTranscriptionService {
     /// Transcribes `tracks` with `cloud` and replaces `old` with the result.
@@ -31,12 +34,13 @@ impl FinalTranscriptionService {
         &self,
         meeting: &MeetingId,
         (tracks, old): Before,
-        (cloud, cancel): Cloud<'_>,
+        (cloud, pass): Cloud<'_>,
     ) -> Result<FinalOutcome, FinalTranscriptionError> {
         if !cloud.requested && old.iter().any(|segment| segment.edited_at.is_some()) {
             return Ok(FinalOutcome::Skipped(FinalSkip::EditedByUser));
         }
-        let heard = hear(cloud, tracks, cancel)
+        let shares = TrackShares::new(pass.progress.clone(), tracks.len());
+        let heard = hear(cloud, tracks, &pass.cancel, &shares)
             .await
             .map_err(FinalTranscriptionError::Cloud)?;
         if heard.is_empty() {
@@ -97,15 +101,17 @@ async fn hear(
     cloud: &CloudPass,
     tracks: Vec<(Channel, String)>,
     cancel: &CancellationToken,
+    shares: &TrackShares,
 ) -> Result<Vec<(Channel, CloudSpan)>, CloudError> {
     let mut heard = Vec::new();
-    for (channel, path) in tracks {
+    for (index, (channel, path)) in tracks.into_iter().enumerate() {
         let request = CloudRequest {
             audio: path.into(),
             diarize: channel != Channel::Mic,
             cancel: cancel.clone(),
         };
         let spans = cloud.transcriber.transcribe(request).await?;
+        shares.done(index);
         heard.extend(spans.into_iter().map(|span| (channel, span)));
     }
     Ok(heard)

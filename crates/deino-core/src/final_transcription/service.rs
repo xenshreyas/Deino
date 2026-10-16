@@ -25,9 +25,10 @@ use tokio_util::sync::CancellationToken;
 
 #[cfg(doc)]
 use super::carried_speaker;
+use super::progress::TrackShares;
 use super::{
     ChannelSpeakers, CloudError, CloudPass, HeardSpan, OriginalTranscripts, TrackError,
-    TrackRequest, TrackTranscriber, carried_segment,
+    TrackProgress, TrackRequest, TrackTranscriber, carried_segment,
 };
 use crate::meetings::{MeetingAudio, MeetingLifecycleRepo};
 use crate::segments::{NewSegment, Page, Segment, SegmentReader, SegmentWriter, SpeakerRepo};
@@ -122,6 +123,10 @@ pub struct FinalPass {
     pub cloud: Option<CloudPass>,
     /// Fires when the stage is cancelled.
     pub cancel: CancellationToken,
+    /// How far the run is through its tracks, 0.0 to 1.0: (tracks done +
+    /// the current track's fraction) / tracks. Reported only while tracks
+    /// are transcribed, so a run that skips reports nothing.
+    pub progress: TrackProgress,
 }
 
 /// Transcribes finished meetings.
@@ -151,9 +156,7 @@ impl FinalTranscriptionService {
         }
         let old = self.deps.segments.list(meeting, Page::ALL).await?;
         if let Some(cloud) = &pass.cloud {
-            return self
-                .run_cloud(meeting, (tracks, old), (cloud, &pass.cancel))
-                .await;
+            return self.run_cloud(meeting, (tracks, old), (cloud, pass)).await;
         }
         if let Some(skip) = skip(&old, pass.repass) {
             return Ok(FinalOutcome::Skipped(skip));
@@ -183,12 +186,15 @@ impl FinalTranscriptionService {
         pass: &FinalPass,
     ) -> Result<Vec<(Channel, HeardSpan)>, TrackError> {
         let mut heard = Vec::new();
-        for (channel, path) in tracks {
+        let shares = TrackShares::new(pass.progress.clone(), tracks.len());
+        for (index, (channel, path)) in tracks.into_iter().enumerate() {
             let request = TrackRequest {
                 audio: path.into(),
                 cancel: pass.cancel.clone(),
+                progress: shares.track(index),
             };
             let spans = self.deps.transcriber.transcribe(request).await?;
+            shares.done(index);
             heard.extend(spans.into_iter().map(|span| (channel, span)));
         }
         Ok(heard)

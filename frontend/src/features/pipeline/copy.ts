@@ -12,6 +12,8 @@ export const copy = {
   detailsDescription: 'Every step Deino ran after this meeting, and how each one went.',
   detailsEmpty: 'Nothing has run for this meeting yet.',
   close: 'Close',
+  /** After a running stage's line when it says how far it is: " · 40%". */
+  percent: (percent: number) => ` · ${String(Math.round(percent))}%`,
 } as const;
 
 /** What each status reads as, in Processing details. */

@@ -1,6 +1,7 @@
 /**
  * The meeting header's processing line (UX-01): silent when every stage
- * worked or was skipped; one quiet line ("Writing notes…") while work runs;
+ * worked or was skipped; one quiet line ("Writing notes…") while work runs,
+ * with how far it is when the stage reports that ("Transcribing… · 40%");
  * and one plain-words row per failed stage, with its reason and Retry.
  * A transcript step that gave up on ElevenLabs (CAP-14) gets a row too: it
  * was skipped, not failed (the Mac's transcript was kept and the later steps
@@ -14,7 +15,7 @@ import { CircleAlert, ICON_PROPS } from '@/ui/icons';
 
 import { copy, stageFailed, stageLabel, stageRunning } from '../copy';
 import { usePipelineProgress } from '../hooks/use-pipeline-progress';
-import { usePipelineStatus, useRerunStage } from '../queries';
+import { usePipelineStatus, useRerunStage, useStagePercent } from '../queries';
 import type { MeetingId, StageId, StageStatus } from '../types';
 import { isStopped, RetryButton } from './stage-item';
 
@@ -27,6 +28,17 @@ export function activeStage(stages: readonly StageStatus[]): StageStatus | undef
   return (
     stages.find((stage) => stage.status === 'running') ??
     stages.find((stage) => stage.status === 'pending')
+  );
+}
+
+/** The quiet "working" line, with how far the stage is when it says ("Transcribing… · 40%"). */
+function RunningLine({ meetingId, stage }: { meetingId: MeetingId; stage: StageId }) {
+  const percent = useStagePercent(meetingId, stage);
+  return (
+    <p role="status" className="animate-pulse-soft text-xs text-fg-muted">
+      {stageRunning(stage)}
+      {percent === null ? null : <span className="tabular-nums">{copy.percent(percent)}</span>}
+    </p>
   );
 }
 
@@ -111,9 +123,7 @@ export function PipelineStatus({ meetingId }: PipelineStatusProps) {
         </ul>
       )}
       {failed.length === 0 && active !== undefined ? (
-        <p role="status" className="animate-pulse-soft text-xs text-fg-muted">
-          {stageRunning(active.stage)}
-        </p>
+        <RunningLine meetingId={meetingId} stage={active.stage} />
       ) : null}
       {rerun.isError ? (
         <p role="alert" className="text-xs text-danger">

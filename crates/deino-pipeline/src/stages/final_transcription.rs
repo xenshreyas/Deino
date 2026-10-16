@@ -12,18 +12,24 @@
 //! cloud fails for good, the run falls back to the Mac's rules above and
 //! the stage is skipped with "ElevenLabs transcription failed: …", so the
 //! transcript made on this Mac stays and the later stages still run.
+//!
+//! While it runs, the stage reports how far through the tracks it is
+//! through `ctx.events` ([`StageFraction`]: a running event with a
+//! fraction, once per whole percent). Only numbers, never what was said.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::final_transcription::{
     CloudChoice, CloudError, FinalOutcome, FinalPass, FinalSkip, FinalTranscriptionDeps,
-    FinalTranscriptionError, FinalTranscriptionService, TrackError,
+    FinalTranscriptionError, FinalTranscriptionService, TrackError, TrackProgress,
 };
 use deino_core::settings::SettingsService;
 use deino_domain::{ErrorClass, MeetingId, StageId};
 
-use crate::{PipelineStage, RetryPolicy, StageCtx, StageError, StageOutcome, StagePorts};
+use crate::{
+    PipelineStage, RetryPolicy, StageCtx, StageError, StageFraction, StageOutcome, StagePorts,
+};
 
 /// The stage's stored name.
 const ID: &str = "final_transcription";
@@ -138,6 +144,7 @@ impl PipelineStage for FinalTranscriptionStage {
             repass: self.repass.enabled().await,
             cloud: self.cloud.for_meeting(&meeting).await,
             cancel: ctx.cancel.child_token(),
+            progress: progress(ctx, &meeting),
         };
         let outcome = self.transcribe(ctx, &meeting, &pass).await?;
         if let Err(FinalTranscriptionError::Cloud(error)) = &outcome {
@@ -152,6 +159,13 @@ impl PipelineStage for FinalTranscriptionStage {
             Err(error) => outcome_of(&error, ctx.attempt),
         }
     }
+}
+
+/// The run's progress, reported as this stage's fraction of `meeting`.
+fn progress(ctx: &StageCtx, meeting: &MeetingId) -> TrackProgress {
+    let stage = StageId::new(ID);
+    let fraction = StageFraction::new(Arc::clone(&ctx.events), meeting.clone(), stage);
+    TrackProgress::new(move |done| fraction.report(done))
 }
 
 fn reason(skip: FinalSkip) -> &'static str {

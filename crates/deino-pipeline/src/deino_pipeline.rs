@@ -19,13 +19,15 @@
 //!   ([`RetryPolicy`]); every task is tracked, never detached.
 //! - [`JobRepo`] and [`SqliteJobRepo`]: the queue in SQLite.
 //! - [`ProgressSink`]: where [`PipelineProgress`] events go (a typed Tauri
-//!   event in the app).
+//!   event in the app); [`StageFraction`] reports how far a long stage has
+//!   got, once per whole percent.
 //!
 //! This crate depends on `deino-core` for the meetings lifecycle and the
 //! ports its stages read; the app wires adapters in `composition.rs`.
 
 mod error;
 mod events;
+mod fraction;
 mod job;
 mod plan;
 mod reconcile;
@@ -51,6 +53,7 @@ pub use error::PipelineError;
 #[cfg(any(test, feature = "test-support"))]
 pub use events::RecordedProgress;
 pub use events::{PipelineProgress, ProgressSink};
+pub use fraction::StageFraction;
 pub use job::{Job, JobKey, Settlement, StageStatus};
 pub use registry::{Registry, StagePorts};
 pub use repo::{JobRepo, SqliteJobRepo};
