@@ -212,8 +212,8 @@ async fn the_microphone_is_cancelled_against_its_reference_unless_on_headphones(
     let echo_pass: Vec<f32> = seen.lock().unwrap().clone();
     headphones.transcribe(request).await.unwrap();
 
-    let decoded = decoder.1.lock().unwrap().clone();
-    let names: Vec<&str> = decoded.iter().filter_map(|p| p.to_str()).collect();
+    let paths = decoder.1.lock().unwrap().clone();
+    let names: Vec<&str> = paths.iter().filter_map(|p| p.to_str()).collect();
     assert_eq!(names, ["mic.m4a", "system.m4a", "mic.m4a"]);
     assert!(echo_pass.windows(2).all(|pair| pair[0] <= pair[1]));
     assert!(echo_pass.iter().any(|f| *f > 0.0 && *f <= ECHO_SHARE));

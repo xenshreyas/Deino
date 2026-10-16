@@ -53,7 +53,7 @@ fn track_transcriber(
         Arc::clone(settings),
         tauri::async_runtime::handle().inner().clone(),
     );
-    let headphones: Arc<dyn HeadphonesSetting> = Arc::clone(settings);
+    let headphones: Arc<dyn HeadphonesSetting> = settings.clone();
     Arc::new(
         OfflineTranscriber::new(Arc::new(engines), Arc::new(NativeDecoder))
             .with_headphones(headphones),
