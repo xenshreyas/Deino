@@ -195,16 +195,21 @@ async fn the_cloud_replaces_the_live_transcript_and_keeps_it() {
     );
     let sent = world.cloud.sent();
     assert_eq!(sent, [(MIC.into(), false), (SYSTEM.into(), true)]);
-    assert_eq!(
-        *world.fractions.lock().unwrap(),
-        [0.5, 1.0],
-        "a share per upload"
-    );
     let kept = world.originals.kept(&meeting()).await.unwrap().unwrap();
     assert_eq!(
         kept.iter().map(|l| l.text.as_str()).collect::<Vec<_>>(),
         ["live", "live"]
     );
+}
+
+#[tokio::test]
+async fn each_upload_moves_the_run_by_its_tracks_share() {
+    let world = World::new().await;
+    world.cloud.say(MIC, vec![said(0, "Morning", None)]);
+
+    world.run(false).await.unwrap();
+
+    assert_eq!(*world.fractions.lock().unwrap(), [0.5, 1.0]);
 }
 
 #[tokio::test]
