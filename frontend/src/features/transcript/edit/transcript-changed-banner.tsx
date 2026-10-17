@@ -4,12 +4,15 @@
  * offers to rewrite the notes, so deleted words leave them too. It shows
  * exactly when the newest notes' regenerate reasons (NOT-02's typed
  * `RegenerateReason`s, ADR 0030) say the transcript was edited since they
- * were written, and Not now hides it until the notes change.
+ * were written, and Not now hides it until the notes change. It stays away
+ * while the meeting's processing runs: after a re-transcription the
+ * pipeline rewrites the notes itself.
  */
 import { useState } from 'react';
 
 import type { MeetingId } from '@/features/meetings';
 import { useEnhanceAction, useEnhancedNotes, useIsEnhancing } from '@/features/notes';
+import { usePipelineStatus } from '@/features/pipeline';
 import { Button } from '@/ui/button';
 import { ICON_PROPS, RotateCcw } from '@/ui/icons';
 
@@ -20,9 +23,11 @@ export function TranscriptChangedBanner({ meetingId }: { meetingId: MeetingId })
   const notes = useEnhancedNotes(meetingId);
   const enhance = useEnhanceAction(meetingId);
   const busy = useIsEnhancing(meetingId);
+  const stages = usePipelineStatus(meetingId).data ?? [];
+  const processing = stages.some(({ status }) => status === 'pending' || status === 'running');
   const [dismissed, setDismissed] = useState<number | null>(null);
   const view = notes.data;
-  if (view?.isLatest !== true || busy) return null;
+  if (view?.isLatest !== true || busy || processing) return null;
   if (!view.reasons.includes('transcriptEdited') || dismissed === view.version.version) return null;
   return (
     <div

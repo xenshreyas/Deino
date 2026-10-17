@@ -221,14 +221,14 @@ async fn a_json_answer_is_a_structured_output_without_tools_or_temperature() {
 async fn a_json_answer_keeps_a_cap_above_the_floor() {
     let (provider, http) = provider(FakeHttp::new());
     let mut asked = request(title_output());
-    asked.max_tokens = 32_000;
+    asked.max_tokens = 64_000;
 
     assert!(
         provider.stream(asked).await.is_err(),
         "no reply is scripted"
     );
 
-    assert_eq!(http.json_body(0)["max_tokens"], 32_000);
+    assert_eq!(http.json_body(0)["max_tokens"], 64_000);
 }
 
 #[tokio::test]

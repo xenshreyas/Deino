@@ -26,9 +26,10 @@ use crate::{CompletionRequest, JsonOutput, OutputFormat, Part, Role};
 /// route cap sized for the answer alone (a 40-token title, a JSON answer)
 /// could be spent on thinking and leave the answer empty or cut off. The
 /// request streams, so a large cap is no timeout risk, and it is a ceiling,
-/// not a spend: the prompts still ask for short answers. Other providers
-/// keep the route's cap.
-pub(super) const ANTHROPIC_MIN_TOKENS: u32 = 16_000;
+/// not a spend: the prompts still ask for short answers. 16 000 cut the
+/// notes of a 72-minute meeting off mid-JSON (Oct 2026); 48 000 fits within
+/// every 5.5 model's output limit. Other providers keep the route's cap.
+pub(super) const ANTHROPIC_MIN_TOKENS: u32 = 48_000;
 
 /// What a schema the API cannot constrain asks for in the system prompt.
 const JSON_INSTRUCTION: &str = "Reply with only one JSON value that matches this JSON schema, with no Markdown fence and no other text.";
