@@ -60,6 +60,10 @@ pub struct Watch {
     holder: Option<CallApp>,
     prepared: Vec<Pid>,
     degraded: Option<TagError>,
+    /// Spans saved so far, and whether any poll found a call window: the
+    /// end-of-watch summary that tells a silent failure from a quiet call.
+    saved: usize,
+    saw_call: bool,
 }
 
 impl Watch {
@@ -73,6 +77,8 @@ impl Watch {
             holder: None,
             prepared: Vec::new(),
             degraded: None,
+            saved: 0,
+            saw_call: false,
         }
     }
 
@@ -102,6 +108,11 @@ impl Watch {
     pub fn finish(&mut self) {
         self.timeline.interrupt();
         self.flush(self.flushed_at);
+        let (meeting, saved, call) = (&self.parts.meeting, self.saved, self.saw_call);
+        let last = self
+            .degraded
+            .map_or_else(|| "none".into(), |error| error.to_string());
+        log::info!(target: TARGET, "meeting {meeting}: {saved} speaker tags saved; a call window was {}found; last problem: {last}", if call { "" } else { "not " });
     }
 
     /// Who is speaking, if a remote participant is and a window says so.
@@ -131,6 +142,7 @@ impl Watch {
                 match self.read(adapter, pid) {
                     Ok(Some(reading)) => {
                         self.holder = Some(app);
+                        self.saw_call = true;
                         return Ok(reading.active.remote().map(|name| (app, name.clone())));
                     }
                     Ok(None) => {}
@@ -197,7 +209,7 @@ impl Watch {
     /// Notes a failure, logging it when it is new.
     fn degrade(&mut self, error: TagError) {
         if self.degraded != Some(error) {
-            log::debug!(
+            log::info!(
                 target: TARGET,
                 "meeting {}: {error}; speakers fall back to voice matching",
                 self.parts.meeting
@@ -209,7 +221,7 @@ impl Watch {
     /// Notes that a poll worked again.
     fn recover(&mut self) {
         if self.degraded.take().is_some() {
-            log::debug!(target: TARGET, "meeting {}: speaker tags read again", self.parts.meeting);
+            log::info!(target: TARGET, "meeting {}: speaker tags read again", self.parts.meeting);
         }
     }
 
@@ -221,7 +233,10 @@ impl Watch {
             return;
         }
         match self.parts.sink.save(&self.parts.meeting, &self.unsaved) {
-            Ok(()) => self.unsaved.clear(),
+            Ok(()) => {
+                self.saved += self.unsaved.len();
+                self.unsaved.clear();
+            }
             Err(error) => log::warn!(
                 target: TARGET,
                 "meeting {}: {} speaker tags kept for the next save: {error}",
