@@ -68,7 +68,8 @@ function usePick(props: AssignSpeakerProps, choice: ScopeChoice) {
 export function AssignSpeaker(props: AssignSpeakerProps) {
   const { meetingId, name, segmentId } = props;
   const [search, setSearch] = useState('');
-  const [choice, setChoice] = useState<ScopeChoice>(segmentId === undefined ? 'all' : 'segment');
+  // Naming a speaker names all their lines unless the user narrows it.
+  const [choice, setChoice] = useState<ScopeChoice>('all');
   const candidates = useNameCandidates(meetingId, search);
   const pick = usePick(props, choice);
   return (
@@ -81,8 +82,8 @@ export function AssignSpeaker(props: AssignSpeakerProps) {
             value={choice}
             onValueChange={setChoice}
             segments={[
-              { value: 'segment', label: speakersCopy.scopeSegment },
               { value: 'all', label: speakersCopy.scopeAll },
+              { value: 'segment', label: speakersCopy.scopeSegment },
             ]}
           />
         )}

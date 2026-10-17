@@ -87,9 +87,21 @@ describe('"Who is Speaker 2?"', () => {
     });
   });
 
-  test('from a segment it renames that segment unless "All segments" is chosen', async () => {
+  test('from a segment it renames every segment by default', async () => {
     renderAssign(SEGMENT);
 
+    fireEvent.click(await screen.findByText('Bob Stone'));
+    await waitFor(() => {
+      expect(commands.rename).toHaveBeenLastCalledWith(
+        expect.objectContaining({ scope: { kind: 'all' } }),
+      );
+    });
+  });
+
+  test('"This segment" narrows the rename to that segment', async () => {
+    renderAssign(SEGMENT);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'This segment' }));
     fireEvent.click(await screen.findByText('Bob Stone'));
     await waitFor(() => {
       expect(commands.rename).toHaveBeenLastCalledWith(

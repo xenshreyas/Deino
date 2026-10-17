@@ -4,7 +4,7 @@
 
 Speaker tags (CAP-05, [ADR 0045](../../docs/adr/0045-speaker-tags-from-the-meeting-apps-accessibility-tree.md)):
 while Deino records, read who the meeting app shows as the active speaker
-(Zoom, Teams, Meet in Chrome) through macOS Accessibility every 250 ms, and
+(Zoom, Teams, Meet in Chrome, Brave, Edge, Arc or Vivaldi) through macOS Accessibility every 250 ms, and
 store it as `(start, end, name)` spans on the recording's timeline. The
 `identify_speakers` stage (`deino-core::speaker_tags`) turns the spans into
 names for the system track's segments before it matches voices.

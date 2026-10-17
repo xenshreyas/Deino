@@ -214,13 +214,13 @@ describe('TranscriptPanel', () => {
     });
   });
 
-  it('renames one line from its turn header with CAP-04\'s "Who is …?"', async () => {
+  it('renames a speaker everywhere from its turn header with CAP-04\'s "Who is …?"', async () => {
     renderPanel();
     await screen.findByText('Great, ship it Monday.');
 
     fireEvent.click(screen.getByRole('button', { name: /Shreyas/ }));
     expect(await screen.findByText('Who is Shreyas?')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'This segment' }).getAttribute('aria-checked')).toBe(
+    expect(screen.getByRole('radio', { name: 'All segments' }).getAttribute('aria-checked')).toBe(
       'true',
     );
     fireEvent.click(await screen.findByText('Priya Shah', { selector: '[role="option"] *' }));
@@ -229,7 +229,7 @@ describe('TranscriptPanel', () => {
       expect(speakers.rename).toHaveBeenCalledWith(
         expect.objectContaining({
           speakerId: ME.speakerId,
-          scope: { kind: 'segment', segmentId: 'b' },
+          scope: { kind: 'all' },
         }),
       );
     });

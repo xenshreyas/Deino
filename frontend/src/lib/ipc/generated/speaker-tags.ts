@@ -82,7 +82,7 @@ export type CallApp =
  */
 "teams" | 
 /**
- * Google Meet in Google Chrome.
+ * Google Meet in Chrome or a Chromium browser (Brave, Edge, Arc, Vivaldi).
  */
 "meet"
 /**

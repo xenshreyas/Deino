@@ -23,7 +23,7 @@ db_enum! {
         Zoom = "zoom",
         /// The Microsoft Teams desktop app.
         Teams = "teams",
-        /// Google Meet in Google Chrome.
+        /// Google Meet in Chrome or a Chromium browser (Brave, Edge, Arc, Vivaldi).
         Meet = "meet",
     }
 }

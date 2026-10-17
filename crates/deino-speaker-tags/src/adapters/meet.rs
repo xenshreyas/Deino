@@ -1,4 +1,5 @@
-//! [`MeetAdapter`]: Google Meet in Google Chrome (`com.google.Chrome`).
+//! [`MeetAdapter`]: Google Meet in Chrome and the Chromium browsers built on
+//! it (Brave, Edge, Arc, Vivaldi), which expose web content the same way.
 //!
 //! A Chrome window's `AXDocument` is its active tab's address, so a window
 //! may hold a call when that tab is a Meet room (`meet.google.com/abc-defg-hij`),
@@ -46,7 +47,7 @@ const CLASSES: Classes = Classes {
     ],
 };
 
-/// Reads Meet's call tab in Chrome.
+/// Reads Meet's call tab in Chrome or a Chromium browser.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MeetAdapter;
 
@@ -56,7 +57,13 @@ impl SpeakerAdapter for MeetAdapter {
     }
 
     fn bundle_ids(&self) -> &'static [&'static str] {
-        &["com.google.Chrome"]
+        &[
+            "com.google.Chrome",
+            "com.brave.Browser",
+            "com.microsoft.edgemac",
+            "company.thebrowser.Browser",
+            "com.vivaldi.Vivaldi",
+        ]
     }
 
     fn is_call_window(&self, window: &WindowSummary) -> bool {
