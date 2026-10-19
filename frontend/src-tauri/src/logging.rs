@@ -36,15 +36,21 @@ fn open_log_file() -> Option<File> {
 }
 
 /// `~/Library/Logs/com.xenshreyas.deino/deino.log` on macOS.
-#[cfg(target_os = "macos")]
 fn log_path() -> Option<PathBuf> {
+    Some(log_dir()?.join("deino.log"))
+}
+
+/// The log folder, `~/Library/Logs/com.xenshreyas.deino` on macOS; other
+/// diagnostics the user turns on are written beside the log.
+#[cfg(target_os = "macos")]
+pub(crate) fn log_dir() -> Option<PathBuf> {
     let home = std::env::var_os("HOME")?;
-    Some(PathBuf::from(home).join("Library/Logs/com.xenshreyas.deino/deino.log"))
+    Some(PathBuf::from(home).join("Library/Logs/com.xenshreyas.deino"))
 }
 
 /// Elsewhere only stderr is used.
 #[cfg(not(target_os = "macos"))]
-fn log_path() -> Option<PathBuf> {
+pub(crate) fn log_dir() -> Option<PathBuf> {
     None
 }
 

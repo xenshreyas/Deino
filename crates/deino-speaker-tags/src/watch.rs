@@ -7,13 +7,16 @@
 //! logged at debug level when it first appears (never per poll) and never
 //! raised: the poll simply names nobody, and voice matching names that
 //! stretch later. Finished spans are saved every
-//! [`FLUSH_EVERY`] of recording time and when the recording ends.
+//! [`FLUSH_EVERY`] of recording time and when the recording ends. When the
+//! user asked for it, a call window that cannot be read is dumped once per
+//! meeting and app ([`crate::capture`]).
 
 use std::sync::Arc;
 
 use deino_domain::{CallApp, MeetingId, Millis, TagSpan};
 
 use crate::adapter::{SpeakerAdapter, adapter_for};
+use crate::capture::{Captures, WindowCapture};
 use crate::error::TagError;
 use crate::ports::{Pid, Platform, Position, RecordingClock, TagSink};
 use crate::reading::{ReadError, Reading};
@@ -40,6 +43,9 @@ pub struct WatchParts {
     pub sink: Arc<dyn TagSink>,
     /// Shared with Settings: whether each app's window was recognised.
     pub health: Arc<LayoutHealth>,
+    /// Where dumps of unreadable call windows go
+    /// ([`NoCapture`](crate::capture::NoCapture) for none).
+    pub capture: Arc<dyn WindowCapture>,
 }
 
 /// Whether to keep polling.
@@ -64,6 +70,7 @@ pub struct Watch {
     /// end-of-watch summary that tells a silent failure from a quiet call.
     saved: usize,
     saw_call: bool,
+    captures: Captures,
 }
 
 impl Watch {
@@ -79,6 +86,7 @@ impl Watch {
             degraded: None,
             saved: 0,
             saw_call: false,
+            captures: Captures::default(),
         }
     }
 
@@ -96,6 +104,9 @@ impl Watch {
             Position::At(at) => {
                 let sighting = self.look();
                 self.timeline.observe(at, sighting);
+                if !self.saw_call {
+                    self.captures.no_call_yet(&self.parts, at);
+                }
                 if at.0.saturating_sub(self.flushed_at.0) >= FLUSH_EVERY.0 {
                     self.flush(at);
                 }
@@ -185,6 +196,7 @@ impl Watch {
                 Err(ReadError::NotInCall) => {}
                 Err(source @ ReadError::UnrecognisedLayout) => {
                     self.parts.health.record(app, false);
+                    self.captures.unrecognised(&self.parts, app);
                     return Err(TagError::Layout { app, source });
                 }
             }

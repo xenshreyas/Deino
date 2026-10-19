@@ -70,6 +70,7 @@ impl Rig {
             clock: ScriptedClock::new(positions),
             sink: self.sink.clone(),
             health: self.health.clone(),
+            capture: Arc::new(crate::capture::NoCapture),
         })
     }
 

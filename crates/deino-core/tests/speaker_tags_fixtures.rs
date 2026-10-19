@@ -16,7 +16,7 @@ use deino_core::speaker_tags::Timed;
 use deino_core::speaker_tags::align::align;
 use deino_domain::{CallApp, MeetingId, Millis, SegmentId, SystemClock, TagSpan};
 use deino_speaker_tags::fake::{FakeMac, MemorySink, ScriptedClock};
-use deino_speaker_tags::{AxNode, LayoutHealth, Pid, Position, Step, Watch, WatchParts};
+use deino_speaker_tags::{AxNode, LayoutHealth, NoCapture, Pid, Position, Step, Watch, WatchParts};
 
 const ZOOM: Pid = Pid(4_242);
 
@@ -43,6 +43,7 @@ fn record(frames: &[&str]) -> Vec<TagSpan> {
         clock: ScriptedClock::new(positions.chain([Position::Over])),
         sink: sink.clone(),
         health: Arc::new(LayoutHealth::default()),
+        capture: Arc::new(NoCapture),
     });
     for frame in frames {
         mac.show(ZOOM, Ok(zoom_dump(frame)));

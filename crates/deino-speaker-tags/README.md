@@ -25,8 +25,10 @@ names for the system track's segments before it matches voices.
   `AXIsProcessTrusted`, `NSRunningApplication`, `AXUIElement` trees,
   Chromium's `AXManualAccessibility` and `AXDOMClassList`, and opening the
   Accessibility page of System Settings.
-- The fixture dumps (`fixtures/`, with how to capture new ones) and the
-  capture tool (`tests/capture.rs`).
+- The fixture dumps (`fixtures/`, with how to capture new ones), the
+  capture tool (`tests/capture.rs`) and the opt-in dump of a call window
+  the watch cannot read (`capture.rs`: `WindowCapture`, once per meeting
+  and app; the app writes it to the log folder).
 
 ## Does Not Own
 
@@ -51,6 +53,8 @@ names for the system track's segments before it matches voices.
 - Every failure degrades to voice matching: a typed `TagError`, logged once
   at debug level; nothing is raised to the recording or the user.
 - Nothing logs names, window titles or addresses: meeting IDs and counts only.
+  A call-window dump holds names, so it is taken only when the user turned
+  the setting on, and handed to the port, never logged.
 - Everything except `macos/` builds and is tested on every platform;
   elsewhere `platform()` is `None` and every app is Unsupported.
 

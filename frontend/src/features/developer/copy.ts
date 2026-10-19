@@ -46,3 +46,13 @@ export const cliCopy = {
   copied: 'Copied',
   loadFailed: 'Could not read the command-line tool’s status.',
 } as const;
+
+/** Diagnostics that help fix Deino on this Mac (CAP-05). */
+export const diagnosticsCopy = {
+  title: 'Diagnostics',
+  description: 'Files that help fix Deino on this Mac. Nothing leaves your Mac.',
+  captureLabel: "Save the call window when speaker names can't be read",
+  captureDescription:
+    "Once per meeting, Deino saves what the meeting app's window shows to Accessibility (including participants' names) to its log folder, so its speaker reading can be fixed. Off by default.",
+  saveFailed: 'Could not save the setting.',
+} as const;

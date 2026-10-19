@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use deino_domain::MeetingId;
 
+use crate::capture::WindowCapture;
 use crate::ports::{Platform, RecordingClock, TagSink};
 use crate::status::{AppTagStatus, LayoutHealth, statuses};
 use crate::timeline::POLL_INTERVAL;
@@ -20,6 +21,8 @@ pub struct SpeakerTagsParts {
     pub clock: Arc<dyn RecordingClock>,
     /// Where spans are stored.
     pub sink: Arc<dyn TagSink>,
+    /// Where dumps of unreadable call windows go.
+    pub capture: Arc<dyn WindowCapture>,
 }
 
 /// Speaker tags for every recording (see the module docs).
@@ -53,6 +56,7 @@ impl SpeakerTags {
             clock: Arc::clone(&self.parts.clock),
             sink: Arc::clone(&self.parts.sink),
             health: Arc::clone(&self.health),
+            capture: Arc::clone(&self.parts.capture),
         });
         let watcher = match Watcher::spawn(watch, POLL_INTERVAL) {
             Ok(watcher) => Some(watcher),
@@ -82,6 +86,7 @@ mod tests {
     use deino_domain::CallApp;
 
     use super::*;
+    use crate::capture::NoCapture;
     use crate::fake::{FakeMac, MemorySink, ScriptedClock};
     use crate::status::TagState;
 
@@ -90,6 +95,7 @@ mod tests {
             platform,
             clock: ScriptedClock::new([]),
             sink: Arc::new(MemorySink::default()),
+            capture: Arc::new(NoCapture),
         })
     }
 

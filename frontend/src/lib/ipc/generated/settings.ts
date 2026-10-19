@@ -431,6 +431,17 @@ ignoredApps: IgnoredApp[];
  */
 autoStart: AutoStartSettings }
 /**
+ * The developer section of `Settings`.
+ */
+export type DeveloperSettings = { 
+/**
+ * When speaker tags (CAP-05) cannot read the meeting app's call
+ * window, save one Accessibility dump of that app's windows (with
+ * participants' names) to Deino's log folder, once per meeting, so the
+ * app's adapter can be fixed. Off by default.
+ */
+captureCallWindows: boolean }
+/**
  * An email address in canonical form: lower case, no surrounding
  * whitespace, one `@` between a non-empty local part and a dotted domain.
  * 
@@ -1455,7 +1466,11 @@ api: ApiSettings;
 /**
  * First-run setup progress.
  */
-onboarding: OnboardingSettings }
+onboarding: OnboardingSettings; 
+/**
+ * Diagnostics for fixing Deino on this Mac.
+ */
+developer: DeveloperSettings }
 /**
  * The settings were saved; `settings` is the new, complete document.
  */

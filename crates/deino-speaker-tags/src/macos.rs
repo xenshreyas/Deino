@@ -16,9 +16,8 @@ pub(crate) fn platform() -> Platform {
     Platform {
         permission: Arc::new(workspace::Trust),
         apps: Arc::new(workspace::Workspace),
-        windows: Arc::new(reader::AxWindows::live()),
+        windows: Arc::new(reader::AxWindows),
     }
 }
 
-pub(crate) use reader::AxWindows;
 pub(crate) use workspace::open_accessibility_settings;

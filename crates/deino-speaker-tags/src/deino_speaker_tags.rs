@@ -21,6 +21,7 @@
 //! - [`timeline`]: polls into [`TagSpan`](deino_domain::TagSpan)s;
 //! - [`watch`], [`watcher`], [`service`]: one recording's polling, its
 //!   thread, and the app's handle ([`SpeakerTags`]);
+//! - [`capture`]: the opt-in dump of a call window that cannot be read;
 //! - [`status`]: Settings → Speaker tags (Enabled, Needs permission,
 //!   Unsupported);
 //! - [`ports`]: the platform, the clock and the sink; `macos/` implements
@@ -35,6 +36,7 @@
 
 pub mod adapter;
 mod adapters;
+pub mod capture;
 pub mod error;
 #[cfg(any(test, feature = "test-support"))]
 pub mod fake;
@@ -52,6 +54,7 @@ pub mod watcher;
 
 pub use adapter::{SpeakerAdapter, adapter_for};
 pub use adapters::{MeetAdapter, TeamsAdapter, ZoomAdapter};
+pub use capture::{CAPTURE_AFTER, NoCapture, WindowCapture};
 pub use error::{AxError, SinkError, TagError};
 pub use label::Label;
 pub use ports::{
@@ -102,11 +105,10 @@ pub fn open_accessibility_settings() -> Result<(), AxError> {
 pub fn capture(app: deino_domain::CallApp) -> Result<Vec<AxNode>, AxError> {
     let adapter = adapter_for(app);
     let platform = macos::platform();
-    let reader = macos::AxWindows::capture();
     let mut windows = Vec::new();
     for pid in platform.apps.pids(adapter.bundle_ids()) {
-        reader.prepare(app, pid);
-        windows.extend(reader.windows(pid, &|_| true)?);
+        platform.windows.prepare(app, pid);
+        windows.extend(platform.windows.full_windows(pid, &|_| true)?);
     }
     Ok(windows)
 }

@@ -73,6 +73,7 @@ mod tests {
     use deino_domain::{MeetingId, Millis};
 
     use super::*;
+    use crate::capture::NoCapture;
     use crate::fake::{FakeMac, MemorySink, ScriptedClock};
     use crate::ports::Position;
     use crate::status::LayoutHealth;
@@ -85,6 +86,7 @@ mod tests {
             clock,
             sink,
             health: Arc::new(LayoutHealth::default()),
+            capture: Arc::new(NoCapture),
         })
     }
 

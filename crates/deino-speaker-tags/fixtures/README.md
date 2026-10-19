@@ -25,9 +25,25 @@ Chromium's `AXDOMClassList` is `domClasses`, a window's `AXDocument` is
 The names are fictional. The first set was modelled on each app's call
 window (its tile and roster labels, Meet's classes) to pin the adapters'
 rules; **replace them with real captures** as described below whenever an
-app changes, and during CAP-05's manual QA.
+app changes, and during CAP-05's manual QA. The easiest way is to let Deino
+save the window during a real call (next section).
 
-## Capturing a new dump
+## Capturing a new dump from Deino (no terminal grant)
+
+Deino already has Accessibility, so it can save the window itself:
+
+1. Turn on Settings → Advanced → Developer → Diagnostics → "Save the call
+   window when speaker names can't be read" (`developer.captureCallWindows`).
+2. Record a real call with at least two other people. When Deino cannot
+   read the app's call window (a layout its adapter does not know, or no
+   call window 20 s into the recording), it saves that app's windows once
+   per meeting to
+   `~/Library/Logs/com.xenshreyas.deino/call-window-<app>-<meeting id>-<UTC time>.json`,
+   in this folder's format with every attribute, and logs the file name.
+3. Turn the setting off again; the files hold participants' real names.
+4. Anonymise the file and add it here as in steps 4 and 5 below.
+
+## Capturing a new dump from a terminal
 
 1. Grant Accessibility to your terminal: System Settings → Privacy &
    Security → Accessibility. The tool checks without prompting and stops if
