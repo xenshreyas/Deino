@@ -17,6 +17,9 @@ fn main() {
     if let Some(code) = deino_lib::stt::cli::run_if_requested(&args) {
         std::process::exit(code);
     }
+    if let Some(code) = deino_lib::call_window_dump::run_if_requested(&args) {
+        std::process::exit(code);
+    }
 
     deino_lib::logging::init();
     log::info!("Starting application...");
