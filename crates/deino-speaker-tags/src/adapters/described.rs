@@ -82,7 +82,7 @@ fn describe(node: &AxNode, grammar: &Grammar) -> Option<Described> {
 
 /// The name and the states after it: the text up to the first comma
 /// outside parentheses ("Sam (Host, me), Muted" is "Sam (Host, me)").
-fn split_name(text: &str) -> Option<(&str, &str)> {
+pub(super) fn split_name(text: &str) -> Option<(&str, &str)> {
     let mut depth = 0_u32;
     for (index, character) in text.char_indices() {
         match character {

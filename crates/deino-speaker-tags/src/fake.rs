@@ -150,6 +150,7 @@ impl RecordingClock for ScriptedClock {
 #[derive(Debug, Default)]
 pub struct MemorySink {
     saved: Mutex<Vec<(MeetingId, TagSpan)>>,
+    roster: Mutex<Vec<(MeetingId, TagSpan)>>,
     failing: AtomicBool,
 }
 
@@ -157,6 +158,14 @@ impl MemorySink {
     /// Every span saved, in order.
     pub fn spans(&self) -> Vec<TagSpan> {
         lock(&self.saved)
+            .iter()
+            .map(|(_, span)| span.clone())
+            .collect()
+    }
+
+    /// Every roster span saved, in order.
+    pub fn roster(&self) -> Vec<TagSpan> {
+        lock(&self.roster)
             .iter()
             .map(|(_, span)| span.clone())
             .collect()
@@ -175,6 +184,15 @@ impl TagSink for MemorySink {
         }
         let mut saved = lock(&self.saved);
         saved.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
+        Ok(())
+    }
+
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError> {
+        if self.failing.load(Ordering::SeqCst) {
+            return Err(SinkError::new(std::io::Error::other("the disk is full")));
+        }
+        let mut roster = lock(&self.roster);
+        roster.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
         Ok(())
     }
 }

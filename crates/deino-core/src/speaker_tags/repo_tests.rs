@@ -100,3 +100,34 @@ async fn a_meetings_spans_are_read_through_the_index() {
         "{plan:?}"
     );
 }
+
+#[tokio::test]
+async fn the_roster_is_kept_apart_from_the_speaker_spans_and_read_by_its_index() {
+    let (database, repo) = repo().await;
+    let meeting = MeetingId::new(MEETING);
+    let roster = [
+        span(0, 60_000, "Bea Ruiz", CallApp::Zoom),
+        span(5_000, 9_000, "Cleo", CallApp::Zoom),
+    ];
+
+    repo.append_roster(&meeting, &roster[1..]).await.unwrap();
+    repo.append_roster(&meeting, &roster[..1]).await.unwrap();
+    repo.append_roster(&meeting, &[]).await.unwrap();
+
+    assert_eq!(repo.roster(&meeting).await.unwrap(), roster);
+    assert!(repo.spans(&meeting).await.unwrap().is_empty());
+    let empty = repo
+        .append_roster(&meeting, &[span(500, 500, "Alex", CallApp::Zoom)])
+        .await;
+    assert!(empty.is_err());
+    let plan = query_plan(
+        &database,
+        "SELECT start_ms FROM speaker_tag_roster WHERE meeting_id = ?1 ORDER BY start_ms, id",
+    )
+    .await;
+    assert!(
+        plan.iter()
+            .any(|step| step.contains("idx_speaker_tag_roster_meeting_id")),
+        "{plan:?}"
+    );
+}

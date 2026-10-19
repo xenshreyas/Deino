@@ -123,6 +123,12 @@ impl TagSink for DatabaseSink {
             .block_on(self.repo.append(meeting, spans))
             .map_err(SinkError::new)
     }
+
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError> {
+        self.runtime
+            .block_on(self.repo.append_roster(meeting, spans))
+            .map_err(SinkError::new)
+    }
 }
 
 #[cfg(test)]
@@ -179,12 +185,17 @@ mod tests {
         let meeting = MeetingId::new("meeting");
 
         std::thread::scope(|scope| {
-            scope.spawn(|| sink.save(&meeting, std::slice::from_ref(&span)).unwrap());
+            scope.spawn(|| {
+                sink.save(&meeting, std::slice::from_ref(&span)).unwrap();
+                sink.save_roster(&meeting, std::slice::from_ref(&span))
+                    .unwrap();
+            });
         });
 
-        let stored = runtime
-            .block_on(SqliteSpeakerTagRepo::new(database).spans(&meeting))
-            .unwrap();
-        assert_eq!(stored, [span]);
+        let repo = SqliteSpeakerTagRepo::new(database);
+        let stored = runtime.block_on(repo.spans(&meeting)).unwrap();
+        let roster = runtime.block_on(repo.roster(&meeting)).unwrap();
+        assert_eq!(stored, [span.clone()]);
+        assert_eq!(roster, [span]);
     }
 }

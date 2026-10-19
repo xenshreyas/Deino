@@ -2,7 +2,9 @@
 //!
 //! - [`described`]: native and WebKit apps describe each participant's tile
 //!   or roster row in one accessibility description, "Alex Chen, Unmuted,
-//!   Speaking" (Zoom, Teams);
+//!   Speaking" (Teams). Zoom describes its tiles the same way but without
+//!   any speaking state, so its adapter reads tiles, sizes and audio itself
+//!   (`zoom/tiles.rs`);
 //! - [`classed`]: Chromium exposes the page's CSS classes, so Meet's tiles
 //!   are read by the classes of their name label and voice indicator.
 //!

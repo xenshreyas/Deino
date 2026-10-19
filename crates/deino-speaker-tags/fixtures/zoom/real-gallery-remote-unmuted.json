@@ -1,0 +1,319 @@
+[
+  {
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "title": "Zoom Meeting",
+    "identifier": "zm.meeting.window.main",
+    "children": [
+      {
+        "role": "AXTabGroup",
+        "description": "Alex Chen, Computer audio muted, Video off",
+        "children": [
+          {
+            "role": "AXImage"
+          },
+          {
+            "role": "AXButton",
+            "description": "Alex Chen"
+          }
+        ]
+      },
+      {
+        "role": "AXTabGroup",
+        "description": "Bea Ruiz, Computer audio unmuted, Video off",
+        "children": [
+          {
+            "role": "AXImage"
+          },
+          {
+            "role": "AXButton",
+            "description": "Bea Ruiz"
+          }
+        ]
+      },
+      {
+        "role": "AXScrollArea",
+        "children": [
+          {
+            "role": "AXOutline",
+            "description": "Participants list",
+            "children": [
+              {
+                "role": "AXRow",
+                "subrole": "AXTableRow",
+                "children": [
+                  {
+                    "role": "AXCell",
+                    "identifier": "ZMHCTableItemType_PANELIST",
+                    "children": [
+                      {
+                        "role": "AXStaticText",
+                        "value": "Alex Chen (Host, me)"
+                      },
+                      {
+                        "role": "AXMenuButton",
+                        "description": "More options for Alex Chen, collapsed"
+                      },
+                      {
+                        "role": "AXButton",
+                        "description": "Start video"
+                      },
+                      {
+                        "role": "AXButton",
+                        "description": "Unmute"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "role": "AXRow",
+                "subrole": "AXTableRow",
+                "children": [
+                  {
+                    "role": "AXCell",
+                    "identifier": "ZMHCTableItemType_PANELIST",
+                    "children": [
+                      {
+                        "role": "AXStaticText",
+                        "value": "Bea Ruiz (Guest)"
+                      },
+                      {
+                        "role": "AXMenuButton",
+                        "description": "More options for Bea Ruiz, collapsed"
+                      },
+                      {
+                        "role": "AXButton",
+                        "description": "Ask to start video"
+                      },
+                      {
+                        "role": "AXButton",
+                        "description": "Mute"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "description": "Invite"
+      },
+      {
+        "role": "AXButton",
+        "description": "Mute all"
+      },
+      {
+        "role": "AXButton",
+        "description": "More options to manage all participants"
+      },
+      {
+        "role": "AXUnknown",
+        "description": "Participants (2)",
+        "children": [
+          {
+            "role": "AXButton",
+            "title": "Close",
+            "description": "Button"
+          },
+          {
+            "role": "AXButton",
+            "title": "Pop out",
+            "description": "Button"
+          },
+          {
+            "role": "AXStaticText",
+            "value": "Participants (2)"
+          }
+        ]
+      },
+      {
+        "role": "AXSplitter"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXCloseButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXMinimizeButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXFullScreenButton"
+      }
+    ]
+  },
+  {
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "title": "Zoom Workplace",
+    "children": [
+      {
+        "role": "",
+        "description": ""
+      },
+      {
+        "role": "AXButton",
+        "title": "",
+        "description": "Zoom, Alex Chen, In a Zoom Meeting, Pro account"
+      },
+      {
+        "role": "AXButton",
+        "description": "Search (⌘E)  ⌘E"
+      },
+      {
+        "role": "AXButton",
+        "description": "Back in Chat(⌘ + left bracket)"
+      },
+      {
+        "role": "AXButton",
+        "description": "Forward in Chat(⌘ + right bracket)"
+      },
+      {
+        "role": "AXButton",
+        "description": "History"
+      },
+      {
+        "role": "AXButton",
+        "description": "Create new"
+      },
+      {
+        "role": "AXButton",
+        "description": "Open activity center"
+      },
+      {
+        "role": "AXButton",
+        "description": "Open calendar side panel (⌘⇧J)"
+      },
+      {
+        "role": "AXButton",
+        "description": "Room"
+      },
+      {
+        "role": "AXGroup",
+        "description": "Navigation tabs",
+        "children": [
+          {
+            "role": "AXButton",
+            "description": "Home, selected, 1 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Meetings, 2 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Chat, 3 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Hub, 4 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Whiteboards, 5 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "More, 6 of 6"
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "title": "Settings"
+      },
+      {
+        "role": "AXStaticText",
+        "value": "Settings"
+      },
+      {
+        "role": "AXSplitGroup",
+        "children": [
+          {
+            "role": "AXGroup",
+            "children": [
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Back to meeting",
+                "identifier": "00000000-0000-0000-0000-000000000001"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Join meeting",
+                "identifier": "00000000-0000-0000-0000-000000000002"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Schedule meeting",
+                "identifier": "00000000-0000-0000-0000-000000000003"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Share screen",
+                "identifier": "00000000-0000-0000-0000-000000000004"
+              },
+              {
+                "role": "AXGroup",
+                "children": [
+                  {
+                    "role": "AXGroup",
+                    "children": [
+                      {
+                        "role": "AXScrollArea",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "children": [
+                          {
+                            "role": "AXWebArea",
+                            "title": "",
+                            "description": "Zoom Calendar Sidebar",
+                            "value": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "role": "AXSplitter"
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXCloseButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXFullScreenButton",
+        "children": [
+          {
+            "role": "AXGroup",
+            "children": [
+              {
+                "role": "AXGroup"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXMinimizeButton"
+      }
+    ]
+  }
+]

@@ -81,6 +81,10 @@ pub trait RecordingClock: Send + Sync {
 
 /// Where finished spans go.
 pub trait TagSink: Send + Sync {
-    /// Stores `spans` for `meeting`.
+    /// Stores `spans` (who the window showed speaking) for `meeting`.
     fn save(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError>;
+
+    /// Stores `spans` of the remote roster (who the call window listed,
+    /// speaking or not) for `meeting`.
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError>;
 }

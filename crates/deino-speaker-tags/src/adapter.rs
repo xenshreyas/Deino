@@ -30,6 +30,20 @@ pub trait SpeakerAdapter: Send + Sync {
 
     /// Reads a call window's full tree.
     fn read(&self, window: &AxNode) -> Result<Reading, ReadError>;
+
+    /// Whether `window`, never a call itself, says something about the call
+    /// (Zoom's main window names the signed-in user). Such windows are read
+    /// along with the call windows and passed to
+    /// [`read_with`](Self::read_with). None by default.
+    fn is_context_window(&self, _window: &WindowSummary) -> bool {
+        false
+    }
+
+    /// Reads a call window with the app's context windows read alongside;
+    /// by default the context is not needed.
+    fn read_with(&self, window: &AxNode, _context: &[AxNode]) -> Result<Reading, ReadError> {
+        self.read(window)
+    }
 }
 
 /// The adapter for `app`.

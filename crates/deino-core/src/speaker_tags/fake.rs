@@ -14,6 +14,18 @@ use crate::testing::lock;
 #[derive(Debug, Default)]
 pub struct FakeSpeakerTagRepo {
     spans: Mutex<Vec<(MeetingId, TagSpan)>>,
+    roster: Mutex<Vec<(MeetingId, TagSpan)>>,
+}
+
+/// `meeting`'s entries of `stored`, in time order.
+fn of(stored: &Mutex<Vec<(MeetingId, TagSpan)>>, meeting: &MeetingId) -> Vec<TagSpan> {
+    let mut spans: Vec<TagSpan> = lock(stored)
+        .iter()
+        .filter(|(owner, _)| owner == meeting)
+        .map(|(_, span)| span.clone())
+        .collect();
+    spans.sort_by_key(|span| span.start);
+    spans
 }
 
 #[async_trait]
@@ -23,17 +35,21 @@ impl SpeakerTagWriter for FakeSpeakerTagRepo {
         stored.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
         Ok(())
     }
+
+    async fn append_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), DbError> {
+        let mut stored = lock(&self.roster);
+        stored.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl SpeakerTagReader for FakeSpeakerTagRepo {
     async fn spans(&self, meeting: &MeetingId) -> Result<Vec<TagSpan>, DbError> {
-        let mut spans: Vec<TagSpan> = lock(&self.spans)
-            .iter()
-            .filter(|(owner, _)| owner == meeting)
-            .map(|(_, span)| span.clone())
-            .collect();
-        spans.sort_by_key(|span| span.start);
-        Ok(spans)
+        Ok(of(&self.spans, meeting))
+    }
+
+    async fn roster(&self, meeting: &MeetingId) -> Result<Vec<TagSpan>, DbError> {
+        Ok(of(&self.roster, meeting))
     }
 }

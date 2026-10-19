@@ -5,19 +5,27 @@
 Speaker tags (CAP-05, [ADR 0045](../../docs/adr/0045-speaker-tags-from-the-meeting-apps-accessibility-tree.md)):
 while Deino records, read who the meeting app shows as the active speaker
 (Zoom, Teams, Meet in Chrome, Brave, Edge, Arc or Vivaldi) through macOS Accessibility every 250 ms, and
-store it as `(start, end, name)` spans on the recording's timeline. The
-`identify_speakers` stage (`deino-core::speaker_tags`) turns the spans into
+store it as `(start, end, name)` spans on the recording's timeline, with
+the remote roster (who the call window listed) as spans of its own. The
+`identify_speakers` stage (`deino-core::speaker_tags`) turns them into
 names for the system track's segments before it matches voices.
 
 ## Owns
 
 - `AxNode` (`tree.rs`): the snapshot of an app's window every adapter
-  reads, live or from a fixture dump.
+  reads, live or from a fixture dump, with an optional `Frame`
+  (`AXPosition` + `AXSize`; read live for Zoom's tiles only).
 - The `SpeakerAdapter` trait (`adapter.rs`) and one adapter per app
-  (`adapters/`): Zoom and Teams over a description scanner
-  (`described.rs`), Meet over a CSS-class scanner (`classed.rs`).
+  (`adapters/`): Zoom by its video tiles (`zoom/tiles.rs`: no talking
+  indicator exists, so Speaker View's large tile, else the one unmuted
+  remote; the user from the Zoom Workplace window's account button, read
+  as a context window), Teams over a description scanner (`described.rs`),
+  Meet over a CSS-class scanner (`classed.rs`).
 - Labels without decorations (`label.rs`), readings and their typed errors
-  (`reading.rs`), the poll-to-span `Timeline` (`timeline.rs`).
+  (`reading.rs`), the poll-to-span `Timeline` (`timeline.rs`), the remote
+  roster as spans (`presence.rs`: who the call window listed, which
+  `identify_speakers` uses to name every remote voice of a one-to-one
+  call).
 - `Watch` (one recording's polls, `watch.rs`), `Watcher` (its thread,
   `watcher.rs`), `SpeakerTags` (the app's handle, `service.rs`) and the
   Settings rows (`status.rs`).
@@ -79,11 +87,14 @@ who talked for more than 3 s: at least 90 % must carry the right name.
       permission" before granting, "Enabled" after (reopen the page), and
       the button opens Privacy & Security → Accessibility without changing
       anything. In light and dark mode.
-- [ ] **Zoom desktop**, gallery view: three people take turns → each turn's
-      segments carry the speaker's Zoom name; ≥ 90 % right.
-- [ ] **Zoom**, speaker view and while someone shares a screen: names
-      continue where Zoom shows a speaking tile; stretches without one fall
-      back to "Speaker N" (no wrong names).
+- [ ] **Zoom desktop, one-to-one** (Zoom Workplace signed in): every
+      remote segment carries the other person's name, as one speaker, even
+      when diarization split their voice.
+- [ ] **Zoom desktop, Speaker View**, three people take turns → each turn's
+      segments carry the speaker's Zoom name (the large tile); ≥ 90 % right.
+- [ ] **Zoom**, Gallery View with everyone muting between turns: the one
+      unmuted person's turns are named; with several unmuted, stretches
+      fall back to "Speaker N" (no wrong names).
 - [ ] **Meet in Chrome** (the call tab active in its window): same check,
       ≥ 90 % right. Chrome stays responsive (Activity Monitor: Deino's CPU
       during the call is a few percent).

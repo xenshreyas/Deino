@@ -18,15 +18,22 @@ pub fn windows(app: CallApp, case: &str) -> Vec<AxNode> {
 }
 
 /// What the watcher would read from a dump: the first call window that
-/// reads, else the first layout error, else "not in a call".
+/// reads (with the app's context windows), else the first layout error,
+/// else "not in a call".
 pub fn read(app: CallApp, case: &str) -> Result<Reading, ReadError> {
     let adapter = adapter_for(app);
+    let windows = windows(app, case);
+    let context: Vec<AxNode> = windows
+        .iter()
+        .filter(|window| adapter.is_context_window(&window.summary()))
+        .cloned()
+        .collect();
     let mut failure = ReadError::NotInCall;
-    for window in windows(app, case)
+    for window in windows
         .iter()
         .filter(|window| adapter.is_call_window(&window.summary()))
     {
-        match adapter.read(window) {
+        match adapter.read_with(window, &context) {
             Ok(reading) => return Ok(reading),
             Err(ReadError::NotInCall) => {}
             Err(error) => failure = error,

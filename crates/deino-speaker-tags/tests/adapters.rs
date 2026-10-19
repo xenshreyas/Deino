@@ -23,29 +23,30 @@ fn speaker(app: CallApp, case: &str) -> Active {
     read(app, case).unwrap().active
 }
 
+/// Real Zoom (the `real-*` dumps): the user is Alex Chen (signed in to
+/// Zoom Workplace), the one remote participant Bea Ruiz.
 #[test]
-fn zoom_reads_the_talking_tile_and_everyone_but_the_user() {
-    let reading = read(CallApp::Zoom, "gallery-bea-talking").unwrap();
+fn zoom_speaker_view_names_the_large_tile_and_leaves_out_the_user() {
+    let reading = read(CallApp::Zoom, "real-speaker-view-remote-talking").unwrap();
 
+    assert_eq!(reading.participants, [name("Bea Ruiz")]);
     assert_eq!(reading.active, Active::Speaking(name("Bea Ruiz")));
-    assert_eq!(
-        reading.participants,
-        [name("Alex Chen"), name("Bea Ruiz"), name("Cleo Martin")]
-    );
-    assert_eq!(
-        speaker(CallApp::Zoom, "gallery-alex-talking"),
-        Active::Speaking(name("Alex Chen"))
-    );
 }
 
 #[test]
-fn zoom_silence_the_users_tile_and_a_shared_screen() {
-    assert_eq!(speaker(CallApp::Zoom, "gallery-silent"), Active::Nobody);
-    assert_eq!(speaker(CallApp::Zoom, "gallery-me-talking"), Active::Me);
-    assert_eq!(
-        speaker(CallApp::Zoom, "screen-share-no-indicator"),
-        Active::NoIndicator
-    );
+fn zoom_gallery_names_the_one_unmuted_remote() {
+    let reading = read(CallApp::Zoom, "real-gallery-remote-unmuted").unwrap();
+
+    assert_eq!(reading.participants, [name("Bea Ruiz")]);
+    assert_eq!(reading.active, Active::Speaking(name("Bea Ruiz")));
+}
+
+#[test]
+fn zoom_with_everyone_muted_names_nobody_but_keeps_the_roster() {
+    let reading = read(CallApp::Zoom, "real-silent-all-muted").unwrap();
+
+    assert_eq!(reading.participants, [name("Bea Ruiz")]);
+    assert_eq!(reading.active, Active::Nobody);
 }
 
 #[test]
@@ -56,6 +57,12 @@ fn zoom_without_a_call_or_with_an_unknown_layout_reads_nothing() {
     );
     assert_eq!(
         read(CallApp::Zoom, "unknown-layout"),
+        Err(ReadError::UnrecognisedLayout)
+    );
+    // The hand-modelled call dump kept for deino-consent's chat tests has
+    // no tile Zoom really shows.
+    assert_eq!(
+        read(CallApp::Zoom, "gallery-alex-talking"),
         Err(ReadError::UnrecognisedLayout)
     );
 }
@@ -124,7 +131,7 @@ fn meet_in_the_lobby_or_with_an_unknown_layout_reads_nothing() {
 #[test]
 fn every_dump_belongs_to_its_app_and_no_other_adapter_reads_it() {
     let cases = [
-        (CallApp::Zoom, "gallery-alex-talking"),
+        (CallApp::Zoom, "real-speaker-view-remote-talking"),
         (CallApp::Teams, "call-alex-speaking"),
         (CallApp::Meet, "call-alex-speaking"),
     ];

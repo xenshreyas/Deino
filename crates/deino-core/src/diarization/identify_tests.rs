@@ -347,3 +347,93 @@ async fn the_meeting_apps_names_override_a_matching_voiceprint() {
         ]
     );
 }
+
+/// A system-track segment of `speaker` that no window named.
+async fn said(world: &World, speaker: SpeakerId, (start, end): (u32, u32)) {
+    let segment = NewSegment {
+        id: SegmentId::generate(&clock()),
+        meeting_id: MeetingId::new(MEETING),
+        channel: Channel::System,
+        speaker_id: Some(speaker),
+        start: Millis(start),
+        end: Millis(end),
+        text: "…".into(),
+        words: Vec::new(),
+    };
+    world.segments.append(&[segment]).await.unwrap();
+}
+
+/// The call window listed `name` from `start` to `end`.
+async fn listed(world: &World, name: &str, (start, end): (u32, u32)) {
+    let span = TagSpan {
+        start: Millis(start),
+        end: Millis(end),
+        name: DisplayName::parse(name).unwrap(),
+        app: CallApp::Zoom,
+    };
+    let tags = SqliteSpeakerTagRepo::new(world.database.clone());
+    tags.append_roster(&MeetingId::new(MEETING), &[span])
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn a_one_to_one_call_merges_the_split_remote_voice_into_that_person() {
+    let world = World::new().await;
+    let bea = world.person("Bea Ruiz", false, None).await;
+    world.invite(bea).await;
+    // Diarization split Bea's voice in three; the window showed no speaker.
+    let ids = world
+        .speakers(&[
+            (voice(&[(0, 0.9)]), 30_000),
+            (voice(&[(1, 0.9)]), 20_000),
+            (voice(&[(2, 0.9)]), 10_000),
+        ])
+        .await;
+    said(&world, ids[0], (0, 30_000)).await;
+    said(&world, ids[1], (30_000, 50_000)).await;
+    said(&world, ids[2], (50_000, 60_000)).await;
+    listed(&world, "Bea Ruiz", (0, 600_000)).await;
+    // Someone who dialled in for half a minute does not count.
+    listed(&world, "Dev Patel", (100_000, 130_000)).await;
+
+    let service = tagged_service(&world);
+    service.identify(&MeetingId::new(MEETING)).await.unwrap();
+    service.identify(&MeetingId::new(MEETING)).await.unwrap();
+
+    // One speaker is left for the remote track (which of the three keeps
+    // its label does not matter), named Bea.
+    let names = world.names().await;
+    assert_eq!(names.len(), 2, "{names:?}");
+    assert_eq!(names[0], ("Me".into(), None, None));
+    assert_eq!(names[1].1.as_deref(), Some("Bea Ruiz"));
+}
+
+#[tokio::test]
+async fn a_group_call_still_votes_by_spans_and_names_the_rest_by_elimination() {
+    let world = World::new().await;
+    let bea = world.person("Bea Ruiz", false, None).await;
+    let cleo = world.person("Cleo Martin", false, None).await;
+    world.invite(bea).await;
+    world.invite(cleo).await;
+    let ids = world
+        .speakers(&[(voice(&[(0, 0.9)]), 30_000), (voice(&[(1, 0.9)]), 30_000)])
+        .await;
+    listed(&world, "Bea Ruiz", (0, 600_000)).await;
+    listed(&world, "Cleo Martin", (0, 600_000)).await;
+    // Speaker View showed Bea while Speaker 1 talked; Cleo was never shown.
+    tagged(&world, ids[0], (0, 30_000), "Bea Ruiz").await;
+    said(&world, ids[1], (30_000, 60_000)).await;
+
+    let service = tagged_service(&world);
+    service.identify(&MeetingId::new(MEETING)).await.unwrap();
+
+    assert_eq!(
+        world.names().await,
+        [
+            ("Me".into(), None, None),
+            named("Speaker 1", "Bea Ruiz"),
+            named("Speaker 2", "Cleo Martin"),
+        ]
+    );
+}

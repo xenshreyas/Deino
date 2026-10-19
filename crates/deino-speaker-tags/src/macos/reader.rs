@@ -14,7 +14,7 @@ use deino_domain::CallApp;
 use super::dom;
 use crate::error::AxError;
 use crate::ports::{Pid, WindowReader};
-use crate::tree::{AxNode, WINDOW_ROLE, WindowSummary};
+use crate::tree::{AxNode, Frame, WINDOW_ROLE, WindowSummary};
 
 /// How long one Accessibility request may take, in seconds.
 const AX_TIMEOUT_SECS: f32 = 0.1;
@@ -37,6 +37,10 @@ const SKIPPED_ROLES: &[&str] = &[
     "AXTextField",
     "AXImage",
 ];
+
+/// Roles whose frame the live read keeps: Zoom's video tiles, compared by
+/// size to find Speaker View's large tile. The full read keeps every frame.
+const FRAMED_ROLES: &[&str] = &["AXTabGroup"];
 
 /// Web content, where Chromium exposes CSS classes.
 const WEB_AREA_ROLE: &str = "AXWebArea";
@@ -156,8 +160,11 @@ impl Reader {
                 .map(|value| dom::strings(&value))
                 .unwrap_or_default()
         };
+        let role = role(element);
+        let framed = self.full || FRAMED_ROLES.contains(&role.as_str());
         AxNode {
-            role: role(element),
+            frame: framed.then(|| frame(element)).flatten(),
+            role,
             subrole: self
                 .full
                 .then(|| string(element, ax::attr::subrole()))
@@ -180,6 +187,27 @@ struct Walk {
     depth: usize,
     /// It is web content (inside an `AXWebArea`).
     web: bool,
+}
+
+/// The element's position and size, rounded to whole points.
+fn frame(element: &ax::UiElement) -> Option<Frame> {
+    let at = element.pos().ok()?.cg_point()?;
+    let size = element.size().ok()?.cg_size()?;
+    Some(Frame {
+        x: points(at.x),
+        y: points(at.y),
+        width: u32::try_from(points(size.width)).unwrap_or(0),
+        height: u32::try_from(points(size.height)).unwrap_or(0),
+    })
+}
+
+/// A coordinate in whole points, clamped to what a screen can hold.
+#[allow(
+    clippy::cast_possible_truncation,
+    reason = "rounded and clamped to ±1,000,000 points first"
+)]
+fn points(value: f64) -> i32 {
+    value.round().clamp(-1_000_000.0, 1_000_000.0) as i32
 }
 
 fn role(element: &ax::UiElement) -> String {

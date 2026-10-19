@@ -16,7 +16,7 @@ fn window(title: &str, description: &str) -> AxNode {
         role: "AXWindow".into(),
         title: Some(title.into()),
         children: vec![AxNode {
-            role: "AXGroup".into(),
+            role: "AXTabGroup".into(),
             description: Some(description.into()),
             ..AxNode::default()
         }],
@@ -36,10 +36,7 @@ fn zoom_home() -> AxNode {
 
 /// Zoom's call window with Alex talking.
 fn zoom_call() -> AxNode {
-    window(
-        "Zoom Meeting",
-        "Alex Chen, Computer audio unmuted, Video on, Talking",
-    )
+    window("Zoom Meeting", "Alex Chen, Computer audio unmuted")
 }
 
 struct Rig {

@@ -43,7 +43,9 @@ pub mod fake;
 pub mod label;
 #[cfg(target_os = "macos")]
 mod macos;
+mod outbox;
 pub mod ports;
+pub mod presence;
 pub mod reading;
 pub mod service;
 pub mod status;
@@ -61,11 +63,12 @@ pub use ports::{
     AccessibilityPermission, Pid, Platform, Position, RecordingClock, RunningApps, TagSink,
     WindowReader,
 };
+pub use presence::Presence;
 pub use reading::{Active, ReadError, Reading};
 pub use service::{SpeakerTags, SpeakerTagsParts};
 pub use status::{AppTagStatus, LayoutHealth, TagState};
 pub use timeline::{POLL_INTERVAL, Timeline};
-pub use tree::{AxNode, WindowSummary};
+pub use tree::{AxNode, Frame, WindowSummary};
 pub use watch::{Step, Watch, WatchParts};
 pub use watcher::Watcher;
 

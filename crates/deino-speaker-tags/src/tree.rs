@@ -4,8 +4,10 @@
 //!
 //! Only the attributes the adapters use are kept, under their short names
 //! (`AXRole` is `role`, `AXDescription` is `description`, Chromium's
-//! `AXDOMClassList` is `domClasses`, a window's `AXDocument` is `document`).
-//! Absent attributes are left out of the JSON, so dumps stay readable.
+//! `AXDOMClassList` is `domClasses`, a window's `AXDocument` is `document`,
+//! `AXPosition` and `AXSize` together are `frame`). Absent attributes are
+//! left out of the JSON, so dumps stay readable, and dumps made before an
+//! attribute was kept still read.
 
 use serde::{Deserialize, Serialize};
 
@@ -36,9 +38,34 @@ pub struct AxNode {
     /// `AXDocument`: a browser window's page address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub document: Option<String>,
+    /// `AXPosition` and `AXSize`: where the element is on screen. Read for
+    /// the roles an adapter compares by size (Zoom's video tiles).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame: Option<Frame>,
     /// The element's children, in order.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<AxNode>,
+}
+
+/// Where an element is, in points: `AXPosition` (screen coordinates, the
+/// top-left corner) and `AXSize`. Adapters compare sizes, never positions.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Frame {
+    /// The left edge.
+    pub x: i32,
+    /// The top edge.
+    pub y: i32,
+    /// The width.
+    pub width: u32,
+    /// The height.
+    pub height: u32,
+}
+
+impl Frame {
+    /// The area, in square points.
+    pub fn area(&self) -> u64 {
+        u64::from(self.width) * u64::from(self.height)
+    }
 }
 
 /// A window as seen before its contents are read: enough to tell a meeting
@@ -168,6 +195,31 @@ mod tests {
 
         assert_eq!(labelled.text(), Some("Alex Chen, muted"));
         assert_eq!(AxNode::default().text(), None);
+    }
+
+    #[test]
+    fn a_frame_reads_back_and_dumps_without_one_still_read() {
+        let tile = AxNode {
+            role: "AXTabGroup".into(),
+            frame: Some(Frame {
+                x: 0,
+                y: 93,
+                width: 1_261,
+                height: 709,
+            }),
+            ..AxNode::default()
+        };
+
+        let json = serde_json::to_string(&tile).unwrap();
+
+        assert_eq!(
+            json,
+            r#"{"role":"AXTabGroup","frame":{"x":0,"y":93,"width":1261,"height":709}}"#
+        );
+        assert_eq!(serde_json::from_str::<AxNode>(&json).unwrap(), tile);
+        assert_eq!(tile.frame.map(|frame| frame.area()), Some(894_049));
+        let old: AxNode = serde_json::from_str(r#"{"role":"AXGroup"}"#).unwrap();
+        assert_eq!(old.frame, None);
     }
 
     #[test]

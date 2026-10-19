@@ -320,7 +320,21 @@ export type Table =
 /**
  * The transcript made on this Mac that a cloud transcription replaced (CAP-14): one per meeting, the first one replaced, until the user restores it or retention deletes the transcript.
  */
-"original_transcripts"
+"original_transcripts" | 
+/**
+ * CAP-05: speaker tags' remote roster, who the meeting app's call window listed.
+ * 
+ * `speaker_tag_roster`: while a meeting records, the speaker-tags watcher
+ * reads the call window every 250 ms and stores one row per stretch during
+ * which a remote participant (never the user) was listed in it, speaking or
+ * not. Zoom shows no talking indicator, so the roster is what tells a
+ * one-to-one call from a group call: `identify_speakers` names every remote
+ * voice of a call with one remote person throughout after that person.
+ * Columns as in `speaker_tag_spans`; rows are only ever appended while
+ * recording (`SpeakerTagWriter::append_roster`, the only writer) and go with
+ * their meeting.
+ */
+"speaker_tag_roster"
 
 /** tauri-specta globals **/
 
