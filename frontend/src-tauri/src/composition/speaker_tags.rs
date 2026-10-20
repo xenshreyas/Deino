@@ -195,7 +195,7 @@ mod tests {
         let repo = SqliteSpeakerTagRepo::new(database);
         let stored = runtime.block_on(repo.spans(&meeting)).unwrap();
         let roster = runtime.block_on(repo.roster(&meeting)).unwrap();
-        assert_eq!(stored, [span.clone()]);
+        assert_eq!(stored, std::slice::from_ref(&span));
         assert_eq!(roster, [span]);
     }
 }
