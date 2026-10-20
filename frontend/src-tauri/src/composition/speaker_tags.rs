@@ -5,11 +5,16 @@
 //!   `speaker_tag_spans` table ([`DatabaseSink`]). The recorder starts a
 //!   watch for every recording through `features::speaker_tags::WatchOnStart`.
 //! - [`tag_priors`] gives `identify_speakers` the spans as priors.
+//! - `capture`: the opt-in dumps of call windows the watch cannot read
+//!   ([`LogFolderCapture`]), written to the log folder.
+
+mod capture;
 
 use std::sync::Arc;
 
 use deino_core::people::SqlitePeopleRepo;
 use deino_core::segments::SqliteSegmentRepo;
+use deino_core::settings::SettingsService;
 use deino_core::speaker_tags::{
     SpeakerTagPriors, SpeakerTagWriter, SqliteSpeakerTagRepo, TagPriorPorts, TagPriors,
 };
@@ -17,33 +22,55 @@ use deino_db::Database;
 use deino_domain::{Clock, MeetingId, TagSpan};
 use deino_recording::{Playhead, RecordingService};
 use deino_speaker_tags::{
-    Position, RecordingClock, SinkError, SpeakerTags, SpeakerTagsParts, TagSink,
+    NoCapture, Position, RecordingClock, SinkError, SpeakerTags, SpeakerTagsParts, TagSink,
+    WindowCapture,
 };
 use tauri::{AppHandle, Manager, Runtime};
 use tokio::runtime::Handle;
 
+use self::capture::LogFolderCapture;
 use super::attach::Phase;
 
 super::attach::attach!(
     "speaker-tags",
     10,
     Phase::Background(|cx| {
-        attach_speaker_tags(cx.app, cx.database);
+        attach_speaker_tags(cx.app, cx.database, cx.clock);
     })
 );
 
 /// Builds and manages `Arc<SpeakerTags>`.
-pub(crate) fn attach_speaker_tags(app: &AppHandle, database: &Database) {
+pub(crate) fn attach_speaker_tags(app: &AppHandle, database: &Database, clock: &Arc<dyn Clock>) {
     let runtime = tauri::async_runtime::handle().inner().clone();
     let tags = SpeakerTags::new(SpeakerTagsParts {
         platform: deino_speaker_tags::platform(),
         clock: Arc::new(RecorderClock { app: app.clone() }),
         sink: Arc::new(DatabaseSink {
             repo: SqliteSpeakerTagRepo::new(database.clone()),
-            runtime,
+            runtime: runtime.clone(),
         }),
+        capture: window_capture(app, runtime, clock),
     });
     app.manage(Arc::new(tags));
+}
+
+/// The call-window dumps over the settings and the log folder; none
+/// without settings.
+fn window_capture(
+    app: &AppHandle,
+    runtime: Handle,
+    clock: &Arc<dyn Clock>,
+) -> Arc<dyn WindowCapture> {
+    let Some(settings) = app.try_state::<Arc<SettingsService>>() else {
+        log::warn!(target: "speaker_tags", "settings are not loaded; call windows are never saved");
+        return Arc::new(NoCapture);
+    };
+    Arc::new(LogFolderCapture {
+        settings: Arc::clone(&settings),
+        runtime,
+        clock: Arc::clone(clock),
+        folder: crate::logging::log_dir(),
+    })
 }
 
 /// The speaker tags of a meeting as priors for `identify_speakers`.
@@ -94,6 +121,12 @@ impl TagSink for DatabaseSink {
     fn save(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError> {
         self.runtime
             .block_on(self.repo.append(meeting, spans))
+            .map_err(SinkError::new)
+    }
+
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError> {
+        self.runtime
+            .block_on(self.repo.append_roster(meeting, spans))
             .map_err(SinkError::new)
     }
 }
@@ -152,12 +185,17 @@ mod tests {
         let meeting = MeetingId::new("meeting");
 
         std::thread::scope(|scope| {
-            scope.spawn(|| sink.save(&meeting, std::slice::from_ref(&span)).unwrap());
+            scope.spawn(|| {
+                sink.save(&meeting, std::slice::from_ref(&span)).unwrap();
+                sink.save_roster(&meeting, std::slice::from_ref(&span))
+                    .unwrap();
+            });
         });
 
-        let stored = runtime
-            .block_on(SqliteSpeakerTagRepo::new(database).spans(&meeting))
-            .unwrap();
-        assert_eq!(stored, [span]);
+        let repo = SqliteSpeakerTagRepo::new(database);
+        let stored = runtime.block_on(repo.spans(&meeting)).unwrap();
+        let roster = runtime.block_on(repo.roster(&meeting)).unwrap();
+        assert_eq!(stored, std::slice::from_ref(&span));
+        assert_eq!(roster, [span]);
     }
 }

@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use deino_speaker_tags::fake::{FakeMac, MemorySink, ScriptedClock};
-use deino_speaker_tags::{SpeakerTags, SpeakerTagsParts};
+use deino_speaker_tags::{NoCapture, SpeakerTags, SpeakerTagsParts};
 use serde_json::json;
 use tauri::Manager;
 use tauri::test::mock_builder;
@@ -18,6 +18,7 @@ fn tags(mac: &Arc<FakeMac>) -> Arc<SpeakerTags> {
         platform: Some(mac.platform()),
         clock: ScriptedClock::new([]),
         sink: Arc::new(MemorySink::default()),
+        capture: Arc::new(NoCapture),
     }))
 }
 

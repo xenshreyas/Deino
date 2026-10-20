@@ -210,5 +210,8 @@ export const DEFAULT_SETTINGS: Settings = {
     "completed": false,
     "step": "welcome",
     "outcomes": {}
+  },
+  "developer": {
+    "captureCallWindows": false
   }
 };

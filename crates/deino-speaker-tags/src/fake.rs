@@ -2,11 +2,12 @@
 //! `test-support`).
 
 use std::collections::VecDeque;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use deino_domain::{CallApp, MeetingId, TagSpan};
 
+use crate::capture::WindowCapture;
 use crate::error::{AxError, SinkError};
 use crate::ports::{
     AccessibilityPermission, Pid, Platform, Position, RecordingClock, RunningApps, TagSink,
@@ -28,6 +29,7 @@ pub struct FakeMac {
     apps: Mutex<Vec<(String, Pid)>>,
     windows: Mutex<Vec<(Pid, Shown)>>,
     prepared: Mutex<Vec<(CallApp, Pid)>>,
+    full_reads: AtomicUsize,
 }
 
 impl FakeMac {
@@ -68,6 +70,11 @@ impl FakeMac {
     pub fn prepared(&self) -> Vec<(CallApp, Pid)> {
         lock(&self.prepared).clone()
     }
+
+    /// How many full reads (dumps) were made so far.
+    pub fn full_reads(&self) -> usize {
+        self.full_reads.load(Ordering::SeqCst)
+    }
 }
 
 impl AccessibilityPermission for FakeMac {
@@ -106,6 +113,15 @@ impl WindowReader for FakeMac {
             .filter(|window| pick(&window.summary()))
             .collect())
     }
+
+    fn full_windows(
+        &self,
+        pid: Pid,
+        pick: &dyn Fn(&WindowSummary) -> bool,
+    ) -> Result<Vec<AxNode>, AxError> {
+        self.full_reads.fetch_add(1, Ordering::SeqCst);
+        self.windows(pid, pick)
+    }
 }
 
 /// A recording clock that plays a script of positions, then reports
@@ -134,6 +150,7 @@ impl RecordingClock for ScriptedClock {
 #[derive(Debug, Default)]
 pub struct MemorySink {
     saved: Mutex<Vec<(MeetingId, TagSpan)>>,
+    roster: Mutex<Vec<(MeetingId, TagSpan)>>,
     failing: AtomicBool,
 }
 
@@ -141,6 +158,14 @@ impl MemorySink {
     /// Every span saved, in order.
     pub fn spans(&self) -> Vec<TagSpan> {
         lock(&self.saved)
+            .iter()
+            .map(|(_, span)| span.clone())
+            .collect()
+    }
+
+    /// Every roster span saved, in order.
+    pub fn roster(&self) -> Vec<TagSpan> {
+        lock(&self.roster)
             .iter()
             .map(|(_, span)| span.clone())
             .collect()
@@ -160,5 +185,50 @@ impl TagSink for MemorySink {
         let mut saved = lock(&self.saved);
         saved.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
         Ok(())
+    }
+
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError> {
+        if self.failing.load(Ordering::SeqCst) {
+            return Err(SinkError::new(std::io::Error::other("the disk is full")));
+        }
+        let mut roster = lock(&self.roster);
+        roster.extend(spans.iter().map(|span| (meeting.clone(), span.clone())));
+        Ok(())
+    }
+}
+
+/// Keeps every dump in memory; wanted or not, as told.
+#[derive(Debug, Default)]
+pub struct MemoryCapture {
+    wanted: AtomicBool,
+    saved: Mutex<Vec<(MeetingId, CallApp, Vec<AxNode>)>>,
+}
+
+impl MemoryCapture {
+    /// A capture that wants dumps.
+    pub fn wanting() -> Arc<Self> {
+        let capture = Arc::new(Self::default());
+        capture.set_wanted(true);
+        capture
+    }
+
+    /// Wants dumps (or not) from now on.
+    pub fn set_wanted(&self, wanted: bool) {
+        self.wanted.store(wanted, Ordering::SeqCst);
+    }
+
+    /// Every dump saved, in order.
+    pub fn saved(&self) -> Vec<(MeetingId, CallApp, Vec<AxNode>)> {
+        lock(&self.saved).clone()
+    }
+}
+
+impl WindowCapture for MemoryCapture {
+    fn wanted(&self) -> bool {
+        self.wanted.load(Ordering::SeqCst)
+    }
+
+    fn save(&self, meeting: &MeetingId, app: CallApp, windows: &[AxNode]) {
+        lock(&self.saved).push((meeting.clone(), app, windows.to_vec()));
     }
 }

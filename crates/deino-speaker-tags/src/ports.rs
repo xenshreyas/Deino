@@ -39,6 +39,16 @@ pub trait WindowReader: Send + Sync {
         pid: Pid,
         pick: &dyn Fn(&WindowSummary) -> bool,
     ) -> Result<Vec<AxNode>, AxError>;
+
+    /// The same windows read with every attribute a fixture dump keeps
+    /// (subroles and identifiers too), within the same budget: the capture
+    /// tool's read and the call-window diagnostic's
+    /// ([`WindowCapture`](crate::capture::WindowCapture)).
+    fn full_windows(
+        &self,
+        pid: Pid,
+        pick: &dyn Fn(&WindowSummary) -> bool,
+    ) -> Result<Vec<AxNode>, AxError>;
 }
 
 /// The platform's ports, together.
@@ -71,6 +81,10 @@ pub trait RecordingClock: Send + Sync {
 
 /// Where finished spans go.
 pub trait TagSink: Send + Sync {
-    /// Stores `spans` for `meeting`.
+    /// Stores `spans` (who the window showed speaking) for `meeting`.
     fn save(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError>;
+
+    /// Stores `spans` of the remote roster (who the call window listed,
+    /// speaking or not) for `meeting`.
+    fn save_roster(&self, meeting: &MeetingId, spans: &[TagSpan]) -> Result<(), SinkError>;
 }

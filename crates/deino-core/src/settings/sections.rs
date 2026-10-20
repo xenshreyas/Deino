@@ -14,6 +14,7 @@ mod briefs;
 mod calendar;
 mod consent;
 mod detection;
+mod developer;
 mod export;
 mod integrations;
 mod network;

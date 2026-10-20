@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT start_ms AS \"start: Millis\", end_ms AS \"end: Millis\",\n                      display_name AS \"name: DisplayName\", app AS \"app: CallApp\"\n               FROM speaker_tag_roster WHERE meeting_id = ?1 ORDER BY start_ms, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "start: Millis",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "end: Millis",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name: DisplayName",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "app: CallApp",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "25e0e017fc3e8358d6632366c46fb18cd4ac915efd7f4ef9d6d348963335d8ab"
+}

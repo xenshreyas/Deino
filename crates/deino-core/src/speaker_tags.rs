@@ -7,8 +7,10 @@
 //! pipeline reaches `identify_speakers` (CAP-04), [`TagPriors`] turns them
 //! into a [`TagPlan`] **before** voices are matched:
 //!
-//! 1. [`align`]: a name wins a system-track segment when its spans cover
-//!    more than half of it;
+//! 1. `one_to_one`: when the call window listed exactly one remote person
+//!    for the whole call (the roster, [`SpeakerTagReader::roster`]), that
+//!    person wins every system-track segment; otherwise [`align`]: a name
+//!    wins a system-track segment when its spans cover more than half of it;
 //! 2. `resolve`: a name stands for an invited attendee or a known person
 //!    with that name, or stays a label;
 //! 3. [`seats`]: each name gets one speaker (the person's, the labelled
@@ -27,6 +29,7 @@
 pub mod align;
 #[cfg(any(test, feature = "test-support"))]
 mod fake;
+pub mod one_to_one;
 mod plan;
 mod priors;
 mod repo;

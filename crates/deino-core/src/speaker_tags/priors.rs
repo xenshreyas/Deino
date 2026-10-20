@@ -1,12 +1,14 @@
 //! [`TagPriors`]: what `identify_speakers` asks before matching voices.
 //!
-//! [`SpeakerTagPriors`] reads the meeting's spans and its system-track
-//! segments, finds the name that wins each segment ([`super::align`]),
-//! resolves names to people ([`super::resolve`]), seats them
-//! ([`super::seats`]) and returns the [`TagPlan`]. A meeting recorded
-//! without speaker tags (no permission, no supported app, a window the
-//! adapters did not recognise) has no spans, so its plan is empty and voice
-//! matching names its speakers exactly as before.
+//! [`SpeakerTagPriors`] reads the meeting's spans, roster and system-track
+//! segments, finds the name that wins each segment (every segment for the
+//! one remote person of a one-to-one call, [`super::one_to_one`], else by
+//! the spans, [`super::align`]), resolves names to people
+//! ([`super::resolve`]), seats them ([`super::seats`]) and returns the
+//! [`TagPlan`]. A meeting recorded without speaker tags (no permission, no
+//! supported app, a window the adapters did not recognise) has no spans and
+//! no roster, so its plan is empty and voice matching names its speakers
+//! exactly as before.
 
 use std::collections::BTreeSet;
 use std::sync::Arc;
@@ -17,6 +19,7 @@ use deino_domain::{Channel, Clock, DisplayName, MeetingId, PersonId};
 
 use super::SpeakerTagReader;
 use super::align::{Timed, Win, align};
+use super::one_to_one::{only_remote, won_by};
 use super::plan::{TagPlan, Track, plan};
 use super::resolve::{Directory, resolve};
 use super::seats::{Ballot, Seated, elect};
@@ -72,12 +75,16 @@ impl SpeakerTagPriors {
 impl TagPriors for SpeakerTagPriors {
     async fn plan(&self, meeting: &MeetingId, speakers: &[Speaker]) -> Result<TagPlan, DbError> {
         let spans = self.ports.tags.spans(meeting).await?;
-        if spans.is_empty() {
+        let roster = self.ports.tags.roster(meeting).await?;
+        if spans.is_empty() && roster.is_empty() {
             return Ok(TagPlan::default());
         }
         let segments = system_track(self.ports.segments.list(meeting, Page::ALL).await?);
         let timed: Vec<Timed> = segments.iter().map(timed).collect();
-        let wins = align(&spans, &timed);
+        let only = only_remote(&roster);
+        let wins = only
+            .as_ref()
+            .map_or_else(|| align(&spans, &timed), |name| won_by(name, &timed));
         let people = self.people(meeting, &wins).await?;
         let seated: Vec<Seated> = segments.iter().map(seated).collect();
         let ballot = Ballot {
@@ -94,8 +101,10 @@ impl TagPriors for SpeakerTagPriors {
         let tag_plan = plan(&elect(&ballot), &track, self.ports.clock.as_ref());
         log::info!(
             target: "deino_core::speaker_tags",
-            "meeting {meeting}: {} spans, {} of {} segments won, {} moved, {} known people",
+            "meeting {meeting}: {} spans, {} roster spans, one-to-one {}, {} of {} segments won, {} moved, {} known people",
             spans.len(),
+            roster.len(),
+            only.is_some(),
             wins.len(),
             seated.len(),
             tag_plan.seating.moved.len(),

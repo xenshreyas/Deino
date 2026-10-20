@@ -5,7 +5,8 @@
 //! the watcher), a node budget and a depth limit, and subtrees that never
 //! hold participants (menus, scroll bars, text fields such as a chat
 //! composer) are skipped. Only the attributes the adapters use are read
-//! live; the capture tool reads them all. Nothing read here is logged.
+//! live; the full read (the capture tool, the call-window diagnostic) reads
+//! them all. Nothing read here is logged.
 
 use cidre::{ax, cf};
 use deino_domain::CallApp;
@@ -13,7 +14,7 @@ use deino_domain::CallApp;
 use super::dom;
 use crate::error::AxError;
 use crate::ports::{Pid, WindowReader};
-use crate::tree::{AxNode, WINDOW_ROLE, WindowSummary};
+use crate::tree::{AxNode, Frame, WINDOW_ROLE, WindowSummary};
 
 /// How long one Accessibility request may take, in seconds.
 const AX_TIMEOUT_SECS: f32 = 0.1;
@@ -37,6 +38,10 @@ const SKIPPED_ROLES: &[&str] = &[
     "AXImage",
 ];
 
+/// Roles whose frame the live read keeps: Zoom's video tiles, compared by
+/// size to find Speaker View's large tile. The full read keeps every frame.
+const FRAMED_ROLES: &[&str] = &["AXTabGroup"];
+
 /// Web content, where Chromium exposes CSS classes.
 const WEB_AREA_ROLE: &str = "AXWebArea";
 
@@ -47,22 +52,7 @@ const MANUAL_ACCESSIBILITY: &str = "AXManualAccessibility";
 const DOM_CLASS_LIST: &str = "AXDOMClassList";
 
 /// Reads windows through Accessibility.
-pub(crate) struct AxWindows {
-    /// Read every attribute (the capture tool), not just the adapters'.
-    full: bool,
-}
-
-impl AxWindows {
-    /// The watcher's reader: the adapters' attributes only.
-    pub(super) const fn live() -> Self {
-        Self { full: false }
-    }
-
-    /// The capture tool's reader: every attribute a dump keeps.
-    pub(crate) const fn capture() -> Self {
-        Self { full: true }
-    }
-}
+pub(super) struct AxWindows;
 
 impl WindowReader for AxWindows {
     fn prepare(&self, app: CallApp, pid: Pid) {
@@ -82,30 +72,46 @@ impl WindowReader for AxWindows {
         pid: Pid,
         pick: &dyn Fn(&WindowSummary) -> bool,
     ) -> Result<Vec<AxNode>, AxError> {
-        let app = ax::UiElement::with_app_pid(pid.0);
-        app.set_messaging_timeout_secs(AX_TIMEOUT_SECS)
-            .map_err(api_error)?;
-        let children = app.children().map_err(api_error)?;
-        let reader = Reader::new(self.full);
-        let mut trees = Vec::new();
-        for window in children
-            .iter()
-            .filter(|child| role(child) == WINDOW_ROLE)
-            .take(MAX_WINDOWS)
-        {
-            let summary = WindowSummary {
-                title: string(window, ax::attr::title()),
-                document: string(window, ax::attr::document()),
-            };
-            if pick(&summary) {
-                let mut budget = MAX_NODES;
-                let mut tree = reader.tree(window, Walk::default(), &mut budget);
-                tree.document = summary.document;
-                trees.push(tree);
-            }
-        }
-        Ok(trees)
+        read_windows(pid, pick, &Reader::new(false))
     }
+
+    fn full_windows(
+        &self,
+        pid: Pid,
+        pick: &dyn Fn(&WindowSummary) -> bool,
+    ) -> Result<Vec<AxNode>, AxError> {
+        read_windows(pid, pick, &Reader::new(true))
+    }
+}
+
+/// `pid`'s windows that `pick` accepts, front to back, read by `reader`.
+fn read_windows(
+    pid: Pid,
+    pick: &dyn Fn(&WindowSummary) -> bool,
+    reader: &Reader,
+) -> Result<Vec<AxNode>, AxError> {
+    let app = ax::UiElement::with_app_pid(pid.0);
+    app.set_messaging_timeout_secs(AX_TIMEOUT_SECS)
+        .map_err(api_error)?;
+    let children = app.children().map_err(api_error)?;
+    let mut trees = Vec::new();
+    for window in children
+        .iter()
+        .filter(|child| role(child) == WINDOW_ROLE)
+        .take(MAX_WINDOWS)
+    {
+        let summary = WindowSummary {
+            title: string(window, ax::attr::title()),
+            document: string(window, ax::attr::document()),
+        };
+        if pick(&summary) {
+            let mut budget = MAX_NODES;
+            let mut tree = reader.tree(window, Walk::default(), &mut budget);
+            tree.document = summary.document;
+            trees.push(tree);
+        }
+    }
+    Ok(trees)
 }
 
 /// One read of a window, with its attribute names made once.
@@ -154,8 +160,11 @@ impl Reader {
                 .map(|value| dom::strings(&value))
                 .unwrap_or_default()
         };
+        let role = role(element);
+        let framed = self.full || FRAMED_ROLES.contains(&role.as_str());
         AxNode {
-            role: role(element),
+            frame: framed.then(|| frame(element)).flatten(),
+            role,
             subrole: self
                 .full
                 .then(|| string(element, ax::attr::subrole()))
@@ -178,6 +187,27 @@ struct Walk {
     depth: usize,
     /// It is web content (inside an `AXWebArea`).
     web: bool,
+}
+
+/// The element's position and size, rounded to whole points.
+fn frame(element: &ax::UiElement) -> Option<Frame> {
+    let at = element.pos().ok()?.cg_point()?;
+    let size = element.size().ok()?.cg_size()?;
+    Some(Frame {
+        x: points(at.x),
+        y: points(at.y),
+        width: u32::try_from(points(size.width)).unwrap_or(0),
+        height: u32::try_from(points(size.height)).unwrap_or(0),
+    })
+}
+
+/// A coordinate in whole points, clamped to what a screen can hold.
+#[allow(
+    clippy::cast_possible_truncation,
+    reason = "rounded and clamped to ±1,000,000 points first"
+)]
+fn points(value: f64) -> i32 {
+    value.round().clamp(-1_000_000.0, 1_000_000.0) as i32
 }
 
 fn role(element: &ax::UiElement) -> String {

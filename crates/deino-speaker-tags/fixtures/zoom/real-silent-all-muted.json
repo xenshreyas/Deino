@@ -1,0 +1,688 @@
+[
+  {
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "title": "Zoom Meeting",
+    "identifier": "zm.meeting.window.main",
+    "children": [
+      {
+        "role": "AXTabGroup",
+        "description": "Bea Ruiz, Computer audio muted",
+        "children": [
+          {
+            "role": "AXImage"
+          },
+          {
+            "role": "AXButton",
+            "description": "Bea Ruiz"
+          }
+        ]
+      },
+      {
+        "role": "AXTabGroup",
+        "description": "Alex Chen, Computer audio muted, Video off",
+        "children": [
+          {
+            "role": "AXImage"
+          },
+          {
+            "role": "AXButton",
+            "description": "Alex Chen"
+          }
+        ]
+      },
+      {
+        "role": "AXSplitter"
+      },
+      {
+        "role": "AXStaticText",
+        "description": "Host tools"
+      },
+      {
+        "role": "AXButton",
+        "description": "Pop out, Host tools"
+      },
+      {
+        "role": "AXButton",
+        "description": "Close, Host tools"
+      },
+      {
+        "role": "AXScrollArea",
+        "description": "Host tools",
+        "children": [
+          {
+            "role": "AXStaticText",
+            "description": "Meeting controls"
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Waiting room"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Waiting room"
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Lock meeting"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Lock meeting"
+          },
+          {
+            "role": "AXButton",
+            "description": "Advanced"
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Participant permissions"
+          },
+          {
+            "role": "AXButton",
+            "title": "",
+            "description": "Turn all off"
+          },
+          {
+            "role": "",
+            "description": ""
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Unmute self"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Unmute self"
+          },
+          {
+            "role": "",
+            "description": ""
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Start video"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Start video"
+          },
+          {
+            "role": "",
+            "description": ""
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Chat"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Chat"
+          },
+          {
+            "role": "",
+            "description": ""
+          },
+          {
+            "role": "AXStaticText",
+            "description": "Rename self"
+          },
+          {
+            "role": "AXCheckBox",
+            "subrole": "AXSwitch",
+            "description": "Rename self"
+          },
+          {
+            "role": "AXButton",
+            "description": "Share"
+          },
+          {
+            "role": "AXButton",
+            "description": "Recording"
+          },
+          {
+            "role": "AXButton",
+            "description": "My Notes"
+          },
+          {
+            "role": "AXButton",
+            "description": "Captions"
+          },
+          {
+            "role": "AXButton",
+            "description": "Apps"
+          }
+        ]
+      },
+      {
+        "role": "AXGroup",
+        "children": [
+          {
+            "role": "AXGroup",
+            "children": [
+              {
+                "role": "AXScrollArea",
+                "title": "",
+                "description": "",
+                "value": "",
+                "children": [
+                  {
+                    "role": "AXWebArea",
+                    "title": "",
+                    "description": "Meeting details",
+                    "value": "",
+                    "children": [
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": ""
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": ""
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "summary-line"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Alex Chen's Zoom Meeting"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "quick-look__header--time"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "calendar-divider"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-item--title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Meeting ID"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXStaticText",
+                        "title": "",
+                        "description": "",
+                        "value": "000 0000 0000"
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-item--title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Passcode"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXStaticText",
+                        "title": "",
+                        "description": "",
+                        "value": "000000"
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-item--title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Invite link"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXApplicationGroup",
+                        "title": "https://example.zoom.us/j/00000000000",
+                        "description": "https://example.zoom.us/j/00000000000",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-link",
+                          "calendar-occlusion-element"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "https://example.zoom.us/j/00000000000"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXButton",
+                        "title": "Copy Invite link",
+                        "description": "Copy Invite link",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-link--operation",
+                          "calendar-occlusion-element"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-item--title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Host"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXStaticText",
+                        "title": "",
+                        "description": "",
+                        "value": "Alex Chen"
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "meeting-item--title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Participant ID"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXStaticText",
+                        "title": "",
+                        "description": "",
+                        "value": "000000"
+                      },
+                      {
+                        "role": "AXButton",
+                        "title": "Hide join info",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "view-more-info",
+                          "showMeetingInfo"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": ""
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "calendar-divider"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "description-title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Description"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXButton",
+                        "title": "Description",
+                        "description": "Description",
+                        "value": "",
+                        "domClasses": [
+                          "zm-icon-right"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "subrole": "AXEmptyGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "calendar-divider",
+                          "agenda-divider"
+                        ]
+                      },
+                      {
+                        "role": "AXGroup",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "in-meeting-info-title"
+                        ],
+                        "children": [
+                          {
+                            "role": "AXStaticText",
+                            "title": "",
+                            "description": "",
+                            "value": "Meeting agenda"
+                          }
+                        ]
+                      },
+                      {
+                        "role": "AXButton",
+                        "title": "Meeting agenda",
+                        "description": "Meeting agenda",
+                        "value": "",
+                        "domClasses": [
+                          "zm-icon-down"
+                        ]
+                      },
+                      {
+                        "role": "AXStaticText",
+                        "title": "",
+                        "description": "",
+                        "value": "Organize your discussion topics and timing to keep the participants aligned."
+                      },
+                      {
+                        "role": "AXButton",
+                        "title": "Create meeting agenda",
+                        "description": "",
+                        "value": "",
+                        "domClasses": [
+                          "zoom-button",
+                          "zoom-button--md",
+                          "zoom-button--primary"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "role": "AXUnknown",
+        "description": "Meeting info",
+        "children": [
+          {
+            "role": "AXButton",
+            "title": "Close",
+            "description": "Button"
+          },
+          {
+            "role": "AXButton",
+            "title": "Pop out",
+            "description": "Button"
+          },
+          {
+            "role": "AXStaticText",
+            "value": "Meeting info"
+          }
+        ]
+      },
+      {
+        "role": "AXSplitter"
+      },
+      {
+        "role": "AXSplitter"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXCloseButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXMinimizeButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXFullScreenButton"
+      }
+    ]
+  },
+  {
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "title": "Zoom Workplace",
+    "children": [
+      {
+        "role": "",
+        "description": ""
+      },
+      {
+        "role": "AXButton",
+        "title": "",
+        "description": "Zoom, Alex Chen, In a Zoom Meeting, Pro account"
+      },
+      {
+        "role": "AXButton",
+        "description": "Search (⌘E)  ⌘E"
+      },
+      {
+        "role": "AXButton",
+        "description": "Back in Chat(⌘ + left bracket)"
+      },
+      {
+        "role": "AXButton",
+        "description": "Forward in Chat(⌘ + right bracket)"
+      },
+      {
+        "role": "AXButton",
+        "description": "History"
+      },
+      {
+        "role": "AXButton",
+        "description": "Create new"
+      },
+      {
+        "role": "AXButton",
+        "description": "Open activity center"
+      },
+      {
+        "role": "AXButton",
+        "description": "Open calendar side panel (⌘⇧J)"
+      },
+      {
+        "role": "AXButton",
+        "description": "Room"
+      },
+      {
+        "role": "AXGroup",
+        "description": "Navigation tabs",
+        "children": [
+          {
+            "role": "AXButton",
+            "description": "Home, selected, 1 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Meetings, 2 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Chat, 3 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Hub, 4 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "Whiteboards, 5 of 6"
+          },
+          {
+            "role": "AXButton",
+            "description": "More, 6 of 6"
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "title": "Settings"
+      },
+      {
+        "role": "AXStaticText",
+        "value": "Settings"
+      },
+      {
+        "role": "AXSplitGroup",
+        "children": [
+          {
+            "role": "AXGroup",
+            "children": [
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Back to meeting",
+                "identifier": "00000000-0000-0000-0000-000000000001"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Join meeting",
+                "identifier": "00000000-0000-0000-0000-000000000002"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Schedule meeting",
+                "identifier": "00000000-0000-0000-0000-000000000003"
+              },
+              {
+                "role": "AXButton",
+                "title": "",
+                "description": "Share screen",
+                "identifier": "00000000-0000-0000-0000-000000000004"
+              },
+              {
+                "role": "AXGroup",
+                "children": [
+                  {
+                    "role": "AXGroup",
+                    "children": [
+                      {
+                        "role": "AXScrollArea",
+                        "title": "",
+                        "description": "",
+                        "value": "",
+                        "children": [
+                          {
+                            "role": "AXWebArea",
+                            "title": "",
+                            "description": "Zoom Calendar Sidebar",
+                            "value": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "role": "AXSplitter"
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXCloseButton"
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXFullScreenButton",
+        "children": [
+          {
+            "role": "AXGroup"
+          }
+        ]
+      },
+      {
+        "role": "AXButton",
+        "subrole": "AXMinimizeButton"
+      }
+    ]
+  }
+]

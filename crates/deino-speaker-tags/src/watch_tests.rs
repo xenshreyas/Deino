@@ -6,23 +6,25 @@ use crate::status::{TagState, statuses};
 const ZOOM: Pid = Pid(101);
 const CHROME: Pid = Pid(202);
 
+/// A Zoom video tile, as real Zoom describes it.
 fn tile(description: &str) -> AxNode {
     AxNode {
-        role: "AXGroup".into(),
+        role: "AXTabGroup".into(),
         description: Some(description.into()),
         ..AxNode::default()
     }
 }
 
-/// Zoom's call window with Alex, Bea and the user; `talking` is lit.
+/// Zoom's call window with Alex, Bea and the user; only `talking` is
+/// unmuted (Zoom shows no talking indicator).
 fn zoom_call(talking: Option<&str>) -> AxNode {
     let state = |name: &str| {
-        let lit = if talking == Some(name) {
-            ", Talking"
+        let audio = if talking == Some(name) {
+            "unmuted"
         } else {
-            ""
+            "muted"
         };
-        format!("{name}, Computer audio unmuted, Video on{lit}")
+        format!("{name}, Computer audio {audio}")
     };
     AxNode {
         role: "AXWindow".into(),
@@ -30,7 +32,7 @@ fn zoom_call(talking: Option<&str>) -> AxNode {
         children: vec![
             tile(&state("Alex Chen")),
             tile(&state("Bea Ruiz")),
-            tile("Shreyas (Host, me), Computer audio muted, Video on"),
+            tile("Shreyas (me), Computer audio unmuted"),
         ],
         ..AxNode::default()
     }
@@ -70,6 +72,7 @@ impl Rig {
             clock: ScriptedClock::new(positions),
             sink: self.sink.clone(),
             health: self.health.clone(),
+            capture: Arc::new(crate::capture::NoCapture),
         })
     }
 
@@ -116,6 +119,16 @@ fn speaker_switches_in_a_zoom_call_become_spans_saved_at_the_end() {
             .spans()
             .iter()
             .all(|span| span.app == CallApp::Zoom)
+    );
+    let roster: Vec<(u32, u32, String)> = rig
+        .sink
+        .roster()
+        .into_iter()
+        .map(|span| (span.start.0, span.end.0, span.name.to_string()))
+        .collect();
+    assert_eq!(
+        roster,
+        [(0, 875, "Alex Chen".into()), (0, 875, "Bea Ruiz".into())]
     );
 }
 

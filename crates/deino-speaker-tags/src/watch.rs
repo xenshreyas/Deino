@@ -3,22 +3,28 @@
 //! Each [`tick`](Watch::tick) asks the recording clock where the recording
 //! is, then looks at the meeting apps: the app that held the call at the
 //! last poll first, then Zoom, Teams and Meet. The first call window an
-//! adapter reads decides who speaks. Every failure is a [`TagError`],
+//! adapter reads decides who speaks; the remote participants it lists are
+//! kept as roster spans ([`Presence`]). Every failure is a [`TagError`],
 //! logged at debug level when it first appears (never per poll) and never
 //! raised: the poll simply names nobody, and voice matching names that
-//! stretch later. Finished spans are saved every
-//! [`FLUSH_EVERY`] of recording time and when the recording ends.
+//! stretch later. Finished speaker and roster spans are saved every
+//! [`FLUSH_EVERY`] of recording time and when the recording ends. When the
+//! user asked for it, a call window that cannot be read is dumped once per
+//! meeting and app ([`crate::capture`]).
 
 use std::sync::Arc;
 
-use deino_domain::{CallApp, MeetingId, Millis, TagSpan};
+use deino_domain::{CallApp, MeetingId, Millis};
 
 use crate::adapter::{SpeakerAdapter, adapter_for};
+use crate::capture::{Captures, WindowCapture};
 use crate::error::TagError;
+use crate::outbox::Outbox;
 use crate::ports::{Pid, Platform, Position, RecordingClock, TagSink};
+use crate::presence::Presence;
 use crate::reading::{ReadError, Reading};
 use crate::status::LayoutHealth;
-use crate::timeline::{Sighting, Timeline};
+use crate::timeline::Timeline;
 use crate::tree::{AxNode, WindowSummary};
 
 /// How much recording time passes between saves of finished spans.
@@ -36,10 +42,13 @@ pub struct WatchParts {
     pub platform: Platform,
     /// The recording's clock.
     pub clock: Arc<dyn RecordingClock>,
-    /// Where finished spans go.
+    /// Where finished speaker and roster spans go.
     pub sink: Arc<dyn TagSink>,
     /// Shared with Settings: whether each app's window was recognised.
     pub health: Arc<LayoutHealth>,
+    /// Where dumps of unreadable call windows go
+    /// ([`NoCapture`](crate::capture::NoCapture) for none).
+    pub capture: Arc<dyn WindowCapture>,
 }
 
 /// Whether to keep polling.
@@ -55,15 +64,16 @@ pub enum Step {
 pub struct Watch {
     parts: WatchParts,
     timeline: Timeline,
-    unsaved: Vec<TagSpan>,
+    presence: Presence,
+    outbox: Outbox,
     flushed_at: Millis,
     holder: Option<CallApp>,
     prepared: Vec<Pid>,
     degraded: Option<TagError>,
-    /// Spans saved so far, and whether any poll found a call window: the
+    /// Whether any poll found a call window: with the saved counts, the
     /// end-of-watch summary that tells a silent failure from a quiet call.
-    saved: usize,
     saw_call: bool,
+    captures: Captures,
 }
 
 impl Watch {
@@ -72,13 +82,14 @@ impl Watch {
         Self {
             parts,
             timeline: Timeline::default(),
-            unsaved: Vec::new(),
+            presence: Presence::default(),
+            outbox: Outbox::default(),
             flushed_at: Millis(0),
             holder: None,
             prepared: Vec::new(),
             degraded: None,
-            saved: 0,
             saw_call: false,
+            captures: Captures::default(),
         }
     }
 
@@ -91,11 +102,21 @@ impl Watch {
             }
             Position::Paused => {
                 self.timeline.interrupt();
+                self.presence.interrupt();
                 Step::Continue
             }
             Position::At(at) => {
-                let sighting = self.look();
-                self.timeline.observe(at, sighting);
+                let seen = self.look();
+                let listed = seen
+                    .as_ref()
+                    .map(|(app, r)| (*app, r.participants.as_slice()));
+                self.presence.observe(at, listed);
+                let speaking =
+                    seen.and_then(|(app, r)| r.active.remote().map(|n| (app, n.clone())));
+                self.timeline.observe(at, speaking);
+                if !self.saw_call {
+                    self.captures.no_call_yet(&self.parts, at);
+                }
                 if at.0.saturating_sub(self.flushed_at.0) >= FLUSH_EVERY.0 {
                     self.flush(at);
                 }
@@ -107,16 +128,18 @@ impl Watch {
     /// Closes the open span and saves everything; the watch is over.
     pub fn finish(&mut self) {
         self.timeline.interrupt();
+        self.presence.interrupt();
         self.flush(self.flushed_at);
-        let (meeting, saved, call) = (&self.parts.meeting, self.saved, self.saw_call);
+        let (meeting, call) = (&self.parts.meeting, self.saw_call);
+        let (saved, roster) = (self.outbox.saved, self.outbox.saved_roster);
         let last = self
             .degraded
             .map_or_else(|| "none".into(), |error| error.to_string());
-        log::info!(target: TARGET, "meeting {meeting}: {saved} speaker tags saved; a call window was {}found; last problem: {last}", if call { "" } else { "not " });
+        log::info!(target: TARGET, "meeting {meeting}: {saved} speaker tags and {roster} roster spans saved; a call window was {}found; last problem: {last}", if call { "" } else { "not " });
     }
 
-    /// Who is speaking, if a remote participant is and a window says so.
-    fn look(&mut self) -> Option<Sighting> {
+    /// The app holding the call and what its window says, if one does.
+    fn look(&mut self) -> Option<(CallApp, Reading)> {
         if !self.parts.platform.permission.granted() {
             self.degrade(TagError::PermissionDenied);
             return None;
@@ -133,8 +156,8 @@ impl Watch {
         }
     }
 
-    /// The first call window's speaker, the last holder's app first.
-    fn sighting(&mut self) -> Result<Option<Sighting>, TagError> {
+    /// The first call window's reading, the last holder's app first.
+    fn sighting(&mut self) -> Result<Option<(CallApp, Reading)>, TagError> {
         let mut failure = None;
         for app in self.order() {
             let adapter = adapter_for(app);
@@ -143,7 +166,7 @@ impl Watch {
                     Ok(Some(reading)) => {
                         self.holder = Some(app);
                         self.saw_call = true;
-                        return Ok(reading.active.remote().map(|name| (app, name.clone())));
+                        return Ok(Some((app, reading)));
                     }
                     Ok(None) => {}
                     Err(error) => failure = Some(error),
@@ -169,15 +192,18 @@ impl Watch {
     ) -> Result<Option<Reading>, TagError> {
         let app = adapter.app();
         let mut windows = self.call_windows(adapter, pid)?;
+        let is_call = |window: &&AxNode| adapter.is_call_window(&window.summary());
         // An app is readied only once a call window shows (Chrome exposes its
         // web content only then), and that window is read again at once.
-        if !windows.is_empty() && !self.prepared.contains(&pid) {
+        if windows.iter().any(|w| is_call(&w)) && !self.prepared.contains(&pid) {
             self.parts.platform.windows.prepare(app, pid);
             self.prepared.push(pid);
             windows = self.call_windows(adapter, pid)?;
         }
-        for window in &windows {
-            match adapter.read(window) {
+        let (calls, context): (Vec<&AxNode>, Vec<&AxNode>) = windows.iter().partition(is_call);
+        let context: Vec<AxNode> = context.into_iter().cloned().collect();
+        for window in calls {
+            match adapter.read_with(window, &context) {
                 Ok(reading) => {
                     self.parts.health.record(app, true);
                     return Ok(Some(reading));
@@ -185,6 +211,7 @@ impl Watch {
                 Err(ReadError::NotInCall) => {}
                 Err(source @ ReadError::UnrecognisedLayout) => {
                     self.parts.health.record(app, false);
+                    self.captures.unrecognised(&self.parts, app);
                     return Err(TagError::Layout { app, source });
                 }
             }
@@ -192,13 +219,16 @@ impl Watch {
         Ok(None)
     }
 
-    /// The windows of `pid` that may hold a call, read in full.
+    /// The windows of `pid` that may hold a call or tell about it, read in
+    /// full.
     fn call_windows(
         &self,
         adapter: &dyn SpeakerAdapter,
         pid: Pid,
     ) -> Result<Vec<AxNode>, TagError> {
-        let pick = |window: &WindowSummary| adapter.is_call_window(window);
+        let pick = |window: &WindowSummary| {
+            adapter.is_call_window(window) || adapter.is_context_window(window)
+        };
         let windows = self.parts.platform.windows.windows(pid, &pick);
         windows.map_err(|source| TagError::Unreadable {
             app: adapter.app(),
@@ -228,22 +258,9 @@ impl Watch {
     /// Saves the finished spans; keeps them for the next try on failure.
     fn flush(&mut self, at: Millis) {
         self.flushed_at = at;
-        self.unsaved.extend(self.timeline.take_closed());
-        if self.unsaved.is_empty() {
-            return;
-        }
-        match self.parts.sink.save(&self.parts.meeting, &self.unsaved) {
-            Ok(()) => {
-                self.saved += self.unsaved.len();
-                self.unsaved.clear();
-            }
-            Err(error) => log::warn!(
-                target: TARGET,
-                "meeting {}: {} speaker tags kept for the next save: {error}",
-                self.parts.meeting,
-                self.unsaved.len()
-            ),
-        }
+        let closed = (self.timeline.take_closed(), self.presence.take_closed());
+        let (sink, meeting) = (self.parts.sink.as_ref(), &self.parts.meeting);
+        self.outbox.flush(sink, meeting, closed);
     }
 }
 

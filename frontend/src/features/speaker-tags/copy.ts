@@ -10,7 +10,10 @@ export const speakerTagsCopy = {
   apps: {
     zoom: { name: 'Zoom', where: 'The Zoom desktop app' },
     teams: { name: 'Microsoft Teams', where: 'The Teams desktop app' },
-    meet: { name: 'Google Meet', where: 'Meet in Chrome, Brave, Edge or Arc, as the active tab of its window' },
+    meet: {
+      name: 'Google Meet',
+      where: 'Meet in Chrome, Brave, Edge or Arc, as the active tab of its window',
+    },
   } satisfies Record<CallApp, { name: string; where: string }>,
   /** The permission, as the Permissions card names it (UX-09, UX-10: one row, there). */
   permission: 'Accessibility',
