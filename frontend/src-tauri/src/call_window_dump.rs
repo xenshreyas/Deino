@@ -16,7 +16,10 @@ const FLAG: &str = "--dump-call-window";
 /// Runs the dump when the arguments ask for it; returns the exit code.
 pub fn run_if_requested(args: &[OsString]) -> Option<i32> {
     let at = args.iter().position(|arg| arg == FLAG)?;
-    let app = args.get(at + 1).and_then(|name| name.to_str()).and_then(app_named);
+    let app = args
+        .get(at + 1)
+        .and_then(|name| name.to_str())
+        .and_then(app_named);
     let out = args.get(at + 2);
     let (Some(app), Some(out)) = (app, out) else {
         log::error!("usage: deino --dump-call-window <zoom|teams|meet> <file>");
@@ -27,7 +30,10 @@ pub fn run_if_requested(args: &[OsString]) -> Option<i32> {
 
 /// The meeting app called `name`.
 fn app_named(name: &str) -> Option<CallApp> {
-    CallApp::ALL.iter().copied().find(|app| app.as_str() == name)
+    CallApp::ALL
+        .iter()
+        .copied()
+        .find(|app| app.as_str() == name)
 }
 
 /// Writes `app`'s windows to `out`.
