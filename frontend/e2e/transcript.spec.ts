@@ -81,7 +81,8 @@ test('a meeting transcript reads as speaker turns and searches with speaker filt
   await searchBox(page).press('Escape');
   await transcript(page).getByRole('button', { name: 'Maya Chen' }).first().click();
   await expect(page.getByRole('heading', { name: 'Who is Maya Chen?' })).toBeVisible();
-  await expect(page.getByRole('radio', { name: 'This segment' })).toBeChecked();
+  // Naming a speaker names all their lines unless the user narrows it.
+  await expect(page.getByRole('radio', { name: 'All segments' })).toBeChecked();
   await expect(page.getByText('In this meeting')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('transcript-rename.png') });
   await page.keyboard.press('Escape');
