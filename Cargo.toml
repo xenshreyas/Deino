@@ -13,6 +13,7 @@ edition = "2024"
 # Kept equal to `rust-toolchain.toml`, so clippy suggests every stable API we can use.
 rust-version = "1.96"
 publish = false
+license = "MIT"
 
 # Versions shared by more than one crate. Members inherit them with
 # `dep = { workspace = true }` and add features locally. Pin the specta set

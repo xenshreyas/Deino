@@ -3,6 +3,7 @@ name = "deino-doc"
 version = "0.1.0"
 description = "Deino's note document: the typed TipTap JSON model, Markdown in and out, and validation"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

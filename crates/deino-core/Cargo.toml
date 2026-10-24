@@ -3,6 +3,7 @@ name = "deino-core"
 version = "0.1.0"
 description = "Deino's features as Tauri-free modules: models, services, ports and repositories"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

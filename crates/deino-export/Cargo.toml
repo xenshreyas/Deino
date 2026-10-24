@@ -3,6 +3,7 @@ name = "deino-export"
 version = "0.1.0"
 description = "Deino's meeting exports: pure renderers (Markdown, TXT, JSON, SRT, VTT, HTML, DOCX, PDF, CSV) over a typed MeetingExport"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

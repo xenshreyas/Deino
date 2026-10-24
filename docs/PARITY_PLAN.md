@@ -43,7 +43,7 @@ This document does two jobs:
   - integrations the user connects (Slack, Notion, Gmail, calendars, CRMs, task tools).
   - Audio and transcription never leave the Mac.
 - **No meeting bot.** Recording only ever happens on the computer running Deino. There are no share links or cloud sync (§5.8). A phone app is a future consideration (§10).
-- **Proprietary.** Do not add open-source licence headers. Keep `THIRD_PARTY_NOTICES.md` up to date whenever code is copied from MIT projects such as Meetily, Handy or community PRs.
+- **MIT licensed** ([`LICENSE`](../LICENSE)). No per-file licence headers. Keep `THIRD_PARTY_NOTICES.md` up to date whenever code is copied from MIT projects such as Meetily, Handy or community PRs.
 
 **Defaults unless §8 says otherwise**
 - **Platform:** macOS 14.2+ on Apple Silicon is the primary target. Windows and Linux must still compile (`cargo check`), but new OS-specific features may be stubbed with `#[cfg(not(target_os = "macos"))]` returning `Err("unsupported on this platform")`.

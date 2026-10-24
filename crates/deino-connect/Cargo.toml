@@ -3,6 +3,7 @@ name = "deino-connect"
 version = "0.1.0"
 description = "Deino's connections to the user's online calendar accounts: the Google Calendar and Microsoft Graph calendar sources, signed in through the integrations framework's OAuth"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

@@ -3,6 +3,7 @@ name = "deino-recording"
 version = "0.1.0"
 description = "Deino's live recording pipeline: two-lane Me/Them transcription, echo cancellation and Rust-owned persistence"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

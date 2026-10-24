@@ -3,6 +3,7 @@ name = "deino-speaker-tags"
 version = "0.1.0"
 description = "Deino's speaker tags: who the meeting app shows as the active speaker, read through Accessibility while recording"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

@@ -3,6 +3,7 @@ name = "deino-audio"
 version = "0.1.0"
 description = "Deino's crash-safe audio recording: track writers, manifest, recovery, finalize and the AudioSource port"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

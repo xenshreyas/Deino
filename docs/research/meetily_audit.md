@@ -1,6 +1,6 @@
 # Meetily v0.4.1 (Deino fork) — Feature & Architecture Audit
 
-Repo: `/Users/xenshreyas/Documents/GitHub/Deino` (HEAD `aeb1d24 "Start Deino from Meetily v0.4.1"`, upstream `Zackriya-Solutions/meetily`).
+Repo: Deino (HEAD `aeb1d24 "Start Deino from Meetily v0.4.1"`, upstream `Zackriya-Solutions/meetily`).
 Method: read CLAUDE.md, README, docs/, then verified against source. Paths below are relative to the repo root unless absolute. All claims marked "verified" were checked in code; README/CLAUDE.md claims that turned out wrong are called out explicitly.
 
 ---

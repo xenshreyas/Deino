@@ -3,6 +3,7 @@ name = "deino-integrations"
 version = "0.1.0"
 description = "Deino's integrations framework: providers, capabilities, OAuth with PKCE over a loopback redirect, connections and the delivery log"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

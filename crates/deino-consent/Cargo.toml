@@ -3,6 +3,7 @@ name = "deino-consent"
 version = "0.1.0"
 description = "Deino's consent tools: the automatic notice posted in the meeting chat through Accessibility"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

@@ -3,6 +3,7 @@ name = "deino-pipeline"
 version = "0.1.0"
 description = "Deino's post-meeting pipeline: durable SQLite jobs, the stage trait, the registry and the runner"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

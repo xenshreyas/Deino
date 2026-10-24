@@ -3,6 +3,7 @@ name = "deino-domain"
 version = "0.1.0"
 description = "Deino's shared vocabulary: typed IDs, the IPC error model and the Clock port"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

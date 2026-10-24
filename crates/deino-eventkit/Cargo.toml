@@ -3,6 +3,7 @@ name = "deino-eventkit"
 version = "0.1.0"
 description = "macOS Calendar through EventKit: Deino's default calendar source, with no OAuth"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

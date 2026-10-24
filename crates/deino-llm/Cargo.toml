@@ -3,6 +3,7 @@ name = "deino-llm"
 version = "0.1.0"
 description = "Deino's LLM gateway: task routes, providers, streaming, structured output, tools, prompts and usage"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

@@ -3,6 +3,7 @@ name = "deino-importers"
 version = "0.1.0"
 description = "Deino's importers from other note-takers (CAP-12): Granola, Circleback, Fireflies and Fathom over deino-net, and folders of JSON or Markdown files, each an adapter behind deino-core's Importer port"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

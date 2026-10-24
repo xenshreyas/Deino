@@ -1,13 +1,14 @@
 # Deino
 
-Deino is a private, local-first AI meeting notepad for macOS. It records the
+Deino is an open-source, local-first AI meeting notepad for macOS. It records the
 microphone and system audio on your Mac, transcribes locally, and turns the
 transcript and your own notes into structured meeting notes. Recording,
 transcription, storage and search all run on the Mac; the only data that leaves
 it goes to the LLM provider and integrations you choose to connect.
 
-This is an internal, proprietary repository. See [LICENSE](LICENSE) and
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Deino is released under the [MIT License](LICENSE). It started from
+[Meetily](https://github.com/Zackriya-Solutions/meetily) (MIT); that notice and
+every other attribution are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Where to start
 

@@ -34,7 +34,7 @@ allow = [
 ]
 confidence-threshold = 0.9
 
-# Deino's own crates are unpublished and proprietary (see LICENSE).
+# Deino's own crates are MIT (see LICENSE) and not published to crates.io.
 [licenses.private]
 ignore = true
 

@@ -3,6 +3,7 @@ name = "deino-testkit"
 version = "0.1.0"
 description = "Test fixtures and fakes for Deino's crates, and the fixture seeder of the debug-only dev plugin"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

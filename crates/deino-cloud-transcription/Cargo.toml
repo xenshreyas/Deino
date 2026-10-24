@@ -3,6 +3,7 @@ name = "deino-cloud-transcription"
 version = "0.1.0"
 description = "Deino's opt-in cloud transcription after the meeting (CAP-14): ElevenLabs Scribe over deino-net on the user's own Keychain key, behind deino-core's CloudTranscriber and CloudChoice ports"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 

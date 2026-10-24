@@ -3,6 +3,7 @@ name = "deino-cli"
 version = "0.1.0"
 description = "The deino command: read meetings, notes and transcripts from the terminal, and serve them to Claude over MCP (stdio)"
 edition.workspace = true
+license.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 
