@@ -3,7 +3,10 @@
 //!
 //! 1. **Named speakers join the meeting.** A transcript speaker the user (or
 //!    CAP-04's voice match) named is a person; one not invited is added as
-//!    `speaker_only`, so the meeting shows on their page.
+//!    `speaker_only`, so the meeting shows on their page. The
+//!    `link_speakers` stage (order 47) does this before the notes are
+//!    written, so they see every attendee and are not out of date at once;
+//!    `update_entities` does it again for speakers named since.
 //! 2. **Summaries refresh.** Every attendee except the user, and every
 //!    company they work at, gets a new briefing on `entity.summary`, at
 //!    most [`MAX_SUMMARIES`] in all, people first.
@@ -39,6 +42,12 @@ pub trait EntityUpdater: Send + Sync {
     /// Updates `meeting`'s entities (see the module docs). Dropping the
     /// future cancels the model call in flight.
     async fn update_entities(&self, meeting: &MeetingId) -> Result<EntityUpdate, EntityError>;
+
+    /// Adds every named speaker who is not an attendee yet (step 1 alone);
+    /// returns how many joined. An updater without speakers links none.
+    async fn link_speakers(&self, _meeting: &MeetingId) -> Result<usize, EntityError> {
+        Ok(0)
+    }
 }
 
 /// What [`EntityUpdateService`] is built from.
@@ -63,36 +72,6 @@ impl EntityUpdateService {
     /// Creates the service over its ports.
     pub fn new(ports: EntityUpdatePorts) -> Self {
         Self { ports }
-    }
-
-    /// Adds every named speaker who is not an attendee yet.
-    async fn link_speakers(&self, meeting: &MeetingId) -> Result<usize, EntityError> {
-        let attendees = &self.ports.entities.attendees;
-        let present: BTreeSet<PersonId> = attendees
-            .attendees(meeting)
-            .await?
-            .into_iter()
-            .map(|attendee| attendee.person_id)
-            .collect();
-        let named: BTreeSet<PersonId> = self
-            .ports
-            .speakers
-            .speakers(meeting)
-            .await?
-            .into_iter()
-            .filter_map(|speaker| speaker.person_id)
-            .filter(|person| !present.contains(person))
-            .collect();
-        for person in &named {
-            let attendee = Attendee {
-                meeting_id: meeting.clone(),
-                person_id: *person,
-                role: AttendeeRole::SpeakerOnly,
-                rsvp: None,
-            };
-            attendees.upsert_attendee(&attendee).await?;
-        }
-        Ok(named.len())
     }
 
     /// The meeting's people other than the user, and their companies.
@@ -169,6 +148,35 @@ impl EntityUpdater for EntityUpdateService {
             speakers_linked,
             summaries,
         })
+    }
+
+    async fn link_speakers(&self, meeting: &MeetingId) -> Result<usize, EntityError> {
+        let attendees = &self.ports.entities.attendees;
+        let present: BTreeSet<PersonId> = attendees
+            .attendees(meeting)
+            .await?
+            .into_iter()
+            .map(|attendee| attendee.person_id)
+            .collect();
+        let named: BTreeSet<PersonId> = self
+            .ports
+            .speakers
+            .speakers(meeting)
+            .await?
+            .into_iter()
+            .filter_map(|speaker| speaker.person_id)
+            .filter(|person| !present.contains(person))
+            .collect();
+        for person in &named {
+            let attendee = Attendee {
+                meeting_id: meeting.clone(),
+                person_id: *person,
+                role: AttendeeRole::SpeakerOnly,
+                rsvp: None,
+            };
+            attendees.upsert_attendee(&attendee).await?;
+        }
+        Ok(named.len())
     }
 }
 

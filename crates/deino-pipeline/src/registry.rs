@@ -273,6 +273,7 @@ mod tests {
                 "identify_speakers",
                 "vocab_fixups",
                 "screen_context",
+                "link_speakers",
                 "enhance_notes",
                 "extract_action_items",
                 "auto_title",

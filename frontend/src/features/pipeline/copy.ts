@@ -39,6 +39,7 @@ export const KNOWN_STAGES = [
   'identify_speakers',
   'vocab_fixups',
   'screen_context',
+  'link_speakers',
   'enhance_notes',
   'extract_action_items',
   'auto_title',
@@ -79,6 +80,7 @@ const stageCopy: Record<KnownStage, StageWords> = {
     'Reading the shared screen…',
     'The shared screen couldn’t be read.',
   ),
+  link_speakers: words('Attendees', 'Adding speakers…', 'Speakers couldn’t be added.'),
   enhance_notes: words('Notes', 'Writing notes…', 'Notes couldn’t be written.'),
   extract_action_items: words(
     'Action items',

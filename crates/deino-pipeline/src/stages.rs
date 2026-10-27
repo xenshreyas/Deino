@@ -10,6 +10,7 @@
 //! | 35 | [`IdentifySpeakersStage`] (`identify_speakers`) | CAP-04 |
 //! | 40 | [`VocabFixupsStage`] (`vocab_fixups`) | TRN-05 |
 //! | 45 | [`ScreenContextStage`] (`screen_context`) | CAP-09 |
+//! | 47 | [`LinkSpeakersStage`] (`link_speakers`) | ORG-04 |
 //! | 50 | [`EnhanceNotesStage`] (`enhance_notes`) | NOT-02 |
 //! | 60 | [`ExtractActionItemsStage`] (`extract_action_items`) | AI-05 |
 //! | 65 | [`AutoTitleStage`] (`auto_title`) | NOT-02 |
@@ -40,6 +41,7 @@ mod follow_up_draft;
 mod identify_speakers;
 mod index;
 mod insights;
+mod link_speakers;
 mod screen_context;
 mod screen_video;
 mod update_entities;
@@ -83,6 +85,7 @@ pub use index::{INDEX_STAGE, IndexStage};
 pub use insights::InsightsStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use insights::RecordedInsights;
+pub use link_speakers::LinkSpeakersStage;
 #[cfg(any(test, feature = "test-support"))]
 pub use screen_context::RecordedScreenContext;
 pub use screen_context::{ScreenContextReader, ScreenContextStage};

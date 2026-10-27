@@ -102,6 +102,7 @@ fn rerun_returns_the_scheduled_stages_with_camel_case_fields() {
             pending("identify_speakers"),
             pending("vocab_fixups"),
             pending("screen_context"),
+            pending("link_speakers"),
             pending("enhance_notes"),
             pending("extract_action_items"),
             pending("auto_title"),
