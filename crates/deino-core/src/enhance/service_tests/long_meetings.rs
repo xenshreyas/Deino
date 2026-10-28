@@ -99,3 +99,61 @@ fn segment_ids(fixture: &FixtureMeeting) -> Vec<String> {
 fn references_are_found_once_each() {
     assert_eq!(references("[s1 00:04] x [s12, s1] s3x"), ["s1", "s12"]);
 }
+
+/// Like [`respond`], but the merge and the second part's whole-part
+/// answers never parse (the first part-2 prompt fixes how many lines the
+/// whole part has): the part is noted in halves and merged here.
+fn respond_with_a_broken_part() -> impl Fn(&CompletionRequest) -> String + Send + Sync {
+    let whole = std::sync::Mutex::new(None::<usize>);
+    move |request| {
+        let prompt = request
+            .messages
+            .last()
+            .map(deino_llm::Message::text)
+            .unwrap_or_default();
+        let lines = prompt.matches("[s").count();
+        let broken = if prompt.contains("corrected JSON") || prompt.contains("<partial_notes>") {
+            true
+        } else if prompt.contains("part=\"2 of") {
+            let mut whole = whole.lock().unwrap();
+            *whole.get_or_insert(lines) == lines
+        } else {
+            false
+        };
+        if broken {
+            "{\"sections\": [".to_owned()
+        } else {
+            respond(request)
+        }
+    }
+}
+
+#[tokio::test]
+async fn a_part_whose_answer_cannot_be_read_still_leaves_notes() {
+    let harness = harness(
+        MeetingKind::Planning,
+        MockProvider::new().answer_with(Route::NotesEnhance, respond_with_a_broken_part()),
+    )
+    .await;
+
+    let view = harness
+        .service
+        .enhance(&harness.fixture.id, Overwrite::KeepEdits)
+        .await
+        .unwrap();
+
+    let part_two = enhance_requests(&harness.mock)
+        .iter()
+        .filter_map(|r| r.messages.last().map(deino_llm::Message::text))
+        .filter(|text| text.contains("part=\"2 of"))
+        .count();
+    assert_eq!(
+        part_two, 4,
+        "asked twice (each repaired once), then two halves"
+    );
+    assert!(
+        !text_by(&view.doc, Author::Ai).is_empty(),
+        "the parts are merged without the model"
+    );
+    assert!(!citations(&view.doc).is_empty(), "their references survive");
+}

@@ -76,17 +76,25 @@ impl Gateway {
             Ok(value) => return Ok(value),
             Err(error) => error,
         };
-        log::info!(target: "llm", "{route}: structured answer did not parse ({}); repairing once", category(&error));
+        log::info!(target: "llm", "{route}: structured answer did not parse ({}, stop {:?}, {} chars); repairing once", category(&error), first.stop, first.text.len());
         let repair = repair_prompt(prompt, &first.text, &error);
         let second = self.complete_shaped(route, repair, shape).await?;
-        parse::<T>(&second.text).map_err(|error| LlmError::InvalidOutput {
-            detail: format!(
-                "{} error at line {} column {}",
-                category(&error),
-                error.line(),
-                error.column()
-            ),
+        parse::<T>(&second.text).map_err(|error| {
+            log::warn!(target: "llm", "{route}: repaired answer did not parse either ({}, stop {:?}, {} chars)", category(&error), second.stop, second.text.len());
+            invalid_output(&error)
         })
+    }
+}
+
+/// The error of an answer that did not parse, without its text.
+fn invalid_output(error: &serde_json::Error) -> LlmError {
+    LlmError::InvalidOutput {
+        detail: format!(
+            "{} error at line {} column {}",
+            category(error),
+            error.line(),
+            error.column()
+        ),
     }
 }
 
