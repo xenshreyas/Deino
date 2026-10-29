@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE speakers\n         SET centroid = voice.centroid,\n             embedding_model = voice.embedding_model,\n             speech_ms = voice.speech_ms\n         FROM (SELECT centroid, embedding_model, speech_ms FROM speakers WHERE id = ?1) AS voice\n         WHERE speakers.id = ?2\n           AND voice.centroid IS NOT NULL\n           AND (speakers.centroid IS NULL OR voice.speech_ms > speakers.speech_ms)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "05fdb34425dd7bb3d85dded802dfb25fe15b2819310fc0a187891049a252899b"
+}

@@ -197,3 +197,52 @@ fn one_voice_goes_to_one_name_the_one_with_more_speech() {
     assert_eq!(seat(&election, "Alex"), Seat::Speaker(them.id));
     assert_eq!(seat(&election, "Bea"), Seat::New);
 }
+
+#[test]
+fn a_name_seen_for_part_of_the_call_claims_the_one_voice_it_was_always_on() {
+    let mehrdad_voice = speaker("Speaker 2");
+    let jordon_voice = speaker("Speaker 1");
+    let mut track = Track::default();
+    for _ in 0..4 {
+        track.say(&mehrdad_voice, 30_000, Some("Mehrdad"));
+    }
+    for _ in 0..10 {
+        track.say(&mehrdad_voice, 60_000, None);
+        track.say(&jordon_voice, 60_000, None);
+    }
+    let early = track.say(&jordon_voice, 5_000, Some("Mehrdad"));
+
+    let election = track.elect(&[mehrdad_voice.clone(), jordon_voice], &[]);
+
+    assert_eq!(
+        seat(&election, "Mehrdad"),
+        Seat::Speaker(mehrdad_voice.id),
+        "120 s of 125 s won are on one voice"
+    );
+    assert_eq!(
+        moved(&election),
+        [(early, "Mehrdad".to_owned())],
+        "only the stray line moves"
+    );
+}
+
+#[test]
+fn a_contested_or_brief_name_gets_its_own_speaker() {
+    let voice = speaker("Speaker 1");
+    let mut track = Track::default();
+    track.say(&voice, 50_000, Some("Mehrdad"));
+    track.say(&voice, 600_000, None);
+    assert_eq!(
+        seat(&track.elect(std::slice::from_ref(&voice), &[]), "Mehrdad"),
+        Seat::New,
+        "under a minute"
+    );
+
+    track.say(&voice, 30_000, Some("Mehrdad"));
+    track.say(&voice, 10_000, Some("Jordon"));
+    assert_eq!(
+        seat(&track.elect(&[voice], &[]), "Mehrdad"),
+        Seat::New,
+        "another name was seen on it"
+    );
+}

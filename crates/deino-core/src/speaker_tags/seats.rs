@@ -11,7 +11,12 @@
 //! 3. the unnamed diarized speaker the name wins **more than half** of the
 //!    speech of, the largest share first: that voice is the name's, so the
 //!    speaker takes the name;
-//! 4. a new speaker.
+//! 4. the unnamed diarized speaker that holds nearly all of the name's won
+//!    speech ([`CLAIM_SHARE_PERCENT`], at least [`CLAIM_MIN_MS`]) when no
+//!    other name won any of it: the name was seen only for part of the call
+//!    (the roster during a screen share, a tile lit for a minute), but every
+//!    time it was seen the same voice spoke, so that voice takes the name;
+//! 5. a new speaker.
 //!
 //! Then every won segment moves to its name's seat, unless the user named
 //! the speaker it sits on, or it is the user's own: a name overrides
@@ -59,6 +64,12 @@ pub enum Seat {
     New,
 }
 
+/// Rule 4: the share of a name's won speech one speaker must hold, in percent.
+pub const CLAIM_SHARE_PERCENT: u64 = 80;
+
+/// Rule 4: the least won speech on that speaker, in milliseconds.
+pub const CLAIM_MIN_MS: u64 = 60_000;
+
 /// One name and its seat.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Elected {
@@ -68,7 +79,7 @@ pub struct Elected {
     pub person: Option<PersonId>,
     /// Where its segments go.
     pub seat: Seat,
-    /// The seat is an unnamed speaker that takes the name (rules 2 and 3).
+    /// The seat is an unnamed speaker that takes the name (rules 2, 3 and 4).
     pub takes_name: bool,
 }
 
@@ -117,7 +128,10 @@ pub fn elect(ballot: &Ballot<'_>) -> Election {
         };
         let free = |speaker: &Speaker| movable(speaker) && !taken.contains(&speaker.id);
         let candidates: Vec<&Speaker> = ballot.speakers.iter().filter(|s| free(s)).collect();
-        if let Some(speaker) = tally.majority_speaker(&candidates, &entry.name) {
+        let claimed = tally
+            .majority_speaker(&candidates, &entry.name)
+            .or_else(|| tally.claimed_speaker(&candidates, &entry.name));
+        if let Some(speaker) = claimed {
             entry.seat = Seat::Speaker(speaker);
             entry.takes_name = true;
         }

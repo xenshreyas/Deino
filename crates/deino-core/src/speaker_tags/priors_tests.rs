@@ -35,6 +35,7 @@ impl Rig {
             segments: self.segments.clone(),
             attendees: self.people.clone(),
             people: self.people.clone(),
+            me: self.people.clone(),
             clock: Arc::new(clock()),
         })
     }

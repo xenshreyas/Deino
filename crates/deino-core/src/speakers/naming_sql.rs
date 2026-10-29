@@ -125,9 +125,35 @@ pub(super) async fn fold_speaker(
     )
     .execute(&mut *connection)
     .await?;
+    keep_voice(connection, from, into).await?;
     sqlx::query!("DELETE FROM speakers WHERE id = ?1", from.id)
         .execute(connection)
         .await?;
+    Ok(())
+}
+
+/// Gives `into` the voice of `from` when it has none, or when `from`'s was
+/// heard for longer: the merged speaker keeps the voice diarization found
+/// for most of its speech, so naming it later can save a voice profile.
+async fn keep_voice(
+    connection: &mut SqliteConnection,
+    from: &Speaker,
+    into: &Speaker,
+) -> Result<(), DbError> {
+    sqlx::query!(
+        "UPDATE speakers
+         SET centroid = voice.centroid,
+             embedding_model = voice.embedding_model,
+             speech_ms = voice.speech_ms
+         FROM (SELECT centroid, embedding_model, speech_ms FROM speakers WHERE id = ?1) AS voice
+         WHERE speakers.id = ?2
+           AND voice.centroid IS NOT NULL
+           AND (speakers.centroid IS NULL OR voice.speech_ms > speakers.speech_ms)",
+        from.id,
+        into.id,
+    )
+    .execute(&mut *connection)
+    .await?;
     Ok(())
 }
 

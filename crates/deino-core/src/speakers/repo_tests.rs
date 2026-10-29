@@ -189,3 +189,60 @@ async fn participants_read_speakers_and_speech_through_indexes() {
     assert!(uses("(meeting_id=?)"), "{plan:?}");
     assert!(uses("idx_transcript_segments_speaker_id"), "{plan:?}");
 }
+
+/// Gives `speaker` a stored voice of `speech_ms`, every value `value`.
+async fn give_voice(database: &Database, speaker: &Speaker, value: f32, speech_ms: i64) {
+    let centroid: Vec<u8> = std::iter::repeat_n(value.to_le_bytes(), 256)
+        .flatten()
+        .collect();
+    sqlx::query(
+        "UPDATE speakers SET centroid = ?1, embedding_model = 'm', speech_ms = ?2 WHERE id = ?3",
+    )
+    .bind(centroid)
+    .bind(speech_ms)
+    .bind(speaker.id)
+    .execute(database.writer())
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn a_merge_keeps_the_voice_heard_for_longest() {
+    let database = test_db().await;
+    seed::meeting(&database, MEETING, "Interview", at(T0)).await;
+    let segments = SqliteSegmentRepo::new(database.clone());
+    let repo = SqliteNamingRepo::new(database.clone());
+    let [voiced, named_only, quieter] = [
+        speaker("Speaker 1", None),
+        speaker("Mehrdad", None),
+        speaker("Speaker 2", None),
+    ];
+    for s in [&voiced, &named_only, &quieter] {
+        segments.add_speaker(s).await.unwrap();
+    }
+    give_voice(&database, &voiced, 0.5, 600_000).await;
+    give_voice(&database, &quieter, 0.25, 30_000).await;
+    let merge = |from: &Speaker, into: &Speaker| MergeSpeakers {
+        meeting_id: MeetingId::new(MEETING),
+        from: from.clone(),
+        into: into.clone(),
+        at: at(T0),
+    };
+
+    repo.merge(&merge(&voiced, &named_only)).await.unwrap();
+    let kept = segments.voice(&named_only.id).await.unwrap().unwrap();
+    assert_eq!(
+        kept.speech,
+        Millis(600_000),
+        "a speaker without a voice takes the merged one's"
+    );
+
+    repo.merge(&merge(&quieter, &named_only)).await.unwrap();
+    let kept = segments.voice(&named_only.id).await.unwrap().unwrap();
+    assert_eq!(
+        kept.speech,
+        Millis(600_000),
+        "a shorter voice never replaces a longer one"
+    );
+    assert!((kept.centroid[0] - 0.5).abs() < 1e-6);
+}

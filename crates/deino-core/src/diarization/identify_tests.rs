@@ -289,6 +289,7 @@ fn tagged_service(world: &World) -> IdentifyService {
         segments: world.segments.clone(),
         attendees: world.people.clone(),
         people: world.people.clone(),
+        me: world.people.clone(),
         clock: Arc::new(clock()),
     });
     world

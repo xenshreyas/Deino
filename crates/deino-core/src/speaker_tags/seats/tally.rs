@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use deino_domain::{DisplayName, SegmentId, SpeakerId};
 
-use super::{Ballot, Seated};
+use super::{Ballot, CLAIM_MIN_MS, CLAIM_SHARE_PERCENT, Seated};
 use crate::segments::Speaker;
 
 /// Shares are compared in thousandths.
@@ -92,5 +92,46 @@ impl<'a> Tally<'a> {
             })
             .max_by_key(|&(speaker, share)| (share, Reverse(speaker)))
             .map(|(speaker, _)| speaker)
+    }
+
+    /// Rule 4: the candidate holding at least [`CLAIM_SHARE_PERCENT`] of
+    /// `name`'s won speech (and [`CLAIM_MIN_MS`]), when no other name won
+    /// any of its speech.
+    pub(super) fn claimed_speaker(
+        &self,
+        candidates: &[&Speaker],
+        name: &DisplayName,
+    ) -> Option<SpeakerId> {
+        let total = self.total(name);
+        candidates
+            .iter()
+            .map(|speaker| {
+                (
+                    speaker.id,
+                    self.won.get(&(speaker.id, name)).copied().unwrap_or(0),
+                )
+            })
+            .filter(|&(speaker, won)| {
+                won >= CLAIM_MIN_MS
+                    && won * 100 >= total * CLAIM_SHARE_PERCENT
+                    && !self.contested(speaker, name)
+            })
+            .max_by_key(|&(speaker, won)| (won, Reverse(speaker)))
+            .map(|(speaker, _)| speaker)
+    }
+
+    /// All the speech `name` won.
+    fn total(&self, name: &DisplayName) -> u64 {
+        self.totals
+            .iter()
+            .find(|(known, _)| *known == name)
+            .map_or(0, |(_, total)| *total)
+    }
+
+    /// Whether a name other than `name` won any of `speaker`'s speech.
+    fn contested(&self, speaker: SpeakerId, name: &DisplayName) -> bool {
+        self.won
+            .iter()
+            .any(|(&(holder, other), &won)| holder == speaker && other != name && won > 0)
     }
 }

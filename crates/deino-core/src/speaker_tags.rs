@@ -34,6 +34,7 @@ mod plan;
 mod priors;
 mod repo;
 mod resolve;
+pub mod roster;
 pub mod seats;
 
 pub use align::{Timed, Win};

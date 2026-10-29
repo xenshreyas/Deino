@@ -80,6 +80,7 @@ pub(crate) fn tag_priors(database: &Database, clock: Arc<dyn Clock>) -> Arc<dyn 
         tags: Arc::new(SqliteSpeakerTagRepo::new(database.clone())),
         segments: Arc::new(SqliteSegmentRepo::new(database.clone())),
         attendees: people.clone(),
+        me: people.clone(),
         people,
         clock,
     }))

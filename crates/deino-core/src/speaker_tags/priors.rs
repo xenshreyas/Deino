@@ -2,8 +2,9 @@
 //!
 //! [`SpeakerTagPriors`] reads the meeting's spans, roster and system-track
 //! segments, finds the name that wins each segment (every segment for the
-//! one remote person of a one-to-one call, [`super::one_to_one`], else by
-//! the spans, [`super::align`]), resolves names to people
+//! one remote person of a one-to-one call the roster watched, [`super::one_to_one`],
+//! else by the spans, [`super::align`], then by moments the roster listed
+//! one remote person, [`super::roster`]), resolves names to people
 //! ([`super::resolve`]), seats them ([`super::seats`]) and returns the
 //! [`TagPlan`]. A meeting recorded without speaker tags (no permission, no
 //! supported app, a window the adapters did not recognise) has no spans and
@@ -22,8 +23,9 @@ use super::align::{Timed, Win, align};
 use super::one_to_one::{only_remote, won_by};
 use super::plan::{TagPlan, Track, plan};
 use super::resolve::{Directory, resolve};
+use super::roster::{covers_call, listed_alone, without_me};
 use super::seats::{Ballot, Seated, elect};
-use crate::people::{AttendeeRepo, PersonRepo};
+use crate::people::{AttendeeRepo, MeRepo, PersonRepo};
 use crate::segments::{Page, Segment, SegmentReader, Speaker};
 
 /// The meeting app's names as priors for naming a meeting's speakers.
@@ -55,6 +57,8 @@ pub struct TagPriorPorts {
     pub attendees: Arc<dyn AttendeeRepo>,
     /// Everyone the user knows, for resolving names.
     pub people: Arc<dyn PersonRepo>,
+    /// The user, whom the roster may list among the remote people.
+    pub me: Arc<dyn MeRepo>,
     /// Stamps new speakers' IDs.
     pub clock: Arc<dyn Clock>,
 }
@@ -81,10 +85,13 @@ impl TagPriors for SpeakerTagPriors {
         }
         let segments = system_track(self.ports.segments.list(meeting, Page::ALL).await?);
         let timed: Vec<Timed> = segments.iter().map(timed).collect();
-        let only = only_remote(&roster);
-        let wins = only
-            .as_ref()
-            .map_or_else(|| align(&spans, &timed), |name| won_by(name, &timed));
+        let me = self.ports.me.me().await?.map(|person| person.name);
+        let roster = without_me(roster, me.as_deref());
+        let only = only_remote(&roster).filter(|_| covers_call(&roster, &timed));
+        let wins = only.as_ref().map_or_else(
+            || with_roster(align(&spans, &timed), listed_alone(&roster, &timed)),
+            |name| won_by(name, &timed),
+        );
         let people = self.people(meeting, &wins).await?;
         let seated: Vec<Seated> = segments.iter().map(seated).collect();
         let ballot = Ballot {
@@ -133,6 +140,13 @@ impl SpeakerTagPriors {
         };
         resolve(&directory, meeting, &names).await
     }
+}
+
+/// The spans' wins, then the roster's for the segments no span won.
+fn with_roster(mut wins: Vec<Win>, roster: Vec<Win>) -> Vec<Win> {
+    let won: BTreeSet<_> = wins.iter().map(|win| win.segment).collect();
+    wins.extend(roster.into_iter().filter(|win| !won.contains(&win.segment)));
+    wins
 }
 
 /// The segments heard on the system track, not deleted.
