@@ -76,4 +76,6 @@ allow-git = [
     "https://github.com/ahkohd/tauri-nspanel",
     "https://github.com/emotechlab/silero-rs",
     "https://github.com/nathanbabcock/ffmpeg-sidecar",
+    # DeepFilterNet 0.5 (deino-denoise's voice check), pinned by revision.
+    "https://github.com/Rikorose/DeepFilterNet",
 ]

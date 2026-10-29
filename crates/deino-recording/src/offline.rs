@@ -16,6 +16,7 @@
 //! track's progress.
 
 pub mod echo;
+pub mod silent_lines;
 pub mod utterances;
 
 use std::ops::Range;
@@ -27,10 +28,13 @@ use deino_core::final_transcription::{
     HeardSpan, TrackError, TrackRequest, TrackTranscriber, fraction_of,
 };
 use deino_core::segments::WordTiming;
+use deino_domain::Channel;
 use deino_stt::words::{TimedWord, words_from_tokens};
 use deino_stt::{BatchTranscriber, Millis};
 
 pub use echo::{FixedHeadphones, HeadphonesSetting, cancel_echo};
+use silent_lines::drop_silent_lines;
+pub use silent_lines::{DeepFilterCheck, VoiceCheck};
 pub use utterances::{MAX_UTTERANCE, utterances, voice_spans};
 
 use crate::echo::{EchoMode, SonoraAec};
@@ -76,6 +80,7 @@ pub struct OfflineTranscriber {
     engines: Arc<dyn BatchEngines>,
     decoder: Arc<dyn TrackDecoder>,
     headphones: Option<Arc<dyn HeadphonesSetting>>,
+    voice_check: Option<Arc<dyn VoiceCheck>>,
 }
 
 impl OfflineTranscriber {
@@ -86,6 +91,17 @@ impl OfflineTranscriber {
             engines,
             decoder,
             headphones: None,
+            voice_check: None,
+        }
+    }
+
+    /// Drops microphone lines `check` finds no voice under
+    /// ([`silent_lines`]); without it every line is kept.
+    #[must_use]
+    pub fn with_voice_check(self, check: Arc<dyn VoiceCheck>) -> Self {
+        Self {
+            voice_check: Some(check),
+            ..self
         }
     }
 
@@ -136,7 +152,10 @@ impl OfflineTranscriber {
             report(fraction_of(done.0, length.0));
         }
         report(1.0);
-        Ok(heard)
+        Ok(match (&self.voice_check, request.channel) {
+            (Some(check), Channel::Mic) => drop_silent_lines(&pcm, heard, check.as_ref()),
+            _ => heard,
+        })
     }
 
     /// The track's samples, with `echo`'s echo cancelled when it is given

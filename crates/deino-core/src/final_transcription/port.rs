@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use async_trait::async_trait;
-use deino_domain::{ErrorClass, ErrorCode, Millis};
+use deino_domain::{Channel, ErrorClass, ErrorCode, Millis};
 use tokio_util::sync::CancellationToken;
 
 use super::TrackProgress;
@@ -19,6 +19,9 @@ pub type EngineError = Box<dyn std::error::Error + Send + Sync>;
 pub struct TrackRequest {
     /// The finalized file (`mic.m4a`, `system.m4a` or `audio.mp4`).
     pub audio: PathBuf,
+    /// Which track it is: the transcriber checks the microphone's lines
+    /// for a voice (`deino-recording::offline::silent_lines`).
+    pub channel: Channel,
     /// The system track, on the same timeline, when this is the microphone
     /// track of a meeting that has one: what the speakers played, whose
     /// echo the microphone may hold. The transcriber may cancel that echo

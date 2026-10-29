@@ -56,6 +56,7 @@ deino-consent = { path = "crates/deino-consent" }
 deino-db = { path = "crates/deino-db" }
 # Tests add `features = ["test-support"]` for the fakes of its ports.
 deino-detect = { path = "crates/deino-detect" }
+deino-denoise = { path = "crates/deino-denoise" }
 deino-diarize = { path = "crates/deino-diarize" }
 deino-doc = { path = "crates/deino-doc" }
 deino-domain = { path = "crates/deino-domain" }

@@ -200,6 +200,7 @@ impl FinalTranscriptionService {
         for (index, (channel, path)) in tracks.into_iter().enumerate() {
             let request = TrackRequest {
                 audio: path.into(),
+                channel,
                 echo_reference: system.clone().filter(|_| channel == Channel::Mic),
                 cancel: pass.cancel.clone(),
                 progress: shares.track(index),

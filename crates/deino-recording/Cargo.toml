@@ -21,6 +21,7 @@ chrono.workspace = true
 deino-audio.workspace = true
 deino-core.workspace = true
 deino-db.workspace = true
+deino-denoise.workspace = true
 deino-domain.workspace = true
 deino-stt.workspace = true
 # Live voice activity per lane: pure Rust, 16 ms frames at 16 kHz, no ONNX

@@ -36,6 +36,7 @@ impl BatchEngines for Engines {
 fn request() -> TrackRequest {
     TrackRequest {
         audio: PathBuf::from("mic.m4a"),
+        channel: Channel::Mic,
         echo_reference: None,
         cancel: CancellationToken::new(),
         progress: TrackProgress::default(),

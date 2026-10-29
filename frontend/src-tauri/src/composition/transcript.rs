@@ -18,7 +18,7 @@ use deino_core::vocabulary::FixupService;
 use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::RequestedRepass;
-use deino_recording::{HeadphonesSetting, NativeDecoder, OfflineTranscriber};
+use deino_recording::{DeepFilterCheck, HeadphonesSetting, NativeDecoder, OfflineTranscriber};
 use tauri::{AppHandle, Manager};
 
 use super::attach::Phase;
@@ -60,7 +60,8 @@ fn track_transcriber(
     let headphones: Arc<dyn HeadphonesSetting> = settings.clone();
     Arc::new(
         OfflineTranscriber::new(Arc::new(engines), Arc::new(NativeDecoder))
-            .with_headphones(headphones),
+            .with_headphones(headphones)
+            .with_voice_check(Arc::new(DeepFilterCheck)),
     )
 }
 

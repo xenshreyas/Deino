@@ -1,0 +1,29 @@
+[package]
+name = "deino-denoise"
+version = "0.1.0"
+description = "Deino's voice check: DeepFilterNet3 over tract, run on short stretches of the microphone track to tell a voice from noise"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/deino_denoise.rs"
+
+[dependencies]
+# DeepFilterNet3 (MIT OR Apache-2.0) with its model embedded; pinned by
+# revision because 0.5 is not on crates.io (deny.toml allows the repository).
+deep_filter = { git = "https://github.com/Rikorose/DeepFilterNet", rev = "d375b2d8309e0935d165700c91da9de862a99c31", default-features = false, features = ["tract", "default-model"] }
+# deep_filter is built against tract 0.21.4 and ndarray 0.15 (its own
+# lockfile); later 0.21 releases moved to ndarray 0.16 and do not compile
+# with it, so the set is pinned here.
+tract-core = "=0.21.4"
+tract-hir = "=0.21.4"
+tract-onnx = "=0.21.4"
+tract-pulse = "=0.21.4"
+# The version deep_filter's arrays use.
+ndarray = "0.15.6"
+thiserror.workspace = true
+
+[lints]
+workspace = true
