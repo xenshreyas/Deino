@@ -127,8 +127,9 @@ fn level_db(frame: &[f32]) -> f32 {
     20.0 * (energy.sqrt() + 1e-9).log10()
 }
 
+/// The error with its causes (`{:#}` prints an `anyhow` chain).
 fn model_error(error: impl std::fmt::Display) -> DenoiseError {
-    DenoiseError::Model(error.to_string())
+    DenoiseError::Model(format!("{error:#}"))
 }
 
 #[cfg(test)]

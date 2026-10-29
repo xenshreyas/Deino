@@ -126,6 +126,12 @@ disallowed_types = "deny"
 opt-level = 1
 debug = false
 
+# tract's debug-build graph checks reject DeepFilterNet3's model (a duplicate
+# node name the release build tolerates), so debug and test builds load it
+# the way the app does (deino-denoise).
+[profile.dev.package.tract-core]
+debug-assertions = false
+
 # The local LLM sidecar is loaded on demand, so it is optimised for size.
 # Cargo honours `[profile]` only in the workspace root; the member's own
 # `[profile.release]` was silently ignored.
