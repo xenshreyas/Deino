@@ -7,6 +7,7 @@
 //! stream reports only the tokens committed since its last answer.
 
 mod options;
+mod phrases;
 mod stream;
 
 use std::path::Path;
@@ -16,6 +17,7 @@ use transcribe_cpp::{
 };
 
 use options::{loaded_info, run_options, stream_options};
+use phrases::tokens_or_phrases;
 pub use stream::CppStream;
 use stream::timed_token;
 
@@ -146,7 +148,8 @@ impl Loaded {
 
 fn batch_transcript(transcript: &Transcript) -> BatchTranscript {
     BatchTranscript {
-        tokens: transcript.tokens.iter().map(timed_token).collect(),
+        tokens: tokens_or_phrases(transcript)
+            .unwrap_or_else(|| transcript.tokens.iter().map(timed_token).collect()),
         text: transcript.text.trim().to_string(),
     }
 }
