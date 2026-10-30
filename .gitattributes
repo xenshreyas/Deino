@@ -8,3 +8,7 @@ crates/deino-pipeline/src/stages.rs merge=union
 crates/deino-llm/tests/llm_eval/main.rs merge=union
 crates/deino-core/src/settings/sections.rs merge=union
 crates/deino-domain/src/id.rs merge=union
+# The speaker models bundled in the app (scripts/export-speaker-models.py),
+# stored with Git LFS.
+frontend/src-tauri/resources/speakers/*.onnx filter=lfs diff=lfs merge=lfs -text
+frontend/src-tauri/resources/speakers/*.npz filter=lfs diff=lfs merge=lfs -text

@@ -17,6 +17,7 @@
 //!   per-utterance mean normalisation itself, so the ONNX metadata sherpa-onnx
 //!   reads (`feature_normalize_type`) plays no part.
 
+pub mod bundled;
 pub mod store;
 
 pub use store::{ModelStore, StoreError};

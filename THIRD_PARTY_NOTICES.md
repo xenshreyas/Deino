@@ -397,7 +397,7 @@ errors; the C++ sources are unchanged.
 
 ## pyannote segmentation-3.0 (model weights)
 
-Downloaded on demand (not bundled) from
+Bundled in the app (`speakers/`), unmodified, from
 https://huggingface.co/onnx-community/pyannote-segmentation-3.0 (revision
 `733a93b`, file `onnx/model.onnx`, SHA-256 `057ee564…ea25`). Original model:
 https://huggingface.co/pyannote/segmentation-3.0, MIT License,
@@ -418,7 +418,7 @@ unmodified, on the Mac, to embed meeting text for semantic search.
 
 ## WeSpeaker ResNet34-LM (model weights)
 
-Downloaded on demand (not bundled) from
+Bundled in the app (`speakers/`), unmodified, from
 https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM (revision
 `f0c48c2`, file `voxceleb_resnet34_LM.onnx`, SHA-256 `7bb2f06e…c068`).
 
@@ -429,6 +429,35 @@ Commons Attribution 4.0 International License (CC BY 4.0,
 https://creativecommons.org/licenses/by/4.0/). Deino uses it unmodified to
 compute speaker embeddings. Paper: "WeSpeaker: A Research and Production
 oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
+
+---
+
+## pyannote speaker-diarization-community-1 (model weights)
+
+Bundled in the app (`speakers/`). From
+https://huggingface.co/pyannote/speaker-diarization-community-1 (revision
+`3533c8c`): the segmentation model, converted to ONNX
+(`community-1-segmentation.onnx`, SHA-256 `6b6d4b03…1208`), and the PLDA
+arrays, unmodified (`community-1-plda.npz`, `community-1-xvec-transform.npz`).
+The conversion is `scripts/export-speaker-models.py`.
+
+"pyannote/speaker-diarization-community-1" by pyannoteAI (Hervé Bredin and
+contributors) is licensed under the Creative Commons Attribution 4.0
+International License (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
+Changes: the segmentation model was exported from PyTorch to ONNX; its
+weights are unchanged.
+
+---
+
+## wav2vec2-base-960h (model weights)
+
+Bundled in the app (`speakers/wav2vec2-base-960h-int8.onnx`, SHA-256
+`eb4d50a9…958c`). From https://huggingface.co/facebook/wav2vec2-base-960h
+(revision `22aad52`), licensed under the Apache License 2.0, Copyright Meta
+Platforms, Inc. and affiliates. Changes: exported from PyTorch to ONNX, and
+its matrix-multiplication weights quantized to 8-bit integers
+(`scripts/export-speaker-models.py`). Deino uses it on the Mac to time
+transcript words.
 
 ---
 

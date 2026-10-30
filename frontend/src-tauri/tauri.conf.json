@@ -67,6 +67,9 @@
             "icons/icon.icns",
             "icons/icon.ico"
         ],
+        "resources": {
+            "resources/speakers/*": "speakers/"
+        },
         "externalBin": [
             "binaries/llama-helper",
             "binaries/ffmpeg",

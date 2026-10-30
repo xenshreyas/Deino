@@ -1,22 +1,25 @@
 //! Wiring for speaker diarization (CAP-03): the ONNX engine behind the
 //! `diarize` stage.
 //!
-//! Its two models live in `<models>/diarization/` and are fetched on first
-//! use through `deino-core`'s SHA-256-verified downloader over `deino-net`'s
-//! `hf_models` service. The stage downloads on its own, so it uses the
-//! ordinary scoped client, not `approved_download`: offline mode and the
-//! user's network switches block it, and the stage then skips speakers
-//! rather than holding up notes. Core ML keeps its compiled copy of the
-//! embedding model in `<models>/diarization/coreml-cache/`.
+//! Its two models ship inside the app (`speakers/` among its resources). A
+//! build without them (a checkout without Git LFS) falls back to
+//! `<models>/diarization/`, fetched on first use through `deino-core`'s
+//! SHA-256-verified downloader over `deino-net`'s `hf_models` service. The
+//! stage downloads on its own, so it uses the ordinary scoped client, not
+//! `approved_download`: offline mode and the user's network switches block
+//! it, and the stage then skips speakers rather than holding up notes. Core
+//! ML keeps its compiled copy of the embedding model in
+//! `<models>/diarization/coreml-cache/`.
 
 use std::sync::Arc;
 
 use deino_core::diarization::{NoWordAligner, TrackDiarizer, WordAligner};
 use deino_diarize::RuntimeConfig;
-use deino_diarize::models::ModelStore;
+use deino_diarize::models::{ModelStore, bundled};
 use deino_diarize::python::PythonEngine;
 use deino_diarize::track::OnnxTrackDiarizer;
 use deino_net::{Net, ServiceId};
+use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
 use crate::paths::AppPaths;
@@ -61,9 +64,20 @@ fn track_diarizer(app: &AppHandle) -> Result<Arc<dyn TrackDiarizer>, String> {
         accelerator_cache: Some(root.join(ACCELERATOR_CACHE)),
         ..RuntimeConfig::default()
     };
-    Ok(Arc::new(OnnxTrackDiarizer::new(
-        ModelStore::new(root),
-        source,
-        runtime,
-    )))
+    let store = bundled_store(app).unwrap_or_else(|| ModelStore::new(root));
+    Ok(Arc::new(OnnxTrackDiarizer::new(store, source, runtime)))
+}
+
+/// The models inside the app, when both are there at their pinned sizes.
+fn bundled_store(app: &AppHandle) -> Option<ModelStore> {
+    let folder = app
+        .path()
+        .resolve(bundled::FOLDER, BaseDirectory::Resource)
+        .ok()?;
+    let store = ModelStore::new(folder);
+    if store.verified_paths().is_ok() {
+        return Some(store);
+    }
+    log::warn!(target: "pipeline", "speakers: the bundled models are missing; downloading instead");
+    None
 }

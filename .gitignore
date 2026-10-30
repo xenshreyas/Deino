@@ -10,6 +10,8 @@
 /frontend/src-tauri/models/
 *.gguf
 *.onnx
+# ...except the speaker models bundled in the app (Git LFS, .gitattributes).
+!frontend/src-tauri/resources/speakers/*.onnx
 !fixtures/**/*.onnx
 /.pnp
 .pnp.*
@@ -88,3 +90,5 @@ frontend/src-tauri/binaries/
 # Claude Code agent worktrees
 .claude/worktrees/
 
+# The speaker port's references from private recordings stay on the owner's Mac.
+/crates/deino-diarize/tests/reference/

@@ -28,11 +28,21 @@ login, no first-run download and no network are needed:
 | Community-1 segmentation (ONNX) | pyannote/speaker-diarization-community-1 (gated on Hugging Face, so it cannot be fetched for users) | CC-BY-4.0 | ~6 MB |
 | WeSpeaker ResNet34-LM embedding | the one Deino already uses | CC-BY-4.0 | ~26 MB |
 | PLDA `plda.npz`, `xvec_transform.npz` as plain arrays | Community-1 | CC-BY-4.0 | < 1 MB |
-| wav2vec2-base-960h aligner (ONNX, int8) | facebook/wav2vec2-base-960h | Apache-2.0 | ~95 MB |
+| wav2vec2-base-960h aligner (ONNX, MatMul int8) | facebook/wav2vec2-base-960h | Apache-2.0 | 122 MB |
 
-Each file is pinned by SHA-256, added as a Tauri resource, and credited in
-`THIRD_PARTY_NOTICES.md` (the CC-BY-4.0 attribution, and the Apache-2.0 notice).
-The app grows by about 130 MB.
+Done: `scripts/export-speaker-models.py` makes them into
+`frontend/src-tauri/resources/speakers/` (Git LFS); each is pinned in
+`deino_diarize::models::bundled`, bundled as the `speakers/` resource and
+credited in `THIRD_PARTY_NOTICES.md`. The ONNX engine reads its two models
+from there instead of downloading them. The app grows by about 160 MB.
+Quantizing every layer of the aligner to int8 (95 MB) broke it: on a real
+meeting it agreed with PyTorch on 29% of speech frames; MatMul-only, per
+channel, agrees on 97%.
+
+The Python engine's answer on one real call (speaker turns and word times,
+no text) is kept as the port's reference in
+`crates/deino-diarize/tests/reference/`, on the owner's Mac only
+(gitignored): it comes from a private recording.
 
 When every row is done, delete `python/`, `src/python.rs`, the setup script and
 this plan, and make the Rust path the only one.
