@@ -42,7 +42,11 @@ the SQLite adapters behind those ports.
   the newest is editable, an edited one is never replaced without
   `Overwrite::ReplaceEdits`. `EnhanceBasis` yields the regenerate reasons,
   `AutoTitler` names placeholder-titled meetings, `LegacySummaryImport`
-  copies the old summaries in as version 1. Fake: `FakeEnhancedNotesRepo`.
+  copies the old summaries in as version 1. While a version is written its
+  finished lines stream to a `NotesProgress` port as `NotesDraft`s
+  (`partial`, `LiveDraft`, ADR 2026-10-30-streamed-notes), and
+  `EnhanceService::stop` cancels the writing. Fakes:
+  `FakeEnhancedNotesRepo`, `RecordedProgress`.
 - The core-schema aggregates (FND-07), each with small ports, a SQLite
   repository and a fake that pass the same contract tests; feature cards add
   the services and commands:

@@ -10,21 +10,23 @@
 //!
 //! Reading, editing and restoring versions are in `history.rs`.
 
-use std::collections::HashSet;
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_doc::Flavor;
-use deino_domain::{Clock, MeetingId};
+use deino_domain::{Clock, MeetingId, TemplateId};
 use deino_llm::Gateway;
 
-use super::assemble::{Checks, assemble};
+use super::assemble::{Checks, Draft, assemble};
 use super::citations::SegmentIndex;
 use super::convert::to_doc;
+use super::live::LiveDraft;
 use super::material::Material;
+use super::progress::{NoProgress, NotesDraft, NotesProgress};
+use super::runs::{Run, Runs};
 use super::sources::MaterialSources;
-use super::user_lines::{user_headings, user_lines};
-use super::writer::NotesWriter;
+use super::user_lines::{UserLine, user_headings, user_lines};
+use super::writer::{NotesWriter, WriteJob};
 use super::{
     EnhanceBasis, EnhanceError, EnhancedNotesReader, EnhancedNotesView, EnhancedNotesWriter,
     NewVersion,
@@ -87,34 +89,45 @@ pub struct EnhancePorts {
     pub gateway: Arc<Gateway>,
 }
 
+/// Shown when the user stopped the notes the pipeline was writing.
+pub const STOPPED: &str = "You stopped the notes. Use Enhance on the Notes tab to write them.";
+
 /// Writes, reads and edits enhanced notes.
 pub struct EnhanceService {
     pub(super) ports: EnhancePorts,
     pub(super) clock: Arc<dyn Clock>,
     writer: NotesWriter,
-    running: Mutex<HashSet<MeetingId>>,
+    runs: Runs,
 }
 
 impl EnhanceService {
-    /// The service over its ports.
+    /// The service over its ports, reporting runs nowhere.
     pub fn new(ports: EnhancePorts, clock: Arc<dyn Clock>) -> Self {
         Self {
             writer: NotesWriter::new(Arc::clone(&ports.gateway)),
             ports,
             clock,
-            running: Mutex::new(HashSet::new()),
+            runs: Runs::new(Arc::new(NoProgress)),
         }
+    }
+
+    /// Reports every run's drafts and end to `progress` (streamed notes).
+    #[must_use]
+    pub fn with_progress(mut self, progress: Arc<dyn NotesProgress>) -> Self {
+        self.runs = Runs::new(progress);
+        self
     }
 
     /// Writes the meeting's notes as a new version and returns it. Fails
     /// with [`EnhanceError::WouldReplaceEdits`] when the newest version has
-    /// the user's edits and `overwrite` does not allow replacing them.
+    /// the user's edits and `overwrite` does not allow replacing them, and
+    /// with [`EnhanceError::Stopped`] when the user stopped it.
     pub async fn enhance(
         &self,
         meeting: &MeetingId,
         overwrite: Overwrite,
     ) -> Result<EnhancedNotesView, EnhanceError> {
-        let _running = self.start(meeting)?;
+        let run = self.runs.start(meeting)?;
         let latest = self.ports.reader.latest(meeting).await?;
         if overwrite == Overwrite::KeepEdits && latest.is_some_and(|notes| notes.is_user_edited) {
             return Err(EnhanceError::WouldReplaceEdits);
@@ -126,7 +139,9 @@ impl EnhanceService {
         if material.is_empty() {
             return Err(EnhanceError::NothingToEnhance);
         }
-        let version = self.write(&material).await?;
+        let written = self.write(&material, &run).await;
+        run.finish(&written);
+        let version = written?;
         self.view(meeting, Some(version))
             .await?
             .ok_or(EnhanceError::VersionNotFound { version })
@@ -134,7 +149,7 @@ impl EnhanceService {
 
     /// The pipeline's run (`enhance_notes`): writes notes unless there is
     /// nothing to write from, the user edited the notes, or nothing changed
-    /// since they were written.
+    /// since they were written. A run the user stops is a skip.
     pub async fn run_for_pipeline(&self, meeting: &MeetingId) -> Result<PipelineRun, EnhanceError> {
         let material = self.material(meeting).await?;
         if material.transcript_deleted {
@@ -154,8 +169,25 @@ impl EnhanceService {
                 return Ok(PipelineRun::Skipped(UP_TO_DATE));
             }
         }
-        let _running = self.start(meeting)?;
-        Ok(PipelineRun::Written(self.write(&material).await?))
+        let run = self.runs.start(meeting)?;
+        let written = self.write(&material, &run).await;
+        run.finish(&written);
+        match written {
+            Ok(version) => Ok(PipelineRun::Written(version)),
+            Err(EnhanceError::Stopped) => Ok(PipelineRun::Skipped(STOPPED)),
+            Err(error) => Err(error),
+        }
+    }
+
+    /// The notes of `meeting` as far as they are written, while they are.
+    pub fn draft(&self, meeting: &MeetingId) -> Option<NotesDraft> {
+        self.runs.draft(meeting)
+    }
+
+    /// Stops writing `meeting`'s notes; nothing is saved. False when they
+    /// were not being written.
+    pub fn stop(&self, meeting: &MeetingId) -> bool {
+        self.runs.stop(meeting)
     }
 
     /// The material of `meeting`, or [`EnhanceError::MeetingNotFound`].
@@ -167,22 +199,43 @@ impl EnhanceService {
             .ok_or_else(|| EnhanceError::MeetingNotFound(meeting.clone()))
     }
 
-    /// Writes, checks and stores one version; returns its number.
-    async fn write(&self, material: &Material) -> Result<u32, EnhanceError> {
-        let meeting = &material.meeting.id;
-        let template = self.ports.templates.template_for(meeting).await?;
+    /// Writes, checks and stores one version, showing it to `run` as it is
+    /// written; returns its number.
+    async fn write(&self, material: &Material, run: &Run<'_>) -> Result<u32, EnhanceError> {
+        let template = self
+            .ports
+            .templates
+            .template_for(&material.meeting.id)
+            .await?;
         let index = SegmentIndex::new(&material.transcript);
-        let written = self.writer.write(material, &template, &index).await?;
-        let (lines, headings) = match &material.notes {
-            Some(notes) => (user_lines(&notes.doc), user_headings(&notes.doc)),
-            None => (Vec::new(), Vec::new()),
-        };
+        let (lines, headings) = typed(material);
+        run.keeps(lines.len());
         let checks = Checks {
             lines: &lines,
             headings: &headings,
             index: &index,
         };
-        let draft = assemble(&written.answer, checks);
+        let live = LiveDraft::new(run, checks);
+        let job = WriteJob {
+            material,
+            template: &template,
+            index: &index,
+            report: &live,
+        };
+        let written = run.abortable(self.writer.write(&job)).await?;
+        live.saving();
+        let answer = Answer {
+            draft: assemble(&written.answer, checks),
+            template: template.id,
+            model: written.model,
+        };
+        self.store(material, answer).await
+    }
+
+    /// Stores the checked answer as the meeting's next version.
+    async fn store(&self, material: &Material, answer: Answer) -> Result<u32, EnhanceError> {
+        let meeting = &material.meeting.id;
+        let draft = answer.draft;
         if draft.sections.is_empty() {
             return Err(EnhanceError::EmptyNotes);
         }
@@ -191,8 +244,8 @@ impl EnhanceService {
             meeting_id: meeting.clone(),
             markdown: deino_doc::to_markdown(&doc, Flavor::Readable),
             doc,
-            template_id: Some(template.id),
-            model: written.model,
+            template_id: Some(answer.template),
+            model: answer.model,
             basis: Some(EnhanceBasis::of(material)),
             is_user_edited: false,
             at: self.clock.now(),
@@ -201,31 +254,19 @@ impl EnhanceService {
         log::info!(target: "enhance", "{meeting}: stored notes version {number} ({} sections)", draft.sections.len());
         Ok(number)
     }
-
-    /// Marks `meeting` as being written, or fails when it already is.
-    fn start(&self, meeting: &MeetingId) -> Result<Running<'_>, EnhanceError> {
-        let mut running = self.running.lock().unwrap_or_else(PoisonError::into_inner);
-        if !running.insert(meeting.clone()) {
-            return Err(EnhanceError::AlreadyRunning);
-        }
-        Ok(Running {
-            set: &self.running,
-            meeting: meeting.clone(),
-        })
-    }
 }
 
-/// While alive, its meeting counts as being written.
-struct Running<'a> {
-    set: &'a Mutex<HashSet<MeetingId>>,
-    meeting: MeetingId,
+/// A checked answer and what wrote it.
+struct Answer {
+    draft: Draft,
+    template: TemplateId,
+    model: String,
 }
 
-impl Drop for Running<'_> {
-    fn drop(&mut self) {
-        self.set
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(&self.meeting);
+/// The lines and headings the user typed in their notes.
+fn typed(material: &Material) -> (Vec<UserLine>, Vec<String>) {
+    match &material.notes {
+        Some(notes) => (user_lines(&notes.doc), user_headings(&notes.doc)),
+        None => (Vec::new(), Vec::new()),
     }
 }

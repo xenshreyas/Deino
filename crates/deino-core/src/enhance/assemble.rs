@@ -116,6 +116,20 @@ pub fn assemble(answer: &EnhancedDoc, checks: Checks<'_>) -> Draft {
     Draft { sections }
 }
 
+/// The checks a partial answer gets while it is written (streamed notes):
+/// rules 1 to 3, in the same order, so a line shows as it will be saved.
+/// Not rule 4, since a user line not written yet is not dropped; and a
+/// section shows from its heading on, before its first block.
+pub fn preview(answer: &EnhancedDoc, checks: Checks<'_>) -> Draft {
+    let mut matcher = LineMatcher::new(checks.lines);
+    let sections = answer
+        .sections
+        .iter()
+        .map(|section| draft_section(section, checks, &mut matcher))
+        .collect();
+    Draft { sections }
+}
+
 fn draft_section(
     section: &EnhancedSection,
     checks: Checks<'_>,

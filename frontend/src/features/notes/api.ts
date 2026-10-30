@@ -10,6 +10,7 @@ import { unwrap } from '@/lib/ipc/result';
 import type {
   CitedSegment,
   EnhancedNotesView,
+  NotesDraft,
   SavedEnhancedNotes,
   SegmentId,
   VersionInfo,
@@ -24,6 +25,10 @@ export const enhanceApi = {
   /** Writes a new version; `conflict` when it would replace edits without consent. */
   enhance: (meetingId: MeetingId, replaceEdits: boolean): Promise<EnhancedNotesView> =>
     unwrap(commands.enhance(meetingId, replaceEdits)),
+  /** The notes as far as they are written, while they are; `null` otherwise. */
+  draft: (meetingId: MeetingId): Promise<NotesDraft | null> => unwrap(commands.draft(meetingId)),
+  /** Stops writing the notes; nothing is saved. `false` when none were being written. */
+  stop: (meetingId: MeetingId): Promise<boolean> => unwrap(commands.stop(meetingId)),
   /** Saves an edit of the newest version. */
   save: (meetingId: MeetingId, version: number, doc: NoteDoc): Promise<SavedEnhancedNotes> =>
     unwrap(commands.save(meetingId, version, doc)),

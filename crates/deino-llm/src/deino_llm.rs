@@ -87,7 +87,7 @@ pub use router::{
     RouteOverrides, RouteSource, RouteStore, RouteStoreError, Router,
 };
 pub use sse::{SseEvent, SseParser};
-pub use structured::json_schema_for;
+pub use structured::{AnswerSink, json_schema_for};
 pub use tools::{DEFAULT_MAX_TOOL_STEPS, Tool, ToolError, ToolRun, Toolbox};
 pub use usage::{
     CallOutcome, LlmCall, LlmCallRepo, MemoryUsage, SqliteLlmCallRepo, UsageChannel, UsageRecorder,

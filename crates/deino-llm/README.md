@@ -9,6 +9,8 @@ and model, streams the answer, and meters the call into `llm_calls`.
 ## Owns
 
 - `Gateway` (`gateway.rs`): `complete`, `stream`, `structured::<T>()`
+  (and `structured_streamed::<T>()`, the same with the raw JSON handed to
+  an `AnswerSink` as it arrives, for streamed notes)
   (`structured.rs`: schemars draft-07 with inlined subschemas, one repair
   retry; `structured_as` takes a schema built at run time, for AI-06's
   per-insight fields), `with_tools` (`tools.rs`: typed `Tool`s, a step-limited loop),

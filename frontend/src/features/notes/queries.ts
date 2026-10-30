@@ -52,6 +52,7 @@ export const enhanceKeys = {
   cited: (id: MeetingId, segments: readonly string[]) =>
     [...enhanceKeys.all, 'cited', id, ...segments] as const,
   run: (id: MeetingId) => [...enhanceKeys.all, 'run', id] as const,
+  live: (id: MeetingId) => [...enhanceKeys.all, 'live', id] as const,
 };
 
 /** A version of the meeting's notes; the newest for `null`. */

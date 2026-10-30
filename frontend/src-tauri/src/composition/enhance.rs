@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::enhance::{
-    AutoTitler, EnhanceError, EnhancePorts, EnhanceService, MaterialSources, PipelineRun,
-    SqliteEnhancedNotesRepo, TemplateSource, TitleRun,
+    AutoTitler, EnhanceError, EnhancePorts, EnhanceService, LateProgress, MaterialSources,
+    PipelineRun, SqliteEnhancedNotesRepo, TemplateSource, TitleRun,
 };
 use deino_core::redaction::{LocalModelCheck, Redactor, SettingRedactor, TextRedactor};
 use deino_core::settings::SettingsService;
@@ -23,6 +23,7 @@ use deino_pipeline::{MeetingTitler, NotesEnhancer};
 use tauri::{Manager, Runtime};
 
 use super::notes::NoteDeps;
+use crate::features::enhance::TauriNotesProgress;
 
 /// Why the notes stages skip when the gateway could not be wired.
 const AI_UNAVAILABLE: &str = "AI is unavailable: the Keychain or the network could not start.";
@@ -34,6 +35,9 @@ pub(crate) struct NotesAi {
     /// The webhooks' sink for `notes.generated` and `notes.edited` (DEV-01),
     /// bound in [`NotesAi::manage`].
     webhooks: Arc<LateSink>,
+    /// Where runs show their notes as they are written, bound in
+    /// [`NotesAi::manage`].
+    progress: Arc<LateProgress>,
     enhancer: Arc<dyn NotesEnhancer>,
     titler: Arc<dyn MeetingTitler>,
 }
@@ -48,10 +52,12 @@ impl NotesAi {
     ) -> Self {
         let clock = &deps.clock;
         let webhooks = Arc::new(LateSink::default());
+        let progress = Arc::new(LateProgress::default());
         let Some(gateway) = deps.gateway.clone() else {
             return Self {
                 service: None,
                 webhooks,
+                progress,
                 enhancer: Arc::new(Unwired),
                 titler: Arc::new(Unwired),
             };
@@ -72,11 +78,13 @@ impl NotesAi {
             templates,
             gateway,
         };
-        let service = Arc::new(EnhanceService::new(ports, Arc::clone(clock)));
+        let service =
+            Arc::new(EnhanceService::new(ports, Arc::clone(clock)).with_progress(progress.clone()));
         Self {
             enhancer: service.clone(),
             service: Some(service),
             webhooks,
+            progress,
             titler: Arc::new(titler),
         }
     }
@@ -92,11 +100,14 @@ impl NotesAi {
     }
 
     /// Registers the service as Tauri state, where the `enhance` commands
-    /// find it, and connects its notes to the webhooks.
+    /// find it, connects its notes to the webhooks and shows its runs to
+    /// the UI.
     pub(crate) fn manage<R: Runtime>(&self, app: &impl Manager<R>) {
         if let Some(sink) = super::webhooks::sink(app) {
             self.webhooks.bind(sink);
         }
+        self.progress
+            .bind(Arc::new(TauriNotesProgress::new(app.app_handle().clone())));
         if let Some(service) = &self.service {
             app.manage(Arc::clone(service));
         }

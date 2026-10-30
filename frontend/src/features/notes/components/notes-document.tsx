@@ -29,6 +29,8 @@ export interface NotesDocumentProps {
   /** Total versions, for the older-version bar. */
   versions: number;
   busy: boolean;
+  /** The status row already says the notes are being written (streamed notes). */
+  quiet?: boolean;
   /** What follows the notes inside their scroll (insight answers, images). */
   footer?: ReactNode;
   /** Writes the notes again; `null` when they cannot be (PRV-01). */
@@ -75,7 +77,7 @@ export function NotesDocument(props: NotesDocumentProps) {
   const reasons = hidden ? [] : view.reasons;
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {busy ? <RewritingLine /> : null}
+      {busy && props.quiet !== true ? <RewritingLine /> : null}
       <RegenerateBanner
         reasons={reasons}
         onRegenerate={props.onRegenerate ?? NO_REGENERATE}

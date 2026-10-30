@@ -27,6 +27,9 @@ pub enum EnhanceError {
     /// The newest version has the user's edits; regenerating needs consent.
     #[error("Regenerating will replace the notes you edited.")]
     WouldReplaceEdits,
+    /// The user stopped the notes while they were written; nothing was saved.
+    #[error("Writing the notes was stopped.")]
+    Stopped,
     /// Notes for this meeting are being written already.
     #[error("Notes for this meeting are already being written.")]
     AlreadyRunning,
@@ -83,6 +86,7 @@ impl ErrorClass for EnhanceError {
             }
             Self::WouldReplaceEdits | Self::AlreadyRunning | Self::NotLatest => ErrorCode::Conflict,
             Self::EmptyNotes => ErrorCode::Llm,
+            Self::Stopped => ErrorCode::Cancelled,
             Self::Llm(error) => error.code(),
             Self::Template(error) => error.code(),
             Self::Storage(_) => ErrorCode::Internal,

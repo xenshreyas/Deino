@@ -1,8 +1,8 @@
 /**
  * Mock of `@/lib/ipc/generated/enhance`: the enhanced notes over the mock
- * `enhanced_notes` table. Writing notes takes a moment (so the "writing"
- * state shows) and is refused with `conflict` over the user's edits, like
- * Rust; citations are answered from the fixtures' transcripts.
+ * `enhanced_notes` table. Writing notes streams them a line at a time
+ * (`NotesRun` drafts, Stop) and is refused with `conflict` over the user's
+ * edits, like Rust; citations are answered from the fixtures' transcripts.
  */
 import type * as Generated from '@/lib/ipc/generated/enhance';
 
@@ -11,10 +11,43 @@ import { fixtureUuid } from './fixture-ids';
 import type { FixtureMeeting } from './fixture-schema';
 import { latency } from './latency';
 import { failure, ok } from './mock-database';
+import { mockEvent } from './mock-event';
+import { streamDoc } from './mock-notes-stream';
 import { transcriptEditedAt } from './mock-transcript-edits';
 
-/** How long the mock "writes" notes. */
-const WRITING_MS = 1600;
+/** A run in progress: its latest draft, and whether the user stopped it. */
+interface MockRun {
+  draft: Generated.NotesDraft | null;
+  stopped: boolean;
+}
+
+/** The runs in progress, by meeting. */
+const runs = new Map<string, MockRun>();
+
+export const events = {
+  notesRun: mockEvent<Generated.NotesRun>('plugin:enhance:notes-run'),
+} satisfies typeof Generated.events;
+
+/** Streams the notes `enhance` is about to save; false when the user stopped. */
+async function stream(meetingId: Generated.MeetingId): Promise<boolean> {
+  const run: MockRun = { draft: null, stopped: false };
+  runs.set(meetingId, run);
+  const finished = await streamDoc(
+    meetingId,
+    mockEnhanced.next(meetingId),
+    (draft) => {
+      run.draft = draft;
+      void events.notesRun.emit({ meetingId, update: { kind: 'draft', draft } });
+    },
+    () => run.stopped,
+  );
+  runs.delete(meetingId);
+  return finished;
+}
+
+function ended(meetingId: Generated.MeetingId, end: Generated.NotesRunEnd) {
+  void events.notesRun.emit({ meetingId, update: { kind: 'ended', end } });
+}
 
 function notFound(what: string) {
   return failure<never>({ code: 'not_found', message: `${what} was not found` });
@@ -84,11 +117,26 @@ export const commands = {
         message: 'Regenerating will replace the notes you edited.',
       });
     }
-    await new Promise((resolve) => setTimeout(resolve, WRITING_MS));
+    if (!(await stream(meetingId))) {
+      ended(meetingId, { kind: 'stopped' });
+      return failure({ code: 'cancelled', message: 'Writing the notes was stopped.' });
+    }
     const version = mockEnhanced.write(meetingId, new Date());
     mockDatabase.touch(['enhanced_notes']);
+    ended(meetingId, { kind: 'written', version, kept: 0 });
     const written = view(meetingId, version);
     return written ? ok(written) : notFound(`meeting ${meetingId}`);
+  },
+  async draft(meetingId) {
+    await latency();
+    return ok(runs.get(meetingId)?.draft ?? null);
+  },
+  async stop(meetingId) {
+    await latency();
+    const run = runs.get(meetingId);
+    if (run === undefined) return ok(false);
+    run.stopped = true;
+    return ok(true);
   },
   async save(meetingId, version, doc) {
     await latency();

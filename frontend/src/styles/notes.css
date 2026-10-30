@@ -194,6 +194,23 @@
     display: none;
   }
 
+  /*
+    Streamed notes: while the notes are written, each finished line fades in
+    once as it arrives (React keeps the earlier lines' elements). The saved
+    version, drawn by the editor, has no animation.
+  */
+  .notes-draft :is(h1, h2, h3, li, blockquote, pre, hr),
+  .notes-draft > p {
+    animation: note-line-in var(--dur-pill) var(--ease-out) both;
+  }
+
+  @keyframes note-line-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+  }
+
   /* A person chip (ui.md §3 Speaker chip, inline in notes). */
   .note-mention {
     display: inline-flex;

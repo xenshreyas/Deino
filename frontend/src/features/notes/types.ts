@@ -3,8 +3,17 @@
  * re-exported here.
  */
 export type {
+  Block,
   CitedSegment,
+  doc as DraftDoc,
   EnhancedNotesView,
+  Inline,
+  Mark,
+  NotesDraft,
+  NotesPhase,
+  NotesRun,
+  NotesRunEnd,
+  NotesRunUpdate,
   RegenerateReason,
   SavedEnhancedNotes,
   SegmentId,

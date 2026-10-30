@@ -9,7 +9,8 @@
 use std::sync::Arc;
 
 use deino_core::enhance::{
-    CitedSegment, EnhanceService, EnhancedNotesView, Overwrite, SavedEnhancedNotes, VersionInfo,
+    CitedSegment, EnhanceService, EnhancedNotesView, NotesDraft, Overwrite, SavedEnhancedNotes,
+    VersionInfo,
 };
 use deino_doc::Doc;
 use deino_domain::{AppError, MeetingId, SegmentId};
@@ -22,7 +23,7 @@ type Notes<'a> = State<'a, Arc<EnhanceService>>;
 
 /// The plugin's commands, collected here so they can stay private.
 pub(super) fn collect<R: Runtime>() -> tauri_specta::Commands<R> {
-    tauri_specta::collect_commands![get, versions, enhance, save, restore, cited]
+    tauri_specta::collect_commands![get, versions, enhance, draft, stop, save, restore, cited]
 }
 
 /// Version `version` of the meeting's notes (the newest when null), with
@@ -59,6 +60,22 @@ async fn enhance(
         Overwrite::KeepEdits
     };
     notes.enhance(&meeting_id, overwrite).await.into_ipc()
+}
+
+/// The meeting's notes as far as they are written, while they are; null
+/// otherwise. For a page opened mid-run; later drafts come as `NotesRun`.
+#[tauri::command]
+#[specta::specta]
+async fn draft(notes: Notes<'_>, meeting_id: MeetingId) -> Result<Option<NotesDraft>, AppError> {
+    Ok(notes.draft(&meeting_id))
+}
+
+/// Stops writing the meeting's notes; nothing is saved and the previous
+/// version stays. False when they were not being written.
+#[tauri::command]
+#[specta::specta]
+async fn stop(notes: Notes<'_>, meeting_id: MeetingId) -> Result<bool, AppError> {
+    Ok(notes.stop(&meeting_id))
 }
 
 /// Saves the user's edit of the newest version.

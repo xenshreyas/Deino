@@ -159,3 +159,59 @@ async fn a_run_time_schema_is_sent_as_given_and_the_answer_parses_into_the_wire_
     };
     assert_eq!((json.name.as_str(), &json.schema), ("budget", &schema));
 }
+
+/// Records what a streamed answer hands its sink.
+#[derive(Default)]
+struct Recorded(std::sync::Mutex<Vec<String>>);
+
+impl AnswerSink for Recorded {
+    fn start(&self) {
+        self.0.lock().unwrap().push("<start>".to_owned());
+    }
+
+    fn piece(&self, piece: &str) {
+        self.0.lock().unwrap().push(piece.to_owned());
+    }
+}
+
+#[tokio::test]
+async fn a_streamed_answer_reaches_the_sink_piece_by_piece_and_still_parses() {
+    let answer = r#"{"items":[{"title":"Send the proposal"}]}"#;
+    let mock = MockProvider::new().reply_in_chunks(Route::ExtractActionItems, answer, 7);
+    let harness = mock_gateway(Arc::new(mock));
+    let sink = Recorded::default();
+
+    let items: ActionItems = harness
+        .gateway
+        .structured_streamed(Route::ExtractActionItems, Prompt::new("x"), &sink)
+        .await
+        .unwrap();
+
+    assert_eq!(items.items[0].title, "Send the proposal");
+    let seen = sink.0.into_inner().unwrap();
+    assert_eq!(seen[0], "<start>");
+    assert!(seen.len() > 3, "{seen:?}");
+    assert_eq!(seen[1..].concat(), answer);
+}
+
+#[tokio::test]
+async fn the_repair_turn_starts_the_sink_over() {
+    let mock = MockProvider::new()
+        .reply_in_chunks(Route::ExtractActionItems, r#"{"items":[{"name":"x"}]}"#, 5)
+        .reply_in_chunks(Route::ExtractActionItems, r#"{"items":[{"title":"x"}]}"#, 5);
+    let harness = mock_gateway(Arc::new(mock));
+    let sink = Recorded::default();
+
+    let items: ActionItems = harness
+        .gateway
+        .structured_streamed(Route::ExtractActionItems, Prompt::new("x"), &sink)
+        .await
+        .unwrap();
+
+    assert_eq!(items.items[0].title, "x");
+    let seen = sink.0.into_inner().unwrap();
+    let starts = seen.iter().filter(|piece| *piece == "<start>").count();
+    assert_eq!(starts, 2);
+    let after = seen.iter().rposition(|piece| piece == "<start>").unwrap();
+    assert_eq!(seen[after + 1..].concat(), r#"{"items":[{"title":"x"}]}"#);
+}

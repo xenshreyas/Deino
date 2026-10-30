@@ -45,6 +45,25 @@ export const notesCopy = {
   noRecording: 'No recording to play',
   showInTranscript: 'Show in transcript',
   saveFailed: 'Your edit was not saved yet; retrying',
+  readingTranscript: 'Reading the transcript…',
+  readingParts: (done: number, total: number) =>
+    `Reading the transcript in ${String(total)} parts · ${String(done)} of ${String(total)} done`,
+  merging: 'Merging the parts…',
+  writingSection: (heading: string) => (heading === '' ? 'Writing…' : `Writing · ${heading}`),
+  retrying: 'The first answer could not be used. Asking again…',
+  saving: 'Saving…',
+  stop: 'Stop',
+  stopHint: 'Stop writing; nothing is saved',
+  lockedHint: 'You can edit once the notes are written',
+  writingBelow: 'Writing below',
+  written: (kept: number) =>
+    kept === 0
+      ? 'Notes written'
+      : kept === 1
+        ? 'Notes written · your line kept'
+        : `Notes written · all ${String(kept)} of your lines kept`,
+  stoppedNothing: 'Stopped. Nothing was saved.',
+  stoppedKept: (version: number) => `Stopped. Version ${String(version)} is unchanged.`,
 } as const;
 
 /** How each regenerate reason reads in the banner. */

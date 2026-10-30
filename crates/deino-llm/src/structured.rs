@@ -12,6 +12,9 @@
 //! `maxLength` or `minimum`, so the serde parse here and each caller's own
 //! validation are the checks that always run. A JSON answer cut off at `max_tokens` fails as
 //! [`LlmError::Truncated`] on Anthropic rather than reaching the repair.
+//! `Gateway::structured_streamed::<T>()` is the same call with the raw JSON
+//! handed to an [`AnswerSink`] as it arrives, so a caller can show a long
+//! answer while it is written (NOT-02's notes).
 
 use schemars::generate::SchemaSettings;
 use schemars::{JsonSchema, Schema};
@@ -20,7 +23,7 @@ use serde_json::Value;
 
 use crate::gateway::Shape;
 use crate::providers::stream::category;
-use crate::{Gateway, JsonOutput, LlmError, Message, OutputFormat, Prompt, Route};
+use crate::{Completion, Gateway, JsonOutput, LlmError, Message, OutputFormat, Prompt, Route};
 
 /// What the repair turn tells the model.
 const REPAIR_INSTRUCTION: &str = "Your answer could not be used. Reply again with only the corrected JSON, matching the schema exactly.";
@@ -65,25 +68,85 @@ impl Gateway {
         prompt: Prompt,
         output: JsonOutput,
     ) -> Result<T, LlmError> {
-        let shape = Shape {
-            output: OutputFormat::Json(output),
-            tools: Vec::new(),
+        self.structured_inner(prompt, Call::new(route, output, None))
+            .await
+    }
+
+    /// [`Gateway::structured`], with the answer's raw JSON handed to `sink`
+    /// as it streams: [`AnswerSink::start`] before each attempt (the repair
+    /// turn is a second one), then every piece. The value returned is
+    /// parsed from the whole answer exactly as [`Gateway::structured`] does.
+    pub async fn structured_streamed<T: JsonSchema + DeserializeOwned>(
+        &self,
+        route: Route,
+        prompt: Prompt,
+        sink: &dyn AnswerSink,
+    ) -> Result<T, LlmError> {
+        let output = JsonOutput {
+            name: schema_name::<T>(),
+            schema: json_schema_for::<T>(),
         };
-        let first = self
-            .complete_shaped(route, prompt.clone(), shape.clone())
-            .await?;
+        self.structured_inner(prompt, Call::new(route, output, Some(sink)))
+            .await
+    }
+
+    async fn structured_inner<T: DeserializeOwned>(
+        &self,
+        prompt: Prompt,
+        call: Call<'_>,
+    ) -> Result<T, LlmError> {
+        let route = call.route;
+        let first = self.attempt(prompt.clone(), &call).await?;
         let error = match parse::<T>(&first.text) {
             Ok(value) => return Ok(value),
             Err(error) => error,
         };
         log::info!(target: "llm", "{route}: structured answer did not parse ({}, stop {:?}, {} chars); repairing once", category(&error), first.stop, first.text.len());
         let repair = repair_prompt(prompt, &first.text, &error);
-        let second = self.complete_shaped(route, repair, shape).await?;
+        let second = self.attempt(repair, &call).await?;
         parse::<T>(&second.text).map_err(|error| {
             log::warn!(target: "llm", "{route}: repaired answer did not parse either ({}, stop {:?}, {} chars)", category(&error), second.stop, second.text.len());
             invalid_output(&error)
         })
     }
+
+    /// One call, its text teed to the call's sink when there is one.
+    async fn attempt(&self, prompt: Prompt, call: &Call<'_>) -> Result<Completion, LlmError> {
+        let shape = call.shape.clone();
+        let Some(sink) = call.sink else {
+            return self.complete_shaped(call.route, prompt, shape).await;
+        };
+        sink.start();
+        let stream = self.stream_shaped(call.route, prompt, shape).await?;
+        Completion::collect_with(stream, |piece| sink.piece(piece)).await
+    }
+}
+
+/// What every attempt of one structured answer shares.
+struct Call<'a> {
+    route: Route,
+    shape: Shape,
+    sink: Option<&'a dyn AnswerSink>,
+}
+
+impl<'a> Call<'a> {
+    fn new(route: Route, output: JsonOutput, sink: Option<&'a dyn AnswerSink>) -> Self {
+        let shape = Shape {
+            output: OutputFormat::Json(output),
+            tools: Vec::new(),
+        };
+        Self { route, shape, sink }
+    }
+}
+
+/// Receives a structured answer's raw text as it streams
+/// ([`Gateway::structured_streamed`]). Implementations must be quick: they
+/// run on the call's task, between pieces.
+pub trait AnswerSink: Send + Sync {
+    /// A new attempt begins: whatever came before is void.
+    fn start(&self);
+    /// The next piece of the answer.
+    fn piece(&self, piece: &str);
 }
 
 /// The error of an answer that did not parse, without its text.

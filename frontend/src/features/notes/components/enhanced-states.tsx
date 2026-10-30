@@ -28,14 +28,19 @@ export function NotesSkeleton() {
   );
 }
 
-/** Notes are being written: a calm line above the shape they will take. */
-export function WritingNotes() {
+/**
+ * Notes are being written: a calm line above the shape they will take;
+ * `quiet` leaves the line out when the status row says it already.
+ */
+export function WritingNotes({ quiet = false }: { quiet?: boolean }) {
   return (
     <div className="flex flex-col gap-5 pt-4" role="status" aria-live="polite">
-      <p className="flex items-center gap-2 text-sm text-ai-text">
-        <Sparkles {...ICON_PROPS} className="animate-pulse text-accent" />
-        {notesCopy.writing}
-      </p>
+      {quiet ? null : (
+        <p className="flex items-center gap-2 text-sm text-ai-text">
+          <Sparkles {...ICON_PROPS} className="animate-pulse text-accent" />
+          {notesCopy.writing}
+        </p>
+      )}
       <div className="flex flex-col gap-4" aria-hidden>
         <Skeleton className="h-3.5 w-28" />
         <SkeletonText lines={4} />

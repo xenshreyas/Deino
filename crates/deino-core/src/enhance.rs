@@ -13,6 +13,8 @@
 //! | `prompt.rs` | the `notes.enhance` prompts: one pass, a part, the merge |
 //! | `wire.rs` | [`EnhancedDoc`], the shape the model answers in |
 //! | `writer.rs` | [`NotesWriter`]: one pass or map-reduce over the gateway |
+//! | `partial.rs`, `live.rs` | streamed notes: the finished lines of an answer still being written, published as [`NotesDraft`]s |
+//! | `progress.rs`, `runs.rs` | [`NotesProgress`] (drafts and how a run ended), the runs in progress and Stop |
 //! | `user_lines.rs` | the user's lines and the matcher that holds the model to them |
 //! | `citations.rs` | [`SegmentIndex`]: references back to segments, invalid ones dropped |
 //! | `assemble.rs` | the checks between the answer and the document |
@@ -33,12 +35,16 @@ mod error;
 mod fake;
 mod history;
 mod legacy_import;
+mod live;
 mod material;
 mod model;
+mod partial;
+mod progress;
 mod prompt;
 mod repo;
 #[cfg(test)]
 mod repo_tests;
+mod runs;
 mod screen;
 mod service;
 #[cfg(test)]
@@ -56,7 +62,7 @@ mod writer;
 
 pub use assemble::{
     Body, Checks, Draft, DraftBlock, DraftDetail, DraftKind, DraftSection, LEFTOVER_HEADING,
-    assemble,
+    assemble, preview,
 };
 pub use basis::{EnhanceBasis, EventBasis};
 pub use citations::{MAX_CITATIONS, SegmentIndex, parse_reference};
@@ -73,9 +79,13 @@ pub use model::{
     CitedSegment, EnhancedNotes, EnhancedNotesView, Evidence, LEGACY_MODEL, NewVersion,
     RegenerateReason, SavedEnhancedNotes, VersionInfo,
 };
+pub use partial::{complete_lines, line_count};
+pub use progress::{LateProgress, NoProgress, NotesDraft, NotesPhase, NotesProgress, NotesRunEnd};
+#[cfg(any(test, feature = "test-support"))]
+pub use progress::{RecordedProgress, Reported};
 pub use repo::{EnhancedNotesReader, EnhancedNotesWriter, SqliteEnhancedNotesRepo, VersionEdit};
 pub use service::{
-    EnhancePorts, EnhanceService, KEPT_EDITS, NOTHING_TO_WRITE, Overwrite, PipelineRun,
+    EnhancePorts, EnhanceService, KEPT_EDITS, NOTHING_TO_WRITE, Overwrite, PipelineRun, STOPPED,
     TRANSCRIPT_DELETED, TemplateSource, UP_TO_DATE,
 };
 pub use sources::MaterialSources;
@@ -85,4 +95,4 @@ pub use title::{
 pub use transcript::{PART_SPAN, PartLimits, TranscriptLine, clock, parts, render_lines};
 pub use user_lines::{LineKind, LineMatcher, UserLine, user_headings, user_lines};
 pub use wire::{BlockKind, EnhancedBlock, EnhancedDetail, EnhancedDoc, EnhancedSection, Origin};
-pub use writer::{MAP_CONCURRENCY, NotesWriter, Written, model_label};
+pub use writer::{MAP_CONCURRENCY, NotesWriter, WriteJob, WriteReport, Written, model_label};

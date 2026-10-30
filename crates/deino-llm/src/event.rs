@@ -84,14 +84,26 @@ impl Completion {
     ///
     /// Fails with the stream's first error, or with
     /// [`LlmError::Truncated`] when the stream ends without a stop event.
-    pub async fn collect(mut stream: EventStream) -> Result<Self, LlmError> {
+    pub async fn collect(stream: EventStream) -> Result<Self, LlmError> {
+        Self::collect_with(stream, |_| ()).await
+    }
+
+    /// [`Completion::collect`], handing each piece of text to `on_text` as
+    /// it arrives (a structured answer streamed to the UI, NOT-02).
+    pub async fn collect_with(
+        mut stream: EventStream,
+        mut on_text: impl FnMut(&str) + Send,
+    ) -> Result<Self, LlmError> {
         let mut text = String::new();
         let mut tool_calls = Vec::new();
         let mut usage = Usage::default();
         let mut stop = None;
         while let Some(event) = stream.next().await {
             match event? {
-                CompletionEvent::Text(piece) => text.push_str(&piece),
+                CompletionEvent::Text(piece) => {
+                    on_text(&piece);
+                    text.push_str(&piece);
+                }
                 CompletionEvent::ToolUse(call) => tool_calls.push(call),
                 CompletionEvent::Usage(report) => usage = usage.merge(report),
                 CompletionEvent::Stop(reason) => stop = Some(reason),

@@ -26,7 +26,13 @@ use crate::{
 /// The built-in model name routes resolve to in a [`mock_gateway`].
 pub const MOCK_LOCAL_MODEL: &str = "mock-local";
 
-type Turn = Result<Vec<CompletionEvent>, LlmError>;
+/// A scripted answer: its events, and whether the stream then hangs.
+struct Scripted {
+    events: Vec<CompletionEvent>,
+    stalls: bool,
+}
+
+type Turn = Result<Scripted, LlmError>;
 
 /// Answers a request with text, from what it asks.
 type Responder = Arc<dyn Fn(&CompletionRequest) -> String + Send + Sync>;
@@ -61,6 +67,19 @@ impl MockProvider {
         self.events(route, text_turn(text))
     }
 
+    /// Scripts a text answer for `route` streamed in pieces of `size`
+    /// characters, as a provider sends it.
+    #[must_use]
+    pub fn reply_in_chunks(self, route: Route, text: &str, size: usize) -> Self {
+        let characters: Vec<char> = text.chars().collect();
+        let mut events: Vec<CompletionEvent> = characters
+            .chunks(size.max(1))
+            .map(|piece| CompletionEvent::Text(piece.iter().collect()))
+            .collect();
+        events.push(CompletionEvent::Stop(StopReason::EndTurn));
+        self.events(route, events)
+    }
+
     /// Scripts a turn in which the model calls tool `name` with `input`.
     #[must_use]
     pub fn call_tool(self, route: Route, name: &str, input: Value) -> Self {
@@ -82,7 +101,27 @@ impl MockProvider {
     /// Scripts a turn that yields exactly `events`.
     #[must_use]
     pub fn events(self, route: Route, events: Vec<CompletionEvent>) -> Self {
-        self.push(route, Ok(events))
+        self.push(
+            route,
+            Ok(Scripted {
+                events,
+                stalls: false,
+            }),
+        )
+    }
+
+    /// Scripts a turn that streams `text` and then never ends, as a slow
+    /// model mid-answer does (for stopping a call in flight).
+    #[must_use]
+    pub fn stall(self, route: Route, text: &str) -> Self {
+        let events = vec![CompletionEvent::Text(text.to_owned())];
+        self.push(
+            route,
+            Ok(Scripted {
+                events,
+                stalls: true,
+            }),
+        )
     }
 
     /// Answers every call on `route` that no scripted turn is left for with
@@ -126,15 +165,26 @@ impl LlmProvider for MockProvider {
             .get_mut(&route)
             .and_then(VecDeque::pop_front);
         let responder = lock(&self.responders).get(&route).cloned();
-        let turn = scripted.or_else(|| responder.map(|respond| Ok(text_turn(&respond(&request)))));
+        let turn = scripted.or_else(|| {
+            responder.map(|respond| {
+                Ok(Scripted {
+                    events: text_turn(&respond(&request)),
+                    stalls: false,
+                })
+            })
+        });
         lock(&self.requests).push(request);
-        let events = turn.unwrap_or_else(|| {
+        let Scripted { events, stalls } = turn.unwrap_or_else(|| {
             Err(LlmError::Unavailable {
                 provider: ProviderId::BuiltIn,
                 reason: format!("MockProvider has no turn scripted for {route}"),
             })
         })?;
-        Ok(stream::iter(events.into_iter().map(Ok)).boxed())
+        let events = stream::iter(events.into_iter().map(Ok));
+        if stalls {
+            return Ok(events.chain(stream::pending()).boxed());
+        }
+        Ok(events.boxed())
     }
 
     async fn context_window(&self, _model: &str) -> Option<u32> {

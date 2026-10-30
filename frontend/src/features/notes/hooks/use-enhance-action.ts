@@ -38,6 +38,11 @@ export function needsConsent(error: unknown): boolean {
   return error instanceof IpcError && error.code === 'conflict';
 }
 
+/** True when `error` is the run the user stopped: no failure, nothing to show. */
+export function wasStopped(error: unknown): boolean {
+  return error instanceof IpcError && error.code === 'cancelled';
+}
+
 /** What a trigger gets: run it, and whether notes are being written. */
 export interface EnhanceAction {
   /** Writes notes; asks first when that would replace the user's edits. */
@@ -57,7 +62,10 @@ export function useEnhanceAction(meeting: MeetingId): EnhanceAction {
   const enhance = useEnhance(meeting);
   const ask = useConfirmRegenerate((state) => state.ask);
   const blocked = useRegenerateBlock(meeting);
-  const failure = enhance.error !== null && !needsConsent(enhance.error) ? enhance.error : null;
+  const failure =
+    enhance.error !== null && !needsConsent(enhance.error) && !wasStopped(enhance.error)
+      ? enhance.error
+      : null;
   return {
     run: () => {
       if (blocked !== null) return;

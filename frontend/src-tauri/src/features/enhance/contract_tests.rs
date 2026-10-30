@@ -1,26 +1,33 @@
 //! Contract tests: the JSON the UI sends to and receives from each `enhance`
-//! command, through the real plugin, ACL and error mapping, over the seeded
-//! fixtures and a scripted `notes.enhance`.
+//! command and the `NotesRun` event, through the real plugin, ACL and error
+//! mapping, over the seeded fixtures and a scripted `notes.enhance`.
 
-use std::sync::Arc;
+use std::sync::{Arc, mpsc};
+use std::time::Duration;
 
 use async_trait::async_trait;
 use deino_core::enhance::{
-    EnhancePorts, EnhanceService, MaterialSources, SqliteEnhancedNotesRepo, TemplateSource,
+    EnhancePorts, EnhanceService, LateProgress, MaterialSources, NotesDraft, NotesPhase,
+    NotesProgress, NotesRunEnd, SqliteEnhancedNotesRepo, TemplateSource,
 };
 use deino_core::templates::{
     BuiltinSync, CATALOG, SqliteTemplateRepo, Template, TemplateError, TemplateRepo,
 };
+use deino_doc::Doc;
 use deino_domain::{MeetingId, TemplateId};
 use deino_llm::{MockProvider, Route, mock_gateway};
 use deino_testkit::fixture::{Fixtures, MeetingKind, seed_fixtures};
 use deino_testkit::{FakeClock, at, test_db};
 use serde_json::{Value, json};
-use tauri::WebviewWindow;
 use tauri::async_runtime::block_on;
 use tauri::test::{MockRuntime, mock_builder};
+use tauri::{Listener, Manager, WebviewWindow};
 
+use super::TauriNotesProgress;
 use crate::features::ipc_tests::{invoke, main_window, mock_app};
+
+/// How long a test waits for an event that should already have been emitted.
+const EVENT_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// The built-in 1:1 for every meeting.
 struct OneOnOne(Arc<SqliteTemplateRepo>);
@@ -54,7 +61,8 @@ fn window() -> (WebviewWindow<MockRuntime>, MeetingId) {
         templates: Arc::new(OneOnOne(templates)),
         gateway: Arc::new(mock_gateway(Arc::new(mock)).gateway),
     };
-    let service = Arc::new(EnhanceService::new(ports, clock));
+    let progress = Arc::new(LateProgress::default());
+    let service = Arc::new(EnhanceService::new(ports, clock).with_progress(progress.clone()));
     let builder = mock_builder().plugin(super::init()).manage(service);
     let meeting = Fixtures::load()
         .unwrap()
@@ -62,7 +70,9 @@ fn window() -> (WebviewWindow<MockRuntime>, MeetingId) {
         .unwrap()
         .id
         .clone();
-    (main_window(&mock_app(builder)), meeting)
+    let app = mock_app(builder);
+    progress.bind(Arc::new(TauriNotesProgress::new(app.handle().clone())));
+    (main_window(&app), meeting)
 }
 
 fn call(window: &WebviewWindow<MockRuntime>, command: &str, args: Value) -> Result<Value, Value> {
@@ -206,4 +216,100 @@ fn find_citation(node: &Value) -> Option<&Value> {
         return Some(&node["attrs"]);
     }
     node["content"].as_array()?.iter().find_map(find_citation)
+}
+
+#[test]
+fn draft_is_null_and_stop_is_false_while_nothing_is_written() {
+    let (window, meeting) = window();
+
+    let draft = call(&window, "draft", json!({ "meetingId": meeting }));
+    let stopped = call(&window, "stop", json!({ "meetingId": meeting }));
+
+    assert_eq!(draft, Ok(Value::Null));
+    assert_eq!(stopped, Ok(json!(false)));
+}
+
+/// Every `NotesRun` payload the app emits, as JSON.
+fn notes_runs(window: &WebviewWindow<MockRuntime>) -> mpsc::Receiver<Value> {
+    let (sender, received) = mpsc::channel();
+    window
+        .app_handle()
+        .listen_any("plugin:enhance:notes-run", move |event| {
+            let payload = serde_json::from_str(event.payload()).expect("the payload is JSON");
+            sender.send(payload).expect("the test is still listening");
+        });
+    received
+}
+
+#[test]
+fn a_draft_and_the_run_s_end_arrive_as_notes_run() {
+    let (window, meeting) = window();
+    let received = notes_runs(&window);
+    let progress = TauriNotesProgress::new(window.app_handle().clone());
+
+    progress.draft(&NotesDraft {
+        meeting_id: meeting.clone(),
+        phase: NotesPhase::Parts { done: 1, total: 3 },
+        doc: Doc::empty(),
+        lines: 0,
+        stale: true,
+    });
+    progress.ended(
+        &meeting,
+        NotesRunEnd::Written {
+            version: 2,
+            kept: 4,
+        },
+    );
+
+    let draft = received.recv_timeout(EVENT_TIMEOUT).unwrap();
+    assert_eq!(draft["meetingId"], json!(meeting));
+    assert_eq!(draft["update"]["kind"], json!("draft"));
+    let body = &draft["update"]["draft"];
+    assert_eq!(
+        body["phase"],
+        json!({ "kind": "parts", "done": 1, "total": 3 })
+    );
+    assert_eq!(body["doc"]["type"], json!("doc"));
+    assert_eq!(
+        (body["lines"].clone(), body["stale"].clone()),
+        (json!(0), json!(true))
+    );
+    let ended = received.recv_timeout(EVENT_TIMEOUT).unwrap();
+    assert_eq!(
+        ended["update"],
+        json!({ "kind": "ended", "end": { "kind": "written", "version": 2, "kept": 4 } })
+    );
+}
+
+#[test]
+fn writing_the_notes_streams_drafts_then_ends_with_the_new_version() {
+    let (window, meeting) = window();
+    let received = notes_runs(&window);
+
+    call(
+        &window,
+        "enhance",
+        json!({ "meetingId": meeting, "replaceEdits": false }),
+    )
+    .unwrap();
+
+    let mut runs: Vec<Value> = Vec::new();
+    while runs
+        .last()
+        .is_none_or(|run| run["update"]["kind"] != json!("ended"))
+    {
+        runs.push(received.recv_timeout(EVENT_TIMEOUT).unwrap());
+    }
+    let first = &runs[0]["update"];
+    assert_eq!(first["draft"]["phase"], json!({ "kind": "reading" }));
+    let saving = &runs[runs.len() - 2]["update"]["draft"];
+    assert_eq!(saving["phase"], json!({ "kind": "saving" }));
+    assert_eq!(saving["lines"], json!(2));
+    let end = &runs[runs.len() - 1]["update"]["end"];
+    assert_eq!(
+        (&end["kind"], &end["version"]),
+        (&json!("written"), &json!(1))
+    );
+    assert!(end["kept"].is_u64());
 }

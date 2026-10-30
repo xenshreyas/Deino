@@ -96,11 +96,16 @@ export class MockEnhanced {
     return this.state[meetingId]?.at(-1)?.info.isUserEdited ?? false;
   }
 
+  /** The notes a write would save, before it does (for streamed notes). */
+  next(meetingId: MeetingId): NoteDoc {
+    const fixture = this.fixtures.find((candidate) => candidate.id === meetingId);
+    return fixture === undefined ? emptyDoc() : mockEnhancedDoc(fixture);
+  }
+
   /** Writes a new version from the fixture; its number. */
   write(meetingId: MeetingId, now: Date): number {
     const fixture = this.fixtures.find((candidate) => candidate.id === meetingId);
-    const doc = fixture === undefined ? emptyDoc() : mockEnhancedDoc(fixture);
-    return this.push(meetingId, doc, { at: now, fixture });
+    return this.push(meetingId, this.next(meetingId), { at: now, fixture });
   }
 
   /** Saves an edit of the newest version; false for an older one. */

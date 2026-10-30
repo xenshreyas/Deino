@@ -11,6 +11,9 @@
  * | {@link useEnhanceAction} | anything that regenerates (the template picker) |
  * | {@link CitedExcerpts} | the transcript excerpts a citation opens (NOT-03), reused by "Ask about this meeting" |
  *
+ * While notes are written they stream in a finished line at a time
+ * (`hooks/use-live-notes.ts`, `components/draft-notes.tsx`), with Stop.
+ *
  * The editor loads on first use (`lazy.tsx`). Other code imports from here only.
  */
 export { enhanceApi } from './api';

@@ -41,6 +41,30 @@ async enhance(meetingId: MeetingId, replaceEdits: boolean) : Promise<Result<Enha
 }
 },
 /**
+ * The meeting's notes as far as they are written, while they are; null
+ * otherwise. For a page opened mid-run; later drafts come as `NotesRun`.
+ */
+async draft(meetingId: MeetingId) : Promise<Result<NotesDraft | null, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:enhance|draft", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stops writing the meeting's notes; nothing is saved and the previous
+ * version stays. False when they were not being written.
+ */
+async stop(meetingId: MeetingId) : Promise<Result<boolean, AppError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("plugin:enhance|stop", { meetingId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Saves the user's edit of the newest version.
  */
 async save(meetingId: MeetingId, version: number, doc: doc) : Promise<Result<SavedEnhancedNotes, AppError>> {
@@ -78,6 +102,11 @@ async cited(meetingId: MeetingId, segmentIds: SegmentId[]) : Promise<Result<Cite
 /** user-defined events **/
 
 
+export const events = __makeEvents__<{
+notesRun: NotesRun
+}>({
+notesRun: "plugin:enhance:notes-run"
+})
 
 /** user-defined constants **/
 
@@ -379,6 +408,96 @@ label: string }
  * A count of milliseconds, for example a segment's offset in a recording.
  */
 export type Millis = number
+/**
+ * The notes as far as they are written.
+ */
+export type NotesDraft = { 
+/**
+ * The meeting.
+ */
+meetingId: MeetingId; 
+/**
+ * What the run is doing.
+ */
+phase: NotesPhase; 
+/**
+ * The finished lines so far; empty before the first.
+ */
+doc: doc; 
+/**
+ * How many lines `doc` holds (headings, blocks, details).
+ */
+lines: number; 
+/**
+ * True while `doc` belongs to an answer being replaced (a retry, or a
+ * transcript noted in parts after one call failed): shown dimmed until
+ * the new answer's first line replaces it.
+ */
+stale: boolean }
+/**
+ * What a run is doing.
+ */
+export type NotesPhase = 
+/**
+ * One call is reading the transcript and writing the notes.
+ */
+{ kind: "reading" } | 
+/**
+ * A transcript too long for one call is noted in parts first.
+ */
+{ kind: "parts"; done: number; total: number } | 
+/**
+ * The parts' notes are being merged into the notes.
+ */
+{ kind: "merging" } | 
+/**
+ * An answer could not be used; the model is asked again.
+ */
+{ kind: "retrying" } | 
+/**
+ * The notes are written and being saved.
+ */
+{ kind: "saving" }
+/**
+ * A meeting's notes got further while being written, or the run ended.
+ */
+export type NotesRun = { 
+/**
+ * The meeting.
+ */
+meetingId: MeetingId; 
+/**
+ * What happened.
+ */
+update: NotesRunUpdate }
+/**
+ * How a run ended.
+ */
+export type NotesRunEnd = 
+/**
+ * The notes were saved as this version.
+ */
+{ kind: "written"; version: number; kept: number } | 
+/**
+ * The user stopped it; nothing was saved.
+ */
+{ kind: "stopped" } | 
+/**
+ * It failed; nothing was saved.
+ */
+{ kind: "failed" }
+/**
+ * What a [`NotesRun`] reports.
+ */
+export type NotesRunUpdate = 
+/**
+ * The notes as far as they are written.
+ */
+{ kind: "draft"; draft: NotesDraft } | 
+/**
+ * The run ended.
+ */
+{ kind: "ended"; end: NotesRunEnd }
 /**
  * Where a numbered list starts counting.
  */

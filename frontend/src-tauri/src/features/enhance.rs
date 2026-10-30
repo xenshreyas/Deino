@@ -5,13 +5,18 @@
 //! The Notes tab's Enhanced view reads a version (`get`) and the version
 //! history (`versions`), writes notes (`enhance`, which asks before
 //! replacing the user's edits), saves edits (`save`), restores an old
-//! version (`restore`) and opens citations (`cited`). The service is wired
-//! in `composition/enhance.rs`. Every change reaches the UI through
-//! `DbChanged` on `enhanced_notes`, so the plugin declares no events.
+//! version (`restore`) and opens citations (`cited`). While notes are
+//! written it shows them as they arrive: the [`NotesRun`] event, the
+//! latest draft (`draft`) and Stop (`stop`). The service is wired in
+//! `composition/enhance.rs`. Saved versions reach the UI through
+//! `DbChanged` on `enhanced_notes`.
 
 mod commands;
 #[cfg(test)]
 mod contract_tests;
+mod events;
+
+pub use events::{NotesRun, NotesRunUpdate, TauriNotesProgress};
 
 use tauri::Runtime;
 use tauri::plugin::{Builder, TauriPlugin};
@@ -26,12 +31,18 @@ pub fn specta<R: Runtime>() -> tauri_specta::Builder<R> {
     tauri_specta::Builder::new()
         .plugin_name(NAME)
         .commands(commands::collect())
+        .events(tauri_specta::collect_events![NotesRun])
         .error_handling(tauri_specta::ErrorHandlingMode::Result)
 }
 
 /// Builds the `enhance` plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    let builder = specta();
     Builder::new(NAME)
-        .invoke_handler(specta().invoke_handler())
+        .invoke_handler(builder.invoke_handler())
+        .setup(move |app, _| {
+            builder.mount_events(app);
+            Ok(())
+        })
         .build()
 }

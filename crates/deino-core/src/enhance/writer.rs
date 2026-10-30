@@ -10,6 +10,10 @@
 //! change mid-run cannot mix models. Dropping the future cancels every call
 //! in flight.
 //!
+//! The calls whose answer becomes the notes (one pass, the merge) stream it
+//! to the run's [`WriteReport`], which shows the notes as they are written;
+//! the parts only report how many are done.
+//!
 //! An answer that cannot be used (cut off at the token cap, or JSON that
 //! does not parse even after the gateway's repair) does not sink the notes:
 //! the call is asked again, a part that still fails is noted in halves and a
@@ -20,8 +24,7 @@
 
 use std::sync::Arc;
 
-use deino_llm::{Gateway, LlmError, Prompt, ProviderId, Route, Target};
-use futures_util::{StreamExt, TryStreamExt, stream};
+use deino_llm::{AnswerSink, Gateway, LlmError, Prompt, ProviderId, Route, Target};
 
 use super::citations::SegmentIndex;
 use super::material::Material;
@@ -31,6 +34,7 @@ use super::wire::EnhancedDoc;
 use crate::templates::Template;
 
 mod fallback;
+mod map;
 
 use fallback::{halve, is_answer_failure, or_merge_locally};
 
@@ -58,12 +62,33 @@ pub struct Written {
     pub parts: usize,
 }
 
-/// Part `number` (from 1) of `count` of a long meeting's transcript.
-#[derive(Clone, Copy)]
-struct Part<'a> {
-    number: usize,
-    count: usize,
-    lines: &'a [TranscriptLine],
+/// What one run of the writer is given.
+pub struct WriteJob<'a> {
+    /// What the notes are written from.
+    pub material: &'a Material,
+    /// The meeting's template.
+    pub template: &'a Template,
+    /// The transcript's references.
+    pub index: &'a SegmentIndex,
+    /// Where the run reports how far it got.
+    pub report: &'a dyn WriteReport,
+}
+
+/// How far a run got: the notes' answer as it streams, and the parts.
+pub trait WriteReport: Send + Sync {
+    /// Receives the answer of each call that becomes the notes.
+    fn sink(&self) -> &dyn AnswerSink;
+    /// `done` of `total` parts of a long transcript are noted.
+    fn parts(&self, done: usize, total: usize);
+    /// The parts are noted; the merge call starts.
+    fn merging(&self);
+}
+
+/// The calls of one run: its prompts, pinned target and report.
+struct Pass<'a> {
+    inputs: PromptInputs,
+    target: Target,
+    report: &'a dyn WriteReport,
 }
 
 /// Writes notes through the gateway.
@@ -77,43 +102,46 @@ impl NotesWriter {
         Self { gateway }
     }
 
-    /// The notes of `material`, written with `template`.
-    pub async fn write(
-        &self,
-        material: &Material,
-        template: &Template,
-        index: &SegmentIndex,
-    ) -> Result<Written, LlmError> {
-        let inputs = PromptInputs::new(material, template);
-        let target = self
-            .gateway
-            .target(Route::NotesEnhance, &Prompt::default())
-            .await?;
-        let mut cuts = parts(&material.transcript, self.limits(&target).await);
+    /// The notes of `job.material`, written with `job.template`.
+    pub async fn write(&self, job: &WriteJob<'_>) -> Result<Written, LlmError> {
+        let material = job.material;
+        let pass = Pass {
+            inputs: PromptInputs::new(material, job.template),
+            target: self
+                .gateway
+                .target(Route::NotesEnhance, &Prompt::default())
+                .await?,
+            report: job.report,
+        };
+        let mut cuts = parts(&material.transcript, self.limits(&pass.target).await);
         if cuts.len() <= 1 {
-            match self
-                .one_pass(&inputs, &material.transcript, &target)
-                .await?
-            {
-                Some(answer) => return Ok(written(material, answer, &target, 1)),
+            match self.one_pass(&pass, &material.transcript).await? {
+                Some(answer) => return Ok(written(material, answer, &pass.target, 1)),
                 None => cuts = halve(&material.transcript),
             }
         }
-        let noted = self.map(&inputs, &cuts, &target).await?;
-        let merged = self.ask_again(inputs.merge(&noted, index), &target).await;
+        let noted = self.map(&pass, &cuts).await?;
+        pass.report.merging();
+        let merge = pass.inputs.merge(&noted, job.index);
+        let merged = self
+            .ask_again(merge, &pass.target, Some(pass.report.sink()))
+            .await;
         let answer = or_merge_locally(merged, &noted)?;
-        Ok(written(material, answer, &target, cuts.len()))
+        Ok(written(material, answer, &pass.target, cuts.len()))
     }
 
     /// The notes of a short meeting in one call, or `None` when its answer
     /// could not be used and the transcript can be noted in halves instead.
     async fn one_pass(
         &self,
-        inputs: &PromptInputs,
+        pass: &Pass<'_>,
         lines: &[TranscriptLine],
-        target: &Target,
     ) -> Result<Option<EnhancedDoc>, LlmError> {
-        match self.ask_again(inputs.single(lines), target).await {
+        let sink = Some(pass.report.sink());
+        match self
+            .ask_again(pass.inputs.single(lines), &pass.target, sink)
+            .await
+        {
             Ok(answer) => Ok(Some(answer)),
             Err(error) if is_answer_failure(&error) && lines.len() >= 2 => {
                 log::warn!(target: "enhance", "one pass failed ({:?}); noting in halves", error.kind());
@@ -123,94 +151,43 @@ impl NotesWriter {
         }
     }
 
-    /// The map step: each part's notes, in order, a part that failed noted
-    /// in halves; at least one part must be noted.
-    async fn map<'a>(
-        &self,
-        inputs: &PromptInputs,
-        cuts: &[&'a [TranscriptLine]],
-        target: &Target,
-    ) -> Result<Vec<(&'a [TranscriptLine], EnhancedDoc)>, LlmError> {
-        let count = cuts.len();
-        // Collected first: a lazy iterator's closure inside the stream would
-        // make the future `Send` only for one lifetime (rust-lang/rust#102211).
-        let calls: Vec<_> = cuts
-            .iter()
-            .enumerate()
-            .map(|(at, lines)| {
-                let part = Part {
-                    number: at + 1,
-                    count,
-                    lines,
-                };
-                self.note_part(inputs, part, target)
-            })
-            .collect();
-        let noted: Vec<Vec<_>> = stream::iter(calls)
-            .buffered(concurrency(target))
-            .try_collect()
-            .await?;
-        let noted: Vec<_> = noted.into_iter().flatten().collect();
-        if noted.is_empty() {
-            return Err(LlmError::InvalidOutput {
-                detail: "no part of the transcript could be noted".to_owned(),
-            });
-        }
-        Ok(noted)
-    }
-
-    /// A part's notes, or its halves' notes when its answer could not be
-    /// used twice; a half that fails is left out.
-    async fn note_part<'a>(
-        &self,
-        inputs: &PromptInputs,
-        part: Part<'a>,
-        target: &Target,
-    ) -> Result<Vec<(&'a [TranscriptLine], EnhancedDoc)>, LlmError> {
-        let Part {
-            number,
-            count,
-            lines,
-        } = part;
-        match self
-            .ask_again(inputs.part(number, count, lines), target)
-            .await
-        {
-            Ok(whole) => return Ok(vec![(lines, whole)]),
-            Err(error) if !is_answer_failure(&error) => return Err(error),
-            Err(error) => {
-                log::warn!(target: "enhance", "part {number} of {count} failed ({:?}); noting it in halves", error.kind());
-            }
-        }
-        let mut kept = Vec::new();
-        for half in halve(lines) {
-            match self.ask(inputs.part(number, count, half), target).await {
-                Ok(half_notes) => kept.push((half, half_notes)),
-                Err(error) if is_answer_failure(&error) => {
-                    log::warn!(target: "enhance", "half of part {number} of {count} left out ({:?})", error.kind());
-                }
-                Err(error) => return Err(error),
-            }
-        }
-        Ok(kept)
-    }
-
     /// [`Self::ask`], asked once more when the answer could not be used:
     /// the model samples afresh, and a loop or a cut-off rarely repeats.
-    async fn ask_again(&self, prompt: Prompt, target: &Target) -> Result<EnhancedDoc, LlmError> {
-        match self.ask(prompt.clone(), target).await {
+    async fn ask_again(
+        &self,
+        prompt: Prompt,
+        target: &Target,
+        sink: Option<&dyn AnswerSink>,
+    ) -> Result<EnhancedDoc, LlmError> {
+        match self.ask(prompt.clone(), target, sink).await {
             Err(error) if is_answer_failure(&error) => {
                 log::info!(target: "enhance", "notes answer unusable ({:?}); asking again", error.kind());
-                self.ask(prompt, target).await
+                self.ask(prompt, target, sink).await
             }
             other => other,
         }
     }
 
-    async fn ask(&self, prompt: Prompt, target: &Target) -> Result<EnhancedDoc, LlmError> {
-        self.gateway
-            .structured::<EnhancedDoc>(Route::NotesEnhance, prompt.on(target.clone()))
-            .await
+    /// One structured call, streamed to `sink` when there is one.
+    async fn ask(
+        &self,
+        prompt: Prompt,
+        target: &Target,
+        sink: Option<&dyn AnswerSink>,
+    ) -> Result<EnhancedDoc, LlmError> {
+        let prompt = prompt.on(target.clone());
+        match sink {
+            Some(sink) => {
+                self.gateway
+                    .structured_streamed::<EnhancedDoc>(Route::NotesEnhance, prompt, sink)
+                    .await
+            }
+            None => {
+                self.gateway
+                    .structured::<EnhancedDoc>(Route::NotesEnhance, prompt)
+                    .await
+            }
+        }
     }
 
     /// How to cut the transcript for `target`: its context window when it

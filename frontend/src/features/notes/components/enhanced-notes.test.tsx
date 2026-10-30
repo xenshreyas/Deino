@@ -21,8 +21,15 @@ const enhance = vi.hoisted(() => ({
   save: vi.fn<typeof Generated.commands.save>(),
   restore: vi.fn<typeof Generated.commands.restore>(),
   cited: vi.fn<typeof Generated.commands.cited>(),
+  draft: vi.fn<typeof Generated.commands.draft>(() =>
+    Promise.resolve({ status: 'ok', data: null }),
+  ),
+  stop: vi.fn<typeof Generated.commands.stop>(),
 }));
-vi.mock('@/lib/ipc/generated/enhance', () => ({ commands: enhance }));
+vi.mock('@/lib/ipc/generated/enhance', () => ({
+  commands: enhance,
+  events: { notesRun: { listen: () => Promise.resolve(() => undefined) } },
+}));
 
 const pipeline = vi.hoisted(() => ({
   commands: {
