@@ -34,11 +34,25 @@ fn a_short_meeting_is_one_part() {
     assert!(parts(&[], HOSTED).is_empty());
 }
 
+/// A budget the 90- and 43-minute test meetings (about 22k and 11k
+/// characters) are too long for, but a 20-minute part fits.
+const TIGHT: PartLimits = PartLimits {
+    span: PART_SPAN,
+    chars: 10_000,
+};
+
 #[test]
-fn a_ninety_minute_meeting_is_cut_into_twenty_minute_parts() {
+fn a_long_meeting_that_fits_is_one_part() {
     let lines = meeting(90, 10);
 
-    let parts = parts(&lines, HOSTED);
+    assert_eq!(parts(&lines, HOSTED).len(), 1, "duration alone never splits");
+}
+
+#[test]
+fn a_transcript_too_long_for_one_call_is_cut_into_twenty_minute_parts() {
+    let lines = meeting(90, 10);
+
+    let parts = parts(&lines, TIGHT);
 
     assert_eq!(parts.len(), 5, "20+20+20+20+10 minutes");
     assert!(
@@ -54,7 +68,7 @@ fn a_ninety_minute_meeting_is_cut_into_twenty_minute_parts() {
 fn a_short_last_part_joins_the_one_before() {
     let lines = meeting(43, 10);
 
-    let parts = parts(&lines, HOSTED);
+    let parts = parts(&lines, TIGHT);
 
     assert_eq!(parts.len(), 2, "20 + 23 minutes, not 20 + 20 + 3");
 }

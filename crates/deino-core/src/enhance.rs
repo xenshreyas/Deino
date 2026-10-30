@@ -82,9 +82,7 @@ pub use sources::MaterialSources;
 pub use title::{
     ALREADY_NAMED, AutoTitler, NO_TITLE, NOTHING_TO_NAME, TitleRun, clean_title, is_generic_title,
 };
-pub use transcript::{
-    LONG_MEETING, PART_SPAN, PartLimits, TranscriptLine, clock, parts, render_lines,
-};
+pub use transcript::{PART_SPAN, PartLimits, TranscriptLine, clock, parts, render_lines};
 pub use user_lines::{LineKind, LineMatcher, UserLine, user_headings, user_lines};
 pub use wire::{BlockKind, EnhancedBlock, EnhancedDetail, EnhancedDoc, EnhancedSection, Origin};
 pub use writer::{MAP_CONCURRENCY, NotesWriter, Written, model_label};

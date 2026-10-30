@@ -1,8 +1,8 @@
 //! [`NotesWriter`]: the `notes.enhance` calls, one pass or map-reduce.
 //!
-//! A meeting of up to [`LONG_MEETING`](super::transcript::LONG_MEETING)
-//! whose transcript fits the model is written in one call. A longer one is
-//! cut into parts of about 20 minutes (`transcript::parts`), each part
+//! A transcript that fits the model (about 30k tokens on a hosted model) is
+//! written in one call, however long the meeting ran. A longer one is cut
+//! into parts of about 20 minutes (`transcript::parts`), each part
 //! noted in parallel (map, at most [`MAP_CONCURRENCY`] calls at once on a
 //! hosted model, one at a time on a local one), then the parts' notes are
 //! merged with the user's notes and the template (reduce). Every call is

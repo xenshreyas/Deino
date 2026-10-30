@@ -8,9 +8,8 @@
 
 use deino_domain::{Millis, SegmentId};
 
-/// A meeting longer than this is noted in parts (map-reduce).
-pub const LONG_MEETING: Millis = Millis(30 * 60 * 1000);
-/// The span of one part of a long meeting (about 20 minutes, the card's window).
+/// The span of one part when a transcript is too long for one call
+/// (about 20 minutes, the card's window).
 pub const PART_SPAN: Millis = Millis(20 * 60 * 1000);
 /// A last part shorter than this joins the one before it.
 const SHORT_TAIL: Millis = Millis(5 * 60 * 1000);
@@ -80,13 +79,14 @@ pub struct PartLimits {
     pub chars: usize,
 }
 
-/// The transcript in parts: one part when the meeting is short and fits,
-/// else consecutive parts of at most `limits` each (never empty).
+/// The transcript in parts: one part whenever it fits `limits.chars`, however
+/// long the meeting ran, else consecutive parts of at most `limits` each
+/// (never empty).
 pub fn parts(lines: &[TranscriptLine], limits: PartLimits) -> Vec<&[TranscriptLine]> {
     if lines.is_empty() {
         return Vec::new();
     }
-    if span(lines) <= LONG_MEETING && chars(lines) <= limits.chars {
+    if chars(lines) <= limits.chars {
         return vec![lines];
     }
     let mut cuts = Vec::new();
