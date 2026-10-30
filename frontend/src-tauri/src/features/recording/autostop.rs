@@ -6,7 +6,7 @@
 //! - [`SyncedWindows`], the calendar's in-memory events around now;
 //! - [`SettingsAutoStop`], the `Settings::recording.auto_stop` section;
 //! - [`TauriAutoStopActions`], the notice and offer as `auto-stop-changed`
-//!   (the notice also as a top-right card), and the stop and the split on
+//!   (the notice also as a top-centre card), and the stop and the split on
 //!   the recorder, in the background.
 //!
 //! Each looks its service up in Tauri state on every call: the recorder
@@ -155,7 +155,7 @@ impl AutoStopSettings for SettingsAutoStop {
 /// Auto-stop's decisions, carried out on the recorder.
 pub struct TauriAutoStopActions<R: Runtime> {
     app: AppHandle<R>,
-    /// Shows (`true`) or hides the top-right "Ending…" card's window.
+    /// Shows (`true`) or hides the top-centre "Ending…" card's window.
     ending_card: fn(&AppHandle<R>, bool),
     /// Whether the card is up, so it is shown and hidden once per notice.
     showing: AtomicBool,

@@ -120,10 +120,14 @@ describe('DetectionPrompt', () => {
       expect(screen.queryByRole('heading')).toBeNull();
     });
     deliver('meetingDetected', { detection: detection({ id: 8 }) });
-    // One button on the card; Ignore and the permanent answer are in its caret menu.
-    expect(screen.queryByRole('button', { name: 'Ignore' })).toBeNull();
-    await openIgnoreMenu();
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Ignore' }));
+    // Ignore sits beside Take notes; the permanent answer is in its caret menu.
+    fireEvent.click(await screen.findByRole('button', { name: 'Ignore' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('heading')).toBeNull();
+    });
+    deliver('meetingDetected', { detection: detection({ id: 10 }) });
+    // The close button dismisses too.
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
     await waitFor(() => {
       expect(screen.queryByRole('heading')).toBeNull();
     });
@@ -136,6 +140,7 @@ describe('DetectionPrompt', () => {
     });
     expect(bindings.commands.takeNotes).toHaveBeenCalledWith(7);
     expect(bindings.commands.dismiss).toHaveBeenCalledWith(8);
+    expect(bindings.commands.dismiss).toHaveBeenCalledWith(10);
   });
 
   it('counts down to the auto-start and offers Don’t record instead of Ignore', async () => {
@@ -147,9 +152,8 @@ describe('DetectionPrompt', () => {
     renderPrompt();
 
     expect(await screen.findByText(/Recording in 10s/)).toBeTruthy();
-    await openIgnoreMenu();
-    expect(screen.queryByRole('menuitem', { name: 'Ignore' })).toBeNull();
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Don’t record' }));
+    expect(screen.queryByRole('button', { name: 'Ignore' })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Don’t record' }));
 
     await waitFor(() => {
       expect(bindings.commands.dismiss).toHaveBeenCalledWith(1);

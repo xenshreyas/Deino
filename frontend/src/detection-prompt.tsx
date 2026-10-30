@@ -28,10 +28,10 @@ if (!rootElement) {
 }
 
 bootTheme();
-// The window is transparent; only the card is drawn. The window reaches the
-// screen's right edge (so the card can slide in from off-screen); the inset
-// leaves room for the card's shadow and keeps it 16px from that edge.
-document.body.classList.add('bg-transparent', 'p-2', 'pr-4');
+// The window is transparent; only the card is drawn. The window starts right
+// under the menu bar, so the card drops in from beneath it; the inset leaves
+// room for the shadow and the close button that sits on the card's corner.
+document.body.classList.add('bg-transparent', 'px-3', 'pt-5', 'pb-3');
 
 createRoot(rootElement).render(
   <IpcQueryProvider client={createQueryClient()}>

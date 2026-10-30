@@ -42,15 +42,35 @@ pub struct Recording {
     pub ends_at: Option<DateTime<Utc>>,
 }
 
-/// The text next to the menu bar icon at `now`, if any: the time left in
-/// the recorded meeting, or the countdown to the next one today.
+/// The dot on the menu bar icon while a recording is on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Dot {
+    /// Red and breathing: capturing.
+    Recording,
+    /// Amber and still: paused.
+    Paused,
+}
+
+/// The dot for `recording`, if one is on.
+pub fn dot(recording: Option<&Recording>) -> Option<Dot> {
+    recording.map(|recording| {
+        if recording.paused {
+            Dot::Paused
+        } else {
+            Dot::Recording
+        }
+    })
+}
+
+/// The text next to the menu bar icon at `now`, if any: the countdown to
+/// the next meeting today. None while recording: the dot says so instead.
 pub fn title(
     recording: Option<&Recording>,
     today: &[Meeting],
     now: DateTime<Utc>,
 ) -> Option<String> {
-    if let Some(recording) = recording {
-        return Some(recording_title(recording, now));
+    if recording.is_some() {
+        return None;
     }
     if let Some(live) = today
         .iter()
@@ -69,8 +89,9 @@ pub fn title(
     ))
 }
 
-/// "12m left" while the event lasts, else the time recorded ("47m").
-fn recording_title(recording: &Recording, now: DateTime<Utc>) -> String {
+/// The recording's status in the menu: "12m left" while the event lasts,
+/// else the time recorded ("47m"), or "Paused".
+pub fn status(recording: &Recording, now: DateTime<Utc>) -> String {
     if recording.paused {
         return "Paused".to_owned();
     }
@@ -139,29 +160,36 @@ mod tests {
     }
 
     #[test]
-    fn recording_it_shows_the_time_left_in_the_event_or_the_time_recorded() {
+    fn recording_it_shows_a_dot_and_no_title() {
         let mut recording = Recording {
             title: "Standup".into(),
             paused: false,
             started_at: at(0),
             ends_at: Some(at(30)),
         };
-        assert_eq!(
-            title(Some(&recording), &[], at(18)).as_deref(),
-            Some("12m left")
-        );
+        let today = [meeting(25, "Design review")];
 
-        assert_eq!(title(Some(&recording), &[], at(47)).as_deref(), Some("47m"));
-        recording.ends_at = None;
-        assert_eq!(
-            title(Some(&recording), &[], at(65)).as_deref(),
-            Some("1h 05m")
-        );
+        assert_eq!(title(Some(&recording), &today, at(18)), None);
+        assert_eq!(dot(Some(&recording)), Some(Dot::Recording));
         recording.paused = true;
-        assert_eq!(
-            title(Some(&recording), &[], at(65)).as_deref(),
-            Some("Paused")
-        );
+        assert_eq!(dot(Some(&recording)), Some(Dot::Paused));
+        assert_eq!(dot(None), None);
+    }
+
+    #[test]
+    fn the_menu_shows_the_time_left_in_the_event_or_the_time_recorded() {
+        let mut recording = Recording {
+            title: "Standup".into(),
+            paused: false,
+            started_at: at(0),
+            ends_at: Some(at(30)),
+        };
+        assert_eq!(status(&recording, at(18)), "12m left");
+        assert_eq!(status(&recording, at(47)), "47m");
+        recording.ends_at = None;
+        assert_eq!(status(&recording, at(65)), "1h 05m");
+        recording.paused = true;
+        assert_eq!(status(&recording, at(65)), "Paused");
     }
 
     #[test]

@@ -1,14 +1,16 @@
-//! The menu bar (CAP-10): Deino's icon with the time left in the recorded
-//! meeting or a countdown to the next one beside it, and a menu with the
+//! The menu bar (CAP-10): Deino's icon with a red dot while recording (or a
+//! countdown to the next meeting beside it when idle), and a menu with the
 //! recording's controls and today's meetings (Join / Record / Open).
 //!
 //! - [`view`], what to show, as plain data (tested);
-//! - [`menu`], that data as a native menu, and what its items do.
+//! - [`menu`], that data as a native menu, and what its items do;
+//! - [`dot`], the recording dot on the icon.
 //!
 //! The menu is rebuilt when the recorder's phase changes and when the
 //! calendar syncs; the title follows the clock through a light ticker that
 //! re-reads both every [`TITLE_TICK`].
 
+mod dot;
 mod menu;
 mod view;
 
@@ -92,6 +94,7 @@ fn update<R: Runtime>(app: &AppHandle<R>, with_menu: bool) {
         if let Err(error) = shown {
             log::warn!(target: "tray", "could not update the menu bar: {error}");
         }
+        dot::show(&tray, view::dot(contents.recording.as_ref()));
     });
 }
 

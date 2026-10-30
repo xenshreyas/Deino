@@ -25,7 +25,8 @@ pub struct RecordingSettings {
     pub auto_save: bool,
     /// Remind the user to tell participants that the meeting is recorded.
     pub show_recording_notice: bool,
-    /// Show the floating record panel while recording (CAP-10).
+    /// Show the floating record panel while recording (CAP-10). Off by
+    /// default: the menu bar icon's red dot says a recording is on.
     pub show_panel: bool,
     /// Where the record panel was last left; `None` puts it at the right
     /// edge, a third of the way down.
@@ -39,7 +40,7 @@ impl Default for RecordingSettings {
         Self {
             auto_save: true,
             show_recording_notice: true,
-            show_panel: true,
+            show_panel: false,
             panel_position: None,
             auto_stop: AutoStopOptions::default(),
         }

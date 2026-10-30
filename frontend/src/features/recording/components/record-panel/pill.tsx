@@ -81,7 +81,7 @@ function Status({ view }: { view: PillView }) {
   );
 }
 
-/** The part that grows on hover (auto-stop's notice is a top-right card). */
+/** The part that grows on hover (auto-stop's notice is a top-centre card). */
 function Reveal({ view, actions }: { view: PillView; actions: PillActions }) {
   const running = view.phase === 'recording' || view.phase === 'paused';
   const open = running && view.expanded;

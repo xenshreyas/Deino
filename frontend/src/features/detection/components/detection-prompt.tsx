@@ -57,7 +57,7 @@ function PromptCard({ detection }: { detection: Detection }) {
 
 /**
  * The prompt for the detection on screen; between prompts, auto-stop's
- * "Ending…" card, which shares this top-right window (Rust shows it).
+ * "Ending…" card, which shares this top-centre window (Rust shows it).
  */
 export function DetectionPrompt() {
   const detection = usePromptDetection();

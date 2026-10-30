@@ -32,14 +32,10 @@ describe('EndingCardView', () => {
     });
   });
 
-  it('stops now from the caret menu', async () => {
+  it('stops now', async () => {
     const { onKeep, onStopNow } = renderCard();
 
-    fireEvent.pointerDown(screen.getByRole('button', { name: recordingCopy.endingMore }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    fireEvent.click(await screen.findByRole('menuitem', { name: recordingCopy.stopNow }));
+    fireEvent.click(screen.getByRole('button', { name: recordingCopy.stopNow }));
     await waitFor(() => {
       expect(onStopNow).toHaveBeenCalledOnce();
     });

@@ -40,6 +40,7 @@ export const detectionCopy = {
   alwaysIgnore: 'Always ignore this app',
   moreIgnore: 'More ways to ignore',
   promptLabel: 'Meeting prompt',
+  close: 'Close',
   countdown: (seconds: number) => `Recording in ${seconds}s`,
   failed: 'That didn’t work. Try again from the main window.',
 

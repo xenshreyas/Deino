@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   "recording": {
     "autoSave": true,
     "showRecordingNotice": true,
-    "showPanel": true,
+    "showPanel": false,
     "panelPosition": null,
     "autoStop": {
       "enabled": true,

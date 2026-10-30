@@ -57,13 +57,13 @@ describe('Settings → Recording', () => {
     bindings.settings.patch.mockResolvedValue({ status: 'ok', data: settings });
   });
 
-  it('hides the record panel with a merge patch', async () => {
+  it('shows the record panel (off by default) with a merge patch', async () => {
     renderSection();
 
     fireEvent.click(await screen.findByRole('switch', { name: copy.panelTitle }));
 
     await waitFor(() => {
-      expect(bindings.settings.patch).toHaveBeenCalledWith({ recording: { showPanel: false } });
+      expect(bindings.settings.patch).toHaveBeenCalledWith({ recording: { showPanel: true } });
     });
   });
 

@@ -1067,7 +1067,8 @@ autoSave: boolean;
  */
 showRecordingNotice: boolean; 
 /**
- * Show the floating record panel while recording (CAP-10).
+ * Show the floating record panel while recording (CAP-10). Off by
+ * default: the menu bar icon's red dot says a recording is on.
  */
 showPanel: boolean; 
 /**

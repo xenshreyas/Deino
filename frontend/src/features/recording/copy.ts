@@ -2,12 +2,11 @@
 import type { HealthIssue, StopReason } from './types';
 
 export const recordingCopy = {
-  /** Auto-stop's top-right card. */
+  /** Auto-stop's top-centre card. */
   endingLabel: 'Recording ending',
   endsIn: (seconds: number) => `Recording ends in ${String(seconds)}s`,
   keepRecording: 'Keep recording',
   stopNow: 'Stop now',
-  endingMore: 'More ways to end',
   start: 'Start recording',
   starting: 'Starting…',
   pause: 'Pause',
@@ -54,8 +53,6 @@ export const panelCopy = {
   screen: 'Screen to capture',
   systemDefault: 'System default',
   recordCallAudio: 'Record the call’s audio',
-  keepRecording: 'Keep recording',
-  ending: (seconds: number) => `Ending in ${String(seconds)}s`,
   splitTitle: (title: string) => `${title} has started`,
   splitBody: 'Start a new note for it?',
   splitAccept: 'New note',

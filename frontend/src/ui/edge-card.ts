@@ -1,8 +1,9 @@
 /**
  * Motion for the small cards that float at the screen's top-right edge (the
- * meeting prompt, the meeting reminder): each slides in from off-screen and
- * back out when answered, and only fades with Reduce Motion. Their windows
- * reach the screen's right edge so the slide starts beyond it.
+ * meeting reminder): each slides in from off-screen and back out when
+ * answered, and only fades with Reduce Motion. Their windows reach the
+ * screen's right edge so the slide starts beyond it. The exit hook is shared
+ * with the top-centre cards (`ui/top-card`).
  */
 import { useState } from 'react';
 

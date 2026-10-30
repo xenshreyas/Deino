@@ -104,7 +104,7 @@ fn recording_items<R: Runtime>(app: &AppHandle<R>, contents: &Contents) -> tauri
             _ => vec![item("recording:start", "Start Recording", true)?],
         });
     };
-    let status = contents.title.clone().unwrap_or_default();
+    let status = view::status(recording, contents.now);
     let heading = format!("● {} — {status}", view::short(&recording.title));
     let toggle = if recording.paused {
         item("recording:resume", "Resume", true)?

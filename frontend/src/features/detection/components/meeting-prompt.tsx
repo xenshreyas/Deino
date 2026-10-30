@@ -1,20 +1,14 @@
 /**
- * The meeting prompt card (presentational), design E2 of
- * `docs/mockups/meeting-prompt.html`, after Granola's: one row with a solid
- * brand bar, the event (or "Meeting detected") over its time or app, and one
- * split button, Take notes with the Deino mark and a caret menu holding
- * Ignore and "Always ignore <app>". The time it has left (until it closes,
- * or until auto-start) drains along the bottom.
+ * The meeting prompt card (presentational): a top-centre card, after
+ * Notion's meeting prompt, with the event (or "Meeting detected") over its
+ * time or app, Take notes and Ignore (its caret holds "Always ignore
+ * <app>"), and a close button on hover. The time it has left (until it
+ * closes, or until auto-start) drains along the bottom.
  * Props in, events out; `DetectionPrompt` wires it to Rust.
  *
- * The card floats in its own transparent, non-activating window that
- * reaches the screen's right edge, so it slides in from off-screen and back
- * out when answered (a fade only with Reduce Motion).
+ * The card floats in its own transparent, non-activating window centred
+ * under the menu bar; it slides down on arrival and back up when answered.
  */
-import { BrandMark } from '@/ui/brand';
-import { cn } from '@/ui/cn';
-import { DrainBar } from '@/ui/drain-bar';
-import { EDGE_MOTION, type EdgeLeave as Leave, useEdgeExit } from '@/ui/edge-card';
 import { ChevronDown, ICON_PROPS } from '@/ui/icons';
 import {
   DropdownMenu,
@@ -22,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/menu';
+import { TOP_BUTTON, TopCard, TopCardHeading, useTopExit } from '@/ui/top-card';
 
 import { detectionCopy } from '../copy';
 import type { Detection } from '../types';
@@ -42,73 +37,56 @@ export interface MeetingPromptProps {
   onAlwaysIgnore: () => void;
 }
 
-/** The event (or "Meeting detected") over its time or app, and the countdown. */
-function Heading({ detection, secondsLeft }: { detection: Detection; secondsLeft: number | null }) {
-  const title = detection.event?.title ?? detectionCopy.titles[detection.kind];
+/** The time or app, and the auto-start countdown when there is one. */
+function Detail({ detection, secondsLeft }: { detection: Detection; secondsLeft: number | null }) {
   return (
-    <div className="min-w-0 flex-1 pr-1">
-      <h1 className="truncate text-sm font-semibold text-fg" title={title}>
-        {title}
-      </h1>
-      <p className="flex min-w-0 gap-1 text-xs text-fg-muted">
-        <span className="truncate">{detectionCopy.subtitle(detection)}</span>
-        {secondsLeft === null ? null : (
-          <span className="shrink-0 text-fg tabular-nums">
-            {`· ${detectionCopy.countdown(secondsLeft)}`}
-          </span>
-        )}
-      </p>
-    </div>
+    <>
+      <span className="truncate">{detectionCopy.subtitle(detection)}</span>
+      {secondsLeft === null ? null : (
+        <span className="shrink-0 text-fg tabular-nums">{`· ${detectionCopy.countdown(secondsLeft)}`}</span>
+      )}
+    </>
   );
 }
 
-/** The caret's menu: Ignore (or Don't record) and Always ignore <app>. */
-function IgnoreMenu({ props, leave }: { props: MeetingPromptProps; leave: Leave }) {
+/** Ignore (or Don't record), with a caret holding "Always ignore <app>". */
+function IgnoreButton({
+  props,
+  leave,
+}: {
+  props: MeetingPromptProps;
+  leave: (answer: () => void) => void;
+}) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        disabled={props.busy}
-        aria-label={detectionCopy.moreIgnore}
-        className="flex w-8 items-center justify-center border-l border-border text-fg-muted hover:bg-bg-muted disabled:opacity-50"
-      >
-        <ChevronDown {...ICON_PROPS} className="size-3.5" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end">
-        <DropdownMenuItem
-          onSelect={() => {
-            leave(props.onDismiss);
-          }}
-        >
-          {props.secondsLeft === null ? detectionCopy.ignore : detectionCopy.dontRecord}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => {
-            leave(props.onAlwaysIgnore);
-          }}
-        >
-          {detectionCopy.alwaysIgnoreApp(props.detection.app.name)}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/** Take notes, carrying the Deino mark, joined to the caret menu. */
-function SplitButton({ props, leave }: { props: MeetingPromptProps; leave: Leave }) {
-  return (
-    <div className="flex h-10 shrink-0 overflow-hidden rounded-lg border border-border bg-bg shadow-xs">
+    <div className="flex flex-1 overflow-hidden rounded-lg">
       <button
         type="button"
         disabled={props.busy}
         onClick={() => {
-          leave(props.onTakeNotes);
+          leave(props.onDismiss);
         }}
-        className="flex items-center gap-2 pr-3 pl-2.5 text-sm font-medium text-fg hover:bg-bg-muted disabled:opacity-50"
+        className={`${TOP_BUTTON.quiet} rounded-r-none`}
       >
-        <BrandMark size={16} />
-        {detectionCopy.takeNotes}
+        {props.secondsLeft === null ? detectionCopy.ignore : detectionCopy.dontRecord}
       </button>
-      <IgnoreMenu props={props} leave={leave} />
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          disabled={props.busy}
+          aria-label={detectionCopy.moreIgnore}
+          className="flex w-7 items-center justify-center border-l border-border bg-bg-muted text-fg-muted hover:brightness-95 disabled:opacity-50"
+        >
+          <ChevronDown {...ICON_PROPS} className="size-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="bottom" align="end">
+          <DropdownMenuItem
+            onSelect={() => {
+              leave(props.onAlwaysIgnore);
+            }}
+          >
+            {detectionCopy.alwaysIgnoreApp(props.detection.app.name)}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -116,26 +94,40 @@ function SplitButton({ props, leave }: { props: MeetingPromptProps; leave: Leave
 /** The meeting prompt card. */
 export function MeetingPrompt(props: MeetingPromptProps) {
   const { detection, secondsLeft, millisecondsLeft } = props;
-  const [leaving, leave] = useEdgeExit(props.failed);
+  const [leaving, leave] = useTopExit(props.failed);
+  const title = detection.event?.title ?? detectionCopy.titles[detection.kind];
   return (
-    <section
-      aria-label={detectionCopy.promptLabel}
-      className={cn(
-        'relative overflow-hidden rounded-xl bg-surface-raised text-fg shadow-popover',
-        leaving ? EDGE_MOTION.exit : EDGE_MOTION.enter,
-      )}
+    <TopCard
+      label={detectionCopy.promptLabel}
+      leaving={leaving}
+      drainMs={millisecondsLeft}
+      closeLabel={detectionCopy.close}
+      onClose={() => {
+        leave(props.onDismiss);
+      }}
     >
-      <div className="flex items-center gap-2.5 py-2.5 pr-2.5 pl-3">
-        <span aria-hidden className="my-0.5 w-[3px] shrink-0 self-stretch rounded-full bg-brand" />
-        <Heading detection={detection} secondsLeft={secondsLeft} />
-        <SplitButton props={props} leave={leave} />
+      <TopCardHeading
+        title={title}
+        detail={<Detail detection={detection} secondsLeft={secondsLeft} />}
+      />
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          disabled={props.busy}
+          onClick={() => {
+            leave(props.onTakeNotes);
+          }}
+          className={TOP_BUTTON.primary}
+        >
+          {detectionCopy.takeNotes}
+        </button>
+        <IgnoreButton props={props} leave={leave} />
       </div>
       {props.failed ? (
-        <p role="alert" className="px-3 pb-2 text-xs text-danger">
+        <p role="alert" className="mt-2 text-xs text-danger">
           {detectionCopy.failed}
         </p>
       ) : null}
-      <DrainBar durationMs={millisecondsLeft} />
-    </section>
+    </TopCard>
   );
 }
