@@ -1,6 +1,5 @@
 //! Word timings from wav2vec2 forced alignment: `deino-core`'s
-//! `WordAligner` port in Rust, replacing the Python engine's `align`
-//! (`docs/plans/python-speakers-port.md`, step 3).
+//! `WordAligner` port in Rust (`docs/adr/2026-10-30-speakers-community-1-in-rust.md`).
 //!
 //! Each line is cut from the track with [`PAD_MS`] either side, run through
 //! the bundled wav2vec2-base-960h ([`model`]), and its letters are aligned

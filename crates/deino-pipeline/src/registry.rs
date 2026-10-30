@@ -98,8 +98,8 @@ pub struct StagePorts {
     pub vocab_fixer: Arc<dyn VocabFixer>,
     /// Reads the shared screen's snapshots before the notes (CAP-09).
     pub screen_context: Arc<dyn ScreenContextReader>,
-    /// Times untimed lines' words for `diarize` (the owner's opt-in Python
-    /// engine); [`NoWordAligner`] leaves them as they are.
+    /// Times untimed lines' words for `diarize` (wav2vec2 forced alignment);
+    /// [`NoWordAligner`] leaves them as they are.
     pub word_aligner: Arc<dyn WordAligner>,
 }
 

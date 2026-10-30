@@ -1,7 +1,7 @@
 //! CTC forced alignment of a line's letters to wav2vec2's frames (pure).
 //!
-//! A port of `python/speakers.py`'s `align_line`, `frames_by_word` and
-//! `fill_gaps`, kept step for step so the two give the same times:
+//! A port of the former Python engine's `align_line`, `frames_by_word` and
+//! `fill_gaps`, kept step for step so the two gave the same times:
 //! uppercase letters and apostrophes become tokens, words are joined by the
 //! `|` separator, a Viterbi pass over the log-probabilities emits each
 //! token at one frame (blanks fill the rest), and a word spans its first to

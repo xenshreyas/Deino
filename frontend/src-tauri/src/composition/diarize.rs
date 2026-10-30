@@ -17,7 +17,6 @@ use deino_core::diarization::{NoWordAligner, TrackDiarizer, WordAligner};
 use deino_diarize::RuntimeConfig;
 use deino_diarize::align::OnnxWordAligner;
 use deino_diarize::models::{ModelStore, bundled};
-use deino_diarize::python::PythonEngine;
 use deino_diarize::track::OnnxTrackDiarizer;
 use deino_diarize::vbx::Plda;
 use deino_net::{Net, ServiceId};
@@ -33,22 +32,12 @@ const MODELS_FOLDER: &str = "diarization";
 /// Core ML's compiled-model cache, inside the models folder.
 const ACCELERATOR_CACHE: &str = "coreml-cache";
 
-/// The owner's opt-in Python speaker engine's folder under the data dir
-/// (`scripts/setup-python-speakers.sh`); deleting it turns the engine off.
-const PYTHON_ENGINE_FOLDER: &str = "python-diarization";
-
 /// The diarizer and the word aligner the `diarize` stage uses.
 pub(super) type SpeakerEngines = (Arc<dyn TrackDiarizer>, Arc<dyn WordAligner>);
 
-/// The Python engine for both when it is installed, else the ONNX engine
-/// and the bundled wav2vec2 word aligner.
+/// The ONNX engine (Community-1's clustering when the PLDA is bundled) and
+/// the bundled wav2vec2 word aligner.
 pub(super) fn speaker_engines(app: &AppHandle) -> Result<SpeakerEngines, String> {
-    let paths = AppPaths::resolve(app).map_err(|error| error.to_string())?;
-    if let Some(engine) = PythonEngine::installed(&paths.data().join(PYTHON_ENGINE_FOLDER)) {
-        log::info!(target: "pipeline", "speakers: using the Python engine (Community-1 and word alignment)");
-        let engine = Arc::new(engine);
-        return Ok((engine.clone(), engine));
-    }
     Ok((track_diarizer(app)?, word_aligner(app)))
 }
 

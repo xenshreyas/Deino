@@ -44,7 +44,6 @@ mod onnx;
 pub mod pipeline;
 pub mod policy;
 pub mod prune;
-pub mod python;
 pub mod segmentation;
 pub mod track;
 pub mod units;

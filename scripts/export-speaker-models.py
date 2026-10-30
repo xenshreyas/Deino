@@ -1,4 +1,4 @@
-"""Exports the speaker models Deino bundles (docs/plans/python-speakers-port.md).
+"""Exports the speaker models Deino bundles (docs/adr/2026-10-30-speakers-community-1-in-rust.md).
 
 Writes into frontend/src-tauri/resources/speakers/ (tracked with Git LFS):
 

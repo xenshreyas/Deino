@@ -2,7 +2,7 @@
 //! `frontend/src-tauri/resources/speakers/` in the repository, Git LFS),
 //! made by `scripts/export-speaker-models.py`. Nothing is downloaded for
 //! them: Community-1 is gated on Hugging Face, and everything runs on the
-//! Mac (`docs/plans/python-speakers-port.md`).
+//! Mac (`docs/adr/2026-10-30-speakers-community-1-in-rust.md`).
 //!
 //! [`SEGMENTATION`](super::SEGMENTATION) and [`EMBEDDING`](super::EMBEDDING)
 //! are bundled too, under the same names and pins, so the store can read
