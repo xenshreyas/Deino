@@ -8,8 +8,9 @@
 //!     --models <dir> file <audio.wav|.m4a> <reference.rttm> [--speakers N]
 //! ```
 //!
-//! Flags: `--cpu` (no Core ML), `--threads N`. `<dir>` must hold the pinned
-//! models (verified by SHA-256). Each run prints one JSON line: DER with a
+//! Flags: `--cpu` (no Core ML), `--threads N`, `--segmentation <file>` (a
+//! segmentation model to compare with the pinned one). `<dir>` must hold
+//! the pinned models (verified by SHA-256). Each run prints one JSON line: DER with a
 //! 0.25 s collar and without, its parts, speaker counts, timings, and the
 //! machine's load average (timings are only comparable at low load).
 #![allow(
@@ -55,6 +56,8 @@ struct Options {
     runtime: RuntimeConfig,
     command: Vec<String>,
     speakers: Option<usize>,
+    /// A segmentation model to try instead of the pinned one.
+    segmentation: Option<PathBuf>,
 }
 
 fn main() {
@@ -66,9 +69,12 @@ fn main() {
 }
 
 fn run(options: &Options) -> Result<(), String> {
-    let models = ModelStore::new(&options.models)
+    let mut models = ModelStore::new(&options.models)
         .verified_paths()
         .map_err(|e| e.to_string())?;
+    if let Some(segmentation) = &options.segmentation {
+        models.segmentation.clone_from(segmentation);
+    }
     let cases = match options
         .command
         .iter()
@@ -153,6 +159,7 @@ fn parse(args: Vec<String>) -> Result<Options, String> {
         runtime: RuntimeConfig::default(),
         command: Vec::new(),
         speakers: None,
+        segmentation: None,
     };
     let mut args = args.into_iter();
     while let Some(arg) = args.next() {
@@ -162,6 +169,7 @@ fn parse(args: Vec<String>) -> Result<Options, String> {
             "--cpu" => options.runtime.accelerate_embedding = false,
             "--threads" => options.runtime.intra_threads = number(&value()?)?,
             "--speakers" => options.speakers = Some(number(&value()?)?.get()),
+            "--segmentation" => options.segmentation = Some(PathBuf::from(value()?)),
             _ => options.command.push(arg),
         }
     }

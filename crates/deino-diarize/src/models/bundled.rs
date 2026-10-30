@@ -6,7 +6,9 @@
 //!
 //! [`SEGMENTATION`](super::SEGMENTATION) and [`EMBEDDING`](super::EMBEDDING)
 //! are bundled too, under the same names and pins, so the store can read
-//! them from the app instead of downloading them.
+//! them from the app instead of downloading them. Community-1's own
+//! segmentation model is not bundled: it is segmentation-3.0 (their outputs
+//! differ by at most 2e-5).
 
 /// One bundled file, pinned like the downloaded ones.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -21,14 +23,6 @@ pub struct BundledFile {
 
 /// The bundled folder's name among the app's resources.
 pub const FOLDER: &str = "speakers";
-
-/// pyannote Community-1's segmentation model (CC-BY-4.0), revision
-/// `3533c8c`: `input_values` [batch, 1, samples] → `logits` [batch, frames, 7].
-pub const COMMUNITY_SEGMENTATION: BundledFile = BundledFile {
-    file_name: "community-1-segmentation.onnx",
-    sha256: "6b6d4b0382b1a975a7194de6f809a15c85a1fad768fa31756dc6814a70ee1208",
-    bytes: 5_916_337,
-};
 
 /// Community-1's PLDA (CC-BY-4.0): `mu`, `tr`, `psi` as `NumPy` arrays.
 pub const COMMUNITY_PLDA: BundledFile = BundledFile {
@@ -54,8 +48,7 @@ pub const ALIGNER: BundledFile = BundledFile {
 };
 
 /// Every bundled file, the downloaded models' copies included.
-pub const FILES: [BundledFile; 6] = [
-    COMMUNITY_SEGMENTATION,
+pub const FILES: [BundledFile; 5] = [
     COMMUNITY_PLDA,
     COMMUNITY_XVEC_TRANSFORM,
     ALIGNER,

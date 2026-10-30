@@ -436,16 +436,14 @@ oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
 
 Bundled in the app (`speakers/`). From
 https://huggingface.co/pyannote/speaker-diarization-community-1 (revision
-`3533c8c`): the segmentation model, converted to ONNX
-(`community-1-segmentation.onnx`, SHA-256 `6b6d4b03…1208`), and the PLDA
-arrays, unmodified (`community-1-plda.npz`, `community-1-xvec-transform.npz`).
-The conversion is `scripts/export-speaker-models.py`.
+`3533c8c`): the PLDA arrays, unmodified (`community-1-plda.npz`,
+`community-1-xvec-transform.npz`), copied by
+`scripts/export-speaker-models.py`.
 
 "pyannote/speaker-diarization-community-1" by pyannoteAI (Hervé Bredin and
 contributors) is licensed under the Creative Commons Attribution 4.0
 International License (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
-Changes: the segmentation model was exported from PyTorch to ONNX; its
-weights are unchanged.
+Deino uses them unmodified.
 
 ---
 

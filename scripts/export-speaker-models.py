@@ -2,10 +2,6 @@
 
 Writes into frontend/src-tauri/resources/speakers/ (tracked with Git LFS):
 
-- community-1-segmentation.onnx: pyannote Community-1's segmentation model
-  (CC-BY-4.0), input `input_values` [batch, 1, samples] at 16 kHz, output
-  `logits` [batch, frames, 7] (powerset log-probabilities), like the
-  onnx-community export of segmentation-3.0 that Deino already runs.
 - community-1-plda.npz, community-1-xvec-transform.npz: Community-1's PLDA
   arrays, copied as they are (plain NumPy arrays).
 - wav2vec2-base-960h-int8.onnx: facebook/wav2vec2-base-960h (Apache-2.0),
@@ -16,7 +12,9 @@ Writes into frontend/src-tauri/resources/speakers/ (tracked with Git LFS):
 - pyannote-segmentation-3.0.onnx and wespeaker-voxceleb-resnet34-lm.onnx,
   the models Deino downloads today, copied from --existing.
 
-Each export is checked against PyTorch before it is written. Needs the
+Each export is checked against PyTorch before it is written. Community-1's
+segmentation model is not exported: it is segmentation-3.0, which Deino
+already runs (their outputs differ by at most 2e-5). Needs the
 Community-1 terms accepted on Hugging Face and `hf auth login`, plus
 pyannote.audio, torch, transformers, onnx and onnxruntime. Run:
 
@@ -33,7 +31,6 @@ import onnxruntime as ort
 import torch
 from huggingface_hub import hf_hub_download
 from onnxruntime.quantization import QuantType, quantize_dynamic
-from pyannote.audio import Model
 from transformers import Wav2Vec2ForCTC
 
 COMMUNITY = "pyannote/speaker-diarization-community-1"
@@ -48,25 +45,6 @@ OUT = REPO / "frontend/src-tauri/resources/speakers"
 def run(path: pathlib.Path, inputs: np.ndarray) -> np.ndarray:
     session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
     return session.run(["logits"], {"input_values": inputs})[0]
-
-
-def export_segmentation() -> None:
-    model = Model.from_pretrained(COMMUNITY, subfolder="segmentation", revision=COMMUNITY_REVISION)
-    model.eval()
-    # Reference outputs come first: exporting can leave the module changed.
-    check = torch.randn(3, 1, 80_000)
-    with torch.no_grad():
-        expected = model(check).numpy()
-    sample = torch.randn(2, 1, 160_000)
-    path = OUT / "community-1-segmentation.onnx"
-    torch.onnx.export(
-        model, (sample,), str(path), input_names=["input_values"], output_names=["logits"],
-        dynamic_axes={"input_values": {0: "batch", 2: "samples"}, "logits": {0: "batch", 1: "frames"}},
-        opset_version=OPSET, dynamo=False,
-    )
-    error = np.abs(run(path, check.numpy()) - expected).max()
-    assert error < 1e-3, f"segmentation differs from PyTorch by {error}"
-    print(f"segmentation: max difference {error:.2e}")
 
 
 def export_plda() -> None:
@@ -130,7 +108,6 @@ def main() -> None:
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(0)
-    export_segmentation()
     export_plda()
     export_aligner()
     copy_existing(args.existing)

@@ -11,7 +11,7 @@ against the Python output on that meeting before the Python piece goes.
 
 | Piece | Python today | Rust replacement | Check |
 |---|---|---|---|
-| Segmentation | Community-1 segmentation (pyannote) | Community-1 segmentation weights exported to ONNX, run in `deino-diarize::segmentation` (same architecture as segmentation-3.0) | frame-level activations match within 1e-3 |
+| Segmentation | Community-1 segmentation (pyannote) | **Nothing to port:** Community-1's segmentation model is segmentation-3.0, which Deino already runs (exported, their outputs differ by at most 2e-5). On the reference call Deino's current engine is already at 3.2% DER against the Python engine (2.1% missed, 0.5% false alarm, 0.6% confusion; 0.25 s collar; `diarize-bench --segmentation`), with one 3-second phantom voice | frame-level activations match within 1e-3 |
 | Voice embeddings | WeSpeaker ResNet34-LM via pyannote | already in Deino (`EMBEDDING_MODEL_ID`, Core ML); centroids match the Python ones at cosine 0.996 | per-voice cosine ≥ 0.99 |
 | Clustering | PLDA + VBx (Community-1) | port PLDA transform and VBx to `deino-diarize::clustering` (references: pyannote, FluidAudio) | same voice count and ≥ 98% same turn labels on the meeting |
 | Exclusive turns | `exclusive_speaker_diarization` | one voice per frame in the reconstruction step | turns within 50 ms |
@@ -25,7 +25,6 @@ login, no first-run download and no network are needed:
 
 | File | Source | Licence | Size |
 |---|---|---|---|
-| Community-1 segmentation (ONNX) | pyannote/speaker-diarization-community-1 (gated on Hugging Face, so it cannot be fetched for users) | CC-BY-4.0 | ~6 MB |
 | WeSpeaker ResNet34-LM embedding | the one Deino already uses | CC-BY-4.0 | ~26 MB |
 | PLDA `plda.npz`, `xvec_transform.npz` as plain arrays | Community-1 | CC-BY-4.0 | < 1 MB |
 | wav2vec2-base-960h aligner (ONNX, MatMul int8) | facebook/wav2vec2-base-960h | Apache-2.0 | 122 MB |
