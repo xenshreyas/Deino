@@ -94,8 +94,11 @@ fn read<T: for<'de> Deserialize<'de>>(path: &Path) -> T {
 fn the_engines_side_by_side() {
     let lines: Vec<Line> = read(&env("AB_LINES"));
     let prints: Vec<Voiceprint> = read(&env("AB_VOICEPRINTS"));
-    let rust = rust_engine(&env("AB_AUDIO"), &lines, &prints);
+    let mut rust = rust_engine(&env("AB_AUDIO"), &lines, &prints);
     let python = python_engine(&lines);
+    if std::env::var_os("AB_PY_WORDS").is_some() {
+        rust.1.clone_from(&python.1);
+    }
     let out = json!({
         "rust": report(&lines, &rust.0, &rust.1, &prints),
         "python": report(&lines, &python.0, &python.1, &prints),

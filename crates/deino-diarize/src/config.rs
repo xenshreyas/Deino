@@ -47,6 +47,9 @@ pub struct DiarizationConfig {
     /// Community-1's clustering (`crate::vbx`) with this PLDA, instead of
     /// the centroid-linkage clustering under `threshold`.
     pub vbx: Option<std::sync::Arc<crate::vbx::Plda>>,
+    /// One speaker per frame (Community-1's exclusive diarization) instead
+    /// of overlapping turns.
+    pub exclusive: bool,
 }
 
 impl Default for DiarizationConfig {
@@ -63,6 +66,7 @@ impl Default for DiarizationConfig {
             known_speaker_min_score: DEFAULT_KNOWN_SPEAKER_SCORE,
             runtime: RuntimeConfig::default(),
             vbx: None,
+            exclusive: false,
         }
     }
 }

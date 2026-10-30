@@ -18,7 +18,7 @@ use deino_core::diarization::{
 };
 use deino_core::models::ByteSource;
 
-use crate::config::{DiarizationConfig, RuntimeConfig, SpeakerBounds};
+use crate::config::{RuntimeConfig, SpeakerBounds};
 use crate::error::DiarizeError;
 use crate::models::{EMBEDDING_MODEL_ID, ModelStore};
 use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, KnownSpeaker, ModelPaths};
@@ -97,9 +97,9 @@ pub fn diarize_file(
         .map_err(|error| TrackError::Failed(Box::new(error)))?;
     let duration = samples_to_duration(samples.len());
     let bounds = policy::bounds_for(duration, expected(request.speakers));
-    let config = DiarizationConfig {
-        vbx,
-        ..policy::config_for(duration, runtime)
+    let config = match vbx {
+        Some(plda) => policy::community_config(duration, runtime, plda),
+        None => policy::config_for(duration, runtime),
     };
     let mut diarizer = Diarizer::new(config, models).map_err(engine)?;
     let known = known_speakers(&request.known);

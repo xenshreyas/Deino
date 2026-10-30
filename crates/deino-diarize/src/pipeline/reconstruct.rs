@@ -5,6 +5,11 @@
 //! least half the windows covering it say so. Runs of such frames become
 //! turns, speakers without a turn are dropped, and the rest are numbered by
 //! first appearance.
+//!
+//! With `exclusive` (Community-1's `exclusive_speaker_diarization`), each
+//! frame has at most one speaker instead: when the windows covering it hear
+//! about one or more people (their mean count of active local speakers,
+//! rounded, is at least one), it goes to the speaker most windows hear.
 
 use std::time::Duration;
 
@@ -12,7 +17,7 @@ use super::labels::Clusters;
 use super::scan::{Scan, WindowGrid};
 use super::{Diarization, DiarizedSpeaker, SpeakerTurn};
 use crate::config::DiarizationConfig;
-use crate::segmentation::is_active;
+use crate::segmentation::{LOCAL_SPEAKERS, is_active};
 use crate::units::{
     FRAME_SIZE, SAMPLE_RATE, WINDOW_SAMPLES, frame_start_sample, frames_for_samples,
     samples_to_millis,
@@ -35,9 +40,13 @@ pub(super) fn reconstruct(
     config: &DiarizationConfig,
 ) -> Diarization {
     let votes = Votes::cast(scan, grid, clusters);
+    let exclusive = config.exclusive.then(|| votes.exclusive());
     let mut turns: Vec<SampleTurn> = (0..clusters.centroids.len())
         .flat_map(|speaker| {
-            let active = votes.majority(speaker);
+            let active = match &exclusive {
+                Some(owner) => owner.iter().map(|o| *o == Some(speaker)).collect(),
+                None => votes.majority(speaker),
+            };
             runs_to_turns(&active, speaker, config)
         })
         .map(|turn| SampleTurn {
@@ -54,6 +63,8 @@ pub(super) fn reconstruct(
 /// of them hear each speaker there.
 struct Votes {
     coverage: Vec<u16>,
+    /// Active local speakers per frame, summed over the covering windows.
+    talkers: Vec<u16>,
     speakers: Vec<Vec<u16>>,
 }
 
@@ -62,6 +73,7 @@ impl Votes {
         let frames = frames_for_samples(grid.total.max(WINDOW_SAMPLES));
         let mut votes = Self {
             coverage: vec![0; frames],
+            talkers: vec![0; frames],
             speakers: vec![vec![0; frames]; clusters.centroids.len()],
         };
         for (window, activity) in scan.activities.iter().enumerate() {
@@ -71,6 +83,11 @@ impl Votes {
                 offset,
                 activity.frames.iter().map(|_| true),
             );
+            let talking = activity.frames.iter().map(|frame| {
+                let count = (0..LOCAL_SPEAKERS).filter(|s| is_active(frame, *s)).count();
+                u16::try_from(count).unwrap_or(u16::MAX)
+            });
+            add(&mut votes.talkers, offset, talking);
         }
         for (item, label) in scan.embeddings.iter().zip(&clusters.labels) {
             let (Some(activity), Some(track)) = (
@@ -98,6 +115,35 @@ impl Votes {
             .zip(&self.coverage)
             .map(|(votes, coverage)| *coverage > 0 && u32::from(*votes) * 2 >= u32::from(*coverage))
             .collect()
+    }
+
+    /// Each frame's one speaker, if anyone talks there: the most-heard
+    /// speaker wherever the rounded mean count of talkers is at least one.
+    fn exclusive(&self) -> Vec<Option<usize>> {
+        (0..self.coverage.len())
+            .map(|frame| {
+                let coverage = f64::from(self.coverage.get(frame).copied().unwrap_or(0));
+                let talkers = f64::from(self.talkers.get(frame).copied().unwrap_or(0));
+                if coverage == 0.0 || (talkers / coverage).round_ties_even() < 1.0 {
+                    return None;
+                }
+                let heard = |s: &Vec<u16>| s.get(frame).copied().unwrap_or(0);
+                let (speaker, votes) = self
+                    .speakers
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .max_by_key(|(_, track)| heard(track))?;
+                (heard(votes) > 0).then_some(speaker)
+            })
+            .collect()
+    }
+}
+
+/// Adds `values` to `counts` from `offset` on.
+fn add(counts: &mut [u16], offset: usize, values: impl Iterator<Item = u16>) {
+    for (slot, value) in counts.iter_mut().skip(offset).zip(values) {
+        *slot = slot.saturating_add(value);
     }
 }
 
@@ -292,5 +338,19 @@ mod tests {
             &DiarizationConfig::default(),
         );
         assert_eq!(result.turns.last().unwrap().end, samples_to_millis(48_000));
+    }
+
+    #[test]
+    fn exclusive_frames_go_to_the_most_heard_speaker_when_someone_talks() {
+        // Four frames, two windows over each; speaker 1 is heard more in
+        // frame 1, they tie in frame 2 (the lower index wins), and in
+        // frame 3 one talker in two windows rounds to none (0.5 → 0).
+        let votes = Votes {
+            coverage: vec![2, 2, 2, 2],
+            talkers: vec![2, 3, 2, 1],
+            speakers: vec![vec![2, 1, 1, 1], vec![0, 2, 1, 0]],
+        };
+
+        assert_eq!(votes.exclusive(), vec![Some(0), Some(1), Some(0), None]);
     }
 }

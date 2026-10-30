@@ -61,6 +61,35 @@ pub fn config_for(duration: Duration, runtime: RuntimeConfig) -> DiarizationConf
     }
 }
 
+/// Community-1's settings: VBx clustering with `plda`, one speaker per
+/// frame, and a 2 s window step. On the reference call, against the Python
+/// engine: 3 s left 41 words on another speaker and added two stray splits;
+/// 1 s left 36 but gave the call's opening greeting to the wrong person;
+/// 2 s left 40, split lines exactly as often and got the opening right.
+/// The step still grows past [`COMMUNITY_MAX_WINDOWS`] windows, so a long
+/// call's clustering stays within a few hundred megabytes.
+pub fn community_config(
+    duration: Duration,
+    runtime: RuntimeConfig,
+    plda: std::sync::Arc<crate::vbx::Plda>,
+) -> DiarizationConfig {
+    DiarizationConfig {
+        step: COMMUNITY_STEP,
+        max_windows: COMMUNITY_MAX_WINDOWS,
+        vbx: Some(plda),
+        exclusive: true,
+        ..config_for(duration, runtime)
+    }
+}
+
+/// Community-1's window step.
+pub const COMMUNITY_STEP: Duration = Duration::from_secs(2);
+/// The most windows Community-1's settings run (2.5 hours at 2 s).
+pub const COMMUNITY_MAX_WINDOWS: std::num::NonZeroUsize = match std::num::NonZeroUsize::new(4_500) {
+    Some(count) => count,
+    None => std::num::NonZeroUsize::MIN,
+};
+
 /// The speaker bounds for a recording of `duration`. Short recordings only
 /// ever get an upper bound: someone invited may not have spoken yet.
 pub fn bounds_for(duration: Duration, expected: ExpectedSpeakers) -> SpeakerBounds {
