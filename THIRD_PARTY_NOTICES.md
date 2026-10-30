@@ -436,14 +436,19 @@ oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
 
 Bundled in the app (`speakers/`). From
 https://huggingface.co/pyannote/speaker-diarization-community-1 (revision
-`3533c8c`): the PLDA arrays, unmodified (`community-1-plda.npz`,
-`community-1-xvec-transform.npz`), copied by
-`scripts/export-speaker-models.py`.
+`3533c8c`): the x-vector transform and PLDA arrays, converted to
+`community-1-vbx.f64` by `scripts/export-speaker-models.py` (the PLDA basis
+and variances precomputed as pyannote.audio's `vbx_setup` does at load
+time).
 
 "pyannote/speaker-diarization-community-1" by pyannoteAI (Hervé Bredin and
 contributors) is licensed under the Creative Commons Attribution 4.0
 International License (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/).
-Deino uses them unmodified.
+Changes: the arrays were stored in a plain binary layout, with the PLDA's
+generalized eigendecomposition already applied; the values are unchanged.
+`crates/deino-diarize/src/vbx` is a Rust port of pyannote.audio's VBx
+clustering (MIT License, Copyright (c) 2020 CNRS), itself after Landini et
+al.'s VBx (Apache-2.0, Brno University of Technology).
 
 ---
 

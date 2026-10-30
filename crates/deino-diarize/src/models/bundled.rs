@@ -24,18 +24,12 @@ pub struct BundledFile {
 /// The bundled folder's name among the app's resources.
 pub const FOLDER: &str = "speakers";
 
-/// Community-1's PLDA (CC-BY-4.0): `mu`, `tr`, `psi` as `NumPy` arrays.
-pub const COMMUNITY_PLDA: BundledFile = BundledFile {
-    file_name: "community-1-plda.npz",
-    sha256: "9b77bcd840692710dd3496f62ecfeed8d8e5f002fd991b785079b244eab7d255",
-    bytes: 133_852,
-};
-
-/// Community-1's x-vector transform (CC-BY-4.0): `mean1`, `mean2`, `lda`.
-pub const COMMUNITY_XVEC_TRANSFORM: BundledFile = BundledFile {
-    file_name: "community-1-xvec-transform.npz",
-    sha256: "325f1ce8e48f7e55e9c8aa47e05d2766b7c48c4b25b8de8dd751e7a4cc5fbe8f",
-    bytes: 134_376,
+/// Community-1's x-vector transform and PLDA (CC-BY-4.0), precomputed for
+/// VBx (`vbx::Plda`).
+pub const VBX: BundledFile = BundledFile {
+    file_name: "community-1-vbx.f64",
+    sha256: "ccfb4904cb46a8917d4bf0d6be12841f7b53b9453e34870671a66cdb3683125f",
+    bytes: 398_336,
 };
 
 /// facebook/wav2vec2-base-960h (Apache-2.0), revision `22aad52`, `MatMul`
@@ -48,9 +42,8 @@ pub const ALIGNER: BundledFile = BundledFile {
 };
 
 /// Every bundled file, the downloaded models' copies included.
-pub const FILES: [BundledFile; 5] = [
-    COMMUNITY_PLDA,
-    COMMUNITY_XVEC_TRANSFORM,
+pub const FILES: [BundledFile; 4] = [
+    VBX,
     ALIGNER,
     as_bundled(super::SEGMENTATION),
     as_bundled(super::EMBEDDING),

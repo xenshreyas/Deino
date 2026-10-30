@@ -18,13 +18,14 @@ use deino_core::diarization::{
 };
 use deino_core::models::ByteSource;
 
-use crate::config::{RuntimeConfig, SpeakerBounds};
+use crate::config::{DiarizationConfig, RuntimeConfig, SpeakerBounds};
 use crate::error::DiarizeError;
 use crate::models::{EMBEDDING_MODEL_ID, ModelStore};
 use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, KnownSpeaker, ModelPaths};
 use crate::policy::{self, ExpectedSpeakers};
 use crate::prune;
 use crate::units::{SAMPLE_RATE, samples_to_duration};
+use crate::vbx::Plda;
 use crate::vector::Embedding;
 
 /// The ONNX diarizer as a `TrackDiarizer`.
@@ -36,6 +37,7 @@ pub struct OnnxTrackDiarizer {
     store: ModelStore,
     source: Arc<dyn ByteSource>,
     runtime: RuntimeConfig,
+    vbx: Option<Arc<Plda>>,
     one_at_a_time: tokio::sync::Mutex<()>,
 }
 
@@ -47,8 +49,17 @@ impl OnnxTrackDiarizer {
             store,
             source,
             runtime,
+            vbx: None,
             one_at_a_time: tokio::sync::Mutex::new(()),
         }
+    }
+
+    /// Clusters with Community-1's VBx over `plda` instead of centroid
+    /// linkage.
+    #[must_use]
+    pub fn with_vbx(mut self, plda: Arc<Plda>) -> Self {
+        self.vbx = Some(plda);
+        self
     }
 }
 
@@ -65,8 +76,9 @@ impl TrackDiarizer for OnnxTrackDiarizer {
             .ensure(self.source.as_ref())
             .await
             .map_err(|error| TrackError::ModelsUnavailable(Box::new(error)))?;
-        let runtime = self.runtime.clone();
-        let run = tokio::task::spawn_blocking(move || diarize_file(&models, runtime, &request));
+        let (runtime, vbx) = (self.runtime.clone(), self.vbx.clone());
+        let run =
+            tokio::task::spawn_blocking(move || diarize_file(&models, runtime, vbx, &request));
         run.await
             .map_err(|error| TrackError::Failed(Box::new(error)))?
     }
@@ -78,14 +90,18 @@ impl TrackDiarizer for OnnxTrackDiarizer {
 pub fn diarize_file(
     models: &ModelPaths,
     runtime: RuntimeConfig,
+    vbx: Option<Arc<Plda>>,
     request: &TrackRequest,
 ) -> Result<TrackDiarization, TrackError> {
     let samples = deino_audio::read_mono(&request.audio, SAMPLE_RATE)
         .map_err(|error| TrackError::Failed(Box::new(error)))?;
     let duration = samples_to_duration(samples.len());
     let bounds = policy::bounds_for(duration, expected(request.speakers));
-    let mut diarizer =
-        Diarizer::new(policy::config_for(duration, runtime), models).map_err(engine)?;
+    let config = DiarizationConfig {
+        vbx,
+        ..policy::config_for(duration, runtime)
+    };
+    let mut diarizer = Diarizer::new(config, models).map_err(engine)?;
     let known = known_speakers(&request.known);
     let run = DiarizeRequest {
         bounds,

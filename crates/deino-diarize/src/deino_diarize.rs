@@ -24,6 +24,7 @@
 //! | [`metrics`] | Diarization error rate for the benchmark |
 //! | [`models`] | Pinned model files, the verified store, the downloader port |
 //! | [`track`] | The `deino-core` `TrackDiarizer` adapter (decode, run, prune) |
+//! | [`vbx`] | Community-1's clustering: AHC, PLDA, VBx, constrained assignment |
 //! | [`align`] | The `deino-core` `WordAligner` adapter: wav2vec2 CTC word times |
 //!
 //! No `tauri`, no `deino-net`: the store downloads through `deino-core`'s
@@ -47,6 +48,7 @@ pub mod python;
 pub mod segmentation;
 pub mod track;
 pub mod units;
+pub mod vbx;
 pub mod vector;
 
 pub use config::{DiarizationConfig, RuntimeConfig, SpeakerBounds};

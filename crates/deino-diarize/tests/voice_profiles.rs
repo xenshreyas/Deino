@@ -53,7 +53,7 @@ impl TrackDiarizer for LocalModels {
     }
 
     async fn diarize(&self, request: TrackRequest) -> Result<TrackDiarization, TrackError> {
-        diarize_file(&self.0, RuntimeConfig::default(), &request)
+        diarize_file(&self.0, RuntimeConfig::default(), None, &request)
     }
 }
 

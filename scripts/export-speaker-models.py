@@ -2,8 +2,12 @@
 
 Writes into frontend/src-tauri/resources/speakers/ (tracked with Git LFS):
 
-- community-1-plda.npz, community-1-xvec-transform.npz: Community-1's PLDA
-  arrays, copied as they are (plain NumPy arrays).
+- community-1-vbx.f64: Community-1's x-vector transform and PLDA, ready for
+  VBx: little-endian f64 arrays, back to back, `mean1` [256], `lda`
+  [256 × 128], `mean2` [128], `mu` [128], `tr` [128 × 128] and `psi` [128],
+  where `tr` and `psi` are already the generalized-eigenvector basis and
+  eigenvalues pyannote's `vbx_setup` computes at load time (so Deino needs
+  no linear-algebra library). Row-major.
 - wav2vec2-base-960h-int8.onnx: facebook/wav2vec2-base-960h (Apache-2.0),
   input `input_values` [batch, samples] (zero mean, unit variance), output
   `logits` [batch, frames, 32], its MatMul weights quantized to int8 per
@@ -48,9 +52,21 @@ def run(path: pathlib.Path, inputs: np.ndarray) -> np.ndarray:
 
 
 def export_plda() -> None:
-    for name in ("plda", "xvec_transform"):
-        source = hf_hub_download(COMMUNITY, f"plda/{name}.npz", revision=COMMUNITY_REVISION)
-        shutil.copyfile(source, OUT / f"community-1-{name.replace('_', '-')}.npz")
+    from scipy.linalg import eigh
+
+    def load(name):
+        return np.load(hf_hub_download(COMMUNITY, f"plda/{name}.npz", revision=COMMUNITY_REVISION))
+
+    x, p = load("xvec_transform"), load("plda")
+    # pyannote.audio.utils.vbx.vbx_setup, done once here.
+    within = np.linalg.inv(p["tr"].T.dot(p["tr"]))
+    between = np.linalg.inv((p["tr"].T / p["psi"]).dot(p["tr"]))
+    acvar, wccn = eigh(between, within)
+    psi, tr = acvar[::-1], wccn.T[::-1]
+    arrays = [x["mean1"], x["lda"], x["mean2"], p["mu"], tr, psi]
+    assert [a.shape for a in arrays] == [(256,), (256, 128), (128,), (128,), (128, 128), (128,)]
+    blob = b"".join(np.ascontiguousarray(a, dtype="<f8").tobytes() for a in arrays)
+    (OUT / "community-1-vbx.f64").write_bytes(blob)
 
 
 def export_aligner() -> None:
@@ -96,7 +112,7 @@ def copy_existing(folder: pathlib.Path) -> None:
 
 def manifest() -> None:
     for path in sorted(OUT.glob("*")):
-        if path.suffix in {".onnx", ".npz"}:
+        if path.suffix in {".onnx", ".f64"}:
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             print(f"{path.name}  {path.stat().st_size}  {digest}")
 

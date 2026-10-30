@@ -44,6 +44,9 @@ pub struct DiarizationConfig {
     pub known_speaker_min_score: f32,
     /// How the models run.
     pub runtime: RuntimeConfig,
+    /// Community-1's clustering (`crate::vbx`) with this PLDA, instead of
+    /// the centroid-linkage clustering under `threshold`.
+    pub vbx: Option<std::sync::Arc<crate::vbx::Plda>>,
 }
 
 impl Default for DiarizationConfig {
@@ -59,6 +62,7 @@ impl Default for DiarizationConfig {
             max_windows: non_zero(1_800),
             known_speaker_min_score: DEFAULT_KNOWN_SPEAKER_SCORE,
             runtime: RuntimeConfig::default(),
+            vbx: None,
         }
     }
 }

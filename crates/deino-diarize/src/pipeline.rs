@@ -17,6 +17,7 @@ mod known;
 mod labels;
 mod reconstruct;
 mod scan;
+mod vbx_labels;
 
 use std::path::PathBuf;
 
@@ -180,7 +181,10 @@ impl Diarizer {
         if scanned.embeddings.is_empty() {
             return Ok(Diarization::default());
         }
-        let mut clusters = labels::label(&scanned.embeddings, &self.config, &grid, request.bounds);
+        let mut clusters = match &self.config.vbx {
+            Some(plda) => vbx_labels::label(&scanned.embeddings, plda, request.bounds),
+            None => labels::label(&scanned.embeddings, &self.config, &grid, request.bounds),
+        };
         known::apply(&scanned.embeddings, &mut clusters, request, &self.config);
         Ok(reconstruct::reconstruct(
             &scanned,

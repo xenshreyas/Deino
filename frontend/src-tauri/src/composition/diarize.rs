@@ -19,6 +19,7 @@ use deino_diarize::align::OnnxWordAligner;
 use deino_diarize::models::{ModelStore, bundled};
 use deino_diarize::python::PythonEngine;
 use deino_diarize::track::OnnxTrackDiarizer;
+use deino_diarize::vbx::Plda;
 use deino_net::{Net, ServiceId};
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
@@ -66,7 +67,28 @@ fn track_diarizer(app: &AppHandle) -> Result<Arc<dyn TrackDiarizer>, String> {
         ..RuntimeConfig::default()
     };
     let store = bundled_store(app).unwrap_or_else(|| ModelStore::new(root));
-    Ok(Arc::new(OnnxTrackDiarizer::new(store, source, runtime)))
+    let engine = OnnxTrackDiarizer::new(store, source, runtime);
+    Ok(Arc::new(match bundled_vbx(app) {
+        Some(plda) => engine.with_vbx(plda),
+        None => engine,
+    }))
+}
+
+/// Community-1's PLDA inside the app, for VBx clustering; without it the
+/// engine clusters by centroid linkage, as before.
+fn bundled_vbx(app: &AppHandle) -> Option<Arc<Plda>> {
+    let path = app
+        .path()
+        .resolve(bundled::FOLDER, BaseDirectory::Resource)
+        .ok()?
+        .join(bundled::VBX.file_name);
+    match Plda::load(&path) {
+        Ok(plda) => Some(Arc::new(plda)),
+        Err(error) => {
+            log::warn!(target: "pipeline", "speakers: no bundled PLDA, clustering without VBx: {error}");
+            None
+        }
+    }
 }
 
 /// The bundled wav2vec2 aligner, or none when the app lacks it (a checkout
