@@ -15,6 +15,11 @@ name = "diarize-bench"
 path = "src/bin/diarize_bench.rs"
 required-features = ["bench"]
 
+[[bin]]
+name = "align-bench"
+path = "src/bin/align_bench.rs"
+required-features = ["bench"]
+
 [features]
 # The DER/RTF harness (`cargo run -p deino-diarize --release --features bench
 # --bin diarize-bench`); reads WAV and RTTM files.

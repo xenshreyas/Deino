@@ -15,7 +15,7 @@ against the Python output on that meeting before the Python piece goes.
 | Voice embeddings | WeSpeaker ResNet34-LM via pyannote | already in Deino (`EMBEDDING_MODEL_ID`, Core ML); centroids match the Python ones at cosine 0.996 | per-voice cosine ≥ 0.99 |
 | Clustering | PLDA + VBx (Community-1) | port PLDA transform and VBx to `deino-diarize::clustering` (references: pyannote, FluidAudio) | same voice count and ≥ 98% same turn labels on the meeting |
 | Exclusive turns | `exclusive_speaker_diarization` | one voice per frame in the reconstruction step | turns within 50 ms |
-| Word aligner | wav2vec2-base-960h CTC + Viterbi in numpy | export to ONNX, run with `ort`; port `frames_by_word` and `fill_gaps` | word times within 40 ms |
+| Word aligner | wav2vec2-base-960h CTC + Viterbi in numpy | **Done:** `deino_diarize::align` (`OnnxWordAligner`), the default without the Python engine. On the reference call's 5,492 words: with the fp32 export every word matches Python; with the bundled int8 model the median gap is 0 ms and 97% of starts are within 20 ms (`align-bench`) | word times within 40 ms |
 
 ## Model files ship inside the app
 

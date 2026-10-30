@@ -15,6 +15,7 @@ use std::sync::Arc;
 
 use deino_core::diarization::{NoWordAligner, TrackDiarizer, WordAligner};
 use deino_diarize::RuntimeConfig;
+use deino_diarize::align::OnnxWordAligner;
 use deino_diarize::models::{ModelStore, bundled};
 use deino_diarize::python::PythonEngine;
 use deino_diarize::track::OnnxTrackDiarizer;
@@ -39,7 +40,7 @@ const PYTHON_ENGINE_FOLDER: &str = "python-diarization";
 pub(super) type SpeakerEngines = (Arc<dyn TrackDiarizer>, Arc<dyn WordAligner>);
 
 /// The Python engine for both when it is installed, else the ONNX engine
-/// and no aligner.
+/// and the bundled wav2vec2 word aligner.
 pub(super) fn speaker_engines(app: &AppHandle) -> Result<SpeakerEngines, String> {
     let paths = AppPaths::resolve(app).map_err(|error| error.to_string())?;
     if let Some(engine) = PythonEngine::installed(&paths.data().join(PYTHON_ENGINE_FOLDER)) {
@@ -47,7 +48,7 @@ pub(super) fn speaker_engines(app: &AppHandle) -> Result<SpeakerEngines, String>
         let engine = Arc::new(engine);
         return Ok((engine.clone(), engine));
     }
-    Ok((track_diarizer(app)?, Arc::new(NoWordAligner)))
+    Ok((track_diarizer(app)?, word_aligner(app)))
 }
 
 /// The diarization engine over the app's model store and network client.
@@ -66,6 +67,28 @@ fn track_diarizer(app: &AppHandle) -> Result<Arc<dyn TrackDiarizer>, String> {
     };
     let store = bundled_store(app).unwrap_or_else(|| ModelStore::new(root));
     Ok(Arc::new(OnnxTrackDiarizer::new(store, source, runtime)))
+}
+
+/// The bundled wav2vec2 aligner, or none when the app lacks it (a checkout
+/// without Git LFS): lines then stay untimed, as before.
+fn word_aligner(app: &AppHandle) -> Arc<dyn WordAligner> {
+    let model = app
+        .path()
+        .resolve(bundled::FOLDER, BaseDirectory::Resource)
+        .map(|folder| folder.join(bundled::ALIGNER.file_name));
+    match model {
+        Ok(model) if file_size(&model) == Some(bundled::ALIGNER.bytes) => {
+            Arc::new(OnnxWordAligner::new(model, RuntimeConfig::default()))
+        }
+        _ => {
+            log::warn!(target: "pipeline", "speakers: the bundled word aligner is missing; lines stay untimed");
+            Arc::new(NoWordAligner)
+        }
+    }
+}
+
+fn file_size(path: &std::path::Path) -> Option<u64> {
+    std::fs::metadata(path).ok().map(|metadata| metadata.len())
 }
 
 /// The models inside the app, when both are there at their pinned sizes.

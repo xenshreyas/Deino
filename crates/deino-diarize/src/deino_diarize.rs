@@ -24,12 +24,14 @@
 //! | [`metrics`] | Diarization error rate for the benchmark |
 //! | [`models`] | Pinned model files, the verified store, the downloader port |
 //! | [`track`] | The `deino-core` `TrackDiarizer` adapter (decode, run, prune) |
+//! | [`align`] | The `deino-core` `WordAligner` adapter: wav2vec2 CTC word times |
 //!
 //! No `tauri`, no `deino-net`: the store downloads through `deino-core`'s
 //! `ByteSource` port. The voiceprint matching rules and enrolment spans moved
 //! to `deino-core::voiceprints` (CAP-04), where `identify_speakers` uses
 //! them; the known-speaker merge here imports them from there.
 
+pub mod align;
 pub mod clustering;
 pub mod config;
 pub mod embedding;

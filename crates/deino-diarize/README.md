@@ -25,6 +25,9 @@ Core ML, centroid-linkage clustering under calendar speaker bounds.
   `<app data>/python-diarization/` is installed by
   `scripts/setup-python-speakers.sh`; a stopgap until
   `docs/plans/python-speakers-port.md` is done.
+- `align::OnnxWordAligner`: `deino-core`'s `WordAligner` port, wav2vec2
+  CTC forced alignment over the bundled int8 model (`models::bundled`),
+  checked word by word against the Python engine with `align-bench`.
 - `online` (live clustering) for CAP-02, `metrics` (DER) and the `diarize-bench`
   harness (`docs/perf/diarization.md`).
 
