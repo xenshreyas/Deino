@@ -57,6 +57,16 @@ spoken. The UI only watches.
   echo reference has the system track's echo cancelled from its decoded
   copy first (`offline/echo.rs`: `cancel_echo` over `SonoraAec`), unless
   `HeadphonesSetting` says headphones; the stored file is never changed.
+  Microphone utterances without a voice are dropped before the engine runs
+  (`offline/silent_lines.rs`: `voiced`); an engine that times no words is
+  never asked for halves.
+- Transcribing during the meeting (`offline/follow.rs`, `offline/memory.rs`,
+  `offline/echo_resume.rs`): `FollowAlong` runs the stage's transcriber,
+  the word aligner and the diarizer's scan every 30 s over snapshots of the
+  tracks being recorded (live transcript off); `PassMemory` keeps the
+  engine's answers by the exact clip and model, and the echo canceller with
+  the samples it cancelled, so the stage after the meeting redoes only the
+  last moments and gives the same transcript as without it.
 - Imported files (`import.rs`, CAP-11): `NativeIngest`, `deino-core`'s
   `MediaIngest` over `deino-audio::media` (`audio.m4a`, and a video kept as
   `video.<ext>`). `examples/import_bench.rs` times a watched-folder import

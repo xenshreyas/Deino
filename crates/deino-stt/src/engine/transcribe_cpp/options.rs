@@ -1,19 +1,33 @@
 //! The options every call to a loaded model uses, and what it reports back.
 
 use transcribe_cpp::{
-    Capabilities, CommitPolicy, DeviceType, Model, ParakeetBufferedStreamOptions, RunOptions,
-    StreamExtension, StreamOptions, TimestampKind,
+    Capabilities, CommitPolicy, DeviceType, Model, ParakeetBufferedStreamOptions, RunExtension,
+    RunOptions, StreamExtension, StreamOptions, TimestampKind, WhisperRunOptions,
 };
 
 use crate::protocol::LoadedInfo;
 use crate::window::StreamWindow;
 
+/// The seed of Whisper's sampling when it falls back to a higher
+/// temperature. Fixed, so the same audio always gives the same transcript:
+/// a re-transcription repeats, and a clip transcribed during the meeting
+/// is the clip the pass after it would transcribe. Unset, transcribe-cpp
+/// draws a new seed on every run.
+pub const WHISPER_SEED: u32 = 7;
+
 /// Token timestamps where the model has them; English pinned for multilingual
-/// models (Deino is English-only), left unset for English-only ones.
-pub(super) fn run_options(capabilities: &Capabilities) -> RunOptions {
+/// models (Deino is English-only), left unset for English-only ones; Whisper
+/// sampling seeded with [`WHISPER_SEED`]. `arch` is the model family.
+pub(super) fn run_options(capabilities: &Capabilities, arch: &str) -> RunOptions {
     RunOptions {
         timestamps: timestamps(capabilities.max_timestamp_kind),
         language: english_hint(&capabilities.languages),
+        family: (arch == "whisper").then(|| {
+            RunExtension::Whisper(WhisperRunOptions {
+                seed: Some(WHISPER_SEED),
+                ..WhisperRunOptions::default()
+            })
+        }),
         ..RunOptions::default()
     }
 }

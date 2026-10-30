@@ -35,6 +35,8 @@ sonora = "=0.2.0"
 specta.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+# The cancellation token of `deino-core`'s track requests (offline::follow).
+tokio-util.workspace = true
 
 [dev-dependencies]
 deino-audio = { workspace = true, features = ["test-support"] }

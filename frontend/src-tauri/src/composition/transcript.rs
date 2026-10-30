@@ -5,6 +5,9 @@
 //! setting, and `vocab_fixups` (TRN-05) over the vocabulary's fixups; and
 //! the user's transcript edits (TRN-02, ADR 0040), re-indexed through the
 //! `ReindexQueue` that `search::attach_gateway_and_search` manages.
+//!
+//! The stage's transcriber shares a [`PassMemory`] with passes during the
+//! meeting (`follow`), which take the [`FollowTranscriber`] managed here.
 
 use std::sync::Arc;
 
@@ -18,7 +21,9 @@ use deino_core::vocabulary::FixupService;
 use deino_db::Database;
 use deino_domain::Clock;
 use deino_pipeline::RequestedRepass;
-use deino_recording::{DeepFilterCheck, HeadphonesSetting, NativeDecoder, OfflineTranscriber};
+use deino_recording::{
+    DeepFilterCheck, HeadphonesSetting, NativeDecoder, OfflineTranscriber, PassMemory,
+};
 use tauri::{AppHandle, Manager};
 
 use super::attach::Phase;
@@ -58,11 +63,24 @@ fn track_transcriber(
         tauri::async_runtime::handle().inner().clone(),
     );
     let headphones: Arc<dyn HeadphonesSetting> = settings.clone();
-    Arc::new(
-        OfflineTranscriber::new(Arc::new(engines), Arc::new(NativeDecoder))
-            .with_headphones(headphones)
-            .with_voice_check(Arc::new(DeepFilterCheck)),
-    )
+    let transcriber = OfflineTranscriber::new(Arc::new(engines), Arc::new(NativeDecoder))
+        .with_headphones(headphones)
+        .with_voice_check(Arc::new(DeepFilterCheck));
+    let memory = PassMemory::new();
+    app.manage(FollowTranscriber {
+        transcriber: transcriber.clone().with_memory(memory.following()),
+        memory: memory.clone(),
+    });
+    Arc::new(transcriber.with_memory(memory))
+}
+
+/// The stage's transcriber for passes during the meeting, and the memory
+/// it shares with the stage.
+pub(crate) struct FollowTranscriber {
+    /// Keeps the echo canceller going between passes.
+    pub(crate) transcriber: OfflineTranscriber,
+    /// What the stage's own transcriber reads.
+    pub(crate) memory: PassMemory,
 }
 
 /// Transcription without an STT runtime: always unavailable.

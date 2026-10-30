@@ -3,13 +3,13 @@
 //! track's progress into the whole run's.
 //!
 //! A fraction is `0.0..=1.0`. The run's fraction is
-//! `(tracks done + the current track's fraction) / tracks`: every track
-//! weighs the same, which matches their durations, because the microphone
-//! and system tracks both span the whole meeting. Only numbers pass
-//! through here, never what was said.
+//! the mean of the tracks' fractions, so tracks transcribed at the same
+//! time add up: every track weighs the same, which matches their
+//! durations, because the microphone and system tracks both span the whole
+//! meeting. Only numbers pass through here, never what was said.
 
 use std::fmt;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// Reports how far a piece of work has got, as a fraction from 0.0 to 1.0.
 /// The default reports nowhere.
@@ -50,17 +50,21 @@ pub fn fraction_of(done: u64, total: u64) -> f32 {
     f32::from(u16::try_from(permyriad).unwrap_or(10_000)) / 10_000.0
 }
 
-/// A run over `tracks` tracks, reporting the whole run's fraction.
+/// A run over several tracks, reporting the whole run's fraction.
 #[derive(Clone, Debug)]
 pub(super) struct TrackShares {
     run: TrackProgress,
-    tracks: usize,
+    /// How far each track is.
+    fractions: Arc<Mutex<Vec<f32>>>,
 }
 
 impl TrackShares {
-    /// Shares of `run` for `tracks` tracks, in order.
+    /// Shares of `run` for `tracks` tracks.
     pub(super) fn new(run: TrackProgress, tracks: usize) -> Self {
-        Self { run, tracks }
+        Self {
+            run,
+            fractions: Arc::new(Mutex::new(vec![0.0; tracks.max(1)])),
+        }
     }
 
     /// The progress of track `index` (from 0), as part of the run.
@@ -75,8 +79,16 @@ impl TrackShares {
     }
 
     fn report(&self, index: usize, fraction: f32) {
-        let tracks = count(self.tracks.max(1));
-        self.run.report((count(index) + fraction) / tracks);
+        let Ok(mut fractions) = self.fractions.lock() else {
+            return;
+        };
+        if let Some(track) = fractions.get_mut(index) {
+            *track = fraction.clamp(0.0, 1.0);
+        }
+        let sum: f32 = fractions.iter().sum();
+        let mean = sum / count(fractions.len());
+        drop(fractions);
+        self.run.report(mean);
     }
 }
 
@@ -109,6 +121,19 @@ mod tests {
         shares.done(1);
 
         assert_eq!(*seen.lock().unwrap(), vec![0.25, 0.5, 0.7, 1.0]);
+    }
+
+    #[test]
+    fn tracks_at_the_same_time_add_up_without_going_back() {
+        let (run, seen) = recorded();
+        let shares = TrackShares::new(run, 2);
+
+        shares.track(1).report(0.6);
+        shares.track(0).report(0.2);
+        shares.done(1);
+        shares.done(0);
+
+        assert_eq!(*seen.lock().unwrap(), vec![0.3, 0.4, 0.6, 1.0]);
     }
 
     #[test]

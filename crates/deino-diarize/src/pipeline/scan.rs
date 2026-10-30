@@ -5,11 +5,16 @@
 //! then one embedding call per distinct input length in the batch. Only a
 //! batch of windows is in memory at a time.
 
+mod segmenting;
+
+use segmenting::segment_all;
+
+use super::scan_cache::{BatchKey, ScanCache, ScannedBatch};
 use super::{AudioSource, DiarizeRequest};
 use crate::config::DiarizationConfig;
-use crate::embedding::{AudioFeatures, EmbeddingExtractor, Features};
+use crate::embedding::{EmbeddingExtractor, Features};
 use crate::error::DiarizeError;
-use crate::segmentation::{LOCAL_SPEAKERS, Segmenter, WindowActivity, is_active, is_clean};
+use crate::segmentation::{Segmenter, WindowActivity};
 use crate::units::{FRAME_SIZE, WINDOW_SAMPLES, as_f32, duration_to_frames, frames_for_samples};
 
 /// The models a scan runs.
@@ -78,7 +83,19 @@ struct Job {
     features: Features,
 }
 
-/// Runs stage 1 over every window of `grid`.
+/// One batch of windows, segmented, with the local speakers to embed, or
+/// its embeddings when an earlier pass scanned the same batch.
+struct Segmented {
+    windows: std::ops::Range<usize>,
+    activities: Vec<WindowActivity>,
+    jobs: Vec<Job>,
+    key: BatchKey,
+    embedded: Option<Vec<WindowEmbedding>>,
+}
+
+/// Runs stage 1 over every window of `grid`. Segmentation (CPU) runs one
+/// batch ahead of the embeddings (Core ML) on its own thread, so the two
+/// models overlap; every model call is the same as one after the other.
 pub(super) fn scan(
     models: Models<'_>,
     audio: &(impl AudioSource + ?Sized),
@@ -90,129 +107,54 @@ pub(super) fn scan(
         embedder,
         config,
     } = models;
-    let thresholds = Thresholds::new(config);
     let mut scanned = Scan {
         activities: Vec::with_capacity(grid.count),
         embeddings: Vec::new(),
     };
-    let batch = config.runtime.batch_windows.get();
-    let mut buffer = Vec::new();
-    for first in (0..grid.count).step_by(batch) {
-        if request.is_cancelled.is_some_and(|cancelled| cancelled()) {
-            return Err(DiarizeError::Cancelled);
+    std::thread::scope(|scope| {
+        let (send, batches) = std::sync::mpsc::sync_channel(1);
+        let cache = request.scan_cache;
+        scope.spawn(move || segment_all(segmenter, (audio, cache, grid), config, &send));
+        for segmented in batches {
+            if request.is_cancelled.is_some_and(|cancelled| cancelled()) {
+                return Err(DiarizeError::Cancelled);
+            }
+            let (windows, batch) = embedded(embedder, segmented?, cache)?;
+            scanned.embeddings.extend(batch.embeddings);
+            scanned.activities.extend(batch.activities);
+            if let Some(progress) = request.on_progress {
+                progress(as_f32(windows.end) / as_f32(grid.count));
+            }
         }
-        let windows = first..(first + batch).min(grid.count);
-        read_windows(audio, grid, windows.clone(), &mut buffer)?;
-        let activities = segment(segmenter, &buffer, grid, windows.clone())?;
-        let mut jobs = Vec::new();
-        for (offset, (samples, activity)) in buffer
-            .chunks_exact(WINDOW_SAMPLES)
-            .zip(&activities)
-            .enumerate()
-        {
-            jobs.extend(window_jobs(
-                samples,
-                activity,
-                windows.start + offset,
-                thresholds,
-            )?);
-        }
-        embed(embedder, jobs, &mut scanned.embeddings)?;
-        scanned.activities.extend(activities);
-        if let Some(progress) = request.on_progress {
-            progress(as_f32(windows.end) / as_f32(grid.count));
-        }
-    }
+        Ok(())
+    })?;
     Ok(scanned)
 }
 
-/// Fills `buffer` with the windows' samples, zero-padded past the end.
-fn read_windows(
-    audio: &(impl AudioSource + ?Sized),
-    grid: &WindowGrid,
-    windows: std::ops::Range<usize>,
-    buffer: &mut Vec<f32>,
-) -> Result<(), DiarizeError> {
-    buffer.resize(windows.len() * WINDOW_SAMPLES, 0.0);
-    for (index, out) in windows.zip(buffer.chunks_exact_mut(WINDOW_SAMPLES)) {
-        audio.read(grid.start(index), out)?;
+/// The batch's windows, activities and embeddings: embedded now (and kept
+/// in `cache`) unless an earlier pass scanned it.
+fn embedded(
+    embedder: &mut EmbeddingExtractor,
+    segmented: Segmented,
+    cache: Option<&ScanCache>,
+) -> Result<(std::ops::Range<usize>, ScannedBatch), DiarizeError> {
+    if let Some(embeddings) = segmented.embedded {
+        let batch = ScannedBatch {
+            activities: segmented.activities,
+            embeddings,
+        };
+        return Ok((segmented.windows, batch));
     }
-    Ok(())
-}
-
-/// Segments the batch and drops frames past the end of the audio.
-fn segment(
-    segmenter: &mut Segmenter,
-    buffer: &[f32],
-    grid: &WindowGrid,
-    windows: std::ops::Range<usize>,
-) -> Result<Vec<WindowActivity>, DiarizeError> {
-    let mut activities = segmenter.run(buffer)?;
-    for (index, activity) in windows.zip(&mut activities) {
-        let valid = WINDOW_SAMPLES.min(grid.total.saturating_sub(grid.start(index)));
-        let frames = frames_for_samples(valid).min(activity.frames.len());
-        activity.frames.truncate(frames);
-    }
-    Ok(activities)
-}
-
-/// Speech, in segmentation frames, a local speaker needs to be embedded
-/// and to anchor the clustering.
-#[derive(Clone, Copy)]
-struct Thresholds {
-    activity: usize,
-    anchor: usize,
-}
-
-impl Thresholds {
-    fn new(config: &DiarizationConfig) -> Self {
-        Self {
-            activity: duration_to_frames(config.min_activity).max(1),
-            anchor: duration_to_frames(config.min_embedding_speech).max(1),
-        }
-    }
-}
-
-/// The local speakers of one window worth embedding, with their features.
-/// An anchor is embedded from its clean frames only, anyone else from all
-/// their active frames.
-fn window_jobs(
-    samples: &[f32],
-    activity: &WindowActivity,
-    window: usize,
-    thresholds: Thresholds,
-) -> Result<Vec<Job>, DiarizeError> {
-    let speakers: Vec<usize> = (0..LOCAL_SPEAKERS)
-        .filter(|speaker| activity.active_frames(*speaker) >= thresholds.activity)
-        .collect();
-    if speakers.is_empty() {
-        return Ok(Vec::new());
-    }
-    let Some(features) = AudioFeatures::compute(samples)? else {
-        return Ok(Vec::new());
+    let mut embeddings = Vec::new();
+    embed(embedder, segmented.jobs, &mut embeddings)?;
+    let batch = ScannedBatch {
+        activities: segmented.activities,
+        embeddings,
     };
-    let jobs = speakers
-        .into_iter()
-        .filter_map(|local_speaker| {
-            let anchor = activity.clean_frames(local_speaker) >= thresholds.anchor;
-            let heard = |frame: &[bool; LOCAL_SPEAKERS]| {
-                if anchor {
-                    is_clean(frame, local_speaker)
-                } else {
-                    is_active(frame, local_speaker)
-                }
-            };
-            let features =
-                features.masked(|frame| activity.frames.get(frame).is_some_and(heard))?;
-            Some(Job {
-                window,
-                local_speaker,
-                anchor,
-                features,
-            })
-        })
-        .collect();
-    Ok(jobs)
+    if let Some(cache) = cache {
+        cache.put(segmented.key, batch.clone());
+    }
+    Ok((segmented.windows, batch))
 }
 
 /// Embeds the batch's jobs and keeps the finite results, in job order.

@@ -10,15 +10,19 @@
 //! it, and the stage then skips speakers rather than holding up notes. Core
 //! ML keeps its compiled copy of the embedding model in
 //! `<models>/diarization/coreml-cache/`.
+//!
+//! The diarizer's scanned windows and the aligner's timed lines are kept in
+//! memories that passes during the meeting fill (`follow`), so the stage
+//! after it redoes only the meeting's last moments.
 
 use std::sync::Arc;
 
 use deino_core::diarization::{NoWordAligner, TrackDiarizer, WordAligner};
-use deino_diarize::RuntimeConfig;
-use deino_diarize::align::OnnxWordAligner;
+use deino_diarize::align::{LineMemory, OnnxWordAligner};
 use deino_diarize::models::{ModelStore, bundled};
 use deino_diarize::track::OnnxTrackDiarizer;
 use deino_diarize::vbx::Plda;
+use deino_diarize::{RuntimeConfig, ScanCache};
 use deino_net::{Net, ServiceId};
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
@@ -32,17 +36,40 @@ const MODELS_FOLDER: &str = "diarization";
 /// Core ML's compiled-model cache, inside the models folder.
 const ACCELERATOR_CACHE: &str = "coreml-cache";
 
-/// The diarizer and the word aligner the `diarize` stage uses.
-pub(super) type SpeakerEngines = (Arc<dyn TrackDiarizer>, Arc<dyn WordAligner>);
+/// The diarizer and the word aligner the `diarize` stage uses, and their
+/// memories.
+#[derive(Clone)]
+pub(crate) struct SpeakerEngines {
+    /// The diarization engine.
+    pub(crate) diarizer: Arc<dyn TrackDiarizer>,
+    /// The word aligner.
+    pub(crate) aligner: Arc<dyn WordAligner>,
+    /// The diarizer's scanned windows.
+    pub(crate) scans: Arc<ScanCache>,
+    /// The aligner's timed lines.
+    pub(crate) lines: Arc<LineMemory>,
+}
 
 /// The ONNX engine (Community-1's clustering when the PLDA is bundled) and
 /// the bundled wav2vec2 word aligner.
 pub(super) fn speaker_engines(app: &AppHandle) -> Result<SpeakerEngines, String> {
-    Ok((track_diarizer(app)?, word_aligner(app)))
+    let (scans, lines) = (
+        Arc::new(ScanCache::default()),
+        Arc::new(LineMemory::default()),
+    );
+    Ok(SpeakerEngines {
+        diarizer: track_diarizer(app, Arc::clone(&scans))?,
+        aligner: word_aligner(app, Arc::clone(&lines)),
+        scans,
+        lines,
+    })
 }
 
 /// The diarization engine over the app's model store and network client.
-fn track_diarizer(app: &AppHandle) -> Result<Arc<dyn TrackDiarizer>, String> {
+fn track_diarizer(
+    app: &AppHandle,
+    scans: Arc<ScanCache>,
+) -> Result<Arc<dyn TrackDiarizer>, String> {
     let paths = AppPaths::resolve(app).map_err(|error| error.to_string())?;
     let net = app
         .try_state::<Net>()
@@ -56,7 +83,7 @@ fn track_diarizer(app: &AppHandle) -> Result<Arc<dyn TrackDiarizer>, String> {
         ..RuntimeConfig::default()
     };
     let store = bundled_store(app).unwrap_or_else(|| ModelStore::new(root));
-    let engine = OnnxTrackDiarizer::new(store, source, runtime);
+    let engine = OnnxTrackDiarizer::new(store, source, runtime).with_scan_cache(scans);
     Ok(Arc::new(match bundled_vbx(app) {
         Some(plda) => engine.with_vbx(plda),
         None => engine,
@@ -82,14 +109,14 @@ fn bundled_vbx(app: &AppHandle) -> Option<Arc<Plda>> {
 
 /// The bundled wav2vec2 aligner, or none when the app lacks it (a checkout
 /// without Git LFS): lines then stay untimed, as before.
-fn word_aligner(app: &AppHandle) -> Arc<dyn WordAligner> {
+fn word_aligner(app: &AppHandle, lines: Arc<LineMemory>) -> Arc<dyn WordAligner> {
     let model = app
         .path()
         .resolve(bundled::FOLDER, BaseDirectory::Resource)
         .map(|folder| folder.join(bundled::ALIGNER.file_name));
     match model {
         Ok(model) if file_size(&model) == Some(bundled::ALIGNER.bytes) => {
-            Arc::new(OnnxWordAligner::new(model, RuntimeConfig::default()))
+            Arc::new(OnnxWordAligner::new(model, RuntimeConfig::default()).with_memory(lines))
         }
         _ => {
             log::warn!(target: "pipeline", "speakers: the bundled word aligner is missing; lines stay untimed");

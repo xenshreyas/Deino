@@ -188,26 +188,37 @@ impl FinalTranscriptionService {
         })
     }
 
-    /// Every utterance of every track, with its channel.
+    /// Every utterance of every track, with its channel. The tracks are
+    /// transcribed at the same time: one's echo cancellation and voice
+    /// checks (CPU) overlap the other's engine runs (GPU).
     async fn hear(
         &self,
         tracks: Vec<(Channel, String)>,
         pass: &FinalPass,
     ) -> Result<Vec<(Channel, HeardSpan)>, TrackError> {
-        let mut heard = Vec::new();
         let shares = TrackShares::new(pass.progress.clone(), tracks.len());
         let system = track_of(&tracks, Channel::System);
-        for (index, (channel, path)) in tracks.into_iter().enumerate() {
-            let request = TrackRequest {
-                audio: path.into(),
-                channel,
-                echo_reference: system.clone().filter(|_| channel == Channel::Mic),
-                cancel: pass.cancel.clone(),
-                progress: shares.track(index),
-            };
-            let spans = self.deps.transcriber.transcribe(request).await?;
-            shares.done(index);
-            heard.extend(spans.into_iter().map(|span| (channel, span)));
+        let runs = tracks
+            .into_iter()
+            .enumerate()
+            .map(|(index, (channel, path))| {
+                let request = TrackRequest {
+                    audio: path.into(),
+                    channel,
+                    echo_reference: system.clone().filter(|_| channel == Channel::Mic),
+                    cancel: pass.cancel.clone(),
+                    progress: shares.track(index),
+                };
+                let shares = &shares;
+                async move {
+                    let spans = self.deps.transcriber.transcribe(request).await;
+                    shares.done(index);
+                    spans.map(|spans| spans.into_iter().map(move |span| (channel, span)))
+                }
+            });
+        let mut heard = Vec::new();
+        for spans in futures_util::future::join_all(runs).await {
+            heard.extend(spans?);
         }
         Ok(heard)
     }

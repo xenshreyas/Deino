@@ -86,6 +86,16 @@ impl<R: Runtime> BatchEngines for SttBatchEngines<R> {
             TranscriptionEngine::Parakeet | TranscriptionEngine::Whisper => self.legacy(),
         }
     }
+
+    /// The engine and model chosen in Settings: a pass with another model
+    /// never reuses this one's answers.
+    fn model(&self) -> Option<String> {
+        let transcription = self.runtime.block_on(self.settings.get()).transcription;
+        Some(format!(
+            "{:?}/{}",
+            transcription.engine, transcription.model
+        ))
+    }
 }
 
 /// An inherited engine as a batch transcriber: text, no token times.

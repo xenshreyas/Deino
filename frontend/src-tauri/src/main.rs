@@ -14,6 +14,9 @@ fn main() {
         std::process::exit(deino_lib::stt::worker_entry::run());
     }
     let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
+    if let Some(code) = deino_lib::stt::final_bench::run_if_requested(&args) {
+        std::process::exit(code);
+    }
     if let Some(code) = deino_lib::stt::cli::run_if_requested(&args) {
         std::process::exit(code);
     }

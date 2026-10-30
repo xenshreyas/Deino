@@ -14,6 +14,7 @@
 
 mod batch;
 pub mod cli;
+pub mod final_bench;
 mod http_source;
 mod installed;
 pub mod lanes;

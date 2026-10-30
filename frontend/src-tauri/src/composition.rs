@@ -38,6 +38,7 @@ mod enhance;
 mod entities;
 mod example;
 mod export;
+mod follow;
 mod followups;
 mod hotkeys;
 pub(crate) mod import;

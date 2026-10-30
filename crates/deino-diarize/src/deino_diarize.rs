@@ -54,7 +54,7 @@ pub use config::{DiarizationConfig, RuntimeConfig, SpeakerBounds};
 pub use error::DiarizeError;
 pub use pipeline::{
     AudioSource, Diarization, DiarizeRequest, DiarizedSpeaker, Diarizer, KnownSpeaker, ModelPaths,
-    SpeakerIdentity, SpeakerTurn,
+    ScanCache, SpeakerIdentity, SpeakerTurn,
 };
 pub use units::SAMPLE_RATE;
 pub use vector::Embedding;

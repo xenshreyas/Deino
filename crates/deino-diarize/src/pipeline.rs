@@ -17,6 +17,9 @@ mod known;
 mod labels;
 mod reconstruct;
 mod scan;
+mod scan_cache;
+
+pub use scan_cache::ScanCache;
 mod vbx_labels;
 
 use std::path::PathBuf;
@@ -40,7 +43,7 @@ pub struct ModelPaths {
 
 /// Random-access mono 16 kHz audio, so a long recording need not be held in
 /// memory by every implementation.
-pub trait AudioSource {
+pub trait AudioSource: Sync {
     /// Total samples.
     fn sample_count(&self) -> usize;
 
@@ -85,6 +88,8 @@ pub struct DiarizeRequest<'a> {
     pub is_cancelled: Option<&'a dyn Fn() -> bool>,
     /// Called after each batch with the fraction of windows done.
     pub on_progress: Option<&'a dyn Fn(f32)>,
+    /// Batches an earlier pass over the same recording scanned.
+    pub scan_cache: Option<&'a ScanCache>,
 }
 
 /// A stretch of one speaker's speech.

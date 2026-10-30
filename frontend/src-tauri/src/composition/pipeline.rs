@@ -202,19 +202,21 @@ pub(super) fn attach_pipeline(
             return log::error!(target: "pipeline", "app folders unavailable: {error}; the pipeline is off");
         }
     };
-    let (diarizer, word_aligner) = match diarize::speaker_engines(app) {
+    let speakers = match diarize::speaker_engines(app) {
         Ok(engines) => engines,
         Err(error) => {
             return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");
         }
     };
+    // Passes during the meeting (`follow`) share the stage's engines.
+    app.manage(speakers.clone());
     let Some(transcript) = transcript::stages(app) else {
         return log::error!(target: "pipeline", "settings or the vocabulary are not ready; the pipeline is off");
     };
     let adapters = PipelineAdapters {
         screen_context: super::screen::context_reader(app, database, &recordings),
-        diarizer,
-        word_aligner,
+        diarizer: speakers.diarizer,
+        word_aligner: speakers.aligner,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         ai,
         transcript,

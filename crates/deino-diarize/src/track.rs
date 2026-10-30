@@ -21,7 +21,7 @@ use deino_core::models::ByteSource;
 use crate::config::{RuntimeConfig, SpeakerBounds};
 use crate::error::DiarizeError;
 use crate::models::{EMBEDDING_MODEL_ID, ModelStore};
-use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, KnownSpeaker, ModelPaths};
+use crate::pipeline::{Diarization, DiarizeRequest, Diarizer, KnownSpeaker, ModelPaths, ScanCache};
 use crate::policy::{self, ExpectedSpeakers};
 use crate::prune;
 use crate::units::{SAMPLE_RATE, samples_to_duration};
@@ -38,6 +38,7 @@ pub struct OnnxTrackDiarizer {
     source: Arc<dyn ByteSource>,
     runtime: RuntimeConfig,
     vbx: Option<Arc<Plda>>,
+    scan_cache: Option<Arc<ScanCache>>,
     one_at_a_time: tokio::sync::Mutex<()>,
 }
 
@@ -50,6 +51,7 @@ impl OnnxTrackDiarizer {
             source,
             runtime,
             vbx: None,
+            scan_cache: None,
             one_at_a_time: tokio::sync::Mutex::new(()),
         }
     }
@@ -59,6 +61,14 @@ impl OnnxTrackDiarizer {
     #[must_use]
     pub fn with_vbx(mut self, plda: Arc<Plda>) -> Self {
         self.vbx = Some(plda);
+        self
+    }
+
+    /// Reuses batches an earlier pass over the same recording scanned
+    /// (passes during the meeting).
+    #[must_use]
+    pub fn with_scan_cache(mut self, cache: Arc<ScanCache>) -> Self {
+        self.scan_cache = Some(cache);
         self
     }
 }
@@ -76,9 +86,14 @@ impl TrackDiarizer for OnnxTrackDiarizer {
             .ensure(self.source.as_ref())
             .await
             .map_err(|error| TrackError::ModelsUnavailable(Box::new(error)))?;
-        let (runtime, vbx) = (self.runtime.clone(), self.vbx.clone());
-        let run =
-            tokio::task::spawn_blocking(move || diarize_file(&models, runtime, vbx, &request));
+        let (runtime, vbx, cache) = (
+            self.runtime.clone(),
+            self.vbx.clone(),
+            self.scan_cache.clone(),
+        );
+        let run = tokio::task::spawn_blocking(move || {
+            diarize_file_with(&models, runtime, (vbx, cache.as_deref()), &request)
+        });
         run.await
             .map_err(|error| TrackError::Failed(Box::new(error)))?
     }
@@ -91,6 +106,16 @@ pub fn diarize_file(
     models: &ModelPaths,
     runtime: RuntimeConfig,
     vbx: Option<Arc<Plda>>,
+    request: &TrackRequest,
+) -> Result<TrackDiarization, TrackError> {
+    diarize_file_with(models, runtime, (vbx, None), request)
+}
+
+/// [`diarize_file`], reusing `cache`'s scanned batches.
+pub fn diarize_file_with(
+    models: &ModelPaths,
+    runtime: RuntimeConfig,
+    (vbx, cache): (Option<Arc<Plda>>, Option<&ScanCache>),
     request: &TrackRequest,
 ) -> Result<TrackDiarization, TrackError> {
     let samples = deino_audio::read_mono(&request.audio, SAMPLE_RATE)
@@ -106,6 +131,7 @@ pub fn diarize_file(
     let run = DiarizeRequest {
         bounds,
         known_speakers: &known,
+        scan_cache: cache,
         ..DiarizeRequest::default()
     };
     let diarization = diarizer.diarize(samples.as_slice(), &run).map_err(engine)?;

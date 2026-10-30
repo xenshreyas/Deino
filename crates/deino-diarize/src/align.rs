@@ -5,12 +5,18 @@
 //! the bundled wav2vec2-base-960h ([`model`]), and its letters are aligned
 //! to the frames ([`ctc`]); a word runs from its first letter's frame to
 //! the end of its last. It runs on a blocking thread and loads the model per
-//! run, so a finished meeting holds no memory.
+//! run, so a finished meeting holds no model; lines run on several sessions
+//! at once, and a [`LineMemory`] keeps lines a pass during the meeting
+//! timed ([`lines`]).
 
 pub mod ctc;
+mod lines;
 pub mod model;
 
+pub use lines::{ALIGN_SESSIONS, LineMemory};
+
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use deino_core::diarization::{AlignLine, TrackError, WordAligner};
@@ -32,6 +38,7 @@ const MIN_SAMPLES: usize = 400;
 pub struct OnnxWordAligner {
     model: PathBuf,
     runtime: RuntimeConfig,
+    memory: Option<Arc<LineMemory>>,
     one_at_a_time: tokio::sync::Mutex<()>,
 }
 
@@ -41,8 +48,16 @@ impl OnnxWordAligner {
         Self {
             model,
             runtime,
+            memory: None,
             one_at_a_time: tokio::sync::Mutex::new(()),
         }
+    }
+
+    /// Reuses the lines `memory` holds and keeps the ones it times there.
+    #[must_use]
+    pub fn with_memory(mut self, memory: Arc<LineMemory>) -> Self {
+        self.memory = Some(memory);
+        self
     }
 }
 
@@ -55,8 +70,10 @@ impl WordAligner for OnnxWordAligner {
     ) -> Result<Vec<Vec<WordTiming>>, TrackError> {
         let _running = self.one_at_a_time.lock().await;
         let (model, runtime) = (self.model.clone(), self.runtime.clone());
-        let (audio, lines) = (audio.to_owned(), lines.to_vec());
-        let run = tokio::task::spawn_blocking(move || align_file(&model, &runtime, &audio, &lines));
+        let (audio, lines, memory) = (audio.to_owned(), lines.to_vec(), self.memory.clone());
+        let run = tokio::task::spawn_blocking(move || {
+            align_file_with((&model, &runtime), (&audio, memory.as_deref()), &lines)
+        });
         run.await
             .map_err(|error| TrackError::Failed(Box::new(error)))?
             .map_err(|error| TrackError::Failed(Box::new(error)))
@@ -70,13 +87,18 @@ pub fn align_file(
     audio: &Path,
     lines: &[AlignLine],
 ) -> Result<Vec<Vec<WordTiming>>, DiarizeError> {
+    align_file_with((model, runtime), (audio, None), lines)
+}
+
+/// [`align_file`], reusing and keeping lines in `memory`.
+pub fn align_file_with(
+    (model, runtime): (&Path, &RuntimeConfig),
+    (audio, memory): (&Path, Option<&LineMemory>),
+    lines: &[AlignLine],
+) -> Result<Vec<Vec<WordTiming>>, DiarizeError> {
     let samples = deino_audio::read_mono(audio, SAMPLE_RATE)
         .map_err(|error| DiarizeError::Audio(Box::new(error)))?;
-    let mut aligner = Aligner::load(model, runtime)?;
-    let timed = lines
-        .iter()
-        .map(|line| align_line(&mut aligner, &samples, line))
-        .collect::<Result<Vec<_>, _>>()?;
+    let timed = lines::time_lines((model, runtime), &samples, lines, memory)?;
     log::info!(target: "deino_diarize", "timed the words of {} lines", timed.len());
     Ok(timed)
 }

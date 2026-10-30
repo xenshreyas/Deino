@@ -151,12 +151,47 @@ fn a_run_that_stopped_early_is_read_again_in_halves() {
     let loud = vec![0.5; Millis(12_000).to_samples()];
     let engine = StopsEarly(FakeTranscriber::new());
 
-    let heard = checked(&engine, &loud, Millis(0)..Millis(12_000)).unwrap();
+    let heard = checked(&engine, &loud, Millis(0)..Millis(12_000), &mut None).unwrap();
 
     let words: usize = heard.iter().map(|span| span.words.len()).sum();
     assert_eq!(heard.len(), 2);
     assert_eq!(words, 30, "every 400 ms block of both halves");
     assert_eq!(heard[1].start, deino_domain::Millis(6_000));
+}
+
+/// An engine that writes text but times no words (as Whisper here),
+/// counting its runs.
+#[derive(Default)]
+struct Untimed {
+    runs: Mutex<usize>,
+}
+
+impl BatchTranscriber for Untimed {
+    fn transcribe(&self, _pcm: Vec<f32>) -> Result<BatchTranscript, SttError> {
+        *self.runs.lock().unwrap() += 1;
+        Ok(BatchTranscript {
+            text: "hello there".into(),
+            tokens: Vec::new(),
+        })
+    }
+}
+
+#[test]
+fn an_engine_that_times_no_words_is_not_asked_for_halves() {
+    let loud = vec![0.5; Millis(12_000).to_samples()];
+    let engine = Untimed::default();
+    let mut timed = None;
+
+    let heard = checked(&engine, &loud, Millis(0)..Millis(12_000), &mut timed).unwrap();
+
+    assert_eq!(heard.len(), 1);
+    assert_eq!(heard[0].text, "hello there");
+    assert_eq!(
+        *engine.runs.lock().unwrap(),
+        1,
+        "halves could never hear more words"
+    );
+    assert_eq!(timed, Some(false));
 }
 
 #[tokio::test]

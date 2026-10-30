@@ -81,7 +81,7 @@ impl Engine for TranscribeCppEngine {
         let info = loaded_info(&model, &capabilities);
         let mut loaded = Loaded {
             session,
-            options: run_options(&capabilities),
+            options: run_options(&capabilities, &info.arch),
         };
         loaded.warm_up(capabilities.supports_streaming);
         self.loaded = Some(loaded);

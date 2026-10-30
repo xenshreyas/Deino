@@ -7,8 +7,16 @@
 //! times placed on the recording's timeline. Batch decoding can stop early on
 //! some clips (the STT spike), so an utterance that comes back with far too
 //! few words for its length is run again as two halves, keeping whichever
-//! reading heard more. It reports how far through the track it is after
+//! reading heard more (an engine that times no words, such as Whisper,
+//! could never hear more, so it is not asked). On the microphone track,
+//! utterances without a voice are dropped before the engine hears them
+//! ([`silent_lines`]). It reports how far through the track it is after
 //! each utterance.
+//!
+//! With a [`PassMemory`], passes over a recording while it is made
+//! ([`follow`]) leave the pass after the meeting only the last moments to
+//! do: the engine's answers, the voice checks and the echo canceller are
+//! remembered by the exact audio they came from.
 //!
 //! A microphone track with an echo reference (the system track) has the
 //! call's echo cancelled from its decoded copy first ([`echo`]), unless
@@ -16,10 +24,13 @@
 //! track's progress.
 
 pub mod echo;
+mod echo_resume;
+pub mod follow;
+mod memory;
+mod reading;
 pub mod silent_lines;
 pub mod utterances;
 
-use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -27,14 +38,14 @@ use async_trait::async_trait;
 use deino_core::final_transcription::{
     HeardSpan, TrackError, TrackRequest, TrackTranscriber, fraction_of,
 };
-use deino_core::segments::WordTiming;
 use deino_domain::Channel;
-use deino_stt::words::{TimedWord, words_from_tokens};
 use deino_stt::{BatchTranscriber, Millis};
 
 pub use echo::{FixedHeadphones, HeadphonesSetting, cancel_echo};
-use silent_lines::drop_silent_lines;
+pub use memory::PassMemory;
+use reading::checked;
 pub use silent_lines::{DeepFilterCheck, VoiceCheck};
+use silent_lines::{drop_silent_lines, voiced};
 pub use utterances::{MAX_UTTERANCE, utterances, voice_spans};
 
 use crate::echo::{EchoMode, SonoraAec};
@@ -72,6 +83,12 @@ pub trait BatchEngines: Send + Sync {
     /// The engine, loading its model when needed (blocks); unavailable when
     /// no model is downloaded.
     fn open(&self) -> Result<Arc<dyn BatchTranscriber>, TrackError>;
+
+    /// The model [`Self::open`] runs now, naming its answers in a
+    /// [`PassMemory`]; `None` (the default) remembers nothing.
+    fn model(&self) -> Option<String> {
+        None
+    }
 }
 
 /// The engine behind the `final_transcription` stage.
@@ -81,6 +98,7 @@ pub struct OfflineTranscriber {
     decoder: Arc<dyn TrackDecoder>,
     headphones: Option<Arc<dyn HeadphonesSetting>>,
     voice_check: Option<Arc<dyn VoiceCheck>>,
+    memory: Option<PassMemory>,
 }
 
 impl OfflineTranscriber {
@@ -92,6 +110,16 @@ impl OfflineTranscriber {
             decoder,
             headphones: None,
             voice_check: None,
+            memory: None,
+        }
+    }
+
+    /// Shares `memory` with the other passes over the same recording.
+    #[must_use]
+    pub fn with_memory(self, memory: PassMemory) -> Self {
+        Self {
+            memory: Some(memory),
+            ..self
         }
     }
 
@@ -136,26 +164,51 @@ impl OfflineTranscriber {
         let (pcm, share) = self.samples(request, echo)?;
         let report = |fraction: f32| request.progress.report(share + (1.0 - share) * fraction);
         let length = Millis::from_samples(pcm.len());
+        let check = self.voice_check(request.channel);
         let pieces = utterances(&voice_spans(&pcm), length);
+        let pieces = match &check {
+            Some(check) => voiced(&pcm, pieces, *check),
+            None => pieces,
+        };
         if pieces.is_empty() {
             report(1.0);
             return Ok(Vec::new());
         }
-        let engine = self.engines.open()?;
+        let engine = self.engine()?;
         let mut heard = Vec::with_capacity(pieces.len());
+        let mut timed = None;
         for piece in pieces {
             if request.cancel.is_cancelled() {
                 return Err(TrackError::Cancelled);
             }
             let done = piece.end;
-            heard.extend(checked(engine.as_ref(), &pcm, piece)?);
+            heard.extend(checked(engine.as_ref(), &pcm, piece, &mut timed)?);
             report(fraction_of(done.0, length.0));
         }
         report(1.0);
-        Ok(match (&self.voice_check, request.channel) {
-            (Some(check), Channel::Mic) => drop_silent_lines(&pcm, heard, check.as_ref()),
-            _ => heard,
+        Ok(match &check {
+            Some(check) => drop_silent_lines(&pcm, heard, *check),
+            None => heard,
         })
+    }
+
+    /// The engine, answering from the memory when there is one.
+    fn engine(&self) -> Result<Arc<dyn BatchTranscriber>, TrackError> {
+        let engine = self.engines.open()?;
+        Ok(match (&self.memory, self.engines.model()) {
+            (Some(memory), Some(model)) => memory.engine(engine, model),
+            _ => engine,
+        })
+    }
+
+    /// The voice check of a microphone track. Passes during the meeting
+    /// skip it: it is not remembered (see [`PassMemory`]), so only the pass
+    /// after the meeting's answers count.
+    fn voice_check(&self, channel: Channel) -> Option<&dyn VoiceCheck> {
+        let following = self.memory.as_ref().is_some_and(PassMemory::follows);
+        self.voice_check
+            .as_deref()
+            .filter(|_| channel == Channel::Mic && !following)
     }
 
     /// The track's samples, with `echo`'s echo cancelled when it is given
@@ -180,7 +233,11 @@ impl OfflineTranscriber {
             request.progress.report(fraction * ECHO_SHARE);
             !request.cancel.is_cancelled()
         };
-        if !cancel_echo(&mut pcm, &far, &mut SonoraAec::new(), &progress) {
+        let finished = match &self.memory {
+            Some(memory) => echo_resume::cancel_resumed(memory, (&mut pcm, &far), &progress),
+            None => cancel_echo(&mut pcm, &far, &mut SonoraAec::new(), &progress),
+        };
+        if !finished {
             return Err(TrackError::Cancelled);
         }
         Ok((pcm, ECHO_SHARE))
@@ -191,83 +248,16 @@ impl OfflineTranscriber {
 impl TrackTranscriber for OfflineTranscriber {
     async fn transcribe(&self, request: TrackRequest) -> Result<Vec<HeardSpan>, TrackError> {
         let echo = self.echo_reference(&request).await;
+        // After the meeting, wait for a pass during it to finish first.
+        let _gate = match &self.memory {
+            Some(memory) if !memory.follows() => Some(memory.shared().await),
+            _ => None,
+        };
         let this = self.clone();
         tokio::task::spawn_blocking(move || this.run(&request, echo.as_deref()))
             .await
             .map_err(|error| TrackError::Failed(Box::new(error)))?
     }
-}
-
-/// The utterance `piece`, read again as two halves when the first reading
-/// heard too few words for its length.
-fn checked(
-    engine: &dyn BatchTranscriber,
-    pcm: &[f32],
-    piece: Range<Millis>,
-) -> Result<Vec<HeardSpan>, TrackError> {
-    let whole = heard(engine, pcm, piece.clone())?;
-    let length = piece.end.saturating_sub(piece.start);
-    let words = whole.as_ref().map_or(0, |span| span.words.len());
-    let enough =
-        u64::try_from(words).unwrap_or(u64::MAX) >= MIN_WORDS_PER_SECOND * length.0 / 1_000;
-    if length < CHECKED_UTTERANCE || enough {
-        return Ok(whole.into_iter().collect());
-    }
-    let middle = Millis(piece.start.0 + length.0 / 2);
-    let halves: Vec<HeardSpan> = [piece.start..middle, middle..piece.end]
-        .into_iter()
-        .map(|half| heard(engine, pcm, half))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .flatten()
-        .collect();
-    let half_words: usize = halves.iter().map(|span| span.words.len()).sum();
-    Ok(if half_words > words {
-        halves
-    } else {
-        whole.into_iter().collect()
-    })
-}
-
-/// What the engine hears in `piece` of `pcm`, if anything.
-fn heard(
-    engine: &dyn BatchTranscriber,
-    pcm: &[f32],
-    piece: Range<Millis>,
-) -> Result<Option<HeardSpan>, TrackError> {
-    let samples = pcm.get(piece.start.to_samples()..piece.end.to_samples().min(pcm.len()));
-    let transcript = engine
-        .transcribe(samples.unwrap_or_default().to_vec())
-        .map_err(|error| TrackError::Failed(Box::new(error)))?;
-    let text = transcript.text.trim();
-    if text.is_empty() {
-        return Ok(None);
-    }
-    let words: Vec<WordTiming> = words_from_tokens(&transcript.tokens, piece.start)
-        .iter()
-        .map(timing)
-        .collect();
-    let start = words.first().map_or(stored(piece.start), |word| word.start);
-    let end = words.last().map_or(stored(piece.end), |word| word.end);
-    Ok(Some(HeardSpan {
-        start,
-        end: end.max(start),
-        text: text.to_owned(),
-        words,
-    }))
-}
-
-fn timing(word: &TimedWord) -> WordTiming {
-    WordTiming {
-        text: word.text.clone(),
-        start: stored(word.start),
-        end: stored(word.end.max(word.start)),
-    }
-}
-
-/// An engine time as a stored time (saturating past 49 days).
-fn stored(time: Millis) -> deino_domain::Millis {
-    deino_domain::Millis(u32::try_from(time.0).unwrap_or(u32::MAX))
 }
 
 #[cfg(test)]
