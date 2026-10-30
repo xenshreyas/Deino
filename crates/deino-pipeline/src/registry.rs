@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::automations::AutomationRunner;
-use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
+use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer, WordAligner};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::{CloudChoice, OriginalTranscripts, TrackTranscriber};
@@ -98,6 +98,9 @@ pub struct StagePorts {
     pub vocab_fixer: Arc<dyn VocabFixer>,
     /// Reads the shared screen's snapshots before the notes (CAP-09).
     pub screen_context: Arc<dyn ScreenContextReader>,
+    /// Times untimed lines' words for `diarize` (the owner's opt-in Python
+    /// engine); [`NoWordAligner`] leaves them as they are.
+    pub word_aligner: Arc<dyn WordAligner>,
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -106,7 +109,7 @@ impl StagePorts {
     /// (`StagePorts { segments, ..StagePorts::fakes() }`).
     pub fn fakes() -> Self {
         use deino_core::action_items::FakeActionItemExtractor;
-        use deino_core::diarization::FakeTrackDiarizer;
+        use deino_core::diarization::{FakeTrackDiarizer, NoWordAligner};
         use deino_core::final_transcription::{FakeOriginalTranscripts, LocalOnly, ScriptedTracks};
         use deino_core::meetings::FakeMeetingRepo;
         use deino_core::people::FakePeopleRepo;
@@ -144,6 +147,7 @@ impl StagePorts {
             originals: Arc::new(FakeOriginalTranscripts::default()),
             vocab_fixer: Arc::new(crate::stages::RecordedFixer::default()),
             screen_context: Arc::new(crate::stages::RecordedScreenContext::default()),
+            word_aligner: Arc::new(NoWordAligner),
         }
     }
 }

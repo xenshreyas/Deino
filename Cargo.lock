@@ -2341,6 +2341,7 @@ dependencies = [
  "knf-rs",
  "log",
  "ort",
+ "serde",
  "serde_json",
  "sha2",
  "tempfile",

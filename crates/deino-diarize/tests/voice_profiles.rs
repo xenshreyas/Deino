@@ -104,6 +104,7 @@ async fn process(database: &Database, meeting: &MeetingId) {
     let people = Arc::new(SqlitePeopleRepo::new(database.clone()));
     let prints = Arc::new(SqliteVoiceprintRepo::new(database.clone()));
     let diarize = DiarizeService::new(DiarizeDeps {
+        aligner: std::sync::Arc::new(deino_core::diarization::NoWordAligner),
         meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
         attendees: people.clone(),
         segments: segments.clone(),

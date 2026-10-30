@@ -62,6 +62,7 @@ fn service(database: &Database) -> (DiarizeService, Arc<SqliteSegmentRepo>) {
     let never = Arc::new(FakeByteSource::new(Vec::new(), FakeServer::Stalls));
     let engine = OnnxTrackDiarizer::new(ModelStore::new(models), never, RuntimeConfig::default());
     let service = DiarizeService::new(DiarizeDeps {
+        aligner: std::sync::Arc::new(deino_core::diarization::NoWordAligner),
         meetings: Arc::new(SqliteMeetingRepo::new(database.clone())),
         attendees: Arc::new(SqlitePeopleRepo::new(database.clone())),
         segments: segments.clone(),

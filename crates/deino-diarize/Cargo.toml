@@ -18,11 +18,14 @@ required-features = ["bench"]
 [features]
 # The DER/RTF harness (`cargo run -p deino-diarize --release --features bench
 # --bin diarize-bench`); reads WAV and RTTM files.
-bench = ["dep:deino-testkit", "dep:hound", "dep:serde_json"]
+bench = ["dep:deino-testkit", "dep:hound"]
 
 [dependencies]
 async-trait.workspace = true
 deino-audio = { path = "../deino-audio" }
+# The opt-in Python speaker engine's JSON answers (`python`).
+serde.workspace = true
+serde_json.workspace = true
 deino-core.workspace = true
 deino-domain.workspace = true
 # Filterbank features for the embedding model (vendored, MIT + Apache-2.0).
@@ -37,7 +40,6 @@ tokio-util = "0.7.18"
 
 deino-testkit = { workspace = true, optional = true }
 hound = { version = "=3.5.1", optional = true }
-serde_json = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # The speaker-embedding model runs through Core ML (CPU + Neural Engine):

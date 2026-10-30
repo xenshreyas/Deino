@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use deino_core::action_items::extraction::ActionItemExtractor;
 use deino_core::automations::AutomationRunner;
-use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer};
+use deino_core::diarization::{SpeakerIdentifier, TrackDiarizer, WordAligner};
 use deino_core::entities::EntityUpdater;
 use deino_core::export::AutoExporter;
 use deino_core::final_transcription::{CloudChoice, SqliteOriginalTranscripts, TrackTranscriber};
@@ -40,6 +40,8 @@ use crate::paths::AppPaths;
 pub(crate) struct PipelineAdapters {
     pub(crate) progress: Arc<dyn ProgressSink>,
     pub(crate) diarizer: Arc<dyn TrackDiarizer>,
+    /// Times untimed lines' words for `diarize` (the opt-in Python engine).
+    pub(crate) word_aligner: Arc<dyn WordAligner>,
     pub(crate) ai: StageServices,
     pub(crate) transcript: TranscriptStages,
     /// Every live recording's folder lives here (`AppPaths::recordings`).
@@ -117,6 +119,7 @@ fn stage_ports(
         segment_writer: segments.clone(),
         speakers: segments,
         diarizer: adapters.diarizer,
+        word_aligner: adapters.word_aligner,
         voiceprints: Arc::new(SqliteVoiceprintRepo::new(database.clone())),
         identifier: adapters.ai.adapters.identifier,
         clock: Arc::clone(clock),
@@ -199,8 +202,8 @@ pub(super) fn attach_pipeline(
             return log::error!(target: "pipeline", "app folders unavailable: {error}; the pipeline is off");
         }
     };
-    let diarizer = match diarize::track_diarizer(app) {
-        Ok(diarizer) => diarizer,
+    let (diarizer, word_aligner) = match diarize::speaker_engines(app) {
+        Ok(engines) => engines,
         Err(error) => {
             return log::error!(target: "pipeline", "diarization could not start: {error}; the pipeline is off");
         }
@@ -211,6 +214,7 @@ pub(super) fn attach_pipeline(
     let adapters = PipelineAdapters {
         screen_context: super::screen::context_reader(app, database, &recordings),
         diarizer,
+        word_aligner,
         progress: Arc::new(features::pipeline::TauriPipelineProgress::new(app.clone())),
         ai,
         transcript,

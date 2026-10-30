@@ -151,6 +151,7 @@ async fn harness(
     let people = invitees(attendees).await;
     let voiceprints = Arc::new(FakeVoiceprintRepo::default());
     let deps = DiarizeDeps {
+        aligner: Arc::new(crate::diarization::NoWordAligner),
         meetings: recorded_meeting().await,
         attendees: people.clone(),
         segments: store.clone(),

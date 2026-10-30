@@ -77,6 +77,7 @@ fn recorded_adapters() -> (PipelineAdapters, Recorded) {
     let adapters = PipelineAdapters {
         progress: Arc::new(deino_pipeline::RecordedProgress::default()),
         diarizer: Arc::new(deino_core::diarization::FakeTrackDiarizer::default()),
+        word_aligner: Arc::new(deino_core::diarization::NoWordAligner),
         ai: StageServices {
             enhancer: recorded.enhancer.clone(),
             titler: recorded.titler.clone(),

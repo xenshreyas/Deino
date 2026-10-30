@@ -18,6 +18,7 @@ use std::sync::Arc;
 
 use deino_domain::{Channel, Clock, MeetingId, PaletteColor, SegmentId, SpeakerId};
 
+use super::align::{WordAligner, time_track};
 use super::assign::{Attributed, attribute};
 use super::known::known_voices;
 use super::plan::{PlannedTrack, plan_channels};
@@ -52,6 +53,8 @@ pub struct DiarizeDeps {
     pub exemplars: Arc<dyn ExemplarReader>,
     /// IDs for new speakers and split segments.
     pub clock: Arc<dyn Clock>,
+    /// Times untimed lines' words so lines split where the voice changes.
+    pub aligner: Arc<dyn WordAligner>,
 }
 
 /// Diarizes a finished meeting and attributes its transcript.
@@ -78,10 +81,13 @@ impl DiarizeService {
         let mut changes = Vec::new();
         if let Some(track) = plan.diarize {
             let request = self.request(&audio, track, &attendees).await?;
+            let path = request.audio.clone();
             let voices = self.diarize(meeting, request).await?;
             outcome.channel = Some(track.channel);
             outcome.speakers = voices.ids.len();
-            changes.extend(self.attribute_channel(&segments, track.channel, &voices));
+            let aligner = self.deps.aligner.as_ref();
+            let timed = time_track(aligner, &path, segments.clone(), track.channel).await;
+            changes.extend(self.attribute_channel(&timed, track.channel, &voices));
         }
         if let Some(channel) = plan.me {
             let me = self.me(meeting).await?;

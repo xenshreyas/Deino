@@ -16,6 +16,7 @@
 //! [`identify`] (CAP-04) holds the rules of `identify_speakers` (order 35):
 //! naming the stored speakers from voice profiles and the calendar.
 
+mod align;
 mod assign;
 mod error;
 #[cfg(any(test, feature = "test-support"))]
@@ -27,6 +28,7 @@ mod plan;
 mod port;
 mod service;
 
+pub use align::{AlignLine, NoWordAligner, WordAligner, untimed, with_words};
 pub use assign::{Attributed, MIN_PIECE, attribute, voice_at};
 pub use error::DiarizationError;
 #[cfg(any(test, feature = "test-support"))]

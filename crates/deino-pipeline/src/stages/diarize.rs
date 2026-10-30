@@ -43,6 +43,7 @@ impl DiarizeStage {
             speakers: Arc::clone(&ports.speakers),
             diarizer: Arc::clone(&ports.diarizer),
             exemplars: Arc::clone(&ports.voiceprints),
+            aligner: Arc::clone(&ports.word_aligner),
             clock: Arc::clone(&ports.clock),
         });
         Self {

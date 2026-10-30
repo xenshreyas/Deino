@@ -20,6 +20,11 @@ Core ML, centroid-linkage clustering under calendar speaker bounds.
   (`ByteSource` port).
 - `track::OnnxTrackDiarizer`: `deino-core`'s `TrackDiarizer` port (decode the
   finalized track with `deino-audio`, run, prune).
+- `python::PythonEngine`: the owner's opt-in Python engine (pyannote
+  Community-1 and a wav2vec2 word aligner, `python/speakers.py`), used when
+  `<app data>/python-diarization/` is installed by
+  `scripts/setup-python-speakers.sh`; a stopgap until
+  `docs/plans/python-speakers-port.md` is done.
 - `online` (live clustering) for CAP-02, `metrics` (DER) and the `diarize-bench`
   harness (`docs/perf/diarization.md`).
 
