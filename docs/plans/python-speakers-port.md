@@ -17,5 +17,22 @@ against the Python output on that meeting before the Python piece goes.
 | Exclusive turns | `exclusive_speaker_diarization` | one voice per frame in the reconstruction step | turns within 50 ms |
 | Word aligner | wav2vec2-base-960h CTC + Viterbi in numpy | export to ONNX, run with `ort`; port `frames_by_word` and `fill_gaps` | word times within 40 ms |
 
+## Model files ship inside the app
+
+Deino is used by the owner's friends (macOS only), and everything runs on
+the Mac. Model files are bundled in the app instead of downloaded, so no
+login, no first-run download and no network are needed:
+
+| File | Source | Licence | Size |
+|---|---|---|---|
+| Community-1 segmentation (ONNX) | pyannote/speaker-diarization-community-1 (gated on Hugging Face, so it cannot be fetched for users) | CC-BY-4.0 | ~6 MB |
+| WeSpeaker ResNet34-LM embedding | the one Deino already uses | CC-BY-4.0 | ~26 MB |
+| PLDA `plda.npz`, `xvec_transform.npz` as plain arrays | Community-1 | CC-BY-4.0 | < 1 MB |
+| wav2vec2-base-960h aligner (ONNX, int8) | facebook/wav2vec2-base-960h | Apache-2.0 | ~95 MB |
+
+Each file is pinned by SHA-256, added as a Tauri resource, and credited in
+`THIRD_PARTY_NOTICES.md` (the CC-BY-4.0 attribution, and the Apache-2.0 notice).
+The app grows by about 130 MB.
+
 When every row is done, delete `python/`, `src/python.rs`, the setup script and
 this plan, and make the Rust path the only one.
