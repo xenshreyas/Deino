@@ -35,6 +35,15 @@ export interface MeetingTabSlot {
   Component: ComponentType<MeetingSlotProps>;
 }
 
+/** The context rail's sections. */
+export type MeetingRailId = 'people' | 'action-items' | 'follow-up';
+
+/** A section of the context rail; it renders nothing when it has nothing to show. */
+export interface MeetingRailSlot {
+  id: MeetingRailId;
+  Component: ComponentType<MeetingSlotProps>;
+}
+
 /** A section of the right panel. */
 export interface MeetingPanelSlot {
   id: MeetingPanelId;

@@ -8,7 +8,7 @@
  * images (CAP-09) follow the notes, when there are any. The tab opens on
  * Enhanced when the meeting has enhanced notes or they are being written,
  * else on My notes. Switching the template offers to regenerate the notes
- * (Granola §3.3). The follow-up email is a header chip now.
+ * (Granola §3.3). The follow-up email is in the context rail, or Details.
  */
 import { useState } from 'react';
 

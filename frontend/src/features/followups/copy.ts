@@ -1,9 +1,15 @@
 /** Every visible string of suggested follow-up emails (NOT-07). */
 export const followUpsCopy = {
-  chip: {
-    title: 'Follow-up email ready',
+  block: {
+    title: 'Follow-up email',
     hint: 'A draft to the people you met, with gaps marked for you to fill.',
-    view: 'View draft',
+    noSubject: 'No subject',
+    /** "Draft ready · to 3 people". */
+    ready: (people: number) =>
+      people === 0
+        ? 'Draft ready'
+        : `Draft ready · to ${people.toString()} ${people === 1 ? 'person' : 'people'}`,
+    open: 'Open draft',
     dismiss: 'Dismiss for good',
   },
   editor: {

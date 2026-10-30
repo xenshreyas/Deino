@@ -8,7 +8,7 @@ import { createQueryClient } from '@/lib/ipc';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import type { FollowUpDraft } from '../types';
-import { FollowUpChip, MeetingFollowUp } from './follow-up-chip';
+import { FollowUpBlock, MeetingFollowUp } from './follow-up-block';
 
 const commands = vi.hoisted(() => ({
   suggested: vi.fn(),
@@ -39,24 +39,28 @@ function wrap(children: ReactNode) {
   );
 }
 
-/** Opens a Radix menu the way a pointer does. */
-function openMenu(name: string) {
-  fireEvent.pointerDown(screen.getByRole('button', { name }), { button: 0, ctrlKey: false });
-}
-
-describe('FollowUpChip', () => {
-  it('views the draft, or dismisses it with an item that says it is for good', async () => {
-    const onView = vi.fn();
+describe('FollowUpBlock', () => {
+  it('shows the subject and recipients, opens the draft, or dismisses it for good', () => {
+    const onOpen = vi.fn();
     const onDismiss = vi.fn();
-    render(wrap(<FollowUpChip onView={onView} onDismiss={onDismiss} />));
+    const twoPeople: FollowUpDraft = {
+      ...draft,
+      recipients: {
+        to: ['marcus@brightkite.example'],
+        cc: ['MARCUS@brightkite.example', 'hannah@brightkite.example'],
+        bcc: [],
+      },
+    };
+    render(wrap(<FollowUpBlock draft={twoPeople} onOpen={onOpen} onDismiss={onDismiss} />));
 
-    openMenu('Follow-up email ready');
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'View draft' }));
-    expect(onView).toHaveBeenCalledOnce();
+    screen.getByRole('region', { name: 'Follow-up email' });
+    screen.getByText('Pilot next steps');
+    screen.getByText('Draft ready · to 2 people');
+    fireEvent.click(screen.getByRole('button', { name: 'Open draft' }));
+    expect(onOpen).toHaveBeenCalledOnce();
     expect(onDismiss).not.toHaveBeenCalled();
 
-    openMenu('Follow-up email ready');
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Dismiss for good' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss for good' }));
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 });
@@ -81,11 +85,7 @@ describe('MeetingFollowUp', () => {
     commands.forMeeting.mockResolvedValue({ status: 'ok', data: draft });
     render(wrap(<MeetingFollowUp meetingId={MEETING} />));
 
-    fireEvent.pointerDown(await screen.findByRole('button', { name: 'Follow-up email ready' }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'View draft' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open draft' }));
     expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('marcus@brightkite.example');
     screen.getByText('1 gap to fill');
     expect(screen.queryByRole('button', { name: /Send via Gmail or Outlook/ })).toBeNull();

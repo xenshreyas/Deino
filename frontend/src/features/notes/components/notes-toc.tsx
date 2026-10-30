@@ -2,7 +2,8 @@
  * The table of contents beside notes with three or more headings (ui.md
  * §4.2, Circleback §5): 12/400 `fg-muted`, the section in view in `fg`.
  * It floats at the right of the note column when there is room and the
- * right panel is closed.
+ * right panel is closed, unless the meeting page's context rail takes that
+ * gutter (from a 1100px `@container/meeting`, the rail's own rule).
  */
 import type { NoteDoc } from '@/features/notepad';
 import { cn } from '@/ui/cn';
@@ -41,7 +42,7 @@ export function NotesToc({ entries, active, onJump }: NotesTocProps) {
   return (
     <nav
       aria-label={notesCopy.contents}
-      className="absolute top-12 left-full ml-10 hidden w-44 min-[1400px]:block"
+      className="absolute top-12 left-full ml-10 hidden w-44 min-[1400px]:block @min-[1100px]/meeting:hidden"
     >
       <p className="mb-2 text-xs font-semibold text-fg-subtle">{notesCopy.contents}</p>
       <ol className="flex flex-col gap-0.5 border-l border-border">

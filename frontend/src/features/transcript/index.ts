@@ -16,6 +16,7 @@
  * | {@link TranscriptView} | anything that already holds rows (presentational) |
  * | {@link TRANSCRIPT_ACTIONS} | the bubble actions registry: TRN-04 and TRN-06 fill their entries |
  * | {@link useSpeakerBands} | the player's scrubber: who spoke when |
+ * | {@link useTalkTime} | the meeting page's context rail: who talked how much |
  */
 export { TRANSCRIPT_ACTIONS } from './actions';
 export type {
@@ -29,6 +30,8 @@ export { TranscriptPanel, type TranscriptPanelProps } from './components/transcr
 export { TranscriptView, type TranscriptViewProps } from './components/transcript-view';
 export { transcriptCopy } from './copy';
 export { useSpeakerBands } from './hooks/use-speaker-bands';
+export { useTalkTime } from './hooks/use-talk-time';
+export type { TalkShare } from './model/talk-time';
 export { timedWords } from './model/word-ranges';
 export { transcriptKeys, transcriptQuery } from './queries';
 export type {

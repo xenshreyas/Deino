@@ -17,4 +17,10 @@ export const meetingCopy = {
   showRecording: 'Show recording in Finder',
   processingDetails: 'Processing details',
   moveToTrash: 'Move to trash',
+  rail: {
+    label: 'Meeting context',
+    people: 'People',
+    talkTime: 'talk time',
+    percent: (value: number) => `${value.toString()}%`,
+  },
 } as const;

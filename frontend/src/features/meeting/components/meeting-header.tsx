@@ -3,7 +3,6 @@ import { format, isSameDay, subDays } from 'date-fns';
 import { OpenNoteReporter } from '@/features/calendar';
 import { MeetingAttendees } from '@/features/entities';
 import { MeetingFolders } from '@/features/folders';
-import { MeetingFollowUp } from '@/features/followups';
 import { type MeetingId, useMeeting } from '@/features/meetings';
 import { PipelineStatus } from '@/features/pipeline';
 import { ResumeRecordingButton } from '@/features/recording';
@@ -31,10 +30,10 @@ const REVEAL_ON_HOVER =
 /**
  * Title and the ⋯ menu (UX-05), then a row of meta chips (UX-08): the date,
  * attendees (ORG-04), folders, tags only once there are some (their "Add"
- * ghosts wait for hover), and "Follow-up email ready" while a draft waits
- * (NOT-07); Resume for a meeting that ended in the last two hours. Below,
- * one processing line, only while work runs or after a failure (UX-01).
- * The calendar event and related meetings are in Details.
+ * ghosts wait for hover); Resume for a meeting that ended in the last two
+ * hours. Below, one processing line, only while work runs or after a
+ * failure (UX-01). The calendar event and related meetings are in Details;
+ * a follow-up draft (NOT-07) is in the context rail, or Details.
  */
 export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
   const meeting = useMeeting(meetingId);
@@ -59,7 +58,6 @@ export function MeetingHeader({ meetingId }: { meetingId: MeetingId }) {
         <MeetingAttendees meetingId={meetingId} restingClassName={REVEAL_ON_HOVER} />
         <MeetingFolders meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
         <MeetingTags meetingId={meetingId} addChipClassName={REVEAL_ON_HOVER} />
-        <MeetingFollowUp meetingId={meetingId} />
         <span className="ml-auto">
           <ResumeRecordingButton meetingId={meetingId} />
         </span>

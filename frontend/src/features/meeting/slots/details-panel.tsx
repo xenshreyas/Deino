@@ -1,8 +1,9 @@
 /**
- * The Details panel (UX-04): who spoke (CAP-04), the meeting's comments
- * (TRN-06) and clips (TRN-04) when it has any, its calendar event and
- * related meetings (ORG-03), and last, collapsed, what the vocabulary
- * corrected in its transcript (TRN-05). The header already shows the date,
+ * The Details panel (UX-04): the follow-up draft (NOT-07) when there is one
+ * (on a wide window the context rail shows it while this panel is closed),
+ * who spoke (CAP-04), the meeting's comments (TRN-06) and clips (TRN-04)
+ * when it has any, its calendar event and related meetings (ORG-03), and
+ * last, collapsed, what the vocabulary corrected in its transcript (TRN-05). The header already shows the date,
  * so the panel has no created or edited facts.
  */
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { useMemo } from 'react';
 import { MeetingClips } from '@/features/clips';
 import { CommentsPanel } from '@/features/comments';
 import { MeetingLinksPanel } from '@/features/event-links';
+import { MeetingFollowUp } from '@/features/followups';
 import type { MeetingId } from '@/features/meetings';
 import { ParticipantsPanel } from '@/features/speakers';
 import { transcriptQuery } from '@/features/transcript';
@@ -34,6 +36,7 @@ function Comments({ meetingId }: { meetingId: MeetingId }) {
 export function DetailsPanelSlot({ meetingId }: MeetingSlotProps) {
   return (
     <div className="flex flex-col gap-6 px-4 py-4">
+      <MeetingFollowUp meetingId={meetingId} />
       <PanelSection title={meetingCopy.participants}>
         <ParticipantsPanel meetingId={meetingId} />
       </PanelSection>

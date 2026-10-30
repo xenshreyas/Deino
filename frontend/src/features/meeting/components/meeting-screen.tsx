@@ -1,7 +1,8 @@
 /**
  * The meeting page skeleton (PARITY_PLAN §4.6, ui.md §4.2): a 720px column
- * with the header and the Notes / Transcript tabs, the right panel (Chat /
- * Details) and the bottom player (UX-03, UX-04). Every region is a slot in
+ * with the header and the Notes / Transcript tabs, the context rail beside it
+ * on a wide window, the right panel (Chat / Details) and the bottom player
+ * (UX-03, UX-04). Every region is a slot in
  * `slots.ts`; the legacy session publishes the recording folder for the ⋯
  * menu until CAP-08/CAP-11 port re-transcription.
  */
@@ -23,6 +24,7 @@ import type { MeetingSource, MeetingTabId } from '../search';
 import type { MeetingMoment } from '../types';
 import type { TranscriptMoment } from '@/features/transcript';
 import { MEETING_PLAYER, MEETING_TABS } from '../slots';
+import { ContextRail } from './context-rail';
 import { MeetingHeader } from './meeting-header';
 import { MeetingSidePanel } from './meeting-side-panel';
 
@@ -121,9 +123,12 @@ export function MeetingScreen({
       <MeetingTitleBar meetingId={id} />
       <div className="flex h-full min-w-0">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col px-6">
-            <MeetingHeader meetingId={id} />
-            <MeetingTabs meetingId={id} tab={tab} onTabChange={onTabChange} moment={shown} />
+          <div className="@container/meeting flex min-h-0 flex-1 justify-center gap-6">
+            <div className="flex min-h-0 w-full max-w-[720px] min-w-0 flex-col px-6">
+              <MeetingHeader meetingId={id} />
+              <MeetingTabs meetingId={id} tab={tab} onTabChange={onTabChange} moment={shown} />
+            </div>
+            <ContextRail meetingId={id} />
           </div>
           <Player meetingId={id} moment={shown} />
         </div>
