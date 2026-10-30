@@ -82,6 +82,8 @@ fn run_contract(meeting: &FixtureMeeting) -> Result<(), Failed> {
         .filter(|request| request.route == Route::NotesEnhance)
         .map(prompt_text)
         .collect();
+    // The notes reach the prompt as markdown; the typed lines are plain.
+    let prompts = prompts.replace("**", "");
     let first = meeting
         .segments
         .first()
