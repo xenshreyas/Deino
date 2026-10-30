@@ -26,11 +26,11 @@ test('settings show a saved key without revealing it, and switches persist', asy
   // A switch saves through the settings plugin and survives a page change.
   await openSection(page, 'Recording');
   const panel = page.getByRole('switch', { name: 'Show the record panel' });
-  await expect(panel).toBeChecked();
+  await expect(panel).not.toBeChecked();
   await panel.click();
   await openSection(page, 'General');
   await openSection(page, 'Recording');
-  await expect(page.getByRole('switch', { name: 'Show the record panel' })).not.toBeChecked();
+  await expect(page.getByRole('switch', { name: 'Show the record panel' })).toBeChecked();
 });
 
 test('Privacy shows what left the Mac, Advanced the services in use', async ({ page }) => {
