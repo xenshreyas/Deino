@@ -39,12 +39,20 @@ pub struct MockProvider {
     turns: Mutex<BTreeMap<Route, VecDeque<Turn>>>,
     responders: Mutex<BTreeMap<Route, Responder>>,
     requests: Mutex<Vec<CompletionRequest>>,
+    context_window: Option<u32>,
 }
 
 impl MockProvider {
     /// No turns scripted.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Reports a context window of `tokens`, as a local model does.
+    #[must_use]
+    pub fn with_context_window(mut self, tokens: u32) -> Self {
+        self.context_window = Some(tokens);
+        self
     }
 
     /// Scripts a text answer for `route`.
@@ -127,6 +135,10 @@ impl LlmProvider for MockProvider {
             })
         })?;
         Ok(stream::iter(events.into_iter().map(Ok)).boxed())
+    }
+
+    async fn context_window(&self, _model: &str) -> Option<u32> {
+        self.context_window
     }
 }
 

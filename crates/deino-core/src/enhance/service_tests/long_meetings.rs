@@ -1,7 +1,21 @@
-//! A long meeting is noted in parts (map) and merged (reduce), and the
-//! transcript references survive the merge.
+//! A transcript too long for one call is noted in parts (map) and merged
+//! (reduce), and the transcript references survive the merge.
 
 use super::*;
+
+/// A window too small for the 83-minute planning meeting's transcript
+/// (about 76k characters) in one call, but roomy for a 23-minute part.
+const SMALL_WINDOW: u32 = 20_000;
+
+/// The planning meeting on a model with [`SMALL_WINDOW`], answered by `respond`.
+async fn small_window_harness(
+    respond: impl Fn(&CompletionRequest) -> String + Send + Sync + 'static,
+) -> Harness {
+    let mock = MockProvider::new()
+        .with_context_window(SMALL_WINDOW)
+        .answer_with(Route::NotesEnhance, respond);
+    harness(MeetingKind::Planning, mock).await
+}
 
 /// Every `s<n>` reference in `text`, in order, without repeats.
 fn references(text: &str) -> Vec<String> {
@@ -44,12 +58,8 @@ fn respond(request: &CompletionRequest) -> String {
 }
 
 #[tokio::test]
-async fn an_eighty_minute_meeting_is_noted_in_parts_and_merged_with_its_references() {
-    let harness = harness(
-        MeetingKind::Planning,
-        MockProvider::new().answer_with(Route::NotesEnhance, respond),
-    )
-    .await;
+async fn a_transcript_too_long_for_one_call_is_noted_in_parts_and_merged_with_its_references() {
+    let harness = small_window_harness(respond).await;
     let meeting = &harness.fixture.id;
 
     let view = harness
@@ -130,11 +140,7 @@ fn respond_with_a_broken_part() -> impl Fn(&CompletionRequest) -> String + Send 
 
 #[tokio::test]
 async fn a_part_whose_answer_cannot_be_read_still_leaves_notes() {
-    let harness = harness(
-        MeetingKind::Planning,
-        MockProvider::new().answer_with(Route::NotesEnhance, respond_with_a_broken_part()),
-    )
-    .await;
+    let harness = small_window_harness(respond_with_a_broken_part()).await;
 
     let view = harness
         .service

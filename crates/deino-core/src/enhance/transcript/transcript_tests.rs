@@ -45,7 +45,11 @@ const TIGHT: PartLimits = PartLimits {
 fn a_long_meeting_that_fits_is_one_part() {
     let lines = meeting(90, 10);
 
-    assert_eq!(parts(&lines, HOSTED).len(), 1, "duration alone never splits");
+    assert_eq!(
+        parts(&lines, HOSTED).len(),
+        1,
+        "duration alone never splits"
+    );
 }
 
 #[test]
