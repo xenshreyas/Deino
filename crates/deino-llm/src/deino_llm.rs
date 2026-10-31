@@ -78,8 +78,8 @@ pub use providers::{
     OllamaProvider, OpenAiCompatProvider, PullProgress,
 };
 pub use request::{
-    CompletionRequest, ImagePart, JsonOutput, Message, OutputFormat, Part, Prompt, Role, Target,
-    ToolCall, ToolDefinition, ToolResult,
+    CompletionRequest, Effort, ImagePart, JsonOutput, Message, OutputFormat, Part, Prompt, Role,
+    Target, ToolCall, ToolDefinition, ToolResult,
 };
 pub use route::{Route, RouteTier};
 pub use router::{

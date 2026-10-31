@@ -21,7 +21,7 @@ import { useIpcEvent } from '@/lib/ipc/events';
 import { events as settingsEvents } from '@/lib/ipc/generated/settings';
 
 import { llmApi } from './api';
-import type { ProviderId, ResolvedRoute, Route, Target } from './types';
+import type { Effort, ProviderId, ResolvedRoute, Route, Target } from './types';
 
 /** Query keys; every key starts with `llmKeys.all`. */
 export const llmKeys = {
@@ -105,13 +105,17 @@ export function useRoutePin(row: ResolvedRoute) {
         pin({ provider, model: models[0]?.id ?? row.target.model });
       });
   };
+  const effort = row.target.effort ?? null;
   return {
     reset: () => {
       pin(null);
     },
     chooseProvider,
     chooseModel: (model: string) => {
-      pin({ provider: row.target.provider, model });
+      pin({ provider: row.target.provider, model, effort });
+    },
+    chooseEffort: (next: Effort | null) => {
+      pin({ provider: row.target.provider, model: row.target.model, effort: next });
     },
     error: setRoute.error,
   };

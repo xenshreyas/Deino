@@ -142,6 +142,42 @@ pub struct Target {
     pub provider: ProviderId,
     /// The provider's model ID.
     pub model: String,
+    /// How hard the model thinks, where the provider takes it (Anthropic's
+    /// `output_config.effort`); the model's default when `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub effort: Option<Effort>,
+}
+
+/// How much thinking a model spends on an answer: more is slower, costs more
+/// and can be more careful. Claude's levels; other providers ignore it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "lowercase")]
+pub enum Effort {
+    /// The least thinking.
+    Low,
+    /// Some thinking.
+    Medium,
+    /// Much thinking.
+    High,
+    /// More than high.
+    #[serde(rename = "xhigh")]
+    XHigh,
+    /// As much as the model can.
+    Max,
+}
+
+impl Effort {
+    /// The level's name on the wire (`low` … `max`).
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::XHigh => "xhigh",
+            Self::Max => "max",
+        }
+    }
 }
 
 /// What a caller asks the gateway: the conversation and its limits.
@@ -211,6 +247,8 @@ pub struct CompletionRequest {
     pub max_tokens: u32,
     /// Sampling temperature; the provider's default when `None`.
     pub temperature: Option<f32>,
+    /// How hard the model thinks; the model's default when `None`.
+    pub effort: Option<Effort>,
 }
 
 #[cfg(test)]

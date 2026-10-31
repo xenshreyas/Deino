@@ -119,6 +119,31 @@ code: ErrorCode;
  */
 message: string }
 /**
+ * How much thinking a model spends on an answer: more is slower, costs more
+ * and can be more careful. Claude's levels; other providers ignore it.
+ */
+export type Effort = 
+/**
+ * The least thinking.
+ */
+"low" | 
+/**
+ * Some thinking.
+ */
+"medium" | 
+/**
+ * Much thinking.
+ */
+"high" | 
+/**
+ * More than high.
+ */
+"xhigh" | 
+/**
+ * As much as the model can.
+ */
+"max"
+/**
  * What kind of failure an [`AppError`] reports. The UI branches on it. Stored
  * in the `last_error_code` and `error_code` columns of the integration tables.
  */
@@ -418,7 +443,12 @@ provider: ProviderId;
 /**
  * The provider's model ID.
  */
-model: string }
+model: string; 
+/**
+ * How hard the model thinks, where the provider takes it (Anthropic's
+ * `output_config.effort`); the model's default when `None`.
+ */
+effort?: Effort | null }
 /**
  * Token counts of one call.
  */

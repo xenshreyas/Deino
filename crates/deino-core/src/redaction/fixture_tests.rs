@@ -148,6 +148,7 @@ async fn a_hosted_route_skips_the_check_and_redacts_everything() {
     let cloud = Target {
         provider: ProviderId::Anthropic,
         model: "claude-haiku".to_owned(),
+        effort: None,
     };
     gateway
         .router()

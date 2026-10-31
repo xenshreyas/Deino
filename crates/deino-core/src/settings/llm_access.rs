@@ -192,6 +192,7 @@ mod tests {
         let target = Target {
             provider: ProviderId::OpenAi,
             model: "gpt-5".into(),
+            effort: None,
         };
         overrides.set(Route::Chat, Some(target.clone()));
 

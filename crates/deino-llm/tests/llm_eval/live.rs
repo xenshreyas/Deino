@@ -76,6 +76,7 @@ fn parse_target(target: &str) -> Option<Target> {
     Some(Target {
         provider,
         model: model.to_owned(),
+        effort: None,
     })
 }
 

@@ -103,6 +103,7 @@ impl Gateway {
         let target = Target {
             provider: ProviderId::BuiltIn,
             model: LOCAL_EMBEDDING_MODEL.to_owned(),
+            effort: None,
         };
         let meter = self.meter(Route::Embed, &target);
         match self.local.embed(&target.model, inputs).await {
@@ -147,7 +148,8 @@ impl Gateway {
         shape: Shape,
     ) -> Result<EventStream, LlmError> {
         let target = self.target(route, &prompt).await?;
-        log::info!(target: "llm", "{route}: calling {} {}", target.provider, target.model);
+        let effort = target.effort.map_or("", |effort| effort.as_str());
+        log::info!(target: "llm", "{route}: calling {} {} {effort}", target.provider, target.model);
         let meter = self.meter(route, &target);
         let context = match &self.context {
             Some(context) => context.system_context().await,
@@ -183,6 +185,7 @@ fn request(route: Route, target: &Target, prompt: Prompt, shape: Shape) -> Compl
         output: shape.output,
         max_tokens: prompt.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
         temperature: prompt.temperature,
+        effort: target.effort,
     }
 }
 

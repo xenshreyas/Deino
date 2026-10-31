@@ -210,6 +210,7 @@ fn default_target(tier: RouteTier, defaults: &Defaults) -> Target {
     Target {
         provider,
         model: model.to_owned(),
+        effort: None,
     }
 }
 /// Route choices kept in memory, for tests and the eval harness.
@@ -251,6 +252,7 @@ mod tests {
         Target {
             provider,
             model: model.to_owned(),
+            effort: None,
         }
     }
 

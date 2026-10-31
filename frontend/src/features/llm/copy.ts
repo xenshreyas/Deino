@@ -1,6 +1,6 @@
 import type { LlmProvider } from '@/features/settings';
 
-import type { Route, RouteTier } from './types';
+import type { Effort, Route, RouteTier } from './types';
 
 /** Settings → Notes → AI (UX-11). */
 export const aiProviderCopy = {
@@ -41,6 +41,15 @@ export const llmCopy = {
   routeColumn: 'Task',
   providerColumn: 'Provider',
   modelColumn: 'Model',
+  effortColumn: 'Effort',
+  efforts: {
+    default: 'Default effort',
+    low: 'Low effort',
+    medium: 'Medium effort',
+    high: 'High effort',
+    xhigh: 'Extra-high effort',
+    max: 'Max effort',
+  } satisfies Record<Effort | 'default', string>,
   custom: 'Custom',
   default: 'Default',
   reset: 'Reset',

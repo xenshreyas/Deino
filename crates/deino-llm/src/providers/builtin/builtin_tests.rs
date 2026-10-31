@@ -17,6 +17,7 @@ fn request(messages: Vec<Message>, output: OutputFormat) -> CompletionRequest {
         output,
         max_tokens: 4096,
         temperature: None,
+        effort: None,
     }
 }
 

@@ -49,10 +49,13 @@ pub(super) struct MessagesRequest<'a> {
     stream: bool,
 }
 
-/// `output_config`: the answer's format.
-#[derive(Debug, Serialize)]
+/// `output_config`: the answer's format and the model's effort.
+#[derive(Debug, Default, Serialize)]
 struct OutputConfig {
-    format: JsonSchemaFormat,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    format: Option<JsonSchemaFormat>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    effort: Option<&'static str>,
 }
 
 /// `{"type": "json_schema", "schema": …}`.
@@ -115,7 +118,10 @@ impl<'a> MessagesRequest<'a> {
             system: request.system.as_deref().map(Cow::Borrowed),
             messages: request.messages.iter().map(message).collect(),
             tools: Vec::new(),
-            output_config: None,
+            output_config: request.effort.map(|effort| OutputConfig {
+                format: None,
+                effort: Some(effort.as_str()),
+            }),
             stream: true,
         };
         match &request.output {
@@ -134,7 +140,9 @@ impl<'a> MessagesRequest<'a> {
                     kind: "json_schema",
                     schema,
                 };
-                self.output_config = Some(OutputConfig { format });
+                self.output_config
+                    .get_or_insert_with(OutputConfig::default)
+                    .format = Some(format);
             }
             OutputSchema::Unconstrained(reason) => {
                 log::info!(target: "llm", "anthropic: the {} schema is {reason}; asking for JSON in the prompt", json.name);

@@ -122,6 +122,31 @@ describe('AiSettings', () => {
     expect(screen.queryByRole('button', { name: llmCopy.reset })).toBeNull();
   });
 
+  it('offers an effort only for Claude, and choosing one pins it with the model', async () => {
+    commands.setRoute.mockResolvedValue({
+      status: 'ok',
+      data: { ...title, target: { ...title.target, effort: 'max' }, source: 'custom' },
+    });
+    renderSettings();
+    const claude = (await screen.findByText(llmCopy.routes.title)).closest('li');
+    const openAi = screen.getByText(llmCopy.routes.chat).closest('li');
+    const effort = `${llmCopy.effortColumn}: ${llmCopy.routes.title}`;
+    expect(within(openAi ?? document.body).queryByRole('combobox', { name: /Effort/ })).toBeNull();
+
+    const trigger = within(claude ?? document.body).getByRole('combobox', { name: effort });
+    expect(trigger.textContent).toBe(llmCopy.efforts.default);
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+    fireEvent.click(await screen.findByRole('option', { name: llmCopy.efforts.max }));
+
+    await vi.waitFor(() => {
+      expect(commands.setRoute).toHaveBeenCalledWith('title', {
+        provider: 'anthropic',
+        model: 'claude-haiku-5-5',
+        effort: 'max',
+      });
+    });
+  });
+
   it('shows a failed test as an inline error', async () => {
     commands.testRoute.mockResolvedValue({
       status: 'error',

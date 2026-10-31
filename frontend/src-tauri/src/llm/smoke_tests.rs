@@ -58,6 +58,7 @@ async fn smoke() -> Smoke {
     let target = Target {
         provider: ProviderId::BuiltIn,
         model,
+        effort: None,
     };
     Smoke {
         gateway: Arc::new(gateway),

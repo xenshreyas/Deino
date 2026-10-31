@@ -28,6 +28,7 @@ fn request(output: OutputFormat) -> CompletionRequest {
         output,
         max_tokens: 256,
         temperature: None,
+        effort: None,
     }
 }
 
@@ -215,6 +216,26 @@ async fn a_json_answer_is_a_structured_output_without_tools_or_temperature() {
             "stream": true,
         })
     );
+}
+
+#[tokio::test]
+async fn an_effort_goes_in_the_output_config_beside_the_format() {
+    let (provider, http) = provider(FakeHttp::new());
+    let mut text = request(OutputFormat::Text);
+    text.effort = Some(crate::Effort::XHigh);
+    let mut json = request(title_output());
+    json.effort = Some(crate::Effort::Low);
+
+    assert!(provider.stream(text).await.is_err(), "no reply is scripted");
+    assert!(provider.stream(json).await.is_err(), "no reply is scripted");
+
+    assert_eq!(
+        http.json_body(0)["output_config"],
+        json!({ "effort": "xhigh" })
+    );
+    let config = &http.json_body(1)["output_config"];
+    assert_eq!(config["effort"], "low");
+    assert_eq!(config["format"]["type"], "json_schema");
 }
 
 #[tokio::test]

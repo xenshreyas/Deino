@@ -36,6 +36,7 @@ async fn a_pinned_target_bypasses_the_route() {
     let gpt = Target {
         provider: ProviderId::OpenAi,
         model: "gpt-5".into(),
+        effort: None,
     };
 
     harness

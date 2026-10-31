@@ -3,7 +3,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { llmCopy } from '../copy';
 import { useModels, useRoutePin, useTestRoute } from '../queries';
-import type { ProviderId, ProviderStatus, ResolvedRoute, RouteTestReport } from '../types';
+import type { Effort, ProviderId, ProviderStatus, ResolvedRoute, RouteTestReport } from '../types';
+
+/** Claude's effort levels, least first. */
+const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+
+/** The picker's value for "the model's default". */
+const DEFAULT_EFFORT = 'default' as const;
+
+/** Every choice the effort picker offers. */
+const EFFORT_CHOICES: readonly (Effort | typeof DEFAULT_EFFORT)[] = [DEFAULT_EFFORT, ...EFFORTS];
 
 /** Props of {@link RouteRow}. */
 export interface RouteRowProps {
@@ -27,6 +36,9 @@ export function RouteRow({ row, providers }: RouteRowProps) {
           onChange={pinning.chooseProvider}
         />
         <ModelPicker row={row} disabled={locked} onChange={pinning.chooseModel} />
+        {row.target.provider === 'anthropic' ? (
+          <EffortPicker row={row} disabled={locked} onChange={pinning.chooseEffort} />
+        ) : null}
         <Button
           variant="secondary"
           size="sm"
@@ -117,6 +129,34 @@ function ModelPicker({ row, disabled, onChange }: PickerProps<string>) {
         {options.map((model) => (
           <SelectItem key={model} value={model}>
             {model}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/** Claude's effort: how much it thinks before answering. */
+function EffortPicker({ row, disabled, onChange }: PickerProps<Effort | null>) {
+  const value = row.target.effort ?? DEFAULT_EFFORT;
+  return (
+    <Select
+      value={value}
+      disabled={disabled}
+      onValueChange={(next) => {
+        onChange(EFFORTS.find((effort) => effort === next) ?? null);
+      }}
+    >
+      <SelectTrigger
+        aria-label={`${llmCopy.effortColumn}: ${llmCopy.routes[row.route]}`}
+        className="w-40"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {EFFORT_CHOICES.map((effort) => (
+          <SelectItem key={effort} value={effort}>
+            {llmCopy.efforts[effort]}
           </SelectItem>
         ))}
       </SelectContent>

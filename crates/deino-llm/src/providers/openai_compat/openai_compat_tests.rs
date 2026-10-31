@@ -41,6 +41,7 @@ fn request(output: OutputFormat) -> CompletionRequest {
         output,
         max_tokens: 64,
         temperature: None,
+        effort: None,
     }
 }
 

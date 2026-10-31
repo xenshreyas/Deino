@@ -94,6 +94,7 @@ async fn routes_can_be_pinned_and_reset() {
     let target = Target {
         provider: ProviderId::Groq,
         model: "llama-3.3-70b-versatile".into(),
+        effort: None,
     };
 
     let pinned = admin

@@ -1,5 +1,6 @@
 /** The LLM feature's types, generated from Rust by `bindings.rs`. */
 export type {
+  Effort,
   LlmStreamEvent,
   ModelInfo,
   OllamaPull,
