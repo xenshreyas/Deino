@@ -14,6 +14,12 @@ rustflags = ["-C", "link-arg=-mmacosx-version-min=14.2"]
 # linking symbols newer than macOS 14.2.
 MACOSX_DEPLOYMENT_TARGET = { value = "14.2", force = true }
 CMAKE_OSX_DEPLOYMENT_TARGET = "14.2"
+# llama.cpp (llama-cpp-sys-2 forwards every CMAKE_* variable to CMake) would
+# otherwise build its vendored cpp-httplib against any OpenSSL it finds, such as
+# Homebrew's, whose OpenSSL 3 headers it no longer compiles against. The helper
+# only loads a local model and never speaks HTTPS, and a Homebrew libssl would
+# not exist on users' Macs anyway.
+CMAKE_DISABLE_FIND_PACKAGE_OpenSSL = "ON"
 # The `sqlx::query*!` macros read the committed `.sqlx/` query data instead of
 # a live database. Not forced, so `scripts/sqlx-prepare.sh` can switch it off
 # while it regenerates the data.
