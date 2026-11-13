@@ -90,7 +90,10 @@ fn update<R: Runtime>(app: &AppHandle<R>, with_menu: bool) {
         };
         let shown = menu
             .and_then(|menu| menu.map_or(Ok(()), |menu| tray.set_menu(Some(menu))))
-            .and_then(|()| tray.set_title(contents.title.as_deref()));
+            // An empty title, not `None`: on macOS `None` leaves the last
+            // title up (tray-icon skips it), so a calendar title would stay
+            // beside the recording dot.
+            .and_then(|()| tray.set_title(Some(contents.title.as_deref().unwrap_or_default())));
         if let Err(error) = shown {
             log::warn!(target: "tray", "could not update the menu bar: {error}");
         }
